@@ -33,6 +33,8 @@ jobs:
 
       - name: Run SHA Staleness Check
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $thresholdDays = if ('${{ github.event.inputs.threshold-days }}') { 
             [int]'${{ github.event.inputs.threshold-days }}' 
@@ -41,7 +43,7 @@ jobs:
           }
           
           Write-Host "Running SHA staleness check with $thresholdDays day threshold..."
-          & scripts/security/Test-SHAStaleness.ps1 -ThresholdDays $thresholdDays -WarningsOnly
+          & scripts/security/Test-SHAStaleness.ps1 -MaxAge $thresholdDays -WarningsOnly
           
           if ($LASTEXITCODE -ne 0) {
             Write-Warning "Some GitHub Actions have stale SHA pins. Review the warnings above."

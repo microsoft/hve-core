@@ -115,8 +115,8 @@ jobs:
             -OutputPath logs/sha-staleness-results.json
           
           # Extract stale count from JSON report
-          if (Test-Path sha-staleness-report.json) {
-            $report = Get-Content sha-staleness-report.json | ConvertFrom-Json
+          if (Test-Path logs/sha-staleness-results.json) {
+            $report = Get-Content logs/sha-staleness-results.json | ConvertFrom-Json
             $staleCount = ($report.StaleDependencies | Where-Object { $_.Age -gt $thresholdDays } | Measure-Object).Count
             "stale-count=$staleCount" >> $env:GITHUB_OUTPUT
             "has-stale=$(if ($staleCount -gt 0) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
