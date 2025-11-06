@@ -417,7 +417,9 @@ function Get-SHAForAction {
 
         Write-SecurityLog "Found SHA mapping: $ActionRef -> $pinnedRef" -Level 'Success' | Out-Null
         return $pinnedRef
-    }    # For unmapped actions, suggest manual review
+    }
+
+    # For unmapped actions, suggest manual review
     Write-SecurityLog "No SHA mapping found for: $ActionRef - requires manual review" -Level 'Warning' | Out-Null
     return $null
 }

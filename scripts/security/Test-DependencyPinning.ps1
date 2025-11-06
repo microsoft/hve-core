@@ -69,6 +69,9 @@ param(
     [string]$Path = ".",
 
     [Parameter(Mandatory = $false)]
+    [switch]$Recursive,
+
+    [Parameter(Mandatory = $false)]
     [ValidateSet('json', 'sarif', 'csv', 'markdown', 'table')]
     [string]$Format = 'json',
 

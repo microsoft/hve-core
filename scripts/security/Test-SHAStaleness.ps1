@@ -99,7 +99,7 @@ function Write-SecurityLog {
 # Structure to hold stale dependency information
 $StaleDependencies = @()
 
-function Get-BulkGitHubActionsStalenesss {
+function Get-BulkGitHubActionsStaleness {
     param(
         [Parameter(Mandatory = $true)]
         [array]$ActionRepos,
