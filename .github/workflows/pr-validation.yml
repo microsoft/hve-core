@@ -1,0 +1,122 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+jobs:
+  spell-check:
+    name: Spell Check
+    uses: ./.github/workflows/spell-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-lint:
+    name: Markdown Lint
+    uses: ./.github/workflows/markdown-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  table-format:
+    name: Table Format Check
+    uses: ./.github/workflows/table-format.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  psscriptanalyzer:
+    name: PowerShell Lint
+    uses: ./.github/workflows/psscriptanalyzer.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+
+  frontmatter-validation:
+    name: Frontmatter Validation
+    uses: ./.github/workflows/frontmatter-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      skip-footer-validation: false
+      warnings-as-errors: true
+
+  link-lang-check:
+    name: Link Language Check
+    uses: ./.github/workflows/link-lang-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-link-check:
+    name: Markdown Link Check
+    uses: ./.github/workflows/markdown-link-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: true
+
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: ./.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: true
+      upload-sarif: false
+
+  checkov-scan:
+    name: Checkov IaC Security Scan
+    uses: ./.github/workflows/checkov-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: true
+      upload-sarif: false
+
+  dependency-pinning-check:
+    name: Validate Dependency Pinning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+        
+      - name: Validate SHA Pinning (Strict Mode)
+        shell: pwsh
+        run: |
+          Write-Host "Validating all dependencies are SHA-pinned..."
+          & scripts/security/Test-DependencyPinning.ps1 `
+            -Path . `
+            -Format console `
+            -FailOnViolations
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Unpinned dependencies detected. All GitHub Actions and dependencies must be SHA-pinned."
+            exit 1
+          }

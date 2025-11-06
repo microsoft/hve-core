@@ -1,0 +1,56 @@
+name: Main Branch CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+jobs:
+  spell-check:
+    name: Spell Check
+    uses: ./.github/workflows/spell-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-lint:
+    name: Markdown Lint
+    uses: ./.github/workflows/markdown-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  table-format:
+    name: Table Format Check
+    uses: ./.github/workflows/table-format.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: ./.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+
+  checkov-scan:
+    name: Checkov IaC Security Scan
+    uses: ./.github/workflows/checkov-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
