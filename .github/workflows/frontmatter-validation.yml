@@ -1,0 +1,64 @@
+name: Frontmatter Validation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on frontmatter validation errors'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only validate changed markdown files'
+        required: false
+        type: boolean
+        default: true
+      skip-footer-validation:
+        description: 'Skip Copilot footer validation'
+        required: false
+        type: boolean
+        default: false
+      warnings-as-errors:
+        description: 'Treat warnings as errors'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontmatter-validation:
+    name: Validate Markdown Frontmatter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run Frontmatter Validation
+        shell: pwsh
+        run: |
+          $params = @{}
+          
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+          if ('${{ inputs.skip-footer-validation }}' -eq 'true') {
+            $params['SkipFooterValidation'] = $true
+          }
+          if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
+            $params['WarningsAsErrors'] = $true
+          }
+          
+          & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
+        continue-on-error: ${{ inputs.soft-fail }}
