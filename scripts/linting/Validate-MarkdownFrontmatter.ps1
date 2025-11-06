@@ -44,7 +44,9 @@ function Get-MarkdownFrontmatter {
 
     .OUTPUTS
     Returns a hashtable with Frontmatter, FrontmatterEndIndex, and Content properties.
-    #>    param(
+    #>
+
+    param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$FilePath
@@ -194,11 +196,14 @@ function Test-FrontmatterValidation {
     .PARAMETER Files
     Array of specific file paths to validate (takes precedence over Paths).
 
-    .PARAMETER WarningsAsErrors    Treat warnings as errors (fail validation on warnings).
+    .PARAMETER WarningsAsErrors
+    Treat warnings as errors (fail validation on warnings).
 
     .OUTPUTS
     Returns validation results with errors and warnings.
-    #>    param(
+    #>
+
+    param(
         [Parameter(Mandatory = $false)]
         [AllowEmptyCollection()]
         [string[]]$Paths = @(),
@@ -309,7 +314,9 @@ function Test-FrontmatterValidation {
             }
         }
         $Paths = $sanitizedPaths
-    }    # Ensure we have at least one valid input source
+    }
+
+    # Ensure we have at least one valid input source
     if ($Files.Count -eq 0 -and $Paths.Count -eq 0) {
         $warnings += "No valid files or paths provided for validation"
         return @{
@@ -479,7 +486,9 @@ function Test-FrontmatterValidation {
                             $errors += "Missing required field '$field' in: $($file.FullName)"
                         }
                     }
-                }                # GitHub resources have different requirements
+                }
+
+                # GitHub resources have different requirements
                 elseif ($isGitHub) {
                     # ChatMode files (.chatmode.md) have specific frontmatter structure
                     if ($isChatMode) {

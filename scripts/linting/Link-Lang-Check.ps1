@@ -152,7 +152,7 @@ function Repair-LinksInFile {
         - OriginalUrl: The original URL to replace
         - FixedUrl: The URL to replace it with
 
-    .OUTPUTS    .OUTPUTS
+    .OUTPUTS
         System.Boolean
         True if the file was modified, False otherwise
     #>
