@@ -72,8 +72,7 @@ A pre-configured development environment that includes all tools, extensions, an
 
 - **Spell Checking**: Street Side Software Spell Checker
 - **Markdown**: markdownlint, Markdown All in One, Mermaid support
-- **GitHub**: GitHub Pull Requests, GitHub Copilot
-- **Code Quality**: ESLint, Prettier
+- **GitHub**: GitHub Pull Requests
 
 ## Common Commands
 
