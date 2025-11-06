@@ -39,12 +39,16 @@ jobs:
         id: analyze
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
           $params = @{}
           if ('${{ inputs.changed-files-only }}' -eq 'true') {
             $params['ChangedFilesOnly'] = $true
           }
           
-          & scripts/linting/Invoke-PSScriptAnalyzer.ps1 @params
+          & scripts/linting/PSScriptAnalyzer.ps1 @params
+          if ($LASTEXITCODE -ne 0) {
+            "PSSCRIPTANALYZER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload results

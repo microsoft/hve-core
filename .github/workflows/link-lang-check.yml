@@ -32,7 +32,11 @@ jobs:
       - name: Run Link Language Check
         shell: pwsh
         run: |
-          & scripts/linting/Invoke-LinkLanguageCheck.ps1
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          & scripts/linting/Link-Lang-Check.ps1 | Tee-Object -FilePath logs/link-lang-check-results.json
+          if ($LASTEXITCODE -ne 0) {
+            "LINK_LANG_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload results
