@@ -53,7 +53,6 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Required Tools](#required-tools)
   - [Validation Commands](#validation-commands)
   - [Development Environment](#development-environment)
-  - [Table of Contents](#table-of-contents)
   - [Code of Conduct](#code-of-conduct)
   - [I Have a Question](#i-have-a-question)
   - [I Want To Contribute](#i-want-to-contribute)
@@ -66,7 +65,7 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
     - [Your First Code Contribution](#your-first-code-contribution)
     - [Improving The Documentation](#improving-the-documentation)
   - [Style Guides](#style-guides)
-    - [Development Environment](#development-environment)
+    - [Local Development Setup](#local-development-setup)
     - [Coding Conventions](#coding-conventions)
   - [Attribution](#attribution)
 
