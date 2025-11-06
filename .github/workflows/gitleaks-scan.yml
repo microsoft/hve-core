@@ -39,18 +39,27 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
+        if: hashFiles('package-lock.json') != ''
         uses: actions/setup-node@dda4788290998366da86b6a4f497909644397bb2 # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        if: hashFiles('package-lock.json') != ''
         run: npm ci
+
+      - name: Install Gitleaks
+        run: |
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
+          tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
+          sudo mv gitleaks /usr/local/bin/
+          chmod +x /usr/local/bin/gitleaks
 
       - name: Run Gitleaks scan
         id: gitleaks-scan
         run: |
-          npm run security:scan > gitleaks-output.txt 2>&1 || echo "GITLEAKS_FAILED=true" >> $GITHUB_ENV
+          gitleaks detect --source . --no-git --redact > gitleaks-output.txt 2>&1 || echo "GITLEAKS_FAILED=true" >> $GITHUB_ENV
           cat gitleaks-output.txt
         continue-on-error: true
 
