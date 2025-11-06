@@ -62,7 +62,6 @@ avere
 avro
 Babelscape
 backticked
-bandwidth
 baremetal
 bargauge
 blockchain
@@ -259,7 +258,6 @@ Zeek
 baas
 ballmer
 bandwidth
-baremetal
 barracuda
 bastion
 batchaccount
@@ -1259,7 +1257,6 @@ nosql
 olap
 oltp
 polybase
-realtime
 timeseries
 
 # Business & Enterprise
@@ -1355,8 +1352,6 @@ microservice
 microservices
 webhook
 webhooks
-workflow
-workflows
 
 # Proper Nouns & Company Names
 Katello
@@ -1514,8 +1509,8 @@ Simbolic
 simbolic
 JENNI
 jenni
-Extneded
-extneded
+Extended
+extended
 Clis
 clis
 interceptable
