@@ -20,6 +20,7 @@
 <!-- Describe how you tested these changes -->
 
 ## Checklist
+<!-- Note: npm scripts referenced below will be available once package.json is added to the repository -->
 - [ ] All linting checks pass (`npm run lint:md`, `npm run spell-check`)
 - [ ] Tables are properly formatted (use `npm run format:tables`)
 - [ ] Documentation is updated (if applicable)

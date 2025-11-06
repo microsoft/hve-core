@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Enable version updates for npm (will activate when package.json is added)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
