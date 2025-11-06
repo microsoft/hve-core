@@ -1,0 +1,51 @@
+name: SHA Staleness Check
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly on Sunday at midnight UTC
+  workflow_dispatch:
+    inputs:
+      threshold-days:
+        description: 'Staleness threshold in days'
+        required: false
+        type: number
+        default: 30
+
+permissions:
+  contents: read
+
+jobs:
+  check-staleness:
+    name: Check Action SHA Staleness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run SHA Staleness Check
+        shell: pwsh
+        run: |
+          $thresholdDays = if ('${{ github.event.inputs.threshold-days }}') { 
+            [int]'${{ github.event.inputs.threshold-days }}' 
+          } else { 
+            30 
+          }
+          
+          Write-Host "Running SHA staleness check with $thresholdDays day threshold..."
+          & scripts/security/Test-SHAStaleness.ps1 -ThresholdDays $thresholdDays -WarningsOnly
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Some GitHub Actions have stale SHA pins. Review the warnings above."
+            Write-Host "::warning::GitHub Actions with stale SHA pins detected. This is informational only - no action required immediately."
+          } else {
+            Write-Host "All GitHub Actions SHA pins are up to date."
+          }
