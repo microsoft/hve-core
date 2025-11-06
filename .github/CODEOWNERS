@@ -1,0 +1,17 @@
+# CODEOWNERS
+# 
+# This file defines code ownership for the hve-core repository.
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies files they own.
+#
+# Syntax: <file-pattern> @owner1 @owner2
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# GitHub Actions workflows require approval from any repository collaborator with write access
+# This ensures security-sensitive workflow changes are reviewed by trusted maintainers
+# Note: * means any repository collaborator with write access (portable across organizations)
+/.github/workflows/ *
+
+# Security automation scripts require approval from any repository collaborator with write access
+# Note: * means any repository collaborator with write access (portable across organizations)
+/scripts/security/ *
