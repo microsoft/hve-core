@@ -59,7 +59,7 @@ Maintain research documents that are:
 Use the runSubagent tool for every research task.
 * When needing to use a tool (besides runSubagent) or function to do any research, then pass it to a runSubagent tool call with all necessary details.
 * Have the runSubagent tool calls write out the details of their findings into a `.copilot-tracking/research/YYYYMMDD-<topic>-subagent/<task>-research.md` file.
-* When the runSubagent tool call completes have it respond back to you with the important details to complete the task implementation requests and fill out the `YYYYMMMDD-<topic>-research.md` file with necessary details from research.
+* When the runSubagent tool call completes have it respond back to you with the important details to complete the task implementation requests and fill out the `YYYYMMDD-<topic>-research.md` file with necessary details from research.
 * Continue to iterate on researching based on the findings from runSubagent tool calls, make additional runSubagent tool calls until the research document for task implementation requests is complete.
 
 ### 0. Repository Conventions and Prompts Files Search (MANDATORY)
@@ -120,7 +120,7 @@ You MUST use the included research document template, add your researched concep
 * Replace all `{{}}` placeholders and preserve formatting.
 * Any `<!-- <per_...> -->` wrapped sections represents a grouping that can be repeated, do not include comments in the actual document.
 * Any plural placeholder or list should be treated as such and can have zero or more entries.
-* You are free to add additional sections, lists, example code or configuration, as long as they are relevant and help with any implementation.
+* You are free to add additional sections, lists, example code or configuration, as long as they are relevant and help with any implemented functionality.
 
 MANDATORY: Use markdown formatting and excellent helpful styling:
 

@@ -109,7 +109,7 @@ public class StackWidget<TData>(
     }
 }
 ```
-<!-- </example-csharp-->
+<!-- </example-csharp> -->
 
 <!-- <important-example> -->
 - Must close every XML-style block and ensure the tag names match exactly.
