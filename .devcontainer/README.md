@@ -41,11 +41,6 @@ A pre-configured development environment that includes all tools, extensions, an
    - Select **Dev Containers: Reopen in Container**
    - Wait for the container to build (first time takes 5-10 minutes)
 
-4. Verify setup:
-   ```bash
-   npm test
-   ```
-
 ## Included Tools
 
 ### Languages & Runtimes
@@ -60,7 +55,7 @@ A pre-configured development environment that includes all tools, extensions, an
 
 ### Code Quality
 - **Markdown**: markdownlint, markdown-table-formatter
-- **Spelling**: cspell
+- **Spelling**: Code Spell Checker (VS Code extension)
 - **Shell**: shellcheck
 - **Diagrams**: Mermaid CLI
 
@@ -79,33 +74,24 @@ A pre-configured development environment that includes all tools, extensions, an
 Run these commands inside the container:
 
 ```bash
-# Run all validation checks
-npm test
-
 # Lint Markdown files
-npm run lint:md
+markdownlint '**/*.md' --ignore node_modules
 
 # Check spelling
-npm run lint:spelling
+cspell '**/*.md'
 
-# Format tables
-npm run format:tables
+# Check shell scripts
+shellcheck scripts/**/*.sh
 
 # Security scan
-npm run security:scan
+gitleaks detect --source . --verbose
 ```
-
-## Customization
-
-Personal settings can be added to `.devcontainer/devcontainer.local.json` (git-ignored). See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
 
 ## Troubleshooting
 
 **Container won't build**: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
 
 **Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
-
-**Port conflicts**: Check `.devcontainer/devcontainer.json` for port mappings and ensure they're available.
 
 For more help, see [SUPPORT.md](../SUPPORT.md).
 

@@ -23,18 +23,11 @@
         "bierner.markdown-mermaid",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "github.vscode-pull-request-github"
-      ],
-      "settings": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "yzhang.markdown-all-in-one",
-        "[markdown]": {
-          "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-        },
-        "markdown.mermaid.theme": "default"
-      }
+      ]
     }
   },
+  // Dependencies are pinned for stability. Dependabot and security workflows manage updates.
   "onCreateCommand": "sudo apt update && sudo apt install -y shellcheck && curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks",
-  "postCreateCommand": "npm install && npm install -g @mermaid-js/mermaid-cli && pip install checkov",
+  "postCreateCommand": "npm install && pip install -r requirements.txt",
   "remoteUser": "vscode"
 }
