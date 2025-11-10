@@ -1,0 +1,10 @@
+# Set the default behavior, in case core.autocrlf has not been set.
+* text=auto
+
+# Declare files that will always have LF line endings on checkout.
+*.sh text eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+*.docx binary
+*.jpg binary
+*.png binary
