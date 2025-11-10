@@ -1394,7 +1394,6 @@ lockfiles
 Lockfiles
 workitem
 workitems
-timeseries
 timespan
 todatetime
 toreal
