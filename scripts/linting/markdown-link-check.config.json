@@ -1,0 +1,11 @@
+{
+  "projectBaseUrl": ".",
+  "timeout": "20s",
+  "retryOn429": true,
+  "ignorePatterns": [
+    { "pattern": "\\{\\{[A-Z0-9_]+\\}\\}" },
+    { "pattern": "^mailto:" },
+    { "pattern": "^tel:" }
+  ],
+  "replacementPatterns": []
+}
