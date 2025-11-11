@@ -34,9 +34,15 @@ For GitHub Enterprise Server:
    ```
 
 2. Set your PAT as an environment variable:
+
    ```powershell
    # PowerShell
    $env:GITHUB_PERSONAL_ACCESS_TOKEN = "your_token_here"
+   ```
+
+   ```bash
+   # Bash/Linux/macOS
+   export GITHUB_PERSONAL_ACCESS_TOKEN="your_token_here"
    ```
 
 ### Required Token Scopes

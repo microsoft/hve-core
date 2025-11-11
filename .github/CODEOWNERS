@@ -8,7 +8,7 @@
 # More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # GitHub Actions
-/.github/workflows/ @microsoft/Edge-AI Core Dev
+/.github/workflows/ @microsoft/edge-ai-core-dev
 
 # Automation Scripts
-/scripts/security/ @microsoft/Edge-AI Core Dev
+/scripts/security/ @microsoft/edge-ai-core-dev
