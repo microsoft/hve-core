@@ -1,0 +1,31 @@
+adatum
+adventure works
+alpine ski house
+contoso
+fabrikam
+lamna
+liberty's delightful sinful bakery & cafe
+lucerne publishing
+margie's travel
+southridge video
+tailspin toys
+tailwind traders
+the phone company
+trey research
+wide world importers
+wingtip toys
+woodgrove
+myapp
+mycompany
+myproject
+myprefix
+mycoai
+mycustom
+mycontext
+myacr
+yourcustomstorageacct
+yourdomain
+Northwind
+myorg
+myorga
+myorgb
