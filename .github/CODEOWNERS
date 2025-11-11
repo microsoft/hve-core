@@ -8,11 +8,7 @@
 # More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # GitHub Actions
-# GitHub Actions workflows require approval from any repository collaborator with write access
-# Any collaborator with write permission can approve changes to workflows
-/.github/workflows/
+/.github/workflows/ @microsoft/Edge-AI Core Dev
 
 # Automation Scripts
-# Security automation scripts require approval from any repository collaborator with write access
-# Any collaborator with write permission can approve changes to security scripts
-/scripts/security/
+/scripts/security/ @microsoft/Edge-AI Core Dev
