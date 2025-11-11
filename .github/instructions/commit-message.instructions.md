@@ -10,7 +10,7 @@ This document provides instructions for generating standardized commit messages.
 ## Format Requirements
 
 - Use Conventional Commit Messages
-- All changes MUST be in present tense
+- All changes MUST be in imperative mood
 
 ## Types
 

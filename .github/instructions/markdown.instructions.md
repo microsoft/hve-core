@@ -117,7 +117,7 @@ See <https://example.com> and [Docs](https://example.com/docs).
 
 * Use a single space after the `>` marker; avoid multiple spaces.
 * Do not place a bare blank line between adjacent blockquotes unless they are the same quote (then include `>` on the blank line to continue it).
- * Inside blockquotes, apply the same list and code rules; when creating tight lists with code fences inside blockquotes, consider whether a blank line is required for your target renderer.
+* Inside blockquotes, apply the same list and code rules; when creating tight lists with code fences inside blockquotes, consider whether a blank line is required for your target renderer.
 
 <!-- <example-blockquotes> -->
 ```markdown

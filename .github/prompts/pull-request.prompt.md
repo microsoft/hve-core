@@ -29,7 +29,7 @@ You WILL NEVER create follow-up tasks for documentation or tests.
   * **MANDATORY**: You MUST create `pr-reference.xml` using the repository scripts—select the command that matches your host environment. Do not use any other commands to gather git status or diffs.
     * **Unix-like shells**: Use `./scripts/dev-tools/pr-ref-gen.sh`.
       * Default: `./scripts/dev-tools/pr-ref-gen.sh`.
-      * If `${input:excludeMarkdown}` is true: `./scripts/dev-tools/pr-ref-gen.sh  --no-md-diff` (excludes markdown).
+      * If `${input:excludeMarkdown}` is true: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff` (excludes markdown).
       * If a different base branch is specified via `${input:branch}`: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}` (adjust markdown inclusion as needed).
     * **Windows PowerShell hosts**: Use `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`.
       * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`.

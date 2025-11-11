@@ -48,16 +48,16 @@ Instructions use XML-style comment blocks for structured content:
 - **Nesting:** Allowed with distinct tag names
 - **Closing:** Always required with matching tag names
 
-```markdown
+````markdown
 <!-- <example-terraform> -->
-\```terraform
+```terraform
 resource "azurerm_resource_group" "example" {
   name     = "example-rg"
   location = "eastus"
 }
-\```
-<!-- </example-terraform> -->
 ```
+<!-- </example-terraform> -->
+````
 
 ## Available Instructions
 
