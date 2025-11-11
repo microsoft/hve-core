@@ -62,7 +62,6 @@ avere
 avro
 Babelscape
 backticked
-baremetal
 bargauge
 blockchain
 chatbot
@@ -83,21 +82,18 @@ citrix
 citus
 classpath
 clickjacking
-clickstream
 cloudadmin
 cloudamize
 cloudera
 cloudnative
 cloudsimple
 cloudyn
-cmdb
 cmdlet
 cmdlets
 cmks
 cmmc
 cnab
 cname
-codd
 codefresh
 codegen
 codeowners
@@ -109,7 +105,6 @@ colocate
 colocated
 colocates
 colocating
-colocation
 columnstore
 commoditization
 commoditizes
@@ -136,7 +131,6 @@ creds
 crory
 crossplane
 crowdsourced
-Crowdsourced
 csat
 cscf
 cse
@@ -177,7 +171,6 @@ elasticsearch
 enduser
 endusers
 explainability
-Explainability
 Fairlearn
 Falco
 filesystem
@@ -196,7 +189,6 @@ hyperconverged
 hyperparameters
 hypervisor
 infrastructure
-iot
 istio
 jenkins
 jira
@@ -222,7 +214,6 @@ platform
 platforms
 Qdrant
 Qwen
-realtime
 rlhf
 rollouts
 Rundeck
@@ -242,23 +233,20 @@ telemetry
 Terrascan
 terraform
 terragrunt
-Terragrunt
 TOCTOU
 virtualization
 webapp
 webapps
 webservice
 webservices
-workflow
-workflows
 YARA
 Zachman
 Zeebe
 Zeek
 baas
 ballmer
-bandwidth
 barracuda
+baremetal
 bastion
 batchaccount
 bcp
@@ -309,7 +297,6 @@ changesets
 checkbox
 checkboxes
 checksums
-citrix
 clearcase
 clickstream
 clickthrough
@@ -324,12 +311,12 @@ cmdb
 cms
 cobol
 codecommit
+colocation
 codeless
 codeql
 codestar
 codified
 cogs
-colocation
 columnar
 comcast
 concatenation
@@ -342,12 +329,10 @@ coprocessing
 correlated
 correlations
 cosmosdb
-couchbase
 cpps
 crc
 crossfilter
 csp
-csps
 csr
 curated
 cyan
@@ -357,7 +342,6 @@ Dapr
 datadog
 datafactory
 datalake
-datasets
 dataverse
 davinci
 dbcc
@@ -422,7 +406,6 @@ fhir
 fido
 fileshare
 fileshares
-firewall
 firewalls
 fluentbit
 fluentd
@@ -695,7 +678,6 @@ onapsis
 onboarded
 onboards
 onnx
-openapi
 opencencus
 openid
 openrowset
@@ -1186,10 +1168,8 @@ operationalization
 operationalize
 operationalized
 scikit
-Scikit
 homomorphic
 onnxruntime
-Onnxruntime
 memprofile
 cpuprofile
 minmax
@@ -1197,7 +1177,6 @@ modreqs
 modreq
 modopts
 flexbox
-Flexbox
 rgba
 srgb
 backface
@@ -1212,13 +1191,10 @@ antimalware
 auditable
 auditability
 auditifnotexists
-cybersecurity
-devsecops
 gdpr
 hipaa
 oidc
 OSSF
-ossf
 passwordless
 siem
 sox
@@ -1257,19 +1233,16 @@ nosql
 olap
 oltp
 polybase
+realtime
 timeseries
 
 # Business & Enterprise
 chargeback
-Chargeback
 crm
 epicor
 erp
 Exfiltration
 hrms
-oracle
-salesforce
-sap
 scm
 workday
 
@@ -1277,13 +1250,12 @@ workday
 cidr
 cyclonedds
 dns
-firewall
+iot
 loadbalancer
 nginx
 proxy
 ssl
 tls
-vpn
 wan
 lan
 
@@ -1300,10 +1272,10 @@ intel
 microsoft
 nvidia
 oracle
-redhat
 salesforce
 sap
 vmware
+vpn
 
 # Product Names & Trademarks (not covered by public dicts)
 github
@@ -1313,7 +1285,6 @@ windows
 gruntwork
 
 # File Formats & Extensions
-avro
 csv
 docx
 json
@@ -1326,12 +1297,10 @@ yaml
 yml
 
 # Abbreviations & Acronyms
-api
 app
 cli
 cpu
 gpu
-iot
 sql
 tcp
 udp
@@ -1340,10 +1309,8 @@ uri
 uuid
 vm
 vpc
-vpn
 
 # Technical Terms
-api
 apis
 backend
 frontend
@@ -1356,14 +1323,12 @@ webhooks
 # Proper Nouns & Company Names
 Katello
 Metaverse
-metaverse
 Upselling
 
 # Development & DevOps
 agile
 cicd
 devops
-gitops
 scrum
 kanban
 sprint
@@ -1371,8 +1336,6 @@ backlog
 pipeline
 pipelines
 pwsh
-Pwsh
-PWSH
 shellcheck
 nslookup
 journalctl
@@ -1391,7 +1354,6 @@ parameterless
 notnull
 gettype
 lockfiles
-Lockfiles
 workitem
 workitems
 timespan
@@ -1436,7 +1398,6 @@ drawtext
 fontcolor
 fontsize
 lanczos
-Lanczos
 lavfi
 libx
 palettegen
@@ -1447,12 +1408,10 @@ smptebars
 testsrc
 
 # Hardware & Platforms (not covered by public dicts)
-intel
 Jetson
 microcontroller
 microcontrollers
 Mbed
-nvidia
 openvino
 Portworx
 Zigbee
@@ -1461,7 +1420,6 @@ Hudi
 # Software & CAD Tools
 autocad
 autodesk
-CATIA
 Coppelia
 Creo
 GMSH
@@ -1469,53 +1427,28 @@ Modelica
 postman
 powershell
 tableau
-vmware
 Serilog
-serilog
-Onnxruntime
-onnxruntime
 Silverlight
-silverlight
 DYNPROXY
-dynproxy
 Proxyable
-proxyable
 Cropp
-cropp
 Clarius
-clarius
 Retryable
-retryable
 Remotable
-remotable
 Finalizer
-finalizer
 Unproxied
-unproxied
 Memberwise
-memberwise
 Distro
-distro
 SHAP
-shap
 Plotly
-plotly
 Anthos
-anthos
 Trino
-trino
 Simbolic
-simbolic
 JENNI
-jenni
-Extended
-extended
 Clis
-clis
+Extended
 interceptable
 Hypervelocity
-hypervelocity
 junitxml
 PSScriptAnalyzer
-psscriptanalyzer
 
