@@ -1,6 +1,5 @@
 ---
-description: 'Guidelines for generating conventional commit messages - Brought to you by microsoft/edge-ai'
-applyTo: 'commit'
+description: 'Required instructions for creating all commit messages - Brought to you by microsoft/edge-ai'
 ---
 
 # Commit Message Guidelines
