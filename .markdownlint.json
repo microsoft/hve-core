@@ -1,0 +1,147 @@
+{
+  "default": true,
+  "extends": null,
+  "MD001": true,
+  "MD003": {
+    "style": "consistent"
+  },
+  "MD004": {
+    "style": "consistent"
+  },
+  "MD005": true,
+  "MD007": {
+    "indent": 2,
+    "start_indented": false,
+    "start_indent": 2
+  },
+  "MD009": {
+    "br_spaces": 2,
+    "list_item_empty_lines": false,
+    "strict": false
+  },
+  "MD010": {
+    "code_blocks": true,
+    "ignore_code_languages": [],
+    "spaces_per_tab": 1
+  },
+  "MD011": true,
+  "MD012": {
+    "maximum": 1
+  },
+  "MD013": {
+    "line_length": 500,
+    "heading_line_length": 80,
+    "code_block_line_length": 1200,
+    "code_blocks": true,
+    "tables": false,
+    "headings": true,
+    "strict": false,
+    "stern": false
+  },
+  "MD014": true,
+  "MD018": true,
+  "MD019": true,
+  "MD020": true,
+  "MD021": true,
+  "MD022": {
+    "lines_above": 1,
+    "lines_below": 1
+  },
+  "MD023": true,
+  "MD024": {
+    "siblings_only": false
+  },
+  "MD025": {
+    "level": 1,
+    "front_matter_title": "^\\s*title\\s*[:=]"
+  },
+  "MD026": {
+    "punctuation": ".,;:!。，；：！"
+  },
+  "MD027": true,
+  "MD028": true,
+  "MD029": {
+    "style": "one_or_ordered"
+  },
+  "MD030": {
+    "ul_single": 1,
+    "ol_single": 1,
+    "ul_multi": 1,
+    "ol_multi": 1
+  },
+  "MD031": {
+    "list_items": true
+  },
+  "MD032": true,
+  "MD033": {
+    "allowed_elements": [
+      "details",
+      "summary",
+      "time",
+      "difficulty"
+    ]
+  },
+  "MD034": true,
+  "MD035": {
+    "style": "consistent"
+  },
+  "MD036": {
+    "punctuation": ".,;:!?。，；：！？"
+  },
+  "MD037": true,
+  "MD038": true,
+  "MD039": true,
+  "MD040": {
+    "allowed_languages": [],
+    "language_only": false
+  },
+  "MD041": {
+    "level": 1,
+    "front_matter_title": "^\\s*title\\s*[:=]"
+  },
+  "MD042": true,
+  "MD043": false,
+  "MD044": {
+    "names": [],
+    "code_blocks": true,
+    "html_elements": true
+  },
+  "MD045": true,
+  "MD046": {
+    "style": "consistent"
+  },
+  "MD047": true,
+  "MD048": {
+    "style": "consistent"
+  },
+  "MD049": {
+    "style": "consistent"
+  },
+  "MD050": {
+    "style": "consistent"
+  },
+  "MD051": {
+    "ignore_case": false
+  },
+  "MD052": {
+    "shortcut_syntax": false
+  },
+  "MD053": {
+    "ignored_definitions": [
+      "//"
+    ]
+  },
+  "MD054": {
+    "autolink": true,
+    "inline": true,
+    "full": true,
+    "collapsed": true,
+    "shortcut": true,
+    "url_inline": true
+  },
+  "MD055": {
+    "style": "consistent"
+  },
+  "MD056": true,
+  "MD058": true
+}
