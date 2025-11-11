@@ -4,8 +4,9 @@ This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
 ## Configuration
 
-The MCP server is configured in `.vscode/mcp.json` to use GitHub's hosted remote server.
+The MCP server is configured in `.vscode/mcp.json` to use a custom endpoint (`https://github.com/mcp`). 
 
+> **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
 ### Authentication
 
 **Option 1: OAuth (Recommended)**
