@@ -380,7 +380,7 @@ function Test-GitHubActionsForStaleness {
 
     # Bulk query for all actions using GraphQL optimization
     try {
-        $bulkResults = Get-BulkGitHubActionsStalenesss -ActionRepos $allActionRepos -ShaToActionMap $shaToActionMap
+        $bulkResults = Get-BulkGitHubActionsStaleness -ActionRepos $allActionRepos -ShaToActionMap $shaToActionMap
 
         foreach ($result in $bulkResults) {
             if ($result.IsStale) {

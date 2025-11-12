@@ -22,7 +22,7 @@
     Path where compliance results should be saved. Defaults to 'dependency-pinning-report.json'
     in the current directory.
 
-.PARAMETER FailOnViolations
+.PARAMETER FailOnUnpinned
     Exit with error code if pinning violations are found. Default is false for reporting mode.
 
 .PARAMETER ExcludePaths
@@ -40,7 +40,7 @@
     Scan current directory for dependency pinning compliance.
 
 .EXAMPLE
-    ./Test-DependencyPinning.ps1 -Path "/workspace" -Format "sarif" -FailOnViolations
+    ./Test-DependencyPinning.ps1 -Path "/workspace" -Format "sarif" -FailOnUnpinned
     Scan workspace directory, output SARIF format, fail on violations.
 
 .EXAMPLE
@@ -193,7 +193,8 @@ function Get-FilesToScan {
     param(
         [string]$ScanPath,
         [string[]]$Types,
-        [string[]]$ExcludePatterns
+        [string[]]$ExcludePatterns,
+        [switch]$Recursive
     )
 
     $allFiles = @()
@@ -442,6 +443,12 @@ function Export-ComplianceReport {
         [string]$OutputPath
     )
 
+    # Ensure parent directory exists
+    $parentDir = Split-Path -Path $OutputPath -Parent
+    if ($parentDir -and -not (Test-Path $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
+
     switch ($Format.ToLower()) {
         'json' {
             $Report | ConvertTo-Json -Depth 10 | Out-File -FilePath $OutputPath -Encoding UTF8
@@ -536,6 +543,12 @@ function Export-ComplianceReport {
         }
 
         'table' {
+            # Ensure parent directory exists
+            $parentDir = Split-Path -Path $OutputPath -Parent
+            if ($parentDir -and -not (Test-Path $parentDir)) {
+                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+            }
+            
             # Display formatted table to console and save simple text format
             if ($Report.Violations.Count -gt 0) {
                 $Report.Violations | Format-Table -Property File, Line, Type, Name, Version, Severity -AutoSize | Out-File -FilePath $OutputPath -Encoding UTF8 -Width 200
@@ -631,7 +644,7 @@ try {
     if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
 
     # Discover files to scan
-    $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns
+    $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive
     Write-PinningLog "Found $($filesToScan.Count) files to scan" -Level Info
 
     # Scan for violations

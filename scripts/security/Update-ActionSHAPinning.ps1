@@ -42,7 +42,9 @@ param(
 
     [Parameter()]
     [switch]$UpdateStale
-)Set-StrictMode -Version Latest
+)
+
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Explicit parameter usage to satisfy static analyzer
