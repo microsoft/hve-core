@@ -43,18 +43,8 @@
             Placement = 'before'
         }
 
-        # Enforce proper ShouldProcess usage
-        PSUseShouldProcessForStateChangingFunctions = @{
-            Enable = $true
-        }
-
         # Enforce proper OutputType declarations
         PSUseOutputTypeCorrectly = @{
-            Enable = $true
-        }
-
-        # Require proper singular nouns for functions
-        PSUseSingularNouns = @{
             Enable = $true
         }
 

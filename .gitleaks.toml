@@ -1,0 +1,11 @@
+title = "HVE Core Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+  '''node_modules/''',
+  '''package-lock.json''',
+]
