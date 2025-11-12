@@ -7,7 +7,7 @@
     { "pattern": "^mailto:" },
     { "pattern": "^tel:" },
     {
-      "pattern": "^https://github\\.com/microsoft/hve-core/issues"
+      "pattern": "^https://github\\.com/microsoft/hve-core/issues/\\d+$"
     }
   ],
   "replacementPatterns": []

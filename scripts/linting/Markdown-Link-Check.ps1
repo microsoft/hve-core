@@ -228,9 +228,14 @@ try {
         try {
             $commandArgs = $baseArguments + @($relative, '--reporters', 'default,junit', '--junit-output', $xmlFile)
 
-            # Run markdown-link-check with XML output
-            & $cli @commandArgs 2>&1 | Out-Null
+            # Run markdown-link-check with XML output and capture output
+            $output = & $cli @commandArgs 2>&1
             $exitCode = $LASTEXITCODE
+            
+            # Display output if verbose mode or if there were errors
+            if ($VerbosePreference -eq 'Continue' -or $exitCode -ne 0) {
+                Write-Host $output
+            }
 
             # Parse XML output
             if (Test-Path $xmlFile) {

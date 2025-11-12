@@ -299,11 +299,11 @@ function Write-SecurityLog {
 
     # Handle empty strings for formatting (blank lines)
     if ([string]::IsNullOrWhiteSpace($Message)) {
-        Write-Output ""
+        Write-Host ""
         return
     }
 
-    Write-Output "$prefix $Message"
+    Write-Host "$prefix $Message"
 }
 
 # Initialize security issues array at script scope
@@ -589,7 +589,7 @@ function Get-SHAForAction {
             }
         }
 
-        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info'
+        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info' | Out-Null
         return $ActionRef
     }
 

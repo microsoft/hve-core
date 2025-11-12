@@ -149,7 +149,7 @@ function Get-MarkdownFrontmatter {
         }
     }
     catch {
-        Write-Warning "Error parsing frontmatter in ${FilePath}: $($_.Exception.Message)"
+        Write-Warning "Error parsing frontmatter in ${FilePath}: [$($_.Exception.GetType().Name)] $($_.Exception.Message)"
         return $null
     }
 }
@@ -275,6 +275,8 @@ function Test-FrontmatterValidation {
     # Input validation and sanitization
     $errors = @()
     $warnings = @()
+    $filesWithErrors = [System.Collections.Generic.HashSet[string]]::new()
+    $filesWithWarnings = [System.Collections.Generic.HashSet[string]]::new()
 
     # If ChangedFilesOnly is specified, get changed files from git
     if ($ChangedFilesOnly) {
@@ -476,6 +478,7 @@ function Test-FrontmatterValidation {
                         if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
                             $warningMsg = "Suggested field '$field' missing in: $($file.FullName)"
                             $warnings += $warningMsg
+                            [void]$filesWithWarnings.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'warning' -Message "Suggested field '$field' missing" -File $file.FullName
                         }
                     }
@@ -486,6 +489,7 @@ function Test-FrontmatterValidation {
                         if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
                             $warningMsg = "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
                             $warnings += $warningMsg
+                            [void]$filesWithWarnings.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName
                         }
                     }
@@ -498,6 +502,7 @@ function Test-FrontmatterValidation {
                         if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
                             $errorMsg = "Missing required field '$field' in: $($file.FullName)"
                             $errors += $errorMsg
+                            [void]$filesWithErrors.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
                         }
                     }
@@ -511,6 +516,7 @@ function Test-FrontmatterValidation {
                         # Only warn if missing description as it's commonly used
                         if (-not $frontmatter.Frontmatter.ContainsKey('description')) {
                             $warnings += "ChatMode file missing 'description' field: $($file.FullName)"
+                            [void]$filesWithWarnings.Add($file.FullName)
                         }
                     }
                     # Instruction files (.instructions.md) have specific patterns
@@ -518,6 +524,7 @@ function Test-FrontmatterValidation {
                         # Instruction files should have 'applyTo' field for context-specific instructions
                         if (-not $frontmatter.Frontmatter.ContainsKey('applyTo')) {
                             $warnings += "Instruction file missing 'applyTo' field: $($file.FullName)"
+                            [void]$filesWithWarnings.Add($file.FullName)
                         }
                     }
                     # Prompt files (.prompt.md) are instructions/templates
@@ -528,6 +535,7 @@ function Test-FrontmatterValidation {
                     # Other GitHub files (templates, etc.)
                     elseif ($file.Name -like "*template*" -and -not $frontmatter.Frontmatter.ContainsKey('name')) {
                         $warnings += "GitHub template missing 'name' field: $($file.FullName)"
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
 
@@ -536,6 +544,7 @@ function Test-FrontmatterValidation {
                     $keywords = $frontmatter.Frontmatter['keywords']
                     if ($keywords -isnot [array] -and $keywords -notmatch ',') {
                         $warnings += "Keywords should be an array in: $($file.FullName)"
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
                 # Validate estimated_reading_time if present
@@ -543,6 +552,7 @@ function Test-FrontmatterValidation {
                     $readingTime = $frontmatter.Frontmatter['estimated_reading_time']
                     if ($readingTime -notmatch '^\d+$') {
                         $warnings += "Invalid estimated_reading_time format in: $($file.FullName). Should be a number."
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
 
@@ -555,10 +565,12 @@ function Test-FrontmatterValidation {
                         
                         if ($footerSeverity -eq 'Error') {
                             $errors += $footerMessage
+                            [void]$filesWithErrors.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'error' -Message "Missing standard Copilot footer" -File $file.FullName
                         }
                         else {
                             $warnings += $footerMessage
+                            [void]$filesWithWarnings.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'warning' -Message "Missing standard Copilot footer" -File $file.FullName
                         }
                     }
@@ -575,6 +587,7 @@ function Test-FrontmatterValidation {
 
                 if ($isMainDocLocal) {
                     $warnings += "No frontmatter found in: $($file.FullName)"
+                    [void]$filesWithWarnings.Add($file.FullName)
                 }
             }
         }
@@ -604,8 +617,8 @@ function Test-FrontmatterValidation {
         script = 'frontmatter-validation'
         summary = @{
             total_files = $markdownFiles.Count
-            files_with_errors = ($errors | Where-Object { $_ -match 'in:' } | ForEach-Object { ($_ -split 'in:')[1].Trim() } | Select-Object -Unique).Count
-            files_with_warnings = ($warnings | Where-Object { $_ -match 'in:' } | ForEach-Object { ($_ -split 'in:')[1].Trim() } | Select-Object -Unique).Count
+            files_with_errors = $filesWithErrors.Count
+            files_with_warnings = $filesWithWarnings.Count
             total_errors = $errors.Count
             total_warnings = $warnings.Count
         }

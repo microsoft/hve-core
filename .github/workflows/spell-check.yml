@@ -21,7 +21,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.10.2
         with:
           egress-policy: audit
 
@@ -39,11 +39,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create logs directory
+        run: mkdir -p logs
+
       - name: Run spell check
         id: spell-check
         run: |
-          npm run spell-check > spell-check-output.txt 2>&1 || echo "SPELL_CHECK_FAILED=true" >> $GITHUB_ENV
-          cat spell-check-output.txt
+          npm run spell-check > logs/spell-check-results.txt 2>&1
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "SPELL_CHECK_FAILED=true" >> $GITHUB_ENV
+          fi
+          cat logs/spell-check-results.txt
+          exit $EXIT_CODE
         continue-on-error: true
 
       - name: Create annotations
@@ -56,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
         with:
           name: spell-check-results
-          path: spell-check-output.txt
+          path: logs/spell-check-results.txt
           retention-days: 30
 
       - name: Add job summary

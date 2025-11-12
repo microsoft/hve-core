@@ -12,6 +12,19 @@ param()
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 
+# Get repository root
+$repoRoot = git rev-parse --show-toplevel 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Not in a git repository"
+    exit 1
+}
+
+# Create logs directory if it doesn't exist
+$logsDir = Join-Path $repoRoot "logs"
+if (-not (Test-Path $logsDir)) {
+    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+}
+
 Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
 
 # Run the language check script
@@ -30,12 +43,6 @@ try {
                 -Message "URL contains language path: $($item.original_url)" `
                 -File $item.file `
                 -Line $item.line_number
-        }
-        
-        # Create logs directory if it doesn't exist
-        $logsDir = Join-Path $PSScriptRoot "../../logs"
-        if (-not (Test-Path $logsDir)) {
-            New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
         }
         
         # Save results
@@ -79,12 +86,6 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
     }
     else {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
-        
-        # Create logs directory if it doesn't exist
-        $logsDir = Join-Path $PSScriptRoot "../../logs"
-        if (-not (Test-Path $logsDir)) {
-            New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-        }
         
         # Save empty results
         $emptyResults = @{
