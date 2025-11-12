@@ -85,7 +85,10 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip"
+    [string]$IncludeTypes = "github-actions,npm,pip",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Remediate
 )
 
 # Set error action preference for consistent error handling
@@ -102,7 +105,7 @@ $DependencyPatterns = @{
                 Description = 'GitHub Actions uses statements'
             }
         )
-        SHAPattern      = '^[a-f0-9]{40}$'
+        SHAPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = 'https://api.github.com/repos/{0}/commits/{1}'
     }
 
@@ -115,7 +118,7 @@ $DependencyPatterns = @{
                 Description = 'NPM dependencies in package.json'
             }
         )
-        SHAPattern      = '^[a-f0-9]{40}$'
+        SHAPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = 'https://registry.npmjs.org/{0}/{1}'
     }
 
@@ -128,7 +131,7 @@ $DependencyPatterns = @{
                 Description = 'Python pip requirements'
             }
         )
-        SHAPattern      = '^[a-f0-9]{40}$'
+        SHAPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = 'https://pypi.org/pypi/{0}/{1}/json'
     }
 }
@@ -283,7 +286,6 @@ function Get-DependencyViolation {
 
         foreach ($patternInfo in $patterns) {
             $pattern = $patternInfo.Pattern
-            $groups = $patternInfo.Groups
             $description = $patternInfo.Description
 
             $regexMatches = [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
@@ -299,8 +301,8 @@ function Get-DependencyViolation {
                 }
 
                 # Extract dependency information
-                $dependencyName = $match.Groups[($groups.Keys | Where-Object { $groups[$_] -eq 1 })].Value
-                $version = $match.Groups[($groups.Keys | Where-Object { $groups[$_] -eq 2 })].Value
+                $dependencyName = $match.Groups[1].Value
+                $version = $match.Groups[2].Value
 
                 # Check if properly pinned
                 if (!(Test-SHAPinning -Version $version -Type $fileType)) {
@@ -334,7 +336,9 @@ function Get-RemediationSuggestion {
     Generates remediation suggestions for unpinned dependencies.
     #>
     param(
-        [DependencyViolation]$Violation
+        [DependencyViolation]$Violation,
+        
+        [switch]$Remediate
     )
 
     $type = $Violation.Type
@@ -384,7 +388,8 @@ function Get-ComplianceReportData {
     param(
         [DependencyViolation[]]$Violations,
         [hashtable[]]$ScannedFiles,
-        [string]$ScanPath
+        [string]$ScanPath,
+        [switch]$Remediate
     )
 
     $report = [ComplianceReport]::new()
@@ -543,12 +548,6 @@ function Export-ComplianceReport {
         }
 
         'table' {
-            # Ensure parent directory exists
-            $parentDir = Split-Path -Path $OutputPath -Parent
-            if ($parentDir -and -not (Test-Path $parentDir)) {
-                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-            }
-            
             # Display formatted table to console and save simple text format
             if ($Report.Violations.Count -gt 0) {
                 $Report.Violations | Format-Table -Property File, Line, Type, Name, Version, Severity -AutoSize | Out-File -FilePath $OutputPath -Encoding UTF8 -Width 200
@@ -655,7 +654,7 @@ try {
 
         # Add remediation suggestions
         foreach ($violation in $violations) {
-            $violation.Remediation = Get-RemediationSuggestion -Violation $violation
+            $violation.Remediation = Get-RemediationSuggestion -Violation $violation -Remediate:$Remediate
         }
 
         $allViolations += $violations
@@ -664,7 +663,7 @@ try {
     Write-PinningLog "Found $($allViolations.Count) dependency pinning violations" -Level Info
 
     # Generate compliance report
-    $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path
+    $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
 
     # Export report
     Export-ComplianceReport -Report $report -Format $Format -OutputPath $OutputPath

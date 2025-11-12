@@ -36,6 +36,14 @@
 .EXAMPLE
     ./Test-SHAStaleness.ps1 -OutputFormat json -OutputPath ./security-report.json
     Generate JSON report of all stale dependencies
+
+.EXAMPLE
+    ./Test-SHAStaleness.ps1 -FailOnStale
+    Fail the build if stale dependencies are found
+
+.EXAMPLE
+    ./Test-SHAStaleness.ps1 -GraphQLBatchSize 10
+    Use smaller GraphQL batch size for rate-limited environments
 #>
 
 [CmdletBinding()]
@@ -51,7 +59,14 @@ param(
     [string]$LogPath = "./logs/sha-staleness-monitoring.log",
 
     [Parameter(Mandatory = $false)]
-    [string]$OutputPath = "./logs/sha-staleness-results.json"
+    [string]$OutputPath = "./logs/sha-staleness-results.json",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$FailOnStale,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateRange(1, 50)]
+    [int]$GraphQLBatchSize = 20
 )
 
 # Ensure logging directory exists
@@ -99,13 +114,149 @@ function Write-SecurityLog {
 # Structure to hold stale dependency information
 $StaleDependencies = @()
 
+function Test-GitHubToken {
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$Token
+    )
+
+    if (-not $Token) {
+        Write-SecurityLog "No GitHub token found" -Level Warning
+        Write-SecurityLog "SOLUTION: Set GITHUB_TOKEN environment variable for higher rate limits (5,000 vs 60 points/hour)" -Level Warning
+        Write-SecurityLog "CAUSE: Unauthenticated GitHub GraphQL API requests are heavily rate limited" -Level Info
+        return @{
+            Valid         = $false
+            Authenticated = $false
+            RateLimit     = 60
+            Message       = "No token provided - using unauthenticated API with 60 points/hour rate limit"
+        }
+    }
+
+    try {
+        $headers = @{
+            "Authorization" = "Bearer $Token"
+            "Content-Type"  = "application/json"
+        }
+
+        $query = @{
+            query = "query { viewer { login } rateLimit { limit remaining resetAt } }"
+        } | ConvertTo-Json
+
+        $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
+
+        if ($response.data.viewer) {
+            $rateLimit = $response.data.rateLimit
+            Write-SecurityLog "GitHub token validated - User: $($response.data.viewer.login), Rate limit: $($rateLimit.remaining)/$($rateLimit.limit)" -Level Success
+            
+            if ($rateLimit.remaining -lt 100) {
+                Write-SecurityLog "WARNING: GitHub API rate limit running low ($($rateLimit.remaining) remaining)" -Level Warning
+                Write-SecurityLog "Rate limit resets at: $($rateLimit.resetAt)" -Level Info
+            }
+
+            return @{
+                Valid         = $true
+                Authenticated = $true
+                RateLimit     = $rateLimit.limit
+                Remaining     = $rateLimit.remaining
+                ResetAt       = $rateLimit.resetAt
+                User          = $response.data.viewer.login
+                Message       = "Token valid - authenticated as $($response.data.viewer.login)"
+            }
+        }
+    }
+    catch {
+        Write-SecurityLog "GitHub token validation failed: $($_.Exception.Message)" -Level Error
+        Write-SecurityLog "CAUSE: Token may be expired, revoked, or have insufficient permissions" -Level Warning
+        Write-SecurityLog "SOLUTION: Generate a new GitHub token with 'repo' scope at https://github.com/settings/tokens" -Level Warning
+        return @{
+            Valid         = $false
+            Authenticated = $false
+            Message       = "Token validation failed: $($_.Exception.Message)"
+        }
+    }
+
+    return @{
+        Valid         = $false
+        Authenticated = $false
+        Message       = "Token validation returned unexpected response"
+    }
+}
+
+function Invoke-GitHubAPIWithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Uri,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Method,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Headers,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Body,
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxRetries = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int]$InitialDelaySeconds = 5
+    )
+
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+
+    while ($attempt -lt $MaxRetries) {
+        try {
+            if ($Body) {
+                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body -ContentType "application/json" -ErrorAction Stop
+            }
+            else {
+                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -ErrorAction Stop
+            }
+            return $response
+        }
+        catch {
+            $statusCode = $null
+            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+            }
+
+            # Check if it's a rate limit error (403 or 429)
+            if ($statusCode -in 403, 429) {
+                $attempt++
+                if ($attempt -lt $MaxRetries) {
+                    Write-SecurityLog "GitHub API rate limit hit (HTTP $statusCode). Retrying in $delay seconds (attempt $attempt/$MaxRetries)..." -Level Warning
+                    Start-Sleep -Seconds $delay
+                    $delay = $delay * 2  # Exponential backoff
+                }
+                else {
+                    Write-SecurityLog "GitHub API rate limit exceeded after $MaxRetries attempts" -Level Error
+                    Write-SecurityLog "CAUSE: Too many API requests in a short time period" -Level Warning
+                    Write-SecurityLog "SOLUTION: Wait for rate limit to reset or provide a GitHub token with higher limits" -Level Warning
+                    throw
+                }
+            }
+            else {
+                # Non-rate-limit error, throw immediately
+                Write-SecurityLog "GitHub API request failed: $($_.Exception.Message)" -Level Error
+                throw
+            }
+        }
+    }
+
+    throw "Failed to complete GitHub API request after $MaxRetries retries"
+}
+
 function Get-BulkGitHubActionsStaleness {
     param(
         [Parameter(Mandatory = $true)]
         [array]$ActionRepos,
 
         [Parameter(Mandatory = $true)]
-        [hashtable]$ShaToActionMap
+        [hashtable]$ShaToActionMap,
+
+        [int]$BatchSize = 20
     )
 
     # Setup headers with authentication
@@ -117,26 +268,21 @@ function Get-BulkGitHubActionsStaleness {
     $githubToken = $null
     if ($env:GITHUB_TOKEN) {
         $githubToken = $env:GITHUB_TOKEN
-        Write-SecurityLog "Using GITHUB_TOKEN environment variable" -Level Info
     }
     elseif ($env:SYSTEM_ACCESSTOKEN -and $env:BUILD_REPOSITORY_PROVIDER -eq "GitHub") {
-        # Azure DevOps with GitHub repository might have this
         $githubToken = $env:SYSTEM_ACCESSTOKEN
-        Write-SecurityLog "Using Azure DevOps SYSTEM_ACCESSTOKEN for GitHub repo" -Level Info
     }
     elseif ($env:GH_TOKEN) {
-        # Alternative GitHub token environment variable
         $githubToken = $env:GH_TOKEN
-        Write-SecurityLog "Using GH_TOKEN environment variable" -Level Info
     }
 
-    if ($githubToken) {
+    # Validate token if provided
+    $tokenStatus = Test-GitHubToken -Token $githubToken
+    if ($tokenStatus.Valid) {
         $headers['Authorization'] = "Bearer $githubToken"
-        Write-SecurityLog "Using authenticated GraphQL API (5,000 points/hour)" -Level Info
     }
-    else {
-        Write-SecurityLog "No GitHub token found - using unauthenticated GraphQL API (60 points/hour)" -Level Warning
-        Write-SecurityLog "Set GITHUB_TOKEN environment variable for higher rate limits" -Level Warning
+    elseif ($githubToken) {
+        Write-SecurityLog "Token validation failed, proceeding without authentication" -Level Warning
     }
 
     # Build GraphQL query for multiple repositories (batch 1: get default branches)
@@ -185,7 +331,7 @@ function Get-BulkGitHubActionsStaleness {
     } | ConvertTo-Json -Depth 10
 
     try {
-        $repoResponse = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $graphqlQuery -ContentType "application/json"
+        $repoResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $graphqlQuery
 
         Write-SecurityLog "GraphQL Rate Limit: $($repoResponse.data.rateLimit.remaining)/$($repoResponse.data.rateLimit.limit) remaining" -Level Info
 
@@ -201,9 +347,11 @@ function Get-BulkGitHubActionsStaleness {
 
         if ($statusCode -in 403, 429) {
             Write-SecurityLog "Repository GraphQL query hit rate limit ($statusCode). Falling back to REST checks." -Level Warning
+            Write-SecurityLog "SOLUTION: Provide a GitHub token via GITHUB_TOKEN environment variable for higher rate limits" -Level Warning
         }
         else {
             Write-SecurityLog "Repository GraphQL query failed: $($_.Exception.Message)" -Level Error
+            Write-SecurityLog "CAUSE: Network connectivity issue or GitHub API unavailable" -Level Warning
         }
 
         throw
@@ -221,7 +369,11 @@ function Get-BulkGitHubActionsStaleness {
 
         # Parse owner/repo (handle actions with subpaths like github/codeql-action/upload-sarif)
         $parts = $action.Repo.Split('/')
-        if ($parts.Count -lt 2) { continue }
+        if ($parts.Count -lt 2) {
+            Write-SecurityLog "Invalid action repository format: $($action.Repo) - must be 'owner/repo'" -Level Warning
+            Write-SecurityLog "SOLUTION: Verify action reference in workflow file follows correct format" -Level Warning
+            continue
+        }
         $owner = $parts[0]
         $repoName = $parts[1]
 
@@ -238,12 +390,11 @@ function Get-BulkGitHubActionsStaleness {
         $commitIndex++
     }
 
-    # Batch commit queries (max 20 per query to avoid complexity limits)
-    $batchSize = 20
+    # Use configurable batch size from script parameter
     $allCommitResults = @{}
 
-    for ($i = 0; $i -lt $commitQueries.Count; $i += $batchSize) {
-        $endIndex = [Math]::Min($i + $batchSize - 1, $commitQueries.Count - 1)
+    for ($i = 0; $i -lt $commitQueries.Count; $i += $BatchSize) {
+        $endIndex = [Math]::Min($i + $BatchSize - 1, $commitQueries.Count - 1)
         $batchQueries = $commitQueries[$i..$endIndex]
 
         $commitGraphqlQuery = @{
@@ -259,7 +410,7 @@ function Get-BulkGitHubActionsStaleness {
         } | ConvertTo-Json -Depth 10
 
         try {
-            $commitResponse = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery -ContentType "application/json"
+            $commitResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery
 
             # Merge results
             foreach ($property in $commitResponse.data.PSObject.Properties) {
@@ -268,10 +419,12 @@ function Get-BulkGitHubActionsStaleness {
                 }
             }
 
-            Write-SecurityLog "GraphQL batch $([Math]::Floor($i / $batchSize) + 1): Cost $($commitResponse.data.rateLimit.cost), $($commitResponse.data.rateLimit.remaining) remaining" -Level Info
+            Write-SecurityLog "GraphQL batch $([Math]::Floor($i / $BatchSize) + 1): Cost $($commitResponse.data.rateLimit.cost), $($commitResponse.data.rateLimit.remaining) remaining" -Level Info
         }
         catch {
             Write-SecurityLog "Commit GraphQL batch query failed: $($_.Exception.Message)" -Level Warning
+            Write-SecurityLog "CAUSE: Network connectivity issue, rate limit exhausted, or malformed query" -Level Warning
+            Write-SecurityLog "SOLUTION: Check GitHub API status or reduce -GraphQLBatchSize parameter (current: $BatchSize)" -Level Warning
         }
     }
 
@@ -334,7 +487,7 @@ function Get-BulkGitHubActionsStaleness {
         }
     }
 
-    $totalCalls = 1 + [Math]::Ceiling($commitQueries.Count / $batchSize)
+    $totalCalls = 1 + [Math]::Ceiling($commitQueries.Count / $BatchSize)
     $originalCalls = $ShaToActionMap.Count * 3
     $reduction = [Math]::Round((1 - ($totalCalls / $originalCalls)) * 100, 1)
 
@@ -353,7 +506,7 @@ function Test-GitHubActionsForStaleness {
     # First pass: collect all unique repositories and SHAs
     foreach ($File in $WorkflowFiles) {
         $Content = Get-Content -Path $File.FullName -Raw
-        $SHAMatches = [regex]::Matches($Content, "uses:\s*([^@\s]+)@([a-f0-9]{40})")
+        $SHAMatches = [regex]::Matches($Content, "uses:\s*([^@\s]+)@([a-fA-F0-9]{40})")
 
         foreach ($Match in $SHAMatches) {
             $ActionRepo = $Match.Groups[1].Value
@@ -380,7 +533,7 @@ function Test-GitHubActionsForStaleness {
 
     # Bulk query for all actions using GraphQL optimization
     try {
-        $bulkResults = Get-BulkGitHubActionsStaleness -ActionRepos $allActionRepos -ShaToActionMap $shaToActionMap
+        $bulkResults = Get-BulkGitHubActionsStaleness -ActionRepos $allActionRepos -ShaToActionMap $shaToActionMap -BatchSize $GraphQLBatchSize
 
         foreach ($result in $bulkResults) {
             if ($result.IsStale) {
@@ -519,14 +672,22 @@ function Write-OutputResult {
                 Dependencies    = $Dependencies
             } | ConvertTo-Json -Depth 10
 
-            # Ensure output directory exists
-            $OutputDir = Split-Path -Parent $OutputPath
-            if (!(Test-Path $OutputDir)) {
-                New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-            }
+            try {
+                # Ensure output directory exists
+                $OutputDir = Split-Path -Parent $OutputPath
+                if (!(Test-Path $OutputDir)) {
+                    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+                    Write-SecurityLog "Created output directory: $OutputDir" -Level Info
+                }
 
-            Set-Content -Path $OutputPath -Value $JsonOutput
-            Write-SecurityLog "JSON report written to: $OutputPath" -Level Success
+                Set-Content -Path $OutputPath -Value $JsonOutput
+                Write-SecurityLog "JSON report written to: $OutputPath" -Level Success
+            }
+            catch {
+                Write-SecurityLog "Failed to write JSON output: $($_.Exception.Message)" -Level Error
+                Write-SecurityLog "CAUSE: Insufficient permissions or invalid path" -Level Warning
+                Write-SecurityLog "SOLUTION: Verify OutputPath is writable: $OutputPath" -Level Warning
+            }
         }
 
         "github" {
@@ -593,6 +754,7 @@ function Write-OutputResult {
 # Main execution
 Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
 Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
+Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
 Write-SecurityLog "Output format: $OutputFormat" -Level Info
 
 # Run staleness check for GitHub Actions
@@ -604,10 +766,15 @@ Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat 
 Write-SecurityLog "SHA staleness monitoring completed" -Level Success
 Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
 
-# Exit with appropriate code for CI/CD
+# Exit with appropriate code based on findings and -FailOnStale parameter
 if ($StaleDependencies.Count -gt 0) {
-    exit 1  # Indicate issues found
+    if ($FailOnStale) {
+        Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
+        exit 1
+    }
+    else {
+        Write-SecurityLog "Stale dependencies found but exiting with status 0 (use -FailOnStale to fail build)" -Level Warning
+        exit 0
+    }
 }
-else {
-    exit 0  # All good
-}
+exit 0  # All good

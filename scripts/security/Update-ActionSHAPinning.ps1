@@ -1,4 +1,5 @@
 ﻿#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
     Updates GitHub Actions workflows to use SHA-pinned action references for supply chain security.
@@ -49,6 +50,183 @@ $ErrorActionPreference = 'Stop'
 
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
+
+function Test-GitHubToken {
+    <#
+    .SYNOPSIS
+        Validates GitHub token and checks API rate limits.
+    
+    .DESCRIPTION
+        Tests if the provided GitHub token is valid and checks remaining rate limit.
+        Returns detailed status including authentication, rate limit info, and actionable messages.
+    
+    .PARAMETER Token
+        GitHub personal access token or GITHUB_TOKEN to validate
+    
+    .OUTPUTS
+        Hashtable with keys: Valid, Authenticated, RateLimit, Remaining, ResetAt, User, Message
+    #>
+    param(
+        [Parameter()]
+        [string]$Token
+    )
+
+    $result = @{
+        Valid         = $false
+        Authenticated = $false
+        RateLimit     = 0
+        Remaining     = 0
+        ResetAt       = $null
+        User          = $null
+        Message       = ""
+    }
+
+    try {
+        $headers = @{
+            "User-Agent" = "GitHub-Actions-Security-Scanner"
+        }
+
+        if ($Token) {
+            $headers["Authorization"] = "Bearer $Token"
+        }
+
+        # Use GraphQL to check authentication and rate limits
+        $query = @{
+            query = "query { viewer { login } rateLimit { limit remaining resetAt } }"
+        } | ConvertTo-Json
+
+        $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
+
+        if ($response.data.viewer) {
+            $result.Valid = $true
+            $result.Authenticated = $true
+            $result.User = $response.data.viewer.login
+            $result.Message = "Authenticated as $($result.User)"
+        }
+        elseif ($response.data.rateLimit) {
+            $result.Valid = $true
+            $result.Authenticated = $false
+            $result.Message = "Unauthenticated access - limited rate limits"
+        }
+
+        $result.RateLimit = $response.data.rateLimit.limit
+        $result.Remaining = $response.data.rateLimit.remaining
+        $result.ResetAt = $response.data.rateLimit.resetAt
+
+        if ($result.Remaining -lt 100) {
+            $result.Message += " | WARNING: Only $($result.Remaining) API calls remaining (resets at $($result.ResetAt))"
+        }
+
+        if (-not $result.Authenticated) {
+            Write-Warning "SOLUTION: Set GITHUB_TOKEN environment variable for higher rate limits (5,000 vs 60 points/hour)"
+            Write-Warning "CAUSE: Unauthenticated GitHub GraphQL API requests are heavily rate limited"
+        }
+    }
+    catch {
+        $result.Message = "Token validation failed: $($_.Exception.Message)"
+        Write-Warning $result.Message
+    }
+
+    return $result
+}
+
+function Invoke-GitHubAPIWithRetry {
+    <#
+    .SYNOPSIS
+        Invokes GitHub API with exponential backoff retry for rate limits.
+    
+    .DESCRIPTION
+        Wraps Invoke-RestMethod with intelligent retry logic for rate-limited API calls.
+        Implements exponential backoff when encountering 403/429 responses.
+    
+    .PARAMETER Uri
+        GitHub API URI to call
+    
+    .PARAMETER Method
+        HTTP method (GET, POST, etc.)
+    
+    .PARAMETER Headers
+        HTTP headers hashtable
+    
+    .PARAMETER Body
+        Request body (optional)
+    
+    .PARAMETER MaxRetries
+        Maximum number of retry attempts (default: 3)
+    
+    .PARAMETER InitialDelaySeconds
+        Initial delay in seconds before first retry (default: 5)
+    
+    .OUTPUTS
+        API response object
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$Uri,
+
+        [Parameter(Mandatory)]
+        [string]$Method,
+
+        [Parameter(Mandatory)]
+        [hashtable]$Headers,
+
+        [Parameter()]
+        [string]$Body,
+
+        [Parameter()]
+        [int]$MaxRetries = 3,
+
+        [Parameter()]
+        [int]$InitialDelaySeconds = 5
+    )
+
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $params = @{
+                Uri     = $Uri
+                Method  = $Method
+                Headers = $Headers
+            }
+
+            if ($Body) {
+                $params['Body'] = $Body
+                $params['ContentType'] = "application/json"
+            }
+
+            $response = Invoke-RestMethod @params -ErrorAction Stop
+            return $response
+        }
+        catch {
+            $statusCode = $null
+            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+            }
+
+            # Check if rate limited (403 or 429)
+            if ($statusCode -in 403, 429) {
+                $attempt++
+                if ($attempt -ge $MaxRetries) {
+                    Write-Warning "CAUSE: Too many API requests in a short time period"
+                    Write-Warning "SOLUTION: Wait for rate limit to reset or provide a GitHub token with higher limits"
+                    throw
+                }
+
+                Write-Warning "Rate limited (HTTP $statusCode). Retrying in $delay seconds... (Attempt $attempt/$MaxRetries)"
+                Start-Sleep -Seconds $delay
+                $delay = $delay * 2  # Exponential backoff
+            }
+            else {
+                # Non-rate-limit error, don't retry
+                throw
+            }
+        }
+    }
+
+    throw "Max retries exceeded for API call to $Uri"
+}
 
 # Common GitHub Actions and their current SHA references
 $ActionSHAMap = @{
@@ -317,25 +495,47 @@ function Get-LatestCommitSHA {
             'User-Agent' = 'hve-core-sha-pinning-updater'
         }
 
-        # Add GitHub token if available (increases rate limit)
-        if ($env:GITHUB_TOKEN) {
-            $headers['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+        # Check GitHub token and validate it
+        $githubToken = $env:GITHUB_TOKEN
+        if ($githubToken) {
+            $tokenStatus = Test-GitHubToken -Token $githubToken
+            if ($tokenStatus.Valid) {
+                $headers['Authorization'] = "Bearer $githubToken"
+            }
+            else {
+                Write-SecurityLog "Token validation failed, proceeding without authentication" -Level Warning
+                Write-SecurityLog "CAUSE: Invalid or expired GitHub token" -Level Warning
+                Write-SecurityLog "SOLUTION: Generate new token at https://github.com/settings/tokens" -Level Warning
+            }
         }
 
         # If no branch specified, detect the repository's default branch
         if (-not $Branch) {
             $repoApiUrl = "https://api.github.com/repos/$Owner/$Repo"
-            $repoInfo = Invoke-RestMethod -Uri $repoApiUrl -Headers $headers -ErrorAction Stop
+            $repoInfo = Invoke-GitHubAPIWithRetry -Uri $repoApiUrl -Method GET -Headers $headers
             $Branch = $repoInfo.default_branch
-            Write-SecurityLog "Detected default branch for $Owner/$Repo : $Branch" -Level 'Info' | Out-Null
+            Write-SecurityLog "Detected default branch for $Owner/$Repo : $Branch" -Level 'Info'
         }
 
         $apiUrl = "https://api.github.com/repos/$Owner/$Repo/commits/$Branch"
-        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -ErrorAction Stop
+        $response = Invoke-GitHubAPIWithRetry -Uri $apiUrl -Method GET -Headers $headers
         return $response.sha
     }
     catch {
-        Write-SecurityLog "Failed to fetch latest SHA for $Owner/$Repo : $($_.Exception.Message)" -Level 'Warning'
+        $statusCode = $null
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+            $statusCode = [int]$_.Exception.Response.StatusCode
+        }
+
+        if ($statusCode -eq 404) {
+            Write-SecurityLog "Failed to fetch latest SHA for $Owner/$Repo : Repository or branch not found" -Level 'Warning'
+            Write-SecurityLog "CAUSE: Repository does not exist, is private, or branch name is incorrect" -Level 'Warning'
+            Write-SecurityLog "SOLUTION: Verify repository exists and branch name is correct" -Level 'Warning'
+        }
+        else {
+            Write-SecurityLog "Failed to fetch latest SHA for $Owner/$Repo : $($_.Exception.Message)" -Level 'Warning'
+            Write-SecurityLog "CAUSE: Network connectivity issue or GitHub API unavailable" -Level 'Warning'
+        }
         return $null
     }
 }
@@ -347,16 +547,25 @@ function Get-SHAForAction {
     )
 
     # Check if already SHA-pinned (40-character hex string)
-    if ($ActionRef -match '@[a-f0-9]{40}$') {
+    if ($ActionRef -match '@[a-fA-F0-9]{40}$') {
         # If UpdateStale is enabled, fetch the latest SHA and compare
         if ($UpdateStale) {
             # Extract owner/repo from action reference (supports subpaths)
-            if ($ActionRef -match '^([^@]+)@([a-f0-9]{40})$') {
+            if ($ActionRef -match '^([^@]+)@([a-fA-F0-9]{40})$') {
                 $actionPath = $matches[1]
                 $currentSHA = $matches[2]
 
                 # Handle actions with subpaths (e.g., github/codeql-action/init)
                 $parts = $actionPath -split '/'
+                
+                # Validate action reference format
+                if ($parts.Count -lt 2) {
+                    Write-SecurityLog "Invalid action reference format: $ActionRef - must be 'owner/repo' or 'owner/repo/path'" -Level 'Warning'
+                    Write-SecurityLog "CAUSE: Malformed action path missing owner or repository name" -Level 'Warning'
+                    Write-SecurityLog "SOLUTION: Verify action reference follows GitHub Actions format (e.g., actions/checkout@v4)" -Level 'Warning'
+                    return $null
+                }
+                
                 $owner = $parts[0]
                 $repo = $parts[1]
 
@@ -380,7 +589,7 @@ function Get-SHAForAction {
             }
         }
 
-        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info' | Out-Null
+        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info'
         return $ActionRef
     }
 
@@ -391,7 +600,7 @@ function Get-SHAForAction {
         # If UpdateStale is enabled, check if we should fetch the latest SHA instead
         if ($UpdateStale) {
             # Extract owner/repo from the pinned reference
-            if ($pinnedRef -match '^([^/]+/[^/@]+)@([a-f0-9]{40})$') {
+            if ($pinnedRef -match '^([^/]+/[^/@]+)@([a-fA-F0-9]{40})$') {
                 $actionPath = $matches[1]
                 $mappedSHA = $matches[2]
 
@@ -399,7 +608,7 @@ function Get-SHAForAction {
                 $owner = $parts[0]
                 $repo = $parts[1]
 
-                Write-SecurityLog "Checking ActionSHAMap entry for updates: $ActionRef (mapped: $($mappedSHA.Substring(0,8))...)" -Level 'Info' | Out-Null
+                Write-SecurityLog "Checking ActionSHAMap entry for updates: $ActionRef (mapped: $($mappedSHA.Substring(0,8))...)" -Level 'Info'
 
                 # Fetch latest SHA from GitHub
                 $latestSHA = Get-LatestCommitSHA -Owner $owner -Repo $repo
@@ -571,10 +780,10 @@ function Set-ContentPreservePermission {
     $OriginalMode = $null
     if (Test-Path $Path) {
         try {
-            # Get file mode using Get-ChildItem (cross-platform)
-            $lsOutput = & Get-ChildItem -la $Path 2>$null
-            if ($LASTEXITCODE -eq 0 -and $lsOutput -match '^([drwx-]+)') {
-                $OriginalMode = $Matches[1]
+            # Get file mode using Get-Item (cross-platform)
+            $item = Get-Item -Path $Path -ErrorAction SilentlyContinue
+            if ($item -and $item.Mode) {
+                $OriginalMode = $item.Mode
             }
         }
         catch {
