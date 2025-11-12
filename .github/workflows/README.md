@@ -2,7 +2,7 @@
 title: GitHub Workflows
 description: Documentation for GitHub Actions workflows in the HVE Core project
 author: HVE Core Team
-ms.date: 2025-11-11
+ms.date: 2025-11-12
 ms.topic: reference
 keywords:
   - github actions

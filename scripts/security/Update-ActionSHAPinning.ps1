@@ -589,7 +589,7 @@ function Get-SHAForAction {
             }
         }
 
-        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info' | Out-Null
+        Write-SecurityLog "Action already SHA-pinned: $ActionRef" -Level 'Info'
         return $ActionRef
     }
 
@@ -626,12 +626,12 @@ function Get-SHAForAction {
             }
         }
 
-        Write-SecurityLog "Found SHA mapping: $ActionRef -> $pinnedRef" -Level 'Success' | Out-Null
+        Write-SecurityLog "Found SHA mapping: $ActionRef -> $pinnedRef" -Level 'Success'
         return $pinnedRef
     }
 
     # For unmapped actions, suggest manual review
-    Write-SecurityLog "No SHA mapping found for: $ActionRef - requires manual review" -Level 'Warning' | Out-Null
+    Write-SecurityLog "No SHA mapping found for: $ActionRef - requires manual review" -Level 'Warning'
     return $null
 }
 

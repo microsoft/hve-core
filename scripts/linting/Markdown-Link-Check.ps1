@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 #Requires -Version 7.0
 
+
 <#
 .SYNOPSIS
     Repository-aware wrapper for markdown-link-check.

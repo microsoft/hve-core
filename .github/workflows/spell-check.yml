@@ -57,7 +57,7 @@ jobs:
       - name: Create annotations
         if: env.SPELL_CHECK_FAILED == 'true'
         run: |
-          echo "::warning::Spell check found issues. Review spell-check-output.txt artifact for details."
+          echo "::warning::Spell check found issues. Review the spell-check-results artifact for details."
 
       - name: Upload spell check results
         if: always()
