@@ -12,6 +12,19 @@ param()
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 
+# Get repository root
+$repoRoot = git rev-parse --show-toplevel 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Not in a git repository"
+    exit 1
+}
+
+# Create logs directory if it doesn't exist
+$logsDir = Join-Path $repoRoot "logs"
+if (-not (Test-Path $logsDir)) {
+    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+}
+
 Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
 
 # Run the language check script
@@ -33,7 +46,16 @@ try {
         }
         
         # Save results
-        $results | ConvertTo-Json -Depth 3 | Out-File 'logs/link-lang-check-results.json'
+        $outputData = @{
+            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            script = "link-lang-check"
+            summary = @{
+                total_issues = $results.Count
+                files_affected = ($results | Select-Object -ExpandProperty file -Unique).Count
+            }
+            issues = $results
+        }
+        $outputData | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
         
         Set-GitHubOutput -Name "issues" -Value $results.Count
         Set-GitHubEnv -Name "LINK_LANG_FAILED" -Value "true"
@@ -64,7 +86,19 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
     }
     else {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
-        @() | ConvertTo-Json | Out-File 'logs/link-lang-check-results.json'
+        
+        # Save empty results
+        $emptyResults = @{
+            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            script = "link-lang-check"
+            summary = @{
+                total_issues = 0
+                files_affected = 0
+            }
+            issues = @()
+        }
+        $emptyResults | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
+        
         Set-GitHubOutput -Name "issues" -Value "0"
         
         Write-GitHubStepSummary -Content @"

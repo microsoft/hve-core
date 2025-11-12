@@ -299,11 +299,11 @@ function Write-SecurityLog {
 
     # Handle empty strings for formatting (blank lines)
     if ([string]::IsNullOrWhiteSpace($Message)) {
-        Write-Output ""
+        Write-Host ""
         return
     }
 
-    Write-Output "$prefix $Message"
+    Write-Host "$prefix $Message"
 }
 
 # Initialize security issues array at script scope
@@ -626,12 +626,12 @@ function Get-SHAForAction {
             }
         }
 
-        Write-SecurityLog "Found SHA mapping: $ActionRef -> $pinnedRef" -Level 'Success' | Out-Null
+        Write-SecurityLog "Found SHA mapping: $ActionRef -> $pinnedRef" -Level 'Success'
         return $pinnedRef
     }
 
     # For unmapped actions, suggest manual review
-    Write-SecurityLog "No SHA mapping found for: $ActionRef - requires manual review" -Level 'Warning' | Out-Null
+    Write-SecurityLog "No SHA mapping found for: $ActionRef - requires manual review" -Level 'Warning'
     return $null
 }
 

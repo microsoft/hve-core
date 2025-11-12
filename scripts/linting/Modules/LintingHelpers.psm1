@@ -59,12 +59,16 @@ function Get-ChangedFilesFromGit {
             if ([string]::IsNullOrEmpty($_)) { return $false }
             
             # Check if file matches any of the allowed extensions
-            $matchesExtension = $FileExtensions | Where-Object { $_ -like $_ } | ForEach-Object { $file -like $_ } | Where-Object { $_ } | Select-Object -First 1
-            if (-not $matchesExtension) {
-                $matchesExtension = $false
+            $currentFile = $_
+            $matchesExtension = $false
+            foreach ($pattern in $FileExtensions) {
+                if ($currentFile -like $pattern) {
+                    $matchesExtension = $true
+                    break
+                }
             }
             
-            $matchesExtension -and (Test-Path $_ -PathType Leaf)
+            $matchesExtension -and (Test-Path $currentFile -PathType Leaf)
         }
 
         Write-Verbose "Found $($filteredFiles.Count) changed files matching extensions: $($FileExtensions -join ', ')"

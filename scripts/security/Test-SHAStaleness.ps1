@@ -95,10 +95,10 @@ function Write-SecurityLog {
     # Console output with colors (only in console mode)
     if ($OutputFormat -eq "console") {
         switch ($Level) {
-            "Info" { Write-Information $logEntry -InformationAction Continue }
-            "Warning" { Write-Warning $logEntry }
-            "Error" { Write-Error $logEntry }
-            "Success" { Write-Information $logEntry -InformationAction Continue }
+            "Info" { Write-Host $logEntry -ForegroundColor Cyan }
+            "Warning" { Write-Host $logEntry -ForegroundColor Yellow }
+            "Error" { Write-Host $logEntry -ForegroundColor Red }
+            "Success" { Write-Host $logEntry -ForegroundColor Green }
         }
     }
 

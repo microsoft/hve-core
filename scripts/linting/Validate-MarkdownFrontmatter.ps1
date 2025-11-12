@@ -30,6 +30,9 @@ param(
     [switch]$SkipFooterValidation
 )
 
+# Import LintingHelpers module
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+
 function Get-MarkdownFrontmatter {
     <#
     .SYNOPSIS
@@ -146,7 +149,7 @@ function Get-MarkdownFrontmatter {
         }
     }
     catch {
-        Write-Warning "Error parsing frontmatter in ${FilePath}: $($_.Exception.Message)"
+        Write-Warning "Error parsing frontmatter in ${FilePath}: [$($_.Exception.GetType().Name)] $($_.Exception.Message)"
         return $null
     }
 }
@@ -171,11 +174,15 @@ function Test-MarkdownFooter {
         [string]$Content
     )
 
-    # Normalize content (remove HTML comments, italic markers, extra whitespace)
-    # Note: This regex handles simple HTML comments and italic markers.
-    # Nested HTML comments or bold text (**text**) may require additional processing.
-    $normalized = $Content -replace '<!--[\s\S]*?-->', ''  # Remove HTML comments
-    $normalized = $normalized -replace '\*([^*]+)\*', '$1'  # Remove italic markers
+    # Normalize content (remove HTML comments and markdown formatting)
+    # Use (?s) for multiline HTML comments and comprehensive markdown format removal
+    $normalized = $Content -replace '(?s)<!--.*?-->', ''  # Remove HTML comments (multiline)
+    $normalized = $normalized -replace '\*\*([^*]+)\*\*', '$1'  # Remove bold (**text**)
+    $normalized = $normalized -replace '__([^_]+)__', '$1'  # Remove bold (__text__)
+    $normalized = $normalized -replace '\*([^*]+)\*', '$1'  # Remove italic (*text*)
+    $normalized = $normalized -replace '_([^_]+)_', '$1'  # Remove italic (_text_)
+    $normalized = $normalized -replace '~~([^~]+)~~', '$1'  # Remove strikethrough
+    $normalized = $normalized -replace '`([^`]+)`', '$1'  # Remove inline code
     $normalized = $normalized.TrimEnd()
 
     # Core footer pattern (flexible for line breaks and formatting variations)
@@ -268,6 +275,8 @@ function Test-FrontmatterValidation {
     # Input validation and sanitization
     $errors = @()
     $warnings = @()
+    $filesWithErrors = [System.Collections.Generic.HashSet[string]]::new()
+    $filesWithWarnings = [System.Collections.Generic.HashSet[string]]::new()
 
     # If ChangedFilesOnly is specified, get changed files from git
     if ($ChangedFilesOnly) {
@@ -459,13 +468,18 @@ function Test-FrontmatterValidation {
 
                     foreach ($field in $requiredFields) {
                         if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $errors += "Missing required field '$field' in: $($file.FullName)"
+                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
+                            $errors += $errorMsg
+                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
                         }
                     }
 
                     foreach ($field in $suggestedFields) {
                         if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $warnings += "Suggested field '$field' missing in: $($file.FullName)"
+                            $warningMsg = "Suggested field '$field' missing in: $($file.FullName)"
+                            $warnings += $warningMsg
+                            [void]$filesWithWarnings.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'warning' -Message "Suggested field '$field' missing" -File $file.FullName
                         }
                     }
 
@@ -473,7 +487,10 @@ function Test-FrontmatterValidation {
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
                         if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
-                            $warnings += "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
+                            $warningMsg = "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
+                            $warnings += $warningMsg
+                            [void]$filesWithWarnings.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName
                         }
                     }
                 }
@@ -483,7 +500,10 @@ function Test-FrontmatterValidation {
 
                     foreach ($field in $requiredFields) {
                         if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $errors += "Missing required field '$field' in: $($file.FullName)"
+                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
+                            $errors += $errorMsg
+                            [void]$filesWithErrors.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
                         }
                     }
                 }
@@ -496,6 +516,7 @@ function Test-FrontmatterValidation {
                         # Only warn if missing description as it's commonly used
                         if (-not $frontmatter.Frontmatter.ContainsKey('description')) {
                             $warnings += "ChatMode file missing 'description' field: $($file.FullName)"
+                            [void]$filesWithWarnings.Add($file.FullName)
                         }
                     }
                     # Instruction files (.instructions.md) have specific patterns
@@ -503,6 +524,7 @@ function Test-FrontmatterValidation {
                         # Instruction files should have 'applyTo' field for context-specific instructions
                         if (-not $frontmatter.Frontmatter.ContainsKey('applyTo')) {
                             $warnings += "Instruction file missing 'applyTo' field: $($file.FullName)"
+                            [void]$filesWithWarnings.Add($file.FullName)
                         }
                     }
                     # Prompt files (.prompt.md) are instructions/templates
@@ -513,6 +535,7 @@ function Test-FrontmatterValidation {
                     # Other GitHub files (templates, etc.)
                     elseif ($file.Name -like "*template*" -and -not $frontmatter.Frontmatter.ContainsKey('name')) {
                         $warnings += "GitHub template missing 'name' field: $($file.FullName)"
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
 
@@ -521,6 +544,7 @@ function Test-FrontmatterValidation {
                     $keywords = $frontmatter.Frontmatter['keywords']
                     if ($keywords -isnot [array] -and $keywords -notmatch ',') {
                         $warnings += "Keywords should be an array in: $($file.FullName)"
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
                 # Validate estimated_reading_time if present
@@ -528,6 +552,7 @@ function Test-FrontmatterValidation {
                     $readingTime = $frontmatter.Frontmatter['estimated_reading_time']
                     if ($readingTime -notmatch '^\d+$') {
                         $warnings += "Invalid estimated_reading_time format in: $($file.FullName). Should be a number."
+                        [void]$filesWithWarnings.Add($file.FullName)
                     }
                 }
 
@@ -540,9 +565,13 @@ function Test-FrontmatterValidation {
                         
                         if ($footerSeverity -eq 'Error') {
                             $errors += $footerMessage
+                            [void]$filesWithErrors.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'error' -Message "Missing standard Copilot footer" -File $file.FullName
                         }
                         else {
                             $warnings += $footerMessage
+                            [void]$filesWithWarnings.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'warning' -Message "Missing standard Copilot footer" -File $file.FullName
                         }
                     }
                 }
@@ -558,6 +587,7 @@ function Test-FrontmatterValidation {
 
                 if ($isMainDocLocal) {
                     $warnings += "No frontmatter found in: $($file.FullName)"
+                    [void]$filesWithWarnings.Add($file.FullName)
                 }
             }
         }
@@ -566,6 +596,38 @@ function Test-FrontmatterValidation {
             Write-Verbose "Error processing file '$($file.FullName)': $($_.Exception.Message)"
         }
     }
+
+    # Get repository root for logs directory
+    $repoRoot = (Get-Location).Path
+    if (-not (Test-Path ".git")) {
+        $gitRoot = git rev-parse --show-toplevel 2>$null
+        if ($gitRoot) {
+            $repoRoot = $gitRoot
+        }
+    }
+
+    # Create logs directory and export results
+    $logsDir = Join-Path -Path $repoRoot -ChildPath 'logs'
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
+
+    $resultsJson = @{
+        timestamp = (Get-Date).ToUniversalTime().ToString('o')
+        script = 'frontmatter-validation'
+        summary = @{
+            total_files = $markdownFiles.Count
+            files_with_errors = $filesWithErrors.Count
+            files_with_warnings = $filesWithWarnings.Count
+            total_errors = $errors.Count
+            total_warnings = $warnings.Count
+        }
+        errors = $errors
+        warnings = $warnings
+    }
+
+    $resultsPath = Join-Path -Path $logsDir -ChildPath 'frontmatter-validation-results.json'
+    $resultsJson | ConvertTo-Json -Depth 10 | Set-Content -Path $resultsPath -Encoding UTF8
 
     # Output results
     $hasIssues = $false
@@ -584,7 +646,70 @@ function Test-FrontmatterValidation {
         $hasIssues = $true
     }
 
-    if (-not $hasIssues) {
+    # Generate GitHub step summary
+    if ($hasIssues) {
+        $summaryContent = @"
+## ❌ Frontmatter Validation Failed
+
+**Files checked:** $($markdownFiles.Count)
+**Files with errors:** $($resultsJson.summary.files_with_errors)
+**Files with warnings:** $($resultsJson.summary.files_with_warnings)
+**Total errors:** $($errors.Count)
+**Total warnings:** $($warnings.Count)
+
+### Issues Found
+
+"@
+        
+        if ($errors.Count -gt 0) {
+            $summaryContent += "`n#### Errors`n`n"
+            foreach ($errorItem in $errors | Select-Object -First 10) {
+                $summaryContent += "- ❌ $errorItem`n"
+            }
+            if ($errors.Count -gt 10) {
+                $summaryContent += "`n*... and $($errors.Count - 10) more errors*`n"
+            }
+        }
+        
+        if ($warnings.Count -gt 0) {
+            $summaryContent += "`n#### Warnings`n`n"
+            foreach ($warning in $warnings | Select-Object -First 10) {
+                $summaryContent += "- ⚠️ $warning`n"
+            }
+            if ($warnings.Count -gt 10) {
+                $summaryContent += "`n*... and $($warnings.Count - 10) more warnings*`n"
+            }
+        }
+        
+        $summaryContent += @"
+
+
+### How to Fix
+
+1. Review the errors and warnings listed above
+2. Update frontmatter fields as required
+3. Ensure date formats follow ISO 8601 (YYYY-MM-DD)
+4. Add missing Copilot attribution footer where required
+5. Re-run validation to verify fixes
+
+See the uploaded artifact for complete details.
+"@
+        
+        Write-GitHubStepSummary -Content $summaryContent
+        Set-GitHubEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
+    }
+    else {
+        $summaryContent = @"
+## ✅ Frontmatter Validation Passed
+
+**Files checked:** $($markdownFiles.Count)
+**Errors:** 0
+**Warnings:** 0
+
+All frontmatter fields are valid and properly formatted. Great job! 🎉
+"@
+        
+        Write-GitHubStepSummary -Content $summaryContent
         Write-Host "✅ Frontmatter validation completed successfully" -ForegroundColor Green
     }
 
