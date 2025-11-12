@@ -1,0 +1,5 @@
+# Python dependencies for development container
+# Used by devcontainer postCreateCommand
+
+# Infrastructure as Code security scanning
+checkov>=3.2.0
