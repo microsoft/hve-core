@@ -1,0 +1,48 @@
+name: Copilot Instruction File Request
+description: Request a new GitHub Copilot instruction file
+title: "[Instruction File]: "
+labels: ["instruction-file", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new Copilot instruction file for a specific context or workflow.
+  
+  - type: input
+    id: file-name
+    attributes:
+      label: Instruction File Name
+      description: What should the instruction file be named?
+      placeholder: e.g., "code-review-assistant.instructions.md"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: What type of instruction file is this?
+      options:
+        - Workspace-level (applies to entire repository)
+        - Folder-level (applies to specific directory)
+        - File-level (applies to specific file type)
+    validations:
+      required: true
+  
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose
+      description: What problem does this instruction file solve?
+      placeholder: Describe the context or workflow this instruction file should support
+    validations:
+      required: true
+  
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: What specific behaviors or guidelines should this instruction file include?
+      placeholder: List the key requirements for this instruction file
+    validations:
+      required: false

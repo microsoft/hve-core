@@ -1,0 +1,29 @@
+# Checkov configuration for security and compliance scanning
+# Scans GitHub Actions workflows, JSON, YAML files, and secrets
+
+framework:
+  - github_actions
+  - json
+  - yaml
+  - secrets
+
+# Evaluate variables in configuration files
+evaluate-variables: true
+
+# Output formats
+output:
+  - junitxml
+  - json
+
+# Optional: Specify output file paths
+# output-file-path: checkov-junit.xml,checkov-results.json
+
+# Optional: Skip specific checks
+# skip-check:
+#   - CKV_SECRET_1
+#   - CKV_GHA_1
+
+# Optional: Exclude directories
+# skip-path:
+#   - node_modules
+#   - .git
