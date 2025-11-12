@@ -45,7 +45,7 @@ jobs:
             $params['ChangedFilesOnly'] = $true
           }
           
-          & scripts/linting/PSScriptAnalyzer.ps1 @params
+          & scripts/linting/Invoke-PSScriptAnalyzer.ps1 @params
           if ($LASTEXITCODE -ne 0) {
             "PSSCRIPTANALYZER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
