@@ -38,8 +38,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create logs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
       - name: Run markdown link check
         shell: pwsh
         run: |
           & scripts/linting/Markdown-Link-Check.ps1
-        continue-on-error: ${{ inputs.soft-fail }}
+        continue-on-error: true
+
+      - name: Upload markdown link check results
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: markdown-link-check-results
+          path: logs/markdown-link-check-results.json
+          retention-days: 30
+
+      - name: Check results and fail if needed
+        if: ${{ !inputs.soft-fail }}
+        shell: pwsh
+        run: |
+          if ($env:MARKDOWN_LINK_CHECK_FAILED -eq 'true') {
+            Write-Host "Markdown link check failed and soft-fail is false. Failing the job."
+            exit 1
+          }

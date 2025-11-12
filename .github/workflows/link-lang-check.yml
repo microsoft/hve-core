@@ -29,15 +29,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run Link Language Check
+      - name: Create logs directory
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
-          & scripts/linting/Link-Lang-Check.ps1 | Tee-Object -FilePath logs/link-lang-check-results.json
-          if ($LASTEXITCODE -ne 0) {
-            "LINK_LANG_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
-          }
-        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Run Link Language Check
+        shell: pwsh
+        run: |
+          & scripts/linting/Invoke-LinkLanguageCheck.ps1
+        continue-on-error: true
 
       - name: Upload results
         if: always()
@@ -47,11 +48,11 @@ jobs:
           path: logs/link-lang-check-results.json
           retention-days: 30
 
-      - name: Check results
-        if: "!inputs.soft-fail"
+      - name: Check results and fail if needed
+        if: ${{ !inputs.soft-fail }}
         shell: pwsh
         run: |
           if ($env:LINK_LANG_FAILED -eq 'true') {
-            Write-Error "Link language path violations found"
+            Write-Host "Link language check failed and soft-fail is false. Failing the job."
             exit 1
           }

@@ -32,8 +32,23 @@ try {
                 -Line $item.line_number
         }
         
+        # Create logs directory if it doesn't exist
+        $logsDir = Join-Path $PSScriptRoot "../../logs"
+        if (-not (Test-Path $logsDir)) {
+            New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+        }
+        
         # Save results
-        $results | ConvertTo-Json -Depth 3 | Out-File 'logs/link-lang-check-results.json'
+        $outputData = @{
+            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            script = "link-lang-check"
+            summary = @{
+                total_issues = $results.Count
+                files_affected = ($results | Select-Object -ExpandProperty file -Unique).Count
+            }
+            issues = $results
+        }
+        $outputData | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
         
         Set-GitHubOutput -Name "issues" -Value $results.Count
         Set-GitHubEnv -Name "LINK_LANG_FAILED" -Value "true"
@@ -64,7 +79,25 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
     }
     else {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
-        @() | ConvertTo-Json | Out-File 'logs/link-lang-check-results.json'
+        
+        # Create logs directory if it doesn't exist
+        $logsDir = Join-Path $PSScriptRoot "../../logs"
+        if (-not (Test-Path $logsDir)) {
+            New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+        }
+        
+        # Save empty results
+        $emptyResults = @{
+            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            script = "link-lang-check"
+            summary = @{
+                total_issues = 0
+                files_affected = 0
+            }
+            issues = @()
+        }
+        $emptyResults | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
+        
         Set-GitHubOutput -Name "issues" -Value "0"
         
         Write-GitHubStepSummary -Content @"

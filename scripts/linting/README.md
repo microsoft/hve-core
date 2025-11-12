@@ -95,13 +95,22 @@ Validates YAML frontmatter and footer format in markdown files.
 * Checks footer format and copyright notice
 * Supports changed files only mode
 * Configurable warnings-as-errors
-* GitHub Actions annotations
+* Creates GitHub Actions annotations for all issues
+* Exports JSON results with detailed statistics
+* Generates comprehensive step summary
 
 **Parameters**:
 
 * `-ChangedFilesOnly` (switch) - Validate only changed markdown files
 * `-SkipFooterValidation` (switch) - Skip footer checks
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
+
+**Artifacts Generated**:
+
+* `logs/frontmatter-validation-results.json` - Complete validation results including:
+  * Timestamp and script name
+  * Summary statistics (total files, error/warning counts)
+  * Lists of all errors and warnings
 
 **Usage**:
 
@@ -119,7 +128,8 @@ Validates YAML frontmatter and footer format in markdown files.
 **GitHub Actions Integration**:
 
 * Workflow: `.github/workflows/frontmatter-validation.yml`
-* Annotations: Errors and warnings on specific lines
+* Artifacts: `frontmatter-validation-results` (JSON)
+* Annotations: Errors and warnings with file paths
 * Exit Code: Non-zero if validation fails
 
 #### `Invoke-LinkLanguageCheck.ps1`
@@ -169,12 +179,24 @@ Validates all links in markdown files using markdown-link-check npm package.
 * Configurable via `markdown-link-check.config.json`
 * Retries failed links
 * Respects robots.txt
+* Creates GitHub Actions annotations for broken links
+* Exports JSON results with link statistics
+* Generates detailed step summary
+
+**Artifacts Generated**:
+
+* `logs/markdown-link-check-results.json` - Complete validation results including:
+  * Timestamp and script name
+  * Summary statistics (total files, broken links count)
+  * List of all broken links with file paths
 
 **GitHub Actions Integration**:
 
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
-* Soft-fail: Enabled for external link flakiness
+* Artifacts: `markdown-link-check-results` (JSON)
+* Annotations: Error for each broken link
+* Exit Code: Non-zero if broken links found
 
 ## Shared Module
 
