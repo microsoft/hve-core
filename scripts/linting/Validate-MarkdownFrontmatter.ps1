@@ -86,7 +86,8 @@ function Get-MarkdownFrontmatter {
         $frontmatter = @{}
 
         foreach ($line in $frontmatterLines) {
-            if ($line.Trim() -eq "" -or $line.Trim().StartsWith("#")) {
+            $trimmedLine = $line.Trim()
+            if ($trimmedLine -eq "" -or $trimmedLine.StartsWith("#")) {
                 continue
             }
 
@@ -171,6 +172,8 @@ function Test-MarkdownFooter {
     )
 
     # Normalize content (remove HTML comments, italic markers, extra whitespace)
+    # Note: This regex handles simple HTML comments and italic markers.
+    # Nested HTML comments or bold text (**text**) may require additional processing.
     $normalized = $Content -replace '<!--[\s\S]*?-->', ''  # Remove HTML comments
     $normalized = $normalized -replace '\*([^*]+)\*', '$1'  # Remove italic markers
     $normalized = $normalized.TrimEnd()
@@ -227,10 +230,7 @@ function Test-FrontmatterValidation {
     
     # Get repository root
     $repoRoot = (Get-Location).Path
-    if (Test-Path ".git") {
-        $repoRoot = (Get-Location).Path
-    }
-    else {
+    if (-not (Test-Path ".git")) {
         $gitRoot = git rev-parse --show-toplevel 2>$null
         if ($gitRoot) {
             $repoRoot = $gitRoot

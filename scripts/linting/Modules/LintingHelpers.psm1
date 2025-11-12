@@ -58,12 +58,10 @@ function Get-ChangedFilesFromGit {
         $filteredFiles = $changedFiles | Where-Object {
             if ([string]::IsNullOrEmpty($_)) { return $false }
             
-            $matchesExtension = $false
-            foreach ($ext in $FileExtensions) {
-                if ($_ -like $ext) {
-                    $matchesExtension = $true
-                    break
-                }
+            # Check if file matches any of the allowed extensions
+            $matchesExtension = $FileExtensions | Where-Object { $_ -like $_ } | ForEach-Object { $file -like $_ } | Where-Object { $_ } | Select-Object -First 1
+            if (-not $matchesExtension) {
+                $matchesExtension = $false
             }
             
             $matchesExtension -and (Test-Path $_ -PathType Leaf)

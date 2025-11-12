@@ -38,22 +38,23 @@ param(
 
     [switch]$Quiet
 )
-<#
-.SYNOPSIS
-    Resolves Markdown files to validate from provided path arguments.
 
-.DESCRIPTION
-    Accepts files or directories, expanding directories to all Markdown files
-    discovered recursively, and returns a sorted, unique list of absolute file
-    paths for downstream validation.
-
-.PARAMETER InputPath
-    Files or directories that may contain Markdown content.
-
-.OUTPUTS
-    System.String[]
-#>
 function Get-MarkdownTarget {
+    <#
+    .SYNOPSIS
+        Resolves Markdown files to validate from provided path arguments.
+
+    .DESCRIPTION
+        Accepts files or directories, expanding directories to all Markdown files
+        discovered recursively, and returns a sorted, unique list of absolute file
+        paths for downstream validation.
+
+    .PARAMETER InputPath
+        Files or directories that may contain Markdown content.
+
+    .OUTPUTS
+        System.String[]
+    #>
     param(
         [string[]]$InputPath
     )
@@ -101,7 +102,21 @@ function Get-MarkdownTarget {
 .OUTPUTS
     System.String
 #>
+
 function Get-RelativePrefix {
+    <#
+    .SYNOPSIS
+        Calculate the relative path prefix from one directory to another.
+
+    .PARAMETER FromPath
+        The directory from which the relative path should be calculated.
+
+    .PARAMETER ToPath
+        The target path that should be expressed relative to the source.
+
+    .OUTPUTS
+        System.String
+    #>
     param(
         [string]$FromPath,
         [string]$ToPath
