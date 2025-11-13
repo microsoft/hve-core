@@ -1,0 +1,35 @@
+{
+  "name": "hve-core",
+  "version": "1.0.0",
+  "description": "HVE Core",
+  "private": true,
+  "scripts": {
+    "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
+    "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
+    "lint:md": "markdownlint \"**/*.md\" --ignore node_modules",
+    "lint:md:fix": "markdownlint \"**/*.md\" --ignore node_modules --fix",
+    "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
+    "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
+    "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
+    "lint:frontmatter": "pwsh -File scripts/linting/Validate-MarkdownFrontmatter.ps1",
+    "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
+    "format:tables": "markdown-table-formatter \"**/*.md\"",
+    "security:scan": "gitleaks detect --verbose",
+    "security:scan:staged": "gitleaks protect --staged --verbose",
+    "security:checkov": "checkov -d . --framework github_actions json yaml secrets --output junitxml --output json --output-file-path console,checkov-results.json --evaluate-variables",
+    "security:checkov:report": "checkov -d . --framework github_actions json yaml secrets --output junitxml --output json --output-file-path checkov-junit.xml,checkov-results.json --evaluate-variables",
+    "precommit": "npm run security:scan:staged"
+  },
+  "devDependencies": {
+    "cspell": "^8.14.4",
+    "markdownlint-cli": "^0.42.0",
+    "markdown-table-formatter": "^1.6.0",
+    "markdown-link-check": "^3.12.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/hve-core.git"
+  },
+  "author": "Microsoft",
+  "license": "MIT"
+}

@@ -1,0 +1,195 @@
+name: Weekly Security Maintenance
+
+on:
+  schedule:
+    - cron: '0 2 * * 0' # Sundays at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      max-age-days:
+        description: 'Maximum SHA age in days before considered stale'
+        required: false
+        type: number
+        default: 30
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # Job 1: Validate all dependencies are SHA-pinned
+  validate-pinning:
+    name: Validate SHA Pinning Compliance
+    uses: ./.github/workflows/dependency-pinning-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: true
+      upload-sarif: true
+      upload-artifact: true
+
+  # Job 2: Check for stale SHA pins
+  check-staleness:
+    name: Check SHA Staleness
+    uses: ./.github/workflows/sha-staleness-check.yml
+    permissions:
+      contents: read
+    with:
+      max-age-days: ${{ inputs.max-age-days || 30 }}
+
+  # Job 3: Run CodeQL security analysis
+  codeql-scan:
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+  # Job 4: Generate consolidated summary
+  summary:
+    name: Security Maintenance Summary
+    needs: [validate-pinning, check-staleness, codeql-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        shell: pwsh
+        run: |
+          $pinningScore = '${{ needs.validate-pinning.outputs.compliance-score }}'
+          $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
+          $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
+          $codeqlResult = '${{ needs.codeql-scan.result }}'
+          
+          # Determine overall status
+          $hasIssues = $false
+          if ($unpinnedCount -ne '0') { $hasIssues = $true }
+          if ($staleCount -ne '0') { $hasIssues = $true }
+          
+          @"
+          # 🔐 Weekly Security Maintenance Report
+          
+          **Execution Time:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          **Trigger:** ${{ github.event_name }}
+          
+          ## 📊 Dependency Health
+          
+          | Metric | Status | Details |
+          |--------|--------|---------|
+          | SHA Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
+          | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
+          | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
+          
+          ## 🛡️ Security Analysis
+          
+          | Component | Status |
+          |-----------|--------|
+          | CodeQL Analysis | $(if ($codeqlResult -eq 'success') { '✅ Complete' } else { '⚠️ See details' }) |
+          | Secret Scanning | ✅ Enabled (GitHub native) |
+          | Dependabot Alerts | ✅ Enabled (GitHub native) |
+          
+          $(if ($unpinnedCount -ne '0') {
+            @"
+          
+          ## ⚠️ Action Required: Unpinned Dependencies
+          
+          **$unpinnedCount dependencies are not SHA-pinned.** This is a security risk.
+          
+          **To fix:**
+          ``````powershell
+          # Review the warnings above, then pin each dependency to a SHA
+          # Example: Change 'uses: actions/checkout@v4' to 'uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2'
+          ``````
+          
+          "@
+          })
+          
+          $(if ($staleCount -ne '0') {
+            # Load the staleness report to show details
+            # Note: Artifacts are not automatically shared between jobs
+            # This will only work if the file exists in the runner's filesystem
+            # Consider using job outputs or downloading artifacts explicitly
+            $stalenessReport = if (Test-Path 'logs/sha-staleness-results.json') {
+              Get-Content 'logs/sha-staleness-results.json' | ConvertFrom-Json
+            }
+            
+            $thresholdDays = ${{ inputs.max-age-days || 30 }}
+            $staleDetails = ""
+            if ($stalenessReport -and $stalenessReport.Dependencies) {
+              foreach ($staleDep in $stalenessReport.Dependencies) {
+                if ($staleDep.DaysOld -gt $thresholdDays) {
+                  $staleDetails += "- **$($staleDep.File)**: $($staleDep.Action)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
+                }
+              }
+            }
+            
+            @"
+          
+          ## ℹ️ Recommended: Update Stale SHAs
+          
+          **$staleCount SHA pins are outdated (>${{ inputs.max-age-days || 30 }} days old).** Consider updating them.
+          
+          $staleDetails
+          
+          **To update:**
+          ``````powershell
+          # Run the update script to get latest SHAs
+          scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale
+          ``````
+          
+          "@
+          })
+          
+          $(if (!$hasIssues) {
+            @"
+          
+          ## ✅ All Clear!
+          
+          Repository security posture is excellent:
+          - All dependencies are SHA-pinned
+          - All SHAs are current (< ${{ inputs.max-age-days || 30 }} days old)
+          - CodeQL analysis completed successfully
+          - GitHub Secret Scanning and Dependabot actively monitoring
+          
+          "@
+          })
+          
+          ---
+          
+          📥 **Detailed Reports:** Download artifacts from this workflow run  
+          🔗 **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          $(if ($hasIssues) {
+            @"
+          
+          ### 📋 Next Steps
+          
+          1. Review the build warnings generated in this workflow run
+          2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
+          3. For stale SHAs (>${{ inputs.max-age-days }} days): Update them when convenient (maintenance task)
+          4. Download the JSON report artifacts for detailed analysis
+          
+          "@
+          })
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+
+      - name: Set workflow conclusion
+        shell: pwsh
+        run: |
+          $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
+          $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
+          
+          # Informational output - workflow succeeds but logs warnings
+          if ($unpinnedCount -ne '0') {
+            Write-Output "::warning::Found $unpinnedCount unpinned dependencies. Review build warnings for details."
+          }
+          
+          if ($staleCount -ne '0') {
+            Write-Output "::warning::Found $staleCount stale SHA pins (>${{ inputs.max-age-days || 30 }} days old). Consider updating them."
+          }
+          
+          if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {
+            Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
+          }

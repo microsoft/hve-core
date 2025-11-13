@@ -1,0 +1,71 @@
+name: PSScriptAnalyzer
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on PSScriptAnalyzer violations'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only analyze changed PowerShell files'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  psscriptanalyzer:
+    name: PowerShell Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run PSScriptAnalyzer
+        id: analyze
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $params = @{}
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+          
+          & scripts/linting/Invoke-PSScriptAnalyzer.ps1 @params
+          if ($LASTEXITCODE -ne 0) {
+            "PSSCRIPTANALYZER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        with:
+          name: psscriptanalyzer-results
+          path: |
+            logs/psscriptanalyzer-results.json
+            logs/psscriptanalyzer-summary.json
+          retention-days: 30
+
+      - name: Check results
+        if: "!inputs.soft-fail"
+        shell: pwsh
+        run: |
+          if ($env:PSSCRIPTANALYZER_FAILED -eq 'true') {
+            Write-Error "PSScriptAnalyzer found violations"
+            exit 1
+          }

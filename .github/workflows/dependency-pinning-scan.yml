@@ -1,0 +1,172 @@
+name: Dependency Pinning Scan
+
+on:
+  workflow_call:
+    inputs:
+      threshold:
+        description: 'Compliance threshold percentage (0-100)'
+        required: false
+        type: number
+        default: 95
+      dependency-types:
+        description: 'Comma-separated list of dependency types to check'
+        required: false
+        type: string
+        default: 'actions,containers'
+      soft-fail:
+        description: 'Whether to continue on compliance violations'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Whether to upload SARIF results to Security tab'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact:
+        description: 'Whether to upload results as artifact'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      compliance-score:
+        description: 'Compliance score percentage'
+        value: ${{ jobs.scan.outputs.compliance-score }}
+      unpinned-count:
+        description: 'Number of unpinned dependencies found'
+        value: ${{ jobs.scan.outputs.unpinned-count }}
+      is-compliant:
+        description: 'Whether repository meets compliance threshold'
+        value: ${{ jobs.scan.outputs.is-compliant }}
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    name: Validate SHA Pinning Compliance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    outputs:
+      compliance-score: ${{ steps.pinning.outputs.compliance-score }}
+      unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
+      is-compliant: ${{ steps.pinning.outputs.is-compliant }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run SHA Pinning Validation
+        id: pinning
+        shell: pwsh
+        run: |
+          Write-Host "Validating dependency SHA pinning compliance..."
+          
+          # Build parameter list
+          $params = @{
+            Path = '.'
+            Format = 'json'
+            OutputPath = 'logs/dependency-pinning-results.json'
+          }
+          
+          if ('${{ inputs.dependency-types }}') {
+            $params['DependencyTypes'] = '${{ inputs.dependency-types }}'
+          }
+          
+          if ('${{ inputs.threshold }}') {
+            $params['Threshold'] = [int]'${{ inputs.threshold }}'
+          }
+          
+          # Run validation script
+          & scripts/security/Test-DependencyPinning.ps1 @params
+          
+          # Extract metrics from report
+          $report = Get-Content logs/dependency-pinning-results.json | ConvertFrom-Json
+          $complianceScore = $report.ComplianceScore
+          $unpinnedCount = $report.UnpinnedDependencies
+          $threshold = [int]'${{ inputs.threshold }}'
+          $isCompliant = $complianceScore -ge $threshold
+          
+          "compliance-score=$complianceScore" >> $env:GITHUB_OUTPUT
+          "unpinned-count=$unpinnedCount" >> $env:GITHUB_OUTPUT
+          "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "Compliance Score: $complianceScore%"
+          Write-Host "Unpinned Dependencies: $unpinnedCount"
+          Write-Host "Is Compliant (>=$threshold%): $isCompliant"
+          
+          # Fire GitHub Actions warnings for each violation
+          if ($unpinnedCount -gt 0) {
+            foreach ($violation in $report.Violations) {
+              Write-Output "::warning file=$($violation.File),line=$($violation.Line)::Unpinned $($violation.Type) dependency: $($violation.Name)@$($violation.Version) (Severity: $($violation.Severity))"
+            }
+          }
+
+      - name: Upload SARIF to Security tab
+        if: inputs.upload-sarif && always()
+        uses: github/codeql-action/upload-sarif@95b1867cf797beb28ce725a6f25268e2d3304672 # v3.27.0
+        with:
+          sarif_file: logs/dependency-pinning-results.sarif
+          category: dependency-pinning
+        continue-on-error: true
+
+      - name: Upload validation report
+        if: inputs.upload-artifact && always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        with:
+          name: dependency-pinning-results
+          path: logs/dependency-pinning-results.json
+          retention-days: 90
+
+      - name: Add job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $complianceScore = '${{ steps.pinning.outputs.compliance-score }}'
+          $unpinnedCount = '${{ steps.pinning.outputs.unpinned-count }}'
+          $isCompliant = '${{ steps.pinning.outputs.is-compliant }}'
+          
+          @"
+          ## Dependency Pinning Scan Results
+          
+          | Metric | Value |
+          |--------|-------|
+          | Compliance Score | $complianceScore% |
+          | Unpinned Dependencies | $unpinnedCount |
+          | Status | $(if ($isCompliant -eq 'true') { '✅ Compliant' } else { '⚠️ Non-Compliant' }) |
+          
+          $(if ($unpinnedCount -ne '0') {
+            @"
+          
+          ### ⚠️ Action Required
+          
+          **$unpinnedCount dependencies are not SHA-pinned.**
+          
+          Review the warnings in the workflow log and pin dependencies to specific SHA commits.
+          
+          "@
+          } else {
+            @"
+          
+          ### ✅ All Dependencies Pinned
+          
+          All dependencies are properly SHA-pinned.
+          
+          "@
+          })
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+
+      - name: Fail job if non-compliant
+        if: steps.pinning.outputs.is-compliant == 'false' && !inputs.soft-fail
+        run: |
+          echo "Dependency pinning scan failed - compliance threshold not met"
+          exit 1

@@ -1,0 +1,74 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "node_modules/**",
+    "**/node_modules/**",
+    "packages/**",
+    "**/packages/**",
+    "vendor/**",
+    "**/vendor/**",
+    "dist/**",
+    "build/**",
+    ".git/**",
+    "**/.terraform/**",
+    "**/.terraform.lock.hcl",
+    ".vscode/**",
+    ".github/copilot-instructions.md",
+    "**/*.min.js",
+    "**/*.min.css",
+    ".mega-linter.yml",
+    "package-lock.json",
+    "**/package-lock.json",
+    "Cargo.lock",
+    "**/Cargo.lock"
+  ],
+  "ignoreRegExpList": [
+    "/#.*/g",
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "azure-services",
+      "path": "./.cspell/azure-services.txt"
+    },
+    {
+      "name": "microsoft-sample-companies",
+      "path": "./.cspell/microsoft-sample-companies.txt"
+    },
+    {
+      "name": "industry-acronyms",
+      "path": "./.cspell/industry-acronyms.txt"
+    },
+    {
+      "name": "general-technical",
+      "path": "./.cspell/general-technical.txt"
+    }
+  ],
+  "dictionaries": [
+    "k8s",
+    "docker",
+    "rust",
+    "data-science",
+    "aws",
+    "terraform",
+    "azure-services",
+    "microsoft-sample-companies",
+    "industry-acronyms",
+    "general-technical"
+  ],
+  "words": [
+    "ˈpræksɪs",
+    "behaviour",
+    "Chronograf",
+    "edgeai",
+    "GHCP",
+    "Kapacitor",
+    "kata",
+    "katas",
+    "learning",
+    "SARIF",
+    "Segoe",
+    "πρᾶξις"
+  ]
+}

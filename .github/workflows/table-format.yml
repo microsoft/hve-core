@@ -1,0 +1,85 @@
+name: Table Format Check
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on table format issues'
+        required: false
+        type: boolean
+        default: false
+
+# Minimal permissions
+permissions:
+  contents: read
+
+jobs:
+  table-format:
+    name: Table Format Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@dda4788290998366da86b6a4f497909644397bb2 # v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check table formatting
+        id: table-format
+        run: |
+          npm run format:tables > table-format-output.txt 2>&1 || echo "TABLE_FORMAT_FAILED=true" >> $GITHUB_ENV
+          cat table-format-output.txt
+        continue-on-error: true
+
+      - name: Create annotations
+        if: env.TABLE_FORMAT_FAILED == 'true'
+        run: |
+          echo "::warning::Table formatting issues found. This check does NOT auto-fix. Please manually format tables or run 'npm run format:tables' locally."
+
+      - name: Upload table format results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        with:
+          name: table-format-results
+          path: table-format-output.txt
+          retention-days: 30
+
+      - name: Add job summary
+        if: always()
+        run: |
+          echo "## Table Format Check Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.TABLE_FORMAT_FAILED }}" == "true" ]; then
+            echo "❌ **Status**: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Note**: This check does NOT auto-fix tables." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**To fix manually:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Run \`npm run format:tables\` locally" >> $GITHUB_STEP_SUMMARY
+            echo "2. Review and commit the changes" >> $GITHUB_STEP_SUMMARY
+            echo "3. Push to update this PR" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Status**: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All tables are properly formatted." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail job if issues found
+        if: env.TABLE_FORMAT_FAILED == 'true' && !inputs.soft-fail
+        run: |
+          echo "Table format check failed"
+          exit 1

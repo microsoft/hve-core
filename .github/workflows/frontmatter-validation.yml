@@ -1,0 +1,86 @@
+name: Frontmatter Validation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on frontmatter validation errors'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only validate changed markdown files'
+        required: false
+        type: boolean
+        default: true
+      skip-footer-validation:
+        description: 'Skip Copilot footer validation'
+        required: false
+        type: boolean
+        default: false
+      warnings-as-errors:
+        description: 'Treat warnings as errors'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontmatter-validation:
+    name: Validate Markdown Frontmatter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Create logs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Run Frontmatter Validation
+        shell: pwsh
+        run: |
+          $params = @{}
+          
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+          if ('${{ inputs.skip-footer-validation }}' -eq 'true') {
+            $params['SkipFooterValidation'] = $true
+          }
+          if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
+            $params['WarningsAsErrors'] = $true
+          }
+          
+          & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
+        continue-on-error: true
+
+      - name: Upload frontmatter validation results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        with:
+          name: frontmatter-validation-results
+          path: logs/frontmatter-validation-results.json
+          retention-days: 30
+
+      - name: Check results and fail if needed
+        if: ${{ !inputs.soft-fail }}
+        shell: pwsh
+        run: |
+          if ($env:FRONTMATTER_VALIDATION_FAILED -eq 'true') {
+            Write-Host "Frontmatter validation failed and soft-fail is false. Failing the job."
+            exit 1
+          }
