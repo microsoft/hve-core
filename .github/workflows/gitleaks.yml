@@ -8,28 +8,15 @@ on:
 
 permissions:
   contents: read
-  security-events: write  # Required for potential SARIF upload
+  security-events: write
 
 jobs:
-  scan:
-    name: Scan for secrets
-    runs-on: ubuntu-latest
+  gitleaks:
+    name: Secret Detection
+    uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
