@@ -174,10 +174,10 @@ jobs:
 
 **Inputs**:
 
-* `threshold` (number, default: 100): Minimum compliance percentage
+* `threshold` (number, default: 95): Minimum compliance percentage
 * `dependency-types` (string, default: 'actions,containers'): Types to validate
 * `soft-fail` (boolean, default: false): Continue on failures
-* `upload-sarif` (boolean, default: true): Upload to Security tab
+* `upload-sarif` (boolean, default: false): Upload to Security tab
 * `upload-artifact` (boolean, default: true): Upload JSON results
 
 **Outputs**:
@@ -211,7 +211,7 @@ jobs:
 
 **Purpose**: Performs comprehensive security analysis using GitHub CodeQL
 
-**Triggers**: `push`, `pull_request`, `schedule` (Mondays at 3 AM), `workflow_call`
+**Triggers**: `push`, `pull_request`, `schedule` (Sundays at 4 AM UTC), `workflow_call`
 
 **Features**:
 
