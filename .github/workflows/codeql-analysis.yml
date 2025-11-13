@@ -28,11 +28,6 @@ jobs:
         language: [ 'javascript' ]
     
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
-        with:
-          egress-policy: audit
-
       - name: Checkout repository
         uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
         with:
