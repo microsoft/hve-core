@@ -91,10 +91,10 @@ jobs:
           ## 📊 Dependency Health
           
           | Metric | Status | Details |
-          |--------|--------|---------|
+          |--------|--------|---------||
           | SHA Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
           | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
-          | Stale SHAs (>30 days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
+          | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
           ## 🛡️ Security Scans
           
@@ -176,7 +176,7 @@ jobs:
           
           1. Review the build warnings generated in this workflow run
           2. For unpinned dependencies: Pin them to SHAs immediately (security risk)
-          3. For stale SHAs: Update them when convenient (maintenance task)
+          3. For stale SHAs (>${{ inputs.max-age-days }} days): Update them when convenient (maintenance task)
           4. Download the JSON report artifacts for detailed analysis
           
           "@
