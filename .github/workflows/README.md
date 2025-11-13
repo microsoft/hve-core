@@ -75,7 +75,7 @@ Workflows follow a consistent naming pattern to indicate their purpose and usage
 | `sha-staleness-check.yml` | Reusable | Check for stale SHA pins | `workflow_call`, `workflow_dispatch` |
 | `gitleaks-scan.yml` | Reusable | Secret detection scan | `workflow_call` |
 | `checkov-scan.yml` | Reusable | Infrastructure-as-Code security scan | `workflow_call` |
-| `gitleaks.yml` | Standalone | Legacy secret detection | `push`, `pull_request` |
+| `security-scan.yml` | Standalone | Security scanning (secrets, IaC, etc.) | `push`, `pull_request` |
 
 ### Validation Workflows
 
