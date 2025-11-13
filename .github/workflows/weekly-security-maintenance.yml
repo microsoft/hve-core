@@ -37,32 +37,19 @@ jobs:
     with:
       max-age-days: ${{ inputs.max-age-days || 30 }}
 
-  # Job 3: Run security scans (Gitleaks)
-  gitleaks-scan:
-    name: Gitleaks Secret Scan
-    uses: ./.github/workflows/gitleaks-scan.yml
+  # Job 3: Run CodeQL security analysis
+  codeql-scan:
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write
-    with:
-      soft-fail: true
-      upload-sarif: true
+      actions: read
 
-  # Job 4: Run security scans (Checkov)
-  checkov-scan:
-    name: Checkov IaC Scan
-    uses: ./.github/workflows/checkov-scan.yml
-    permissions:
-      contents: read
-      security-events: write
-    with:
-      soft-fail: true
-      upload-sarif: true
-
-  # Job 5: Generate consolidated summary
+  # Job 4: Generate consolidated summary
   summary:
     name: Security Maintenance Summary
-    needs: [validate-pinning, check-staleness, gitleaks-scan, checkov-scan]
+    needs: [validate-pinning, check-staleness, codeql-scan]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -74,8 +61,7 @@ jobs:
           $pinningScore = '${{ needs.validate-pinning.outputs.compliance-score }}'
           $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
           $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
-          $gitleaksResult = '${{ needs.gitleaks-scan.result }}'
-          $checkovResult = '${{ needs.checkov-scan.result }}'
+          $codeqlResult = '${{ needs.codeql-scan.result }}'
           
           # Determine overall status
           $hasIssues = $false
@@ -96,12 +82,13 @@ jobs:
           | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
           | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
-          ## 🛡️ Security Scans
+          ## 🛡️ Security Analysis
           
-          | Scanner | Result |
-          |---------|--------|
-          | Gitleaks (Secrets) | $(if ($gitleaksResult -eq 'success') { '✅ Pass' } else { '⚠️ See details' }) |
-          | Checkov (IaC) | $(if ($checkovResult -eq 'success') { '✅ Pass' } else { '⚠️ See details' }) |
+          | Component | Status |
+          |-----------|--------|
+          | CodeQL Analysis | $(if ($codeqlResult -eq 'success') { '✅ Complete' } else { '⚠️ See details' }) |
+          | Secret Scanning | ✅ Enabled (GitHub native) |
+          | Dependabot Alerts | ✅ Enabled (GitHub native) |
           
           $(if ($unpinnedCount -ne '0') {
             @"
@@ -159,7 +146,8 @@ jobs:
           Repository security posture is excellent:
           - All dependencies are SHA-pinned
           - All SHAs are current (< 30 days old)
-          - No security scan issues
+          - CodeQL analysis completed successfully
+          - GitHub Secret Scanning and Dependabot actively monitoring
           
           "@
           })

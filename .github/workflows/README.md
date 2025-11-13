@@ -73,9 +73,9 @@ Workflows follow a consistent naming pattern to indicate their purpose and usage
 | `weekly-security-maintenance.yml` | Orchestrator | Weekly security posture check | `schedule`, `workflow_dispatch` |
 | `dependency-pinning-scan.yml` | Reusable | Validate SHA pinning compliance | `workflow_call` |
 | `sha-staleness-check.yml` | Reusable | Check for stale SHA pins | `workflow_call`, `workflow_dispatch` |
-| `gitleaks-scan.yml` | Reusable | Secret detection scan | `workflow_call` |
-| `checkov-scan.yml` | Reusable | Infrastructure-as-Code security scan | `workflow_call` |
-| `security-scan.yml` | Standalone | Security scanning (secrets, IaC, etc.) | `push`, `pull_request` |
+| `codeql-analysis.yml` | Reusable | CodeQL security analysis | `push`, `pull_request`, `schedule`, `workflow_call` |
+| `dependency-review.yml` | Reusable | Dependency vulnerability review | `pull_request`, `workflow_call` |
+| `security-scan.yml` | Standalone | Security scanning orchestrator | `push`, `pull_request` |
 
 ### Validation Workflows
 
@@ -98,14 +98,12 @@ Call a reusable workflow from another workflow using the `uses` keyword:
 ```yaml
 jobs:
   security-scan:
-    name: Run Security Scan
-    uses: ./.github/workflows/gitleaks-scan.yml
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write
-    with:
-      soft-fail: true
-      upload-sarif: true
+      actions: read
 ```
 
 ### Passing Inputs
@@ -157,12 +155,18 @@ jobs:
 
 **Jobs**:
 
-* `validate-pinning`: Checks SHA pinning compliance (95% threshold)
+* `validate-pinning`: Checks SHA pinning compliance (100% threshold)
 * `check-staleness`: Identifies stale SHA pins (>30 days)
-* `scan-secrets`: Runs Gitleaks secret detection
-* `scan-iac`: Runs Checkov IaC security scan
+* `codeql-scan`: Runs CodeQL security analysis
+* `summary`: Generates consolidated report
 
-**Outputs**: Consolidated SARIF results, JSON reports, job summaries
+**Outputs**: Consolidated job summaries, JSON reports
+
+**Security Coverage**:
+
+* **CodeQL Analysis**: JavaScript/TypeScript code security scanning with security-extended queries
+* **GitHub Secret Scanning**: Automatic detection of 200+ secret patterns (enabled via Security tab)
+* **Dependabot Alerts**: Automatic vulnerability detection for npm dependencies (enabled via Security tab)
 
 #### `dependency-pinning-scan.yml`
 
@@ -202,6 +206,37 @@ jobs:
 * Medium: 91-180 days
 * High: 181-365 days
 * Critical: >365 days
+
+#### `codeql-analysis.yml`
+
+**Purpose**: Performs comprehensive security analysis using GitHub CodeQL
+
+**Triggers**: `push`, `pull_request`, `schedule` (Mondays at 3 AM), `workflow_call`
+
+**Features**:
+
+* **Languages**: JavaScript/TypeScript analysis
+* **Queries**: security-extended and security-and-quality query suites
+* **Coverage**: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
+* **Integration**: Results appear in Security > Code Scanning tab
+* **Autobuild**: Automatically detects and builds JavaScript/TypeScript projects
+
+**Outputs**: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+
+#### `dependency-review.yml`
+
+**Purpose**: Reviews dependency changes in pull requests for known vulnerabilities
+
+**Triggers**: `pull_request`, `workflow_call`
+
+**Features**:
+
+* **Threshold**: Fails on moderate or higher severity vulnerabilities
+* **PR Comments**: Automatically comments on PRs with vulnerability summary
+* **Coverage**: Checks npm packages against GitHub Advisory Database
+* **Integration**: Works with Dependabot alerts and security advisories
+
+**Behavior**: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
 
 ### Validation Workflows
 

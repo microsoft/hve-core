@@ -9,14 +9,21 @@ on:
 permissions:
   contents: read
   security-events: write
+  pull-requests: write
 
 jobs:
-  gitleaks:
-    name: Secret Detection
-    uses: ./.github/workflows/gitleaks-scan.yml
+  codeql:
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
       security-events: write
-    with:
-      soft-fail: false
-      upload-sarif: true
+      actions: read
+  
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/dependency-review.yml
+    permissions:
+      contents: read
+      pull-requests: write
