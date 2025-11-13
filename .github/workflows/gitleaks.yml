@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write  # Required for potential SARIF upload
 
 jobs:
   scan:
@@ -25,10 +26,11 @@ jobs:
         uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Run Gitleaks
-        if: env.GITLEAKS_LICENSE != ''
-        uses: gitleaks/gitleaks-action@12e9436baac6e0303d763d2ede4a691e0e6eede8 # v2.3.6
+        if: ${{ secrets.GITLEAKS_LICENSE != '' }}
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}

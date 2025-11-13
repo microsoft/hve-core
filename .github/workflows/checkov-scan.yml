@@ -43,7 +43,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Checkov
-        run: pip install checkov
+        run: pip install -r requirements.txt
 
       - name: Run Checkov scan
         id: checkov-scan

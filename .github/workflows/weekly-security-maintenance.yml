@@ -120,11 +120,27 @@ jobs:
           })
           
           $(if ($staleCount -ne '0') {
+            # Load the staleness report to show details
+            $stalenessReport = if (Test-Path 'logs/sha-staleness-results.json') {
+              Get-Content 'logs/sha-staleness-results.json' | ConvertFrom-Json
+            }
+            
+            $staleDetails = ""
+            if ($stalenessReport -and $stalenessReport.Dependencies) {
+              foreach ($staleDep in $stalenessReport.Dependencies) {
+                if ($staleDep.DaysOld -gt 30) {
+                  $staleDetails += "- **$($staleDep.File)**: $($staleDep.Action)@$($staleDep.CurrentVersion) ($($staleDep.DaysOld) days old, latest: $($staleDep.LatestVersion))`n"
+                }
+              }
+            }
+            
             @"
           
           ## ℹ️ Recommended: Update Stale SHAs
           
           **$staleCount SHA pins are outdated (>30 days old).** Consider updating them.
+          
+          $staleDetails
           
           **To update:**
           ``````powershell

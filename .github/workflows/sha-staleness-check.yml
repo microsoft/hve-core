@@ -1,8 +1,6 @@
 name: SHA Staleness Check
 
 on:
-  schedule:
-    - cron: '0 0 * * 0' # Weekly on Sunday at midnight UTC
   workflow_dispatch:
     inputs:
       max-age-days:
@@ -71,16 +69,16 @@ jobs:
           # Extract stale count from JSON report
           if (Test-Path logs/sha-staleness-results.json) {
             $report = Get-Content logs/sha-staleness-results.json | ConvertFrom-Json
-            $staleCount = ($report.StaleDependencies | Where-Object { $_.Age -gt $thresholdDays } | Measure-Object).Count
+            $staleCount = ($report.Dependencies | Where-Object { $_.DaysOld -gt $thresholdDays } | Measure-Object).Count
             "stale-count=$staleCount" >> $env:GITHUB_OUTPUT
             "has-stale=$(if ($staleCount -gt 0) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
             
             Write-Host "Stale Dependencies Found: $staleCount"
             
             # Fire warnings for each stale dependency
-            foreach ($staleDep in $report.StaleDependencies) {
-              if ($staleDep.Age -gt $thresholdDays) {
-                Write-Output "::warning file=$($staleDep.File),line=$($staleDep.Line)::Stale SHA detected: $($staleDep.Action)@$($staleDep.CurrentSHA) is $($staleDep.Age) days old (latest: $($staleDep.LatestSHA))"
+            foreach ($staleDep in $report.Dependencies) {
+              if ($staleDep.DaysOld -gt $thresholdDays) {
+                Write-Output "::warning file=$($staleDep.File)::Stale SHA detected: $($staleDep.Action)@$($staleDep.CurrentVersion) is $($staleDep.DaysOld) days old (latest: $($staleDep.LatestVersion))"
               }
             }
           } else {

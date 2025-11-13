@@ -72,7 +72,7 @@ Workflows follow a consistent naming pattern to indicate their purpose and usage
 |----------|------|---------|----------|
 | `weekly-security-maintenance.yml` | Orchestrator | Weekly security posture check | `schedule`, `workflow_dispatch` |
 | `dependency-pinning-scan.yml` | Reusable | Validate SHA pinning compliance | `workflow_call` |
-| `sha-staleness-check.yml` | Reusable | Check for stale SHA pins | `schedule`, `workflow_dispatch`, `workflow_call` |
+| `sha-staleness-check.yml` | Reusable | Check for stale SHA pins | `workflow_call`, `workflow_dispatch` |
 | `gitleaks-scan.yml` | Reusable | Secret detection scan | `workflow_call` |
 | `checkov-scan.yml` | Reusable | Infrastructure-as-Code security scan | `workflow_call` |
 | `gitleaks.yml` | Standalone | Legacy secret detection | `push`, `pull_request` |
