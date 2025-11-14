@@ -2,7 +2,8 @@ name: CodeQL Security Analysis
 
 on:
   schedule:
-    - cron: '0 4 * * 0'  # Sundays at 4 AM UTC (weekly security scan)
+    # Sundays at 4 AM UTC (weekly security scan)
+    - cron: '0 4 * * 0'
   workflow_call:
 
 permissions:

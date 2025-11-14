@@ -38,7 +38,7 @@ jobs:
       max-age-days: ${{ inputs.max-age-days || 30 }}
 
   # Job 3: Run CodeQL security analysis
-  codeql-scan:
+  codeql-analysis:
     name: CodeQL Security Analysis
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
@@ -49,7 +49,7 @@ jobs:
   # Job 4: Generate consolidated summary
   summary:
     name: Security Maintenance Summary
-    needs: [validate-pinning, check-staleness, codeql-scan]
+    needs: [validate-pinning, check-staleness, codeql-analysis]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -61,7 +61,7 @@ jobs:
           $pinningScore = '${{ needs.validate-pinning.outputs.compliance-score }}'
           $unpinnedCount = '${{ needs.validate-pinning.outputs.unpinned-count }}'
           $staleCount = '${{ needs.check-staleness.outputs.stale-count }}'
-          $codeqlResult = '${{ needs.codeql-scan.result }}'
+          $codeqlResult = '${{ needs.codeql-analysis.result }}'
           
           # Determine overall status
           $hasIssues = $false

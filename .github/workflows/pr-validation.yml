@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  codeql-security:
+  codeql-analysis:
     name: CodeQL Security Analysis
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
@@ -47,7 +47,7 @@ jobs:
 
   psscriptanalyzer:
     name: PowerShell Lint
-    uses: ./.github/workflows/psscriptanalyzer.yml
+    uses: ./.github/workflows/ps-script-analyzer.yml
     permissions:
       contents: read
     with:

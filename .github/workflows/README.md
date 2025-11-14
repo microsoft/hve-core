@@ -16,8 +16,6 @@ keywords:
 estimated_reading_time: 25
 ---
 
-# GitHub Actions Workflows
-
 This directory contains GitHub Actions workflows for continuous integration, security scanning, and automated maintenance of the `hve-core` repository.
 
 ## Overview
@@ -32,12 +30,12 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 ### Naming Conventions
 
-| Pattern | Purpose | Example |
-|---------|---------|------|
-| `*-scan.yml` | Security scanning, SARIF outputs | `codeql-analysis.yml` |
-| `*-check.yml` | Validation, compliance checking | `markdown-link-check.yml` |
-| `*-lint.yml` | Code quality, formatting | `markdown-lint.yml` |
-| Orchestrators | Compose multiple workflows | `pr-validation.yml` |
+| Pattern       | Purpose                          | Example                   |
+|---------------|----------------------------------|---------------------------|
+| `*-scan.yml`  | Security scanning, SARIF outputs | `codeql-analysis.yml`     |
+| `*-check.yml` | Validation, compliance checking  | `markdown-link-check.yml` |
+| `*-lint.yml`  | Code quality, formatting         | `markdown-lint.yml`       |
+| Orchestrators | Compose multiple workflows       | `pr-validation.yml`       |
 
 ### Workflow Types
 
@@ -49,29 +47,29 @@ Modular reusable workflows following Single Responsibility Principle. Each workf
 
 Compose multiple reusable workflows for comprehensive validation and security scanning.
 
-| Workflow | Triggers | Jobs | Mode | Purpose |
-|----------|----------|------|------|------|
-| `pr-validation.yml` | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline) | Strict validation | Pre-merge quality gate with security |
-| `main.yml` | Push to main | 5 jobs (5 reusable workflows) | Strict mode, SARIF uploads | Post-merge validation |
-| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC) | 4 (validate-pinning, check-staleness, codeql, summary) | Soft-fail warnings | Weekly security posture |
+| Workflow                          | Triggers                                | Jobs                                                            | Mode                       | Purpose                              |
+|-----------------------------------|-----------------------------------------|-----------------------------------------------------------------|----------------------------|--------------------------------------|
+| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
+| `main.yml`                        | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
+| `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
 
-**pr-validation.yml jobs**: codeql-security, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
+**pr-validation.yml jobs**: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
-**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-security, dependency-pinning-scan
+**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
 
 ## Reusable Workflows
 
 ### Validation Workflows
 
-| Workflow | Tool | Purpose | Key Inputs | Artifacts |
-|----------|------|---------|------------|-----------|
-| `spell-check.yml` | cspell | Validate spelling across all files | `soft-fail` (false) | spell-check-results |
-| `markdown-lint.yml` | markdownlint-cli | Enforce markdown standards | `soft-fail` (false) | markdown-lint-results |
-| `table-format.yml` | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false) | table-format-results |
-| `ps-script-analyzer.yml` | PSScriptAnalyzer | PowerShell static analysis | `soft-fail` (false), `changed-files-only` (true) | psscriptanalyzer-results |
-| `frontmatter-validation.yml` | Custom PS script | YAML frontmatter validation | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
-| `link-lang-check.yml` | Custom PS script | Detect language-specific URLs | `soft-fail` (false) | link-lang-check-results |
-| `markdown-link-check.yml` | markdown-link-check | Validate links (internal/external) | `soft-fail` (true) | markdown-link-check-results |
+| Workflow                     | Tool                     | Purpose                              | Key Inputs                                                                                                      | Artifacts                      |
+|------------------------------|--------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------|
+| `spell-check.yml`            | cspell                   | Validate spelling across all files   | `soft-fail` (false)                                                                                             | spell-check-results            |
+| `markdown-lint.yml`          | markdownlint-cli         | Enforce markdown standards           | `soft-fail` (false)                                                                                             | markdown-lint-results          |
+| `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                             | table-format-results           |
+| `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                | psscriptanalyzer-results       |
+| `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
+| `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
+| `markdown-link-check.yml`    | markdown-link-check      | Validate links (internal/external)   | `soft-fail` (true)                                                                                              | markdown-link-check-results    |
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
@@ -159,7 +157,7 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 * **Queries**: security-extended and security-and-quality query suites
 * **Coverage**: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
 * **Integration**: Results appear in Security > Code Scanning tab
-* **Autobuild**: Automatically detects and builds JavaScript/TypeScript projects
+* **Auto-build**: Automatically detects and builds JavaScript/TypeScript projects
 
 **Outputs**: SARIF results uploaded to GitHub Security tab, job summary with analysis details
 
@@ -223,25 +221,28 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 CodeQL runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
 
-- **PR validation**: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
-- **Main branch**: Runs via `main.yml` on every push to main
-- **Weekly scan**: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
+* **PR validation**: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
+* **Main branch**: Runs via `main.yml` on every push to main
+* **Weekly scan**: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
 
 This architecture ensures:
-- No duplicate CodeQL runs (previously ran both standalone and in orchestrators)
-- Comprehensive security coverage across all code paths
-- Clear ownership of when and why CodeQL executes
-- Reduced GitHub Actions minutes consumption
+
+* No duplicate CodeQL runs on the same commit (previously executed both standalone and within orchestrators)
+* Comprehensive security coverage across all code paths
+* Clear ownership of when and why CodeQL executes
+* Reduced GitHub Actions minutes consumption
 
 **Workflow Execution Matrix**:
 
-| Event | Workflows That Run | CodeQL Included |
-|-------|-------------------|----------------|
-| Open PR to main/develop | `pr-validation.yml` (9 jobs) | ✅ Yes |
-| Push to PR branch | `pr-validation.yml` (9 jobs) | ✅ Yes |
-| Merge to main | `main.yml` (5 jobs) | ✅ Yes |
-| Sunday 4AM UTC | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone) |
-| Feature branch push (no PR) | None | ❌ No |
+| Event                                | Workflows That Run                                       | CodeQL Included    |
+|--------------------------------------|----------------------------------------------------------|--------------------|
+| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
+| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
+| Merge to main                        | `main.yml` (5 jobs)                                      | ✅ Yes              |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone) |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌ No               |
+
+[^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
 ## Adding New Workflows
 
@@ -535,14 +536,14 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 
 ## Configuration Files
 
-| File | Purpose | Used By |
-|------|---------|---------|
-| `scripts/linting/PSScriptAnalyzer.psd1` | PowerShell linting rules | `ps-script-analyzer.yml` |
-| `.markdownlint.json` | Markdown formatting rules | markdown-lint.yml |
-| `scripts/linting/markdown-link-check.config.json` | Link checking configuration | markdown-link-check.yml |
-| `.cspell.json` | Spell checking configuration | spell-check.yml |
-| `.github/instructions/markdown.instructions.md` | Markdown style guide | All markdown workflows |
-| `.github/instructions/commit-message.instructions.md` | Commit message standards | All workflows (informative) |
+| File                                                  | Purpose                      | Used By                     |
+|-------------------------------------------------------|------------------------------|-----------------------------|
+| `scripts/linting/PSScriptAnalyzer.psd1`               | PowerShell linting rules     | `ps-script-analyzer.yml`    |
+| `.markdownlint.json`                                  | Markdown formatting rules    | `markdown-lint.yml`         |
+| `scripts/linting/markdown-link-check.config.json`     | Link checking configuration  | `markdown-link-check.yml`   |
+| `.cspell.json`                                        | Spell checking configuration | `spell-check.yml`           |
+| `.github/instructions/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
+| `.github/instructions/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources
 
