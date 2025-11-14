@@ -60,6 +60,7 @@ jobs:
             logs/psscriptanalyzer-results.json
             logs/psscriptanalyzer-summary.json
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Check results
         if: "!inputs.soft-fail"

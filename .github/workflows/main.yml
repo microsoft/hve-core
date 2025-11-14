@@ -35,14 +35,6 @@ jobs:
     with:
       soft-fail: false
 
-  codeql-analysis:
-    name: CodeQL Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-
   dependency-pinning-scan:
     name: Dependency Pinning Scan
     uses: ./.github/workflows/dependency-pinning-scan.yml

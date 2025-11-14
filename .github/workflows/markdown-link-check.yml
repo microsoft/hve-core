@@ -44,10 +44,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path logs | Out-Null
 
       - name: Run markdown link check
+        id: link-check
         shell: pwsh
         run: |
           & scripts/linting/Markdown-Link-Check.ps1
-        continue-on-error: true
+        continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload markdown link check results
         if: always()
@@ -58,10 +59,8 @@ jobs:
           retention-days: 30
 
       - name: Check results and fail if needed
-        if: ${{ !inputs.soft-fail }}
+        if: ${{ !inputs.soft-fail && steps.link-check.outcome == 'failure' }}
         shell: pwsh
         run: |
-          if ($env:MARKDOWN_LINK_CHECK_FAILED -eq 'true') {
-            Write-Host "Markdown link check failed and soft-fail is false. Failing the job."
-            exit 1
-          }
+          Write-Host "Markdown link check failed and soft-fail is false. Failing the job."
+          exit 1

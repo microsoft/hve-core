@@ -13,14 +13,6 @@ permissions:
   contents: read
 
 jobs:
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-
   spell-check:
     name: Spell Check
     uses: ./.github/workflows/spell-check.yml

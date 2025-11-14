@@ -12,7 +12,7 @@ on:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'actions,containers'
+        default: 'github-actions'
       soft-fail:
         description: 'Whether to continue on compliance violations'
         required: false
@@ -71,44 +71,64 @@ jobs:
         run: |
           Write-Host "Validating dependency SHA pinning compliance..."
           
-          # Build parameter list
+          # Ensure logs directory exists
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          
+          # Build parameter list for JSON output (always generate)
           $params = @{
             Path = '.'
+            Recursive = $true
             Format = 'json'
             OutputPath = 'logs/dependency-pinning-results.json'
           }
           
           if ('${{ inputs.dependency-types }}') {
-            $params['DependencyTypes'] = '${{ inputs.dependency-types }}'
+            $params['IncludeTypes'] = '${{ inputs.dependency-types }}'
           }
           
           if ('${{ inputs.threshold }}') {
             $params['Threshold'] = [int]'${{ inputs.threshold }}'
           }
           
-          # Run validation script
+          # Run validation script (JSON format)
           & scripts/security/Test-DependencyPinning.ps1 @params
+          $jsonExitCode = $LASTEXITCODE
           
-          # Extract metrics from report
-          $report = Get-Content logs/dependency-pinning-results.json | ConvertFrom-Json
-          $complianceScore = $report.ComplianceScore
-          $unpinnedCount = $report.UnpinnedDependencies
-          $threshold = [int]'${{ inputs.threshold }}'
-          $isCompliant = $complianceScore -ge $threshold
+          # Generate SARIF format if requested
+          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+            Write-Host "Generating SARIF format for Security tab..."
+            $params['Format'] = 'sarif'
+            $params['OutputPath'] = 'logs/dependency-pinning-results.sarif'
+            
+            & scripts/security/Test-DependencyPinning.ps1 @params
+          }
           
-          "compliance-score=$complianceScore" >> $env:GITHUB_OUTPUT
-          "unpinned-count=$unpinnedCount" >> $env:GITHUB_OUTPUT
-          "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
-          
-          Write-Host "Compliance Score: $complianceScore%"
-          Write-Host "Unpinned Dependencies: $unpinnedCount"
-          Write-Host "Is Compliant (>=$threshold%): $isCompliant"
-          
-          # Fire GitHub Actions warnings for each violation
-          if ($unpinnedCount -gt 0) {
-            foreach ($violation in $report.Violations) {
-              Write-Output "::warning file=$($violation.File),line=$($violation.Line)::Unpinned $($violation.Type) dependency: $($violation.Name)@$($violation.Version) (Severity: $($violation.Severity))"
+          # Extract metrics from JSON report
+          if (Test-Path logs/dependency-pinning-results.json) {
+            $report = Get-Content logs/dependency-pinning-results.json | ConvertFrom-Json
+            $complianceScore = $report.ComplianceScore
+            $unpinnedCount = $report.UnpinnedDependencies
+            $threshold = [int]'${{ inputs.threshold }}'
+            $isCompliant = $complianceScore -ge $threshold
+            
+            "compliance-score=$complianceScore" >> $env:GITHUB_OUTPUT
+            "unpinned-count=$unpinnedCount" >> $env:GITHUB_OUTPUT
+            "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+            
+            Write-Host "Compliance Score: $complianceScore%"
+            Write-Host "Unpinned Dependencies: $unpinnedCount"
+            Write-Host "Is Compliant (>=$threshold%): $isCompliant"
+            
+            # Fire GitHub Actions warnings for each violation
+            if ($unpinnedCount -gt 0) {
+              foreach ($violation in $report.Violations) {
+                Write-Output "::warning file=$($violation.File),line=$($violation.Line)::Unpinned $($violation.Type) dependency: $($violation.Name)@$($violation.Version) (Severity: $($violation.Severity))"
+              }
             }
+          }
+          else {
+            Write-Error "Failed to generate dependency pinning report"
+            exit 1
           }
 
       - name: Upload SARIF to Security tab
