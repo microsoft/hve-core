@@ -51,14 +51,14 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 
 | Workflow | Triggers | Jobs | Mode | Purpose |
 |----------|----------|------|------|------|
-| `pr-validation.yml` | PR to main | 8 jobs (7 reusable workflows + 1 inline) | Strict validation, soft-fail security | Pre-merge quality gate |
-| `main.yml` | Push to main | 5 jobs (3 reusable workflows + 2 inline) | Strict mode, SARIF uploads | Post-merge validation |
+| `pr-validation.yml` | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline) | Strict validation | Pre-merge quality gate with security |
+| `main.yml` | Push to main | 5 jobs (5 reusable workflows) | Strict mode, SARIF uploads | Post-merge validation |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC) | 4 (validate-pinning, check-staleness, codeql, summary) | Soft-fail warnings | Weekly security posture |
 | `security-scan.yml` | Push/PR main/develop | 2 (codeql, dependency-review) | Standard SARIF | Continuous security |
 
-**pr-validation.yml jobs**: spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
+**pr-validation.yml jobs**: codeql-security, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
-**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
+**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-security, dependency-pinning-scan
 
 ## Reusable Workflows
 
@@ -152,7 +152,7 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 **Purpose**: Performs comprehensive security analysis using GitHub CodeQL
 
-**Triggers**: `push`, `pull_request`, `schedule` (Sundays at 4 AM UTC), `workflow_call`
+**Triggers**: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 
 **Features**:
 
@@ -217,6 +217,32 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 * Medium: 91-180 days
 * High: 181-365 days
 * Critical: >365 days
+
+## Architecture Decisions
+
+### CodeQL Execution Strategy
+
+CodeQL runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
+
+- **PR validation**: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
+- **Main branch**: Runs via `main.yml` on every push to main
+- **Weekly scan**: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
+
+This architecture ensures:
+- No duplicate CodeQL runs (previously ran both standalone and in orchestrators)
+- Comprehensive security coverage across all code paths
+- Clear ownership of when and why CodeQL executes
+- Reduced GitHub Actions minutes consumption
+
+**Workflow Execution Matrix**:
+
+| Event | Workflows That Run | CodeQL Included |
+|-------|-------------------|----------------|
+| Open PR to main/develop | `pr-validation.yml` (9 jobs) | ✅ Yes |
+| Push to PR branch | `pr-validation.yml` (9 jobs) | ✅ Yes |
+| Merge to main | `main.yml` (5 jobs) | ✅ Yes |
+| Sunday 4AM UTC | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone) |
+| Feature branch push (no PR) | None | ❌ No |
 
 ## Adding New Workflows
 
