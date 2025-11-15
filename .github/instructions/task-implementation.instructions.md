@@ -17,7 +17,7 @@ Implementers must fulfill task plans instructions located in `.copilot-tracking/
 * **Task Plan Details**: `.copilot-tracking/details/<date>-<description>-details.md`
 * **Research References**: `.copilot-tracking/research/<date>-<description>-research.md`
 * **Changes Log**: `.copilot-tracking/changes/<date>-<description>-changes.md`
-* **Workspace Standards**: Reference the relevant guidance in `copilot/**` and `.github/instructions/**` before editing code.
+* **Workspace Standards**: Reference the relevant guidance in `.github/instructions/**` before editing code.
 
 ## Preparation Rules
 

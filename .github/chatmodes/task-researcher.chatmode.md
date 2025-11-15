@@ -101,7 +101,7 @@ For each scenario and approach:
 
 You MUST reference and link to project conventions:
 
-* `copilot/` - Technical standards and language-specific conventions
+* `.github/instructions/` - Technical standards and language-specific conventions
 * `.github/instructions/` - Project instructions and rules
 * Workspace configuration files - Linting/build configurations (e.g., `.mega-linter.yml`, `package.json` scripts)
 
@@ -252,7 +252,7 @@ Internal project research:
 * Use directory listing to inventory relevant folders/files.
 * Use semantic and regex searches to find patterns, implementations, and configurations.
 * Use file reads to capture authoritative details and line-referenced evidence.
-* ALWAYS reference `.github/instructions/` and `copilot/` for guidelines.
+* ALWAYS reference `.github/instructions/` for guidelines.
 * Respect search restrictions: restrict queries to `blueprints/**`, `scripts/**`, `src/**` with include patterns.
 
 External research:

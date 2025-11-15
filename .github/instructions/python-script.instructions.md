@@ -31,4 +31,4 @@ When implementing any Python script functionality in the `/scripts` directory:
 
 - You must have read the complete Python documentation before proceeding
 - You must adhere to all guidelines provided in the comprehensive instructions
-- You must implement all patterns exactly as specified in `copilot/python-script.md`
+- You must implement all patterns exactly as specified in `.github/instructions/python-script.instructions.md`

@@ -142,7 +142,7 @@ Follow all instructions from #file:{{relative_path}}/.github/instructions/task-i
 * {{documentation_url}} - {{documentation_description}}
 
 ### Standards References
-* #file:{{relative_path}}/copilot/{{language}}.md - {{language_conventions_description}}
+* #file:{{relative_path}}/.github/instructions/{{language}}.instructions.md - {{language_conventions_description}}
 * #file:{{relative_path}}/.github/instructions/{{instruction_file}}.instructions.md - {{instruction_description}}
 
 ## Implementation Checklist

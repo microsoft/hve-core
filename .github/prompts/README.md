@@ -93,8 +93,9 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Related Resources
 
-- **[AI-Assisted Engineering Guide](../../docs/contributing/ai-assisted-engineering.md)** - Complete guide to project AI resources
-- **[Core Guidance](../../copilot/)** - Comprehensive guidance files for development standards
+- **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
+- **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
+- **[Chat Modes](../chatmodes/README.md)** - Specialized AI assistance with enhanced capabilities
 
 ---
 
