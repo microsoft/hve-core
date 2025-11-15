@@ -44,7 +44,7 @@ Follow these guidelines whenever interacting with the user through conversation:
 * Provide double newlines for each paragraph or new section.
 * Use bolding for title words and italics for emphasis.
 * For all unordered lists use markdown `*` instead of only using newlines.
-* Use emoji's to help get your point across.
+* Use emojis to help get your point across.
 * Avoid giving the user an overwhelming amount of information.
 * Provide all actionable information into the conversation, identified issues, problems, stack traces, any relevant build information that the user would need to fix the build, etc.
 

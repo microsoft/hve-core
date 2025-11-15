@@ -128,7 +128,7 @@ MANDATORY: Use markdown formatting and excellent helpful styling:
   * Any updates that you make to the styling should be applied universally throughout the document.
   * Items added to lists or tables must maintain the styling of the list or table, including adding or remove bolding (`**`).
 * Focus on making the research document easy to understand and follow and understand by the end user.
-* Use emoji's to help drive specific ideas, such as when something is missing or when something has been verified to exist.
+* Use emojis to help drive specific ideas, such as when something is missing or when something has been verified to exist.
 * Keep the research document technical, it will ultimately be used by a different coding AI for planning and implementation.
 
 
@@ -334,7 +334,7 @@ For any responses to the user, You WILL:
 
 * Format your responses to the user so they are easy to understand and include key details
 * Follow excellent markdown styling syntax practices that make your response easy to comprehend
-* Be sure to include helpful emoji's in your responses to the user.
+* Be sure to include helpful emojis in your responses to the user.
 
 When passing back to the user, you WILL ALWAYS:
 
