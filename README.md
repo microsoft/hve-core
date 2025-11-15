@@ -66,14 +66,13 @@ scripts/
 └── linting/         # Code quality and validation tools
 ```
 
-## Contributing
+## 🤝 Contributing
 
-We welcome contributions from the community. Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+We ❤️ contributions! Whether you're fixing typos or adding new components:
 
-* Setting up your development environment
-* Submitting bug reports and feature requests
-* Code style and validation requirements
-* Pull request process
+1. Read our [Contributing Guide](CONTRIBUTING.md)
+2. Check out [open issues](https://github.com/microsoft/hve-core/issues)
+3. Join the [discussion](https://github.com/microsoft/hve-core/discussions)
 
 ## Resources
 
@@ -84,9 +83,22 @@ We welcome contributions from the community. Please see our [Contributing Guide]
 * [Security Policy](SECURITY.md)
 * [Support](SUPPORT.md)
 
-## License
+## Responsible AI
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Microsoft encourages customers to review its Responsible AI Standard when developing AI-enabled systems to ensure ethical, safe, and inclusive AI practices. Learn more at [Microsoft's Responsible AI](https://www.microsoft.com/ai/responsible-ai).
+
+## 📄 Legal
+
+This project is licensed under the [MIT License](./LICENSE).
+
+**Security:** See [SECURITY.md](./SECURITY.md) for security policy and reporting vulnerabilities.
+
+## Trademark Notice
+
+> This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+> trademarks or logos is subject to and must follow Microsoft's Trademark & Brand Guidelines. Use of Microsoft trademarks or logos in
+> modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or
+> logos are subject to those third-party's policies.
 
 ---
 
