@@ -522,9 +522,9 @@ function Test-FrontmatterValidation {
                     # Instruction files (.instructions.md) have specific patterns
                     elseif ($isInstruction) {
                         # Instruction files should have 'applyTo' field for context-specific instructions
+                        # This is informational only - does not fail validation
                         if (-not $frontmatter.Frontmatter.ContainsKey('applyTo')) {
-                            $warnings += "Instruction file missing 'applyTo' field: $($file.FullName)"
-                            [void]$filesWithWarnings.Add($file.FullName)
+                            Write-Verbose "Instruction file missing optional 'applyTo' field: $($file.FullName)"
                         }
                     }
                     # Prompt files (.prompt.md) are instructions/templates
