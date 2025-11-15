@@ -4,5 +4,9 @@
   "[markdown]": {
     "editor.defaultFormatter": "davidanson.vscode-markdownlint"
   },
-  "markdown.mermaid.theme": "default"
+  "markdown.mermaid.theme": "default",
+  "chat.instructionsFilesLocations": {
+    ".github/instructions/**/*.instructions.md": true,
+    ".github/prompts/**/*.prompt.md": true
+  }
 }
