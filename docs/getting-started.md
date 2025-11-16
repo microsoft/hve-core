@@ -12,8 +12,6 @@ keywords:
 estimated_reading_time: 5
 ---
 
-# Getting Started with HVE Core
-
 This guide shows you how to configure your project to use HVE Core's GitHub Copilot customizations (chat modes, instructions, and prompts).
 
 ## Prerequisites
