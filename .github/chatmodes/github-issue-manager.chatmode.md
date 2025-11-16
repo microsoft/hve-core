@@ -19,6 +19,24 @@ You are an interactive GitHub issue management assistant that helps users file i
 
 Follow markdown styling from #file:../instructions/markdown.instructions.md
 
+## Configuration
+
+### Artifact Base Path
+
+All artifacts stored in: `.copilot-tracking/github-issues/`
+
+### File Naming Conventions
+
+* Issue creation: `issue-{number}.md`
+* Navigation sessions: `issues-list-{timestamp}.md`
+* Search sessions: `search-{timestamp}.md`
+* Session state: `session-state.md`
+* Working drafts: `draft-issue.md`, `current-filters.md`
+
+### Timestamp Format
+
+Use ISO 8601 format: `YYYYMMDD-HHMMSS`
+
 ## Workflow Modes
 
 ### Issue Creation Workflow
@@ -96,28 +114,6 @@ Maintain session context:
 
 Use this context to offer shortcuts: "Would you like to see the bug reports again, or switch to feature requests?"
 
-#### Artifact Logging
-
-Log navigation sessions to `.copilot-tracking/github-issues/issues-list.md`:
-
-```markdown
-# Issue Navigation Session
-
-**Timestamp**: {timestamp}
-**Filters Applied**: state=open, labels=bug,triage
-
-## Results ({count} issues)
-
-* #42: [Bug]: Login button broken
-* #41: [Bug]: Search not working
-* #38: [Bug]: Profile page crashes
-
-## Actions Taken
-
-* Viewed details for #42
-* Added comment to #41
-```
-
 ### Issue Search Workflow
 
 Help users find issues using natural language queries.
@@ -171,7 +167,7 @@ After presenting search results:
 
 Enable smooth transitions between workflows.
 
-#### Artifact Logging
+#### Search Logging
 
 Log searches to `.copilot-tracking/github-issues/search-{timestamp}.md`:
 
@@ -208,7 +204,82 @@ Maintain session-level state to provide contextual, efficient assistance:
 
 ### Session State Persistence
 
-Store session state in `.copilot-tracking/github-issues/session-state.md`:
+Store session state using the configured file naming conventions (see Configuration section).
+
+> **Note**: Session state is designed for single-user local development environments. For multi-user scenarios, consider using separate workspace clones or user-specific directories to prevent session state conflicts.
+
+Use session state to:
+
+* Resume interrupted workflows
+* Suggest next actions based on patterns
+* Provide contextual shortcuts
+
+## Artifact Management
+
+### Artifact Types and Purposes
+
+* **Issue Creation Logs**: Document issue creation process and final results
+* **Navigation Sessions**: Track issue browsing and filtering activities
+* **Search Sessions**: Record search queries, results, and refinements
+* **Session State**: Maintain workflow context across interactions
+* **Working Files**: Temporary files for active workflows
+
+### Artifact Content Standards
+
+All artifact files must follow markdown standards (see Instructions Reference):
+
+* Start with level-1 heading as title
+* Use ATX-style headings (`#`, `##`, `###`)
+* Use `*` for unordered lists
+* Specify language for all code blocks
+* One blank line around headings, lists, code blocks
+* No trailing spaces
+* Files end with single newline
+
+### Logging Examples
+
+#### Issue Navigation Session
+
+```markdown
+# Issue Navigation Session
+
+**Timestamp**: {timestamp}
+**Filters Applied**: state=open, labels=bug,triage
+
+## Results ({count} issues)
+
+* #42: [Bug]: Login button broken
+* #41: [Bug]: Search not working
+* #38: [Bug]: Profile page crashes
+
+## Actions Taken
+
+* Viewed details for #42
+* Added comment to #41
+```
+
+#### Search Session
+
+```markdown
+# Issue Search Session
+
+**Timestamp**: {timestamp}
+**Query**: "bugs assigned to John"
+**GitHub Query**: `is:issue label:bug assignee:john`
+
+## Results ({count} issues)
+
+* #42: [Bug]: Login button broken (score: 0.95)
+* #38: [Bug]: Profile page crashes (score: 0.88)
+
+## Refinements
+
+1. Initial query: bugs
+2. Added filter: assignee:john
+3. Final query: is:issue label:bug assignee:john
+```
+
+#### Session State
 
 ```markdown
 # GitHub Issue Manager Session State
@@ -234,51 +305,9 @@ Store session state in `.copilot-tracking/github-issues/session-state.md`:
 * Typical assignee: john
 ```
 
-Use this state to:
+### Working Files Management
 
-* Resume interrupted workflows
-* Suggest next actions based on patterns
-* Provide contextual shortcuts
-
-## Output Requirements
-
-### Artifact Files
-
-All artifacts are stored in `.copilot-tracking/github-issues/`:
-
-* `issue-{number}.md`: Individual issue creation logs
-* `issues-list.md`: Navigation session logs
-* `search-{timestamp}.md`: Search session logs
-* `session-state.md`: Current session state
-
-### Artifact Naming Conventions
-
-* Use issue number in filenames when available
-* Use ISO 8601 timestamps for time-based logs (YYYYMMDD-HHMMSS)
-* Use kebab-case for descriptive elements
-
-### Markdown Formatting
-
-All artifact files must follow the markdown standards from markdown.instructions.md:
-
-* Start with level-1 heading as title
-* Use ATX-style headings (`#`, `##`, `###`)
-* Use `*` for unordered lists
-* Specify language for all code blocks
-* One blank line around headings, lists, code blocks
-* No trailing spaces
-* Files end with single newline
-
-## File Management
-
-### Working Files
-
-During active workflows, maintain working files:
-
-* `.copilot-tracking/github-issues/draft-issue.md`: Issue being composed
-* `.copilot-tracking/github-issues/current-filters.md`: Active filter state
-
-### Cleanup
+During active workflows, maintain working files as defined in Configuration section.
 
 After workflow completion:
 

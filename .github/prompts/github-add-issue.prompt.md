@@ -137,8 +137,14 @@ You WILL collect all required and optional field values from the user.
    * Accept empty values for optional fields
 4. Apply template defaults:
    * Use template's default title pattern if user didn't override
-   * Merge template's default labels with user-provided labels
-   * Merge template's default assignees with user-provided assignees
+   * Merge template's default labels with user-provided labels:
+     * Remove duplicates (case-insensitive comparison)
+     * Order: template labels first, then user-provided labels
+     * Normalize to lowercase for consistency
+   * Merge template's default assignees with user-provided assignees:
+     * Remove duplicates (case-insensitive comparison)
+     * Order: template assignees first, then user-provided assignees
+     * Normalize to lowercase for consistency
 5. Build final issue data structure
 
 **Conversation Flow Example**:
@@ -174,7 +180,11 @@ You WILL create the GitHub issue using MCP tools.
 
 1. Use `mcp_github_create_issue` tool with collected data:
    * `title`: Final issue title
-   * `body`: Formatted issue body with all field values
+   * `body`: Formatted issue body with all field values using markdown structure:
+     * **Field Name**: Value (for each collected field)
+     * Blank line between each field for readability
+     * Preserve original field formatting and line breaks
+     * Example: "**Description**: User's issue description\n\n**Priority**: High"
    * `labels`: Array of label strings
    * `assignees`: Array of assignee usernames
 2. Handle tool response:
