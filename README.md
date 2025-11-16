@@ -66,9 +66,9 @@ scripts/
 └── linting/         # Code quality and validation tools
 ```
 
-## 🤝 Contributing
+## Contributing
 
-We ❤️ contributions! Whether you're fixing typos or adding new components:
+We appreciate contributions! Whether you're fixing typos or adding new components:
 
 1. Read our [Contributing Guide](CONTRIBUTING.md)
 2. Check out [open issues](https://github.com/microsoft/hve-core/issues)
@@ -87,7 +87,7 @@ We ❤️ contributions! Whether you're fixing typos or adding new components:
 
 Microsoft encourages customers to review its Responsible AI Standard when developing AI-enabled systems to ensure ethical, safe, and inclusive AI practices. Learn more at [Microsoft's Responsible AI](https://www.microsoft.com/ai/responsible-ai).
 
-## 📄 Legal
+## Legal
 
 This project is licensed under the [MIT License](./LICENSE).
 
