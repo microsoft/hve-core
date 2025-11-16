@@ -14,14 +14,6 @@ Follow all instructions from #file:../instructions/markdown.instructions.md
 
 You WILL create GitHub issues by discovering available issue templates and collecting the necessary information. You WILL guide users through the process conversationally and ensure all required fields are collected before creation.
 
-When a user wants to create an issue:
-
-1. Discover available issue templates from `.github/ISSUE_TEMPLATE/`
-2. Present template options if multiple exist
-3. Collect required and optional field values conversationally
-4. Create the issue via GitHub MCP tools
-5. Log the creation to an artifact file for tracking
-
 ## General User Conversation Guidance
 
 When a user wants to create an issue:
@@ -68,7 +60,6 @@ You WILL discover and parse available issue templates from `.github/ISSUE_TEMPLA
    * Use generic fallback with basic fields: title, body, labels, assignees
    * Inform user that no custom templates were found
 
-**YAML Form Template Structure**:
 **YAML Form Template Structure**:
 
 ```yaml
@@ -151,7 +142,6 @@ You WILL collect all required and optional field values from the user.
 5. Build final issue data structure
 
 **Conversation Flow Example**:
-**Conversation Flow Example**:
 
 ```text
 Agent: I found 3 issue templates:
@@ -193,7 +183,6 @@ You WILL create the GitHub issue using MCP tools.
 3. Confirm creation with user, providing issue number and URL
 
 **MCP Tool Call Structure Example**:
-**MCP Tool Call Structure Example**:
 
 ```json
 {
@@ -232,7 +221,6 @@ You WILL log issue creation to artifact file for tracking and reference.
    * Issue state and metadata
 4. Confirm artifact location to user
 
-**Artifact File Template**:
 **Artifact File Template**:
 
 ```markdown
