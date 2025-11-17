@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/prompt-frontmatter.schema.json",
+  "title": "Prompt File Frontmatter Schema",
+  "description": "Frontmatter schema for .prompt.md files",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief description of the prompt purpose"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["agent", "assistant", "copilot", "workflow"],
+      "description": "Prompt mode or context"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["ado", "git", "documentation", "workflow", "development"],
+      "description": "Prompt category for organization"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the prompt"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author or team responsible for the prompt"
+    },
+    "lastUpdated": {
+      "$ref": "base-frontmatter.schema.json#/definitions/iso8601Date"
+    }
+  },
+  "additionalProperties": true
+}

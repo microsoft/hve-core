@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/base-frontmatter.schema.json",
+  "title": "Base Frontmatter Schema",
+  "description": "Common frontmatter fields used across HVE Core documentation",
+  "type": "object",
+  "definitions": {
+    "iso8601Date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 date format (YYYY-MM-DD)"
+    },
+    "keywordsArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of keywords for content categorization"
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Positive integer value"
+    }
+  },
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Document title"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief description of the document content"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author or team responsible for the content"
+    },
+    "ms.date": {
+      "$ref": "#/definitions/iso8601Date"
+    },
+    "ms.topic": {
+      "type": "string",
+      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting", "research"],
+      "description": "Microsoft documentation topic type"
+    },
+    "keywords": {
+      "$ref": "#/definitions/keywordsArray"
+    },
+    "estimated_reading_time": {
+      "$ref": "#/definitions/positiveInteger"
+    }
+  }
+}
