@@ -13,8 +13,8 @@
     },
     "applyTo": {
       "type": "string",
-      "pattern": "^(\\*\\*|\\*)",
-      "description": "Glob pattern indicating which files these instructions apply to"
+      "pattern": "^(\\*\\*/)?[*\\w.-]+(/[*\\w.-]+)*(/\\*{1,2})?(\\.\\w+)?(,\\s*(\\*\\*/)?[*\\w.-]+(/[*\\w.-]+)*(/\\*{1,2})?(\\.\\w+)?)*$",
+      "description": "Glob patterns for file matching, supports comma-separated values like '**/*.py, **/*.ipynb' and directory patterns like '**/.copilot-tracking/pr/new/**'"
     },
     "author": {
       "type": "string",

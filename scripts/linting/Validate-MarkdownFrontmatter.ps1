@@ -245,7 +245,8 @@ function Get-SchemaForFile {
 
     try {
         $mapping = Get-Content $mappingPath | ConvertFrom-Json
-        $relativePath = [System.IO.Path]::GetRelativePath((Get-Location), $FilePath) -replace '\\', '/'
+        $scriptRoot = Split-Path -Parent $PSScriptRoot
+        $relativePath = [System.IO.Path]::GetRelativePath($scriptRoot, $FilePath) -replace '\\', '/'
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
@@ -604,6 +605,15 @@ function Test-FrontmatterValidation {
     
     Write-Host "Found $($markdownFiles.Count) total markdown files to validate" -ForegroundColor Cyan
 
+    # Initialize schema validation once before processing files
+    $schemaValidationEnabled = $false
+    if ($EnableSchemaValidation) {
+        $schemaValidationEnabled = Initialize-JsonSchemaValidation
+        if (-not $schemaValidationEnabled) {
+            Write-Warning "Schema validation requested but not available - continuing without schema validation"
+        }
+    }
+
     foreach ($file in $markdownFiles) {
         # Skip null file objects or files with empty/null paths
         if ($null -eq $file) {
@@ -623,21 +633,17 @@ function Test-FrontmatterValidation {
 
             if ($frontmatter) {
                 # JSON Schema Validation (if enabled and available)
-                if ($EnableSchemaValidation) {
-                    $schemaValidationEnabled = Initialize-JsonSchemaValidation
-                    if ($schemaValidationEnabled) {
-                        $schemaPath = Get-SchemaForFile -FilePath $file.FullName
-                        if ($schemaPath) {
-                            $schemaResult = Test-JsonSchemaValidation -Frontmatter $frontmatter.Frontmatter -SchemaPath $schemaPath
-                            # Schema validation note available if needed: $($schemaResult.Note)
-                            if ($schemaResult.Errors.Count -gt 0) {
-                                Write-Warning "JSON Schema validation errors in $($file.FullName):"
-                                $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
-                            }
-                            if ($schemaResult.Warnings.Count -gt 0) {
-                                Write-Verbose "JSON Schema validation warnings in $($file.FullName):"
-                                $schemaResult.Warnings | ForEach-Object { Write-Verbose "  - $_" }
-                            }
+                if ($schemaValidationEnabled) {
+                    $schemaPath = Get-SchemaForFile -FilePath $file.FullName
+                    if ($schemaPath) {
+                        $schemaResult = Test-JsonSchemaValidation -Frontmatter $frontmatter.Frontmatter -SchemaPath $schemaPath
+                        if ($schemaResult.Errors.Count -gt 0) {
+                            Write-Warning "JSON Schema validation errors in $($file.FullName):"
+                            $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
+                        }
+                        if ($schemaResult.Warnings.Count -gt 0) {
+                            Write-Verbose "JSON Schema validation warnings in $($file.FullName):"
+                            $schemaResult.Warnings | ForEach-Object { Write-Verbose "  - $_" }
                         }
                     }
                 }
