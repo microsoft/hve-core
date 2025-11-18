@@ -65,6 +65,28 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 ```
 <!-- </example-lists> -->
 
+### Bullet point punctuation
+
+Follow professional editorial standards for bullet point punctuation consistency:
+
+* **Fragment bullet points** (short phrases, technical terms, simple commands): Do NOT end with periods
+* **Complete sentence bullet points** (subject + verb constructions): End with periods
+* Based on Google, Microsoft, and GitLab style guidelines
+
+<!-- <example-bullet-punctuation> -->
+```markdown
+* Configuration file
+* API endpoint
+* User authentication
+* Enable debugging mode
+
+* This function validates the input parameters
+* The system processes requests asynchronously  
+* Users can configure settings through the UI
+* When enabled, it provides detailed logging information
+```
+<!-- </example-bullet-punctuation> -->
+
 ## Code blocks and code spans
 
 * Use fenced code blocks consistently (prefer triple backticks) and surround them with a blank line before and after. Use fenced code instead of indented code blocks.
