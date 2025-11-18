@@ -4,26 +4,30 @@ This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
 ## Configuration
 
-The MCP server is configured in `.vscode/mcp.json` to use a custom endpoint (`https://github.com/mcp`). 
+The MCP server is configured in `.vscode/mcp.json` to use a custom endpoint (`https://github.com/mcp`).
 
 > **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
+>
 ### Authentication
 
 **Option 1: OAuth (Recommended)**
+
 - Uses VS Code's built-in GitHub authentication
 - No manual token management required
 - Managed via: VS Code → Accounts menu → Manage Trusted MCP Servers
 
 **Option 2: Personal Access Token**
+
 - Required for GitHub Enterprise Server
 - Set environment variable: `GITHUB_PERSONAL_ACCESS_TOKEN`
-- Generate at: https://github.com/settings/personal-access-tokens/new
+- Generate at: <https://github.com/settings/personal-access-tokens/new>
 
 ### Enterprise Configuration
 
 For GitHub Enterprise Server:
 
 1. Update `.vscode/mcp.json` with your enterprise URL:
+
    ```json
    {
      "servers": {
@@ -49,6 +53,7 @@ For GitHub Enterprise Server:
 ### Required Token Scopes
 
 If using PAT authentication, your token needs:
+
 - `repo` - Full control of private repositories
 - `read:org` - Read org and team membership
 - `user` - Read user profile data
@@ -56,6 +61,7 @@ If using PAT authentication, your token needs:
 ### Usage
 
 Once configured, the MCP server provides:
+
 - Repository operations (file management, search)
 - Branch management
 - Issue management
@@ -72,11 +78,13 @@ Once configured, the MCP server provides:
 ### Troubleshooting
 
 **Server not connecting:**
+
 - Check VS Code version (1.101+ recommended for OAuth)
 - Verify GitHub authentication via Accounts menu
 - For PAT: Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set
 
 **Permission errors:**
+
 - Ensure token has required scopes
 - Check token hasn't expired
 - Verify repository access permissions

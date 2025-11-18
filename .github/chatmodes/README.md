@@ -40,7 +40,9 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 ## Chat Mode Details
 
 ### `@task-planner`
+
 **Creates:** Three interconnected files per task:
+
 - Plan checklist: `.copilot-tracking/plans/YYYYMMDD-task-plan.instructions.md`
 - Implementation details: `.copilot-tracking/details/YYYYMMDD-task-details.md`
 - Implementation prompt: `.copilot-tracking/prompts/implement-task.prompt.md`
@@ -49,7 +51,9 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 **Critical:** Automatically calls `@task-researcher` if research missing; treats ALL user input as planning requests (never implements actual code)
 
 ### `@task-researcher`
+
 **Creates:** Single authoritative research document:
+
 - `.copilot-tracking/research/YYYYMMDD-topic-research.md`
 - Subagent files: `.copilot-tracking/research/YYYYMMDD-topic-subagent/task-research.md`
 
@@ -57,7 +61,9 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 **Critical:** Research-only specialist; uses `runSubagent` tool; continuously refines document; never plans or implements
 
 ### `@prompt-builder`
+
 **Creates:** Instruction files AND prompt files:
+
 - `.github/instructions/*.instructions.md`
 - `.copilot-tracking/prompts/*.prompt.md`
 
@@ -65,7 +71,9 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 **Critical:** Dual-persona system; uses XML-style blocks (`<!-- <example-*> -->`); links to authoritative sources; minimal inline examples
 
 ### `@pr-review`
+
 **Creates:** Review tracking files in normalized branch folders:
+
 - `.copilot-tracking/pr/review/{normalized-branch}/in-progress-review.md`
 - `.copilot-tracking/pr/review/{normalized-branch}/pr-reference.xml`
 - `.copilot-tracking/pr/review/{normalized-branch}/handoff.md`
@@ -77,6 +85,7 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 ## Common Workflows
 
 **Planning a Feature:**
+
 1. `@task-researcher` - Create research document with findings
 2. Review research, provide decisions on approach
 3. Clear context or start new chat
@@ -84,11 +93,13 @@ Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 5. Use implementation prompt to execute (separate step)
 
 **Code Review:**
+
 1. `@pr-review` - Automatically runs 4-phase protocol
 2. Collaborate during Phase 3 (review items)
 3. Receive `handoff.md` with final PR comments
 
 **Creating Instructions:**
+
 1. `@prompt-builder` - Draft instruction file with conventions
 2. Auto-validates with Prompt Tester persona
 3. Iterates up to 3 times for quality

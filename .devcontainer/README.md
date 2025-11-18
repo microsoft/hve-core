@@ -26,12 +26,14 @@ A pre-configured development environment that includes all tools, extensions, an
 ## Quick Start
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/microsoft/hve-core.git
    cd hve-core
    ```
 
 2. Open in VS Code:
+
    ```bash
    code .
    ```
@@ -44,22 +46,26 @@ A pre-configured development environment that includes all tools, extensions, an
 ## Included Tools
 
 ### Languages & Runtimes
+
 - Node.js (LTS)
 - Python 3.11
 - PowerShell 7.x
 
 ### CLI Tools
+
 - Git
 - GitHub CLI (`gh`)
 - Azure CLI (`az`)
 
 ### Code Quality
+
 - **Markdown**: markdownlint, markdown-table-formatter
 - **Spelling**: Code Spell Checker (VS Code extension)
 - **Shell**: shellcheck
 - **Diagrams**: Mermaid CLI
 
 ### Security
+
 - Gitleaks (secret scanning)
 - Checkov (infrastructure as code scanning)
 
