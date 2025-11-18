@@ -245,8 +245,18 @@ function Get-SchemaForFile {
 
     try {
         $mapping = Get-Content $mappingPath | ConvertFrom-Json
-        $scriptRoot = Split-Path -Parent $PSScriptRoot
-        $relativePath = [System.IO.Path]::GetRelativePath($scriptRoot, $FilePath) -replace '\\', '/'
+        
+        # Find repository root by searching for .git directory
+        $repoRoot = $PSScriptRoot
+        while ($repoRoot -and -not (Test-Path (Join-Path $repoRoot '.git'))) {
+            $repoRoot = Split-Path -Parent $repoRoot
+        }
+        if (-not $repoRoot) {
+            Write-Warning "Could not find repository root"
+            return $null
+        }
+        
+        $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $FilePath) -replace '\\', '/'
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
@@ -259,8 +269,13 @@ function Get-SchemaForFile {
             }
             # Directory-based patterns
             elseif ($rule.pattern -like "*/**/*") {
-                $pattern = $rule.pattern -replace '\*\*/', '' -replace '\*', '.*'
-                if ($relativePath -match $pattern) {
+                # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
+                $regexPattern = $rule.pattern
+                $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
+                $regexPattern = $regexPattern -replace '\*', '[^/]*'
+                $regexPattern = $regexPattern -replace '\.', '\.'
+                $regexPattern = '^' + $regexPattern + '$'
+                if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
@@ -295,6 +310,13 @@ function Test-JsonSchemaValidation {
 
     .OUTPUTS
     Returns validation result with errors and warnings.
+    
+    .NOTES
+    Validation limitations (intentional for soft validation):
+    - $ref references are not resolved (workaround: inline base schema properties)
+    - allOf/anyOf/oneOf schema composition is not supported
+    - object type validation is not implemented
+    - enum and minLength validations are supported
     #>
     param(
         [Parameter(Mandatory = $true)]
@@ -346,8 +368,8 @@ function Test-JsonSchemaValidation {
                                 }
                             }
                             'array' {
-                                if ($value -isnot [array] -and $value -notlike "*,*") {
-                                    $warnings += "Field '$fieldName' should be an array or comma-separated list"
+                                if ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable]) {
+                                    $errors += "Field '$fieldName' must be an array"
                                 }
                             }
                             'boolean' {
@@ -362,6 +384,28 @@ function Test-JsonSchemaValidation {
                     if ($fieldSchema.pattern -and $value -is [string]) {
                         if ($value -notmatch $fieldSchema.pattern) {
                             $errors += "Field '$fieldName' does not match required pattern: $($fieldSchema.pattern)"
+                        }
+                    }
+                    
+                    # Enum validation
+                    if ($fieldSchema.enum) {
+                        if ($value -is [array]) {
+                            foreach ($item in $value) {
+                                if ($item -notin $fieldSchema.enum) {
+                                    $errors += "Field '$fieldName' contains invalid value: $item. Allowed: $($fieldSchema.enum -join ', ')"
+                                }
+                            }
+                        } else {
+                            if ($value -notin $fieldSchema.enum) {
+                                $errors += "Field '$fieldName' must be one of: $($fieldSchema.enum -join ', '). Got: $value"
+                            }
+                        }
+                    }
+                    
+                    # MinLength validation for strings
+                    if ($fieldSchema.minLength -and $value -is [string]) {
+                        if ($value.Length -lt $fieldSchema.minLength) {
+                            $errors += "Field '$fieldName' must have minimum length of $($fieldSchema.minLength)"
                         }
                     }
                 }
@@ -632,7 +676,8 @@ function Test-FrontmatterValidation {
             $frontmatter = Get-MarkdownFrontmatter -FilePath $file.FullName
 
             if ($frontmatter) {
-                # JSON Schema Validation (if enabled and available)
+                # Soft validation mode: Schema validation reports issues via Write-Warning without failing builds.
+                # This provides comprehensive advisory feedback while manual validation below enforces critical rules.
                 if ($schemaValidationEnabled) {
                     $schemaPath = Get-SchemaForFile -FilePath $file.FullName
                     if ($schemaPath) {
@@ -787,7 +832,7 @@ function Test-FrontmatterValidation {
                     }
                 }
                 
-                # Enhanced validation for documentation files in docs directory
+                # Manual validation enforces critical rules (fails builds); schema validation above provides comprehensive advisory feedback (soft mode).
                 $isDocsFile = $file.DirectoryName -like "*docs*" -and -not $isGitHubLocal
                 if ($isDocsFile) {
                     # Documentation files should have comprehensive frontmatter
