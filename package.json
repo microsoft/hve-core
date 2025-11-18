@@ -6,8 +6,8 @@
   "scripts": {
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
-    "lint:md": "markdownlint \"**/*.md\" --ignore node_modules",
-    "lint:md:fix": "markdownlint \"**/*.md\" --ignore node_modules --fix",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "lint:md:fix": "markdownlint-cli2 \"**/*.md\" --fix",
     "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
     "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
@@ -24,7 +24,7 @@
     "cspell": "9.3.1",
     "markdown-link-check": "3.14.1",
     "markdown-table-formatter": "^1.6.0",
-    "markdownlint-cli": "0.45.0"
+    "markdownlint-cli2": "^0.14.0"
   },
   "repository": {
     "type": "git",
