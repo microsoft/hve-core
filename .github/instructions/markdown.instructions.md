@@ -27,7 +27,7 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 * Surround each heading with a blank line above and below (except at file start/end).
 * Do not end headings with punctuation such as `. , ; : !` or their full-width variants.
 * Avoid duplicate headings under the same parent section; make them unique.
-* Begin the file with a top-level heading as the first line (unless a YAML front matter `title:` is present which serves as the title). Do not include preamble text before the title.
+* Begin the file with a top-level heading after YAML frontmatter (if present). BOTH frontmatter `title:` field AND H1 heading are required when frontmatter is used. Do not include preamble text before the title.
 * Use exactly one space after the `#` characters in headings; do not omit or use multiple spaces.
 * If you close ATX headings with trailing `#` characters, use a single space between the text and both the opening and closing hashes; do not use multiple spaces on either side.
 * Use only one top-level heading per document; subsequent sections must use lower levels.
@@ -41,6 +41,100 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 ### Subsection
 ```
 <!-- </example-headings> -->
+
+## YAML Frontmatter
+
+* All markdown files MUST include YAML frontmatter at the beginning of the file
+* Frontmatter MUST be the first content in the file (before H1 heading)
+* Use triple-dash delimiters (---) on separate lines to wrap frontmatter YAML
+* Frontmatter provides machine-readable metadata for validation, SEO, and site generation
+* BOTH frontmatter `title:` field AND H1 heading are required (not either/or)
+  * Frontmatter title: Metadata for search indexing, HTML `<title>` tag, navigation
+  * H1 heading: Content title for semantic HTML structure and accessibility
+
+### Required Fields by File Type
+
+| File Type | Required Fields | Schema File |
+|-----------|----------------|-------------|
+| Root community files (README.md, CONTRIBUTING.md, etc.) | `title`, `description` | `root-community-frontmatter.schema.json` |
+| Documentation files (`docs/**/*.md`) | `title`, `description` | `docs-frontmatter.schema.json` |
+| Instruction files (`.github/**/*.instructions.md`) | `description`, `applyTo` | `instruction-frontmatter.schema.json` |
+| Chat mode files (`.github/**/*.chatmode.md`) | `description` | `chatmode-frontmatter.schema.json` |
+| Prompt files (`.github/**/*.prompt.md`) | `description` | `prompt-frontmatter.schema.json` |
+
+### Recommended Fields
+
+* `author`: Author or team responsible for the content
+* `ms.date`: Last modified date in ISO 8601 format (YYYY-MM-DD)
+* `ms.topic`: Documentation topic type (overview, concept, tutorial, reference, how-to, troubleshooting)
+* `keywords`: Array of keywords for content categorization
+* `estimated_reading_time`: Positive integer (minutes)
+
+### Date Format
+
+* MUST use ISO 8601 format: YYYY-MM-DD (e.g., `ms.date: 2025-11-15`)
+* Do NOT use MM/DD/YYYY, DD/MM/YYYY, or other formats
+
+### Schema Validation
+
+* Schemas are located in `scripts/linting/schemas/`
+* Pattern-based mapping in `schema-mapping.json` determines which schema applies to each file
+* VS Code YAML extension (`redhat.vscode-yaml`) provides in-editor validation
+* Run validation: `npm run validate:frontmatter` or `pwsh scripts/linting/Validate-MarkdownFrontmatter.ps1`
+
+### Schema Pattern Matching
+
+Files are validated against schemas based on glob pattern matching:
+
+* Patterns are evaluated in order from most specific to least specific
+* First matching pattern determines the schema
+* If no pattern matches, `base-frontmatter.schema.json` is used as default
+* Pattern syntax supports:
+  * `**` for recursive directory matching
+  * `*` for single path segment wildcard
+  * `|` for alternation (e.g., `README.md|CONTRIBUTING.md`)
+
+Pattern examples:
+
+* `.github/**/*.instructions.md` - All instruction files in .github directory tree
+* `docs/**/*.md` - All markdown files under docs directory
+* `README.md|CONTRIBUTING.md` - Exact filename match (alternation)
+
+### Examples
+
+<!-- <example-frontmatter-docs> -->
+```yaml
+---
+title: Getting Started with HVE Core
+description: Quick setup guide for using HVE Core Copilot customizations in your projects
+author: Microsoft
+ms.date: 2025-11-15
+ms.topic: tutorial
+keywords:
+  - github copilot
+  - setup
+  - getting started
+estimated_reading_time: 5
+---
+
+# Getting Started with HVE Core
+
+This guide shows you how to configure your project...
+```
+<!-- </example-frontmatter-docs> -->
+
+<!-- <example-frontmatter-instructions> -->
+```yaml
+---
+description: "Required instructions for creating or editing any Markdown (.md) files"
+applyTo: '**/*.md'
+---
+
+# Markdown Instructions
+
+These instructions define the Markdown style guide...
+```
+<!-- </example-frontmatter-instructions> -->
 
 ## Lists
 
