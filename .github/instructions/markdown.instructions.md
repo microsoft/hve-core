@@ -69,8 +69,8 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 
 Follow professional editorial standards for bullet point punctuation consistency:
 
-* **Fragment bullet points** (short phrases, technical terms, simple commands): Do NOT end with periods
-* **Complete sentence bullet points** (subject + verb constructions): End with periods
+* **Fragment bullet points** (short phrases, technical terms, simple commands): Do NOT end with periods.
+* **Complete sentence bullet points** (subject + verb constructions): End with periods.
 * Based on Google, Microsoft, and GitLab style guidelines
 
 <!-- <example-bullet-punctuation> -->
@@ -81,7 +81,7 @@ Follow professional editorial standards for bullet point punctuation consistency
 * Enable debugging mode
 
 * This function validates the input parameters
-* The system processes requests asynchronously  
+* The system processes requests asynchronously
 * Users can configure settings through the UI
 * When enabled, it provides detailed logging information
 ```
