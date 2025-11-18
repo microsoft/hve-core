@@ -13,8 +13,6 @@ keywords:
 estimated_reading_time: 4
 ---
 
-# GitHub Copilot Chat Modes
-
 Specialized GitHub Copilot behaviors for common development workflows. Each chat mode is optimized for specific tasks with custom instructions and context.
 
 ## Quick Start

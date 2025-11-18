@@ -12,8 +12,6 @@ keywords:
 estimated_reading_time: 3
 ---
 
-# Dev Container
-
 A pre-configured development environment that includes all tools, extensions, and dependencies needed for HVE Core development. Ensures consistency across all development machines.
 
 ## Prerequisites
