@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 author: Microsoft
 ms.date: 2025-11-15
-ms.topic: getting-started
+ms.topic: tutorial
 keywords:
   - github copilot
   - multi-root workspace

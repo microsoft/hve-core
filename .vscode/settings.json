@@ -8,5 +8,18 @@
   "chat.instructionsFilesLocations": {
     ".github/instructions/**/*.instructions.md": true,
     ".github/prompts/**/*.prompt.md": true
+  },
+  "yaml.schemas": {
+    "./scripts/linting/schemas/root-community-frontmatter.schema.json": [
+      "README.md",
+      "CONTRIBUTING.md", 
+      "CODE_OF_CONDUCT.md",
+      "SECURITY.md",
+      "SUPPORT.md",
+      "ANNOUNCEMENT.md"
+    ],
+    "./scripts/linting/schemas/docs-frontmatter.schema.json": [
+      "docs/**/*.md"
+    ]
   }
 }
