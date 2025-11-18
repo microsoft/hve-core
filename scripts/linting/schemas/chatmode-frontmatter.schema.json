@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/chatmode-frontmatter.schema.json",
+  "title": "ChatMode File Frontmatter Schema",
+  "description": "Frontmatter schema for .chatmode.md files",
+  "type": "object",
+  "required": ["description"],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief description of the chat mode functionality"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of tools available in this chat mode"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["agent", "assistant", "copilot"],
+      "description": "Chat mode type"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the chat mode configuration"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author or team responsible for the chat mode"
+    }
+  },
+  "additionalProperties": true
+}

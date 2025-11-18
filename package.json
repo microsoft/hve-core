@@ -11,7 +11,7 @@
     "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
     "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
-    "lint:frontmatter": "pwsh -File scripts/linting/Validate-MarkdownFrontmatter.ps1",
+    "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
     "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "security:scan": "gitleaks detect --verbose",
@@ -21,7 +21,7 @@
     "precommit": "npm run security:scan:staged"
   },
   "devDependencies": {
-    "cspell": "9.3.1",
+    "cspell": "9.3.2",
     "markdown-link-check": "3.14.1",
     "markdown-table-formatter": "^1.6.0",
     "markdownlint-cli2": "^0.14.0"
