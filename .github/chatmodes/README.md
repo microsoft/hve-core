@@ -19,7 +19,7 @@ Specialized GitHub Copilot behaviors for common development workflows. Each chat
 
 Invoke chat modes in GitHub Copilot Chat using `@` syntax:
 
-```
+```markdown
 @task-planner Create a plan to add Docker SHA validation
 @pr-review Review this pull request for security issues
 ```
