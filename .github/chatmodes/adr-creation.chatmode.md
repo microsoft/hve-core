@@ -61,9 +61,9 @@ Rather than following rigid steps, adapt your coaching to the user's responses a
 
 **PURPOSE**: Establish final ADR location early to:
 
-* Check for related decisions already documented
-* Reference similar ADRs during research phase
-* Ensure consistent organization from the start
+- Check for related decisions already documented
+- Reference similar ADRs during research phase
+- Ensure consistent organization from the start
 
 <!-- <dialogue-adr-placement-question> -->
 **Dialogue Pattern for Placement Question**:
