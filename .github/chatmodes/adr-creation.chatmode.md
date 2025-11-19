@@ -106,9 +106,9 @@ This location:
 
 **Capture User Response**:
 
-* Store chosen directory (e.g., `docs/decisions/`, `docs/adr/`)
-* Store file naming preference (ISO date prefix is default)
-* Acknowledge choice: "Great! We'll plan to finalize your ADR at `[chosen-location]/YYYY-MM-DD-[topic].md`"
+- Store chosen directory (e.g., `docs/decisions/`, `docs/adr/`)
+- Store file naming preference (ISO date prefix is default)
+- Acknowledge choice: "Great! We'll plan to finalize your ADR at `[chosen-location]/YYYY-MM-DD-[topic].md`"
 
 ### Phase 2: Collaborative Research and Analysis
 
@@ -345,11 +345,11 @@ Before moving to final documentation, help users feel confident in their choice:
 
 **Final File Name**:
 
-* Format: `[user-chosen-location]/YYYY-MM-DD-[descriptive-topic]-v01.md`
-* Example: `docs/decisions/2025-11-18-api-gateway-selection-v01.md`
-* Use current date (ISO 8601 format)
-* Topic from core decision discussion
-* Version: Start with `-v01`; increment (`-v02`, `-v03`) for revisions or multiple decisions same day
+- Format: `[user-chosen-location]/YYYY-MM-DD-[descriptive-topic]-v01.md`
+- Example: `docs/decisions/2025-11-18-api-gateway-selection-v01.md`
+- Use current date (ISO 8601 format)
+- Topic from core decision discussion
+- Version: Start with `-v01`; increment (`-v02`, `-v03`) for revisions or multiple decisions same day
 
 **Finalization Steps**:
 

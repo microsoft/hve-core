@@ -11,12 +11,14 @@
 Select all that apply:
 
 **Code & Documentation:**
+
 - [ ] Bug fix (non-breaking change fixing an issue)
 - [ ] New feature (non-breaking change adding functionality)
 - [ ] Breaking change (fix or feature causing existing functionality to change)
 - [ ] Documentation update
 
 **Infrastructure & Configuration:**
+
 - [ ] GitHub Actions workflow
 - [ ] Linting configuration (markdown, PowerShell, etc.)
 - [ ] Security configuration
@@ -24,12 +26,14 @@ Select all that apply:
 - [ ] Dependency update
 
 **AI Artifacts:**
+
 - [ ] Reviewed contribution with `prompt-builder` chatmode and addressed all feedback
 - [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
 - [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 - [ ] Copilot chatmode (`.github/chatmodes/*.chatmode.md`)
 
 **Other:**
+
 - [ ] Script/automation (`.ps1`, `.sh`, `.py`)
 - [ ] Other (please describe):
 
@@ -51,10 +55,11 @@ Select all that apply:
 <!-- How does user know it worked correctly? What validation should they perform? -->
 
 For detailed contribution requirements, see:
-* **Common Standards**: [docs/contributing-ai-artifacts-common.md](../docs/contributing-ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
-* **Chatmodes**: [docs/contributing-chatmodes.md](../docs/contributing-chatmodes.md) - Agent configurations with tools and behavior patterns
-* **Prompts**: [docs/contributing-prompts.md](../docs/contributing-prompts.md) - Workflow-specific guidance with template variables
-* **Instructions**: [docs/contributing-instructions.md](../docs/contributing-instructions.md) - Technology-specific standards with glob patterns
+
+- **Common Standards**: [docs/contributing-ai-artifacts-common.md](../docs/contributing-ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
+- **Chatmodes**: [docs/contributing-chatmodes.md](../docs/contributing-chatmodes.md) - Agent configurations with tools and behavior patterns
+- **Prompts**: [docs/contributing-prompts.md](../docs/contributing-prompts.md) - Workflow-specific guidance with template variables
+- **Instructions**: [docs/contributing-instructions.md](../docs/contributing-instructions.md) - Technology-specific standards with glob patterns
 
 ## Testing
 <!-- Describe how you tested these changes -->
@@ -74,7 +79,9 @@ For detailed contribution requirements, see:
 - [ ] Verified contribution follows common standards and type-specific requirements
 
 ### Required Automated Checks
+
 The following validation commands must pass before merging:
+
 - [ ] Markdown linting: `npm run lint:md`
 - [ ] Spell checking: `npm run spell-check`
 - [ ] Frontmatter validation: `npm run lint:frontmatter`

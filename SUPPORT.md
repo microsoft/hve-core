@@ -24,7 +24,7 @@ Thank you for using the HVE Core project! This document explains how to get help
 HVE Core is an open-source project maintained by Microsoft and community contributors. We provide community support through GitHub issue tracking with the following response commitments:
 
 | Priority Level             | Description                                      | Response Time Target           |
-| -------------------------- | ------------------------------------------------ | ------------------------------ |
+|----------------------------|--------------------------------------------------|--------------------------------|
 | Security Vulnerability     | Security issues (see [SECURITY.md](SECURITY.md)) | 24 hours (via MSRC)            |
 | Critical (Accessibility)   | Blocking accessibility issues                    | 1-2 business days              |
 | Major (Accessibility)      | Significant accessibility issues                 | 3-5 business days              |
