@@ -180,7 +180,7 @@ See [official documentation](https://example.com) for details.
 ### File Structure
 
 * Starts with frontmatter (YAML between `---` delimiters)
-* Followed by appropriate code fence (``` ``chatagent ```, ``` ``prompt ```, or ``` ``instructions ```)
+* Followed by appropriate code fence (4-backtick fence with language: chatagent, prompt, or instructions)
 * Content sections
 * Ends with attribution footer
 * Final closing fence
@@ -426,17 +426,7 @@ See https://github.com/microsoft/hve-core for details.
 ✅ **Good**:
 
 ````markdown
-### Issue: Bare URLs
-
-❌ **Bad**:
-
-````markdown
-See https://github.com/microsoft/hve-core for details.
-````
-
-✅ **Good**:
-
-````markdown
+See <https://github.com/microsoft/hve-core> for details.
 # OR
 See [hve-core repository](https://github.com/microsoft/hve-core) for details.
 ```
