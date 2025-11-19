@@ -45,9 +45,8 @@ Prompt files **MUST**:
 
 1. Use the `.prompt.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
-3. Begin content with ````prompt` fence (4 backticks)
-4. Close with matching ```` fence (4 backticks)
-5. End with single newline character
+3. Begin content directly after frontmatter
+4. End with single newline character
 
 ## Frontmatter Requirements
 
@@ -405,13 +404,7 @@ Before submitting your prompt, verify:
 * [ ] `mode` field present with valid value
 * [ ] `category` field appropriate for domain (if present)
 * [ ] No trailing whitespace in values
-
-### Handoff File Format
-
-* [ ] Starts with ````prompt` (4 backticks)
-* [ ] Closes with ```` (4 backticks)
-* [ ] File ends with single newline
-* [ ] No content before opening fence (except frontmatter)
+* [ ] Single newline at EOF
 
 ### Content Structure
 

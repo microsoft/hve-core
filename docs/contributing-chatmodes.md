@@ -44,9 +44,8 @@ Chatmode files **MUST**:
 
 1. Use the `.chatmode.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
-3. Begin content with ````chatagent` fence (4 backticks)
-4. Close with matching ```` fence (4 backticks)
-5. End with single newline character
+3. Begin content directly after frontmatter
+4. End with single newline character
 
 ## Frontmatter Requirements
 
@@ -266,13 +265,7 @@ Before submitting your chatmode, verify:
 * [ ] `tools` array contains only valid tool names (if present)
 * [ ] `mode` is one of: `agent`, `assistant`, `copilot` (if present)
 * [ ] No trailing whitespace in values
-
-### File Format Validation
-
-* [ ] Starts with ````chatagent` (4 backticks)
-* [ ] Closes with ```` (4 backticks)
-* [ ] File ends with single newline
-* [ ] No content before opening fence (except frontmatter)
+* [ ] Single newline at EOF
 
 ### Content Structure
 

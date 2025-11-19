@@ -68,7 +68,7 @@ echo "Hello World"
 def hello(): pass
 ```
 
-```text
+````text
 
 ✅ **Proper opening and closing**:
 
@@ -80,7 +80,7 @@ def hello(): pass
 ```
 
 <!-- </example-code> -->
-```text
+````text
 
 ❌ **Duplicate tag names**:
 
@@ -180,10 +180,8 @@ See [official documentation](https://example.com) for details.
 ### File Structure
 
 * Starts with frontmatter (YAML between `---` delimiters)
-* Followed by appropriate code fence (4-backtick fence with language: chatagent, prompt, or instructions)
-* Content sections
+* Followed by markdown content
 * Ends with attribution footer
-* Final closing fence
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -297,10 +295,6 @@ Use this checklist structure in type-specific guides:
 - [ ] Valid YAML between `---` delimiters
 - [ ] All required fields present and valid
 - [ ] No trailing whitespace
-
-#### File Format
-- [ ] Correct fence type (````chatagent`, ````prompt`, or ````instructions`)
-- [ ] Matching closing fence
 - [ ] Single newline at EOF
 
 #### Markdown Quality
@@ -377,7 +371,7 @@ You SHOULD include at least one working example.
 {"enabled": true}
 ```
 
-```text
+````text
 
 ✅ **Good**:
 
@@ -389,7 +383,7 @@ You SHOULD include at least one working example.
 ```
 
 <!-- </example-config> -->
-```text
+````text
 
 ### Issue: Code Blocks Without Language Tags
 

@@ -57,9 +57,7 @@ Instruction files **MUST**:
 
 1. Use the `.instructions.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
-3. Begin content with ````instructions` fence (4 backticks)
-4. Close with matching ```` fence (4 backticks)
-5. End with single newline character
+3. End with single newline character
 
 ## Frontmatter Requirements
 
