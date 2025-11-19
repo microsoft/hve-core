@@ -29,13 +29,12 @@ the codebase.
 
 Chat modes reference and apply instructions automatically:
 
-- **`@prompt-builder`** creates new instruction files in this directory
-- **All chat modes** respect instructions matching file patterns via `applyTo`
-  field
+- **prompt-builder** agent creates new instruction files in this directory (select from agent picker dropdown)
+- **All chat modes** respect instructions matching file patterns via `applyTo` field
 - **Copilot** loads instructions when editing files matching the patterns
 - Instructions provide repository-specific guardrails and conventions
 
-See [Chat Modes README](../chatmodes/README.md) for details on using `@prompt-builder`.
+See [Chat Modes README](../chatmodes/README.md) for details on using prompt-builder.
 
 ## XML-Style Blocks
 
@@ -70,7 +69,7 @@ resource "azurerm_resource_group" "example" {
 
 ### Recommended Approach
 
-1. Use `@prompt-builder` chat mode for creation
+1. Open Copilot Chat and select **prompt-builder** from the agent picker dropdown
 2. Provide context (files, folders, or requirements)
 3. Prompt Builder researches and drafts instructions
 4. Auto-validates with Prompt Tester (up to 3 iterations)
