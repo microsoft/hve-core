@@ -1451,4 +1451,10 @@ interceptable
 Hypervelocity
 junitxml
 PSScriptAnalyzer
-
+chatagent
+docstrings
+issubset
+isort
+mymodule
+mypy
+sandboxed

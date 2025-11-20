@@ -82,9 +82,16 @@ After updating, rebuild the container:
 
 Check that everything works:
 
-* Both folders visible in Explorer sidebar
-* Type `@` in Copilot Chat to see custom agents from hve-core
-* Use `#file:` to access prompt files from hve-core
+1. Open GitHub Copilot Chat view (Ctrl+Alt+I)
+2. Click the **agent picker dropdown** at the top of the chat panel
+3. Verify custom agents from hve-core appear in the list:
+   * task-planner
+   * task-researcher
+   * prompt-builder
+   * pr-review
+4. Select an agent and submit a test prompt
+
+**Troubleshooting:** If custom agents don't appear, verify the `chat.modeFilesLocations` setting points to the correct path in your workspace settings.
 
 ## Troubleshooting
 

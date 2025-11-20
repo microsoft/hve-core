@@ -9,6 +9,9 @@
     ".github/instructions/**/*.instructions.md": true,
     ".github/prompts/**/*.prompt.md": true
   },
+  "chat.modeFilesLocations": {
+    ".github/chatmodes": true
+  },
   "yaml.schemas": {
     "./scripts/linting/schemas/root-community-frontmatter.schema.json": [
       "README.md",

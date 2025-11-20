@@ -35,14 +35,15 @@ To use HVE Core's GitHub Copilot customizations in your project, clone this repo
 
 ### Using Chat Modes
 
-Invoke specialized AI assistants directly in GitHub Copilot Chat:
+Select specialized AI assistants from the agent picker dropdown in GitHub Copilot Chat:
 
-```text
-@task-planner Create a plan for adding authentication to the API
-@task-researcher Research Azure service options for document processing
-@prompt-builder Create instructions for Terraform infrastructure files
-@pr-review Review this pull request for security and design issues
-```
+1. Open Chat view (Ctrl+Alt+I)
+2. Click the agent picker dropdown at the top
+3. Select your desired agent:
+   * **task-planner** - Plan new features and refactoring
+   * **task-researcher** - Research Azure services and approaches
+   * **prompt-builder** - Create coding instructions and prompts
+   * **pr-review** - Review pull requests comprehensively
 
 [Learn more about chat modes →](.github/chatmodes/README.md)
 

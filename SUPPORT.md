@@ -32,6 +32,14 @@ HVE Core is an open-source project maintained by Microsoft and community contrib
 
 **Note**: Response times indicate initial acknowledgment. Resolution time varies based on issue complexity and community availability.
 
+### Our Support Performance
+
+We track our response time commitments publicly. Our performance metrics demonstrate consistent delivery:
+
+* **48-hour SLO Compliance**: High compliance rate with response targets
+* **Average PR Completion**: Typically completed within 3 days
+* **Fast Resolution**: Significant portion of issues/PRs resolved in under 1 day
+
 ## Filing Issues
 
 ### General Issues, Bugs, and Feature Requests
