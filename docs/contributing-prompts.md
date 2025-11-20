@@ -458,36 +458,15 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 
 ### Prompt-Specific Issues
 
-❌ **Template Variables with Wrong Format**:
+### Template Variables with Wrong Format
 
-```markdown
-Title: <feature-name> for <user>
-File: ${output_path}/${filename}.md
-```
+* **Problem**: Using incorrect syntax for template variables (angle brackets or shell-style)
+* **Solution**: Always use `{{variable_name}}` handlebars format for template variables
 
-✅ **Correct Template Variable Format**:
+### Ambiguous Workflow Steps
 
-```markdown
-Title: {{feature_name}} for {{user_name}}
-File: {{output_path}}/{{filename}}.md
-```
-
-❌ **Ambiguous Workflow Steps**:
-
-```markdown
-1. Find work items
-2. Create PR
-3. Done
-```
-
-✅ **Clear Workflow Steps with Decision Logic**:
-
-```markdown
-1. **Work Item Discovery**:
-   - Extract IDs from branch name using pattern `feature/(\d+)-.*`
-   - If not found, parse commit messages for `#(\d+)`
-   - If still not found, prompt user for IDs
-```
+* **Problem**: Vague workflow steps without specific tools, conditions, or decision logic
+* **Solution**: Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
 

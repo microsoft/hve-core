@@ -21,6 +21,70 @@ Create a chatmode when you need to:
 * Provide domain-specific expertise (e.g., ADR creation, work item processing)
 * Automate complex decision-making with predefined logic flows
 
+## Chatmodes Not Accepted
+
+The following chatmode types will likely be **rejected or closed automatically** because **equivalent chatmodes already exist in hve-core**:
+
+### Duplicate Chatmode Categories
+
+* **Research or Discovery Agents**: Chatmodes that search for, gather, or discover information
+  * ❌ Reason: Existing chatmodes already handle research and discovery workflows
+  * ✅ Alternative: Use existing research-focused chatmodes in `.github/chatmodes/`
+
+* **Indexing or Referencing Agents**: Chatmodes that catalog, index, or create references to existing projects
+  * ❌ Reason: Existing chatmodes already provide indexing and referencing capabilities
+  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core chatmodes
+  * ✅ Alternative: Use existing reference management chatmodes that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+
+* **Planning Agents**: Chatmodes that plan work, break down tasks, or organize backlog items
+  * ❌ Reason: Existing chatmodes already handle work planning and task organization
+  * ✅ Alternative: Use existing planning-focused chatmodes in `.github/chatmodes/`
+
+* **Implementation Agents**: General-purpose coding agents that implement features
+  * ❌ Reason: Existing chatmodes already provide implementation guidance
+  * ✅ Alternative: Use existing implementation-focused chatmodes
+
+### Rationale for Rejection
+
+These chatmode types are rejected because:
+
+1. **Existing chatmodes are hardened and heavily utilized**: The hve-core library already contains production-tested chatmodes in these categories
+2. **Consistency and maintenance**: Coalescing around existing chatmodes reduces fragmentation and maintenance burden
+3. **Avoid duplication**: Multiple chatmodes serving the same purpose create confusion and divergent behavior
+4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing chatmodes
+
+### Before Submitting
+
+When planning to submit a chatmode that falls into these categories:
+
+1. **Question necessity**: Does your use case truly require a new chatmode, or can existing chatmodes meet your needs?
+2. **Review existing chatmodes**: Examine `.github/chatmodes/` to identify chatmodes that already serve your purpose
+3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing chatmodes
+4. **Consider enhancement over creation**: If existing chatmodes don't fully meet your requirements, evaluate whether your changes are:
+   * **Generic enough** to benefit all users
+   * **Valuable enough** to justify modifying the existing chatmode
+5. **Propose enhancements**: Submit a PR to enhance an existing chatmode rather than creating a duplicate
+
+### What Makes a Good New Chatmode
+
+Focus on chatmodes that:
+
+* **Fill gaps**: Address use cases not covered by existing chatmodes
+* **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
+* **Are non-overlapping**: Have clearly distinct purposes from existing chatmodes
+* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing chatmodes
+* **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
+
+### Model Version Requirements
+
+All chatmodes **MUST** target the **latest available models** from **Anthropic and OpenAI only**.
+
+**Accepted**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) and latest GPT models (e.g., GPT-5.1, o1)
+
+**Not Accepted**: Older model versions (e.g., GPT-3.5, GPT-4.1, Claude 2), models from other providers, custom/fine-tuned models
+
+**Rationale**: Latest models provide superior capabilities, reduce maintenance burden, and ensure future compatibility. Older model versions will be deprecated.
+
 ## File Structure Requirements
 
 ### Location
@@ -309,17 +373,10 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 
 ### Chatmode-Specific Issues
 
-❌ **Invalid Tool Names**:
+### Invalid Tool Names
 
-```yaml
-tools: ['readFiles', 'writeFiles', 'searchCode']
-```
-
-✅ **Correct Tool Names**:
-
-```yaml
-tools: ['codebase', 'editFiles', 'search']
-```
+* **Problem**: Referencing tools that don't exist or using incorrect camelCase variants
+* **Solution**: Use exact tool names from VS Code Copilot's available tools list
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
 

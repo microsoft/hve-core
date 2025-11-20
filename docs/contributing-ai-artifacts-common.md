@@ -5,6 +5,85 @@ description: 'Common standards and quality gates for all AI artifact contributio
 
 This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (chatmodes, prompts, and instructions files).
 
+## Chatmodes Not Accepted
+
+The following chatmode types will likely be **rejected or closed automatically** because **equivalent chatmodes already exist in hve-core**:
+
+### Duplicate Chatmode Categories
+
+* **Research or Discovery Agents**: Chatmodes that search for, gather, or discover information
+  * ❌ Reason: Existing chatmodes already handle research and discovery workflows
+  * ✅ Alternative: Use existing research-focused chatmodes in `.github/chatmodes/`
+
+* **Indexing or Referencing Agents**: Chatmodes that catalog, index, or create references to existing projects
+  * ❌ Reason: Existing chatmodes already provide indexing and referencing capabilities
+  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core chatmodes
+  * ✅ Alternative: Use existing reference management chatmodes that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+
+* **Planning Agents**: Chatmodes that plan work, break down tasks, or organize backlog items
+  * ❌ Reason: Existing chatmodes already handle work planning and task organization
+  * ✅ Alternative: Use existing planning-focused chatmodes in `.github/chatmodes/`
+
+* **Implementation Agents**: General-purpose coding agents that implement features
+  * ❌ Reason: Existing chatmodes already provide implementation guidance
+  * ✅ Alternative: Use existing implementation-focused chatmodes
+
+### Rationale for Rejection
+
+These chatmode types are rejected because:
+
+1. **Existing chatmodes are hardened and heavily utilized**: The hve-core library already contains production-tested chatmodes in these categories
+2. **Consistency and maintenance**: Coalescing around existing chatmodes reduces fragmentation and maintenance burden
+3. **Avoid duplication**: Multiple chatmodes serving the same purpose create confusion and divergent behavior
+4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing chatmodes
+
+### Before Submitting
+
+When planning to submit a chatmode that falls into these categories:
+
+1. **Question necessity**: Does your use case truly require a new chatmode, or can existing chatmodes meet your needs?
+2. **Review existing chatmodes**: Examine `.github/chatmodes/` to identify chatmodes that already serve your purpose
+3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing chatmodes
+4. **Consider enhancement over creation**: If existing chatmodes don't fully meet your requirements, evaluate whether your changes are:
+   * **Generic enough** to benefit all users
+   * **Valuable enough** to justify modifying the existing chatmode
+5. **Propose enhancements**: Submit a PR to enhance an existing chatmode rather than creating a duplicate
+
+### What Makes a Good New Chatmode
+
+Focus on chatmodes that:
+
+* **Fill gaps**: Address use cases not covered by existing chatmodes
+* **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
+* **Are non-overlapping**: Have clearly distinct purposes from existing chatmodes
+* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing chatmodes
+* **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
+
+## Model Version Requirements
+
+All AI artifacts (chatmodes, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
+
+### Accepted Models
+
+* **Anthropic**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4)
+* **OpenAI**: Latest GPT models (e.g., GPT-5, 5.1-COdEX)
+
+### Not Accepted
+
+* ❌ Older model versions (e.g., GPT-4o, Claude 4)
+* ❌ Models from other providers
+* ❌ Custom or fine-tuned models
+* ❌ Deprecated model versions
+
+### Rationale
+
+1. **Feature parity**: Latest models support the most advanced features and capabilities
+2. **Maintenance burden**: Supporting multiple model versions creates testing and compatibility overhead
+3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
+4. **Future-proofing**: Older models will be deprecated and removed from service
+
+**Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+
 ## XML-Style Block Standards
 
 All AI artifacts use XML-style HTML comment blocks to wrap examples, schemas, templates, and critical instructions. This enables automated extraction, better navigation, and consistency.
@@ -59,52 +138,15 @@ echo "Hello World"
 
 ### Common XML Block Issues
 
-❌ **Missing closing tag**:
+#### Missing Closing Tag
 
-```markdown
-<!-- <example-code> -->
+* **Problem**: XML-style comment blocks opened but never closed
+* **Solution**: Always include matching closing tags `<!-- </block-name> -->` for all opened blocks
 
-```python
-def hello(): pass
-```
+#### Duplicate Tag Names
 
-````text
-
-✅ **Proper opening and closing**:
-
-```markdown
-<!-- <example-code> -->
-
-```python
-def hello(): pass
-```
-
-<!-- </example-code> -->
-````text
-
-❌ **Duplicate tag names**:
-
-```markdown
-<!-- <example-code> -->
-Code here...
-<!-- </example-code> -->
-
-<!-- <example-code> -->  # ERROR: Duplicate!
-More code...
-<!-- </example-code> -->
-```
-
-✅ **Unique tag names**:
-
-```markdown
-<!-- <example-python-function> -->
-Code here...
-<!-- </example-python-function> -->
-
-<!-- <example-bash-script> -->
-More code...
-<!-- </example-bash-script> -->
-```
+* **Problem**: Using the same XML block tag name multiple times in a file
+* **Solution**: Make each tag name unique (e.g., `<example-python-function>` and `<example-bash-script>` instead of multiple `<example-code>` blocks)
 
 ## Markdown Quality Standards
 
@@ -344,140 +386,40 @@ Before submitting any AI artifact:
 
 ## Common Issues and Fixes
 
-### Issue: Ambiguous Directives
+### Ambiguous Directives
 
-❌ **Bad**:
+* **Problem**: Using vague, non-committal language that doesn't clearly indicate requirements
+* **Solution**: Use RFC 2119 keywords (MUST, SHOULD, MAY) to specify clear requirements
 
-```markdown
-You might want to consider adding validation...
-It would be good to include examples...
-```
+### Missing XML Block Closures
 
-✅ **Good**:
+* **Problem**: XML-style comment blocks opened but never closed
+* **Solution**: Always include matching closing tags for all XML-style comment blocks
 
-```markdown
-You MUST validate all inputs before processing (MANDATORY).
-You SHOULD include at least one working example.
-```
+### Code Blocks Without Language Tags
 
-### Issue: Missing XML Block Closures
+* **Problem**: Code blocks missing language identifiers for syntax highlighting
+* **Solution**: Always specify the language for code blocks (python, bash, json, yaml, markdown, text, plaintext)
 
-❌ **Bad**:
+### Bare URLs
 
-```markdown
-<!-- <example-config> -->
+* **Problem**: URLs placed directly in text without proper markdown formatting
+* **Solution**: Wrap URLs in angle brackets `<https://example.com>` or use proper markdown link syntax `[text](url)`
 
-```json
-{"enabled": true}
-```
+### Inconsistent List Markers
 
-````text
+* **Problem**: Mixing different bullet point markers (* and -) in the same list
+* **Solution**: Use consistent markers throughout (prefer * for bullets, - for nested or alternatives)
 
-✅ **Good**:
+### Trailing Whitespace
 
-```markdown
-<!-- <example-config> -->
+* **Problem**: Extra spaces at the end of lines (except intentional 2-space line breaks)
+* **Solution**: Remove all trailing whitespace from lines
 
-```json
-{"enabled": true}
-```
+### Skipped Heading Levels
 
-<!-- </example-config> -->
-````text
-
-### Issue: Code Blocks Without Language Tags
-
-❌ **Bad**:
-
-````markdown
-
-```text
-def example():
-    pass
-```
-
-````text
-
-✅ **Good**:
-
-````markdown
-
-```python
-def example():
-    pass
-```
-
-````text
-
-### Issue: Bare URLs
-
-❌ **Bad**:
-
-````markdown
-See https://github.com/microsoft/hve-core for details.
-````
-
-✅ **Good**:
-
-````markdown
-See <https://github.com/microsoft/hve-core> for details.
-# OR
-See [hve-core repository](https://github.com/microsoft/hve-core) for details.
-```
-
-### Issue: Inconsistent List Markers
-
-❌ **Bad**:
-
-```markdown
-* Item 1
-- Item 2
-* Item 3
-```
-
-✅ **Good**:
-
-```markdown
-* Item 1
-* Item 2
-* Item 3
-```
-
-### Issue: Trailing Whitespace
-
-❌ **Bad** (spaces after text):
-
-```markdown
-Some text here   
-More text   
-```
-
-✅ **Good**:
-
-```markdown
-Some text here
-More text
-```
-
-### Issue: Skipped Heading Levels
-
-❌ **Bad**:
-
-```markdown
-# Title
-
-### Subsection (skipped H2!)
-```
-
-✅ **Good**:
-
-```markdown
-# Title
-
-## Section
-
-### Subsection
-```
+* **Problem**: Jumping from H1 to H3 without an H2, breaking document hierarchy
+* **Solution**: Follow proper heading sequence (H1 → H2 → H3) without skipping levels
 
 ## Attribution Requirements
 

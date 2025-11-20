@@ -559,37 +559,15 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 
 ### Instructions-Specific Issues
 
-❌ **Invalid Glob Pattern**:
+### Invalid Glob Pattern
 
-```yaml
-applyTo: '*.py'  # Only matches root directory
-applyTo: '**/*..py'  # Invalid syntax
-```
+* **Problem**: Glob patterns that only match root directory or contain syntax errors
+* **Solution**: Use `**/` prefix for recursive matching (e.g., `**/*.py` for all Python files recursively)
 
-✅ **Correct Glob Patterns**:
+### Conflicting Patterns
 
-```yaml
-applyTo: '**/*.py'  # Matches all Python files recursively
-applyTo: '**/src/**/*.py'  # Matches Python files only in src/
-```
-
-❌ **Conflicting Patterns**:
-
-```yaml
-# File 1: python-general.instructions.md
-applyTo: '**/*.py'
-# File 2: python-tests.instructions.md  
-applyTo: '**/*.py'  # Conflicts!
-```
-
-✅ **Non-Conflicting Patterns**:
-
-```yaml
-# File 1: python-general.instructions.md
-applyTo: '**/*.py'
-# File 2: python-tests.instructions.md
-applyTo: '**/tests/**/*.py'  # More specific
-```
+* **Problem**: Multiple instruction files with overlapping glob patterns causing ambiguity
+* **Solution**: Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
 
