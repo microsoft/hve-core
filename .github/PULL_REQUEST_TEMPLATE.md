@@ -33,8 +33,9 @@ Select all that apply:
 - [ ] Copilot chatmode (`.github/chatmodes/*.chatmode.md`)
 
 > **Note for AI Artifact Contributors**:
+>
 > - **Chatmodes**: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation chatmodes likely already exist. Review `.github/chatmodes/` before creating new ones.
-> - **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, GPT-4.1, Claude 4) will be rejected.
+> - **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
 > - See [Chatmodes Not Accepted](../docs/contributing-chatmodes.md#chatmodes-not-accepted) and [Model Version Requirements](../docs/contributing-ai-artifacts-common.md#model-version-requirements).
 
 **Other:**

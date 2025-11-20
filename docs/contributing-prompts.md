@@ -211,16 +211,20 @@ See [AI Artifacts Common Standards - XML-Style Block Standards](./contributing-a
 Use `{{double_curly_braces}}` for placeholders:
 
 <!-- <example-template-variables> -->
-```markdown
-✅ CORRECT:
-Title: {{feature_name}} - {{brief_description}}
-Branch: feature/{{work_item_id}}-{{task_name}}
-Assignee: {{user_email}}
+```yaml
+# ✅ CORRECT: Template variables in YAML frontmatter
+---
+title: "{{feature_name}} - {{brief_description}}"
+branch: "feature/{{work_item_id}}-{{task_name}}"
+assignee: "{{user_email}}"
+---
 
-❌ INCORRECT:
-Title: <feature-name> - <brief-description>
-Branch: feature/<work-item-id>-<task-name>
-Assignee: <user.email>
+# ❌ INCORRECT: Non-standard variable syntax in YAML frontmatter
+---
+title: "<feature-name> - <brief-description>"
+branch: "feature/<work-item-id>-<task-name>"
+assignee: "<user.email>"
+---
 ```
 <!-- </example-template-variables> -->
 

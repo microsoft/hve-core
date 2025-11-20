@@ -489,6 +489,14 @@ find . -name "*.py"
 
 Before submitting your instructions file, verify:
 
+### File Format Structure
+
+* [ ] File uses `.instructions.md` extension
+* [ ] File starts with YAML frontmatter between `---` delimiters
+* [ ] File ends with single newline character (EOF)
+* [ ] No trailing whitespace on any lines
+* [ ] Uses UTF-8 encoding
+
 ### Frontmatter
 
 * [ ] Valid YAML between `---` delimiters
@@ -496,13 +504,6 @@ Before submitting your instructions file, verify:
 * [ ] `applyTo` field with valid glob pattern (if auto-applied)
 * [ ] `version` follows semantic versioning format (if present)
 * [ ] No trailing whitespace in values
-
-### File Format Structure
-
-* [ ] Starts with ````instructions` (4 backticks)
-* [ ] Closes with ```` (4 backticks)
-* [ ] File ends with single newline
-* [ ] No content before opening fence (except frontmatter)
 
 ### Content Structure
 
