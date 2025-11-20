@@ -17,9 +17,9 @@
   },
   "devDependencies": {
     "cspell": "9.3.2",
-    "markdown-link-check": "3.14.1",
+    "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "^1.6.0",
-    "markdownlint-cli2": "^0.14.0"
+    "markdownlint-cli2": "^0.19.0"
   },
   "repository": {
     "type": "git",
