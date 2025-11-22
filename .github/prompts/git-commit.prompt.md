@@ -1,5 +1,5 @@
 ---
-mode: 'agent'
+agent: 'agent'
 description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
 ---
 
@@ -10,13 +10,13 @@ Must follow all instructions provided by #file:../instructions/commit-message.in
 Protocol:
 
 1. Stage all unstaged changes using ONLY: `git add -A` (no other git commands at this step).
-2. Use the `get_changed_files` tool always specify "staged" for the sourceControlState to retrieve the now-staged changes, and "repositoryPath" with the full project path (DO NOT use git diff / show / status / log / fetch / pull / push).
+2. Use the `get_changed_files` tool and always specify "staged" for the sourceControlState to retrieve the now-staged changes, and "repositoryPath" with the full project path (DO NOT use git diff / show / status / log / fetch / pull / push).
 3. Analyze the staged changes and produce a clean Conventional Commit message (per the commit message instructions file referenced above). This message is authoritative once generated.
 4. Immediately commit the staged changes (without showing the message yet) using ONLY allowed git commands:
 
-  * Pipe the exact commit message (including body + footer emoji line) via STDIN: `echo "<full message>" | git commit -F -`.
-  * Preserve newlines exactly; ensure the footer emoji line is the final line (file ends with a newline).
-  * DO NOT run any other git commands (no push, pull, fetch, diff, show, status, log, branch, switch, merge, rebase, tag, etc.).
+   * Pipe the exact commit message (including body + footer emoji line) via STDIN: `echo "<full message>" | git commit -F -`.
+   * Preserve newlines exactly; ensure the footer emoji line is the final line (file ends with a newline).
+   * DO NOT run any other git commands (no push, pull, fetch, diff, show, status, log, branch, switch, merge, rebase, tag, etc.).
 
 5. After the commit succeeds, display to the user a success line followed by the full commit message in a fenced `markdown` code block.
 6. If the commit fails, output a concise error summary and STOP (do not retry).
@@ -96,7 +96,7 @@ Constraints:
 
 * Use `git reset --soft HEAD^` strictly once per original commit; if user requests further tweaks again, repeat only if they just acknowledged the previous updated message (still limited to a single soft reset per actual commit creation cycle).
 * Never use any other git commands (no amend, no rebase, no reflog). Use soft reset + fresh commit only.
-* Preserve original staged content; never modify file contents in this flow-only the message.
+* Preserve original staged content; never modify file contents in this flow—only the message.
 * Re-validate description limits and footer formatting; fix user-proposed changes if they violate standards, silently correcting to compliant form.
 
 User Request Interpretation:

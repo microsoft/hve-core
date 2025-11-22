@@ -1,5 +1,5 @@
 ---
-mode: 'agent'
+agent: 'agent'
 description: 'Interactive, verification-first Git configuration assistant (non-destructive)'
 ---
 
@@ -124,7 +124,8 @@ ssh-keygen -t ed25519 -C "${input:userEmail}" -f ~/.ssh/id_ed25519
 ssh-keygen -t ed25519 -C "${input:userEmail}" -f $HOME/.ssh/id_ed25519
 
 # Start ssh-agent and add key (Linux/macOS):
-eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
 # PowerShell (OpenSSH built-in):
 Start-SSHAgent; ssh-add $HOME/.ssh/id_ed25519
 

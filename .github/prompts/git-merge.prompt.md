@@ -1,6 +1,6 @@
 ---
-mode: "agent"
-description: "Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling."
+agent: 'agent'
+description: 'Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.'
 ---
 
 # Git Merge & Rebase Orchestrator
