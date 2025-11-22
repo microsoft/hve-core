@@ -67,6 +67,11 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Style Guides](#style-guides)
     - [Local Development Setup](#local-development-setup)
     - [Coding Conventions](#coding-conventions)
+  - [Release Process](#release-process)
+    - [How Releases Work](#how-releases-work)
+    - [Version Determination](#version-determination)
+    - [Commit Message Examples](#commit-message-examples)
+    - [Release Validation](#release-validation)
   - [Attribution](#attribution)
 
 ## Code of Conduct
@@ -208,10 +213,10 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 Version bumps are determined by commit types:
 
-- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0)
-- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1)
-- `docs:`, `chore:`, `refactor:`, `ci:` commits → **Patch** version bump
-- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0)
+- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0).
+- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1).
+- `docs:`, `chore:`, `refactor:`, `ci:` commits → **No version bump** (appear in changelog only).
+- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0).
 
 ### Commit Message Examples
 
@@ -244,16 +249,6 @@ All releases must pass:
 - PowerShell script analysis
 - Dependency pinning checks
 - SHA staleness checks
-
-### Manual Release (Emergency Only)
-
-If automation fails, maintainers can manually:
-
-1. Update version in `package.json`
-2. Update `CHANGELOG.md`
-3. Create git tag: `git tag v1.2.3`
-4. Push tag: `git push origin v1.2.3`
-5. Create GitHub Release via UI
 
 ## Attribution
 

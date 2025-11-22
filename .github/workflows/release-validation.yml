@@ -141,12 +141,18 @@ jobs:
       - markdown-link-check
       - dependency-pinning-check
       - sha-staleness-check
-    if: needs.detect-release-pr.outputs.is-release == 'true'
+    if: always() && needs.detect-release-pr.outputs.is-release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Release validation summary
         run: |
-          echo "✅ All validation checks passed"
-          echo "🎉 Release PR is ready to merge"
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "❌ Some validation checks failed"
+            echo "🚫 Release PR is not ready to merge"
+            exit 1
+          else
+            echo "✅ All validation checks passed"
+            echo "🎉 Release PR is ready to merge"
+          fi
