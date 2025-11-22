@@ -1,6 +1,6 @@
 ---
 description: 'Automated installer for HVE-Core chatmodes, prompts, and instructions - Brought to you by microsoft/hve-core'
-tools: ['runCommands', 'edit/createFile', 'edit/editFiles', 'search']
+tools: ['runCommand', 'edit/createFile', 'edit/editFiles', 'search']
 ---
 # HVE-Core Installer Agent
 
@@ -51,7 +51,7 @@ You MUST:
 
 ### Step 2: Detect Workspace Root
 
-You MUST detect the current workspace root using `runCommands`.
+You MUST detect the current workspace root using `runCommand`.
 
 **PowerShell:**
 
@@ -101,9 +101,7 @@ hve_core_target="$workspace_parent/hve-core"
 if [ -d "$hve_core_target" ]; then
     echo "✅ hve-core already exists at: $hve_core_target"
 else
-    cd "$workspace_parent"
-    git clone https://github.com/microsoft/hve-core.git
-    cd - > /dev/null
+    (cd "$workspace_parent" && git clone https://github.com/microsoft/hve-core.git)
     echo "✅ Cloned hve-core to: $hve_core_target"
 fi
 ```
@@ -116,7 +114,7 @@ You MUST handle clone failures by:
 
 ### Step 4: Validate Repository Structure
 
-You MUST validate that required directories exist using `runCommands`.
+You MUST validate that required directories exist using `runCommand`.
 
 **PowerShell:**
 
@@ -170,7 +168,7 @@ I will now update your VS Code settings.json to add hve-core paths.
 
 Changes to be made:
 • Add "../hve-core/.github/chatmodes" to chat.modeFilesLocations
-• Add "../hve-core/.github/prompts" to chat.promptFilesLocations  
+• Add "../hve-core/.github/prompts" to chat.promptFilesLocations
 • Add "../hve-core/.github/instructions" to chat.instructionsFilesLocations
 
 A timestamped backup will be created before any modifications.
@@ -180,9 +178,9 @@ A timestamped backup will be created before any modifications.
 
 If user declines, you MUST respond: "Installation cancelled. No changes were made to your settings."
 
-Upon authorization, you MUST use `edit/editFiles` tool to:
+Upon authorization, you MUST:
 
-1. Determine settings.json path based on OS.
+1. Determine settings.json path based on OS using `runCommand`:
 
 **PowerShell (cross-platform):**
 
@@ -208,9 +206,9 @@ else
 fi
 ```
 
-1. Read current settings.json content
+2. Read current settings.json content using appropriate tools
 
-2. Parse JSON and add paths to arrays (avoid duplicates):
+3. Parse JSON and add paths to arrays (avoid duplicates), then use `edit/editFiles` to write updated JSON:
    * If `chat.modeFilesLocations` doesn't exist, create it as empty array
    * If `chat.promptFilesLocations` doesn't exist, create it as empty array
    * If `chat.instructionsFilesLocations` doesn't exist, create it as empty array

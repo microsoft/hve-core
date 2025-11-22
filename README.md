@@ -17,9 +17,9 @@ estimated_reading_time: 3
 
 An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
 
-[![Install HVE-Core](https://img.shields.io/badge/Install_HVE--Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](#automated-installation)
+[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](#automated-installation)
 
-**Quick Install:** One-click installation via the `hve-core-installer` agent in VS Code (~30 seconds)
+**Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
 
 ## Overview
 
