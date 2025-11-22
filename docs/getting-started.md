@@ -2,7 +2,7 @@
 title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 author: Microsoft
-ms.date: 2025-11-15
+ms.date: 2025-11-21
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -14,7 +14,24 @@ estimated_reading_time: 5
 
 This guide shows you how to configure your project to use HVE Core's GitHub Copilot customizations (chat modes, instructions, and prompts).
 
-## Prerequisites
+## Automated Installation (Recommended)
+
+**Fastest method:** Use the `hve-core-installer` agent for automated setup (~30 seconds):
+
+1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
+2. Select the `hve-core-installer` agent from the agent picker dropdown
+3. Follow the guided installation
+
+The installer will:
+
+* Clone the hve-core repository as a sibling to your workspace
+* Validate the repository structure
+* Update your VS Code settings.json with chat mode, prompt, and instruction paths
+* Make all HVE Core components immediately available
+
+## Manual Installation
+
+### Prerequisites
 
 * VS Code with GitHub Copilot extension installed
 * Both repositories cloned as siblings on your machine
@@ -94,6 +111,43 @@ Check that everything works:
 **Troubleshooting:** If custom agents don't appear, verify the `chat.modeFilesLocations` setting points to the correct path in your workspace settings.
 
 ## Troubleshooting
+
+### Installation Issues
+
+If the automated installation encounters issues, try these solutions:
+
+#### "Not in a git repository" error
+
+* Ensure you have a git repository initialized in your current workspace
+* Run `git init` if needed, then retry installation
+
+#### "Git not found" error
+
+* Install Git and ensure it's available in your PATH
+* Verify: Open terminal and run `git --version`
+* Windows: Download from [git-scm.com](https://git-scm.com)
+* macOS: Install via Homebrew `brew install git` or Xcode Command Line Tools
+* Linux: Install via package manager `apt install git` or `yum install git`
+
+#### "Clone failed" error
+
+* Check network connectivity to github.com
+* Verify you don't already have a `../hve-core` directory
+* Try cloning manually: `git clone https://github.com/microsoft/hve-core.git ../hve-core`
+
+#### "Settings update failed" error
+
+* Check VS Code settings.json file permissions
+* Manually backup your settings: Copy `settings.json` before retrying
+* Verify settings.json is valid JSON (no syntax errors)
+
+#### Agent not available
+
+* Ensure GitHub Copilot extension is installed and active
+* Reload VS Code window: Ctrl+Shift+P → "Developer: Reload Window"
+* Check that hve-core repository is cloned as a sibling to your workspace
+
+### Configuration Issues
 
 **Problem:** Copilot not discovering hve-core customizations
 
