@@ -182,41 +182,42 @@ Upon authorization, you MUST:
 
 1. Determine settings.json path based on OS using `runCommand`:
 
-**PowerShell (cross-platform):**
+    **PowerShell (cross-platform):**
 
-```powershell
-if ($IsWindows -or $env:OS -eq "Windows_NT") {
-    $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
-} elseif ($IsMacOS -or $env:OS -eq "Darwin") {
-    $settingsPath = Join-Path $env:HOME "Library/Application Support/Code/User/settings.json"
-} else {
-    $settingsPath = Join-Path $env:HOME ".config/Code/User/settings.json"
-}
-```
+    ```powershell
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
+    } elseif ($IsMacOS -or $env:OS -eq "Darwin") {
+        $settingsPath = Join-Path $env:HOME "Library/Application Support/Code/User/settings.json"
+    } else {
+        $settingsPath = Join-Path $env:HOME ".config/Code/User/settings.json"
+    }
+    ```
 
-**Bash:**
+    **Bash:**
 
-```bash
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-    settings_path="$APPDATA/Code/User/settings.json"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    settings_path="$HOME/Library/Application Support/Code/User/settings.json"
-else
-    settings_path="$HOME/.config/Code/User/settings.json"
-fi
-```
+    ```bash
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+        settings_path="$APPDATA/Code/User/settings.json"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        settings_path="$HOME/Library/Application Support/Code/User/settings.json"
+    else
+        settings_path="$HOME/.config/Code/User/settings.json"
+    fi
+    ```
 
 2. Read current settings.json content using appropriate tools
 
 3. Parse JSON and add paths to arrays (avoid duplicates), then use `edit/editFiles` to write updated JSON:
-   * If `chat.modeFilesLocations` doesn't exist, create it as empty array
-   * If `chat.promptFilesLocations` doesn't exist, create it as empty array
-   * If `chat.instructionsFilesLocations` doesn't exist, create it as empty array
-   * Add `../hve-core/.github/chatmodes` if not already present
-   * Add `../hve-core/.github/prompts` if not already present
-   * Add `../hve-core/.github/instructions` if not already present
 
-3. Write updated JSON back to settings.json
+    * If `chat.modeFilesLocations` doesn't exist, create it as empty array
+    * If `chat.promptFilesLocations` doesn't exist, create it as empty array
+    * If `chat.instructionsFilesLocations` doesn't exist, create it as empty array
+    * Add `../hve-core/.github/chatmodes` if not already present
+    * Add `../hve-core/.github/prompts` if not already present
+    * Add `../hve-core/.github/instructions` if not already present
+
+4. Write updated JSON back to settings.json
 
 You MUST report each change:
 
