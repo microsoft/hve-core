@@ -17,21 +17,41 @@ estimated_reading_time: 3
 
 An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
 
+[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](#automated-installation)
+
+**Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
+
 ## Overview
 
 HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Copilot chat modes, along with curated instructions and prompt templates, to deliver intelligent, context-aware interactions for building solutions on Azure. Whether you're tackling greenfield projects or modernizing existing systems, HVE Core reduces time-to-value and simplifies complex engineering tasks.
 
 ## Quick Start
 
+### Automated Installation
+
+**Recommended:** Use the `hve-core-installer` agent for automated setup:
+
+1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
+2. Select the `hve-core-installer` agent from the agent picker dropdown
+3. Follow the guided installation (~30 seconds)
+
+The installer will:
+
+* Clone the hve-core repository as a sibling to your workspace
+* Validate the repository structure
+* Update your VS Code settings.json with chat mode, prompt, and instruction paths
+* Make all HVE Core components immediately available
+
+### Manual Installation
+
+To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started.md) for step-by-step instructions.
+
 ### Prerequisites
 
 * GitHub Copilot subscription
 * VS Code with GitHub Copilot extension
+* Git installed and available in PATH
 * Node.js and npm (for development and validation)
-
-### Setup
-
-To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started.md) for step-by-step instructions.
 
 ### Using Chat Modes
 
