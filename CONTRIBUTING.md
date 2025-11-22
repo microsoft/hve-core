@@ -190,6 +190,71 @@ Refer to the [DevContainer README](./.devcontainer/README.md) for detailed infor
 - Run spell checking before committing changes
 - Format tables using the markdown-table-formatter tool
 
+## Release Process
+
+This project uses [release-please](https://github.com/googleapis/release-please) for automated version management and releases.
+
+### How Releases Work
+
+1. **Commit with Conventional Commits** - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/commit-message.instructions.md))
+2. **Release PR Creation** - After commits are pushed to `main`, release-please automatically creates or updates a "release PR" that includes:
+   - Updated version in `package.json`
+   - Generated `CHANGELOG.md` entry
+   - Preview of GitHub release notes
+3. **Review Release PR** - Maintainers review the release PR to verify version bump and changelog accuracy
+4. **Merge to Release** - When the release PR is merged, a git tag and GitHub Release are automatically created
+
+### Version Determination
+
+Version bumps are determined by commit types:
+
+- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0)
+- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1)
+- `docs:`, `chore:`, `refactor:`, `ci:` commits → **Patch** version bump
+- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0)
+
+### Commit Message Examples
+
+```bash
+# Feature addition (minor bump)
+git commit -m "feat(instructions): add Terraform best practices"
+
+# Bug fix (patch bump)
+git commit -m "fix(workflows): correct frontmatter validation path"
+
+# Documentation update (patch bump)
+git commit -m "docs(readme): update installation steps"
+
+# Breaking change (major bump)
+git commit -m "feat!: redesign prompt file structure
+
+BREAKING CHANGE: prompt files now require category frontmatter field"
+```
+
+For complete commit message format requirements, see [commit-message.instructions.md](./.github/instructions/commit-message.instructions.md).
+
+### Release Validation
+
+All releases must pass:
+
+- Markdown linting
+- Frontmatter schema validation
+- Spell checking
+- Link validation
+- PowerShell script analysis
+- Dependency pinning checks
+- SHA staleness checks
+
+### Manual Release (Emergency Only)
+
+If automation fails, maintainers can manually:
+
+1. Update version in `package.json`
+2. Update `CHANGELOG.md`
+3. Create git tag: `git tag v1.2.3`
+4. Push tag: `git push origin v1.2.3`
+5. Create GitHub Release via UI
+
 ## Attribution
 
 This guide is based on the **contributing.md**. [Make your own](https://contributing.md/)!
