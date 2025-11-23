@@ -227,7 +227,7 @@ git commit -m "feat(instructions): add Terraform best practices"
 # Bug fix (patch bump)
 git commit -m "fix(workflows): correct frontmatter validation path"
 
-# Documentation update (patch bump)
+# Documentation update (no version bump)
 git commit -m "docs(readme): update installation steps"
 
 # Breaking change (major bump)
@@ -242,13 +242,10 @@ For complete commit message format requirements, see [commit-message.instruction
 
 All releases must pass:
 
-- Markdown linting
-- Frontmatter schema validation
 - Spell checking
-- Link validation
-- PowerShell script analysis
+- Markdown linting
+- Table format checking
 - Dependency pinning checks
-- SHA staleness checks
 
 ## Attribution
 
