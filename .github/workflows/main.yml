@@ -48,6 +48,11 @@ jobs:
 
   release-please:
     name: Release Please
+    needs:
+      - spell-check
+      - markdown-lint
+      - table-format
+      - dependency-pinning-scan
     runs-on: ubuntu-latest
     permissions:
       contents: write

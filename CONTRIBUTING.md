@@ -213,10 +213,10 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 Version bumps are determined by commit types:
 
-- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0).
-- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1).
-- `docs:`, `chore:`, `refactor:`, `ci:` commits → **No version bump** (appear in changelog only).
-- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0).
+- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0)
+- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1)
+- `docs:`, `chore:`, `refactor:` commits → **No version bump** (appear in changelog only)
+- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0)
 
 ### Commit Message Examples
 

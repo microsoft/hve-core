@@ -10,8 +10,7 @@
         {"type": "fix", "section": "🐛 Bug Fixes", "hidden": false},
         {"type": "docs", "section": "📚 Documentation", "hidden": false},
         {"type": "refactor", "section": "♻️ Refactoring", "hidden": false},
-        {"type": "chore", "section": "🔧 Maintenance", "hidden": false},
-        {"type": "ci", "section": "⚙️ CI/CD", "hidden": false}
+        {"type": "chore", "section": "🔧 Maintenance", "hidden": false}
       ],
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": false
