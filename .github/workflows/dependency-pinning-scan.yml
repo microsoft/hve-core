@@ -61,7 +61,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.2.2
         with:
           persist-credentials: false
 
@@ -142,7 +142,7 @@ jobs:
 
       - name: Upload SARIF to Security tab
         if: inputs.upload-sarif && always()
-        uses: github/codeql-action/upload-sarif@c1a2b73420f0c02efb863cc6921c531bc1a54f4f # v3.27.0
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
         with:
           sarif_file: logs/dependency-pinning-results.sarif
           category: dependency-pinning

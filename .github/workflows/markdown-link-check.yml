@@ -25,12 +25,12 @@ jobs:
           egress-policy: audit
 
       - name: Checkout code
-        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.2.2
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@dda4788290998366da86b6a4f497909644397bb2 # v4.1.0
+        uses: actions/setup-node@633bb92bc0aabcae06e8ea93b85aecddd374c402 # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
