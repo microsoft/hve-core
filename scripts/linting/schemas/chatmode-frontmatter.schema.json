@@ -2,34 +2,39 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/hve-core/schemas/chatmode-frontmatter.schema.json",
   "title": "ChatMode File Frontmatter Schema",
-  "description": "Frontmatter schema for .chatmode.md files",
+  "description": "Frontmatter schema for .chatmode.md files (legacy/deprecated format)",
   "type": "object",
   "required": ["description"],
   "properties": {
     "description": {
       "type": "string",
       "minLength": 1,
-      "description": "Brief description of the chat mode functionality"
+      "description": "Concise explanation of chatmode functionality (10-200 characters)"
     },
     "tools": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Array of tools available in this chat mode"
+      "description": "List of GitHub Copilot tools available to this agent (e.g., codebase, search, editFiles, runCommands)"
     },
     "mode": {
       "type": "string",
       "enum": ["agent", "assistant", "copilot"],
-      "description": "Chat mode type"
+      "description": "Defines agent interaction pattern"
+    },
+    "model": {
+      "type": "string",
+      "description": "The language model to use (e.g., 'Claude Sonnet 4')"
     },
     "version": {
       "type": "string",
-      "description": "Version of the chat mode configuration"
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version number (e.g., '1.0.0')"
     },
     "author": {
       "type": "string",
-      "description": "Author or team responsible for the chat mode"
+      "description": "Attribution for chatmode creator (e.g., 'microsoft/hve-core')"
     }
   },
   "additionalProperties": true

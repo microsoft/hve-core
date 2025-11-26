@@ -27,7 +27,7 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 * Surround each heading with a blank line above and below (except at file start/end).
 * Do not end headings with punctuation such as `. , ; : !` or their full-width variants.
 * Avoid duplicate headings under the same parent section; make them unique.
-* Begin the file with a top-level heading after YAML frontmatter (if present). BOTH frontmatter `title:` field AND H1 heading are required when frontmatter is used. Do not include preamble text before the title.
+* Do NOT use an H1 heading when YAML frontmatter contains a `title:` field. The frontmatter title satisfies MD025 and MD041. Start content with H2 or below after frontmatter. If no frontmatter exists, begin the file with a top-level heading.
 * Use exactly one space after the `#` characters in headings; do not omit or use multiple spaces.
 * If you close ATX headings with trailing `#` characters, use a single space between the text and both the opening and closing hashes; do not use multiple spaces on either side.
 * Use only one top-level heading per document; subsequent sections must use lower levels.
@@ -48,9 +48,8 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 * Frontmatter MUST be the first content in the file (before H1 heading)
 * Use triple-dash delimiters (---) on separate lines to wrap frontmatter YAML
 * Frontmatter provides machine-readable metadata for validation, SEO, and site generation
-* BOTH frontmatter `title:` field AND H1 heading are required (not either/or)
-  * Frontmatter title: Metadata for search indexing, HTML `<title>` tag, navigation
-  * H1 heading: Content title for semantic HTML structure and accessibility
+* Do NOT use an H1 heading when frontmatter includes a `title:` field; the title in frontmatter acts as the document title per MD025/MD041
+* Start document content with H2 or below when frontmatter is present
 
 ### Required Fields by File Type
 

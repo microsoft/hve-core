@@ -2,32 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/hve-core/schemas/instruction-frontmatter.schema.json",
   "title": "Instruction File Frontmatter Schema",
-  "description": "Frontmatter schema for .instructions.md files in .github directory",
+  "description": "Frontmatter schema for .instructions.md files per VS Code Copilot specification",
   "type": "object",
   "required": ["description"],
   "properties": {
     "description": {
       "type": "string",
       "minLength": 1,
-      "description": "Brief description of the instruction file purpose"
+      "description": "A short description of the instructions file"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The name of the instructions file, used in the UI. If not specified, the file name is used."
     },
     "applyTo": {
       "type": "string",
-      "pattern": "^(\\*\\*/)?[*\\w.-]+(/[*\\w.-]+)*(/\\*{1,2})?(\\.\\w+)?(,\\s*(\\*\\*/)?[*\\w.-]+(/[*\\w.-]+)*(/\\*{1,2})?(\\.\\w+)?)*$",
-      "description": "Glob patterns for file matching, supports comma-separated values like '**/*.py, **/*.ipynb' and directory patterns like '**/.copilot-tracking/pr/new/**'"
-    },
-    "author": {
-      "type": "string",
-      "description": "Author or team responsible for the instructions"
-    },
-    "version": {
-      "type": "string",
-      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
-      "description": "Version number for the instruction set"
-    },
-    "lastUpdated": {
-      "$ref": "base-frontmatter.schema.json#/definitions/iso8601Date"
+      "description": "Optional glob pattern that defines which files the instructions should be applied to automatically, relative to the workspace root. Use ** to apply to all files. If not specified, instructions are not applied automatically."
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
