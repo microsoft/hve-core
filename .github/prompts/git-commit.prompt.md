@@ -9,21 +9,25 @@ Must follow all instructions provided by #file:../instructions/commit-message.in
 
 Protocol:
 
-1. Stage all unstaged changes using ONLY: `git add -A` (no other git commands at this step).
-2. Use the `get_changed_files` tool and always specify "staged" for the sourceControlState to retrieve the now-staged changes, and "repositoryPath" with the full project path (DO NOT use git diff / show / status / log / fetch / pull / push).
-3. Analyze the staged changes and produce a clean Conventional Commit message (per the commit message instructions file referenced above). This message is authoritative once generated.
-4. Immediately commit the staged changes (without showing the message yet) using ONLY allowed git commands:
+1. **Pre-staging safety check**: Before staging, verify the repository has a `.gitignore` file. If `.gitignore` is missing or empty:
+   * Warn the user: "⚠️ No .gitignore detected. Using `git add -A` may stage sensitive files (.env, node_modules/, build/, etc.)."
+   * Offer two options: (a) proceed with `git add -u` (tracked files only, safer), or (b) proceed with `git add -A` if user explicitly confirms.
+   * Default to `git add -u` if user does not respond.
+2. Stage changes using the confirmed command (`git add -A` or `git add -u`).
+3. Use the `get_changed_files` tool and always specify "staged" for the sourceControlState to retrieve the now-staged changes, and "repositoryPath" with the full project path (DO NOT use git diff / show / status / log / fetch / pull / push).
+4. Analyze the staged changes and produce a clean Conventional Commit message (per the commit message instructions file referenced above). This message is authoritative once generated.
+5. Immediately commit the staged changes (without showing the message yet) using ONLY allowed git commands:
 
    * Pipe the exact commit message (including body + footer emoji line) via STDIN: `echo "<full message>" | git commit -F -`.
    * Preserve newlines exactly; ensure the footer emoji line is the final line (file ends with a newline).
    * DO NOT run any other git commands (no push, pull, fetch, diff, show, status, log, branch, switch, merge, rebase, tag, etc.).
 
-5. After the commit succeeds, display to the user a success line followed by the full commit message in a fenced `markdown` code block.
-6. If the commit fails, output a concise error summary and STOP (do not retry).
+6. After the commit succeeds, display to the user a success line followed by the full commit message in a fenced `markdown` code block.
+7. If the commit fails, output a concise error summary and STOP (do not retry).
 
 Rules & Constraints:
 
-* Allowed git commands: `git add -A`, `git commit -F -` (stdin) or `git commit -m` variants if single-line only (multi-line must use `-F -`), and conditionally `git reset --soft HEAD^` ONLY when performing an immediate post-commit message revision explicitly requested by the user right after showing the commit.
+* Allowed git commands: `git add -A` or `git add -u` (based on safety check), `git commit -F -` (stdin) or `git commit -m` variants if single-line only (multi-line must use `-F -`), and conditionally `git reset --soft HEAD^` ONLY when performing an immediate post-commit message revision explicitly requested by the user right after showing the commit.
 * Never attempt to obtain diffs via git CLI; rely solely on `get_changed_files` tool output.
 * If there are NO staged changes after staging, output a short notice and STOP (do not create an empty commit).
 * Commit message MUST:
