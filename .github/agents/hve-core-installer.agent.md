@@ -120,7 +120,7 @@ You MUST validate that required directories exist using `runCommand`.
 
 ```powershell
 $hveCoreTarget = Join-Path (Split-Path (git rev-parse --show-toplevel) -Parent) "hve-core"
-$requiredPaths = @(".github/chatmodes", ".github/prompts", ".github/instructions", ".github/agents")
+$requiredPaths = @(".github/chatmodes", ".github/prompts", ".github/instructions")
 $valid = $true
 foreach ($path in $requiredPaths) {
     if (-not (Test-Path (Join-Path $hveCoreTarget $path))) {
@@ -136,7 +136,7 @@ if ($valid) { Write-Host "✅ Repository structure validated" }
 ```bash
 workspace_root=$(git rev-parse --show-toplevel)
 hve_core_target="$(dirname "$workspace_root")/hve-core"
-required_paths=(".github/chatmodes" ".github/prompts" ".github/instructions" ".github/agents")
+required_paths=(".github/chatmodes" ".github/prompts" ".github/instructions")
 valid=true
 
 for path in "${required_paths[@]}"; do
@@ -185,14 +185,16 @@ Upon authorization, you MUST:
     **PowerShell (cross-platform):**
 
     ```powershell
-    if ($IsWindows) {
+    # Cross-version OS detection (PowerShell Core and Windows PowerShell 5.1)
+    $platform = [System.Environment]::OSVersion.Platform
+    if ($platform -eq "Win32NT") {
         $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
-    } elseif ($IsMacOS) {
+    } elseif ($platform -eq "Unix" -and $IsMacOS) {
         $settingsPath = Join-Path $env:HOME "Library/Application Support/Code/User/settings.json"
-    } elseif ($IsLinux) {
+    } elseif ($platform -eq "Unix") {
         $settingsPath = Join-Path $env:HOME ".config/Code/User/settings.json"
     } else {
-        # Fallback for Windows PowerShell 5.1 (lacks $IsWindows)
+        # Fallback: Assume Windows
         $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
     }
     ```
@@ -214,9 +216,37 @@ Upon authorization, you MUST:
     fi
     ```
 
-2. Read current settings.json content using appropriate tools
+2. Create a timestamped backup of settings.json using `runCommand`:
 
-3. Parse JSON and add paths to arrays (avoid duplicates), then use `edit/editFiles` to write updated JSON:
+    **PowerShell:**
+
+    ```powershell
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupPath = "$settingsPath.backup.$timestamp"
+    Copy-Item -Path $settingsPath -Destination $backupPath -ErrorAction SilentlyContinue
+    if (Test-Path $backupPath) {
+        Write-Host "✅ Backup created: $backupPath"
+    } else {
+        Write-Host "⚠️ No existing settings.json to backup (new installation)"
+    }
+    ```
+
+    **Bash:**
+
+    ```bash
+    timestamp=$(date +"%Y%m%d-%H%M%S")
+    backup_path="${settings_path}.backup.${timestamp}"
+    if [ -f "$settings_path" ]; then
+        cp "$settings_path" "$backup_path"
+        echo "✅ Backup created: $backup_path"
+    else
+        echo "⚠️ No existing settings.json to backup (new installation)"
+    fi
+    ```
+
+3. Read current settings.json content using appropriate tools
+
+4. Parse JSON and add paths to arrays (avoid duplicates), then use `edit/editFiles` to write updated JSON:
 
     * If `chat.modeFilesLocations` doesn't exist, create it as empty array
     * If `chat.promptFilesLocations` doesn't exist, create it as empty array
@@ -225,7 +255,7 @@ Upon authorization, you MUST:
     * Add `../hve-core/.github/prompts` if not already present
     * Add `../hve-core/.github/instructions` if not already present
 
-4. Write updated JSON back to settings.json
+5. Write updated JSON back to settings.json
 
 You MUST report each change:
 

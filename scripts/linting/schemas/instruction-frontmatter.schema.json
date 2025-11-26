@@ -4,6 +4,7 @@
   "title": "Instruction File Frontmatter Schema",
   "description": "Frontmatter schema for .instructions.md files per VS Code Copilot specification",
   "type": "object",
+  "required": ["description"],
   "properties": {
     "description": {
       "type": "string",

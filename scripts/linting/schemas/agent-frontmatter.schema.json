@@ -69,5 +69,5 @@
       "description": "Optional list of suggested next actions or prompts to transition between custom agents. Handoff buttons appear as interactive suggestions after a chat response completes"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }
