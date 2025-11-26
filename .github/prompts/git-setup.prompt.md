@@ -1,5 +1,5 @@
 ---
-agent: 'agent'
+mode: 'agent'
 description: 'Interactive, verification-first Git configuration assistant (non-destructive)'
 ---
 
