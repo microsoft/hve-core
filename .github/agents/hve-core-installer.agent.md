@@ -120,7 +120,7 @@ You MUST validate that required directories exist using `runCommand`.
 
 ```powershell
 $hveCoreTarget = Join-Path (Split-Path (git rev-parse --show-toplevel) -Parent) "hve-core"
-$requiredPaths = @(".github/chatmodes", ".github/prompts", ".github/instructions")
+$requiredPaths = @(".github/chatmodes", ".github/prompts", ".github/instructions", ".github/agents")
 $valid = $true
 foreach ($path in $requiredPaths) {
     if (-not (Test-Path (Join-Path $hveCoreTarget $path))) {
@@ -136,7 +136,7 @@ if ($valid) { Write-Host "✅ Repository structure validated" }
 ```bash
 workspace_root=$(git rev-parse --show-toplevel)
 hve_core_target="$(dirname "$workspace_root")/hve-core"
-required_paths=(".github/chatmodes" ".github/prompts" ".github/instructions")
+required_paths=(".github/chatmodes" ".github/prompts" ".github/instructions" ".github/agents")
 valid=true
 
 for path in "${required_paths[@]}"; do
@@ -185,20 +185,28 @@ Upon authorization, you MUST:
     **PowerShell (cross-platform):**
 
     ```powershell
-    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    if ($IsWindows) {
         $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
-    } elseif ($IsMacOS -or $env:OS -eq "Darwin") {
+    } elseif ($IsMacOS) {
         $settingsPath = Join-Path $env:HOME "Library/Application Support/Code/User/settings.json"
-    } else {
+    } elseif ($IsLinux) {
         $settingsPath = Join-Path $env:HOME ".config/Code/User/settings.json"
+    } else {
+        # Fallback for Windows PowerShell 5.1 (lacks $IsWindows)
+        $settingsPath = Join-Path $env:APPDATA "Code\User\settings.json"
     }
     ```
 
     **Bash:**
 
     ```bash
-    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-        settings_path="$APPDATA/Code/User/settings.json"
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
+        # Convert Windows path to Unix-style for Git Bash/MSYS
+        if command -v cygpath &> /dev/null; then
+            settings_path="$(cygpath "$APPDATA")/Code/User/settings.json"
+        else
+            settings_path="${APPDATA//\\//}/Code/User/settings.json"
+        fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         settings_path="$HOME/Library/Application Support/Code/User/settings.json"
     else
