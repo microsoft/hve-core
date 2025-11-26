@@ -29,13 +29,7 @@ repos/
 └── hve-core/
 ```
 
-```bash
-cd repos
-git clone https://github.com/your-org/my-project.git
-git clone https://github.com/microsoft/hve-core.git
-```
-
-```powershell
+```console
 cd repos
 git clone https://github.com/your-org/my-project.git
 git clone https://github.com/microsoft/hve-core.git
