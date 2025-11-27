@@ -1,11 +1,14 @@
 ---
 title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
+author: Microsoft
+ms.date: 2025-11-26
+ms.topic: how-to
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Instructions File?
 
@@ -264,7 +267,7 @@ Brought to you by microsoft/hve-core
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](./contributing-ai-artifacts-common.md#xml-style-block-standards) for complete rules. Common tags for instructions:
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules. Common tags for instructions:
 
 * `<!-- <example-{pattern-name}> -->` - Code examples
 * `<!-- <convention-{category}> -->` - Convention blocks
@@ -274,7 +277,7 @@ See [AI Artifacts Common Standards - XML-Style Block Standards](./contributing-a
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](./contributing-ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
 
 ## Pattern Definition Standards
 
@@ -527,9 +530,9 @@ Before submitting your instructions file, verify:
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](./contributing-ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](./contributing-ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](./contributing-ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
 
 ### Technical Validation
 
@@ -549,7 +552,7 @@ Before submitting your instructions file, verify:
 
 ## Testing Your Instructions
 
-See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai-artifacts-common.md#common-testing-practices) for testing guidelines. For instructions specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For instructions specifically:
 
 1. Verify `applyTo` glob pattern matches intended files
 2. Test all code examples execute correctly
@@ -570,11 +573,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 * **Problem**: Multiple instruction files with overlapping glob patterns causing ambiguity
 * **Solution**: Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](./contributing-ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
@@ -585,14 +588,14 @@ All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Chatmodes](./contributing-chatmodes.md) - AI agent configuration files
-* [Contributing Prompts](./contributing-prompts.md) - Workflow-specific guidance
-* [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
+* [Contributing Chatmodes](chatmodes.md) - AI agent configuration files
+* [Contributing Prompts](prompts.md) - Workflow-specific guidance
+* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](./contributing-ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
 * Review existing examples in `.github/instructions/`
 * Test glob patterns using file search commands

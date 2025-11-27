@@ -1,11 +1,14 @@
 ---
 title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
+author: Microsoft
+ms.date: 2025-11-26
+ms.topic: how-to
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is a Prompt?
 
@@ -204,7 +207,7 @@ Brought to you by microsoft/hve-core
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](./contributing-ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
 
 ### Template Variable Standards
 
@@ -236,7 +239,7 @@ assignee: "<user.email>"
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](./contributing-ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
 
 ## Workflow Definition Standards
 
@@ -430,9 +433,9 @@ Before submitting your prompt, verify:
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](./contributing-ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](./contributing-ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](./contributing-ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
 * [ ] Template variables use `{{snake_case}}`
 
 ### Technical Validation
@@ -451,7 +454,7 @@ Before submitting your prompt, verify:
 
 ## Testing Your Prompt
 
-See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai-artifacts-common.md#common-testing-practices) for testing guidelines. For prompts specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For prompts specifically:
 
 1. Follow prompt steps manually to verify workflow logic
 2. Test with AI execution using realistic scenarios
@@ -472,11 +475,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 * **Problem**: Vague workflow steps without specific tools, conditions, or decision logic
 * **Solution**: Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](./contributing-ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
@@ -487,14 +490,14 @@ All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Chatmodes](./contributing-chatmodes.md) - AI agent configuration files
-* [Contributing Instructions](./contributing-instructions.md) - Technology-specific standards
-* [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
+* [Contributing Chatmodes](chatmodes.md) - AI agent configuration files
+* [Contributing Instructions](instructions.md) - Technology-specific standards
+* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](./contributing-ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
 
 ---
 

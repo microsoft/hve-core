@@ -260,15 +260,28 @@ function Get-SchemaForFile {
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
-            # Simple pattern matching for file names
-            if ($rule.pattern -match '\|') {
-                $patterns = $rule.pattern -split '\|'
-                if ($fileName -in $patterns) {
+            # Directory-based patterns (check these FIRST for proper specificity)
+            if ($rule.pattern -like "*/**/*") {
+                # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
+                $regexPattern = $rule.pattern
+                $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
+                $regexPattern = $regexPattern -replace '\*', '[^/]*'
+                $regexPattern = $regexPattern -replace '\.', '\.'
+                $regexPattern = '^' + $regexPattern + '$'
+                if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
-            # Directory-based patterns
-            elseif ($rule.pattern -like "*/**/*") {
+            # Simple pattern matching for root file names only
+            elseif ($rule.pattern -match '\|') {
+                $patterns = $rule.pattern -split '\|'
+                # Only match if file is in root (relativePath equals fileName)
+                if ($relativePath -eq $fileName -and $fileName -in $patterns) {
+                    return Join-Path -Path $schemaDir -ChildPath $rule.schema
+                }
+            }
+            # Simple file patterns
+            elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
                 # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
                 $regexPattern = $rule.pattern
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'

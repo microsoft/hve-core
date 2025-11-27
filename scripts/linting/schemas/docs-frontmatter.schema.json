@@ -29,7 +29,7 @@
     },
     "ms.topic": {
       "type": "string",
-      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting"],
+      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting", "architecture"],
       "description": "Recommended: Documentation topic type"
     },
     "keywords": {
