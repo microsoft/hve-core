@@ -751,6 +751,72 @@ function Write-OutputResult {
     }
 }
 
+function Get-ToolStaleness {
+    <#
+    .SYNOPSIS
+        Checks tool versions against their latest GitHub releases.
+
+    .DESCRIPTION
+        Reads the tool-checksums.json manifest and queries the GitHub Releases API
+        to detect when tracked tools have newer versions available.
+
+    .PARAMETER ManifestPath
+        Path to the tool-checksums.json manifest file.
+
+    .PARAMETER GitHubToken
+        GitHub API token for authenticated requests (higher rate limits).
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$ManifestPath = (Join-Path $PSScriptRoot "tool-checksums.json"),
+
+        [Parameter()]
+        [string]$GitHubToken = $env:GITHUB_TOKEN
+    )
+
+    if (-not (Test-Path $ManifestPath)) {
+        Write-Warning "Tool manifest not found: $ManifestPath"
+        return @()
+    }
+
+    $manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+    $results = @()
+
+    $headers = @{
+        'Accept'               = 'application/vnd.github+json'
+        'X-GitHub-Api-Version' = '2022-11-28'
+    }
+    if ($GitHubToken) {
+        $headers['Authorization'] = "Bearer $GitHubToken"
+    }
+
+    foreach ($tool in $manifest.tools) {
+        try {
+            $uri = "https://api.github.com/repos/$($tool.repo)/releases/latest"
+            $latestRelease = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+            $latestVersion = $latestRelease.tag_name -replace '^v', ''
+
+            $isStale = $latestVersion -ne $tool.version
+
+            $results += [PSCustomObject]@{
+                Tool           = $tool.name
+                Repository     = $tool.repo
+                CurrentVersion = $tool.version
+                LatestVersion  = $latestVersion
+                IsStale        = $isStale
+                CurrentSHA256  = $tool.sha256
+                Notes          = $tool.notes
+            }
+        }
+        catch {
+            Write-Warning "Failed to check $($tool.name): $_"
+        }
+    }
+
+    return $results
+}
+
 # Main execution
 Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
 Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info

@@ -246,7 +246,6 @@ $ActionSHAMap = @{
     "actions/download-artifact@v3"         = "actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a" # v3.0.2
     "github/super-linter@v6"               = "github/super-linter@4ac6c1e9bce95c4e5e456c8c2c6b468998248097" # v6.8.0
     "github/super-linter@v5"               = "github/super-linter@45fc0d88288beee4701c62761281edfee85655d7" # v5.7.2
-    "step-security/harden-runner@v2"       = "step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde" # v2.9.1
     "hashicorp/setup-terraform@v3"         = "hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8" # v3.1.1
     "hashicorp/setup-terraform@v2"         = "hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1" # v2.0.3
     "azure/login@v2"                       = "azure/login@6c251865b4e6290e7b78be643ea2d005bc51f69a" # v2.1.1

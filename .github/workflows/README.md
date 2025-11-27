@@ -114,11 +114,6 @@ All workflows in this repository follow security best practices:
 * Secrets inherited explicitly with `secrets: inherit`
 * No hardcoded tokens or credentials
 
-### Network Hardening
-
-* `step-security/harden-runner` used in all jobs for egress policy auditing
-* Egress policy set to `audit` mode for visibility
-
 ## Maintenance
 
 ### Updating SHA Pins
@@ -252,7 +247,7 @@ To add a new workflow to the repository:
 
 1. Create `{tool-name}.yml` following existing patterns
 2. Implement 4-channel result publishing (annotations, artifacts, SARIF if security, summaries)
-3. Add harden-runner and SHA pinning
+3. Use SHA pinning for all actions
 4. Use minimal permissions
 5. Add soft-fail input support
 6. Update `pr-validation.yml` and `main.yml` to include new job
@@ -487,7 +482,6 @@ permissions:
 
 * All actions MUST be pinned to SHA commits (not tags or branches)
 * Include SHA comment showing the tag/version (e.g., `# v4.2.2`)
-* Use Harden Runner for audit logging
 * Disable credential persistence when checking out code: `persist-credentials: false`
 
 ## Troubleshooting
