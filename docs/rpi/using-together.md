@@ -146,7 +146,7 @@ Ready for review. Continue to Phase 2?
 
 Check the code, run linters, then continue.
 
-**5. Final output:**
+1. Final output:
 
 When all phases complete:
 

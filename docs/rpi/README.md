@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn the Research, Plan, Implement workflow for transforming complex tasks into working code
 author: Microsoft
 ms.date: 2025-01-28
-ms.topic: conceptual
+ms.topic: concept
 keywords:
   - rpi workflow
   - task researcher

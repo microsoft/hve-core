@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 10
 ---
 
-Build a real validation script using the Research → Plan → Implement workflow. You'll create a PowerShell script that checks every docs subfolder has a `README.md` file.
+Build a real validation script using the Research → Plan → Implement workflow. You'll create a PowerShell script that checks that every docs subfolder has a `README.md` file.
 
 ## Prerequisites
 
