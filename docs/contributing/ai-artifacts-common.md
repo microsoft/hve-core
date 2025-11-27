@@ -464,10 +464,10 @@ When contributing AI artifacts:
 
 ### Common Resources
 
-* [Contributing Chatmodes](./contributing-chatmodes.md) - Agent configurations
-* [Contributing Prompts](./contributing-prompts.md) - Workflow guidance
-* [Contributing Instructions](./contributing-instructions.md) - Technology standards
-* [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
+* [Contributing Chatmodes](chatmodes.md) - Agent configurations
+* [Contributing Prompts](prompts.md) - Workflow guidance
+* [Contributing Instructions](instructions.md) - Technology standards
+* [Pull Request Template](../../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 
 ---
 
