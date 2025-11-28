@@ -31,6 +31,17 @@ HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Co
 
 ### Setup
 
+#### Option 1: Install via PromptyDumpty (Recommended)
+
+```bash
+pip install prompty-dumpty
+dumpty install https://github.com/dasiths/hve-core
+```
+
+See [PromptyDumpty documentation](https://dumpty.dev) for more options.
+
+#### Option 2: Clone Repository
+
 To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started.md) for step-by-step instructions.
 
 ### Using Chat Modes

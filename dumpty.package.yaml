@@ -1,0 +1,410 @@
+name: hve-core
+version: 1.0.0
+description: Open-source library of Hypervelocity Engineering components that accelerates Azure solution development
+manifest_version: 1.0
+license: MIT
+author: Microsoft
+repository: https://github.com/dasiths/hve-core
+homepage: https://github.com/dasiths/hve-core
+
+categories:
+  - name: ado
+    description: Azure DevOps workflows and automation
+  - name: git
+    description: Git workflows and automation
+  - name: development
+    description: Development workflows and task management
+  - name: documentation
+    description: Documentation generation and management
+  - name: testing
+    description: Testing and quality assurance
+  - name: security
+    description: Security scanning and validation
+  - name: linting
+    description: Code quality and linting tools
+  - name: data-science
+    description: Data science and analytics workflows
+
+agents:
+  copilot:
+    # Chat Modes
+    chatmodes:
+      - name: ado-prd-to-wit
+        description: Convert PRD documents to Azure DevOps work items
+        file: .github/chatmodes/ado-prd-to-wit.chatmode.md
+        installed_path: ado-prd-to-wit.chatmode.md
+        categories: [ado, development]
+      
+      - name: adr-creation
+        description: Create Architecture Decision Records (ADRs)
+        file: .github/chatmodes/adr-creation.chatmode.md
+        installed_path: adr-creation.chatmode.md
+        categories: [documentation]
+      
+      - name: gen-data-spec
+        description: Generate data specifications
+        file: .github/chatmodes/gen-data-spec.chatmode.md
+        installed_path: gen-data-spec.chatmode.md
+        categories: [data-science, documentation]
+      
+      - name: gen-jupyter-notebook
+        description: Generate Jupyter notebooks
+        file: .github/chatmodes/gen-jupyter-notebook.chatmode.md
+        installed_path: gen-jupyter-notebook.chatmode.md
+        categories: [data-science]
+      
+      - name: gen-streamlit-dashboard
+        description: Generate Streamlit dashboards
+        file: .github/chatmodes/gen-streamlit-dashboard.chatmode.md
+        installed_path: gen-streamlit-dashboard.chatmode.md
+        categories: [data-science]
+      
+      - name: github-issue-manager
+        description: Manage GitHub issues
+        file: .github/chatmodes/github-issue-manager.chatmode.md
+        installed_path: github-issue-manager.chatmode.md
+        categories: [git, development]
+      
+      - name: pr-review
+        description: Review pull requests comprehensively
+        file: .github/chatmodes/pr-review.chatmode.md
+        installed_path: pr-review.chatmode.md
+        categories: [git, development]
+      
+      - name: prd-builder
+        description: Build Product Requirement Documents
+        file: .github/chatmodes/prd-builder.chatmode.md
+        installed_path: prd-builder.chatmode.md
+        categories: [documentation, development]
+      
+      - name: prompt-builder
+        description: Create coding instructions and prompts
+        file: .github/chatmodes/prompt-builder.chatmode.md
+        installed_path: prompt-builder.chatmode.md
+        categories: [development]
+      
+      - name: security-plan-creator
+        description: Create security plans and assessments
+        file: .github/chatmodes/security-plan-creator.chatmode.md
+        installed_path: security-plan-creator.chatmode.md
+        categories: [security, documentation]
+      
+      - name: task-implementor
+        description: Implement planned tasks
+        file: .github/chatmodes/task-implementor.chatmode.md
+        installed_path: task-implementor.chatmode.md
+        categories: [development]
+      
+      - name: task-planner
+        description: Plan new features and refactoring
+        file: .github/chatmodes/task-planner.chatmode.md
+        installed_path: task-planner.chatmode.md
+        categories: [development]
+      
+      - name: task-researcher
+        description: Research Azure services and approaches
+        file: .github/chatmodes/task-researcher.chatmode.md
+        installed_path: task-researcher.chatmode.md
+        categories: [development]
+      
+      - name: test-streamlit-dashboard
+        description: Test Streamlit dashboards
+        file: .github/chatmodes/test-streamlit-dashboard.chatmode.md
+        installed_path: test-streamlit-dashboard.chatmode.md
+        categories: [data-science, testing]
+    
+    # Prompts
+    prompts:
+      - name: ado-create-pull-request
+        description: Create Azure DevOps pull requests
+        file: .github/prompts/ado-create-pull-request.prompt.md
+        installed_path: ado-create-pull-request.prompt.md
+        categories: [ado]
+      
+      - name: ado-get-build-info
+        description: Get Azure DevOps build information
+        file: .github/prompts/ado-get-build-info.prompt.md
+        installed_path: ado-get-build-info.prompt.md
+        categories: [ado]
+      
+      - name: ado-get-my-work-items
+        description: Get your Azure DevOps work items
+        file: .github/prompts/ado-get-my-work-items.prompt.md
+        installed_path: ado-get-my-work-items.prompt.md
+        categories: [ado]
+      
+      - name: ado-process-my-work-items-for-task-planning
+        description: Process work items for task planning
+        file: .github/prompts/ado-process-my-work-items-for-task-planning.prompt.md
+        installed_path: ado-process-my-work-items-for-task-planning.prompt.md
+        categories: [ado, development]
+      
+      - name: git-commit-message
+        description: Generate standardized commit messages
+        file: .github/prompts/git-commit-message.prompt.md
+        installed_path: git-commit-message.prompt.md
+        categories: [git]
+      
+      - name: git-commit
+        description: Create Git commits
+        file: .github/prompts/git-commit.prompt.md
+        installed_path: git-commit.prompt.md
+        categories: [git]
+      
+      - name: git-merge
+        description: Handle Git merge workflows
+        file: .github/prompts/git-merge.prompt.md
+        installed_path: git-merge.prompt.md
+        categories: [git]
+      
+      - name: git-setup
+        description: Set up Git configuration
+        file: .github/prompts/git-setup.prompt.md
+        installed_path: git-setup.prompt.md
+        categories: [git]
+      
+      - name: github-add-issue
+        description: Add GitHub issues
+        file: .github/prompts/github-add-issue.prompt.md
+        installed_path: github-add-issue.prompt.md
+        categories: [git]
+      
+      - name: pull-request
+        description: Create and manage pull requests
+        file: .github/prompts/pull-request.prompt.md
+        installed_path: pull-request.prompt.md
+        categories: [git, development]
+    
+    # Instructions
+    instructions:
+      # Core instructions
+      - name: copilot-instructions
+        description: Comprehensive coding guidelines and instructions for hve-core
+        file: .github/copilot-instructions.md
+        installed_path: copilot-instructions.md
+      
+      # ADO instructions
+      - name: ado-create-pull-request-instructions
+        description: Instructions for creating Azure DevOps pull requests
+        file: .github/instructions/ado-create-pull-request.instructions.md
+        installed_path: ado-create-pull-request.instructions.md
+        categories: [ado]
+      
+      - name: ado-get-build-info-instructions
+        description: Instructions for getting Azure DevOps build info
+        file: .github/instructions/ado-get-build-info.instructions.md
+        installed_path: ado-get-build-info.instructions.md
+        categories: [ado]
+      
+      - name: ado-update-wit-items-instructions
+        description: Instructions for updating Azure DevOps work items
+        file: .github/instructions/ado-update-wit-items.instructions.md
+        installed_path: ado-update-wit-items.instructions.md
+        categories: [ado]
+      
+      - name: ado-wit-discovery-instructions
+        description: Instructions for discovering Azure DevOps work items
+        file: .github/instructions/ado-wit-discovery.instructions.md
+        installed_path: ado-wit-discovery.instructions.md
+        categories: [ado]
+      
+      - name: ado-wit-planning-instructions
+        description: Instructions for planning Azure DevOps work items
+        file: .github/instructions/ado-wit-planning.instructions.md
+        installed_path: ado-wit-planning.instructions.md
+        categories: [ado]
+      
+      # Git instructions
+      - name: commit-message-instructions
+        description: Instructions for creating commit messages
+        file: .github/instructions/commit-message.instructions.md
+        installed_path: commit-message.instructions.md
+        categories: [git]
+      
+      - name: git-merge-instructions
+        description: Instructions for Git merge workflows
+        file: .github/instructions/git-merge.instructions.md
+        installed_path: git-merge.instructions.md
+        categories: [git]
+      
+      # Development instructions
+      - name: task-implementation-instructions
+        description: Instructions for implementing task plans
+        file: .github/instructions/task-implementation.instructions.md
+        installed_path: task-implementation.instructions.md
+        categories: [development]
+      
+      # Language-specific instructions
+      - name: bash-instructions
+        description: Instructions for bash script implementation
+        file: .github/instructions/bash/bash.instructions.md
+        installed_path: bash/bash.instructions.md
+        categories: [development]
+      
+      - name: bicep-instructions
+        description: Instructions for Bicep infrastructure as code
+        file: .github/instructions/bicep/bicep.instructions.md
+        installed_path: bicep/bicep.instructions.md
+        categories: [development]
+      
+      - name: csharp-instructions
+        description: Instructions for C# implementation
+        file: .github/instructions/csharp/csharp.instructions.md
+        installed_path: csharp/csharp.instructions.md
+        categories: [development]
+      
+      - name: csharp-tests-instructions
+        description: Instructions for C# test code
+        file: .github/instructions/csharp/csharp-tests.instructions.md
+        installed_path: csharp/csharp-tests.instructions.md
+        categories: [development, testing]
+      
+      - name: markdown-instructions
+        description: Instructions for creating or editing Markdown files
+        file: .github/instructions/markdown.instructions.md
+        installed_path: markdown.instructions.md
+        categories: [documentation]
+      
+      - name: python-script-instructions
+        description: Instructions for python scripting implementation
+        file: .github/instructions/python-script.instructions.md
+        installed_path: python-script.instructions.md
+        categories: [development]
+      
+      - name: shell-instructions
+        description: Instructions for shell script implementation
+        file: .github/instructions/shell.instructions.md
+        installed_path: shell.instructions.md
+        categories: [development]
+      
+      - name: uv-projects-instructions
+        description: Instructions for creating and managing Python virtual environments
+        file: .github/instructions/uv-projects.instructions.md
+        installed_path: uv-projects.instructions.md
+        categories: [development]
+    
+    # Files (scripts only)
+    files:
+      # Scripts - Dev Tools
+      - name: generate-pr-reference-ps
+        description: PowerShell script for PR reference generation
+        file: scripts/dev-tools/Generate-PrReference.ps1
+        installed_path: scripts/dev-tools/Generate-PrReference.ps1
+        categories: [development]
+      
+      - name: pr-ref-gen-sh
+        description: Bash script for PR reference generation
+        file: scripts/dev-tools/pr-ref-gen.sh
+        installed_path: scripts/dev-tools/pr-ref-gen.sh
+        categories: [development]
+      
+      # Scripts - Linting
+      - name: invoke-link-language-check
+        description: PowerShell script for link language checking
+        file: scripts/linting/Invoke-LinkLanguageCheck.ps1
+        installed_path: scripts/linting/Invoke-LinkLanguageCheck.ps1
+        categories: [linting]
+      
+      - name: invoke-psscriptanalyzer
+        description: PowerShell script analyzer runner
+        file: scripts/linting/Invoke-PSScriptAnalyzer.ps1
+        installed_path: scripts/linting/Invoke-PSScriptAnalyzer.ps1
+        categories: [linting]
+      
+      - name: link-lang-check
+        description: Link language consistency checker
+        file: scripts/linting/Link-Lang-Check.ps1
+        installed_path: scripts/linting/Link-Lang-Check.ps1
+        categories: [linting]
+      
+      - name: markdown-link-check
+        description: Markdown link validation script
+        file: scripts/linting/Markdown-Link-Check.ps1
+        installed_path: scripts/linting/Markdown-Link-Check.ps1
+        categories: [linting]
+      
+      - name: validate-markdown-frontmatter
+        description: Markdown frontmatter validation script
+        file: scripts/linting/Validate-MarkdownFrontmatter.ps1
+        installed_path: scripts/linting/Validate-MarkdownFrontmatter.ps1
+        categories: [linting]
+      
+      - name: psscriptanalyzer-settings
+        description: PSScriptAnalyzer settings file
+        file: scripts/linting/PSScriptAnalyzer.psd1
+        installed_path: scripts/linting/PSScriptAnalyzer.psd1
+        categories: [linting]
+      
+      - name: markdown-link-check-config
+        description: Markdown link checker configuration
+        file: scripts/linting/markdown-link-check.config.json
+        installed_path: scripts/linting/markdown-link-check.config.json
+        categories: [linting]
+      
+      - name: linting-helpers-module
+        description: PowerShell linting helper functions
+        file: scripts/linting/Modules/LintingHelpers.psm1
+        installed_path: scripts/linting/Modules/LintingHelpers.psm1
+        categories: [linting]
+      
+      # Linting schemas
+      - name: base-frontmatter-schema
+        description: Base frontmatter JSON schema
+        file: scripts/linting/schemas/base-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/base-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: chatmode-frontmatter-schema
+        description: Chatmode frontmatter JSON schema
+        file: scripts/linting/schemas/chatmode-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/chatmode-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: docs-frontmatter-schema
+        description: Documentation frontmatter JSON schema
+        file: scripts/linting/schemas/docs-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/docs-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: instruction-frontmatter-schema
+        description: Instruction frontmatter JSON schema
+        file: scripts/linting/schemas/instruction-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/instruction-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: prompt-frontmatter-schema
+        description: Prompt frontmatter JSON schema
+        file: scripts/linting/schemas/prompt-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/prompt-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: root-community-frontmatter-schema
+        description: Root community frontmatter JSON schema
+        file: scripts/linting/schemas/root-community-frontmatter.schema.json
+        installed_path: scripts/linting/schemas/root-community-frontmatter.schema.json
+        categories: [linting]
+      
+      - name: schema-mapping
+        description: Schema mapping configuration
+        file: scripts/linting/schemas/schema-mapping.json
+        installed_path: scripts/linting/schemas/schema-mapping.json
+        categories: [linting]
+      
+      # Scripts - Security
+      - name: test-dependency-pinning
+        description: Dependency pinning validation script
+        file: scripts/security/Test-DependencyPinning.ps1
+        installed_path: scripts/security/Test-DependencyPinning.ps1
+        categories: [security]
+      
+      - name: test-sha-staleness
+        description: SHA staleness checking script
+        file: scripts/security/Test-SHAStaleness.ps1
+        installed_path: scripts/security/Test-SHAStaleness.ps1
+        categories: [security]
+      
+      - name: update-action-sha-pinning
+        description: Update GitHub Action SHA pins script
+        file: scripts/security/Update-ActionSHAPinning.ps1
+        installed_path: scripts/security/Update-ActionSHAPinning.ps1
+        categories: [security]
