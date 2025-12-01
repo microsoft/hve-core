@@ -49,7 +49,7 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 * Use triple-dash delimiters (---) on separate lines to wrap frontmatter YAML
 * Frontmatter provides machine-readable metadata for validation, SEO, and site generation
 * Do NOT use an H1 heading when frontmatter includes a `title:` field; the title in frontmatter acts as the document title per MD025/MD041
-* Start document content with H2 or below when frontmatter is present
+* Start document content with H2 or below when frontmatter contains a `title:` field
 
 ### Required Fields by File Type
 
@@ -258,13 +258,15 @@ See <https://example.com> and [Docs](https://example.com/docs).
 * Surround tables with a blank line before and after (unless at file start/end).
 * Use a consistent pipe style; prefer leading and trailing pipes on all rows.
 * Ensure every row has the same number of cells as the header.
- * Keep header and delimiter rows aligned in column count so the table is recognized by renderers.
+* Keep header and delimiter rows aligned in column count so the table is recognized by renderers.
+* Use aligned column style: all pipe characters must align vertically across all rows. Pad cell content with spaces so pipes line up.
 
 <!-- <example-tables> -->
 ```markdown
-| Col A | Col B |
-|-------|-------|
-| A     | B     |
+| Column A | Column B | Column C |
+| -------- | -------- | -------- |
+| Short    | Medium   | Longer   |
+| A        | BB       | CCC      |
 ```
 <!-- </example-tables> -->
 

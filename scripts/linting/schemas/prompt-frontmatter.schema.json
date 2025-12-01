@@ -36,5 +36,5 @@
       "description": "List of tool names or tool set names available for this prompt. Can include built-in tools, MCP tools (<server>/*), or extension tools."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }
