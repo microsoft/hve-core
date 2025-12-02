@@ -59,7 +59,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Run release-please
-        uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4.1.3
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
