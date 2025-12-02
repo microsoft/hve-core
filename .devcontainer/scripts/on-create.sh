@@ -18,7 +18,7 @@ main() {
   curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
   
   echo "Checking gitleaks tarball integrity..."
-  if ! echo "${EXPECTED_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -; then
+  if ! echo "${EXPECTED_SHA256} /tmp/gitleaks.tar.gz" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for gitleaks tarball" >&2
     rm /tmp/gitleaks.tar.gz
     exit 1
