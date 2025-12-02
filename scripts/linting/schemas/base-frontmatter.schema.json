@@ -43,7 +43,7 @@
     },
     "ms.topic": {
       "type": "string",
-      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting", "research"],
+      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting", "research", "guide", "hub-page", "architecture"],
       "description": "Microsoft documentation topic type"
     },
     "keywords": {

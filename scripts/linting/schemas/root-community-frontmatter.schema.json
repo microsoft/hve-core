@@ -29,7 +29,7 @@
     },
     "ms.topic": {
       "type": "string",
-      "enum": ["overview", "concept", "reference"],
+      "enum": ["overview", "concept", "reference", "guide", "hub-page"],
       "description": "Recommended: Document topic type"
     },
     "keywords": {

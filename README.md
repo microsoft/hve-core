@@ -12,7 +12,7 @@ keywords:
   - conversational workflows
   - chat modes
   - copilot instructions
-estimated_reading_time: 3
+estimated_reading_time: 2
 ---
 
 An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
@@ -53,32 +53,25 @@ To use HVE Core's GitHub Copilot customizations in your project, clone this repo
 * Git installed and available in PATH
 * Node.js and npm (for development and validation)
 
-### Using Chat Modes
+### Setup
 
-Select specialized AI assistants from the agent picker dropdown in GitHub Copilot Chat:
+To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started/README.md) for step-by-step instructions.
 
-1. Open Chat view (Ctrl+Alt+I)
-2. Click the agent picker dropdown at the top
-3. Select your desired agent:
-   * **task-planner** - Plan new features and refactoring
-   * **task-researcher** - Research Azure services and approaches
-   * **prompt-builder** - Create coding instructions and prompts
-   * **pr-review** - Review pull requests comprehensively
+### Try the RPI Workflow
 
-[Learn more about chat modes →](.github/chatmodes/README.md)
+Transform complex tasks into working code using Research → Plan → Implement:
 
-### Using Instructions
+1. Complete the [Your First RPI Workflow](docs/getting-started/first-workflow.md) tutorial (~15 min)
+2. For simple tasks, use [prompts](.github/prompts/README.md) directly without the full workflow
 
-Repository-specific coding guidelines are automatically applied by GitHub Copilot when you edit files. Instructions ensure consistent code style, conventions, and best practices across your codebase without manual intervention.
+## What's Included
 
-[Learn more about instructions →](.github/instructions/README.md)
-
-## Features
-
-* 🤖 **Specialized Chat Modes** - Task planning, research, prompt engineering, and PR reviews
-* 📋 **Coding Instructions** - Repository-specific guidelines that Copilot automatically follows
-* 🚀 **Accelerated Development** - Pre-built workflows for common Azure development tasks
-* 🔄 **Reusable Components** - Curated templates and patterns for consistent solutions
+| Component    | Description                                                          | Documentation                                  |
+|--------------|----------------------------------------------------------------------|------------------------------------------------|
+| Chat Modes   | Specialized AI assistants for research, planning, and implementation | [Chat Modes](.github/chatmodes/README.md)      |
+| Instructions | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
+| Prompts      | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
+| Scripts      | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Project Structure
 
@@ -86,9 +79,9 @@ Repository-specific coding guidelines are automatically applied by GitHub Copilo
 .github/
 ├── chatmodes/       # Specialized Copilot chat assistants
 ├── instructions/    # Repository-specific coding guidelines
-└── workflows/       # CI/CD automation
-scripts/
-└── linting/         # Code quality and validation tools
+└── prompts/         # Reusable prompt templates
+docs/                # Learning guides and tutorials
+scripts/             # Validation and development tools
 ```
 
 ## Contributing
@@ -99,14 +92,15 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 2. Check out [open issues](https://github.com/microsoft/hve-core/issues)
 3. Join the [discussion](https://github.com/microsoft/hve-core/discussions)
 
-## Resources
+## Documentation
 
-* [Chat Modes Documentation](.github/chatmodes/README.md)
-* [Instructions Documentation](.github/instructions/README.md)
-* [Contributing Guide](CONTRIBUTING.md)
-* [Code of Conduct](CODE_OF_CONDUCT.md)
-* [Security Policy](SECURITY.md)
-* [Support](SUPPORT.md)
+| Guide                                                    | Description                                  |
+|----------------------------------------------------------|----------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial            |
+| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement     |
+| [Contributing](docs/contributing/README.md)              | Create chat modes, instructions, and prompts |
+| [Chat Modes Reference](.github/chatmodes/README.md)      | All available chat modes                     |
+| [Instructions Reference](.github/instructions/README.md) | All coding instructions                      |
 
 ## Responsible AI
 

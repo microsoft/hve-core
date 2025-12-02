@@ -27,7 +27,7 @@ Specialized GitHub Copilot behaviors for common development workflows. Each chat
 * Type: "Create a plan to add Docker SHA validation"
 * Press Enter
 
-**Requirements:** GitHub Copilot subscription, VS Code with Copilot extension, proper workspace configuration (see [Getting Started](../../docs/getting-started.md))
+**Requirements:** GitHub Copilot subscription, VS Code with Copilot extension, proper workspace configuration (see [Getting Started](../../docs/getting-started/README.md))
 
 ## Available Chat Modes
 
