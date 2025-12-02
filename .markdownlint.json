@@ -143,5 +143,8 @@
     "style": "consistent"
   },
   "MD056": true,
-  "MD058": true
+  "MD058": true,
+  "MD060": {
+    "style": "aligned"
+  }
 }

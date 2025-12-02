@@ -31,6 +31,12 @@
       "scope": "github-prompts",
       "schema": "prompt-frontmatter.schema.json",
       "description": "Prompt files in .github directory"
+    },
+    {
+      "pattern": ".github/**/*.agent.md",
+      "scope": "github-agents",
+      "schema": "agent-frontmatter.schema.json",
+      "description": "Agent files in .github directory"
     }
   ],
   "defaultSchema": "base-frontmatter.schema.json"

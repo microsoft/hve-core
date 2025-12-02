@@ -2,34 +2,38 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/hve-core/schemas/prompt-frontmatter.schema.json",
   "title": "Prompt File Frontmatter Schema",
-  "description": "Frontmatter schema for .prompt.md files",
+  "description": "Frontmatter schema for .prompt.md files per VS Code Copilot specification",
   "type": "object",
+  "required": ["description"],
   "properties": {
     "description": {
       "type": "string",
       "minLength": 1,
-      "description": "Brief description of the prompt purpose"
+      "description": "A short description of the prompt"
     },
-    "mode": {
+    "name": {
       "type": "string",
-      "enum": ["agent", "assistant", "copilot", "workflow"],
-      "description": "Prompt mode or context"
+      "minLength": 1,
+      "description": "The name of the prompt, used after typing / in chat. Defaults to filename if not specified."
     },
-    "category": {
+    "argument-hint": {
       "type": "string",
-      "enum": ["ado", "git", "documentation", "workflow", "development"],
-      "description": "Prompt category for organization"
+      "description": "Optional hint text shown in the chat input to guide users on expected arguments"
     },
-    "version": {
+    "agent": {
       "type": "string",
-      "description": "Version of the prompt"
+      "description": "The agent used for running the prompt. Options: ask, edit, agent (default), or a custom agent name"
     },
-    "author": {
+    "model": {
       "type": "string",
-      "description": "Author or team responsible for the prompt"
+      "description": "The language model to use when running the prompt. Defaults to current selection if not specified."
     },
-    "lastUpdated": {
-      "$ref": "base-frontmatter.schema.json#/definitions/iso8601Date"
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of tool names or tool set names available for this prompt. Can include built-in tools, MCP tools (<server>/*), or extension tools."
     }
   },
   "additionalProperties": true
