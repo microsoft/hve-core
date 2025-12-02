@@ -33,12 +33,12 @@ Specialized GitHub Copilot behaviors for common development workflows. Each chat
 
 Select from the **agent picker dropdown** in the Chat view:
 
-| Agent Name           | Purpose                                                          | Key Constraint                              |
-| -------------------- | ---------------------------------------------------------------- | ------------------------------------------- |
-| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                 | Requires research first; never implements code |
-| **task-researcher**  | Produces research documents with evidence-based recommendations  | Research-only; never plans or implements    |
-| **prompt-builder**   | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing       |
-| **pr-review**        | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code            |
+| Agent Name          | Purpose                                                         | Key Constraint                                 |
+| ------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| **task-planner**    | Creates 3-file plan sets (plan, details, prompt)                | Requires research first; never implements code |
+| **task-researcher** | Produces research documents with evidence-based recommendations | Research-only; never plans or implements       |
+| **prompt-builder**  | Engineers and validates instruction/prompt files                | Dual-persona system with auto-testing          |
+| **pr-review**       | 4-phase PR review with tracking artifacts                       | Review-only; never modifies code               |
 
 ## Chat Mode Details
 

@@ -60,10 +60,10 @@ resource "azurerm_resource_group" "example" {
 
 ## Available Instructions
 
-| File | Applies To | Purpose |
-|------|------------|---------|
-| [commit-message.instructions.md](commit-message.instructions.md) | `commit` | Conventional commit message format and standards |
-| [markdown.instructions.md](markdown.instructions.md) | `**/*.md` | Markdown formatting standards and style guide |
+| File                                                             | Applies To | Purpose                                          |
+| ---------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| [commit-message.instructions.md](commit-message.instructions.md) | `commit`   | Conventional commit message format and standards |
+| [markdown.instructions.md](markdown.instructions.md)             | `**/*.md`  | Markdown formatting standards and style guide    |
 
 ## Creating New Instructions
 
