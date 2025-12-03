@@ -467,6 +467,7 @@ docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
 
-# devcontainer rebuild
+# devcontainer
 /.gitconfig.global
 /.gitconfig.local
+/.devcontainer/*.crt
