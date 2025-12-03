@@ -1,8 +1,8 @@
 {
   "name": "HVE Core - Markdown Editing",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  // Rename the mount to /workspace for consistency, otherwise its mounted using
-  // whatever folder name the user cloned the repo as
+  // Rename the mount to /workspace for a predictable workspace paths in our scripts.
+  // The source path might also contain special characters, so it needs escaped double quotes.
   "workspaceMount": "\"source=${localWorkspaceFolder}\",target=/workspace,type=bind",
   "workspaceFolder": "/workspace",
   "mounts": [
@@ -47,11 +47,11 @@
         // Prevent extensions from stealing focus, see microsoft/vscode#205225
         "workbench.view.showQuietly": {
           "workbench.panel.output": true
-        },
+        }
       }
     }
   },
-  // This is to ensure support for config includes is properly handled, see microsoft/vscode-remote-release/2084
+  // This is to ensure support for config includes is properly handled, see microsoft/vscode-remote-release#2084
   "initializeCommand": {
     "extractGitGlobals": "(git config -l --global --include || true) > .gitconfig.global",
     "extractGitLocals": "(git config -l --local --include || true) > .gitconfig.local"
