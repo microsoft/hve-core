@@ -10,9 +10,9 @@ set -euo pipefail
 #
 # IMPORTANT: workaround requires Docker base image to have password-less sudo.
 function fix_volume_ownership() {
-  volume_path="$1"
+  local volume_path="$1"
 
-  if [ ! -d "$volume_path" ]; then
+  if [[ ! -d "$volume_path" ]]; then
     echo "ERROR: the volume path provided '$volume_path' does not exist."
     exit 1
   fi

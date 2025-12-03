@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # devcontainers copy your local gitconfig but do not parse conditional includes.
@@ -7,7 +7,7 @@ set -euo pipefail
 # https://github.com/microsoft/vscode-remote-release/issues/2084#issuecomment-2289987894
 function copy_user_gitconfig() {
   for conf in .gitconfig.global .gitconfig.local; do
-    if [ -f $conf ]; then
+    if [[ -f "$conf" ]]; then
       echo "*** Parsing ${conf##.gitconfig.} Git configuration export"
       while IFS='=' read -r key value; do
         case "$key" in
