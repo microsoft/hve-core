@@ -33,12 +33,16 @@ function npm_install() {
   echo "NPM dependencies installed successfully"
 }
 
-# Adds a root CA to the system certificate store. Useful if developer machines
-# have MITM TLS inspection happening, e.g. with ZScaler.
-if [ -f .devcontainer/*.crt ]; then
-  sudo cp .devcontainer/*.crt /usr/local/share/ca-certificates/
-  sudo update-ca-certificates
-fi
+function update_ca_certs() {
+  # Adds a root CA to the system certificate store. Useful if developer machines
+  # have MITM TLS inspection happening, e.g. with ZScaler.
+  echo "Updating container system CA certificates..."
+  if compgen -G ".devcontainer/*.crt" > /dev/null; then
+    sudo cp .devcontainer/*.crt /usr/local/share/ca-certificates/
+    sudo update-ca-certificates
+  fi
+  echo "Container's system CA certificates updated successfully"
+}
 
 main() {
   fix_volume_ownerships
