@@ -442,3 +442,7 @@ pr-reference.xml
 .mcp/*-local.json
 .mcp/*.local.json
 .mcp/.env
+
+# devcontainer rebuild
+/.gitconfig.global
+/.gitconfig.local
