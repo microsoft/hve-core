@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 3
 ---
 
-# VS Code MCP Server Configuration
+## Overview
 
 This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
