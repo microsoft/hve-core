@@ -22,8 +22,6 @@ function copy_user_gitconfig() {
   done
 }
 
-#
 # Main execution path
-#
 
 copy_user_gitconfig
