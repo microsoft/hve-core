@@ -29,7 +29,7 @@ Items in **HIGHEST PRIORITY** sections from attached instructions files override
 **Prefer safe commands**: Use commands that do not have the potential to mutate files...
 
 * Avoid commands like `sed .../p` to print data when non-mutating alternatives exist.
-* Avoid shell redirects like `2>/dev/null` unless necessary because these force an approval.
+* Avoid shell redirects like `2>/dev/null` unless necessary, as they may trigger interactive approval prompts in certain AI assistant environments.
 
 **Edit tools:** Never use `insert_edit_into_file` tool when other edit and file modification tools are available.
 
