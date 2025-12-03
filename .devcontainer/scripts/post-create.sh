@@ -29,7 +29,7 @@ function fix_volume_ownership() {
   fi
 
   echo "Setting volume ownership for $volume_path"
-  sudo -n chown $USER:$USER "$volume_path"
+  sudo -n chown "${USER}":"${USER}" "$volume_path"
 }
 
 function fix_volume_ownerships() {
