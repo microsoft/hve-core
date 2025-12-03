@@ -34,7 +34,7 @@ HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Co
 1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
 2. Type `@hve-core-installer` and press Enter
 3. Say: "Install HVE-Core into my project"
-4. Follow the guided installation (~30 seconds)
+4. Follow the guided installation
 
 The installer will:
 
@@ -47,12 +47,12 @@ The installer will:
 
 For manual setup or alternative installation methods, see the [Getting Started Guide](docs/getting-started/README.md) which covers:
 
-- [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
-- [Git-Ignored Clone](docs/getting-started/methods/git-ignored.md) - Devcontainer ephemeral setup
-- [Mounted Volume](docs/getting-started/methods/mounted.md) - Advanced container sharing
-- [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
-- [Submodule](docs/getting-started/methods/submodule.md) - Team version control
-- [GitHub Codespaces](docs/getting-started/methods/codespaces.md) - Cloud development
+* [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
+* [Git-Ignored Clone](docs/getting-started/methods/git-ignored.md) - Devcontainer ephemeral setup
+* [Mounted Volume](docs/getting-started/methods/mounted.md) - Advanced container sharing
+* [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
+* [Submodule](docs/getting-started/methods/submodule.md) - Team version control
+* [GitHub Codespaces](docs/getting-started/methods/codespaces.md) - Cloud development
 
 ### Prerequisites
 
