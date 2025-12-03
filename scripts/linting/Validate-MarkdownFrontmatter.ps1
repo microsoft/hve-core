@@ -501,31 +501,9 @@ function Test-FrontmatterValidation {
         }
     }
     
-    # Parse .gitignore patterns
-    $gitignorePatterns = @()
+    # Parse .gitignore patterns using shared helper function
     $gitignorePath = Join-Path $repoRoot ".gitignore"
-    if (Test-Path $gitignorePath) {
-        $gitignorePatterns = Get-Content $gitignorePath | Where-Object {
-            $_ -and 
-            -not $_.StartsWith('#') -and 
-            $_.Trim() -ne ''
-        } | ForEach-Object {
-            $pattern = $_.Trim()
-            # Convert gitignore patterns to PowerShell wildcard patterns
-            if ($pattern.EndsWith('/')) {
-                # Directory pattern
-                "*\$($pattern.TrimEnd('/'))\*"
-            }
-            elseif ($pattern.Contains('/')) {
-                # Path pattern
-                "*\$($pattern.Replace('/', '\'))*"
-            }
-            else {
-                # Simple pattern
-                "*\$pattern\*"
-            }
-        }
-    }
+    $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath $gitignorePath
     
     Write-Host "🔍 Validating frontmatter across markdown files..." -ForegroundColor Cyan
     
