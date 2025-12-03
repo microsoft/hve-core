@@ -46,14 +46,12 @@ A pre-configured development environment that includes all tools, extensions, an
 ### Languages & Runtimes
 
 - Node.js (LTS)
-- Python 3.11
 - PowerShell 7.x
 
 ### CLI Tools
 
 - Git
 - GitHub CLI (`gh`)
-- Azure CLI (`az`)
 
 ### Code Quality
 
@@ -93,9 +91,11 @@ gitleaks detect --source . --verbose
 
 ## Troubleshooting
 
-**Container won't build**: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
+1. **Container won't build**: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
 
-**Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
+2. **Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
+
+3. **HTTP/TLS errors during build**: Machines with corporate firewalls performing TLS inspection will need to drop their corporate root trust certificate (PEM-formatted with `.crt` extension) file into the `.devcontainer` and rebuild the devcontainer. Also run `docker buildx use desktop-linux` to ensure you are using the default builder, which honors OS root certificate trust stores.
 
 For more help, see [SUPPORT.md](../SUPPORT.md).
 
