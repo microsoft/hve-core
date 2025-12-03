@@ -1,7 +1,7 @@
 {
   "name": "HVE Core - Markdown Editing",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  // Rename the mount to /workspace for consistency, otherwise its mounted using
+  // Rename the mount to /workspace for consistency, otherwise it's mounted using
   // whatever folder name the user cloned the repo as
   "workspaceMount": "\"source=${localWorkspaceFolder}\",target=/workspace,type=bind",
   "workspaceFolder": "/workspace",
@@ -47,7 +47,7 @@
         // Prevent extensions from stealing focus, see microsoft/vscode#205225
         "workbench.view.showQuietly": {
           "workbench.panel.output": true
-        },
+        }
       }
     }
   },
