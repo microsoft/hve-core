@@ -443,6 +443,7 @@ pr-reference.xml
 .mcp/*.local.json
 .mcp/.env
 
-# devcontainer rebuild
+# devcontainer
 /.gitconfig.global
 /.gitconfig.local
+/.devcontainer/*.crt
