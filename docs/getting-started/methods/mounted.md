@@ -26,7 +26,7 @@ Mounted Directory installation shares a single HVE-Core clone across multiple de
 
 ❌ **Consider alternatives when:**
 
-- You use Codespaces → [onCreateCommand](codespaces.md) (mounts don't work)
+- You use Codespaces → [GitHub Codespaces](codespaces.md) (mounts don't work)
 - You want simpler setup → [Git-Ignored Folder](git-ignored.md)
 - Your team needs version control → [Submodule](submodule.md)
 - You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)

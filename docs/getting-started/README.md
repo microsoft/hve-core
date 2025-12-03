@@ -35,7 +35,7 @@ HVE-Core supports six installation methods. See the [installation guide](install
 | [Peer Directory Clone](methods/peer-clone.md)   | Local VS Code, solo           |
 | [Git-Ignored Folder](methods/git-ignored.md)    | Local devcontainer, solo      |
 | [Mounted Directory](methods/mounted.md)         | Advanced devcontainer sharing |
-| [onCreateCommand](methods/codespaces.md)        | Codespaces-only projects      |
+| [GitHub Codespaces](methods/codespaces.md)      | Codespaces-only projects      |
 
 ## Verifying Setup
 

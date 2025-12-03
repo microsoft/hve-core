@@ -26,7 +26,7 @@ Peer Directory Clone places HVE-Core as a sibling folder next to your project. T
 ❌ **Consider alternatives when:**
 
 - You use devcontainers → [Git-Ignored Folder](git-ignored.md) or [Mounted Directory](mounted.md)
-- You use Codespaces → [onCreateCommand](codespaces.md)
+- You use Codespaces → [GitHub Codespaces](codespaces.md)
 - Your team needs version control → [Submodule](submodule.md)
 - You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 

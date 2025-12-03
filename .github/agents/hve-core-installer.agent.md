@@ -190,7 +190,7 @@ Use this matrix to determine the recommended method:
 | Local (no container)       | Team | Controlled | **Method 6: Submodule**                       |
 | Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                     |
 | Local devcontainer         | Team | Controlled | **Method 6: Submodule**                       |
-| Codespaces only            | Solo | Auto       | **Method 4: onCreateCommand**                 |
+| Codespaces only            | Solo | Auto       | **Method 4: postCreateCommand**               |
 | Codespaces only            | Team | Controlled | **Method 6: Submodule**                       |
 | Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**            |
 | HVE-Core repo (Codespaces) | -    | -          | **Method 4: Built-in** (already configured)   |
@@ -258,7 +258,7 @@ After selecting a method via the decision matrix, execute the appropriate instal
 <!-- <method-1-install-powershell> -->
 ```powershell
 # Peer Clone Installation
-$workspaceRoot = (Get-Location).Path
+$workspaceRoot = (git rev-parse --show-toplevel).Trim()
 $parentDir = Split-Path $workspaceRoot -Parent
 $hveCoreDir = Join-Path $parentDir "hve-core"
 
@@ -278,7 +278,7 @@ if (-not (Test-Path $hveCoreDir)) {
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE_ROOT="$(pwd)"
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel)"
 PARENT_DIR="$(dirname "$WORKSPACE_ROOT")"
 HVE_CORE_DIR="$PARENT_DIR/hve-core"
 

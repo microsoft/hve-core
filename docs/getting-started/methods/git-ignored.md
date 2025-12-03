@@ -26,7 +26,7 @@ Git-Ignored Folder installation places HVE-Core inside your project in a `.hve-c
 ❌ **Consider alternatives when:**
 
 - Your team needs version control → [Submodule](submodule.md)
-- You use Codespaces → [onCreateCommand](codespaces.md)
+- You use Codespaces → [GitHub Codespaces](codespaces.md)
 - You want to share HVE-Core across projects → [Mounted Directory](mounted.md)
 - You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 
