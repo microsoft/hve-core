@@ -5,11 +5,12 @@ set -euo pipefail
 # This re-configures the devcontainer git identities based on the prior exported
 # global and local git configurations *after* parsing host includes. See also:
 # https://github.com/microsoft/vscode-remote-release/issues/2084#issuecomment-2289987894
-function copy_user_gitconfig() {
+copy_user_gitconfig() {
   for conf in .gitconfig.global .gitconfig.local; do
     if [[ -f "$conf" ]]; then
       echo "*** Parsing ${conf##.gitconfig.} Git configuration export"
       while IFS='=' read -r key value; do
+        local key value
         case "$key" in
         user.name | user.email | user.signingkey | commit.gpgsign)
           echo "Set Git config ${key}=${value}"
