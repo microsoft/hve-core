@@ -87,11 +87,11 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 ## Next Steps
 
-* Try [Your First Workflow](first-workflow.md) for a quick start
-* Learn the [RPI Workflow](../rpi/README.md) for complex tasks
-* Explore [Chat Modes](../../.github/chatmodes/README.md) for available agents
-* Review [Instructions](../../.github/instructions/README.md) for coding guidelines
-* Check the [README](../../README.md) for feature overview
+- Try [Your First Workflow](first-workflow.md) for a quick start
+- Learn the [RPI Workflow](../rpi/README.md) for complex tasks
+- Explore [Chat Modes](../../.github/chatmodes/README.md) for available agents
+- Review [Instructions](../../.github/instructions/README.md) for coding guidelines
+- Check the [README](../../README.md) for feature overview
 
 ---
 

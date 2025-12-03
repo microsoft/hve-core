@@ -43,6 +43,7 @@ If user declines, respond: "Installation cancelled. Run @hve-core-installer anyt
 Upon consent, ask: "Which shell would you prefer? (powershell/bash)"
 
 Shell detection rules:
+
 - "powershell", "pwsh", "ps1", "ps" → PowerShell
 - "bash", "sh", "zsh" → Bash
 - Unclear response → Windows = PowerShell, macOS/Linux = Bash
@@ -183,16 +184,16 @@ How would you like to receive updates? (auto/controlled)
 Use this matrix to determine the recommended method:
 
 <!-- <decision-matrix> -->
-| Environment | Team | Updates | **Recommended Method** |
-|-------------|------|---------|------------------------|
-| Local (no container) | Solo | - | **Method 1: Peer Clone** |
-| Local (no container) | Team | Controlled | **Method 6: Submodule** |
-| Local devcontainer | Solo | Auto | **Method 2: Git-Ignored** |
-| Local devcontainer | Team | Controlled | **Method 6: Submodule** |
-| Codespaces only | Solo | Auto | **Method 4: onCreateCommand** |
-| Codespaces only | Team | Controlled | **Method 6: Submodule** |
-| Both local + Codespaces | Any | Any | **Method 5: Multi-Root Workspace** |
-| HVE-Core repo (Codespaces) | - | - | **Method 4: Built-in** (already configured) |
+| Environment                | Team | Updates    | **Recommended Method**                        |
+|----------------------------|------|------------|-----------------------------------------------|
+| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                      |
+| Local (no container)       | Team | Controlled | **Method 6: Submodule**                       |
+| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                     |
+| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                       |
+| Codespaces only            | Solo | Auto       | **Method 4: onCreateCommand**                 |
+| Codespaces only            | Team | Controlled | **Method 6: Submodule**                       |
+| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**            |
+| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Built-in** (already configured)   |
 <!-- </decision-matrix> -->
 
 ### Method Selection Logic
@@ -223,9 +224,24 @@ Would you like to proceed with this method, or see alternatives?
 ```
 <!-- </recommendation-template> -->
 
+### Method Documentation Reference
+
+Each method has detailed documentation in `docs/getting-started/methods/`:
+
+| Method | Documentation                               | Description                       |
+| ------ | ------------------------------------------- | --------------------------------- |
+| 1      | `peer-clone.md`                             | Local solo developer setup        |
+| 2, 3   | `git-ignored.md`                            | Devcontainer ephemeral cloning    |
+| 4      | `codespaces.md`                             | GitHub Codespaces configuration   |
+| 5      | `multi-root.md`                             | Workspace-based multi-root setup  |
+| 6      | `submodule.md`                              | Git submodule for team versioning |
+| --     | `mounted.md`                                | Advanced volume mount sharing     |
+
+When presenting recommendations, you MAY reference the appropriate documentation for users who want to understand the method before proceeding.
+
 ## Phase 3: Installation Methods
 
-After selecting a method via the decision matrix, execute the appropriate installation workflow below.
+After selecting a method via the decision matrix, execute the appropriate installation workflow below. Each method section contains the complete implementation steps. For additional context, users can consult the detailed documentation in `docs/getting-started/methods/`.
 
 ---
 
@@ -234,6 +250,7 @@ After selecting a method via the decision matrix, execute the appropriate instal
 **Best for:** Local VS Code (no container), solo developers
 
 **Prerequisites:**
+
 - Git installed
 - Network access for initial clone
 - Write access to parent directory
@@ -277,6 +294,7 @@ fi
 <!-- </method-1-install-bash> -->
 
 **Settings.json paths:**
+
 ```json
 {
   "chat.modeFilesLocations": ["../hve-core/.github/chatmodes"],
@@ -292,6 +310,7 @@ fi
 **Best for:** Local devcontainer, solo developers who want isolation
 
 **Prerequisites:**
+
 - Running inside a devcontainer
 - Git installed in container
 
@@ -371,6 +390,7 @@ fi
 <!-- </method-2-install-bash> -->
 
 **Settings.json paths:**
+
 ```json
 {
   "chat.modeFilesLocations": [".hve-core/.github/chatmodes"],
@@ -386,6 +406,7 @@ fi
 **Best for:** Local devcontainer when you want HVE-Core on host
 
 **Prerequisites:**
+
 - Local devcontainer (Docker Desktop)
 - HVE-Core cloned on HOST machine (not container)
 - Container rebuild required
@@ -439,6 +460,7 @@ if (Test-Path $mountedPath) {
 <!-- </method-3-validate-powershell> -->
 
 **Settings.json paths:**
+
 ```json
 {
   "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
@@ -454,6 +476,7 @@ if (Test-Path $mountedPath) {
 **Best for:** GitHub Codespaces, auto-updating on rebuild
 
 **Prerequisites:**
+
 - GitHub Codespaces environment
 - Network access for clone
 
@@ -523,6 +546,7 @@ if (Test-Path $mountedPath) {
 **Best for:** Any environment, provides best IDE integration
 
 **Prerequisites:**
+
 - HVE-Core cloned (peer, mounted, or via onCreateCommand)
 - User opens `.code-workspace` file instead of folder
 
@@ -615,6 +639,7 @@ echo "✅ Created hve-core.code-workspace"
 **Best for:** Teams needing reproducible, version-controlled setup
 
 **Prerequisites:**
+
 - Git repository for consuming project
 - Team members MUST initialize submodules after clone
 
@@ -667,6 +692,7 @@ echo "✅ Committed submodule addition"
 <!-- </method-6-install-bash> -->
 
 **Settings.json paths:**
+
 ```json
 {
   "chat.modeFilesLocations": { "lib/hve-core/.github/chatmodes": true, ".github/chatmodes": true },
@@ -832,9 +858,30 @@ HVE-Core has been successfully installed using Method [N]: [Name]
 2. Open Copilot Chat
 3. Type @ to see available chatmodes
 
+� Documentation:
+• Method guide: [See method-specific link below]
+• Getting started: docs/getting-started/README.md
+
 💡 Tip: Try @task-researcher to explore HVE-Core capabilities
 ```
 <!-- </success-report> -->
+
+### Method Documentation Links
+
+After displaying the success report, provide the documentation link specific to the installed method:
+
+| Method | Documentation Path                              |
+| ------ | ----------------------------------------------- |
+| 1      | `docs/getting-started/methods/peer-clone.md`    |
+| 2      | `docs/getting-started/methods/git-ignored.md`   |
+| 3      | `docs/getting-started/methods/git-ignored.md`   |
+| 4      | `docs/getting-started/methods/mounted.md`       |
+| 5      | `docs/getting-started/methods/multi-root.md`    |
+| 6      | `docs/getting-started/methods/submodule.md`     |
+
+For Codespaces environments, also reference: `docs/getting-started/methods/codespaces.md`
+
+Include the appropriate documentation link in the success report's "Method guide" line based on the selected method.
 
 ---
 
@@ -895,10 +942,10 @@ Missing paths: [list of missing paths]
 
 ### Security Principles
 
-* You MUST never modify files without explicit user authorization
-* You MUST always explain what changes will be made before making them
-* You MUST respect user denial at any authorization checkpoint
-* You MUST validate all paths before adding to settings
+- You MUST never modify files without explicit user authorization
+- You MUST always explain what changes will be made before making them
+- You MUST respect user denial at any authorization checkpoint
+- You MUST validate all paths before adding to settings
 
 ### Authorization Checkpoints
 
@@ -913,15 +960,15 @@ Missing paths: [list of missing paths]
 
 Use these exact emojis for consistency:
 
-* "📂 Detecting environment..."
-* "🔍 Asking configuration questions..."
-* "📋 Recommending installation method..."
-* "📥 Installing HVE-Core..."
-* "🔍 Validating installation..."
-* "⚙️ Updating settings..."
-* "✅ [Success message]"
-* "❌ [Error message]"
-* "⏭️ [Skipped message]"
+- "📂 Detecting environment..."
+- "🔍 Asking configuration questions..."
+- "📋 Recommending installation method..."
+- "📥 Installing HVE-Core..."
+- "🔍 Validating installation..."
+- "⚙️ Updating settings..."
+- "✅ [Success message]"
+- "❌ [Error message]"
+- "⏭️ [Skipped message]"
 
 ---
 
@@ -929,16 +976,16 @@ Use these exact emojis for consistency:
 
 Installation is considered **successful** when:
 
-* Environment detected correctly
-* Method selected matches user requirements
-* HVE-Core accessible at method-specific path
-* All three directories validated (chatmodes, prompts, instructions)
-* Settings configured for selected method
-* User directed to reload VS Code
+- Environment detected correctly
+- Method selected matches user requirements
+- HVE-Core accessible at method-specific path
+- All three directories validated (chatmodes, prompts, instructions)
+- Settings configured for selected method
+- User directed to reload VS Code
 
 Installation is considered **failed** when:
 
-* Environment detection fails
-* Clone/submodule operation fails
-* Validation finds missing directories
-* Settings modification fails
+- Environment detection fails
+- Clone/submodule operation fails
+- Validation finds missing directories
+- Settings modification fails
