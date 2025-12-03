@@ -17,7 +17,7 @@ function copy_user_gitconfig() {
           ;;
         esac
       done < "$conf"
-      rm -f "$conf"
+      rm -f "${conf}"
     fi
   done
 }
