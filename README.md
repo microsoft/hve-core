@@ -44,7 +44,7 @@ The installer will:
 
 ### Manual Installation
 
-To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started.md) for step-by-step instructions.
+To use HVE Core's GitHub Copilot customizations in your project, clone this repository as a sibling to your project and configure a multi-root workspace. See the [Getting Started Guide](docs/getting-started/README.md) for step-by-step instructions.
 
 ### Prerequisites
 
