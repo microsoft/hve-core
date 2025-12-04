@@ -1,0 +1,230 @@
+{
+  "name": "hve-core",
+  "displayName": "HVE Core",
+  "version": "1.0.0",
+  "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
+  "publisher": "ise-hve-essentials",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/hve-core.git"
+  },
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": ["Chat"],
+  "contributes": {
+    "chatAgents": [
+      {
+        "name": "hve-core-installer",
+        "path": "./.github/agents/hve-core-installer.agent.md",
+        "description": "Automated installer for HVE-Core chatmodes, prompts, and instructions - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "test-streamlit-dashboard",
+        "path": "./.github/chatmodes/test-streamlit-dashboard.chatmode.md",
+        "description": "Comprehensive testing of the Streamlit dashboard using Playwright automation and issue tracking"
+      },
+      {
+        "name": "security-plan-creator",
+        "path": "./.github/chatmodes/security-plan-creator.chatmode.md",
+        "description": "Expert security architect for creating comprehensive cloud security plans"
+      },
+      {
+        "name": "ado-prd-to-wit",
+        "path": "./.github/chatmodes/ado-prd-to-wit.chatmode.md",
+        "description": "Convert Product Requirements Documents to Azure DevOps work items"
+      },
+      {
+        "name": "adr-creation",
+        "path": "./.github/chatmodes/adr-creation.chatmode.md",
+        "description": "Create Architecture Decision Records following best practices"
+      },
+      {
+        "name": "gen-data-spec",
+        "path": "./.github/chatmodes/gen-data-spec.chatmode.md",
+        "description": "Generate data specifications and schemas"
+      },
+      {
+        "name": "gen-jupyter-notebook",
+        "path": "./.github/chatmodes/gen-jupyter-notebook.chatmode.md",
+        "description": "Generate Jupyter notebooks for data analysis"
+      },
+      {
+        "name": "gen-streamlit-dashboard",
+        "path": "./.github/chatmodes/gen-streamlit-dashboard.chatmode.md",
+        "description": "Generate Streamlit dashboards"
+      },
+      {
+        "name": "github-issue-manager",
+        "path": "./.github/chatmodes/github-issue-manager.chatmode.md",
+        "description": "Manage GitHub issues efficiently"
+      },
+      {
+        "name": "pr-review",
+        "path": "./.github/chatmodes/pr-review.chatmode.md",
+        "description": "Comprehensive pull request review assistant"
+      },
+      {
+        "name": "prd-builder",
+        "path": "./.github/chatmodes/prd-builder.chatmode.md",
+        "description": "Build Product Requirements Documents"
+      },
+      {
+        "name": "prompt-builder",
+        "path": "./.github/chatmodes/prompt-builder.chatmode.md",
+        "description": "Build and optimize AI prompts"
+      },
+      {
+        "name": "task-implementor",
+        "path": "./.github/chatmodes/task-implementor.chatmode.md",
+        "description": "Implement tasks from detailed plans"
+      },
+      {
+        "name": "task-planner",
+        "path": "./.github/chatmodes/task-planner.chatmode.md",
+        "description": "Plan and break down complex tasks"
+      },
+      {
+        "name": "task-researcher",
+        "path": "./.github/chatmodes/task-researcher.chatmode.md",
+        "description": "Research technical solutions and approaches"
+      }
+    ],
+    "chatPromptFiles": [
+      {
+        "name": "git-commit-message",
+        "path": "./.github/prompts/git-commit-message.prompt.md",
+        "description": "Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch"
+      },
+      {
+        "name": "ado-create-pull-request",
+        "path": "./.github/prompts/ado-create-pull-request.prompt.md",
+        "description": "Create Azure DevOps pull requests with proper work item linking"
+      },
+      {
+        "name": "ado-get-build-info",
+        "path": "./.github/prompts/ado-get-build-info.prompt.md",
+        "description": "Get Azure DevOps build information and logs"
+      },
+      {
+        "name": "ado-get-my-work-items",
+        "path": "./.github/prompts/ado-get-my-work-items.prompt.md",
+        "description": "Get your assigned Azure DevOps work items"
+      },
+      {
+        "name": "ado-process-my-work-items-for-task-planning",
+        "path": "./.github/prompts/ado-process-my-work-items-for-task-planning.prompt.md",
+        "description": "Process Azure DevOps work items for task planning"
+      },
+      {
+        "name": "git-commit",
+        "path": "./.github/prompts/git-commit.prompt.md",
+        "description": "Create git commits following best practices"
+      },
+      {
+        "name": "git-merge",
+        "path": "./.github/prompts/git-merge.prompt.md",
+        "description": "Merge git branches with conflict resolution"
+      },
+      {
+        "name": "git-setup",
+        "path": "./.github/prompts/git-setup.prompt.md",
+        "description": "Set up git repository configuration"
+      },
+      {
+        "name": "github-add-issue",
+        "path": "./.github/prompts/github-add-issue.prompt.md",
+        "description": "Add GitHub issues with proper formatting"
+      },
+      {
+        "name": "pull-request",
+        "path": "./.github/prompts/pull-request.prompt.md",
+        "description": "Create pull requests following best practices"
+      }
+    ],
+    "chatInstructionsFiles": [
+      {
+        "name": "commit-message-instructions",
+        "path": "./.github/instructions/commit-message.instructions.md",
+        "description": "Instructions for generating git commit messages following conventional commit standards"
+      },
+      {
+        "name": "ado-create-pull-request-instructions",
+        "path": "./.github/instructions/ado-create-pull-request.instructions.md",
+        "description": "Instructions for creating Azure DevOps pull requests"
+      },
+      {
+        "name": "ado-get-build-info-instructions",
+        "path": "./.github/instructions/ado-get-build-info.instructions.md",
+        "description": "Instructions for getting Azure DevOps build information"
+      },
+      {
+        "name": "ado-update-wit-items-instructions",
+        "path": "./.github/instructions/ado-update-wit-items.instructions.md",
+        "description": "Instructions for updating Azure DevOps work items"
+      },
+      {
+        "name": "ado-wit-discovery-instructions",
+        "path": "./.github/instructions/ado-wit-discovery.instructions.md",
+        "description": "Instructions for discovering Azure DevOps work items"
+      },
+      {
+        "name": "ado-wit-planning-instructions",
+        "path": "./.github/instructions/ado-wit-planning.instructions.md",
+        "description": "Instructions for planning Azure DevOps work items"
+      },
+      {
+        "name": "git-merge-instructions",
+        "path": "./.github/instructions/git-merge.instructions.md",
+        "description": "Instructions for git merge operations"
+      },
+      {
+        "name": "markdown-instructions",
+        "path": "./.github/instructions/markdown.instructions.md",
+        "description": "Instructions for markdown formatting"
+      },
+      {
+        "name": "python-script-instructions",
+        "path": "./.github/instructions/python-script.instructions.md",
+        "description": "Instructions for Python scripting"
+      },
+      {
+        "name": "shell-instructions",
+        "path": "./.github/instructions/shell.instructions.md",
+        "description": "Instructions for shell scripting"
+      },
+      {
+        "name": "task-implementation-instructions",
+        "path": "./.github/instructions/task-implementation.instructions.md",
+        "description": "Instructions for implementing tasks"
+      },
+      {
+        "name": "uv-projects-instructions",
+        "path": "./.github/instructions/uv-projects.instructions.md",
+        "description": "Instructions for uv project management"
+      },
+      {
+        "name": "bash-instructions",
+        "path": "./.github/instructions/bash/bash.instructions.md",
+        "description": "Instructions for bash scripting"
+      },
+      {
+        "name": "bicep-instructions",
+        "path": "./.github/instructions/bicep/bicep.instructions.md",
+        "description": "Instructions for Bicep infrastructure as code"
+      },
+      {
+        "name": "csharp-instructions",
+        "path": "./.github/instructions/csharp/csharp.instructions.md",
+        "description": "Instructions for C# development"
+      },
+      {
+        "name": "csharp-tests-instructions",
+        "path": "./.github/instructions/csharp/csharp-tests.instructions.md",
+        "description": "Instructions for C# testing"
+      }
+    ]
+  },
+  "author": "Microsoft",
+  "license": "MIT"
+}

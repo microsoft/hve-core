@@ -1,6 +1,5 @@
 {
   "name": "hve-core",
-  "displayName": "HVE Core",
   "version": "1.0.0",
   "description": "HVE Core",
   "private": true,
@@ -14,7 +13,9 @@
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
     "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
-    "format:tables": "markdown-table-formatter \"**/*.md\""
+    "format:tables": "markdown-table-formatter \"**/*.md\"",
+    "package:extension": "cd extension && vsce package",
+    "publish:extension": "cd extension && vsce publish"
   },
   "devDependencies": {
     "cspell": "9.4.0",
@@ -22,50 +23,10 @@
     "markdown-table-formatter": "^1.6.0",
     "markdownlint-cli2": "^0.19.1"
   },
-  "publisher": "ise-hve-essentials",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/hve-core.git"
   },
-  "categories": ["Chat"],
-  "contributes": {
-    "chatAgents": [
-      {
-        "name": "hve-core-installer",
-        "path": "./.github/agents/hve-core-installer.agent.md",
-        "description": "Automated installer for HVE-Core chatmodes, prompts, and instructions - Brought to you by microsoft/hve-core"
-      },
-      {
-        "name": "test-streamlit-dashboard",
-        "path": "./.github/chatmodes/test-streamlit-dashboard.chatmode.md",
-        "description": "Comprehensive testing of the Streamlit dashboard using Playwright automation and issue tracking"
-      },
-      {
-        "name": "security-plan-creator",
-        "path": "./.github/chatmodes/security-plan-creator.chatmode.md",
-        "description": "Expert security architect for creating comprehensive cloud security plans"
-      }
-    ],
-    "chatPromptFiles": [
-      {
-        "name": "git-commit-message",
-        "path": "./.github/prompts/git-commit-message.prompt.md",
-        "description": "Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch"
-      }
-    ],
-    "chatInstructionsFiles": [
-      {
-        "name": "commit-message-instructions",
-        "path": "./.github/instructions/commit-message.instructions.md",
-        "description": "Instructions for generating git commit messages following conventional commit standards"
-      }
-    ]
-  },
-	"engines": {
-		"vscode": "^1.106.1",
-		"npm": ">=9.0.0",
-		"node": ">=22.14.0"
-	},
   "author": "Microsoft",
   "license": "MIT"
 }

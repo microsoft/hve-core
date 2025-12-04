@@ -1,0 +1,18 @@
+# Exclude everything by default
+**
+
+# Include only the extension essentials
+!.github/agents/**
+!.github/chatmodes/**
+!.github/prompts/**
+!.github/instructions/**
+!package.json
+!README.md
+!LICENSE
+!CHANGELOG.md
+
+# Exclude README files within the included directories
+.github/agents/README.md
+.github/chatmodes/README.md
+.github/prompts/README.md
+.github/instructions/README.md
