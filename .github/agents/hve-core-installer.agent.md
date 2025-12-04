@@ -303,9 +303,18 @@ fi
 
 ```json
 {
-  "chat.modeFilesLocations": ["../hve-core/.github/chatmodes"],
-  "chat.promptFilesLocations": ["../hve-core/.github/prompts"],
-  "chat.instructionsFilesLocations": ["../hve-core/.github/instructions"]
+  "chat.modeFilesLocations": {
+    ".github/chatmodes": true,
+    "../hve-core/.github/chatmodes": true
+  },
+  "chat.promptFilesLocations": {
+    ".github/prompts": true,
+    "../hve-core/.github/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    "../hve-core/.github/instructions": true
+  }
 }
 ```
 
@@ -403,9 +412,18 @@ fi
 
 ```json
 {
-  "chat.modeFilesLocations": [".hve-core/.github/chatmodes"],
-  "chat.promptFilesLocations": [".hve-core/.github/prompts"],
-  "chat.instructionsFilesLocations": [".hve-core/.github/instructions"]
+  "chat.modeFilesLocations": {
+    ".github/chatmodes": true,
+    ".hve-core/.github/chatmodes": true
+  },
+  "chat.promptFilesLocations": {
+    ".github/prompts": true,
+    ".hve-core/.github/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    ".hve-core/.github/instructions": true
+  }
 }
 ```
 
@@ -475,9 +493,18 @@ if (Test-Path $mountedPath) {
 
 ```json
 {
-  "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
-  "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-  "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"]
+  "chat.modeFilesLocations": {
+    ".github/chatmodes": true,
+    "/workspaces/hve-core/.github/chatmodes": true
+  },
+  "chat.promptFilesLocations": {
+    ".github/prompts": true,
+    "/workspaces/hve-core/.github/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    "/workspaces/hve-core/.github/instructions": true
+  }
 }
 ```
 
@@ -505,9 +532,18 @@ if (Test-Path $mountedPath) {
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"],
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"]
+        "chat.modeFilesLocations": {
+          ".github/chatmodes": true,
+          "/workspaces/hve-core/.github/chatmodes": true
+        },
+        "chat.promptFilesLocations": {
+          ".github/prompts": true,
+          "/workspaces/hve-core/.github/prompts": true
+        },
+        "chat.instructionsFilesLocations": {
+          ".github/instructions": true,
+          "/workspaces/hve-core/.github/instructions": true
+        }
       }
     }
   }
@@ -538,9 +574,18 @@ if (Test-Path $mountedPath) {
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts", ".github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions", ".github/instructions"],
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes", ".github/chatmodes"]
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts": true,
+          ".github/prompts": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions": true,
+          ".github/instructions": true
+        },
+        "chat.modeFilesLocations": {
+          "/workspaces/hve-core/.github/chatmodes": true,
+          ".github/chatmodes": true
+        }
       },
       "extensions": ["github.copilot", "github.copilot-chat"]
     }
