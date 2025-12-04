@@ -1,6 +1,6 @@
 ---
 description: 'Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core'
-tools: ['runCommand', 'edit/createFile', 'edit/editFiles', 'search']
+tools: ['runInTerminal', 'read', 'vscode/runCommand', 'vscode/newWorkspace', 'edit/createFile', 'edit/editFiles', 'search']
 ---
 # HVE-Core Installer Agent
 
