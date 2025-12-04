@@ -464,7 +464,7 @@ Option B: Using VS Code on HOST
 ```jsonc
 {
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ]
 }
 ```
@@ -888,9 +888,10 @@ for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_p
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
 done
 
-# Method 5: workspace file check (requires jq; fallback: grep for folder count)
+# Method 5: workspace file check (requires jq; fallback: count "path" keys inside .folders array only)
 [ "$method" = "5" ] && [ -f "hve-core.code-workspace" ] && \
-    { jq -e '.folders | length >= 2' hve-core.code-workspace >/dev/null 2>&1 || grep -c '"path"' hve-core.code-workspace | grep -q '^[2-9]'; } && \
+    { jq -e '.folders | length >= 2' hve-core.code-workspace >/dev/null 2>&1 || \
+      awk '/"folders"\s*:/,/\]/ { if ($0 ~ /"path"/) c++ } END { exit (c>=2)?0:1 }' hve-core.code-workspace; } && \
     echo "✅ Multi-root configured" || { echo "❌ Multi-root not configured"; valid=false; }
 
 # Method 6: submodule check

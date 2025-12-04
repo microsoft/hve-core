@@ -179,13 +179,12 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   // Clone if not mounted (Codespaces) and not already present
-  // Note: ${containerWorkspaceFolder:-} uses default fallback syntax since this variable
-  // may not be set in all Codespaces environments
-  "postCreateCommand": "[ -d /workspaces/hve-core ] || [ -d ${containerWorkspaceFolder:-}/../hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
+  // Check both /workspaces/hve-core and, if set, $containerWorkspaceFolder/../hve-core
+  "postCreateCommand": "[ -d /workspaces/hve-core ] || { [ -n \"$containerWorkspaceFolder\" ] && [ -d \"$containerWorkspaceFolder/../hve-core\" ]; } || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
   
   // Local only: mount peer directory (silently fails in Codespaces)
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ],
   
   "customizations": {
@@ -323,6 +322,6 @@ Replace `v1.0.0` with your desired version tag.
 ---
 
 <!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+*🤖 Crafted with precision by ✨GitHub Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*
 <!-- markdownlint-enable MD036 -->

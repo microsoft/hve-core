@@ -120,7 +120,7 @@ Update `.devcontainer/devcontainer.json`:
   // ... existing configuration ...
   
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ]
 }
 ```
@@ -202,7 +202,7 @@ ls /workspaces/hve-core/.github/chatmodes
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   "mounts": [
-    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../hve-core,target=/workspaces/hve-core,type=bind,readonly=true,consistency=cached"
   ],
   
   "customizations": {
