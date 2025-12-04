@@ -1,7 +1,7 @@
 {
   "name": "hve-core",
   "displayName": "HVE Core",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
   "publisher": "ise-hve-essentials",
   "repository": {
@@ -14,11 +14,6 @@
   "categories": ["Chat"],
   "contributes": {
     "chatAgents": [
-      {
-        "name": "hve-core-installer",
-        "path": "./.github/agents/hve-core-installer.agent.md",
-        "description": "Automated installer for HVE-Core chatmodes, prompts, and instructions - Brought to you by microsoft/hve-core"
-      },
       {
         "name": "test-streamlit-dashboard",
         "path": "./.github/chatmodes/test-streamlit-dashboard.chatmode.md",

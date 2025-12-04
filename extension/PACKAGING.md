@@ -6,7 +6,7 @@ This folder contains the VS Code extension configuration for HVE Core.
 
 ```plaintext
 extension/
-├── .github/              # Symlink to ../.github (contains all agents, chatmodes, prompts, instructions)
+├── .github/              # Temporarily copied during packaging (removed after)
 ├── package.json          # Extension manifest with VS Code configuration
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
@@ -33,11 +33,11 @@ npm run package:extension
 
 This will create a `.vsix` file in the `extension/` folder.
 
-Alternatively, package manually:
+Alternatively, package manually (requires manual setup):
 
 ```bash
 cd extension
-vsce package
+rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github
 ```
 
 ## Publishing the Extension
@@ -48,11 +48,11 @@ vsce package
 npm run publish:extension
 ```
 
-Or manually:
+Or manually (requires manual setup):
 
 ```bash
 cd extension
-vsce publish
+rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github
 ```
 
 ## What Gets Included
@@ -85,7 +85,8 @@ code --install-extension hve-core-*.vsix
 
 ## Notes
 
-- The `.github/` folder is symlinked to avoid duplication
+- The `.github/` folder is temporarily copied during packaging (not permanently stored)
 - `LICENSE` and `CHANGELOG.md` are copied from root during builds
-- The extension package only includes necessary files for the VS Code extension
+- Only essential extension files are included (agents, chatmodes, prompts, instructions)
+- Non-essential `.github` files are excluded (workflows, issue templates, etc.)
 - The root `package.json` contains development scripts for the repository
