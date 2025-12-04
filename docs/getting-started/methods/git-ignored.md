@@ -85,7 +85,6 @@ if (-not (Test-Path $hveCoreFolder)) {
 **Bash:**
 
 ```bash
-#!/usr/bin/env bash
 HVE_CORE_FOLDER=".hve-core"
 
 if [ ! -d "$HVE_CORE_FOLDER" ]; then

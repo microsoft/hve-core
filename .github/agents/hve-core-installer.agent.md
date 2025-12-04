@@ -324,7 +324,7 @@ fi
 
 **Best for:** Local devcontainer, solo developers who want isolation
 
-> **📝 Method 2 vs Method 3:** Method 2 clones HVE-Core *inside* your container/project directory and git-ignores it. Method 3 mounts HVE-Core from your *host machine* into the container. Choose Method 2 for simplicity; choose Method 3 if you want one HVE-Core clone shared across multiple projects.
+> **📝 Method 2 vs Method 3:** Method 2 clones HVE-Core *inside* your container/project directory and adds it to `.gitignore`. Method 3 mounts HVE-Core from your *host machine* into the container. Choose Method 2 for simplicity; choose Method 3 if you want one HVE-Core clone shared across multiple projects.
 
 **Prerequisites:**
 
@@ -844,7 +844,11 @@ Run validation based on the selected method. Set the base path variable before r
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-# Unified validation - set $basePath per method table above
+# Required: Set method number and basePath before running
+# Example: $method = 1; $basePath = "../hve-core"
+if (-not $basePath) { throw "Variable `$basePath must be set per method table above" }
+if (-not $method) { throw "Variable `$method must be set (1-6)" }
+
 $valid = $true
 @("$basePath/.github/chatmodes", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
     if (-not (Test-Path $_)) { $valid = $false; Write-Host "❌ Missing: $_" }
@@ -874,7 +878,11 @@ if ($valid) { Write-Host "✅ Installation validated successfully" }
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Unified validation - set base_path and method before running
+# Required: Set method and base_path before running
+# Example: method=1; base_path="../hve-core"
+[ -z "${base_path:-}" ] && { echo "Error: base_path must be set per method table above" >&2; exit 1; }
+[ -z "${method:-}" ] && { echo "Error: method must be set (1-6)" >&2; exit 1; }
+
 valid=true
 for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi

@@ -49,7 +49,7 @@ For manual setup or alternative installation methods, see the [Getting Started G
 
 * [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
 * [Git-Ignored Clone](docs/getting-started/methods/git-ignored.md) - Devcontainer ephemeral setup
-* [Mounted Volume](docs/getting-started/methods/mounted.md) - Advanced container sharing
+* [Mounted Directory](docs/getting-started/methods/mounted.md) - Advanced container sharing
 * [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
 * [Submodule](docs/getting-started/methods/submodule.md) - Team version control
 * [GitHub Codespaces](docs/getting-started/methods/codespaces.md) - Cloud development

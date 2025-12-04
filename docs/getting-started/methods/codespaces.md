@@ -179,7 +179,9 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   // Clone if not mounted (Codespaces) and not already present
-  "postCreateCommand": "[ -d /workspaces/hve-core ] || [ -d ${containerWorkspaceFolder}/../hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
+  // Note: ${containerWorkspaceFolder:-} uses default fallback syntax since this variable
+  // may not be set in all Codespaces environments
+  "postCreateCommand": "[ -d /workspaces/hve-core ] || [ -d ${containerWorkspaceFolder:-}/../hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
   
   // Local only: mount peer directory (silently fails in Codespaces)
   "mounts": [
