@@ -32,7 +32,7 @@ HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Co
 **Recommended:** Use the `hve-core-installer` agent for automated setup:
 
 1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
-2. Select `hve-core-installer` from Agent list in GHCP chat pane
+2. Select `hve-core-installer` from Agent list in GitHub Copilot Chat pane
 3. Say: "Install HVE-Core into my project"
 4. Follow the guided installation
 

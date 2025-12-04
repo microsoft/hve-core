@@ -18,6 +18,8 @@ HVE Core provides GitHub Copilot customizations (chat modes, instructions, and p
 
 See [Installing HVE-Core](install.md) to choose the right installation method for your environment.
 
+> **Contributing to HVE-Core?** See the [Contributing Guide](../contributing/README.md) for development setup and contribution guidelines.
+
 **Quick start:** Use the `hve-core-installer` agent:
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)

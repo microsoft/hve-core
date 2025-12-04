@@ -54,6 +54,8 @@ You MUST run the appropriate detection script:
 
 <!-- <environment-detection-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Detect environment type
 $env_type = "local"
 $is_codespaces = $false
@@ -84,6 +86,8 @@ Write-Host "IS_HVE_CORE_REPO=$is_hve_core_repo"
 <!-- <environment-detection-bash> -->
 ```bash
 #!/usr/bin/env bash
+set -euo pipefail
+
 # Detect environment type
 env_type="local"
 is_codespaces=false
@@ -257,6 +261,8 @@ After selecting a method via the decision matrix, execute the appropriate instal
 
 <!-- <method-1-install-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Peer Clone Installation
 $workspaceRoot = (git rev-parse --show-toplevel).Trim()
 $parentDir = Split-Path $workspaceRoot -Parent
@@ -318,6 +324,8 @@ fi
 
 <!-- <method-2-install-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Git-Ignored Installation
 $hveCoreFolder = ".hve-core"
 $gitignorePath = ".gitignore"
@@ -448,6 +456,8 @@ Option B: Using VS Code on HOST
 
 <!-- <method-3-validate-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 $mountedPath = "/workspaces/hve-core"
 if (Test-Path $mountedPath) {
     if (Test-Path "$mountedPath/.git") {
@@ -554,6 +564,8 @@ if (Test-Path $mountedPath) {
 
 <!-- <method-5-workspace-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Create multi-root workspace file
 $workspaceContent = @'
 {
@@ -588,6 +600,8 @@ Write-Host "✅ Created hve-core.code-workspace"
 <!-- <method-5-workspace-bash> -->
 ```bash
 #!/usr/bin/env bash
+set -euo pipefail
+
 cat > hve-core.code-workspace << 'EOF'
 {
   "folders": [
@@ -647,6 +661,8 @@ echo "✅ Created hve-core.code-workspace"
 
 <!-- <method-6-install-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Add HVE-Core as submodule
 $submodulePath = "lib/hve-core"
 if (-not (Test-Path $submodulePath)) {
@@ -781,6 +797,8 @@ Run validation based on the selected method. Set the base path variable before r
 
 <!-- <validation-unified-powershell> -->
 ```powershell
+$ErrorActionPreference = 'Stop'
+
 # Unified validation - set $basePath per method table above
 $valid = $true
 @("$basePath/.github/chatmodes", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
@@ -809,6 +827,8 @@ if ($valid) { Write-Host "✅ Installation validated successfully" }
 <!-- <validation-unified-bash> -->
 ```bash
 #!/usr/bin/env bash
+set -euo pipefail
+
 # Unified validation - set base_path and method before running
 valid=true
 for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
