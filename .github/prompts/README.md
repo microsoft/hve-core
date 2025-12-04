@@ -29,6 +29,12 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Available Prompts
 
+### Onboarding & Planning
+
+- **[Getting Started](./getting-started.prompt.md)** - Project onboarding and initial setup guidance
+- **[Task Planner](./task-planner-plan.prompt.md)** - Creates implementation plans from research documents
+- **[Task Researcher Research](./task-researcher-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context
+
 ### Source Control & Commit Quality
 
 - **[Git Commit (Stage + Commit)](./git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
