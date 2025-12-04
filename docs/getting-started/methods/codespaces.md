@@ -1,6 +1,6 @@
 ---
 title: GitHub Codespaces Installation
-description: Install HVE-Core in GitHub Codespaces using onCreateCommand
+description: Install HVE-Core in GitHub Codespaces using postCreateCommand
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -8,7 +8,7 @@ keywords:
   - codespaces
   - installation
   - github copilot
-  - onCreateCommand
+  - postCreateCommand
   - cloud development
 estimated_reading_time: 7
 ---

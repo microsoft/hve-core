@@ -276,7 +276,7 @@ Settings must use absolute container paths (`/workspaces/hve-core/...`), not rel
 
 This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host bind mounts.
 
-**Solution:** Use [onCreateCommand](codespaces.md) for Codespaces, or [Multi-Root Workspace](multi-root.md) for dual-environment support.
+**Solution:** Use [postCreateCommand](codespaces.md) for Codespaces, or [Multi-Root Workspace](multi-root.md) for dual-environment support.
 
 ## Limitations
 
@@ -295,7 +295,7 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 - [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
 - [Multi-Root Workspace](multi-root.md) - Simpler portable solution
-- [onCreateCommand](codespaces.md) - If you also need Codespaces support
+- [postCreateCommand](codespaces.md) - If you also need Codespaces support
 
 ---
 

@@ -228,16 +228,16 @@ Would you like to proceed with this method, or see alternatives?
 
 Each method has detailed documentation in `docs/getting-started/methods/`:
 
-| Method | Documentation                               | Description                       |
-| ------ | ------------------------------------------- | --------------------------------- |
-| 1      | `peer-clone.md`                             | Local solo developer setup        |
-| 2, 3   | `git-ignored.md`                            | Devcontainer ephemeral cloning    |
-| 4      | `codespaces.md`                             | GitHub Codespaces configuration   |
-| 5      | `multi-root.md`                             | Workspace-based multi-root setup  |
-| 6      | `submodule.md`                              | Git submodule for team versioning |
-| --     | `mounted.md`                                | Advanced volume mount sharing     |
+| Method | Documentation       | Use Case                          |
+| ------ | ------------------- | --------------------------------- |
+| 1      | `peer-clone.md`     | Local solo developer              |
+| 2      | `git-ignored.md`    | Devcontainer, cloned inside       |
+| 3      | `mounted.md`        | Devcontainer, mounted from host   |
+| 4      | `codespaces.md`     | GitHub Codespaces                 |
+| 5      | `multi-root.md`     | Multi-root workspace (any env)    |
+| 6      | `submodule.md`      | Team version-controlled           |
 
-When presenting recommendations, you MAY reference the appropriate documentation for users who want to understand the method before proceeding.
+Reference the appropriate documentation when presenting recommendations.
 
 ## Phase 3: Installation Methods
 
@@ -293,7 +293,7 @@ fi
 ```
 <!-- </method-1-install-bash> -->
 
-**Settings.json paths:**
+**Add to `.vscode/settings.json` (workspace settings):**
 
 ```json
 {
@@ -308,6 +308,8 @@ fi
 ### Method 2: Git-Ignored Folder
 
 **Best for:** Local devcontainer, solo developers who want isolation
+
+> **📝 Method 2 vs Method 3:** Method 2 clones HVE-Core *inside* your container/project directory and git-ignores it. Method 3 mounts HVE-Core from your *host machine* into the container. Choose Method 2 for simplicity; choose Method 3 if you want one HVE-Core clone shared across multiple projects.
 
 **Prerequisites:**
 
@@ -389,7 +391,7 @@ fi
 ```
 <!-- </method-2-install-bash> -->
 
-**Settings.json paths:**
+**Add to `.vscode/settings.json` (workspace settings):**
 
 ```json
 {
@@ -403,7 +405,7 @@ fi
 
 ### Method 3: Mounted Directory
 
-**Best for:** Local devcontainer when you want HVE-Core on host
+**Best for:** Local devcontainer with shared host clone (see Method 2 note for comparison)
 
 **Prerequisites:**
 
@@ -459,7 +461,7 @@ if (Test-Path $mountedPath) {
 ```
 <!-- </method-3-validate-powershell> -->
 
-**Settings.json paths:**
+**Add to `.vscode/settings.json` (workspace settings):**
 
 ```json
 {
@@ -471,7 +473,7 @@ if (Test-Path $mountedPath) {
 
 ---
 
-### Method 4: onCreateCommand (Codespaces)
+### Method 4: postCreateCommand (Codespaces)
 
 **Best for:** GitHub Codespaces, auto-updating on rebuild
 
@@ -547,7 +549,7 @@ if (Test-Path $mountedPath) {
 
 **Prerequisites:**
 
-- HVE-Core cloned (peer, mounted, or via onCreateCommand)
+- HVE-Core cloned (peer, mounted, or via postCreateCommand)
 - User opens `.code-workspace` file instead of folder
 
 <!-- <method-5-workspace-powershell> -->
@@ -691,7 +693,7 @@ echo "✅ Committed submodule addition"
 ```
 <!-- </method-6-install-bash> -->
 
-**Settings.json paths:**
+**Add to `.vscode/settings.json` (workspace settings):**
 
 ```json
 {
@@ -767,66 +769,63 @@ If user declines: "Installation cancelled. No settings changes were made."
 
 ### Validation Workflow
 
-Run the appropriate validation based on the selected method:
+Run validation based on the selected method. Set the base path variable before running:
 
-<!-- <validation-method-1-2-powershell> -->
+| Method | Base Path                |
+| ------ | ------------------------ |
+| 1      | `../hve-core`            |
+| 2      | `.hve-core`              |
+| 3, 4   | `/workspaces/hve-core`   |
+| 5      | Check workspace file     |
+| 6      | `lib/hve-core`           |
+
+<!-- <validation-unified-powershell> -->
 ```powershell
-# Validation for Methods 1-2 (relative paths)
-$basePath = if ($method -eq 1) { "../hve-core" } else { ".hve-core" }
+# Unified validation - set $basePath per method table above
 $valid = $true
 @("$basePath/.github/chatmodes", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
     if (-not (Test-Path $_)) { $valid = $false; Write-Host "❌ Missing: $_" }
     else { Write-Host "✅ Found: $_" }
 }
-if ($valid) { Write-Host "✅ Installation validated successfully" }
-```
-<!-- </validation-method-1-2-powershell> -->
 
-<!-- <validation-method-3-4-bash> -->
-```bash
-# Validation for Methods 3-4 (absolute container paths)
-valid=true
-for path in "/workspaces/hve-core/.github/chatmodes" "/workspaces/hve-core/.github/prompts" "/workspaces/hve-core/.github/instructions"; do
-    if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
-done
-[ "$valid" = true ] && echo "✅ Installation validated successfully"
-```
-<!-- </validation-method-3-4-bash> -->
-
-<!-- <validation-method-5-powershell> -->
-```powershell
-# Validation for Method 5 (workspace file)
-$valid = $true
-if (Test-Path "hve-core.code-workspace") {
-    Write-Host "✅ Workspace file exists"
+# Method 5 additional check: workspace file
+if ($method -eq 5 -and (Test-Path "hve-core.code-workspace")) {
     $workspace = Get-Content "hve-core.code-workspace" | ConvertFrom-Json
-    if ($workspace.folders.Count -ge 2) { Write-Host "✅ Multi-root configured" }
-    else { Write-Host "❌ Not enough folders"; $valid = $false }
-} else {
-    Write-Host "❌ Workspace file missing"; $valid = $false
+    if ($workspace.folders.Count -lt 2) { $valid = $false; Write-Host "❌ Multi-root not configured" }
+    else { Write-Host "✅ Multi-root configured" }
 }
+
+# Method 6 additional check: submodule
+if ($method -eq 6) {
+    if (-not (Test-Path ".gitmodules") -or -not (Select-String -Path ".gitmodules" -Pattern "lib/hve-core" -Quiet)) {
+        $valid = $false; Write-Host "❌ Submodule not in .gitmodules"
+    }
+}
+
 if ($valid) { Write-Host "✅ Installation validated successfully" }
 ```
-<!-- </validation-method-5-powershell> -->
+<!-- </validation-unified-powershell> -->
 
-<!-- <validation-method-6-bash> -->
+<!-- <validation-unified-bash> -->
 ```bash
-# Validation for Method 6 (submodule)
+#!/usr/bin/env bash
+# Unified validation - set base_path and method before running
 valid=true
-if [ -f ".gitmodules" ] && grep -q "lib/hve-core" .gitmodules; then
-    echo "✅ Submodule configured"
-else
-    echo "❌ Submodule not in .gitmodules"; valid=false
-fi
-for path in "lib/hve-core/.github/chatmodes" "lib/hve-core/.github/prompts" "lib/hve-core/.github/instructions"; do
+for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
 done
-if git submodule status lib/hve-core 2>/dev/null | grep -q "^-"; then
-    echo "⚠️ Submodule not initialized"; valid=false
-fi
+
+# Method 5: workspace file check (requires jq; fallback: grep for folder count)
+[ "$method" = "5" ] && [ -f "hve-core.code-workspace" ] && \
+    { jq -e '.folders | length >= 2' hve-core.code-workspace >/dev/null 2>&1 || grep -c '"path"' hve-core.code-workspace | grep -q '^[2-9]'; } && \
+    echo "✅ Multi-root configured" || { echo "❌ Multi-root not configured"; valid=false; }
+
+# Method 6: submodule check
+[ "$method" = "6" ] && { grep -q "lib/hve-core" .gitmodules 2>/dev/null && echo "✅ Submodule configured" || { echo "❌ Submodule not in .gitmodules"; valid=false; }; }
+
 [ "$valid" = true ] && echo "✅ Installation validated successfully"
 ```
-<!-- </validation-method-6-bash> -->
+<!-- </validation-unified-bash> -->
 
 ### Success Report
 
@@ -836,121 +835,50 @@ Upon successful validation, display:
 ```text
 ✅ Installation Complete!
 
-HVE-Core has been successfully installed using Method [N]: [Name]
+Method [N]: [Name] installed successfully.
 
-📍 Installation Details:
-• Method: [Method name]
-• Location: [path based on method]
-• Settings: [settings file or workspace file]
+📍 Location: [path based on method]
+⚙️ Settings: [settings file or workspace file]
+📖 Documentation: docs/getting-started/methods/[method-doc].md
 
 🧪 Available Chatmodes:
-• @task-researcher - Deep research and analysis
-• @task-planner - Implementation planning
-• @task-implementor - Code implementation
-• @github-issue-manager - GitHub issue management
-• @adr-creation - Architecture decision records
-• @pr-review - Pull request reviews
-• @prompt-builder - Create and validate prompt files
-• ...and more!
+• @task-researcher, @task-planner, @task-implementor
+• @github-issue-manager, @adr-creation, @pr-review
+• @prompt-builder, and more!
 
 ▶️ Next Steps:
-1. Reload VS Code window (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat
-3. Type @ to see available chatmodes
+1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
+2. Open Copilot Chat and type @ to see chatmodes
 
-📚 Documentation:
-• Method guide: [See method-specific link below]
-• Getting started: docs/getting-started/README.md
-
-💡 Tip: Try @task-researcher to explore HVE-Core capabilities
+💡 Try @task-researcher to explore HVE-Core capabilities
 ```
 <!-- </success-report> -->
-
-### Method Documentation Links
-
-After displaying the success report, provide the documentation link specific to the installed method:
-
-| Method | Documentation Path                              |
-| ------ | ----------------------------------------------- |
-| 1      | `docs/getting-started/methods/peer-clone.md`    |
-| 2      | `docs/getting-started/methods/git-ignored.md`   |
-| 3      | `docs/getting-started/methods/git-ignored.md`   |
-| 4      | `docs/getting-started/methods/mounted.md`       |
-| 5      | `docs/getting-started/methods/multi-root.md`    |
-| 6      | `docs/getting-started/methods/submodule.md`     |
-
-For Codespaces environments, also reference: `docs/getting-started/methods/codespaces.md`
-
-Include the appropriate documentation link in the success report's "Method guide" line based on the selected method.
 
 ---
 
 ## Error Recovery
 
-If ANY step fails, provide targeted guidance:
+Provide targeted guidance when steps fail:
 
-<!-- <error-git-detection> -->
-```text
-❌ Not in a git repository
-
-💡 Troubleshooting:
-• Run this installer from within a git repository workspace
-• Verify git is installed: git --version
-• Navigate to your project directory and try again
-```
-<!-- </error-git-detection> -->
-
-<!-- <error-clone-failure> -->
-```text
-❌ Failed to clone hve-core
-
-💡 Troubleshooting:
-• Check network connectivity to github.com
-• Verify git credentials are configured
-• Ensure write permissions in: [target directory]
-• Try manual clone: git clone https://github.com/microsoft/hve-core.git [path]
-```
-<!-- </error-clone-failure> -->
-
-<!-- <error-validation-failure> -->
-```text
-❌ Repository structure validation failed
-
-Missing paths: [list of missing paths]
-
-💡 Troubleshooting:
-• The cloned repository may be incomplete or corrupted
-• Delete the HVE-Core directory and re-run @hve-core-installer
-```
-<!-- </error-validation-failure> -->
-
-<!-- <error-settings-failure> -->
-```text
-❌ Failed to update VS Code settings
-
-💡 Troubleshooting:
-• Verify settings.json is valid JSON
-• Check file permissions for settings.json
-• Close VS Code and try again
-• Manual fallback: See method-specific paths above
-```
-<!-- </error-settings-failure> -->
+<!-- <error-recovery> -->
+| Error                      | Troubleshooting                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| **Not in git repo**        | Run from within a git workspace; verify `git --version`                           |
+| **Clone failed**           | Check network to github.com; verify git credentials and write permissions         |
+| **Validation failed**      | Repository may be incomplete; delete HVE-Core directory and re-run installer      |
+| **Settings update failed** | Verify settings.json is valid JSON; check permissions; try closing VS Code        |
+<!-- </error-recovery> -->
 
 ---
 
 ## Authorization Guardrails
 
-### Security Principles
+Never modify files without explicit user authorization. Always explain changes before making them. Respect denial at any checkpoint.
 
-- You MUST never modify files without explicit user authorization
-- You MUST always explain what changes will be made before making them
-- You MUST respect user denial at any authorization checkpoint
-- You MUST validate all paths before adding to settings
+Checkpoints requiring authorization:
 
-### Authorization Checkpoints
-
-1. **Initial Consent** (Phase 1): Receive "yes/y/proceed/continue" before starting
-2. **Settings Authorization** (Phase 4): Receive explicit approval before editing settings/devcontainer
+1. **Initial Consent** (Phase 1) - before starting detection
+2. **Settings Authorization** (Phase 4) - before editing settings/devcontainer
 
 ---
 
@@ -974,18 +902,6 @@ Use these exact emojis for consistency:
 
 ## Success Criteria
 
-Installation is considered **successful** when:
+**Success:** Environment detected, method selected, HVE-Core directories validated (chatmodes, prompts, instructions), settings configured, user directed to reload.
 
-- Environment detected correctly
-- Method selected matches user requirements
-- HVE-Core accessible at method-specific path
-- All three directories validated (chatmodes, prompts, instructions)
-- Settings configured for selected method
-- User directed to reload VS Code
-
-Installation is considered **failed** when:
-
-- Environment detection fails
-- Clone/submodule operation fails
-- Validation finds missing directories
-- Settings modification fails
+**Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
