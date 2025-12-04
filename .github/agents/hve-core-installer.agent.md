@@ -623,7 +623,7 @@ echo "✅ Created hve-core.code-workspace"
   "name": "My Project + HVE-Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
-  "onCreateCommand": "git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core 2>/dev/null || git -C /workspaces/hve-core pull --ff-only || true",
+  "postCreateCommand": "git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core 2>/dev/null || git -C /workspaces/hve-core pull --ff-only || true",
   
   "workspaceFolder": "/workspaces/my-project",
   
@@ -858,7 +858,7 @@ HVE-Core has been successfully installed using Method [N]: [Name]
 2. Open Copilot Chat
 3. Type @ to see available chatmodes
 
-� Documentation:
+📚 Documentation:
 • Method guide: [See method-specific link below]
 • Getting started: docs/getting-started/README.md
 
