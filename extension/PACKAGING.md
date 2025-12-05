@@ -28,7 +28,7 @@ From the hve-learning directory:
 
 ```bash
 cd extension
-rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github
+rm -rf .github learning docs scripts && cp -r ../.github . && cp -r ../learning . && cp -r ../docs . && cp -r ../scripts . && vsce package && rm -rf .github learning docs scripts
 ```
 
 This will create a `.vsix` file in the `extension/` folder.
@@ -39,7 +39,7 @@ This will create a `.vsix` file in the `extension/` folder.
 
 ```bash
 cd extension
-rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github
+rm -rf .github learning docs scripts && cp -r ../.github . && cp -r ../learning . && cp -r ../docs . && cp -r ../scripts . && vsce publish && rm -rf .github learning docs scripts
 ```
 
 ## What Gets Included
@@ -48,6 +48,9 @@ The `.vscodeignore` file controls what gets packaged. Currently included:
 
 - `.github/agents/**` - All AI learning coach agent definitions
 - `.github/instructions/**` - All learning content instruction files
+- `learning/**` - Complete learning content including katas and exercises
+- `docs/**` - Learning documentation, guides, and methodologies
+- `scripts/**` - Learning automation tools and utilities
 - `package.json` - Extension manifest
 - `README.md` - Extension description
 - `LICENSE` - License file
@@ -70,5 +73,6 @@ code --install-extension hve-learning-*.vsix
 
 - The `.github/` folder is temporarily copied during packaging (not permanently stored)
 - `LICENSE` is a permanent copy from the root directory
-- Only essential extension files are included (agents, instructions)
-- The extension focuses on AI learning coaches and content creation guidelines
+- All learning content is included (agents, instructions, katas, docs, scripts)
+- The extension provides a complete learning platform in VS Code
+- Content follows relative path structure for proper references

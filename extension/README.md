@@ -14,23 +14,32 @@ Specialized AI assistants for different learning needs:
 - **learning-kata-coach** - Focused practice guidance with progress tracking for skill-building exercises
 - **learning-lab-coach** - Comprehensive system coaching for complex learning scenarios
 
-### 📚 Learning Components
+### 📚 Complete Learning Platform
 
-#### 🥋 Katas (15-45 minutes)
-Focused practice exercises designed for skill building:
-- Quick context and immediate problem understanding
-- Minimal prerequisites for essential setup
-- Hands-on skill development through practice tasks
-- Measurable outcomes with completion checks
+This extension includes the entire HVE Learning Platform content:
 
-#### 🧪 Training Labs (2+ hours)
-Comprehensive learning experiences for complex systems:
-- Multi-module structure with progressive complexity
-- Team-based options for collaborative learning
-- Integration focus on real-world system interactions
-- Assessment integration with skill validation checkpoints
+#### 🥋 Learning Katas & Content
+Ready-to-use learning materials in the `learning/` directory:
+- Focused skill-building exercises (15-45 minutes)
+- Progressive difficulty levels and structured paths
+- Hands-on practice scenarios with real-world context
+- Built-in assessment and progress tracking systems
 
-### 📋 Content Guidelines
+#### 📖 Learning Documentation
+Comprehensive guides in the `docs/` directory:
+- Learning methodology and educational philosophy
+- Skill assessment frameworks and rubrics
+- Progress tracking and measurement systems
+- Contributing guidelines for content creators
+
+#### 🛠️ Learning Scripts & Tools
+Automation utilities in the `scripts/` directory:
+- Content validation and quality assurance
+- Learning path generation and organization
+- Progress tracking and analytics
+- Content management utilities
+
+### 📋 Content Creation Guidelines
 
 Best practice instructions for creating learning content:
 
