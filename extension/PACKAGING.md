@@ -86,7 +86,7 @@ code --install-extension hve-core-*.vsix
 ## Notes
 
 - The `.github/` folder is temporarily copied during packaging (not permanently stored)
-- `LICENSE` and `CHANGELOG.md` are copied from root during builds
+- `LICENSE` and `CHANGELOG.md` are permanent copies from the root directory
 - Only essential extension files are included (agents, chatmodes, prompts, instructions)
 - Non-essential `.github` files are excluded (workflows, issue templates, etc.)
 - The root `package.json` contains development scripts for the repository
