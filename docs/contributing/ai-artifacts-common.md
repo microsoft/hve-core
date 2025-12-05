@@ -470,7 +470,7 @@ When contributing AI artifacts:
 * [Contributing Chatmodes](chatmodes.md) - Agent configurations
 * [Contributing Prompts](prompts.md) - Workflow guidance
 * [Contributing Instructions](instructions.md) - Technology standards
-* [Pull Request Template](../../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
+* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 
 ---
 

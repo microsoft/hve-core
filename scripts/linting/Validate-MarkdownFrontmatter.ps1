@@ -715,6 +715,7 @@ function Test-FrontmatterValidation {
                                        ($file.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 
                                                         'SECURITY.md', 'SUPPORT.md', 'README.md'))
                 $isDevContainer = $file.DirectoryName -like "*.devcontainer*" -and $file.Name -eq 'README.md'
+                $isVSCodeReadme = $file.DirectoryName -like "*.vscode*" -and $file.Name -eq 'README.md'
 
                 # Determine if file should have footer
                 $shouldHaveFooter = $false
@@ -728,6 +729,11 @@ function Test-FrontmatterValidation {
                 }
                 elseif ($isDevContainer) {
                     # DevContainer docs are custom
+                    $shouldHaveFooter = $true
+                    $footerSeverity = 'Error'
+                }
+                elseif ($isVSCodeReadme) {
+                    # VS Code configuration docs require footers
                     $shouldHaveFooter = $true
                     $footerSeverity = 'Error'
                 }
@@ -776,6 +782,19 @@ function Test-FrontmatterValidation {
                 }
                 # Validate .devcontainer documentation
                 elseif ($isDevContainer) {
+                    $requiredFields = @('title', 'description')
+
+                    foreach ($field in $requiredFields) {
+                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
+                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
+                            $errors += $errorMsg
+                            [void]$filesWithErrors.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
+                        }
+                    }
+                }
+                # Validate .vscode documentation
+                elseif ($isVSCodeReadme) {
                     $requiredFields = @('title', 'description')
 
                     foreach ($field in $requiredFields) {
