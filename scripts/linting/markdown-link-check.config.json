@@ -6,6 +6,7 @@
     { "pattern": "\\{\\{[A-Z0-9_]+\\}\\}" },
     { "pattern": "^mailto:" },
     { "pattern": "^tel:" },
+    { "pattern": "^https://aka\\.ms/install-hve-core.*" },
     {
       "pattern": "^https://github\\.com/microsoft/hve-core"
     }
