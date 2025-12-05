@@ -10,7 +10,6 @@ HVE Core provides a comprehensive collection of specialized AI chat agents, prom
 
 Specialized AI assistants for specific development tasks:
 
-- **hve-core-installer** - Automated installer for HVE Core chatmodes, prompts, and instructions
 - **task-researcher** - Research technical solutions and approaches
 - **task-planner** - Plan and break down complex tasks
 - **task-implementor** - Implement tasks from detailed plans
