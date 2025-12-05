@@ -2,7 +2,7 @@
 title: {{initiativeName}} - Business Requirements Document
 description: Business requirements for {{briefDescription}}
 author: {{authorName}}
-ms.date: {{YYYY-MM-DD}}
+ms.date: 2025-12-05
 ms.topic: reference
 ---
 
