@@ -88,4 +88,4 @@ For issues, questions, or contributions, please visit the [GitHub repository](ht
 
 ---
 
-**Brought to you by Microsoft ISE HVE Essentials**
+*Brought to you by Microsoft ISE HVE Essentials*
