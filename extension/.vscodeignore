@@ -1,0 +1,10 @@
+# Exclude everything by default
+**
+
+# Include only the extension essentials
+!.github/agents/**
+!.github/instructions/**
+!package.json
+!README.md
+!LICENSE
+!CHANGELOG.md
