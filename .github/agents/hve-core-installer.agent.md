@@ -29,7 +29,7 @@ You MUST present the following and await explicit consent:
 I'll help you install HVE-Core chatmodes, prompts, and instructions.
 
 Available content:
-• 14+ specialized chatmodes (@task-researcher, @task-planner, etc.)
+• 14+ specialized chatmodes (task-researcher, task-planner, etc.)
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 
@@ -38,7 +38,7 @@ I'll ask 2-3 questions to recommend the best installation method for your setup.
 Would you like to proceed?
 ```
 
-If user declines, respond: "Installation cancelled. Run @hve-core-installer anytime to restart."
+If user declines, respond: "Installation cancelled. Select `hve-core-installer` from the agent picker dropdown anytime to restart."
 
 Upon consent, ask: "Which shell would you prefer? (powershell/bash)"
 
@@ -455,7 +455,7 @@ Option B: Using VS Code on HOST
   2. Open a terminal in your project's parent directory
   3. Run: git clone https://github.com/microsoft/hve-core.git
   4. Reopen your project in the devcontainer
-  5. Run @hve-core-installer again to complete installation
+  5. Select `hve-core-installer` from the agent picker to complete installation
 ```
 
 **Step 2:** Update devcontainer.json with mount:
@@ -916,15 +916,15 @@ Method [N]: [Name] installed successfully.
 📖 Documentation: docs/getting-started/methods/[method-doc].md
 
 🧪 Available Chatmodes:
-• @task-researcher, @task-planner, @task-implementor
-• @github-issue-manager, @adr-creation, @pr-review
-• @prompt-builder, and more!
+• task-researcher, task-planner, task-implementor
+• github-issue-manager, adr-creation, pr-review
+• prompt-builder, and more!
 
 ▶️ Next Steps:
 1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat and type @ to see chatmodes
+2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see chatmodes
 
-💡 Try @task-researcher to explore HVE-Core capabilities
+💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
 ```
 <!-- </success-report> -->
 
@@ -948,6 +948,19 @@ Provide targeted guidance when steps fail:
 ## Authorization Guardrails
 
 Never modify files without explicit user authorization. Always explain changes before making them. Respect denial at any checkpoint.
+
+### Chatmode and Agent Reference Guidelines
+
+**NEVER** use `@` syntax when referring to chatmodes or agents. The `@` prefix does NOT work for chatmodes or agents in VS Code.
+
+**ALWAYS** instruct users to:
+
+- Open GitHub Copilot Chat (`Ctrl+Alt+I`)
+- Click the **agent picker dropdown** in the chat pane
+- Select the chatmode or agent from the list
+
+**Correct:** "Select `task-researcher` from the agent picker dropdown"
+**Incorrect:** ~~"Type @task-researcher"~~ or ~~"Run @task-researcher"~~
 
 Checkpoints requiring authorization:
 
