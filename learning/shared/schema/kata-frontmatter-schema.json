@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/your-org/hve-learning/schemas/kata-frontmatter.json",
+  "title": "Kata YAML Frontmatter Schema",
+  "description": "Validation schema for HVE Learning Platform kata YAML frontmatter (28 fields across 6 sections)",
+  "type": "object",
+  "required": [
+    "title",
+    "description",
+    "author",
+    "ms.date",
+    "kata_id",
+    "kata_category",
+    "kata_difficulty",
+    "estimated_time_minutes",
+    "learning_objectives",
+    "prerequisite_katas",
+    "technologies",
+    "success_criteria",
+    "ai_coaching_level",
+    "scaffolding_level",
+    "hint_strategy",
+    "common_pitfalls",
+    "requires_azure_subscription",
+    "requires_local_environment",
+    "tags",
+    "search_keywords"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Page title displayed to users, should start with 'Kata:' prefix",
+      "pattern": "^Kata: .+",
+      "minLength": 10,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "SEO meta description summarizing kata objectives",
+      "minLength": 50,
+      "maxLength": 160
+    },
+    "author": {
+      "type": "string",
+      "description": "Full name of the content author",
+      "minLength": 2
+    },
+    "ms.date": {
+      "type": "string",
+      "description": "Publication date in ISO 8601 format (YYYY-MM-DD)",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "kata_id": {
+      "type": "string",
+      "description": "Unique kata identifier in kebab-case format (e.g., category-100-title, category-405-title)",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "examples": ["adr-creation-100-basic-messaging", "edge-deployment-405-expert-capstone"]
+    },
+    "kata_title": {
+      "type": "string",
+      "description": "Kata title without 'Kata:' prefix",
+      "minLength": 5,
+      "maxLength": 100
+    },
+    "kata_category": {
+      "type": "array",
+      "description": "Array containing single category slug matching category directory name",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "enum": [
+          "adr-creation",
+          "ado-automation",
+          "ai-assisted-engineering",
+          "cross-platform-integration",
+          "edge-deployment",
+          "fabric-integration",
+          "product-requirements",
+          "project-planning",
+          "prompt-engineering",
+          "task-planning",
+          "troubleshooting"
+        ]
+      }
+    },
+    "kata_difficulty": {
+      "type": "integer",
+      "description": "Difficulty rating: 1=Foundation, 2=Skill, 3=Advanced, 4=Expert, 5=Legendary",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "estimated_time_minutes": {
+      "type": "integer",
+      "description": "Realistic completion time in minutes (must be 5-minute increment, supports multi-hour labs)",
+      "minimum": 5,
+      "maximum": 3600,
+      "multipleOf": 5
+    },
+    "learning_objectives": {
+      "type": "array",
+      "description": "Array of 3-5 measurable learning objectives",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "prerequisite_katas": {
+      "type": "array",
+      "description": "Array of prerequisite kata_id values (empty array if none)",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      }
+    },
+    "technologies": {
+      "type": "array",
+      "description": "Array of specific technologies covered in the kata",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "description": "Array of measurable success criteria",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "ai_coaching_level": {
+      "type": "string",
+      "description": "Level of AI coaching assistance",
+      "enum": ["minimal", "guided", "adaptive"]
+    },
+    "scaffolding_level": {
+      "type": "string",
+      "description": "Amount of instructional scaffolding provided",
+      "enum": ["heavy", "medium-heavy", "light", "minimal"]
+    },
+    "hint_strategy": {
+      "type": "string",
+      "description": "Strategy for providing hints and guidance to learners",
+      "enum": ["progressive", "direct", "minimal"]
+    },
+    "common_pitfalls": {
+      "type": "array",
+      "description": "Array of common pitfalls or errors learners may encounter",
+      "minItems": 0,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "requires_azure_subscription": {
+      "type": "boolean",
+      "description": "Whether kata requires an Azure subscription"
+    },
+    "requires_local_environment": {
+      "type": "boolean",
+      "description": "Whether kata requires local development environment"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Category tags for multi-category classification (kata can appear in multiple category READMEs)",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      }
+    },
+    "search_keywords": {
+      "type": "array",
+      "description": "Array of search keywords for discoverability",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    }
+  },
+  "additionalProperties": false
+}
