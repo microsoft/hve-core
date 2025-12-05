@@ -10,20 +10,3 @@
 !README.md
 !LICENSE
 !CHANGELOG.md
-
-# Exclude non-essential files from .github
-.github/workflows/**
-.github/ISSUE_TEMPLATE/**
-.github/policies/**
-.github/acl/**
-.github/artifact-retention.yml
-.github/CODEOWNERS
-.github/copilot-instructions.md
-.github/dependabot.yml
-.github/PULL_REQUEST_TEMPLATE.md
-
-# Exclude README files within the included directories
-.github/agents/README.md
-.github/prompts/README.md
-.github/instructions/README.md
-.github/chatmodes/README.md
