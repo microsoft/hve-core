@@ -60,7 +60,7 @@ rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github
 The `.vscodeignore` file controls what gets packaged. Currently included:
 
 - `.github/agents/**` - All chat agent definitions
-- `.github/chatmodes/**` - All chatmode definitions  
+- `.github/chatmodes/**` - All chatmode definitions
 - `.github/prompts/**` - All prompt templates
 - `.github/instructions/**` - All instruction files
 - `package.json` - Extension manifest
