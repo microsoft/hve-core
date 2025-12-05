@@ -4,7 +4,9 @@
 # Include only the extension essentials
 !.github/agents/**
 !.github/instructions/**
+!learning/**
+!docs/**
+!scripts/**
 !package.json
 !README.md
 !LICENSE
-!CHANGELOG.md
