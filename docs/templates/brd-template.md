@@ -8,8 +8,6 @@ ms.topic: reference
 
 <!-- markdownlint-disable-file -->
 
-# {{initiativeName}} - Business Requirements Document (BRD)
-
 Version {{version}} | Status {{status}} | Owner {{docOwner}} | Sponsor {{businessSponsor}} | Date {{docDate}} | Business Unit {{businessUnit}}
 
 ## Progress Tracker
