@@ -18,17 +18,17 @@ Peer Directory Clone places HVE-Core as a sibling folder next to your project. T
 
 ✅ **Use this when:**
 
-- You're using local VS Code (no devcontainer)
-- You're working solo on a project
-- You want the simplest possible setup
-- You're developing or testing HVE-Core itself
+* You're using local VS Code (no devcontainer)
+* You're working solo on a project
+* You want the simplest possible setup
+* You're developing or testing HVE-Core itself
 
 ❌ **Consider alternatives when:**
 
-- You use devcontainers → [Git-Ignored Folder](git-ignored.md) or [Mounted Directory](mounted.md)
-- You use Codespaces → [GitHub Codespaces](codespaces.md)
-- Your team needs version control → [Submodule](submodule.md)
-- You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
+* You use devcontainers → [Git-Ignored Folder](git-ignored.md) or [Mounted Directory](mounted.md)
+* You use Codespaces → [GitHub Codespaces](codespaces.md)
+* Your team needs version control → [Submodule](submodule.md)
+* You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 
 ## How It Works
 
@@ -84,13 +84,21 @@ Create or update `.vscode/settings.json` in your project:
 
 ```json
 {
-  "chat.modeFilesLocations": ["../hve-core/.github/chatmodes"],
-  "chat.promptFilesLocations": ["../hve-core/.github/prompts"],
-  "chat.instructionsFilesLocations": ["../hve-core/.github/instructions"]
+  "chat.modeFilesLocations": { "../hve-core/.github/chatmodes": true },
+  "chat.promptFilesLocations": { "../hve-core/.github/prompts": true },
+  "chat.instructionsFilesLocations": { "../hve-core/.github/instructions": true }
 }
 ```
 
 ### Step 3: Validate Installation
+
+Verify HVE-Core directories are accessible:
+
+```bash
+ls ../hve-core/.github/chatmodes
+```
+
+You should see `.chatmode.md` files. Then validate in VS Code:
 
 1. Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
@@ -145,9 +153,9 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 **Solutions:**
 
-- Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
-- Use [Mounted Directory](mounted.md) to share HVE-Core across projects
-- Use [Multi-Root Workspace](multi-root.md) for the most portable solution
+* Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
+* Use [Mounted Directory](mounted.md) to share HVE-Core across projects
+* Use [Multi-Root Workspace](multi-root.md) for the most portable solution
 
 ## Limitations
 
@@ -163,9 +171,9 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 ## Next Steps
 
-- [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-- [Multi-Root Workspace](multi-root.md) - Upgrade to portable paths
-- [Submodule](submodule.md) - Add version control for teams
+* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root.md) - Upgrade to portable paths
+* [Submodule](submodule.md) - Add version control for teams
 
 ---
 

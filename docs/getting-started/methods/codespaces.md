@@ -19,24 +19,26 @@ GitHub Codespaces requires a specific installation approach because traditional 
 
 ✅ **Use this when:**
 
-- Your project runs exclusively in Codespaces
-- You want automatic HVE-Core setup for all users
-- You need zero-config onboarding for contributors
+* Your project runs exclusively in Codespaces
+* You want automatic HVE-Core setup for all users
+* You need zero-config onboarding for contributors
 
 ❌ **Consider alternatives when:**
 
-- You also need local devcontainer support → [Multi-Root Workspace](multi-root.md)
-- Your team needs version control → [Submodule](submodule.md)
-- You're using local VS Code only → [Peer Clone](peer-clone.md)
+* You also need local devcontainer support → [Multi-Root Workspace](multi-root.md)
+* Your team needs version control → [Submodule](submodule.md)
+* You're using local VS Code only → [Peer Clone](peer-clone.md)
 
 ## Why Other Methods Don't Work in Codespaces
 
-| Feature                    | Local Devcontainer | GitHub Codespaces        |
-|----------------------------|--------------------|--------------------------|
-| `${localWorkspaceFolder}`  | ✅ Resolves to host | ❌ Not available          |
-| Bind mounts to host        | ✅ Full support     | ❌ No host access         |
-| Persistent storage         | Host filesystem    | `/workspaces` only       |
-| User settings modification | ✅ Via file system  | ❌ Only via Settings Sync |
+| Feature                    | Local Devcontainer  | GitHub Codespaces               |
+|----------------------------|---------------------|--|---------------------------------|
+| `${localWorkspaceFolder}`  | ✅ Resolves to host  | ❌ Not available                 |
+| Bind mounts to host        | ✅ Full support      | ❌ No host access                |
+| Persistent storage         | Host filesystem     | `/workspaces` only              |
+| User settings modification | ✅ Via file system   | ❌ Only via Settings Sync[^1]   |
+
+[^1]: User-level settings require Settings Sync. Workspace/container-level settings can still be configured via `devcontainer.json` using `customizations.vscode.settings`.
 
 ## How It Works
 
@@ -78,9 +80,9 @@ Add the clone command and VS Code settings:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"]
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
   }
@@ -97,8 +99,8 @@ git push
 
 ### Step 3: Create or Rebuild Codespace
 
-- **New Codespace:** Create from the updated branch
-- **Existing Codespace:** Rebuild (`Ctrl+Shift+P` → "Codespaces: Rebuild Container")
+* **New Codespace:** Create from the updated branch
+* **Existing Codespace:** Rebuild (`Ctrl+Shift+P` → "Codespaces: Rebuild Container")
 
 ### Step 4: Validate Installation
 
@@ -120,9 +122,9 @@ git push
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"],
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"]
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
   }
@@ -151,18 +153,18 @@ git push
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.promptFilesLocations": [
-          "/workspaces/hve-core/.github/prompts",
-          ".github/prompts"
-        ],
-        "chat.instructionsFilesLocations": [
-          "/workspaces/hve-core/.github/instructions",
-          ".github/instructions"
-        ],
-        "chat.modeFilesLocations": [
-          "/workspaces/hve-core/.github/chatmodes",
-          ".github/chatmodes"
-        ]
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts": true,
+          ".github/prompts": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions": true,
+          ".github/instructions": true
+        },
+        "chat.modeFilesLocations": {
+          "/workspaces/hve-core/.github/chatmodes": true,
+          ".github/chatmodes": true
+        }
       }
     }
   }
@@ -178,9 +180,8 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
   "name": "HVE-Core (Local + Codespaces)",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
-  // Clone if not mounted (Codespaces) and not already present
-  // Check both /workspaces/hve-core and, if set, $containerWorkspaceFolder/../hve-core
-  "postCreateCommand": "[ -d /workspaces/hve-core ] || { [ -n \"$containerWorkspaceFolder\" ] && [ -d \"$containerWorkspaceFolder/../hve-core\" ]; } || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
+  // Clone if not already present (Codespaces path)
+  "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
   
   // Local only: mount peer directory (silently fails in Codespaces)
   "mounts": [
@@ -191,18 +192,18 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
     "vscode": {
       "settings": {
         // Both paths - VS Code ignores non-existent paths
-        "chat.promptFilesLocations": [
-          "/workspaces/hve-core/.github/prompts",
-          "../hve-core/.github/prompts"
-        ],
-        "chat.instructionsFilesLocations": [
-          "/workspaces/hve-core/.github/instructions",
-          "../hve-core/.github/instructions"
-        ],
-        "chat.modeFilesLocations": [
-          "/workspaces/hve-core/.github/chatmodes",
-          "../hve-core/.github/chatmodes"
-        ]
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts": true,
+          "../hve-core/.github/prompts": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions": true,
+          "../hve-core/.github/instructions": true
+        },
+        "chat.modeFilesLocations": {
+          "/workspaces/hve-core/.github/chatmodes": true,
+          "../hve-core/.github/chatmodes": true
+        }
       }
     }
   }
@@ -315,9 +316,9 @@ Replace `v1.0.0` with your desired version tag.
 
 ## Next Steps
 
-- [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-- [Multi-Root Workspace](multi-root.md) - For dual local + Codespaces support
-- [Submodule](submodule.md) - For team version control
+* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root.md) - For dual local + Codespaces support
+* [Submodule](submodule.md) - For team version control
 
 ---
 

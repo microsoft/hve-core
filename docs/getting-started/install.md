@@ -62,7 +62,7 @@ Answer these questions to find your recommended installation method:
 │  Which environment?                                             │
 │  ├─ Local VS Code only ──────────────► Peer Directory Clone    │
 │  ├─ Local devcontainer only ─────────► Git-Ignored Folder      │
-│  ├─ Codespaces only ─────────────────► GitHub Codespaces         │
+│  ├─ Codespaces only ─────────────────► GitHub Codespaces       │
 │  └─ Both local + Codespaces ─────────► Multi-Root Workspace ⭐ │
 │                                                                 │
 │  Working in a team?                                             │

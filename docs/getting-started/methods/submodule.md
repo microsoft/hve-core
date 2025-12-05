@@ -19,15 +19,15 @@ Git submodules provide version-controlled, reproducible HVE-Core consumption. Ev
 
 ✅ **Use this when:**
 
-- Your team needs reproducible setups (same version for everyone)
-- You want to pin HVE-Core to a specific version
-- Updates should be deliberate, reviewed commits
-- HVE-Core dependency should be tracked in version control
+* Your team needs reproducible setups (same version for everyone)
+* You want to pin HVE-Core to a specific version
+* Updates should be deliberate, reviewed commits
+* HVE-Core dependency should be tracked in version control
 
 ❌ **Consider alternatives when:**
 
-- You want automatic updates → [Multi-Root Workspace](multi-root.md)
-- You're a solo developer without version pinning needs → [Multi-Root Workspace](multi-root.md)
+* You want automatic updates → [Multi-Root Workspace](multi-root.md)
+* You're a solo developer without version pinning needs → [Multi-Root Workspace](multi-root.md)
 
 ## How It Works
 
@@ -144,12 +144,12 @@ git config --global submodule.recurse true
 
 ## Updating HVE-Core
 
-| Task                   | Command                                            |
-|------------------------|----------------------------------------------------|
-| Check for updates      | `git submodule update --remote --dry-run`          |
-| Update to latest       | `git submodule update --remote lib/hve-core`       |
-| Pin to specific commit | `cd lib/hve-core && git checkout <sha>`            |
-| Track different branch | `git config submodule.lib/hve-core.branch develop` |
+| Task                   | Command                                                               |
+|------------------------|-----------------------------------------------------------------------|
+| Check for updates      | `cd lib/hve-core && git fetch && git log HEAD..origin/main --oneline` |
+| Update to latest       | `git submodule update --remote lib/hve-core`                          |
+| Pin to specific commit | `cd lib/hve-core && git checkout <sha>`                               |
+| Track different branch | `git config submodule.lib/hve-core.branch develop`                    |
 
 **After updating, commit the change:**
 
@@ -210,9 +210,9 @@ git submodule update --init --recursive
 
 ### Agents not appearing
 
-- **Check settings paths:** Verify `.vscode/settings.json` paths match submodule location
-- **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
-- **Verify submodule content:** `ls lib/hve-core/.github/chatmodes/`
+* **Check settings paths:** Verify `.vscode/settings.json` paths match submodule location
+* **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
+* **Verify submodule content:** `ls lib/hve-core/.github/chatmodes/`
 
 ### "Detached HEAD" warning in submodule
 
@@ -247,9 +247,9 @@ git commit
 
 ## Next Steps
 
-- [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-- [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
-- [Back to Installation Guide](../install.md) - Compare other methods
+* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
+* [Back to Installation Guide](../install.md) - Compare other methods
 
 ---
 

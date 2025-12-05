@@ -52,10 +52,10 @@ Research what's needed to create a PowerShell script for this repository that
 validates every subfolder under docs/ contains a README.md file.
 
 Consider:
-- Existing PowerShell script patterns in scripts/linting/
-- PSScriptAnalyzer conventions and settings
-- How npm scripts are structured in package.json
-- Expected output format (exit codes, messages)
+* Existing PowerShell script patterns in scripts/linting/
+* PSScriptAnalyzer conventions and settings
+* How npm scripts are structured in package.json
+* Expected output format (exit codes, messages)
 ```
 
 ### What You'll Get
@@ -94,11 +94,11 @@ Copy and paste this prompt (include findings from Phase 1):
 Create an implementation plan to add a README validation script.
 
 Requirements from research:
-- Script location: scripts/linting/Test-DocsReadme.ps1
-- Follow PowerShell conventions (Verb-Noun naming, comment-based help)
-- Add npm script "check:docs-readme" to package.json
-- Exit 0 on success, exit 1 on failure
-- Output list of folders missing README.md
+* Script location: scripts/linting/Test-DocsReadme.ps1
+* Follow PowerShell conventions (Verb-Noun naming, comment-based help)
+* Add npm script "check:docs-readme" to package.json
+* Exit 0 on success, exit 1 on failure
+* Output list of folders missing README.md
 ```
 
 ### Plan Output

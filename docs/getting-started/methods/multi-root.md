@@ -19,15 +19,15 @@ Multi-root workspaces are the **RECOMMENDED** method for consuming HVE-Core. Thi
 
 ✅ **Use this when:**
 
-- You want a single configuration that works everywhere
-- Your project uses Codespaces or devcontainers
-- You need paths that work for the whole team
-- You want integrated source control across both projects
+* You want a single configuration that works everywhere
+* Your project uses Codespaces or devcontainers
+* You need paths that work for the whole team
+* You want integrated source control across both projects
 
 ❌ **Consider alternatives when:**
 
-- Your team needs version-pinned dependencies → [Submodule](submodule.md)
-- You're developing HVE-Core itself → [Peer Clone](peer-clone.md)
+* Your team needs version-pinned dependencies → [Submodule](submodule.md)
+* You're developing HVE-Core itself → [Peer Clone](peer-clone.md)
 
 ## How It Works
 
@@ -143,8 +143,8 @@ Update `.devcontainer/devcontainer.json`:
 
 **Critical:** You must open the `.code-workspace` file, not the folder.
 
-- **Local:** `File` → `Open Workspace from File...` → select `hve-core.code-workspace`
-- **Codespaces:** Run `code .devcontainer/hve-core.code-workspace` in terminal
+* **Local:** `File` → `Open Workspace from File...` → select `hve-core.code-workspace`
+* **Codespaces:** Run `code .devcontainer/hve-core.code-workspace` in terminal
 
 The VS Code title bar should show your workspace name, not just the folder name.
 
@@ -188,25 +188,25 @@ After setup, verify HVE-Core is working:
 
 ### Agents not appearing
 
-- **Verify workspace is open:** Title bar should show workspace name
-- **Check folder paths:** Ensure `path` values in `.code-workspace` are correct
-- **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
+* **Verify workspace is open:** Title bar should show workspace name
+* **Check folder paths:** Ensure `path` values in `.code-workspace` are correct
+* **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
 
 ### "Folder not found" error
 
-- **Local:** Verify HVE-Core is cloned at the relative path specified
-- **Codespaces:** Check `onCreateCommand` ran successfully in creation logs
+* **Local:** Verify HVE-Core is cloned at the relative path specified
+* **Codespaces:** Check `onCreateCommand` ran successfully in creation logs
 
 ### Settings not applying
 
-- **Settings precedence:** Folder settings override workspace settings
-- **Path format:** Use folder names (`"HVE-Core Library/..."`) not absolute paths
+* **Settings precedence:** Folder settings override workspace settings
+* **Path format:** Use folder names (`"HVE-Core Library/..."`) not absolute paths
 
 ## Next Steps
 
-- [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-- [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
-- [Back to Installation Guide](../install.md) - Compare other methods
+* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
+* [Back to Installation Guide](../install.md) - Compare other methods
 
 ---
 

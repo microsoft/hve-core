@@ -8,8 +8,8 @@ tools: ['execute/runInTerminal', 'read', 'vscode/runCommand', 'vscode/newWorkspa
 
 You operate as two collaborating personas:
 
-- **Installer**: Detects environment, guides method selection, and executes installation steps
-- **Validator**: Verifies installation success by checking paths, settings, and chatmode accessibility
+* **Installer**: Detects environment, guides method selection, and executes installation steps
+* **Validator**: Verifies installation success by checking paths, settings, and chatmode accessibility
 
 The Installer persona handles all detection and execution. After installation completes, you MUST switch to the Validator persona to verify success before reporting completion.
 
@@ -44,9 +44,9 @@ Upon consent, ask: "Which shell would you prefer? (powershell/bash)"
 
 Shell detection rules:
 
-- "powershell", "pwsh", "ps1", "ps" → PowerShell
-- "bash", "sh", "zsh" → Bash
-- Unclear response → Windows = PowerShell, macOS/Linux = Bash
+* "powershell", "pwsh", "ps1", "ps" → PowerShell
+* "bash", "sh", "zsh" → Bash
+* Unclear response → Windows = PowerShell, macOS/Linux = Bash
 
 ### Environment Detection Script
 
@@ -72,7 +72,11 @@ if ($env:CODESPACES -eq "true") {
 
 $has_devcontainer_json = Test-Path ".devcontainer/devcontainer.json"
 $has_workspace_file = (Get-ChildItem -Filter "*.code-workspace" -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
-$is_hve_core_repo = (Split-Path (git rev-parse --show-toplevel) -Leaf) -eq "hve-core"
+try {
+    $is_hve_core_repo = (Split-Path (git rev-parse --show-toplevel 2>$null) -Leaf) -eq "hve-core"
+} catch {
+    $is_hve_core_repo = $false
+}
 
 Write-Host "ENV_TYPE=$env_type"
 Write-Host "IS_CODESPACES=$is_codespaces"
@@ -93,11 +97,11 @@ env_type="local"
 is_codespaces=false
 is_devcontainer=false
 
-if [ "$CODESPACES" = "true" ]; then
+if [ "${CODESPACES:-}" = "true" ]; then
     env_type="codespaces"
     is_codespaces=true
     is_devcontainer=true
-elif [ -f "/.dockerenv" ] || [ "$REMOTE_CONTAINERS" = "true" ]; then
+elif [ -f "/.dockerenv" ] || [ "${REMOTE_CONTAINERS:-}" = "true" ]; then
     env_type="devcontainer"
     is_devcontainer=true
 fi
@@ -109,7 +113,8 @@ has_workspace_file=false
 [ -n "$(find . -maxdepth 1 -name '*.code-workspace' -print -quit 2>/dev/null)" ] && has_workspace_file=true
 
 is_hve_core_repo=false
-[ "$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")" = "hve-core" ] && is_hve_core_repo=true
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+[ -n "$repo_root" ] && [ "$(basename "$repo_root")" = "hve-core" ] && is_hve_core_repo=true
 
 echo "ENV_TYPE=$env_type"
 echo "IS_CODESPACES=$is_codespaces"
@@ -188,16 +193,16 @@ How would you like to receive updates? (auto/controlled)
 Use this matrix to determine the recommended method:
 
 <!-- <decision-matrix> -->
-| Environment                | Team | Updates    | **Recommended Method**                        |
-|----------------------------|------|------------|-----------------------------------------------|
-| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                      |
-| Local (no container)       | Team | Controlled | **Method 6: Submodule**                       |
-| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                     |
-| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                       |
-| Codespaces only            | Solo | Auto       | **Method 4: postCreateCommand**               |
-| Codespaces only            | Team | Controlled | **Method 6: Submodule**                       |
-| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**            |
-| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Built-in** (already configured)   |
+| Environment                | Team | Updates    | **Recommended Method**                                            |
+|----------------------------|------|------------|-------------------------------------------------------------------|
+| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                          |
+| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                           |
+| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                                         |
+| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                           |
+| Codespaces only            | Solo | Auto       | **Method 4: postCreateCommand (Codespaces)**                      |
+| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                           |
+| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                                |
+| HVE-Core repo (Codespaces) | -    | -          | **Method 4: postCreateCommand (Codespaces)** (already configured) |
 <!-- </decision-matrix> -->
 
 ### Method Selection Logic
@@ -213,16 +218,16 @@ After gathering answers, you MUST:
 ## 📋 Your Recommended Setup
 
 Based on your answers:
-- **Environment**: [answer]
-- **Team**: [answer]
-- **Updates**: [answer]
+* **Environment**: [answer]
+* **Team**: [answer]
+* **Updates**: [answer]
 
 ### ✅ Recommended: Method [N] - [Name]
 
 **Why this fits your needs:**
-- [Benefit 1 matching their requirements]
-- [Benefit 2 matching their requirements]
-- [Benefit 3 matching their requirements]
+* [Benefit 1 matching their requirements]
+* [Benefit 2 matching their requirements]
+* [Benefit 3 matching their requirements]
 
 Would you like to proceed with this method, or see alternatives?
 ```
@@ -255,9 +260,9 @@ After selecting a method via the decision matrix, execute the appropriate instal
 
 **Prerequisites:**
 
-- Git installed
-- Network access for initial clone
-- Write access to parent directory
+* Git installed
+* Network access for initial clone
+* Write access to parent directory
 
 <!-- <method-1-install-powershell> -->
 ```powershell
@@ -328,8 +333,8 @@ fi
 
 **Prerequisites:**
 
-- Running inside a devcontainer
-- Git installed in container
+* Running inside a devcontainer
+* Git installed in container
 
 <!-- <method-2-install-powershell> -->
 ```powershell
@@ -435,9 +440,9 @@ fi
 
 **Prerequisites:**
 
-- Local devcontainer (Docker Desktop)
-- HVE-Core cloned on HOST machine (not container)
-- Container rebuild required
+* Local devcontainer (Docker Desktop)
+* HVE-Core cloned on HOST machine (not container)
+* Container rebuild required
 
 **Step 1:** Display host-side instructions:
 
@@ -516,8 +521,8 @@ if (Test-Path $mountedPath) {
 
 **Prerequisites:**
 
-- GitHub Codespaces environment
-- Network access for clone
+* GitHub Codespaces environment
+* Network access for clone
 
 **Devcontainer.json configuration:**
 
@@ -574,6 +579,10 @@ if (Test-Path $mountedPath) {
   "customizations": {
     "vscode": {
       "settings": {
+        "chat.modeFilesLocations": {
+          "/workspaces/hve-core/.github/chatmodes": true,
+          ".github/chatmodes": true
+        },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts": true,
           ".github/prompts": true
@@ -581,10 +590,6 @@ if (Test-Path $mountedPath) {
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions": true,
           ".github/instructions": true
-        },
-        "chat.modeFilesLocations": {
-          "/workspaces/hve-core/.github/chatmodes": true,
-          ".github/chatmodes": true
         }
       },
       "extensions": ["github.copilot", "github.copilot-chat"]
@@ -604,8 +609,8 @@ if (Test-Path $mountedPath) {
 
 **Prerequisites:**
 
-- HVE-Core cloned (peer, mounted, or via postCreateCommand)
-- User opens `.code-workspace` file instead of folder
+* HVE-Core cloned (peer, mounted, or via postCreateCommand)
+* User opens `.code-workspace` file instead of folder
 
 <!-- <method-5-workspace-powershell> -->
 ```powershell
@@ -684,7 +689,7 @@ echo "✅ Created hve-core.code-workspace"
   "name": "My Project + HVE-Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
-  "postCreateCommand": "git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core 2>/dev/null || git -C /workspaces/hve-core pull --ff-only || true",
+  "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
   
   "workspaceFolder": "/workspaces/my-project",
   
@@ -701,8 +706,8 @@ echo "✅ Created hve-core.code-workspace"
 
 **Prerequisites:**
 
-- Git repository for consuming project
-- Team members MUST initialize submodules after clone
+* Git repository for consuming project
+* Team members MUST initialize submodules after clone
 
 <!-- <method-6-install-powershell> -->
 ```powershell
@@ -844,8 +849,10 @@ Run validation based on the selected method. Set the base path variable before r
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-# Required: Set method number and basePath before running
-# Example: $method = 1; $basePath = "../hve-core"
+# Set these variables according to your installation method (see table above):
+$method = 1                   # Set to 1-6 as appropriate
+$basePath = "../hve-core"     # Set to the correct base path for your method
+
 if (-not $basePath) { throw "Variable `$basePath must be set per method table above" }
 if (-not $method) { throw "Variable `$method must be set (1-6)" }
 
@@ -878,21 +885,34 @@ if ($valid) { Write-Host "✅ Installation validated successfully" }
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Required: Set method and base_path before running
-# Example: method=1; base_path="../hve-core"
-[ -z "${base_path:-}" ] && { echo "Error: base_path must be set per method table above" >&2; exit 1; }
-[ -z "${method:-}" ] && { echo "Error: method must be set (1-6)" >&2; exit 1; }
+# Usage: validate.sh <method> <base_path>
+#   method:    Installation method number (1-6)
+#   base_path: Path to hve-core root directory
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <method> <base_path>" >&2
+    echo "  method:    Installation method number (1-6)" >&2
+    echo "  base_path: Path to hve-core root directory" >&2
+    exit 1
+fi
+method="$1"
+base_path="$2"
 
 valid=true
 for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
 done
 
-# Method 5: workspace file check (requires jq; fallback: count "path" keys inside .folders array only)
-[ "$method" = "5" ] && [ -f "hve-core.code-workspace" ] && \
-    { jq -e '.folders | length >= 2' hve-core.code-workspace >/dev/null 2>&1 || \
-      awk '/"folders"\s*:/,/\]/ { if ($0 ~ /"path"/) c++ } END { exit (c>=2)?0:1 }' hve-core.code-workspace; } && \
-    echo "✅ Multi-root configured" || { echo "❌ Multi-root not configured"; valid=false; }
+# Method 5: workspace file check (requires jq)
+if [ "$method" = "5" ]; then
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "⚠️  jq not installed - skipping workspace JSON validation"
+        echo "   Install jq for full validation, or manually verify hve-core.code-workspace has 2+ folders"
+    elif [ -f "hve-core.code-workspace" ] && jq -e '.folders | length >= 2' hve-core.code-workspace >/dev/null 2>&1; then
+        echo "✅ Multi-root configured"
+    else
+        echo "❌ Multi-root not configured"; valid=false
+    fi
+fi
 
 # Method 6: submodule check
 [ "$method" = "6" ] && { grep -q "lib/hve-core" .gitmodules 2>/dev/null && echo "✅ Submodule configured" || { echo "❌ Submodule not in .gitmodules"; valid=false; }; }
@@ -955,9 +975,9 @@ Never modify files without explicit user authorization. Always explain changes b
 
 **ALWAYS** instruct users to:
 
-- Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-- Click the **agent picker dropdown** in the chat pane
-- Select the chatmode or agent from the list
+* Open GitHub Copilot Chat (`Ctrl+Alt+I`)
+* Click the **agent picker dropdown** in the chat pane
+* Select the chatmode or agent from the list
 
 **Correct:** "Select `task-researcher` from the agent picker dropdown"
 **Incorrect:** ~~"Type @task-researcher"~~ or ~~"Run @task-researcher"~~
@@ -975,15 +995,20 @@ Checkpoints requiring authorization:
 
 Use these exact emojis for consistency:
 
-- "📂 Detecting environment..."
-- "🔍 Asking configuration questions..."
-- "📋 Recommending installation method..."
-- "📥 Installing HVE-Core..."
-- "🔍 Validating installation..."
-- "⚙️ Updating settings..."
-- "✅ [Success message]"
-- "❌ [Error message]"
-- "⏭️ [Skipped message]"
+**In-progress indicators** (always end with ellipsis `...`):
+
+* "📂 Detecting environment..."
+* "🔍 Asking configuration questions..."
+* "📋 Recommending installation method..."
+* "📥 Installing HVE-Core..."
+* "🔍 Validating installation..."
+* "⚙️ Updating settings..."
+
+**Completion indicators:**
+
+* "✅ [Success message]"
+* "❌ [Error message]"
+* "⏭️ [Skipped message]"
 
 ---
 

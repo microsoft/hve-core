@@ -19,17 +19,17 @@ Mounted Directory installation shares a single HVE-Core clone across multiple de
 
 ✅ **Use this when:**
 
-- You have multiple devcontainer projects needing HVE-Core
-- You want a single shared installation (one update applies everywhere)
-- You're comfortable with devcontainer configuration
-- You're using local devcontainers only (not Codespaces)
+* You have multiple devcontainer projects needing HVE-Core
+* You want a single shared installation (one update applies everywhere)
+* You're comfortable with devcontainer configuration
+* You're using local devcontainers only (not Codespaces)
 
 ❌ **Consider alternatives when:**
 
-- You use Codespaces → [GitHub Codespaces](codespaces.md) (mounts don't work)
-- You want simpler setup → [Git-Ignored Folder](git-ignored.md)
-- Your team needs version control → [Submodule](submodule.md)
-- You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
+* You use Codespaces → [GitHub Codespaces](codespaces.md) (mounts don't work)
+* You want simpler setup → [Git-Ignored Folder](git-ignored.md)
+* Your team needs version control → [Submodule](submodule.md)
+* You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 
 ## ⚠️ Important Limitations
 
@@ -149,10 +149,10 @@ Update `.devcontainer/devcontainer.json`:
 
 **What happens during rebuild:**
 
-- Current container stops
-- New container builds with mount configuration
-- Extensions reinstall
-- Lifecycle scripts re-run
+* Current container stops
+* New container builds with mount configuration
+* Extensions reinstall
+* Lifecycle scripts re-run
 
 ### Phase 4: Configure VS Code Settings
 
@@ -160,9 +160,9 @@ After rebuild, update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
-  "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-  "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"]
+  "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+  "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+  "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
 }
 ```
 
@@ -173,9 +173,9 @@ After rebuild, update `.vscode/settings.json`:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"]
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
   }
@@ -208,9 +208,9 @@ ls /workspaces/hve-core/.github/chatmodes
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": ["/workspaces/hve-core/.github/chatmodes"],
-        "chat.promptFilesLocations": ["/workspaces/hve-core/.github/prompts"],
-        "chat.instructionsFilesLocations": ["/workspaces/hve-core/.github/instructions"]
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
   }
@@ -293,9 +293,9 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 ## Next Steps
 
-- [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-- [Multi-Root Workspace](multi-root.md) - Simpler portable solution
-- [postCreateCommand](codespaces.md) - If you also need Codespaces support
+* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root.md) - Simpler portable solution
+* [postCreateCommand](codespaces.md) - If you also need Codespaces support
 
 ---
 
