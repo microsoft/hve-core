@@ -750,7 +750,7 @@ function Test-FrontmatterValidation {
                     # Validate date format (ISO 8601: YYYY-MM-DD)
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
+                        if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
                             $warningMsg = "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
                             $warnings += $warningMsg
                             [void]$filesWithWarnings.Add($file.FullName)
@@ -868,7 +868,7 @@ function Test-FrontmatterValidation {
                     # Validate date format for docs
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
+                        if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
                             $warnings += "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
                             [void]$filesWithWarnings.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName
