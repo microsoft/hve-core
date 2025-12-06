@@ -1,0 +1,68 @@
+{
+  "name": "hve-learning",
+  "displayName": "HVE Learning Platform",
+  "version": "1.0.0",
+  "description": "AI-assisted learning platform for hyper-velocity engineering education with katas, training labs, and coaching",
+  "publisher": "ise-hve-essentials",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eedorenko/hve-learning.git"
+  },
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": ["Chat"],
+  "contributes": {
+    "chatAgents": [
+      {
+        "name": "learning-content-creator",
+        "path": "./.github/agents/learning-content-creator.agent.md",
+        "description": "Collaborative content development partner for creating learning materials"
+      },
+      {
+        "name": "learning-kata-coach",
+        "path": "./.github/agents/learning-kata-coach.agent.md",
+        "description": "Focused practice guidance with progress tracking for skill-building exercises"
+      },
+      {
+        "name": "learning-lab-coach",
+        "path": "./.github/agents/learning-lab-coach.agent.md",
+        "description": "Comprehensive system coaching for complex learning scenarios"
+      }
+    ],
+    "chatInstructionsFiles": [
+      {
+        "name": "kata-content-instructions",
+        "path": "./.github/instructions/kata-content.instructions.md",
+        "description": "Instructions for creating kata learning content"
+      },
+      {
+        "name": "kata-category-readme-instructions",
+        "path": "./.github/instructions/kata-category-readme.instructions.md",
+        "description": "Instructions for creating kata category README files"
+      },
+      {
+        "name": "learning-coach-schema-instructions",
+        "path": "./.github/instructions/learning-coach-schema.instructions.md",
+        "description": "Instructions for learning coach schema and structure"
+      },
+      {
+        "name": "learning-path-content-instructions",
+        "path": "./.github/instructions/learning-path-content.instructions.md",
+        "description": "Instructions for creating learning path content"
+      },
+      {
+        "name": "training-lab-content-instructions",
+        "path": "./.github/instructions/training-lab-content.instructions.md",
+        "description": "Instructions for creating training lab content"
+      },
+      {
+        "name": "markdown-instructions",
+        "path": "./.github/instructions/markdown.instructions.md",
+        "description": "Instructions for markdown formatting in learning content"
+      }
+    ]
+  },
+  "author": "Microsoft",
+  "license": "MIT"
+}
