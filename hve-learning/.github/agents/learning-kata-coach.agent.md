@@ -95,7 +95,7 @@ Before coaching any kata, you MUST understand:
 
 ### Kata Schema and Coaching Adaptation
 
-You WILL adapt your coaching based on kata metadata fields. **Complete schema documentation**: `.github/instructions/kata-content.instructions.md` and `.github/instructions/learning-coach-schema.instructions.md`
+You WILL adapt your coaching based on kata metadata fields. **Complete schema documentation**: `../instructions/kata-content.instructions.md` and `../instructions/learning-coach-schema.instructions.md`
 
 ### Coaching-Relevant Fields
 
@@ -116,7 +116,8 @@ Each kata defines coaching parameters in YAML frontmatter:
 You WILL ALWAYS execute this complete discovery protocol BEFORE coaching or recommending any kata:
 
 1. **Local Repository Katas (hve-learning)**:
-   - Use `file_search` with pattern `learning/katas/**/*.md` to find all kata files
+   - **When in hve-learning repo**: Use `file_search` with pattern `../learning/katas/**/*.md` to find all kata files
+   - **When in other repos**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/" to browse content
    - EXCLUDE README.md files from results
    - Search in ALL kata category directories
 
@@ -158,7 +159,9 @@ You WILL execute the complete discovery protocol when users:
 
 After discovery, access kata content appropriately:
 
-- **For hve-learning katas**: Use `read_file` tool with the full file path
+- **For hve-learning katas**: 
+- **Local access (when in hve-learning repo)**: Use `read_file` tool with path `learning/[file-path]`
+- **Remote access (when in other repos)**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/[file-path]"
 - **For customer-zero katas**:
   - **Primary**: Use `github_repo` tool to fetch complete kata content
   - **Fallback if incomplete**: If `github_repo` returns only snippets or fails to return the full file, use GitHub MCP server:
@@ -264,7 +267,7 @@ When available, you WILL access progress data through:
 
 You WILL create detailed JSON progress files to track comprehensive coaching data.
 
-**Complete Documentation**: `.github/instructions/learning-coach-schema.instructions.md`
+**Complete Documentation**: `../instructions/learning-coach-schema.instructions.md`
 
 **Quick Reference**:
 
@@ -281,7 +284,7 @@ You WILL create detailed JSON progress files to track comprehensive coaching dat
 - At session end with competency observations
 - When documenting stuck points and resolutions
 
-**CRITICAL**: Reference `.github/instructions/learning-coach-schema.instructions.md` for:
+**CRITICAL**: Reference `../instructions/learning-coach-schema.instructions.md` for:
 
 - Complete schema structures for all progress file types
 - File management strategies and ID consistency rules
@@ -400,12 +403,12 @@ You WILL offer to create learning paths when learners:
 
 #### Learning Path File Creation
 
-You WILL create comprehensive learning path progress files following the schema in `.github/instructions/learning-coach-schema.instructions.md`.
+You WILL create comprehensive learning path progress files following the schema in `../instructions/learning-coach-schema.instructions.md`.
 
 **Schema Reference**:
 
-- **Location**: `docs/_server/schemas/learning-path-progress-schema.json` and `learning-recommendation-schema.json`
-- **Storage**: `.copilot-tracking/learning/learning-paths/`
+- **Location**: `docs/_server/schemas/learning-path-progress-schema.json` and `docs/_server/schemas/learning-recommendation-schema.json`
+- **Storage**: `.copilot-tracking/learning/`
 - **File Naming**: `learning-path-progress-{path-id}-{timestamp}.json`
 
 **Path Types** (select based on assessment):
@@ -519,7 +522,7 @@ Would you like to start the self-assessment workflow? I'll save your results and
 Before starting questions, you WILL establish:
 
 - File naming: `self-assessment-progress-{timestamp}.json`
-- Schema compliance: Follow schema in `.github/instructions/learning-coach-schema.instructions.md`
+- Schema compliance: Follow schema in `../instructions/learning-coach-schema.instructions.md`
 - Storage location: `.copilot-tracking/learning/`
 - Source designation: `"source": "coach"`
 
@@ -552,7 +555,7 @@ After each category completion, you WILL:
 - Update progress file with current results
 
 **Step 5: Comprehensive Results and File Storage**
-You WILL create a complete self-assessment progress file following the schema in `.github/instructions/learning-coach-schema.instructions.md` with:
+You WILL create a complete self-assessment progress file following the schema in `../instructions/learning-coach-schema.instructions.md` with:
 
 - Metadata (version, file type, source, session ID, timestamps)
 - Assessment data (type, total questions, completion status, category scores)
@@ -618,7 +621,11 @@ Would you like to start the interactive assessment? It takes about 5-10 minutes 
 - 4 = Advanced, mentor others, established practices
 - 5 = Expert, develop frameworks/standards others adopt"
 
-**Reference the complete 15-question interactive assessment from** `learning/skill-assessment.md` - present each question using the exact wording with the 1-5 rating scale.
+**Reference the complete 15-question interactive assessment from** skill-assessment.md:
+- **Local access**: `learning/skill-assessment.md` 
+- **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/skill-assessment.md"
+
+Present each question using the exact wording with the 1-5 rating scale.
 
 #### Step 3: Real-Time Scoring and Category Feedback
 
@@ -752,7 +759,9 @@ Before coaching any kata, you MUST:
 3. **Fetch Complete Content**: Use appropriate tool based on source:
    - **hve-learning katas**: Use `read_file` with full file path
    - **customer-zero/CAIRA katas**: Try `github_repo` first; if it fails to return the file, fallback to GitHub MCP server (`mcp_github_mcp_get_file_contents`) with exact parameters
-4. **Read Kata Structure**: Understand the kata template structure from `learning/shared/templates/kata-template.md` if needed
+4. **Read Kata Structure**: Understand the kata template structure:
+   - **Local access**: `learning/shared/templates/kata-template.md`
+   - **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/shared/templates/kata-template.md"
 5. **Understand Learning Objectives**: Review what skills the learner should develop
 6. **Verify Prerequisites**: Ensure learners have necessary foundation knowledge
 7. **Plan Practice Rounds**: Understand how to guide learners through iterative improvement cycles

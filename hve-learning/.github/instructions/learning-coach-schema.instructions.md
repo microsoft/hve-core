@@ -6,15 +6,15 @@ Instructions for AI coaches when writing progress files and managing learner pro
 
 ### Schema Files Location
 
-- **Kata Progress**: `/docs/_server/schemas/kata-progress-schema.json`
-- **Lab Progress**: `/docs/_server/schemas/lab-progress-schema.json`
-- **Self-Assessment**: `/docs/_server/schemas/self-assessment-schema.json`
-- **Learning Path Progress**: `/docs/_server/schemas/learning-path-progress-schema.json`
-- **Learning Recommendation**: `/docs/_server/schemas/learning-recommendation-schema.json`
+- **Kata Progress**: `docs/_server/schemas/kata-progress-schema.json`
+- **Lab Progress**: `docs/_server/schemas/lab-progress-schema.json`
+- **Self-Assessment**: `docs/_server/schemas/self-assessment-schema.json`
+- **Learning Path Progress**: `docs/_server/schemas/learning-path-progress-schema.json`
+- **Learning Recommendation**: `docs/_server/schemas/learning-recommendation-schema.json`
 
 ### File Management Rules
 
-- **Storage Location**: `/.copilot-tracking/learning/`
+- **Storage Location**: `.copilot-tracking/learning/`
 - **File Strategy**: Per-kata/lab updates (same file reused for same ID)
 - **Naming Convention**:
   - Kata/Lab: `{type}-progress-{id}-{timestamp}.json`
@@ -331,7 +331,7 @@ Progress files automatically integrate with:
 ### File Storage and Management
 
 - **Per-kata/lab updates**: Same file gets updated for same kata/lab ID
-- **Storage location**: `/.copilot-tracking/learning/`
+- **Storage location**: `.copilot-tracking/learning/`
 - **File watching**: System monitors files for real-time UI updates
 - **Circular update prevention**: Use `"source": "coach"` to prevent loops
 
@@ -363,7 +363,7 @@ Progress files automatically integrate with:
 
 ### Required Files
 
-- Schema files in `/docs/_server/schemas/`
+- Schema files in `docs/_server/schemas/`
 - Progress tracking UI system
 - File watcher system for automatic updates
 - SSE notification system

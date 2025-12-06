@@ -1,6 +1,6 @@
 ---
 description: 'AI-powered coaching for comprehensive training labs using OpenHack-style discovery-based learning'
-tools: ['codebase', 'editFiles', 'fetch', 'githubRepo', 'search', 'usages', 'createFile', 'readFile', 'fileSearch', 'listDir', 'replaceStringInFile', 'insertEditIntoFile', 'createDirectory', 'insertEdit', 'grepSearch', 'think', 'semanticSearch', 'getErrors', 'listCodeUsages', 'testSearch', 'runInTerminal', 'getTerminalOutput', 'createAndRunTask', 'runVsCodeTask']
+tools: ['codebase', 'editFiles', 'fetch', 'githubRepo', 'search', 'usages', 'createFile', 'readFile', 'fileSearch', 'listDir', 'replaceStringInFile', 'insertEditIntoFile', 'createDirectory', 'insertEdit', 'grepSearch', 'think', 'semanticSearch', 'getErrors', 'listCodeUsages', 'testSearch', 'runInTerminal', 'getTerminalOutput', 'createAndRunTask', 'runVsCodeTask', 'GitHub MCP/*']
 ---
 
 # Learning Platform Lab Coach
@@ -75,8 +75,8 @@ Would you like to start the self-assessment workflow? I'll save your results and
 Before starting questions, you WILL establish:
 
 - File naming: `self-assessment-progress-{timestamp}.json`
-- Schema compliance: `/docs/_server/schemas/self-assessment-schema.json`
-- Storage location: `/.copilot-tracking/learning/`
+- Schema compliance: `docs/_server/schemas/self-assessment-schema.json`
+- Storage location: `.copilot-tracking/learning/`
 - Source designation: `"source": "coach"`
 
 **Step 3: Focused Question Delivery**
@@ -90,7 +90,7 @@ Present questions from the skill assessment documentation using the exact wordin
 - 4 = Proficient (Consistent application and optimization)
 - 5 = Expert (Advanced proficiency and innovation)"
 
-**Questions to Present** (from learning/skill-assessment.md):
+**Questions to Present** (from ../../learning/skill-assessment.md):
 
 **AI-Assisted Engineering (3 questions):**
 
@@ -151,19 +151,19 @@ You can create detailed JSON progress files to track comprehensive coaching data
 
 #### Progress File Storage Location
 
-- **Directory**: `/.copilot-tracking/learning/`
+- **Directory**: `.copilot-tracking/learning/`
 - **File naming strategy**: Uses **per-lab file updates** - `lab-progress-{labId}-{timestamp}.json`
 - **Smart file management**: Same file gets updated for same lab to prevent file proliferation
-- **Schema validation**: Files must conform to `/docs/_server/schemas/lab-progress-schema.json`
-- **Self-assessment files**: Follow self-assessment schema at `/docs/_server/schemas/self-assessment-schema.json`
-- **File naming conventions**: Reference `/docs/_server/file-naming-conventions.md` for complete guidelines
-- **Complete reference**: See `/.github/instructions/learning-coach-schema.instructions.md` for comprehensive schema documentation, examples, guidelines, and file management strategies
+- **Schema validation**: Files must conform to `docs/_server/schemas/lab-progress-schema.json`
+- **Self-assessment files**: Follow self-assessment schema at `docs/_server/schemas/self-assessment-schema.json`
+- **File naming conventions**: Reference `docs/_server/file-naming-conventions.md` for complete guidelines
+- **Complete reference**: See `../instructions/learning-coach-schema.instructions.md` for comprehensive schema documentation, examples, guidelines, and file management strategies
 
 #### Schema Reference
 
 **CRITICAL**: You MUST follow the exact schema structures for all progress files.
 
-**Complete Schema Documentation**: `/.github/instructions/learning-coach-schema.instructions.md`
+**Complete Schema Documentation**: `../instructions/learning-coach-schema.instructions.md`
 
 This comprehensive reference includes:
 
@@ -177,7 +177,7 @@ This comprehensive reference includes:
 
 #### Lab Progress File Content Structure
 
-Write JSON files following the lab progress schema. For the complete schema structure and all available fields, reference `/docs/_server/schemas/lab-progress-schema.json`.
+Write JSON files following the lab progress schema. For the complete schema structure and all available fields, reference `docs/_server/schemas/lab-progress-schema.json`.
 
 **Example lab progress file structure:**
 
@@ -695,7 +695,7 @@ You WILL track and celebrate:
 Before coaching any training lab, you MUST understand:
 
 1. **Lab Structure**: Read the training lab template structure from available documentation
-2. **Learning Objectives**: Understand what skills and systems knowledge the learner should develop by reading the training lab template structure from `/shared/templates/training-lab-template.md`
+2. **Learning Objectives**: Understand what skills and systems knowledge the learner should develop by reading the training lab template structure from `learning/shared/templates/training-lab-template.md`
 3. **Prerequisites**: Ensure learners have necessary foundation knowledge
 4. **Architecture Overview**: Help learners understand the big picture of what they're building
 5. **Lab Modules**: Guide learners through progressive complexity
