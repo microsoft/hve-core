@@ -421,14 +421,13 @@ Content starts here...
 **Usage**:
 
 ```powershell
-# From repository root
-.\scripts\kata-validation\Validate-Katas.ps1
+scripts\kata-validation\Validate-Katas.ps1
 
 # Validate including individual kata files
-.\scripts\kata-validation\Validate-Katas.ps1 -IncludeIndividualKatas
+scripts\kata-validation\Validate-Katas.ps1 -IncludeIndividualKatas
 
 # Run specific validation types
-.\scripts\kata-validation\Validate-Katas.ps1 -ValidationTypes Fields,Quality
+scripts\kata-validation\Validate-Katas.ps1 -ValidationTypes Fields,Quality
 ```
 
 **Validation Checks**:
@@ -509,7 +508,6 @@ then carefully refined by our team of discerning human reviewers.*
 3. **Example Kata**: `learning/katas/prompt-engineering/01-prompt-creation-and-refactoring-workflow.md` - Real kata implementation
 4. **Category README Instructions**: `kata-category-readme.instructions.md` - Category README structure and requirements
 5. **Root Katas README**: `learning/katas/README.md` - Overview of all kata categories
-
 ### External Documentation
 
 1. **Microsoft Learn Metadata**: [Metadata documentation](https://learn.microsoft.com/contribute/metadata) - Official field definitions

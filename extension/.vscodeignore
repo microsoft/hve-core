@@ -1,12 +1,9 @@
 # Exclude everything by default
 **
 
-# Include only the extension essentials
+# Include only the extension essentials - agents and instructions
 !.github/agents/**
 !.github/instructions/**
-!learning/**
-!docs/**
-!scripts/**
 !package.json
 !README.md
 !LICENSE

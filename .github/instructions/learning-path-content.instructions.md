@@ -345,13 +345,13 @@ Use the PowerShell validation script to check learning path compliance:
 
 ```powershell
 # Validate learning path alignment for all katas
-pwsh scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes Paths
+pwsh ../../scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes Paths
 
 # Validate all aspects of kata and path structure
-pwsh scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes All
+pwsh ../../scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes All
 
 # Include individual kata files in validation
-pwsh scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes Paths -IncludeIndividualKatas
+pwsh ../../scripts/kata-validation/Validate-Katas.ps1 -ValidationTypes Paths -IncludeIndividualKatas
 ```
 
 The validation script checks:
@@ -363,8 +363,8 @@ The validation script checks:
 
 ## References
 
-1. **Kata Content Standards**: `.github/instructions/kata-content.instructions.md` - Inherits No Company Names Policy, AI Coaching Integration, Standard Footer format
-2. **Training Lab Standards**: `.github/instructions/training-lab-content.instructions.md` - Multi-phase lab content requirements
+1. **Kata Content Standards**: `kata-content.instructions.md` - Inherits No Company Names Policy, AI Coaching Integration, Standard Footer format
+2. **Training Lab Standards**: `training-lab-content.instructions.md` - Multi-phase lab content requirements
 3. **Example Learning Paths**:
    - `learning/paths/skill-prompt-engineering-excellence.md` - Skill-level path with triple-checkbox pattern
    - `learning/paths/foundation-edge-computing.md` - Foundation-level path example
