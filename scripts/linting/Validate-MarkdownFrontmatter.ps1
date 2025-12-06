@@ -747,7 +747,7 @@ function Test-FrontmatterValidation {
                         }
                     }
 
-                    # Validate date format (ISO 8601: YYYY-MM-DD)
+                    # Validate date format (ISO 8601: YYYY-MM-DD) or placeholder (YYYY-MM-dd)
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
                         if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
@@ -865,7 +865,7 @@ function Test-FrontmatterValidation {
                         }
                     }
                     
-                    # Validate date format for docs
+                    # Validate date format (ISO 8601: YYYY-MM-DD) or placeholder (YYYY-MM-dd) for docs
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
                         if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
