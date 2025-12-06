@@ -1,0 +1,768 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://learning-platform.github.io/schemas/learning-path-progress.json",
+  "title": "Learning Path Progress Schema",
+  "description": "Schema for learning path progress tracking files used by coaches and progress system",
+  "type": "object",
+  "required": ["metadata", "learningPath", "progress", "timestamp"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the learning path progress file and its context",
+      "required": ["version", "learningPathId", "source", "fileType"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Schema version for compatibility tracking",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "example": "1.0.0"
+        },
+        "learningPathId": {
+          "type": "string",
+          "description": "Unique identifier for the learning path (user-generated or system-generated)",
+          "pattern": "^[a-z0-9-]+$",
+          "example": "foundation-builder-ai-engineering-20250716"
+        },
+        "learningPathTitle": {
+          "type": "string",
+          "description": "Human-readable title of the learning path",
+          "example": "Foundation Builder - AI Engineering Path"
+        },
+        "pathType": {
+          "type": "string",
+          "description": "Type of learning path for categorization",
+          "enum": ["foundation", "intermediate", "expert", "custom", "assessment-generated"],
+          "example": "foundation"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the progress update to prevent circular updates",
+          "enum": ["ui", "coach", "file-watcher", "server", "import", "manual", "assessment"],
+          "example": "coach"
+        },
+        "fileType": {
+          "type": "string",
+          "const": "learning-path-progress",
+          "description": "File type identifier for validation"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Optional session identifier for multi-session tracking",
+          "example": "learning-path-session-20250716-164310"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional user identifier for multi-user environments",
+          "example": "user123"
+        },
+        "pageUrl": {
+          "type": "string",
+          "description": "URL of the learning path page where progress was tracked",
+          "example": "/learning/paths/README.md"
+        },
+        "coachMode": {
+          "type": "string",
+          "description": "Which coach mode created or updated this learning path",
+          "enum": ["kata-coach", "lab-coach", "assessment-coach", "self-directed"],
+          "example": "kata-coach"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when this learning path file was last updated",
+          "example": "2025-07-16T16:43:10.000Z"
+        },
+        "basedOnAssessment": {
+          "type": "string",
+          "description": "Assessment ID this learning path was based on (if applicable)",
+          "example": "learning-skill-assessment-20250716-164310"
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this learning path was created",
+      "example": "2025-07-16T16:43:10.000Z"
+    },
+    "learningPath": {
+      "type": "object",
+      "description": "Learning path definition and structure",
+      "required": ["title", "description", "categories", "items"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the learning path",
+          "example": "Foundation Builder - AI Engineering Path"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the learning path",
+          "example": "Comprehensive foundation-building path for AI-assisted engineering skills"
+        },
+        "categories": {
+          "type": "array",
+          "description": "Skill categories covered in this learning path",
+          "items": {
+            "type": "string",
+            "enum": ["ai-assisted-engineering", "prompt-engineering", "edge-deployment", "system-troubleshooting", "task-planning", "adr-creation", "project-planning"]
+          },
+          "example": ["ai-assisted-engineering", "prompt-engineering"]
+        },
+        "estimatedDuration": {
+          "type": "object",
+          "description": "Estimated time to complete the learning path",
+          "properties": {
+            "hours": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Estimated hours to complete"
+            },
+            "weeks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Estimated weeks to complete"
+            },
+            "text": {
+              "type": "string",
+              "description": "Human-readable duration estimate",
+              "example": "2-3 weeks of regular practice"
+            }
+          }
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced", "mixed"],
+          "description": "Overall difficulty level of the learning path",
+          "example": "beginner"
+        },
+        "prerequisites": {
+          "type": "array",
+          "description": "Prerequisites for starting this learning path",
+          "items": {
+            "type": "string"
+          },
+          "example": ["Basic understanding of software development", "Access to VS Code"]
+        },
+        "items": {
+          "type": "array",
+          "description": "Ordered list of learning items (katas, labs, assessments)",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "title", "category", "order"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the learning item",
+                "example": "ai-assisted-engineering-01-ai-development-fundamentals"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["kata", "lab", "assessment", "resource", "checkpoint"],
+                "description": "Type of learning item"
+              },
+              "title": {
+                "type": "string",
+                "description": "Human-readable title of the learning item",
+                "example": "AI Development Fundamentals"
+              },
+              "category": {
+                "type": "string",
+                "enum": ["ai-assisted-engineering", "prompt-engineering", "edge-deployment", "system-troubleshooting", "task-planning", "adr-creation", "project-planning"],
+                "description": "Skill category this item belongs to"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Order in the learning path sequence"
+              },
+              "url": {
+                "type": "string",
+                "description": "URL path to the learning item",
+                "example": "/learning/katas/ai-assisted-engineering/01-ai-development-fundamentals"
+              },
+              "estimatedTime": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Estimated time to complete in minutes"
+              },
+              "difficulty": {
+                "type": "string",
+                "enum": ["beginner", "intermediate", "advanced"],
+                "description": "Difficulty level of this specific item"
+              },
+              "isRequired": {
+                "type": "boolean",
+                "description": "Whether this item is required for path completion",
+                "default": true
+              },
+              "dependencies": {
+                "type": "array",
+                "description": "IDs of items that must be completed before this one",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "skills": {
+                "type": "array",
+                "description": "Skills developed by this learning item",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "recommendationContext": {
+          "type": "object",
+          "description": "Context for how this learning path was recommended",
+          "properties": {
+            "assessmentResults": {
+              "type": "object",
+              "description": "Assessment results that influenced this recommendation",
+              "properties": {
+                "overallScore": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 5,
+                  "description": "Overall assessment score"
+                },
+                "categoryScores": {
+                  "type": "object",
+                  "description": "Scores by category",
+                  "patternProperties": {
+                    "^[a-z-]+$": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 5
+                    }
+                  }
+                },
+                "strengthCategories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Categories where user scored highest"
+                },
+                "growthCategories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Categories with most growth potential"
+                }
+              }
+            },
+            "coachRationale": {
+              "type": "string",
+              "description": "Coach's reasoning for recommending this path",
+              "example": "Based on your assessment scores, this path focuses on building AI fundamentals while addressing prompt engineering gaps"
+            },
+            "personalizedFor": {
+              "type": "object",
+              "description": "Personalization factors",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "description": "Professional role this path is tailored for"
+                },
+                "experience": {
+                  "type": "string",
+                  "enum": ["beginner", "intermediate", "advanced"],
+                  "description": "Experience level"
+                },
+                "goals": {
+                  "type": "array",
+                  "description": "Learning goals",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "description": "Progress tracking for the learning path",
+      "required": ["itemProgress", "overallProgress"],
+      "properties": {
+        "itemProgress": {
+          "type": "object",
+          "description": "Progress tracking for individual items",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "description": "Progress for a specific learning item",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["not-started", "in-progress", "completed", "skipped"],
+                  "description": "Current status of the item"
+                },
+                "inLearningPath": {
+                  "type": "boolean",
+                  "description": "Whether this item is selected for the user's learning path (dual checkbox selection state)",
+                  "default": false
+                },
+                "isCompleted": {
+                  "type": "boolean",
+                  "description": "Whether this item has been completed by the user (dual checkbox completion state)",
+                  "default": false
+                },
+                "checkboxStates": {
+                  "type": "object",
+                  "description": "Individual checkbox states within the learning item (kata/lab internal checkboxes)",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_-]+$": {
+                      "type": "boolean",
+                      "description": "Individual checkbox completion state"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "selectionTimestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When this item was selected for the learning path"
+                },
+                "completionSource": {
+                  "type": "string",
+                  "enum": ["kata-checkboxes", "manual-completion", "coach-assessment", "external-validation"],
+                  "description": "How completion status was determined",
+                  "default": "kata-checkboxes"
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When work on this item began"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When this item was completed"
+                },
+                "timeSpent": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Time spent on this item in minutes"
+                },
+                "progressPercentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Completion percentage for this item"
+                },
+                "lastCheckpoint": {
+                  "type": "string",
+                  "description": "Last checkpoint or milestone reached"
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Personal notes about this item"
+                },
+                "coachingInteractions": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of coach interactions for this item"
+                },
+                "dualCheckboxProgressRef": {
+                  "type": "string",
+                  "description": "Reference to individual kata progress file following dual-checkbox-progress-schema.json",
+                  "example": "ai-assisted-engineering.json"
+                }
+              }
+            }
+          }
+        },
+        "overallProgress": {
+          "type": "object",
+          "description": "Overall learning path progress",
+          "properties": {
+            "itemsCompleted": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of completed items"
+            },
+            "totalItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total number of items in the path"
+            },
+            "completionPercentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Overall completion percentage"
+            },
+            "requiredItemsCompleted": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of required items completed"
+            },
+            "totalRequiredItems": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total number of required items"
+            },
+            "currentItem": {
+              "type": "string",
+              "description": "ID of the current/next item to work on"
+            },
+            "estimatedTimeRemaining": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Estimated time remaining in minutes"
+            },
+            "totalTimeSpent": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total time spent on the path in minutes"
+            },
+            "streakDays": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Current streak of consecutive days with progress"
+            },
+            "averageSessionTime": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average session time in minutes"
+            }
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "description": "Milestone progress tracking",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Milestone identifier"
+              },
+              "title": {
+                "type": "string",
+                "description": "Milestone title"
+              },
+              "description": {
+                "type": "string",
+                "description": "Milestone description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Skill category for this milestone"
+              },
+              "targetPercentage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Target completion percentage for this milestone"
+              },
+              "achieved": {
+                "type": "boolean",
+                "description": "Whether this milestone has been achieved"
+              },
+              "achievedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When this milestone was achieved"
+              },
+              "requiredItems": {
+                "type": "array",
+                "description": "Items that must be completed for this milestone",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "coaching": {
+      "type": "object",
+      "description": "Coaching interaction data for the learning path",
+      "properties": {
+        "lastCoachInteraction": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last coach interaction"
+        },
+        "coachingNotes": {
+          "type": "array",
+          "description": "Notes from coaching sessions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the coaching note was made"
+              },
+              "note": {
+                "type": "string",
+                "description": "Coach observation or guidance note"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["path-guidance", "item-feedback", "encouragement", "adjustment", "milestone-celebration"],
+                "description": "Type of coaching note"
+              },
+              "relatedItem": {
+                "type": "string",
+                "description": "ID of learning item this note relates to"
+              }
+            }
+          }
+        },
+        "pathAdjustments": {
+          "type": "array",
+          "description": "Adjustments made to the learning path based on progress",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the adjustment was made"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["item-added", "item-removed", "order-changed", "difficulty-adjusted", "prerequisite-modified"],
+                "description": "Type of adjustment"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the adjustment"
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Reasoning for the adjustment"
+              },
+              "affectedItems": {
+                "type": "array",
+                "description": "Items affected by this adjustment",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "Current recommendations for the learner",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["next-item", "focus-area", "skill-practice", "review-suggestion", "path-branch"],
+                "description": "Type of recommendation"
+              },
+              "content": {
+                "type": "string",
+                "description": "The recommendation content"
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["high", "medium", "low"],
+                "description": "Priority level"
+              },
+              "category": {
+                "type": "string",
+                "description": "Skill category this recommendation relates to"
+              },
+              "relatedItems": {
+                "type": "array",
+                "description": "Learning items related to this recommendation",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "analytics": {
+      "type": "object",
+      "description": "Analytics and insights for the learning path",
+      "properties": {
+        "progressPattern": {
+          "type": "string",
+          "enum": ["consistent", "accelerating", "slowing", "erratic", "early-stage"],
+          "description": "Overall progress pattern"
+        },
+        "learningVelocity": {
+          "type": "object",
+          "description": "Learning velocity metrics",
+          "properties": {
+            "itemsPerWeek": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average items completed per week"
+            },
+            "hoursPerWeek": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average hours spent per week"
+            },
+            "trend": {
+              "type": "string",
+              "enum": ["increasing", "stable", "decreasing"],
+              "description": "Velocity trend"
+            }
+          }
+        },
+        "skillDevelopment": {
+          "type": "object",
+          "description": "Skill development tracking",
+          "patternProperties": {
+            "^[a-z-]+$": {
+              "type": "object",
+              "properties": {
+                "startingLevel": {
+                  "type": "string",
+                  "enum": ["beginner", "intermediate", "advanced"],
+                  "description": "Starting skill level"
+                },
+                "currentLevel": {
+                  "type": "string",
+                  "enum": ["beginner", "intermediate", "advanced"],
+                  "description": "Current assessed skill level"
+                },
+                "itemsCompleted": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Items completed in this skill area"
+                },
+                "progressIndicators": {
+                  "type": "array",
+                  "description": "Evidence of skill development",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "engagementMetrics": {
+          "type": "object",
+          "description": "Engagement and motivation metrics",
+          "properties": {
+            "totalSessions": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total number of learning sessions"
+            },
+            "averageSessionLength": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average session length in minutes"
+            },
+            "longestStreak": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Longest streak of consecutive learning days"
+            },
+            "coachInteractions": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total coach interactions"
+            },
+            "motivationLevel": {
+              "type": "string",
+              "enum": ["high", "medium", "low", "unknown"],
+              "description": "Assessed motivation level"
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "description": "Environment and context information",
+      "properties": {
+        "browser": {
+          "type": "string",
+          "description": "Browser information if available"
+        },
+        "docsifyVersion": {
+          "type": "string",
+          "description": "Docsify version if using local docs"
+        },
+        "progressSystemVersion": {
+          "type": "string",
+          "description": "Version of progress tracking system"
+        },
+        "localServer": {
+          "type": "boolean",
+          "description": "Whether using local docs server"
+        },
+        "learningInterface": {
+          "type": "string",
+          "enum": ["docsify-dashboard", "coach-guided", "api-integration", "mobile-app"],
+          "description": "Interface used for learning path interaction"
+        },
+        "dualCheckboxPluginVersion": {
+          "type": "string",
+          "description": "Version of the dual checkbox plugin if used",
+          "example": "1.0.0"
+        },
+        "storageFormat": {
+          "type": "string",
+          "enum": ["localStorage", "server-sync", "file-based"],
+          "description": "Storage mechanism used for progress persistence",
+          "default": "localStorage"
+        },
+        "dualCheckboxSchemaRef": {
+          "type": "string",
+          "description": "Reference to the dual checkbox progress schema for individual kata tracking",
+          "const": "https://learning-platform.github.io/schemas/dual-checkbox-progress.json"
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "History of learning path updates for audit trail",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the update occurred"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["ui", "coach", "file-watcher", "server", "import", "manual", "assessment"],
+            "description": "Source of the update"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["created", "updated", "item-completed", "milestone-achieved", "path-adjusted", "coaching-session"],
+            "description": "Type of action performed"
+          },
+          "changes": {
+            "type": "object",
+            "description": "Summary of what changed"
+          },
+          "relatedItems": {
+            "type": "array",
+            "description": "Learning items affected by this change",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
