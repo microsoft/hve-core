@@ -2,13 +2,15 @@
 
 This directory contains specialized AI agents designed to provide enhanced assistance for learning content creation and coaching within the HVE Learning Platform.
 
-## Available Agents
+## Available Components
 
-### Learning Content Creator (`learning-content-creator.agent.md`)
+### Learning Content Creator (Chat Mode)
+**Moved to**: `.github/chatmodes/learning-content-creator.chatmode.md`
+
 **Purpose**: Collaborative partner for creating effective learning content
 - **Best for**: Designing katas, training labs, and learning assessments
 - **Capabilities**: Template guidance, content structure, quality validation
-- **Usage**: `@learning-content-creator Help me create learning content for [topic]`
+- **Usage**: Switch to `learning-content-creator` chat mode and ask for content creation help
 
 ### Learning Kata Coach (`learning-kata-coach.agent.md`) 
 **Purpose**: Focused practice guidance with progress tracking

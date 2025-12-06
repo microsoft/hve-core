@@ -86,7 +86,7 @@ Use the specialized agents for guided learning:
 
 **For Content Creation:**
 ```
-@learning-content-creator Help me create learning content for [topic]
+# Switch to learning-content-creator mode: Help me create learning content for [topic]
 ```
 
 ### 3. Track Your Progress
@@ -158,7 +158,7 @@ The platform uses structured schemas for:
 ## 🤝 Contributing
 
 ### Content Creation Workflow
-1. **Discovery**: Use `@learning-content-creator` for collaborative design
+1. **Discovery**: Use `learning-content-creator` chat mode for collaborative design
 2. **Template Application**: Apply appropriate shared template
 3. **Content Development**: Write following quality guidelines
 4. **Validation**: Run automated checks and user testing

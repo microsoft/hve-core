@@ -1,5 +1,5 @@
 ---
-applyTo: 'learning/katas/**/!(README).md'
+applyTo: '../../learning/katas/**/!(README).md'
 description: 'Required instructions for individual kata content including YAML requirements (28 fields: 21 required + 7 optional), Quick Context pattern, phase structure, and validation standards'
 ---
 
@@ -7,7 +7,7 @@ description: 'Required instructions for individual kata content including YAML r
 
 This file provides comprehensive instructions for creating and maintaining individual kata content files.
 
-**Template File**: When creating new katas, use `learning/shared/templates/kata-template.md` as your starting point. The template includes complete YAML structure and content sections.
+**Template File**: When creating new katas, use `../../learning/shared/templates/kata-template.md` as your starting point. The template includes complete YAML structure and content sections.
 
 For category README files, see `kata-category-readme.instructions.md`.
 For learning path content, see `learning-path-content.instructions.md`.
@@ -36,8 +36,8 @@ Use the following `ms.topic` value in YAML frontmatter for individual katas:
 
 **Authoritative Sources**:
 
-- **Complete field definitions**: `learning/shared/schema/kata-frontmatter-schema.json` (21 required + 7 optional fields)
-- **Template structure**: `learning/shared/templates/kata-template.md` (use as starting point)
+- **Complete field definitions**: `../../learning/shared/schema/kata-frontmatter-schema.json` (21 required + 7 optional fields)
+- **Template structure**: `../../learning/shared/templates/kata-template.md` (use as starting point)
 
 **Schema Overview**: Each kata requires 28 YAML fields (21 required + 7 optional) covering metadata, learning objectives, AI coaching, environment requirements, and search optimization.
 
@@ -57,7 +57,7 @@ Use these ratings for the `kata_difficulty` YAML field (integer 1-5):
 
 ### Field Structure Reference
 
-**Complete YAML structure with all 28 fields and inline documentation**: See `learning/shared/templates/kata-template.md`
+**Complete YAML structure with all 28 fields and inline documentation**: See `../../learning/shared/templates/kata-template.md`
 
 **Key Points**:
 
@@ -402,7 +402,7 @@ Content starts here...
 
 ### Using the Template
 
-1. **Copy template file**: Copy `learning/shared/templates/kata-template.md` to your new kata location
+1. **Copy template file**: Copy `../../learning/shared/templates/kata-template.md` to your new kata location
 2. **Replace all placeholders**: Update YAML frontmatter with your kata's values
 3. **Verify YAML completeness**: Ensure all 28 fields (21 required + 7 optional) are present
 4. **Follow structure**: Maintain the standard section order
@@ -410,7 +410,7 @@ Content starts here...
 
 ### Template Location
 
-- Path: `learning/shared/templates/kata-template.md`
+- Path: `../../learning/shared/templates/kata-template.md`
 - Contains: Complete YAML structure + content sections
 - Updated: Reflects latest standards and requirements
 
@@ -421,13 +421,14 @@ Content starts here...
 **Usage**:
 
 ```powershell
-scripts\kata-validation\Validate-Katas.ps1
+# From repository root
+.\scripts\kata-validation\Validate-Katas.ps1
 
 # Validate including individual kata files
-scripts\kata-validation\Validate-Katas.ps1 -IncludeIndividualKatas
+.\scripts\kata-validation\Validate-Katas.ps1 -IncludeIndividualKatas
 
 # Run specific validation types
-scripts\kata-validation\Validate-Katas.ps1 -ValidationTypes Fields,Quality
+.\scripts\kata-validation\Validate-Katas.ps1 -ValidationTypes Fields,Quality
 ```
 
 **Validation Checks**:
@@ -503,11 +504,12 @@ then carefully refined by our team of discerning human reviewers.*
 
 ### Project Files
 
-1. **Kata Template**: `learning/shared/templates/kata-template.md` - Complete structure with all required fields
+1. **Kata Template**: `../../learning/shared/templates/kata-template.md` - Complete structure with all required fields
 2. **Validation Script**: `scripts/kata-validation/Validate-Katas.ps1` - Automated YAML and structure validation
-3. **Example Kata**: `learning/katas/prompt-engineering/01-prompt-creation-and-refactoring-workflow.md` - Real kata implementation
+3. **Example Kata**: `../../learning/katas/prompt-engineering/01-prompt-creation-and-refactoring-workflow.md` - Real kata implementation
 4. **Category README Instructions**: `kata-category-readme.instructions.md` - Category README structure and requirements
-5. **Root Katas README**: `learning/katas/README.md` - Overview of all kata categories
+5. **Root Katas README**: `../../learning/katas/README.md` - Overview of all kata categories
+
 ### External Documentation
 
 1. **Microsoft Learn Metadata**: [Metadata documentation](https://learn.microsoft.com/contribute/metadata) - Official field definitions

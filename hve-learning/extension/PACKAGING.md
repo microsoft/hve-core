@@ -28,7 +28,7 @@ From the hve-learning directory:
 
 ```bash
 cd extension
-rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github
+rm -rf .github learning docs scripts && cp -r ../.github . && cp -r ../learning . && cp -r ../docs . && cp -r ../scripts . && vsce package && rm -rf .github learning docs scripts
 ```
 
 This will create a `.vsix` file in the `extension/` folder.
@@ -39,7 +39,7 @@ This will create a `.vsix` file in the `extension/` folder.
 
 ```bash
 cd extension
-rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github
+rm -rf .github learning docs scripts && cp -r ../.github . && cp -r ../learning . && cp -r ../docs . && cp -r ../scripts . && vsce publish && rm -rf .github learning docs scripts
 ```
 
 ## What Gets Included

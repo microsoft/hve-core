@@ -86,7 +86,7 @@ After each practice round, facilitate reflection:
 Before coaching any kata, you MUST understand:
 
 1. **Kata Discovery**: ALWAYS search ALL available kata sources before coaching
-2. **Kata Structure**: Read the kata template structure from `learning/shared/templates/kata-template.md`
+2. **Kata Structure**: Read the kata template structure from `../../learning/shared/templates/kata-template.md`
 3. **Learning Objectives**: Understand what skills the learner should develop
 4. **Prerequisites**: Ensure learners have necessary foundation knowledge
 5. **Practice Rounds**: Guide learners through iterative improvement cycles
@@ -116,8 +116,7 @@ Each kata defines coaching parameters in YAML frontmatter:
 You WILL ALWAYS execute this complete discovery protocol BEFORE coaching or recommending any kata:
 
 1. **Local Repository Katas (hve-learning)**:
-   - **When in hve-learning repo**: Use `file_search` with pattern `../learning/katas/**/*.md` to find all kata files
-   - **When in other repos**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/" to browse content
+   - Use `file_search` with pattern `../../learning/katas/**/*.md` to find all kata files
    - EXCLUDE README.md files from results
    - Search in ALL kata category directories
 
@@ -159,9 +158,7 @@ You WILL execute the complete discovery protocol when users:
 
 After discovery, access kata content appropriately:
 
-- **For hve-learning katas**: 
-- **Local access (when in hve-learning repo)**: Use `read_file` tool with path `learning/[file-path]`
-- **Remote access (when in other repos)**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/[file-path]"
+- **For hve-learning katas**: Use `read_file` tool with the full file path
 - **For customer-zero katas**:
   - **Primary**: Use `github_repo` tool to fetch complete kata content
   - **Fallback if incomplete**: If `github_repo` returns only snippets or fails to return the full file, use GitHub MCP server:
@@ -223,7 +220,7 @@ This ensures you have complete context from the kata's ecosystem and can provide
 
 **When user says "Coach me on Repository Orientation"** (non-CAIRA kata):
 
-1. **Search local katas**: `file_search` with `learning/katas/**/*orientation*.md`
+1. **Search local katas**: `file_search` with `../../learning/katas/**/*orientation*.md`
 2. **Search customer-zero**: `github_repo` with query "Repository Orientation kata markdown"
    - If no results or only snippets: Use `mcp_github_mcp_get_file_contents` to browse `docs/katas/` and `docs_v2/katas/` directories
 3. **Identify source**: Found in microsoft/customer-zero at `docs_v2/katas/system-understanding/01-repo-orientation.md`
@@ -272,7 +269,7 @@ You WILL create detailed JSON progress files to track comprehensive coaching dat
 **Quick Reference**:
 
 - **Directory**: `.copilot-tracking/learning/`
-- **Schema**: `docs/_server/schemas/kata-progress-schema.json` (kata progress) and `docs/_server/schemas/self-assessment-schema.json` (assessments)
+- **Schema**: `../../docs/_server/schemas/kata-progress-schema.json` (kata progress) and `../../docs/_server/schemas/self-assessment-schema.json` (assessments)
 - **File naming**: Per-kata file updates with consistent IDs - see learning-coach-schema.instructions.md
 - **Source field**: Always use `"source": "coach"`
 - **Timestamps**: ISO 8601 UTC format
@@ -407,7 +404,7 @@ You WILL create comprehensive learning path progress files following the schema 
 
 **Schema Reference**:
 
-- **Location**: `docs/_server/schemas/learning-path-progress-schema.json` and `docs/_server/schemas/learning-recommendation-schema.json`
+- **Location**: `../../docs/_server/schemas/learning-path-progress-schema.json` and `learning-recommendation-schema.json`
 - **Storage**: `.copilot-tracking/learning/`
 - **File Naming**: `learning-path-progress-{path-id}-{timestamp}.json`
 
@@ -528,7 +525,7 @@ Before starting questions, you WILL establish:
 
 #### Step 3: Focused Question Delivery
 
-**Reference the complete 15-question self-assessment from** `learning/skill-assessment.md` which contains:
+**Reference the complete 15-question self-assessment from** `../../learning/skill-assessment.md` which contains:
 
 - 3 questions for AI-Assisted Engineering (Prompt Writing & AI Integration, Context Management & Code Review, Debugging & Repository Analysis)
 - 3 questions for Prompt Engineering (Structured Prompt Construction, Advanced Techniques & Optimization, Error Handling & Domain Adaptation)
@@ -621,11 +618,7 @@ Would you like to start the interactive assessment? It takes about 5-10 minutes 
 - 4 = Advanced, mentor others, established practices
 - 5 = Expert, develop frameworks/standards others adopt"
 
-**Reference the complete 15-question interactive assessment from** skill-assessment.md:
-- **Local access**: `learning/skill-assessment.md` 
-- **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/skill-assessment.md"
-
-Present each question using the exact wording with the 1-5 rating scale.
+**Reference the complete 15-question interactive assessment from** `../../learning/skill-assessment.md` - present each question using the exact wording with the 1-5 rating scale.
 
 #### Step 3: Real-Time Scoring and Category Feedback
 
@@ -759,9 +752,7 @@ Before coaching any kata, you MUST:
 3. **Fetch Complete Content**: Use appropriate tool based on source:
    - **hve-learning katas**: Use `read_file` with full file path
    - **customer-zero/CAIRA katas**: Try `github_repo` first; if it fails to return the file, fallback to GitHub MCP server (`mcp_github_mcp_get_file_contents`) with exact parameters
-4. **Read Kata Structure**: Understand the kata template structure:
-   - **Local access**: `learning/shared/templates/kata-template.md`
-   - **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/shared/templates/kata-template.md"
+4. **Read Kata Structure**: Understand the kata template structure from `../../learning/shared/templates/kata-template.md` if needed
 5. **Understand Learning Objectives**: Review what skills the learner should develop
 6. **Verify Prerequisites**: Ensure learners have necessary foundation knowledge
 7. **Plan Practice Rounds**: Understand how to guide learners through iterative improvement cycles

@@ -1,5 +1,5 @@
 ---
-applyTo: 'learning/katas/**/README.md'
+applyTo: '../../learning/katas/**/README.md'
 description: 'Required instructions for kata category README files including structure, scaffolding levels, kata listings, and integration documentation'
 ---
 
@@ -34,7 +34,7 @@ Use the following `ms.topic` value in YAML frontmatter for category README files
 
 ## Kata Category README Structure
 
-Each category (folder) under `learning/katas/` MUST have a `README.md` file that serves as the category landing page.
+Each category (folder) under `../../learning/katas/` MUST have a `README.md` file that serves as the category landing page.
 
 ### Purpose
 
@@ -107,8 +107,8 @@ Brief description of what this category covers and why it matters.
 
 ### Recommended Preparation
 
-- [Link to prerequisite kata 1](../other-category/kata-1.md)
-- [Link to prerequisite kata 2](../other-category/kata-2.md)
+- [Link to prerequisite kata 1](../../other-category/kata-1.md)
+- [Link to prerequisite kata 2](../../other-category/kata-2.md)
 
 ## Learning Path
 
@@ -233,8 +233,8 @@ Related comprehensive labs:
 
 ### Related Categories
 
-- [Category 1](../category-1/README.md) - Foundational concepts
-- [Category 2](../category-2/README.md) - Advanced topics
+- [Category 1](../../category-1/README.md) - Foundational concepts
+- [Category 2](../../category-2/README.md) - Advanced topics
 
 ## Feedback and Contributions
 
@@ -349,9 +349,9 @@ then carefully refined by our team of discerning human reviewers.*
 
 ### Project Files
 
-1. **Category README Example**: `learning/katas/prompt-engineering/README.md` - Real category page with all sections
-2. **Root Katas README**: `learning/katas/README.md` - Overview of all kata categories
-3. **Validation Script**: `scripts/kata-validation/Validate-Katas.ps1` - Automated category structure validation
+1. **Category README Example**: `../../learning/katas/prompt-engineering/README.md` - Real category page with all sections
+2. **Root Katas README**: `../../learning/katas/README.md` - Overview of all kata categories
+3. **Validation Script**: `../../scripts/kata-validation/Validate-Katas.ps1` - Automated category structure validation
 4. **Individual Kata Instructions**: `kata-content.instructions.md` - Instructions for individual katas (not category READMEs)
 
 ### Related Instruction Files

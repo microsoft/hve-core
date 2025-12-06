@@ -1,5 +1,5 @@
 ---
-applyTo: 'learning/paths/**/*.md'
+applyTo: '../../learning/paths/**/*.md'
 description: 'Required instructions for learning path content including path YAML requirements, double checkbox navigation pattern, and progressive difficulty ordering'
 ---
 
@@ -366,10 +366,10 @@ The validation script checks:
 1. **Kata Content Standards**: `kata-content.instructions.md` - Inherits No Company Names Policy, AI Coaching Integration, Standard Footer format
 2. **Training Lab Standards**: `training-lab-content.instructions.md` - Multi-phase lab content requirements
 3. **Example Learning Paths**:
-   - `learning/paths/skill-prompt-engineering-excellence.md` - Skill-level path with triple-checkbox pattern
-   - `learning/paths/foundation-edge-computing.md` - Foundation-level path example
-   - `learning/paths/expert-platform-systems.md` - Expert-level path example
-4. **Validation Script**: `scripts/kata-validation/Validate-Katas.ps1` - PowerShell script for learning path validation
-5. **Kata Categories**: `learning/katas/README.md` - Overview of available katas for path composition
-6. **Learning Paths Overview**: `learning/paths/README.md` - Root overview of all learning paths
-7. **Learning Path Template**: Note - No template file currently exists in `learning/templates/`; refer to real examples above
+   - `../../learning/paths/skill-prompt-engineering-excellence.md` - Skill-level path with triple-checkbox pattern
+   - `../../learning/paths/foundation-edge-computing.md` - Foundation-level path example
+   - `../../learning/paths/expert-platform-systems.md` - Expert-level path example
+4. **Validation Script**: `../../scripts/kata-validation/Validate-Katas.ps1` - PowerShell script for learning path validation
+5. **Kata Categories**: `../../learning/katas/README.md` - Overview of available katas for path composition
+6. **Learning Paths Overview**: `../../learning/paths/README.md` - Root overview of all learning paths
+7. **Learning Path Template**: Note - No template file currently exists in `../../learning/templates/`; refer to real examples above
