@@ -36,7 +36,7 @@ Select all that apply:
 >
 > - **Chatmodes**: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation chatmodes likely already exist. Review `.github/chatmodes/` before creating new ones.
 > - **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
-> - See [Chatmodes Not Accepted](../docs/contributing-chatmodes.md#chatmodes-not-accepted) and [Model Version Requirements](../docs/contributing-ai-artifacts-common.md#model-version-requirements).
+> - See [Chatmodes Not Accepted](../docs/contributing/chatmodes.md#chatmodes-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
 
 **Other:**
 
@@ -62,10 +62,10 @@ Select all that apply:
 
 For detailed contribution requirements, see:
 
-- **Common Standards**: [docs/contributing-ai-artifacts-common.md](../docs/contributing-ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
-- **Chatmodes**: [docs/contributing-chatmodes.md](../docs/contributing-chatmodes.md) - Agent configurations with tools and behavior patterns
-- **Prompts**: [docs/contributing-prompts.md](../docs/contributing-prompts.md) - Workflow-specific guidance with template variables
-- **Instructions**: [docs/contributing-instructions.md](../docs/contributing-instructions.md) - Technology-specific standards with glob patterns
+- **Common Standards**: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
+- **Chatmodes**: [docs/contributing/chatmodes.md](../docs/contributing/chatmodes.md) - Agent configurations with tools and behavior patterns
+- **Prompts**: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
+- **Instructions**: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
 
 ## Testing
 <!-- Describe how you tested these changes -->
