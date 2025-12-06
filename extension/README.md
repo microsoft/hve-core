@@ -1,76 +1,87 @@
-# HVE Core - AI-Powered Development Assistant
+# HVE Learning Platform - AI-Powered Engineering Education
 
-> AI-powered chat agents, prompts, and instructions for hybrid virtual environments
+> AI-assisted learning platform for hyper-velocity engineering education with katas, training labs, and coaching
 
-HVE Core provides a comprehensive collection of specialized AI chat agents, prompts, and instructions designed to accelerate development workflows in VS Code with GitHub Copilot.
+HVE Learning Platform provides a comprehensive AI-assisted learning experience designed for hyper-velocity engineering education. It combines structured learning through katas and training labs with specialized AI coaching agents.
 
 ## Features
 
-### 🤖 Chat Agents
+### 🤖 AI Learning Coaches
 
-Specialized AI assistants for specific development tasks:
+Specialized AI assistants for different learning needs:
 
-- **task-researcher** - Research technical solutions and approaches
-- **task-planner** - Plan and break down complex tasks
-- **task-implementor** - Implement tasks from detailed plans
-- **pr-review** - Comprehensive pull request review assistant
-- **github-issue-manager** - Manage GitHub issues efficiently
-- **adr-creation** - Create Architecture Decision Records
-- **prd-builder** - Build Product Requirements Documents
-- **prompt-builder** - Build and optimize AI prompts
-- **security-plan-creator** - Expert security architect for creating comprehensive cloud security plans
+- **learning-content-creator** - Collaborative content development partner for creating learning materials
+- **learning-kata-coach** - Focused practice guidance with progress tracking for skill-building exercises
+- **learning-lab-coach** - Comprehensive system coaching for complex learning scenarios
 
-#### Azure DevOps Integration
+### 📚 Complete Learning Platform
 
-- **ado-prd-to-wit** - Convert Product Requirements Documents to Azure DevOps work items
+This extension includes the entire HVE Learning Platform content:
 
-#### Data Science & Visualization
+#### 🥋 Learning Katas & Content
+Ready-to-use learning materials in the `learning/` directory:
+- Focused skill-building exercises (15-45 minutes)
+- Progressive difficulty levels and structured paths
+- Hands-on practice scenarios with real-world context
+- Built-in assessment and progress tracking systems
 
-- **gen-data-spec** - Generate data specifications and schemas
-- **gen-jupyter-notebook** - Generate Jupyter notebooks for data analysis
-- **gen-streamlit-dashboard** - Generate Streamlit dashboards
-- **test-streamlit-dashboard** - Comprehensive testing of Streamlit dashboards
+#### 📖 Learning Documentation
+Comprehensive guides in the `docs/` directory:
+- Learning methodology and educational philosophy
+- Skill assessment frameworks and rubrics
+- Progress tracking and measurement systems
+- Contributing guidelines for content creators
 
-### 📝 Prompts
+#### 🛠️ Learning Scripts & Tools
+Automation utilities in the `scripts/` directory:
+- Content validation and quality assurance
+- Learning path generation and organization
+- Progress tracking and analytics
+- Content management utilities
 
-Reusable prompt templates for common workflows:
+### 📋 Content Creation Guidelines
 
-- **Git Operations** - Commit messages, merges, setup, and pull requests
-- **GitHub Workflows** - Issue creation and management
-- **Azure DevOps** - PR creation, build info, and work item management
+Best practice instructions for creating learning content:
 
-### 📚 Instructions
-
-Best practice guidelines for:
-
-- **Languages** - Bash, Python, C#, Bicep
-- **Git & Version Control** - Commit messages, merge operations
-- **Documentation** - Markdown formatting
-- **Azure DevOps** - Work item management and PR workflows
-- **Task Management** - Implementation tracking and planning
-- **Project Management** - UV projects and dependencies
+- **Kata Content** - Guidelines for creating focused practice exercises
+- **Training Lab Content** - Instructions for comprehensive learning experiences
+- **Learning Path Content** - Structured progression through topics
+- **Learning Coach Schema** - Framework for AI coaching interactions
+- **Category Organization** - Standards for organizing learning materials
+- **Markdown Formatting** - Consistent documentation standards
 
 ## Getting Started
 
-After installing this extension, the chat agents will be available in GitHub Copilot Chat. You can:
+After installing this extension, the AI learning coaches will be available in GitHub Copilot Chat. You can:
 
-1. **Use chat agents** by typing `@agent-name` in Copilot Chat
-2. **Apply prompts** through the Copilot Chat interface
-3. **Reference instructions** - They're automatically applied based on file patterns
+1. **Create content** by typing `@learning-content-creator` for collaborative content development
+2. **Get coaching** with `@learning-kata-coach` for focused practice guidance
+3. **Navigate complex topics** using `@learning-lab-coach` for comprehensive system coaching
 
 ## Usage Examples
 
-### Using Chat Agents
+### Creating Learning Content
 
 ```plaintext
-@task-planner help me break down this feature into implementable tasks
-@pr-review review this pull request for security issues
-@adr-creation create an ADR for our new microservice architecture
+@learning-content-creator help me create a new kata for Docker containerization
+@learning-content-creator design a training lab for microservices architecture
 ```
 
-### Applying Prompts
+### Getting Learning Coaching
 
-Prompts are available in the Copilot Chat prompt picker and can be used to generate consistent, high-quality outputs for common tasks.
+```plaintext
+@learning-kata-coach guide me through this Kubernetes practice exercise
+@learning-lab-coach help me understand the integration between these components
+```
+
+## Learning Philosophy
+
+The HVE Learning Platform is built on these core principles:
+
+- **AI-Assisted Learning** - Integrated AI coaching throughout the learning journey
+- **Discovery-Based** - OpenHack-style methodology promoting hands-on exploration
+- **Progressive Mastery** - Carefully sequenced learning paths building real-world skills
+- **Practical Focus** - All exercises solve actual engineering challenges
 
 ## Requirements
 
@@ -83,7 +94,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## Support
 
-For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/microsoft/hve-core).
+For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/eedorenko/hve-learning).
 
 ---
 

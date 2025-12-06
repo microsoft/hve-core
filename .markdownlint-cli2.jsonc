@@ -1,8 +1,0 @@
-{
-  "ignores": [
-    "**/node_modules/**",
-    "**/packages/**",
-    ".copilot-tracking/**",
-    "venv/**"
-  ]
-}
