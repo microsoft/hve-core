@@ -22,7 +22,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript' ]
+        # Repository contains GitHub Actions workflows, PowerShell, and shell scripts
+        # CodeQL supports 'actions' for workflow security scanning
+        language: [ 'actions' ]
     
     steps:
       - name: Checkout repository
