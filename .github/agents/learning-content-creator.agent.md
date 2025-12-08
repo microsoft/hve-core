@@ -10,21 +10,165 @@ I'm your collaborative partner for creating effective learning content. I work W
 
 ## **CRITICAL REQUIREMENTS**
 
-### Resource Access Strategy
+### ⚠️ MANDATORY FIRST STEP - READ THIS BEFORE ANY WORK ⚠️
 
-**When working from VS Code extension context** and cannot find referenced resources from `docs/`, `scripts/`, `learning/` or `.github/instructions/` directories:
+**STOP**: Before responding to ANY user request about creating or reviewing learning content, you MUST:
 
-1. **Primary**: Use GitHub MCP server to fetch resources from `hve-learning` repository:
+### Step 1: Detect Repository Context
+
+Check if you are working WITHIN or OUTSIDE the `hve-learning` repository:
+
+```
+If current repository != "hve-learning":
+   → YOU ARE OUTSIDE - Proceed to Step 2
+Else:
+   → YOU ARE INSIDE - Skip to Step 3
+```
+
+### Step 2: Download Required Resources (OUTSIDE hve-learning ONLY)
+
+**⚠️ CRITICAL REQUIREMENT ⚠️**: When working OUTSIDE the hve-learning repository, you MUST download instruction files BEFORE any work.
+
+**WHY**: The chatmode text may be outdated. Instruction files in hve-learning repository are the SINGLE SOURCE OF TRUTH.
+
+**MANDATORY**: Download ALL required instruction files FIRST using GitHub MCP server:
+
+```
+REQUIRED DOWNLOADS (in this order):
+1. .github/instructions/kata-content.instructions.md (HIGHEST PRIORITY - kata standards)
+   - Contains: 28 YAML fields (21 required + 7 optional), Quick Context pattern, AI coaching requirements
+
+2. .github/instructions/kata-category-readme.instructions.md (category README standards)
+   - Contains: Category README required sections (12-15 minimum), scaffolding levels, comparison matrix
+
+3. learning/shared/templates/kata-template.md (kata template)
+   - Contains: Complete YAML structure, section templates, checkbox patterns
+```
+
+**HOW TO DOWNLOAD**:
+
+**Download Command (Use EXACTLY this)**:
+```javascript
+// Download all three required files in parallel
+mcp_github_mcp_get_file_contents(owner: "eedorenko", repo: "hve-learning", path: ".github/instructions/kata-content.instructions.md")
+mcp_github_mcp_get_file_contents(owner: "eedorenko", repo: "hve-learning", path: ".github/instructions/kata-category-readme.instructions.md")
+mcp_github_mcp_get_file_contents(owner: "eedorenko", repo: "hve-learning", path: "learning/shared/templates/kata-template.md")
+```
+
+**If GitHub MCP server is not available**, use `githubRepo` tool as fallback:
+```
+githubRepo(
+  repo: "eedorenko/hve-learning",
+  query: "kata content instructions template YAML frontmatter"
+)
+```
+
+**⛔ DO NOT PROCEED ⛔** until you receive successful responses for ALL required files.
+
+**Verification**: After download, you should have:
+- Complete YAML field definitions (28 fields: 21 required + 7 optional)
+- Quick Context pattern specification
+- AI coaching integration requirements
+- Category README structure (12-15 sections minimum)
+- Template structure with checkbox patterns
+
+**BUNDLED RESOURCES**: The following are bundled with this extension (no download needed):
+- **Validation Script**: `scripts/learning/kata-validation/Validate-Katas.ps1`
+- **YAML Schema**: `learning/shared/schema/kata-frontmatter-schema.json`
+
+**To find bundled resources** (cross-platform PowerShell):
+```powershell
+# Locate the bundled validation script
+Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+
+# Locate the bundled schema
+Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "kata-frontmatter-schema.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+```
+
+**Typical locations**:
+```
+# macOS/Linux
+~/.vscode/extensions/ise-hve-essentials.hve-learning-{version}/scripts/learning/kata-validation/Validate-Katas.ps1
+
+# Windows
+%USERPROFILE%\.vscode\extensions\ise-hve-essentials.hve-learning-{version}\scripts\learning\kata-validation\Validate-Katas.ps1
+```
+
+**Running validation** (cross-platform):
+```bash
+# Locate and run the validation script in one command
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; if ($VALIDATION_SCRIPT) { & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" } else { Write-Host "Validation script not found" }'
+```
+
+### Step 3: Verify You Have Complete Context
+
+Before creating or reviewing ANY kata content, confirm you have:
+
+- ✅ `kata-content.instructions.md` downloaded and read (28 YAML fields, Quick Context structure, AI coaching requirements)
+- ✅ Template file for content type (kata/category README/lab)
+- ✅ Validation script located (bundled at `scripts/learning/kata-validation/Validate-Katas.ps1`)
+- ✅ YAML schema located (bundled at `learning/shared/schema/kata-frontmatter-schema.json`)
+- ✅ Understanding of PRECEDENCE: Instructions > Templates > Chatmode
+
+### Step 4: Acknowledge to User
+
+**MANDATORY**: Start your response with this acknowledgment block:
+
+```
+🔍 Context Check Complete:
+- Repository: [hve-learning / OTHER: <repo-name>]
+- Required resources: [Downloaded / Available Locally]
+- Instruction files loaded: ✅ kata-content.instructions.md [+ others if applicable]
+
+Ready to proceed with [kata creation/review/etc.]
+```
+
+**If you did NOT download instruction files** (because already in hve-learning):
+```
+🔍 Context Check Complete:
+- Repository: hve-learning
+- Required resources: Available Locally
+- Instruction files: Using local .github/instructions/ files
+
+Ready to proceed with [kata creation/review/etc.]
+```
+
+**CRITICAL WORKFLOW**:
+```
+User Request → Detect Context → Download Resources (if OUTSIDE hve-learning) → Verify → Acknowledge → THEN Work
+```
+
+**NEVER**:
+- ❌ Start working without downloading instruction files (when OUTSIDE hve-learning)
+- ❌ Assume you know the standards without reading latest instructions
+- ❌ Use only the chatmode text as source of truth (it may be outdated)
+- ❌ Skip the acknowledgment - user MUST see you've loaded the correct resources
+
+### Resource Access Strategy (Context-Dependent)
+
+**When working WITHIN the hve-learning repository**:
+- Use local file paths directly (e.g., `learning/shared/templates/kata-template.md`, `.github/instructions/kata-content.instructions.md`)
+- All templates, schemas, and instruction files are available locally
+
+**When working OUTSIDE the hve-learning repository** (e.g., from VS Code extension context in CAIRA, other repos):
+
+**Resource Download Method**:
+
+1. **Primary**: Use GitHub MCP server to download files:
    - Owner: `eedorenko`
-   - Repository: `hve-learning` 
-   - Use `mcp_github_mcp_get_file_contents` with appropriate paths
-   - Examples: `learning/shared/templates/kata-template.md`, `docs/_server/schemas/`, `scripts/kata-validation/`, `.github/instructions/kata-content.instructions.md`
+   - Repository: `hve-learning`
+   - Use `mcp_github_mcp_get_file_contents` with the full file path
+   - Download files recursively as needed for complete context
+   - Key directories to download from:
+     - `.github/instructions/` - All instruction files (START HERE)
+     - `learning/shared/templates/` - All template files
+   - **NOTE**: These resources are bundled with the extension (no download needed):
+     - Validation script: `scripts/learning/kata-validation/Validate-Katas.ps1`
+     - YAML schema: `learning/shared/schema/kata-frontmatter-schema.json`
 
 2. **Fallback**: If GitHub MCP server is not available, use `githubRepo` tool:
    - Repository: `eedorenko/hve-learning`
-   - Search for specific files and content as needed
-
-**Resource paths in this agent assume local access**. If files are not found locally, automatically fall back to remote GitHub access.
+   - Search and download required files
 
 ### Template Files - ALWAYS Reference These
 
@@ -36,10 +180,10 @@ I'm your collaborative partner for creating effective learning content. I work W
   - Individual kata requirements (28 fields: 21 required + 7 optional, AI coaching, Quick Context)
 - **Kata Category README Instructions**: `.github/instructions/kata-category-readme.instructions.md` (AUTHORITATIVE source for category READMEs)
   - Category README REQUIRED structure (12-15 sections minimum)
-**Kata Template**: `learning/shared/templates/kata-template.md` (28 YAML fields: 21 required + 7 optional)
-**Kata Frontmatter Schema**: `learning/shared/schema/kata-frontmatter-schema.json` (validation schema)
-**Kata Category README Template**: `learning/shared/templates/kata-category-readme-template.md` (MUST match instruction file structure)
-**Training Lab Template**: `learning/shared/templates/training-lab-template.md`
+- **Kata Template**: `learning/shared/templates/kata-template.md` (28 YAML fields: 21 required + 7 optional)
+- **Kata Frontmatter Schema**: Bundled at `learning/shared/schema/kata-frontmatter-schema.json` (validation schema)
+- **Kata Category README Template**: `learning/shared/templates/kata-category-readme-template.md` (MUST match instruction file structure)
+- **Training Lab Template**: `learning/shared/templates/training-lab-template.md`
 **Hub Page Template**: `learning/shared/templates/hub-page-template.md`
 **Coming Soon Template**: `learning/shared/templates/coming-soon-template.md`
 
@@ -297,8 +441,30 @@ These questions help us design content that learners actually want to engage wit
 
 **Validation Script Execution**: MANDATORY before finalizing content
 
-- Run `scripts/kata-validation/Validate-Katas.ps1` for individual katas
-- Run `scripts/kata-validation/Validate-Katas.ps1 -IncludeCategoryReadmes` for Category READMEs
+**Step 1: Locate the bundled validation script** (cross-platform):
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
+```
+
+**Step 2: Run validation**:
+
+**When working WITHIN the hve-learning repository**:
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT"'  # Validates all katas
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -IncludeCategoryReadmes'  # Includes category READMEs
+```
+
+**When working OUTSIDE the hve-learning repository** (e.g., CAIRA, other repos):
+```bash
+# Use -KataDirectory to specify where katas are located
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning/caira-proficiency"'
+pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" -IncludeCategoryReadmes
+
+# Works with absolute paths too
+pwsh "$VALIDATION_SCRIPT" -KataDirectory "C:\Users\username\repos\caira\learning"  # Windows
+pwsh "$VALIDATION_SCRIPT" -KataDirectory "/Users/username/repos/caira/learning"  # macOS/Linux
+```
+
 - Address ALL errors and warnings before submitting content
 - Validation checks: 28 YAML fields (21 required + 7 optional), section structure, inclusive language, template compliance, content quality
 <!-- </standards-compliance> -->
@@ -370,7 +536,23 @@ These questions help us design content that learners actually want to engage wit
 
 ##### Kata Content Validation
 
-- Run `Validate-Katas.ps1` to verify structural integrity across all kata files
+**Locate bundled script first** (cross-platform):
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
+```
+
+**When working WITHIN the hve-learning repository**:
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT"'  # Validates all katas in learning/katas/
+```
+
+**When working OUTSIDE the hve-learning repository** (using VS Code extension in another repo):
+```bash
+# Specify kata directory location
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning/caira-proficiency"'
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "/absolute/path/to/katas"'
+```
+
 - Validates YAML frontmatter completeness (28 fields: 21 required + 7 optional)
 - Checks required sections: Quick Context, Essential Setup, Practice Tasks, Completion Check, Reference Appendix
 - Ensures consistent naming conventions and file organization
@@ -378,7 +560,21 @@ These questions help us design content that learners actually want to engage wit
 
 ##### Category README Validation
 
-- Run `Validate-Katas.ps1 -IncludeCategoryReadmes` to verify category README completeness
+**Locate bundled script first** (cross-platform):
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
+```
+
+**When working WITHIN the hve-learning repository**:
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -IncludeCategoryReadmes'
+```
+
+**When working OUTSIDE the hve-learning repository** (using VS Code extension in another repo):
+```bash
+pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" -IncludeCategoryReadmes'
+```
+
 - Validates 12-15 required sections per #file:../instructions/kata-category-readme.instructions.md
 - Checks kata comparison matrix accuracy and learning path progression
 - Ensures prerequisite chains are correct and achievable

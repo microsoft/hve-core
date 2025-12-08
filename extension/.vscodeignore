@@ -7,3 +7,7 @@
 !package.json
 !README.md
 !LICENSE
+
+# Include validation script and schemas
+!scripts/learning/kata-validation/**
+!learning/shared/schema/**
