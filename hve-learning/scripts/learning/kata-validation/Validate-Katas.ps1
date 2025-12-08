@@ -24,6 +24,11 @@
     - Prerequisites: Only validate prerequisite chains
     - Fields: Only validate required field completeness
 
+.PARAMETER KataDirectory
+    Specify the path to the katas directory. Can be absolute or relative path.
+    If not specified, defaults to "learning/katas" relative to the project root.
+    This is useful when running from VS Code extension or different working directories.
+
 .PARAMETER IncludeCategoryReadmes
     Include category README.md files in validation.
     By default, only individual kata files (01-*.md, 02-*.md, etc.) are validated.
@@ -34,6 +39,14 @@
 .EXAMPLE
     .\Validate-Katas.ps1
     Runs all validations on individual kata files only (01-*.md, 02-*.md, etc.)
+
+.EXAMPLE
+    .\Validate-Katas.ps1 -KataDirectory "C:\workspace\hve-learning\learning\katas"
+    Validates katas in the specified directory (useful from VS Code extension context)
+
+.EXAMPLE
+    .\Validate-Katas.ps1 -KataDirectory "./learning/katas"
+    Validates katas using a relative path from current directory
 
 .EXAMPLE
     .\Validate-Katas.ps1 -IncludeCategoryReadmes
@@ -86,6 +99,9 @@ param(
     [Alias('File', 'Path', 'KataFile')]
     [object[]]$KataPath,
 
+    [Alias('KataFolder', 'KatasDirectory')]
+    [string]$KataDirectory,
+
     [switch]$IncludeCategoryReadmes,
 
     [switch]$FixCommonIssues,
@@ -95,22 +111,25 @@ param(
 
 # Configuration
 $Script:ProjectRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
-$Script:KataDirectory = Join-Path $Script:ProjectRoot "learning\katas"
-$Script:TemplatePath = Join-Path $Script:ProjectRoot "learning\shared\templates\kata-template.md"
 
-# Valid categories based on repository structure
-$Script:ValidCategories = @(
-    'ado-automation',
-    'adr-creation',
-    'ai-assisted-engineering',
-    'edge-deployment',
-    'fabric-integration',
-    'product-requirements',
-    'project-planning',
-    'prompt-engineering',
-    'task-planning',
-    'troubleshooting'
-)
+# Use provided KataDirectory parameter or default to project structure
+if ($KataDirectory) {
+    # If provided, use it directly (can be absolute or relative)
+    if ([System.IO.Path]::IsPathRooted($KataDirectory)) {
+        $Script:KataDirectory = $KataDirectory
+    } else {
+        # Relative path - resolve from current directory
+        $Script:KataDirectory = Join-Path (Get-Location) $KataDirectory | Resolve-Path -ErrorAction SilentlyContinue
+        if (-not $Script:KataDirectory) {
+            $Script:KataDirectory = Join-Path (Get-Location) $KataDirectory
+        }
+    }
+} else {
+    # Default: assume script is in the hve-learning repository structure
+    $Script:KataDirectory = Join-Path $Script:ProjectRoot "learning\katas"
+}
+
+$Script:TemplatePath = Join-Path $Script:ProjectRoot "learning\shared\templates\kata-template.md"
 
 # Script-level variables to use parameters throughout
 $Script:ValidationTypes = $ValidationTypes
@@ -862,10 +881,6 @@ function Test-Category {
     # Extract first value for path validation (schema guarantees minItems: 1)
     $category = $kataCategory[0]
 
-    if ($category -notin $ValidCategories) {
-        Write-ValidationLog -Level Error -Message "Invalid kata_category '$category'. Valid categories: $($ValidCategories -join ', ')" -File $relativePath
-    }
-
     # Validate category matches file path
     $expectedPath = Join-Path $KataDirectory $category
     if (-not $FilePath.StartsWith($expectedPath)) {
@@ -908,26 +923,8 @@ function Test-Tag {
         return
     }
 
-    # Validate each tag is a valid category
-    foreach ($tag in $tags) {
-        if ($tag -notin $ValidCategories) {
-            Write-ValidationLog -Level Error -Message "Invalid tag '$tag'. Valid categories: $($ValidCategories -join ', ')" -File $relativePath
-        }
-    }
-
-    # Validate at least one tag matches the file path location (primary category)
-    $fileCategory = $null
-    foreach ($validCategory in $ValidCategories) {
-        $categoryPath = Join-Path $KataDirectory $validCategory
-        if ($FilePath.StartsWith($categoryPath)) {
-            $fileCategory = $validCategory
-            break
-        }
-    }
-
-    if ($fileCategory -and $fileCategory -notin $tags) {
-        Write-ValidationLog -Level Warning -Message "File is located in '$fileCategory/' but this category is not in tags array. Consider adding '$fileCategory' to tags." -File $relativePath
-    }
+    # Tags can be any category names - no validation against predefined list
+    # This allows flexibility for different repositories with their own category structures
 }
 
 function Test-Prerequisite {
@@ -1831,17 +1828,8 @@ function Test-CategoryDirectory {
         }
     }
 
-    # Check for invalid category directories
-    $invalidCategories = $actualCategories | Where-Object { $_ -notin $ValidCategories }
-    if ($invalidCategories.Count -gt 0) {
-        Write-ValidationLog -Level Error -Message "Invalid category directories found: $($invalidCategories -join ', ')"
-    }
-
-    # Check for missing category directories
-    $missingCategories = $ValidCategories | Where-Object { $_ -notin $actualCategories }
-    if ($missingCategories.Count -gt 0) {
-        Write-ValidationLog -Level Warning -Message "Missing category directories: $($missingCategories -join ', ')"
-    }
+    # Accept any category names - no validation against predefined list
+    # This allows flexibility for different repositories
 
     return $actualCategories
 }
