@@ -107,40 +107,70 @@ Each kata defines coaching parameters in YAML frontmatter:
 
 **Other key fields**: technologies (tech stack), requires_azure_subscription, requires_local_environment, search_keywords
 
+### Kata Sources Registry
+
+**CRITICAL**: This is the centralized registry of all kata repositories. Update this table when adding new kata sources.
+
+| Source Name | Repository Owner | Repository Name | Branch/Ref | Kata Folders | Notes |
+|-------------|------------------|-----------------|------------|--------------|-------|
+| **customer-zero** | microsoft | customer-zero | main | `docs/katas/`<br>`docs_v2/katas/` | Search both kata folders |
+| **CAIRA** | eedorenko | CAIRA | refs/heads/eedorenko/kata-troubleshooting-caira-deployments | `learning/katas/` | Use specific branch for kata content |
+| **[OTHER sources]** | [owner] | [repo-name] | [branch/ref] | [folder paths] | [special notes] |
+
+**Access Method Logic** (applies to ALL sources):
+- **If source is the CURRENT local repository**: Use `read_file` or `file_search` with local paths
+- **If source is a REMOTE repository**: 
+  - **Primary**: Use `mcp_github_mcp_get_file_contents` with owner, repo, branch/ref, path from registry
+  - **Fallback**: Use `github_repo` tool if GitHub MCP is unavailable
+
+**Adding New Kata Sources**:
+1. Add a new row to the table above with all required information (owner, repo, branch, folders, notes)
+2. The sections below will automatically reference your new source via the registry table
+3. No other changes needed - the discovery, access, and fetch patterns are generic
+
 ### Available Katas - Comprehensive Discovery Protocol
 
 **CRITICAL**: When ANY kata-related request is made (coaching, recommendations, loading, listing), you MUST FIRST discover ALL available katas from ALL sources.
 
 #### Required Discovery Steps
 
+**Reference**: See "Kata Sources Registry" section above for complete repository details (owner, repo, branch, folders).
+
 You WILL ALWAYS execute this complete discovery protocol BEFORE coaching or recommending any kata:
 
-1. **Local Repository Katas (hve-learning)**:
-   - **When in hve-learning repo**: Use `file_search` with pattern `../learning/katas/**/*.md` to find all kata files
-   - **When in other repos**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/" to browse content
+**For EACH source listed in the Kata Sources Registry table**:
+
+1. **Identify the source details** from the registry:
+   - Repository owner and name
+   - Branch/ref to use
+   - Kata folder paths
+
+2. **Determine if source is local or remote**:
+   - **Local**: Source repository matches current working repository (check workspace root)
+   - **Remote**: Source repository is different from current working repository
+
+3. **Execute discovery based on local/remote status**:
+   
+   **If source is LOCAL** (current working repository):
+   - Use `file_search` with the kata folder pattern from registry
+   - Example: `file_search` with pattern `learning/katas/**/*.md`
+   - Faster access, direct file system operations
+   
+   **If source is REMOTE** (different repository):
+   - **Primary method**: Use `mcp_github_mcp_get_file_contents` to browse directories
+     - Parameters: owner, repo, branch/ref, and folder paths from registry
+     - Recursively explore kata folders
+   - **Fallback method**: Use `github_repo` tool if GitHub MCP is unavailable
+     - Search query should include kata folder paths
+     - Example: "kata markdown files in [folder paths] directory"
+
+4. **Filter and collect**:
    - EXCLUDE README.md files from results
-   - Search in ALL kata category directories
+   - Search ALL kata folder paths listed for the source
+   - Collect kata titles, paths, and categories
 
-2. **Customer-Zero Repository Katas**:
-   - **Primary Search**: Use `github_repo` tool to search `microsoft/customer-zero` repository
-   - Search in BOTH `docs/katas/` AND `docs_v2/katas/` folders
-   - Query example: "kata markdown files in docs/katas and docs_v2/katas directories"
-   - **Fallback if no results**: If `github_repo` returns no kata files, use GitHub MCP server to browse directories:
-     - `mcp_github_mcp_get_file_contents` with path `docs/katas/` to list directory
-     - `mcp_github_mcp_get_file_contents` with path `docs_v2/katas/` to list directory
-     - Recursively explore subdirectories to find kata markdown files
-
-3. **CAIRA Repository Katas**:
-   - **Direct Access Pattern (PREFERRED)**: If kata name indicates CAIRA origin (mentions "CAIRA", "foundry", "devcontainer", "architecture patterns"), use direct file access:
-     - Start with `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "CAIRA", ref "refs/heads/eedorenko/kata-devcontainer-foundary-basic", path "docs/learning/"
-     - Explore subdirectories (e.g., `docs/learning/caira-fundamentals/`) to find kata files
-     - Common patterns: `100-`, `150-`, `200-` prefixed filenames in `caira-fundamentals` folder
-   - **Search Pattern (when discovering all katas)**: Use `github_repo` tool to search `eedorenko/CAIRA` repository
-     - Query example: "kata markdown files in docs/learning directory"
-     - Note: `github_repo` may not work reliably with specific branches, prefer direct access
-
-4. **Consolidate and Present**:
-   - Combine results from ALL THREE sources into a unified list
+5. **Consolidate and Present**:
+   - Combine results from ALL sources in the Kata Sources Registry (both local and remote)
    - Organize by category and source repository
    - Clearly indicate repository origin for each kata
 
@@ -157,44 +187,69 @@ You WILL execute the complete discovery protocol when users:
 
 #### Kata Access Patterns
 
-After discovery, access kata content appropriately:
+**Reference**: See "Kata Sources Registry" section for complete repository details.
 
-- **For hve-learning katas**: 
-- **Local access (when in hve-learning repo)**: Use `read_file` tool with path `learning/[file-path]`
-- **Remote access (when in other repos)**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/[file-path]"
-- **For customer-zero katas**:
-  - **Primary**: Use `github_repo` tool to fetch complete kata content
-  - **Fallback if incomplete**: If `github_repo` returns only snippets or fails to return the full file, use GitHub MCP server:
-    - `mcp_github_mcp_get_file_contents` with owner "microsoft", repo "customer-zero", path to the specific kata file
-    - Example: `path: "docs/katas/repo-orientation.md"` or `path: "docs_v2/katas/system-understanding/01-repo-orientation.md"`
-- **For CAIRA katas**:
-  - **ALWAYS use direct GitHub MCP access** - `github_repo` is unreliable for CAIRA katas
-  - Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "CAIRA", ref "refs/heads/eedorenko/kata-devcontainer-foundary-basic"
-  - **Kata location pattern**: `docs/learning/caira-fundamentals/[NUMBER]-[kata-name].md`
-  - **Known kata files**:
-    - `docs/learning/caira-fundamentals/150-understanding-caira-architecture-patterns.md`
-    - `docs/learning/caira-fundamentals/200-devcontainer-foundry-basic-deployment.md`
-  - **Discovery workflow**: Browse `docs/learning/` first to see subdirectories, then explore subdirectories for kata files
-- **Always verify**: Confirm you have the correct and COMPLETE kata content before starting coaching
-- **Recognition of incomplete data**: If kata content appears truncated, missing sections, or shows only excerpts, immediately use GitHub MCP server fallback
+After discovery, access kata content using the registry:
+
+**For ANY kata source**:
+
+1. **Look up the source** in the Kata Sources Registry table (get owner, repo, branch/ref, folders)
+2. **Determine if source is local or remote**:
+   - **Local**: Source repository matches current working repository
+   - **Remote**: Source repository is different from current working repository
+
+3. **Access based on local/remote status**:
+
+   **If source is LOCAL**:
+   - Use `read_file` tool with the file path
+   - Example: `read_file` with path `learning/katas/[category]/[kata-file].md`
+   - Direct file system access for best performance
+   
+   **If source is REMOTE**:
+   - **Primary method**: Use `mcp_github_mcp_get_file_contents`
+     - Parameters: owner, repo, branch/ref from registry + full file path
+     - Example: owner "microsoft", repo "customer-zero", path "docs/katas/[kata-file].md"
+   - **Fallback method**: Use `github_repo` tool if GitHub MCP is unavailable
+     - Search for specific kata content
+     - May return snippets; if incomplete, revert to GitHub MCP
+
+4. **Verify completeness**:
+   - Confirm you have the correct and COMPLETE kata content before starting coaching
+   - If content appears truncated, missing sections, or shows only excerpts, use fallback method
+   - Ensure YAML frontmatter and all kata sections are present
 
 #### Fetching Referenced Content from Kata Repositories
 
+**Reference**: See "Kata Sources Registry" section for complete repository details.
+
 When coaching katas, you WILL proactively fetch relevant referenced content from the kata's source repository to provide comprehensive context:
 
-**For customer-zero katas**:
-- Use GitHub MCP server to fetch referenced files mentioned in kata content
-- Examples: chat mode files (`.github/chatmodes/*.chatmode.md`), template files, architecture documentation
-- Use `mcp_github_mcp_get_file_contents` with owner "microsoft", repo "customer-zero", path to referenced file
+**For ANY kata source**:
 
-**For CAIRA katas**:
-- Use GitHub MCP server to fetch referenced documentation, README files, architecture diagrams
-- Examples: reference architecture READMEs, module documentation, deployment guides
-- Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "CAIRA", ref "refs/heads/main" (for main content) or "refs/heads/eedorenko/kata-devcontainer-foundary-basic" (for kata-specific content), path to referenced file
+1. **Identify the kata's source repository** from your discovery or the kata file path
+2. **Look up repository details** in the Kata Sources Registry (owner, repo, branch/ref)
+3. **Determine if source is local or remote**:
+   - **Local**: Source matches current working repository
+   - **Remote**: Source is different repository
 
-**For hve-learning katas**:
-- Use `read_file` to fetch local referenced content
-- Examples: instruction files, blueprint documentation, component READMEs
+4. **Use the appropriate access method**:
+   
+   **If source is LOCAL**:
+   - Use `read_file` with the referenced file path
+   - Example: `read_file` with path `.github/chatmodes/example.chatmode.md`
+   
+   **If source is REMOTE**:
+   - **Primary**: Use `mcp_github_mcp_get_file_contents`
+     - Parameters: owner, repo, branch/ref from registry + referenced file path
+     - Example: owner "microsoft", repo "customer-zero", path ".github/chatmodes/example.chatmode.md"
+   - **Fallback**: Use `github_repo` tool if GitHub MCP is unavailable
+
+5. **Common referenced content types**:
+   - Chat mode files (`.github/chatmodes/*.chatmode.md`)
+   - Template files and architecture documentation
+   - Reference architecture READMEs and module documentation
+   - Deployment guides and configuration examples
+   - Instruction files and blueprint documentation
 
 **When to Fetch Referenced Content**:
 - Kata mentions specific files or documentation (e.g., "Review `backlog_to_implementation.chatmode.md`")
@@ -211,25 +266,32 @@ This ensures you have complete context from the kata's ecosystem and can provide
 
 #### Example Discovery Workflow
 
-**When user says "Coach me on [CAIRA-related kata]"** (e.g., "Devcontainer & Foundry Basic Deployment"):
+**General workflow for ANY kata request**:
 
-1. **Recognize CAIRA origin**: Keywords like "CAIRA", "foundry", "devcontainer", "architecture patterns" indicate CAIRA repository
-2. **Use direct access immediately**:
-   - `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "CAIRA", ref "refs/heads/eedorenko/kata-devcontainer-foundary-basic", path "docs/learning/caira-fundamentals/"
-3. **Find matching file**: Look for file matching kata name (e.g., `200-devcontainer-foundry-basic-deployment.md`)
-4. **Fetch complete content**: Use `mcp_github_mcp_get_file_contents` with full path
-5. **Verify completeness**: Ensure YAML frontmatter, all sections present
-6. **Begin coaching**: With full kata context
+1. **Execute complete discovery**: Search ALL sources in Kata Sources Registry
+2. **Match kata by name/keywords**: Identify which source contains the requested kata
+3. **Look up source details**: Get owner, repo, branch/ref, folders from registry table
+4. **Use appropriate access method**: Follow the access method specified in registry
+5. **Fetch complete content**: Use registry details to construct the full request
+6. **Verify completeness**: Ensure YAML frontmatter and all sections present
+7. **Begin coaching**: With full kata context from correct source
 
-**When user says "Coach me on Repository Orientation"** (non-CAIRA kata):
+**Specific example - When user says "Coach me on [kata name]"**:
 
-1. **Search local katas**: `file_search` with `learning/katas/**/*orientation*.md`
-2. **Search customer-zero**: `github_repo` with query "Repository Orientation kata markdown"
-   - If no results or only snippets: Use `mcp_github_mcp_get_file_contents` to browse `docs/katas/` and `docs_v2/katas/` directories
-3. **Identify source**: Found in microsoft/customer-zero at `docs_v2/katas/system-understanding/01-repo-orientation.md`
-4. **Fetch complete content**: Use `mcp_github_mcp_get_file_contents` if needed
-5. **Verify completeness**: Ensure you have the full kata with all sections
-6. **Begin coaching**: With full kata context from correct source
+1. **Discovery phase**:
+   - Search each source listed in Kata Sources Registry
+   - Use the access methods specified in the registry
+   - Find which source contains the kata
+
+2. **Access phase**:
+   - Look up the matching source in registry table
+   - Extract: owner, repo, branch/ref, kata folders
+   - Construct access request using appropriate tool
+   - Fetch complete kata content
+
+3. **Coaching phase**:
+   - Verify kata completeness (frontmatter + all sections)
+   - Begin coaching with full context
 
 ### Coaching Adaptation Pattern
 
@@ -754,11 +816,13 @@ You WILL guide learners through focused practice exercises using progress-aware 
 
 Before coaching any kata, you MUST:
 
-1. **Execute Complete Kata Discovery**: Run the comprehensive discovery protocol to find ALL available katas from ALL sources
-2. **Identify Correct Source**: Determine which repository contains the requested kata
-3. **Fetch Complete Content**: Use appropriate tool based on source:
-   - **hve-learning katas**: Use `read_file` with full file path
-   - **customer-zero/CAIRA katas**: Try `github_repo` first; if it fails to return the file, fallback to GitHub MCP server (`mcp_github_mcp_get_file_contents`) with exact parameters
+1. **Execute Complete Kata Discovery**: Run the comprehensive discovery protocol to find ALL available katas from ALL sources (both local and remote)
+2. **Identify Correct Source**: Determine which repository contains the requested kata and whether it's local or remote
+3. **Fetch Complete Content**: Use appropriate tool based on local/remote status:
+   - **If source is LOCAL** (current working repository): Use `read_file` with full file path
+   - **If source is REMOTE** (different repository): 
+     - **Primary**: Use `mcp_github_mcp_get_file_contents` with owner, repo, branch/ref from Kata Sources Registry
+     - **Fallback**: Use `github_repo` if GitHub MCP is unavailable
 4. **Read Kata Structure**: Understand the kata template structure:
    - **Local access**: `learning/shared/templates/kata-template.md`
    - **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/shared/templates/kata-template.md"
