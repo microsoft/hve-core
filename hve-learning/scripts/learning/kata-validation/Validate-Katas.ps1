@@ -315,8 +315,8 @@ function Write-ValidationLog {
 }
 
 function Find-KataFile {
-    if (-not (Test-Path $KataDirectory)) {
-        Write-ValidationLog -Level Error -Message "Kata directory not found: $KataDirectory"
+    if (-not (Test-Path $Script:KataDirectory)) {
+        Write-ValidationLog -Level Error -Message "Kata directory not found: $Script:KataDirectory"
         return @()
     }
 
@@ -368,7 +368,7 @@ function Find-KataFile {
 
     # Otherwise, discover all files (existing behavior)
     # Always include individual numbered kata files (01-*.md, 02-*.md, 100-*.md, 200-*.md, etc.)
-    $individualFiles = Get-ChildItem -Path $KataDirectory -Recurse -Filter "*.md" |
+    $individualFiles = Get-ChildItem -Path $Script:KataDirectory -Recurse -Filter "*.md" |
     Where-Object { $_.Name -notmatch "README\.md" -and $_.Name -match "^\d{2,3}-.*\.md$" } |
     ForEach-Object { $_.FullName }
 
@@ -376,14 +376,16 @@ function Find-KataFile {
 
     # Include category README.md files only if explicitly requested
     if ($Script:IncludeCategoryReadmes) {
-        $readmeFiles = Get-ChildItem -Path $KataDirectory -Recurse -Name "README.md" |
-        Where-Object { $_ -ne "README.md" } |
-        ForEach-Object { Join-Path $KataDirectory $_ }
+        # Get all README.md files recursively
+        # Since we're using -Filter "README.md", we only get files named exactly README.md
+        # This includes both:
+        # - learning/katas/{category}/README.md (when scanning all katas)
+        # - README.md at root (when scanning specific category)
+        $readmeFiles = Get-ChildItem -Path $Script:KataDirectory -Recurse -Filter "README.md" |
+        ForEach-Object { $_.FullName }
 
         $kataFiles += $readmeFiles
-    }
-
-    $Script:KataFiles = $kataFiles
+    }    $Script:KataFiles = $kataFiles
 
     if (-not $Script:Quiet) {
         $message = "📚 Found $($kataFiles.Count) kata files to validate"
@@ -865,6 +867,13 @@ function Test-Category {
     )
 
     $relativePath = Get-RelativePath $FilePath
+
+    # Category READMEs don't have kata_category field - skip this validation
+    $isCategoryReadme = Test-IsCategoryReadme -FilePath $FilePath
+    if ($isCategoryReadme) {
+        return
+    }
+
     $kataCategory = $Frontmatter['kata_category']
 
     if (-not $kataCategory) {
@@ -2061,23 +2070,29 @@ function Test-SingleKata {
 
     # Always run content quality checks (critical for kata standards compliance)
     Test-ContentQuality -FilePath $FilePath
-    Test-RequiredSection -FilePath $FilePath
 
-    # Always run strict structural validations (enforces template compliance)
-    Test-SectionOrdering -FilePath $FilePath
-    Test-ReferenceAppendixStructure -FilePath $FilePath
-    Test-EssentialSetupMetaReference -FilePath $FilePath
+    # Only run kata-specific required sections check for numbered katas
+    if ($isNumberedKata) {
+        Test-RequiredSection -FilePath $FilePath
+    }
 
-    # Run quality checks if requested
-    if ($runQuality) {
+    # Only run strict structural validations for numbered kata files (not category READMEs)
+    if ($isNumberedKata) {
+        Test-SectionOrdering -FilePath $FilePath
+        Test-ReferenceAppendixStructure -FilePath $FilePath
+        Test-EssentialSetupMetaReference -FilePath $FilePath
+    }
+
+    # Run quality checks if requested (only for numbered katas)
+    if ($runQuality -and $isNumberedKata) {
         Test-RedundantSection -FilePath $FilePath -Frontmatter $frontmatter
         Test-OrientationEfficiency -FilePath $FilePath
         Test-ResourceRedundancy -FilePath $FilePath
         Test-ValidationConcreteness -FilePath $FilePath
     }
 
-    # Run structure checks if requested
-    if ($runStructure) {
+    # Run structure checks if requested (only for numbered katas)
+    if ($runStructure -and $isNumberedKata) {
         $fileContent = Get-Content -Path $FilePath -Raw
         Test-NestedCheckboxStructure -Content $fileContent -FilePath $FilePath
     }
