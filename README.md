@@ -2,6 +2,56 @@
 
 A comprehensive AI-assisted learning platform designed for hyper-velocity engineering education. This platform provides structured learning experiences through katas, training labs, and AI-powered coaching.
 
+## 🎯 Platform Purpose
+
+The HVE Learning Platform serves two primary purposes:
+
+### 1. Central Learning Gateway
+Serves as a comprehensive learning hub that can coach you on:
+- **Generic Topics**: Using katas stored in this repository for foundational engineering skills
+- **Domain-Specific Topics**: Using katas stored in corresponding accelerator repositories (CAIRA, edge-ai, etc.)
+- **Scenario-Based Learning Paths**: Navigate comprehensive multi-accelerator learning journeys (e.g., "Create an AI agentic system") that orchestrate katas from multiple accelerator repositories into cohesive end-to-end experiences
+
+### 2. Learning Content Creation Tool
+Empowers developers to create high-quality learning content (katas, labs) using AI-assisted workflows and validated templates.
+
+## 🚀 Getting Started
+
+### For Learners
+
+You have two options to start learning:
+
+#### Option 1: Work Directly in this Repository
+1. Clone/open the `hve-learning` repository
+2. Select `learning-kata-coach` from the Agents dropdown
+3. Start your learning session:
+   ```
+   Coach me on deploying AI infra with CAIRA
+   ```
+
+#### Option 2: Use the VS Code Extension
+1. Install the HVE Learning Platform VS Code extension
+2. Open any accelerator repository (e.g., CAIRA, edge-ai)
+3. Select `learning-kata-coach` from the Agents dropdown
+4. Start your learning session directly in the domain context:
+   ```
+   Coach me on deploying AI infra with CAIRA
+   ```
+
+### For Content Creators
+
+Developers working on new learning content:
+
+1. Install the HVE Learning Platform VS Code extension
+2. Open your accelerator repository (e.g., CAIRA)
+3. Select `learning-content-creator` from the Agents dropdown
+4. Start creating content:
+   ```
+   Let's work on production troubleshooting kata
+   ```
+
+The extension provides all templates, schemas, and validation tools needed to create high-quality learning content in any repository.
+
 ## 🌟 Platform Overview
 
 The HVE (Hyper-Velocity Engineering) Learning Platform combines AI assistance with practical engineering challenges, empowering engineers to achieve more through structured, progressive learning experiences.
@@ -64,14 +114,12 @@ hve-learning/
 └── docs/_server/schemas/      # API and progress tracking schemas
 ```
 
-## 🚀 Quick Start
-
-### 1. Choose Your Learning Path
+## 🎓 Choose Your Learning Path
 - **Foundation Builder**: New to platform concepts
 - **Skill Developer**: Some experience, ready for structured practice
 - **Expert Practitioner**: Advanced learner seeking mastery
 
-### 2. Activate AI Coaching
+## 🤖 AI Coaching Modes
 Use the specialized agents for guided learning:
 
 **For Focused Practice (Katas):**
@@ -89,7 +137,7 @@ Use the specialized agents for guided learning:
 @learning-content-creator Help me create learning content for [topic]
 ```
 
-### 3. Track Your Progress
+## 📊 Track Your Progress
 - Checkbox-based progress tracking in each kata
 - Automated skill assessment and recommendations
 - Personalized learning path generation
@@ -98,7 +146,7 @@ Use the specialized agents for guided learning:
 
 ### Kata Development
 1. Use `learning/shared/templates/kata-template.md`
-2. Follow 28 YAML frontmatter fields (21 required + 7 optional)
+2. Follow 28 YAML front-matter fields (21 required + 7 optional)
 3. Implement flat checkbox structure (no nested content)
 4. Include AI coaching integration points
 
@@ -110,7 +158,7 @@ Use the specialized agents for guided learning:
 
 ### Validation Tools
 - `scripts/learning/kata-validation/Validate-Katas.ps1`
-- Automated frontmatter validation
+- Automated front-matter validation
 - Learning path consistency checks
 - Content quality assessments
 
@@ -145,13 +193,13 @@ The platform uses structured schemas for:
 
 ### Template System
 - **Consistent Structure**: All content follows validated templates
-- **YAML Frontmatter**: Structured metadata for AI coaching integration
+- **YAML Front-matter**: Structured metadata for AI coaching integration
 - **Progressive Disclosure**: Information revealed as needed
 - **Cross-References**: Linked learning experiences
 
 ### Validation Pipeline
 - **Automated Testing**: All instructions verified in clean environments
-- **Schema Compliance**: YAML frontmatter validation
+- **Schema Compliance**: YAML front-matter validation
 - **Link Verification**: Internal and external reference checking
 - **Style Enforcement**: Markdown standards and inclusive language
 
