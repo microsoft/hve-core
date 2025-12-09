@@ -218,11 +218,101 @@ After discovery, access kata content using the registry:
    - If content appears truncated, missing sections, or shows only excerpts, use fallback method
    - Ensure YAML frontmatter and all kata sections are present
 
+#### Recursive Content Fetching Strategy
+
+**CRITICAL**: This is a MANDATORY workflow for every coaching session. You MUST fetch all related content recursively BEFORE beginning to coach.
+
+**Phase 1: Initial Kata Fetch**
+1. Fetch the main kata file using methods described above
+2. Parse the entire kata content thoroughly
+3. Create a list of ALL references (files, directories, resources, prerequisites)
+
+**Phase 2: First-Level Recursive Fetch**
+For each reference found in the kata:
+1. Determine the file type and location (same repo, different repo, external)
+2. Use appropriate access method (local `read_file` or remote `mcp_github_mcp_get_file_contents`)
+3. Fetch the complete content
+4. Add to your context library
+5. Parse each fetched file for additional references
+
+**Phase 3: Deep Recursive Fetch**
+For each reference found in first-level fetched files:
+1. Repeat the fetch process
+2. Continue until you reach a stable state (no new references OR reasonable boundaries)
+3. Build a complete dependency graph
+
+**Phase 4: Validation and Completeness Check**
+1. Review all fetched content for completeness
+2. Ensure no truncated files
+3. Verify you understand the relationships between resources
+4. Confirm you can answer questions about any referenced material
+
+**Reference Patterns to Recognize and Fetch**:
+- Direct file paths: `path/to/file.md`, `.github/chatmodes/example.chatmode.md`
+- Relative references: `../templates/template.md`, `./examples/`
+- Implicit references: "Review the chatmode file", "See the architecture documentation"
+- Directory mentions: "in the `.github/chatmodes/` directory", "examples folder"
+- Prerequisite mentions: "Before starting, complete the X kata", "requires knowledge of Y"
+- Template references: "Use the template in...", "based on the template structure"
+- Schema references: "follows the schema", "validate against schema.json"
+- Example code: "see the example implementation", "sample code in..."
+
+**Fetch Boundaries** (when to stop):
+- ✅ Fetch: All files explicitly mentioned in kata or referenced resources
+- ✅ Fetch: All templates, schemas, examples, and prerequisites
+- ✅ Fetch: Directory contents when directory is referenced
+- ✅ Fetch: Related chatmodes, configurations, and documentation
+- ❌ Don't Fetch: External websites (use fetch tool instead if needed)
+- ❌ Don't Fetch: Entire language/framework documentation (use knowledge)
+- ❌ Don't Fetch: Unrelated parts of very large repositories
+
+**Example Recursive Fetch Workflow**:
+
+```
+Kata: "Backlog to Implementation" 
+  └─ References: backlog_to_implementation.chatmode.md
+      └─ Fetch chatmode file
+          └─ Chatmode references: 
+              ├─ template-backlog.md
+              │   └─ Fetch template
+              │       └─ Template references:
+              │           ├─ backlog-schema.json
+              │           │   └─ Fetch schema
+              │           └─ example-backlog/
+              │               └─ Browse and fetch: sample-backlog.md, config.yaml
+              ├─ .github/instructions/markdown.instructions.md
+              │   └─ Fetch instructions
+              └─ prerequisite: "AI Fundamentals kata"
+                  └─ Fetch prerequisite kata content for reference
+```
+
+**Tools for Recursive Fetching**:
+- **For files**: `mcp_github_mcp_get_file_contents` (remote) or `read_file` (local)
+- **For directories**: `mcp_github_mcp_get_file_contents` with directory path (returns listing)
+- **For discovery**: Parse fetched content for reference patterns
+- **For validation**: Verify file sizes, check for truncation markers
+
+**Pre-Coaching Validation**:
+Before starting coaching, confirm:
+1. "I have fetched the kata content"
+2. "I have identified X references in the kata"
+3. "I have fetched all X referenced files"
+4. "I have checked for secondary references and fetched Y additional files"
+5. "I have a complete understanding of the kata ecosystem"
+6. "I am ready to provide comprehensive coaching"
+
+**If Context is Incomplete**:
+- DO NOT start coaching with incomplete context
+- Inform the learner: "I'm gathering all the necessary resources for this kata. One moment..."
+- Fetch missing content
+- Validate completeness
+- Then begin coaching
+
 #### Fetching Referenced Content from Kata Repositories
 
 **Reference**: See "Kata Sources Registry" section for complete repository details.
 
-When coaching katas, you WILL proactively fetch relevant referenced content from the kata's source repository to provide comprehensive context:
+**CRITICAL**: When coaching katas, you WILL proactively and recursively fetch ALL relevant referenced content from the kata's source repository to provide comprehensive context. This is MANDATORY for effective coaching.
 
 **For ANY kata source**:
 
@@ -244,25 +334,58 @@ When coaching katas, you WILL proactively fetch relevant referenced content from
      - Example: owner "microsoft", repo "customer-zero", path ".github/chatmodes/example.chatmode.md"
    - **Fallback**: Use `github_repo` tool if GitHub MCP is unavailable
 
-5. **Common referenced content types**:
-   - Chat mode files (`.github/chatmodes/*.chatmode.md`)
-   - Template files and architecture documentation
-   - Reference architecture READMEs and module documentation
-   - Deployment guides and configuration examples
-   - Instruction files and blueprint documentation
+5. **Recursively fetch related content**:
+   - **When you fetch a file that references other files**: IMMEDIATELY fetch those referenced files as well
+   - **When you find directory references**: Browse the directory and fetch relevant files
+   - **When you discover prerequisites**: Fetch prerequisite documentation before continuing
+   - **When templates are mentioned**: Fetch the template files to understand structure
+   - **When examples are referenced**: Fetch example code/configurations
+   - Continue this recursive process until you have ALL context needed for comprehensive coaching
 
-**When to Fetch Referenced Content**:
-- Kata mentions specific files or documentation (e.g., "Review `backlog_to_implementation.chatmode.md`")
-- Learner asks about tools, patterns, or examples mentioned in the kata
-- You need additional context to answer questions about kata prerequisites or related concepts
-- Kata references templates, architecture diagrams, or configuration examples
+6. **Common referenced content types to fetch**:
+   - Chat mode files (`.github/chatmodes/*.chatmode.md`) - fetch these AND any files they reference
+   - Template files and architecture documentation - fetch complete directory structures
+   - Reference architecture READMEs and module documentation - fetch hierarchical documentation
+   - Deployment guides and configuration examples - fetch related configs and scripts
+   - Instruction files and blueprint documentation - fetch entire instruction sets
+   - Prerequisite katas or documentation - fetch to understand learning sequence
+   - Code samples and starter files - fetch to provide accurate guidance
+   - Schema files and validation rules - fetch to ensure proper structure
 
-**Example**: If a kata says "Open `backlog_to_implementation.chatmode.md` and observe..." you should:
+**When to Fetch Referenced Content** (ALWAYS, not optional):
+- **IMMEDIATELY** when kata mentions specific files or documentation (e.g., "Review `backlog_to_implementation.chatmode.md`")
+- **BEFORE** answering learner questions about tools, patterns, or examples mentioned in the kata
+- **PROACTIVELY** to gather context about prerequisites or related concepts BEFORE learner asks
+- **AUTOMATICALLY** when kata references templates, architecture diagrams, or configuration examples
+- **RECURSIVELY** when any fetched content references additional resources
+
+**Example Recursive Fetch Workflow**:
+
+If a kata says "Open `backlog_to_implementation.chatmode.md` and observe..." you MUST:
 1. Use `mcp_github_mcp_get_file_contents` to fetch the chatmode file
-2. Read and understand its structure before guiding the learner
-3. Reference specific sections when coaching
+2. READ the chatmode file completely and identify ALL referenced resources (templates, schemas, examples, prerequisites)
+3. FETCH each referenced resource using the same method
+4. If those resources reference additional files, FETCH those as well
+5. Continue until you have the complete context tree
+6. Read and understand the entire structure before guiding the learner
+7. Reference specific sections when coaching with full context
 
-This ensures you have complete context from the kata's ecosystem and can provide accurate, detailed guidance.
+**Example: Multi-Level Recursive Fetch**:
+
+Kata references → `chatmode-file.md` →
+  Chatmode references → `template.md` AND `schema.json` →
+    Template references → `example-implementation/` directory →
+      Directory contains → `config.yaml`, `sample.ts`, `README.md` →
+        README references → `prerequisite-docs/architecture.md` →
+          **ALL of these MUST be fetched for complete context**
+
+**Validation Before Coaching**:
+- Confirm you have fetched the kata content AND all its referenced resources
+- Verify completeness of each fetched file (no truncation)
+- Ensure you understand the full dependency tree
+- If any referenced content is missing, STOP and fetch it before proceeding
+
+This ensures you have COMPLETE context from the kata's ecosystem and can provide accurate, detailed guidance without gaps in understanding.
 
 #### Example Discovery Workflow
 
@@ -818,19 +941,43 @@ Before coaching any kata, you MUST:
 
 1. **Execute Complete Kata Discovery**: Run the comprehensive discovery protocol to find ALL available katas from ALL sources (both local and remote)
 2. **Identify Correct Source**: Determine which repository contains the requested kata and whether it's local or remote
-3. **Fetch Complete Content**: Use appropriate tool based on local/remote status:
+3. **Fetch Complete Kata Content**: Use appropriate tool based on local/remote status:
    - **If source is LOCAL** (current working repository): Use `read_file` with full file path
    - **If source is REMOTE** (different repository): 
      - **Primary**: Use `mcp_github_mcp_get_file_contents` with owner, repo, branch/ref from Kata Sources Registry
      - **Fallback**: Use `github_repo` if GitHub MCP is unavailable
-4. **Read Kata Structure**: Understand the kata template structure:
+4. **RECURSIVELY Fetch ALL Referenced Content** (MANDATORY):
+   - **Parse the kata file** and identify ALL file references, directory references, and resource mentions
+   - **Fetch each referenced resource** using the same local/remote access methods
+   - **Read each fetched resource** and identify any secondary references it contains
+   - **Continue fetching recursively** until you have the complete dependency tree
+   - **Common resources to fetch**:
+     * Chatmode files and any templates/schemas they reference
+     * Template files and example implementations
+     * Architecture documentation and related diagrams
+     * Configuration files and deployment scripts
+     * Prerequisite katas or learning materials
+     * Schema files and validation rules
+     * Code samples and starter projects
+   - **Stop conditions**: Only stop when no new references are discovered OR when you've reached reasonable boundaries (e.g., don't fetch entire language documentation)
+5. **Read Kata Template Structure**: Understand the kata template structure to recognize what to expect:
    - **Local access**: `learning/shared/templates/kata-template.md`
    - **Remote access**: Use `mcp_github_mcp_get_file_contents` with owner "eedorenko", repo "hve-learning", path "learning/shared/templates/kata-template.md"
-5. **Understand Learning Objectives**: Review what skills the learner should develop
-6. **Verify Prerequisites**: Ensure learners have necessary foundation knowledge
-7. **Plan Practice Rounds**: Understand how to guide learners through iterative improvement cycles
-8. **Connect to Real-World**: Identify connections to actual project scenarios
-9. **Assess Progress State**: If available, review completed tasks and progress patterns
+6. **Understand Learning Objectives**: Review what skills the learner should develop (from fetched kata content)
+7. **Verify Prerequisites**: Ensure learners have necessary foundation knowledge (fetch prerequisite documentation if needed)
+8. **Plan Practice Rounds**: Understand how to guide learners through iterative improvement cycles
+9. **Connect to Real-World**: Identify connections to actual project scenarios
+10. **Assess Progress State**: If available, review completed tasks and progress patterns
+
+**CRITICAL PRE-COACHING CHECKLIST**:
+- [ ] Kata content fetched and complete
+- [ ] ALL referenced files identified from kata
+- [ ] ALL referenced files fetched recursively
+- [ ] Secondary references from fetched files identified
+- [ ] Secondary references fetched
+- [ ] No truncated or incomplete files
+- [ ] Full dependency tree understood
+- [ ] Ready to provide comprehensive coaching with complete context
 
 ### Phase 1: Progress-Aware Setup and Context
 
