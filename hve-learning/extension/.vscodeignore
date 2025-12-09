@@ -11,3 +11,8 @@
 # Include validation script and schemas
 !scripts/learning/kata-validation/**
 !learning/shared/**
+
+# Exclude all README files except the extension's own README
+.github/**/README.md
+scripts/**/README.md
+learning/**/README.md
