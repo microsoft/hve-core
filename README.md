@@ -17,6 +17,18 @@ Empowers developers to create high-quality learning content (katas, labs) using 
 
 ## 🚀 Getting Started
 
+### Prerequisites
+
+**GitHub MCP Server in VS Code**
+
+The platform requires the GitHub MCP (Model Context Protocol) server to be configured in VS Code for full functionality:
+
+1. Ensure you have the latest version of VS Code with GitHub Copilot
+2. Configure the GitHub MCP server in your VS Code settings
+3. Authenticate with your GitHub account to enable MCP capabilities
+
+This enables AI coaches to interact with GitHub repositories, track learning progress, and provide context-aware assistance.
+
 ### For Learners
 
 You have two options to start learning:
