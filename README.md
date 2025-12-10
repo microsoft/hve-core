@@ -38,7 +38,7 @@ You have two options to start learning:
 2. Select `learning-kata-coach` from the Agents dropdown
 3. Start your learning session:
    ```
-   Coach me on deploying AI infra with CAIRA
+   Coach me on edge deployments
    ```
 
 #### Option 2: Use the VS Code Extension
