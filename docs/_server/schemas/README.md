@@ -4,7 +4,7 @@ This directory contains JSON schemas for the HVE Learning Platform's progress tr
 
 ## Current Status
 
-**Note**: These schema files are currently **not actively used** by the docsify-based documentation system. The full progress tracking functionality that leverages these schemas is planned for a future release.
+**Note**: These schema files are currently **not used** by the docsify-based documentation system. The full progress tracking functionality that leverages these schemas is planned for a future release.
 
 ## Purpose
 
