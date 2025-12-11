@@ -1,0 +1,40 @@
+# Extension packages
+*.vsix
+
+# Extension temporary directories (copied during packaging)
+extension/.github/
+extension/scripts/
+extension/learning/
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files
+.vscode/.ropeproject
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp

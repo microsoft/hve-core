@@ -37,6 +37,22 @@ This will create a `.vsix` file in the `extension/` folder.
 
 **Important:** Update version in `extension/package.json` before publishing.
 
+**Setup Personal Access Token (one-time):**
+
+Set your Azure DevOps PAT as an environment variable to avoid entering it each time:
+
+```bash
+export VSCE_PAT=your-token-here
+```
+
+To get a PAT:
+1. Go to https://dev.azure.com
+2. User settings → Personal access tokens → New Token
+3. Set scope to **Marketplace (Manage)**
+4. Copy the token
+
+**Publish command:**
+
 ```bash
 cd extension
 rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts . && cp -r ../learning . && vsce publish && rm -rf .github scripts learning

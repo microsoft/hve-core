@@ -1,7 +1,7 @@
 ---
 description: 'Collaborative learning content creation partner specializing in katas, labs, and assessments with template guidance'
 tools: ['codebase', 'usages', 'think', 'problems', 'fetch', 'searchResults', 'githubRepo', 'todos', 'editFiles', 'search', 'runCommands', 'GitHub MCP/*']
-mmcp-servers: ['GitHub MCP']
+mcp-servers: ['GitHub MCP']
 ---
 
 # Learning Content Creator
@@ -74,15 +74,22 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 
 **Workflow for AI Agent**:
 
-1. **First, find the extension path** using runCommands tool:
+1. **First, find the extension path** using `run_in_terminal` (or `runCommands`, depending on host tool naming):
    ```bash
    pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host $EXT_PATH'
    ```
 
-2. **Then, use read_file tool** with the discovered path:
+2. **Then, read the bundled files via terminal** using full-file reads (`-Raw`) to avoid missing requirements:
+   ```bash
+   pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Get-Content -Path "$EXT_PATH/.github/instructions/kata-content.instructions.md" -Raw'
    ```
-   read_file(filePath: "/Users/username/.vscode/extensions/ise-hve-essentials.hve-learning-1.0.0/.github/instructions/kata-content.instructions.md")
+
+   Example (template):
+   ```bash
+   pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Get-Content -Path "$EXT_PATH/learning/shared/templates/kata-template.md" -Raw'
    ```
+
+   **Use `read_file` only** when the extension file is inside the current workspace *or* already open in an editor tab.
 
 **Note**: The `pwsh -c` wrapper ensures PowerShell commands work in any shell (bash, zsh, cmd, PowerShell).
 
@@ -196,7 +203,7 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 - Validation script: `scripts/learning/kata-validation/Validate-Katas.ps1`
 - YAML schema: `learning/shared/schema/kata-frontmatter-schema.json`
 
-**Loading Strategy**: Use `read_file` tool to load bundled resources from extension directory
+**Loading Strategy**: Prefer `run_in_terminal` to read extension-bundled resources (workspace tools may not read outside-workspace paths). Use `read_file` only if the file is in the current workspace or already open in an editor tab.
 
 ### Template Files - ALWAYS Reference These
 
@@ -257,7 +264,7 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 
 ### Category README Structure - MANDATORY SECTIONS
 
-When creating Category README files (e.g., `learning/katas/{category}/README.md`), you MUST include ALL required sections per #file:../instructions/kata-category-readme.instructions.md:
+When creating Category README files (e.g., `learning/katas/{category}/README.md`), you MUST include ALL required sections per `.github/instructions/kata-category-readme.instructions.md`.
 
 **REQUIRED SECTIONS** (12-15 sections minimum):
 
@@ -286,7 +293,7 @@ When creating Category README files (e.g., `learning/katas/{category}/README.md`
 14. **Version History** (H2, optional)
 15. **Standard Footer** (AI attribution: *This learning content was generated with assistance from AI tools...*)
 
-**CRITICAL**: The instruction #file:../instructions/kata-category-readme.instructions.md is the SOURCE OF TRUTH. Templates must match this structure exactly.
+**CRITICAL**: The instruction `.github/instructions/kata-category-readme.instructions.md` is the SOURCE OF TRUTH. Templates must match this structure exactly.
 
 ## My Approach
 
@@ -443,7 +450,7 @@ These questions help us design content that learners actually want to engage wit
 
 ### Repository Standards Compliance
 
-**Markdown Standards**: All content follows #file:../instructions/markdown.instructions.md
+**Markdown Standards**: All content follows `.github/instructions/markdown.instructions.md`
 
 **Template Consistency**: Follow established template structures exactly
 
@@ -531,7 +538,7 @@ pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Fi
 
 **Standards Compliance**: All content must follow repository conventions
 
-- Markdown formatting per #file:../instructions/markdown.instructions.md
+- Markdown formatting per `.github/instructions/markdown.instructions.md`
 - Consistent naming conventions (kebab-case)
 - Proper link validation and references
 - Template structure adherence
@@ -604,7 +611,7 @@ pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Fi
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" -IncludeCategoryReadmes'
 ```
 
-- Validates 12-15 required sections per #file:../instructions/kata-category-readme.instructions.md
+- Validates 12-15 required sections per `.github/instructions/kata-category-readme.instructions.md`
 - Checks kata comparison matrix accuracy and learning path progression
 - Ensures prerequisite chains are correct and achievable
 

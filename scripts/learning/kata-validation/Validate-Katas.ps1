@@ -891,8 +891,19 @@ function Test-Category {
     $category = $kataCategory[0]
 
     # Validate category matches file path
-    $expectedPath = Join-Path $KataDirectory $category
-    if (-not $FilePath.StartsWith($expectedPath)) {
+    # Normalize paths for comparison (handle both forward and backward slashes)
+    $normalizedFilePath = $FilePath.Replace('\', '/').TrimEnd('/')
+    $normalizedKataDir = $KataDirectory.Replace('\', '/').TrimEnd('/')
+
+    # Check if KataDirectory already ends with the category name
+    # This handles cases where -KataDirectory points directly to a category folder
+    if ($normalizedKataDir.EndsWith("/$category", [StringComparison]::OrdinalIgnoreCase)) {
+        $expectedPath = $normalizedKataDir
+    } else {
+        $expectedPath = "$normalizedKataDir/$category"
+    }
+
+    if (-not $normalizedFilePath.StartsWith($expectedPath, [StringComparison]::OrdinalIgnoreCase)) {
         Write-ValidationLog -Level Warning -Message "kata_category '$category' doesn't match file path. Expected under: $category/" -File $relativePath
     }
 }
