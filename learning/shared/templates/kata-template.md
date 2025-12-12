@@ -35,6 +35,7 @@ common_pitfalls:
 # Requirements
 requires_azure_subscription: false
 requires_local_environment: true
+requires_dev_container: false
 
 # SEO & Discoverability
 tags:

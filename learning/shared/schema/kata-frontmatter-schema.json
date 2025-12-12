@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/your-org/hve-learning/schemas/kata-frontmatter.json",
   "title": "Kata YAML Frontmatter Schema",
-  "description": "Validation schema for HVE Learning Platform kata YAML frontmatter (28 fields across 6 sections)",
+  "description": "Validation schema for HVE Learning Platform kata YAML frontmatter (29 fields across 6 sections)",
   "type": "object",
   "required": [
     "title",
@@ -165,6 +165,10 @@
     "requires_local_environment": {
       "type": "boolean",
       "description": "Whether kata requires local development environment"
+    },
+    "requires_dev_container": {
+      "type": "boolean",
+      "description": "Whether kata requires VS Code dev container with pre-configured tools (Terraform, Docker, Azure CLI, etc.)"
     },
     "tags": {
       "type": "array",

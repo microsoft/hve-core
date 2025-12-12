@@ -1,6 +1,6 @@
 ---
 applyTo: 'learning/katas/**/!(README).md'
-description: 'Required instructions for individual kata content including YAML requirements (28 fields: 21 required + 7 optional), Quick Context pattern, phase structure, and validation standards'
+description: 'Required instructions for individual kata content including YAML requirements (29 fields: 21 required + 8 optional), Quick Context pattern, phase structure, and validation standards'
 ---
 
 # Kata Content Standards
@@ -36,7 +36,7 @@ Use the following `ms.topic` value in YAML frontmatter for individual katas:
 
 **Authoritative Sources**:
 
-- **Complete field definitions**: `learning/shared/schema/kata-frontmatter-schema.json` (21 required + 7 optional fields)
+- **Complete field definitions**: `learning/shared/schema/kata-frontmatter-schema.json` (21 required + 8 optional fields)
 - **Template structure**: `learning/shared/templates/kata-template.md` (use as starting point)
 
 **Schema Overview**: Each kata requires 28 YAML fields (21 required + 7 optional) covering metadata, learning objectives, AI coaching, environment requirements, and search optimization.
@@ -61,7 +61,7 @@ Use these ratings for the `kata_difficulty` YAML field (integer 1-5):
 
 **Key Points**:
 
-- 21 required fields, 7 optional fields
+- 21 required fields, 8 optional fields
 - Strict typing enforced by JSON schema
 - All arrays can be empty `[]` when no items apply
 - Date format: `MM/DD/YYYY` (US format)
