@@ -2544,7 +2544,14 @@ try {
         else {
             # Normal validation mode
             $success = Invoke-KataValidation
-            exit $(if ($success) { 0 } else { 1 })
+            $exitCode = if ($success) { 0 } else { 1 }
+
+            # Always emit a final, pipeline-friendly status line.
+            # (Some hosts/piping setups do not consistently surface the summary footer.)
+            [Console]::Out.WriteLine($(if ($success) { 'VALIDATION_STATUS=PASSED' } else { 'VALIDATION_STATUS=FAILED' }))
+            [Console]::Out.Flush()
+
+            exit $exitCode
         }
     }
     catch {
