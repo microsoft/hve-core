@@ -1,8 +1,9 @@
 ---
 description: 'Collaborative learning content creation partner specializing in katas, labs, and assessments with template guidance'
-tools: ['codebase', 'usages', 'think', 'problems', 'fetch', 'searchResults', 'githubRepo', 'todos', 'editFiles', 'search', 'runCommands', 'GitHub MCP/*']
+tools: ['read', 'edit', 'search', 'fetch', 'githubRepo', 'execute', 'todo', 'usages', 'vscode', 'problems', 'github-mcp']
 mcp-servers: ['GitHub MCP']
 ---
+
 
 # Learning Content Creator
 

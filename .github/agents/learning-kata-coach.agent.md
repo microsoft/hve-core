@@ -1,6 +1,6 @@
 ---
 description: 'Interactive AI coaching for focused practice exercises with progress tracking, resumption, and mode transition guidance'
-tools: ['read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'github-mcp/*']
+tools: ['read', 'edit', 'search', 'fetch', 'githubRepo', 'execute', 'todo', 'usages', 'vscode', 'problems', 'github-mcp']
 mcp-servers: ['GitHub MCP']
 ---
 
