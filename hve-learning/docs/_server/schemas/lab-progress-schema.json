@@ -1,0 +1,468 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://learning-platform.github.io/schemas/lab-progress.json",
+  "title": "Lab Progress Schema",
+  "description": "Schema for lab progress tracking files used by lab coaches and progress system",
+  "type": "object",
+  "required": ["metadata", "progress", "timestamp"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the lab progress file and its context",
+      "required": ["version", "labId", "source", "fileType"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Schema version for compatibility tracking",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "example": "1.0.0"
+        },
+        "labId": {
+          "type": "string",
+          "description": "Unique identifier for the lab (category-lab-name format)",
+          "pattern": "^[a-z-]+$",
+          "example": "edge-deployment-comprehensive-iot-ops-setup"
+        },
+        "labTitle": {
+          "type": "string",
+          "description": "Human-readable title of the lab",
+          "example": "Comprehensive IoT Operations Setup"
+        },
+        "category": {
+          "type": "string",
+          "description": "Lab category for grouping and filtering",
+          "enum": ["edge-deployment", "cloud-integration", "full-stack", "troubleshooting", "advanced-scenarios"],
+          "example": "edge-deployment"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the progress update to prevent circular updates",
+          "enum": ["ui", "coach", "file-watcher", "server", "import", "manual"],
+          "example": "coach"
+        },
+        "fileType": {
+          "type": "string",
+          "const": "lab-progress",
+          "description": "File type identifier for validation"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for multi-session lab tracking",
+          "example": "lab-session-20250709-164310"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional user identifier for multi-user environments",
+          "example": "user123"
+        },
+        "labType": {
+          "type": "string",
+          "enum": ["guided", "self-paced", "challenge", "capstone"],
+          "description": "Type of lab experience",
+          "example": "guided"
+        },
+        "pageUrl": {
+          "type": "string",
+          "description": "URL of the lab page where progress was tracked",
+          "example": "/docs/training-labs/edge-deployment/comprehensive-setup.md"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when this progress file was last updated",
+          "example": "2025-07-10T16:43:10.000Z"
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this progress was recorded",
+      "example": "2025-07-09T16:43:10.000Z"
+    },
+    "progress": {
+      "type": "object",
+      "description": "Lab progress tracking data",
+      "required": ["sessions", "overallProgress"],
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "description": "Multi-session progress tracking",
+          "items": {
+            "type": "object",
+            "required": ["sessionId", "startTime", "checkboxStates"],
+            "properties": {
+              "sessionId": {
+                "type": "string",
+                "description": "Unique identifier for this session",
+                "example": "session-001"
+              },
+              "startTime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When this session started"
+              },
+              "endTime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When this session ended (optional if ongoing)"
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Session duration in minutes"
+              },
+              "checkboxStates": {
+                "type": "object",
+                "description": "State of checkboxes during this session",
+                "patternProperties": {
+                  "^[a-zA-Z0-9_-]+$": {
+                    "type": "boolean",
+                    "description": "Checkbox completion state"
+                  }
+                }
+              },
+              "sessionNotes": {
+                "type": "string",
+                "description": "Notes specific to this session"
+              },
+              "blockers": {
+                "type": "array",
+                "description": "Issues that blocked progress in this session",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "achievements": {
+                "type": "array",
+                "description": "Key achievements in this session",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "overallProgress": {
+          "type": "object",
+          "description": "Aggregated progress across all sessions",
+          "required": ["completedTasks", "totalTasks"],
+          "properties": {
+            "completedTasks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total completed tasks across all sessions"
+            },
+            "totalTasks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total number of tasks in the lab"
+            },
+            "completionPercentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Overall completion percentage"
+            },
+            "currentPhase": {
+              "type": "string",
+              "description": "Current phase or module of the lab",
+              "example": "phase-2-deployment"
+            },
+            "estimatedTimeRemaining": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Estimated time remaining in minutes"
+            }
+          }
+        },
+        "phases": {
+          "type": "object",
+          "description": "Progress tracking by lab phases",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "phaseTitle": {
+                  "type": "string",
+                  "description": "Human-readable phase title"
+                },
+                "completed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Completed tasks in this phase"
+                },
+                "total": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Total tasks in this phase"
+                },
+                "percentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Phase completion percentage"
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When this phase was started"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When this phase was completed"
+                },
+                "timeSpent": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Time spent on this phase in minutes"
+                }
+              }
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "description": "Lab environment state and configuration",
+          "properties": {
+            "clusters": {
+              "type": "array",
+              "description": "Cluster environments used in lab",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Cluster name"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["not-created", "creating", "ready", "error", "destroyed"],
+                    "description": "Current cluster status"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "Cluster access URL if available"
+                  },
+                  "lastChecked": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When status was last verified"
+                  }
+                }
+              }
+            },
+            "services": {
+              "type": "array",
+              "description": "Services deployed and their status",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Service name"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["deployment", "service", "ingress", "configmap", "secret", "other"],
+                    "description": "Kubernetes resource type"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["not-deployed", "deploying", "running", "error", "stopped"],
+                    "description": "Current service status"
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "description": "Kubernetes namespace"
+                  }
+                }
+              }
+            },
+            "configurations": {
+              "type": "object",
+              "description": "Key configuration values and their status",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "Configuration value"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["not-set", "configured", "verified", "error"],
+                    "description": "Configuration status"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "coachingData": {
+      "type": "object",
+      "description": "Data specific to lab coach interactions and guidance",
+      "properties": {
+        "lastCoachInteraction": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last coach interaction"
+        },
+        "coachingNotes": {
+          "type": "array",
+          "description": "Notes from coaching sessions across all lab sessions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "sessionId": {
+                "type": "string",
+                "description": "Which session this note relates to"
+              },
+              "note": {
+                "type": "string",
+                "description": "Coach observation or guidance note"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["observation", "guidance", "troubleshooting", "checkpoint", "session-start", "session-end"],
+                "description": "Type of coaching note"
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"],
+                "description": "Priority level for follow-up"
+              }
+            }
+          }
+        },
+        "sessionSummaries": {
+          "type": "array",
+          "description": "Summary of each lab session",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sessionId": {
+                "type": "string",
+                "description": "Session identifier"
+              },
+              "summary": {
+                "type": "string",
+                "description": "Summary of session progress and outcomes"
+              },
+              "nextSessionPlanning": {
+                "type": "string",
+                "description": "Planning notes for next session"
+              },
+              "blockers": {
+                "type": "array",
+                "description": "Outstanding blockers to address",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "overallAssessment": {
+          "type": "object",
+          "description": "Overall assessment of learner progress",
+          "properties": {
+            "strengthAreas": {
+              "type": "array",
+              "description": "Areas where learner shows strength",
+              "items": {
+                "type": "string"
+              }
+            },
+            "improvementAreas": {
+              "type": "array",
+              "description": "Areas needing improvement",
+              "items": {
+                "type": "string"
+              }
+            },
+            "recommendedNextSteps": {
+              "type": "array",
+              "description": "Recommended next learning activities",
+              "items": {
+                "type": "string"
+              }
+            },
+            "readinessLevel": {
+              "type": "string",
+              "enum": ["novice", "developing", "proficient", "advanced"],
+              "description": "Overall readiness level assessment"
+            }
+          }
+        }
+      }
+    },
+    "learningObjectives": {
+      "type": "array",
+      "description": "Lab learning objectives and their completion status",
+      "items": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string",
+            "description": "Learning objective description"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["technical", "process", "troubleshooting", "integration"],
+            "description": "Type of learning objective"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether objective has been achieved"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Evidence of objective completion"
+          },
+          "sessionCompleted": {
+            "type": "string",
+            "description": "Session ID where objective was completed"
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "History of progress updates for audit trail",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["ui", "coach", "file-watcher", "server", "import", "manual"]
+          },
+          "action": {
+            "type": "string",
+            "enum": ["created", "updated", "session-started", "session-ended", "checkpoint", "reset", "completed"]
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID if action relates to specific session"
+          },
+          "changes": {
+            "type": "object",
+            "description": "Summary of what changed"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
