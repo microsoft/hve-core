@@ -17,8 +17,6 @@ estimated_reading_time: 2
 
 An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
 
-[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
-
 **Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
 
 ## Overview
@@ -29,11 +27,15 @@ HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Co
 
 ### Automated Installation
 
-**Recommended:** Use the `hve-core-installer` agent for automated setup:
+**Recommended:** Use the buttons below to install the `hve-core-installer` agent in your project for fully automated setup:
+
+[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
+
+After installing the agent:
 
 1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
-2. Select `hve-core-installer` from Agent list in GitHub Copilot Chat pane
-3. Say: "Install HVE-Core into my project"
+2. Select `hve-core-installer` from the agent list
+3. Enter: "Install HVE Core into my project"
 4. Follow the guided installation
 
 The installer will:
