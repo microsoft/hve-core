@@ -1,5 +1,5 @@
 ---
-mode: 'agent'
+agent: 'agent'
 description: 'Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai'
 ---
 
@@ -15,6 +15,13 @@ You WILL NEVER claim a change "improves security" or other benefits unless expli
 You WILL NEVER start PR content generation before completing the analysis of `pr-reference.xml`.
 You WILL NEVER include changes related to linting errors or auto-generated Bicep/Terraform documentation.
 You WILL NEVER create follow-up tasks for documentation or tests.
+You WILL ALWAYS search for PR templates before generating content.
+You WILL ALWAYS use the repository PR template when available.
+You WILL ALWAYS auto-detect change types from file patterns.
+You WILL ALWAYS extract issue references from commits and branch names.
+You WILL NEVER check checkboxes that require manual verification (testing, security review).
+You WILL NEVER remove template sections, only populate them.
+You WILL ALWAYS preserve template structure and formatting.
 
 ## Process Overview
 
@@ -38,6 +45,33 @@ You WILL NEVER create follow-up tasks for documentation or tests.
   * You WILL note the total line count from the script's output.
   * You WILL write this line count to the chat.
 
+### Step 1.5: PR Template Discovery
+
+* **Search for PR template files:**
+  * Use file_search with pattern: `**/PULL_REQUEST_TEMPLATE.md`
+  * Check for template directory: `.github/PULL_REQUEST_TEMPLATE/`
+  
+* **Template Location Priority:**
+  1. `.github/pull_request_template.md` (hidden directory - most common)
+  2. `docs/pull_request_template.md` (docs directory)
+  3. `pull_request_template.md` (repository root)
+
+* **If template found:**
+  * Read entire template content using read_file
+  * Parse template sections by H2 headers (## Section Name)
+  * Store parsed structure for Step 3.5
+  * Report: "Found PR template at [path]. Will merge generated content."
+
+* **If multiple templates found (directory):**
+  * List available templates with first-line descriptions
+  * Ask user to select: "Multiple PR templates found. Select one:"
+  * Read selected template and continue
+
+* **If no template found:**
+  * Report: "No PR template found. Using standard pr.md format."
+  * Skip Step 3.5
+  * Continue with existing workflow
+
 ### Step 2: `pr-reference.xml` Analysis
 
 * **CRITICAL**: You MUST read and analyze the ENTIRE `pr-reference.xml` file which contains the current branch name, commit history (compared to `origin/main` or the specified `${input:branch}`), and the full detailed diff.
@@ -49,6 +83,88 @@ You WILL NEVER create follow-up tasks for documentation or tests.
 
 * Only AFTER the complete analysis of `pr-reference.xml`, You WILL generate a Markdown PR description in a file named `pr.md`.
 * If `pr.md` already exists then use `rm` to delete the `pr.md` first WITHOUT reading it.
+
+### Step 3.5: Template Integration (if template found in Step 1.5)
+
+* **Only execute if template was discovered in Step 1.5**
+
+* **Section Mapping** - Map pr.md content to template sections:
+
+  | pr.md Component       | Template Section           | Action                                        |
+  |-----------------------|----------------------------|-----------------------------------------------|
+  | H1 Title              | Document title             | Replace `# Pull Request` with generated title |
+  | Summary paragraph     | ## Description             | Insert after placeholder comment              |
+  | Change bullets        | ## Description             | Append after summary                          |
+  | Detected issue refs   | ## Related Issue(s)        | Replace placeholder comment                   |
+  | Detected change types | ## Type of Change          | Check matching `- [ ]` boxes                  |
+  | Security analysis     | ## Security Considerations | Check boxes, add notes if issues              |
+  | Notes/Important       | ## Additional Notes        | Insert content                                |
+
+* **Checkbox Auto-Selection** - For each detected change type:
+  * Replace `- [ ] Bug fix` with `- [x] Bug fix` if fix detected
+  * Replace `- [ ] New feature` with `- [x] New feature` if feature detected
+  * Replace `- [ ] Documentation update` with `- [x] Documentation update` if docs changed
+  * Continue for all applicable checkbox types
+
+* **Related Issues Population**:
+  * Extract issue references from commits: `Fixes #\d+`, `Closes #\d+`, `#\d+`
+  * Extract from branch name: issue numbers (e.g., `feature/123-description`)
+  * Extract ADO references: `AB#\d+`
+  * Insert formatted references replacing placeholder comment
+
+* **Security Section Population**:
+  * Check `- [ ] This PR does not contain...` if no secrets/sensitive data found
+  * Keep `- [ ] Any new dependencies...` unchecked (requires manual review)
+  * Add note if dependency changes detected
+
+* **Output Generation**:
+  * Generate final pr.md using populated template structure
+  * Preserve all template formatting (headers, checkboxes, comments)
+  * Remove placeholder comments that were filled
+  * Keep unfilled placeholders for manual completion
+  * Report: "Generated PR description using repository template"
+
+#### Change Type Detection Patterns
+
+Analyze changed files from pr-reference.xml `<full_diff>` section.
+Extract file paths from diff headers: `diff --git a/path/to/file b/path/to/file`
+
+| Change Type                | File Pattern             | Branch Pattern            | Commit Pattern            |
+|----------------------------|--------------------------|---------------------------|---------------------------|
+| Bug fix                    | —                        | `^(fix\|bugfix\|hotfix)/` | `^fix(\(.+\))?:`          |
+| New feature                | —                        | `^(feat\|feature)/`       | `^feat(\(.+\))?:`         |
+| Breaking change            | —                        | —                         | `BREAKING CHANGE:\|^.+!:` |
+| Documentation update       | `^docs/.*\.md$`          | `^docs/`                  | `^docs(\(.+\))?:`         |
+| GitHub Actions workflow    | `^\.github/workflows/.*` | —                         | `^ci(\(.+\))?:`           |
+| Linting configuration      | `\.markdownlint.*`       | —                         | `^lint(\(.+\))?:`         |
+| Security configuration     | `^scripts/security/.*`   | —                         | —                         |
+| DevContainer configuration | `^\.devcontainer/.*`     | —                         | —                         |
+| Dependency update          | `package.*\.json`        | `^deps/`                  | `^deps(\(.+\))?:`         |
+| Copilot instructions       | `.*\.instructions\.md$`  | —                         | —                         |
+| Copilot prompt             | `.*\.prompt\.md$`        | —                         | —                         |
+| Copilot chatmode           | `.*\.chatmode\.md$`      | —                         | —                         |
+| Script/automation          | `.*\.(ps1\|sh\|py)$`     | —                         | —                         |
+
+**Priority Rules:**
+
+* AI artifact patterns (.instructions.md, .prompt.md, .chatmode.md) take precedence over Documentation update
+* Breaking change in ANY commit marks the PR as breaking
+* Multiple types can be selected (not mutually exclusive)
+
+#### Issue Reference Extraction
+
+Extract from commit messages and branch names:
+
+| Pattern               | Source         | Output Format     |
+|-----------------------|----------------|-------------------|
+| `Fixes #(\d+)`        | Commit message | `Fixes #123`      |
+| `Closes #(\d+)`       | Commit message | `Closes #123`     |
+| `Resolves #(\d+)`     | Commit message | `Resolves #123`   |
+| `#(\d+)` (standalone) | Commit message | `Related to #123` |
+| `/(\d+)-`             | Branch name    | `Related to #123` |
+| `AB#(\d+)`            | Commit/branch  | `AB#12345` (ADO)  |
+
+**Deduplication**: Remove duplicate issue numbers, preserve action prefix from first occurrence.
 
 ### Step 4: Security and Compliance Analysis
 
@@ -101,7 +217,18 @@ You WILL NEVER create follow-up tasks for documentation or tests.
 
 ## PR File Format (`pr.md`)
 
-You WILL ALWAYS use the following Markdown format:
+### If Template Found (Preferred)
+
+Use repository template structure with populated sections:
+
+* Preserve all H2 headers from template
+* Fill sections with generated content
+* Check applicable checkboxes
+* Keep unfilled sections with placeholder comments
+
+### If No Template Found (Fallback)
+
+Use standalone format:
 
 <!-- <example> -->
 ```markdown
