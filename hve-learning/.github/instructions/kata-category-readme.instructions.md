@@ -9,7 +9,8 @@ This file provides comprehensive instructions for creating and maintaining kata 
 
 Category README files organize related katas, document learning progressions, and integrate with learning paths and training labs.
 
-For individual kata content, see `kata-content.instructions.md`.
+For individual kata content, see `
+.md`.
 For learning path content, see `learning-path-content.instructions.md`.
 For training lab content, see `training-lab-content.instructions.md`.
 
