@@ -44,6 +44,18 @@ The `.github/instructions/` files use `applyTo` glob patterns to scope their rul
 - `learning/training-labs/**/*.md` → `training-lab-content.instructions.md` (phase table structure)
 - `**/*.md` → `markdown.instructions.md` (markdownlint compliance, ATX headings, YAML frontmatter)
 
+### Markdown File Standards
+
+When creating or editing ANY markdown file (`.md`), you MUST follow the rules in `.github/instructions/markdown.instructions.md`. Key requirements:
+
+- **YAML frontmatter**: README files SHOULD include frontmatter with `title`, `description`, `ms.date`, `ms.topic`
+- **Headings**: Use ATX style (`#`), don't skip levels, surround with blank lines
+- **Lists**: Use consistent markers (`*` preferred), surround with blank lines, 2-space indent for sublists
+- **Code blocks**: Always specify a language (use `text` if no highlighting needed), surround with blank lines
+- **Tables**: Surround with blank lines, use leading and trailing pipes
+- **Links**: Never use bare URLs, always provide link text or use autolink `<https://...>`
+- **Files must end**: With exactly one trailing newline
+
 ### Mandatory Content Patterns
 
 **Quick Context Section** (all katas):

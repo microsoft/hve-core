@@ -122,23 +122,31 @@ hve-learning/
 │   │   ├── learning-content-creator.agent.md
 │   │   ├── learning-kata-coach.agent.md
 │   │   └── learning-lab-coach.agent.md
-│   └── instructions/           # Learning content guidelines
-│       ├── kata-content.instructions.md
-│       ├── kata-category-readme.instructions.md
-│       ├── learning-coach-schema.instructions.md
-│       ├── learning-path-content.instructions.md
-│       ├── markdown.instructions.md
-│       └── training-lab-content.instructions.md
+│   ├── instructions/           # Learning content guidelines
+│   │   ├── kata-content.instructions.md
+│   │   ├── kata-category-readme.instructions.md
+│   │   ├── learning-coach-schema.instructions.md
+│   │   ├── learning-path-content.instructions.md
+│   │   ├── markdown.instructions.md
+│   │   └── training-lab-content.instructions.md
+│   └── workflows/              # GitHub Actions CI/CD
+│       ├── code-quality.yml
+│       ├── pr.yml
+│       └── ci.yml
 ├── learning/
 │   └── shared/                 # Reusable learning resources
 │       ├── templates/          # Content templates
 │       ├── schema/             # Validation schemas
 │       └── content-guidelines/ # Quality standards
 ├── scripts/
-│   └── learning/              # Automation and validation tools
-│       ├── Generate-LearningCatalog.ps1
-│       ├── Validate-CatalogConsistency.ps1
-│       └── kata-validation/
+│   ├── learning/              # Automation and validation tools
+│   │   ├── Generate-LearningCatalog.ps1
+│   │   ├── Validate-CatalogConsistency.ps1
+│   │   └── kata-validation/
+│   └── linting/               # Code quality scripts
+│       ├── Invoke-SpellCheck.ps1
+│       ├── Invoke-MarkdownLint.ps1
+│       └── Invoke-TableFormat.ps1
 └── docs/_server/schemas/      # API and progress tracking schemas
 ```
 
