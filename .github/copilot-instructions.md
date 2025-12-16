@@ -8,6 +8,7 @@ This is an **AI-assisted learning platform** that provides structured learning t
 2. **Content Creation Mode**: AI assists developers in creating validated, schema-compliant learning content
 
 **Key Components**:
+
 - `.github/agents/`: Chat agents for coaching (`learning-kata-coach`, `learning-lab-coach`, `learning-content-creator`)
 - `.github/instructions/`: Scoped instruction files for different content types (applied via `applyTo` patterns)
 - `learning/shared/`: Templates, schemas, and content guidelines
@@ -46,6 +47,7 @@ The `.github/instructions/` files use `applyTo` glob patterns to scope their rul
 ### Mandatory Content Patterns
 
 **Quick Context Section** (all katas):
+
 ```markdown
 ## Quick Context
 
@@ -57,6 +59,7 @@ The `.github/instructions/` files use `applyTo` glob patterns to scope their rul
 **NO COMPANY NAMES** in scenarios - use "role + industry + technical context" (e.g., "You're a platform engineer at a manufacturing company...")
 
 **AI Coaching Comments** - embed hints in HTML for coach agents:
+
 ```markdown
 <!-- HINT: If learner stuck on X, suggest checking Y -->
 ```
@@ -80,6 +83,7 @@ pwsh ./scripts/learning/kata-validation/Validate-Katas.ps1 -KataDirectory "learn
 ```
 
 **Validation Checks**:
+
 - YAML frontmatter schema compliance (all 28 fields)
 - Prerequisite chain integrity (no circular dependencies)
 - Category directory alignment
@@ -91,6 +95,7 @@ pwsh ./scripts/learning/kata-validation/Validate-Katas.ps1 -KataDirectory "learn
 ### Checkbox Structure Rules
 
 ✅ **CORRECT** - Flat structure:
+
 ```markdown
 - [ ] Complete step 1
 - [ ] Complete step 2
@@ -98,6 +103,7 @@ pwsh ./scripts/learning/kata-validation/Validate-Katas.ps1 -KataDirectory "learn
 ```
 
 ❌ **INCORRECT** - Nested content causes CSS strikethrough issues:
+
 ```markdown
 - [ ] Setup validation:
   - Nested bullet (breaks rendering)
@@ -121,6 +127,7 @@ When coding in this repository, you may interact with specialized chat agents:
 - **@learning-lab-coach**: Multi-phase system coaching
 
 **Agent Constraints**:
+
 - Keep responses concise for chat pane (no walls of text)
 - Never use HTML `<input>` elements in responses
 - Reference instruction files when making content edits
@@ -155,6 +162,7 @@ Match content detail to declared `scaffolding_level` in YAML.
 ### OpenHack Coaching Methodology
 
 Content is designed for **discovery-based learning**:
+
 - Challenges drive motivation (not lectures)
 - Learners explore and experiment
 - Failure is expected and positive
@@ -171,6 +179,7 @@ When writing kata content, phrase instructions as challenges/objectives rather t
 ### GitHub MCP Server
 
 Required for AI coaches to:
+
 - Track progress across sessions
 - Access kata content from multiple repositories (CAIRA, edge-ai, etc.)
 - Create personalized learning paths

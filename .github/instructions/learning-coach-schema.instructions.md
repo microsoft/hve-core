@@ -1,5 +1,8 @@
 # Learning Coach Schema Instructions
 
+<!-- markdownlint-disable MD024 -->
+<!-- This file intentionally uses repeated heading names (File Structure, Implementation Guidelines) for consistent documentation patterns across different schema types -->
+
 Instructions for AI coaches when writing progress files and managing learner progress tracking in the learning platform.
 
 ## Core Requirements

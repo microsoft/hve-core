@@ -71,7 +71,7 @@ Use these ratings when documenting kata difficulty (matches individual kata `kat
 Category README files MUST include these core sections (minimum 10, typically 12-15 depending on category complexity):
 
 <!-- <kata-category-readme-pattern> -->
-```markdown
+````markdown
 ---
 title: "[Category Name] - Learning Katas"
 description: "Category overview and kata collection"
@@ -255,7 +255,7 @@ We welcome feedback and contributions! Please:
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*
 <!-- markdownlint-enable MD036 -->
-```
+````
 
 <!-- </kata-category-readme-pattern> -->
 

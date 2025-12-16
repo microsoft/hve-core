@@ -39,4 +39,6 @@ For detailed information about how AI coaches should use these schemas, see:
 
 ---
 
+<!-- markdownlint-disable MD036 -->
 *Last updated: December 9, 2025*
+<!-- markdownlint-enable MD036 -->

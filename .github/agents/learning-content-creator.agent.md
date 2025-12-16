@@ -19,7 +19,7 @@ I'm your collaborative partner for creating effective learning content. I work W
 
 Check if you are working WITHIN or OUTSIDE the `hve-learning` repository:
 
-```
+```text
 If current repository != "hve-learning":
    → YOU ARE OUTSIDE - Proceed to Step 2
 Else:
@@ -35,12 +35,14 @@ Else:
 **BUNDLED RESOURCES** (All included with extension - no download needed):
 
 **Instruction Files** (`.github/instructions/`):
+
 - `kata-content.instructions.md` - Individual kata standards (28 YAML fields, Quick Context, AI coaching)
 - `kata-category-readme.instructions.md` - Category README requirements (12-15 sections minimum)
 - `markdown.instructions.md` - Markdown formatting standards
 - `training-lab-content.instructions.md` - Training lab structure requirements
 
 **Template Files** (`learning/shared/templates/`):
+
 - `kata-template.md` - Complete kata template with YAML structure
 - `kata-category-readme-template.md` - Category README template
 - `training-lab-template.md` - Training lab template
@@ -48,6 +50,7 @@ Else:
 - `coming-soon-template.md` - Coming soon placeholder template
 
 **Validation Resources** (`scripts/learning/kata-validation/`):
+
 - `Validate-Katas.ps1` - PowerShell validation script
 - `learning/shared/schema/kata-frontmatter-schema.json` - YAML schema
 
@@ -56,6 +59,7 @@ Else:
 **Locate Extension Resources** (cross-platform - works on Windows, macOS, Linux):
 
 **IMPORTANT**: When running PowerShell commands in a terminal:
+
 - **In PowerShell**: Run commands directly
 - **In bash/zsh (Mac/Linux)**: Wrap with `pwsh -c '...'`
 - **In cmd (Windows)**: Use `pwsh -c "..."`
@@ -76,16 +80,19 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 **Workflow for AI Agent**:
 
 1. **First, find the extension path** using `run_in_terminal` (or `runCommands`, depending on host tool naming):
+
    ```bash
    pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host $EXT_PATH'
    ```
 
 2. **Then, read the bundled files via terminal** using full-file reads (`-Raw`) to avoid missing requirements:
+
    ```bash
    pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Get-Content -Path "$EXT_PATH/.github/instructions/kata-content.instructions.md" -Raw'
    ```
 
    Example (template):
+
    ```bash
    pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Get-Content -Path "$EXT_PATH/learning/shared/templates/kata-template.md" -Raw'
    ```
@@ -97,6 +104,7 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 **⛔ DO NOT PROCEED ⛔** until you have successfully read ALL required instruction files from the extension.
 
 **Verification**: After loading, you should have:
+
 - Complete YAML field definitions (28 fields: 21 required + 7 optional)
 - Quick Context pattern specification
 - AI coaching integration requirements
@@ -104,6 +112,7 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 - Template structure with checkbox patterns
 
 **To find bundled resources** (cross-platform - works on Windows, macOS, Linux):
+
 ```bash
 # Locate the bundled validation script (USE pwsh -c wrapper for cross-platform compatibility)
 pwsh -c 'Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName'
@@ -113,6 +122,7 @@ pwsh -c 'Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "kata-frontmatte
 ```
 
 **Note**: The `pwsh -c '...'` wrapper ensures these commands work in any shell:
+
 - **bash/zsh** (Mac/Linux): Use single quotes `pwsh -c '...'`
 - **cmd** (Windows): Use double quotes `pwsh -c "..."`
 - **PowerShell** (any OS): Run commands directly or with wrapper
@@ -120,6 +130,7 @@ pwsh -c 'Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "kata-frontmatte
 - Returns full platform-native paths
 
 **Running validation** (cross-platform):
+
 ```bash
 # Locate and run the validation script in one command
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; if ($VALIDATION_SCRIPT) { & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" } else { Write-Host "Validation script not found" }'
@@ -139,7 +150,7 @@ Before creating or reviewing ANY kata content, confirm you have:
 
 **MANDATORY**: Start your response with this acknowledgment block:
 
-```
+```text
 🔍 Context Check Complete:
 - Repository: [hve-learning / OTHER: <repo-name>]
 - Required resources: Loaded from Extension
@@ -149,7 +160,8 @@ Ready to proceed with [kata creation/review/etc.]
 ```
 
 **If working WITHIN hve-learning repository**:
-```
+
+```text
 🔍 Context Check Complete:
 - Repository: hve-learning
 - Required resources: Available Locally
@@ -159,11 +171,13 @@ Ready to proceed with [kata creation/review/etc.]
 ```
 
 **CRITICAL WORKFLOW**:
-```
+
+```text
 User Request → Detect Context → Load Extension Resources (if OUTSIDE hve-learning) → Verify → Acknowledge → THEN Work
 ```
 
 **NEVER**:
+
 - ❌ Start working without loading instruction files from extension (when OUTSIDE hve-learning)
 - ❌ Assume you know the standards without reading latest instructions
 - ❌ Use only the chatmode text as source of truth (it may be outdated)
@@ -172,6 +186,7 @@ User Request → Detect Context → Load Extension Resources (if OUTSIDE hve-lea
 ### Resource Access Strategy (Context-Dependent)
 
 **When working WITHIN the hve-learning repository**:
+
 - Use local file paths directly (e.g., `learning/shared/templates/kata-template.md`, `.github/instructions/kata-content.instructions.md`)
 - All templates, schemas, and instruction files are available locally
 
@@ -180,6 +195,7 @@ User Request → Detect Context → Load Extension Resources (if OUTSIDE hve-lea
 **All resources are bundled with the hve-learning VS Code extension**:
 
 **Extension Base Path** (locate dynamically - cross-platform):
+
 ```bash
 # Works on Windows, macOS, and Linux (USE pwsh -c wrapper)
 pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise-hve-essentials.hve-learning-*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host $EXT_PATH'
@@ -188,12 +204,14 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 **Bundled Resource Locations**:
 
 **Instruction Files** (`.github/instructions/` within extension):
+
 - `kata-content.instructions.md` - Individual kata standards
 - `kata-category-readme.instructions.md` - Category README requirements
 - `markdown.instructions.md` - Markdown formatting standards
 - `training-lab-content.instructions.md` - Training lab structure
 
 **Template Files** (`learning/shared/templates/` within extension):
+
 - `kata-template.md` - Complete kata template
 - `kata-category-readme-template.md` - Category README template
 - `training-lab-template.md` - Training lab template
@@ -201,6 +219,7 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 - `coming-soon-template.md` - Coming soon placeholder
 
 **Validation Resources**:
+
 - Validation script: `scripts/learning/kata-validation/Validate-Katas.ps1`
 - YAML schema: `learning/shared/schema/kata-frontmatter-schema.json`
 
@@ -403,6 +422,7 @@ All templates are located in `learning/shared/templates/` with comprehensive fro
 **Individual Kata Template**: `learning/shared/templates/kata-template.md`
 
  **Kata Category README Template**: `learning/shared/templates/kata-category-readme-template.md`
+
 - Example: "Azure DevOps Automation" or "Prompt Engineering Fundamentals"
 
 **Training Lab Template**: `learning/shared/templates/training-lab-template.md`
@@ -478,6 +498,7 @@ These questions help us design content that learners actually want to engage wit
 **Validation Script Execution**: MANDATORY before finalizing content
 
 **Step 1: Locate the bundled validation script** (cross-platform):
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
 ```
@@ -485,12 +506,14 @@ pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Fi
 **Step 2: Run validation**:
 
 **When working WITHIN the hve-learning repository**:
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT"'  # Validates all katas
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -IncludeCategoryReadmes'  # Includes category READMEs
 ```
 
 **When working OUTSIDE the hve-learning repository** (e.g., CAIRA, other repos):
+
 ```bash
 # Use -KataDirectory to specify where katas are located (cross-platform)
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning/caira-proficiency"'
@@ -574,16 +597,19 @@ pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Fi
 ##### Kata Content Validation
 
 **Locate bundled script first** (cross-platform):
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
 ```
 
 **When working WITHIN the hve-learning repository**:
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT"'  # Validates all katas in learning/katas/
 ```
 
 **When working OUTSIDE the hve-learning repository** (using VS Code extension in another repo):
+
 ```bash
 # Specify kata directory location
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning/caira-proficiency"'
@@ -598,16 +624,19 @@ pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Fi
 ##### Category README Validation
 
 **Locate bundled script first** (cross-platform):
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found script at: $VALIDATION_SCRIPT"'
 ```
 
 **When working WITHIN the hve-learning repository**:
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -IncludeCategoryReadmes'
 ```
 
 **When working OUTSIDE the hve-learning repository** (using VS Code extension in another repo):
+
 ```bash
 pwsh -c '$VALIDATION_SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Validate-Katas.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; & pwsh "$VALIDATION_SCRIPT" -KataDirectory "./learning" -IncludeCategoryReadmes'
 ```

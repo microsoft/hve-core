@@ -22,7 +22,9 @@ Empowers developers to create high-quality learning content (katas, labs) using 
 
 ### Prerequisites
 
+<!-- markdownlint-disable MD036 -->
 **GitHub MCP Server in VS Code**
+<!-- markdownlint-enable MD036 -->
 
 The platform requires the GitHub MCP (Model Context Protocol) server to be configured in VS Code for full functionality:
 
@@ -42,7 +44,7 @@ You have two options to start learning:
 2. Select `learning-kata-coach` from the Agents dropdown
 3. Start your learning session:
 
-   ```
+   ```text
    Coach me on edge deployments
    ```
 
@@ -53,7 +55,7 @@ You have two options to start learning:
 3. Select `learning-kata-coach` from the Agents dropdown
 4. Start your learning session directly in the domain context:
 
-   ```
+   ```text
    Coach me on deploying AI infra with CAIRA
    ```
 
@@ -66,7 +68,7 @@ Developers working on new learning content:
 3. Select `learning-content-creator` from the Agents dropdown
 4. Start creating content:
 
-   ```
+   ```text
    Let's work on production troubleshooting kata
    ```
 
@@ -113,7 +115,7 @@ Specialized AI assistants for different learning needs:
 
 ## 📁 Platform Structure
 
-```
+```text
 hve-learning/
 ├── .github/
 │   ├── agents/                 # AI coaching agents
@@ -146,25 +148,25 @@ hve-learning/
 - **Skill Developer**: Some experience, ready for structured practice
 - **Expert Practitioner**: Advanced learner seeking mastery
 
-## 🤖 AI Coaching Modes
+## 🤖 Using AI Coaching Agents
 
 Use the specialized agents for guided learning:
 
 **For Focused Practice (Katas):**
 
-```
+```text
 @learning-kata-coach I'm working on [topic] and want interactive coaching
 ```
 
 **For Complex Systems (Training Labs):**
 
-```
+```text
 @learning-lab-coach Guide me through [system/integration] learning
 ```
 
 **For Content Creation:**
 
-```
+```text
 @learning-content-creator Help me create learning content for [topic]
 ```
 
@@ -292,7 +294,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
 trademarks or logos is subject to and must follow
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
 
