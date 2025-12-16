@@ -45,7 +45,7 @@ You have two options to start learning:
 3. Start your learning session:
 
    ```text
-   Coach me on edge deployments
+   Coach me on edge deployments katas
    ```
 
 #### Option 2: Use the VS Code Extension
@@ -56,7 +56,7 @@ You have two options to start learning:
 4. Start your learning session directly in the domain context:
 
    ```text
-   Coach me on deploying AI infra with CAIRA
+   Coach me on deploying AI infra with CAIRA katas
    ```
 
 ### For Content Creators
