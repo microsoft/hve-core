@@ -10,6 +10,9 @@
 !.github/agents/*.agent.md
 !.github/instructions/*.instructions.md
 
+# Never package CI workflows
+.github/workflows/**
+
 # Include validation script and schemas
 !scripts/learning/kata-validation/**
 !learning/shared/**

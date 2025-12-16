@@ -1,0 +1,21 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality-validation:
+    name: Code Quality Validation
+    uses: ./.github/workflows/code-quality.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
