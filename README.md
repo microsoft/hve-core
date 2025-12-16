@@ -50,7 +50,7 @@ You have two options to start learning:
 
 #### Option 2: Use the VS Code Extension
 
-1. Install the HVE Learning Platform VS Code extension
+1. Install the HVE Learning VS Code extension
 2. Open any accelerator repository (e.g., CAIRA, edge-ai)
 3. Select `learning-kata-coach` from the Agents dropdown
 4. Start your learning session directly in the domain context:
