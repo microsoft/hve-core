@@ -16,3 +16,12 @@ jobs:
     uses: ./.github/workflows/code-quality.yml
     permissions:
       contents: read
+  
+  codeql:
+    needs: code-quality-validation
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read

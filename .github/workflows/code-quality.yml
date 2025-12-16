@@ -67,10 +67,3 @@ jobs:
     with:
       soft-fail: true
 
-  codeql:
-    name: CodeQL Security Analysis
-    uses: ./.github/workflows/codeql-analysis.yml
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
