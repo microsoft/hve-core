@@ -18,7 +18,6 @@ jobs:
       contents: read
   
   codeql:
-    needs: code-quality-validation
     name: CodeQL Security Analysis
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
