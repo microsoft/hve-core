@@ -19,21 +19,27 @@ Specialized AI assistants for different learning needs:
 This extension includes the entire HVE Learning Platform content:
 
 #### 🥋 Learning Katas & Content
+
 Ready-to-use learning materials in the `learning/` directory:
+
 - Focused skill-building exercises (15-45 minutes)
 - Progressive difficulty levels and structured paths
 - Hands-on practice scenarios with real-world context
 - Built-in assessment and progress tracking systems
 
 #### 📖 Learning Documentation
+
 Comprehensive guides in the `docs/` directory:
+
 - Learning methodology and educational philosophy
 - Skill assessment frameworks and rubrics
 - Progress tracking and measurement systems
 - Contributing guidelines for content creators
 
 #### 🛠️ Learning Scripts & Tools
+
 Automation utilities in the `scripts/` directory:
+
 - Content validation and quality assurance
 - Learning path generation and organization
 - Progress tracking and analytics

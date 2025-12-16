@@ -7,12 +7,15 @@ A comprehensive AI-assisted learning platform designed for hyper-velocity engine
 The HVE Learning Platform serves two primary purposes:
 
 ### 1. Central Learning Gateway
+
 Serves as a comprehensive learning hub that can coach you on:
+
 - **Generic Topics**: Using katas stored in this repository for foundational engineering skills
 - **Domain-Specific Topics**: Using katas stored in corresponding accelerator repositories (CAIRA, edge-ai, etc.)
 - **Scenario-Based Learning Paths**: Navigate comprehensive multi-accelerator learning journeys (e.g., "Create an AI agentic system") that orchestrate katas from multiple accelerator repositories into cohesive end-to-end experiences
 
 ### 2. Learning Content Creation Tool
+
 Empowers developers to create high-quality learning content (katas, labs) using AI-assisted workflows and validated templates.
 
 ## 🚀 Getting Started
@@ -34,18 +37,22 @@ This enables AI coaches to interact with GitHub repositories, track learning pro
 You have two options to start learning:
 
 #### Option 1: Work Directly in this Repository
+
 1. Clone/open the `hve-learning` repository
 2. Select `learning-kata-coach` from the Agents dropdown
 3. Start your learning session:
+
    ```
    Coach me on edge deployments
    ```
 
 #### Option 2: Use the VS Code Extension
+
 1. Install the HVE Learning Platform VS Code extension
 2. Open any accelerator repository (e.g., CAIRA, edge-ai)
 3. Select `learning-kata-coach` from the Agents dropdown
 4. Start your learning session directly in the domain context:
+
    ```
    Coach me on deploying AI infra with CAIRA
    ```
@@ -58,6 +65,7 @@ Developers working on new learning content:
 2. Open your accelerator repository (e.g., CAIRA)
 3. Select `learning-content-creator` from the Agents dropdown
 4. Start creating content:
+
    ```
    Let's work on production troubleshooting kata
    ```
@@ -78,21 +86,27 @@ The HVE (Hyper-Velocity Engineering) Learning Platform combines AI assistance wi
 ## 🎯 Learning Components
 
 ### 🥋 Katas (15-45 minutes)
+
 Focused practice exercises designed for skill building:
+
 - **Quick Context**: Immediate problem understanding
 - **Essential Setup**: Minimal prerequisites
 - **Practice Tasks**: Hands-on skill development
 - **Completion Check**: Measurable outcomes
 
 ### 🧪 Training Labs (2+ hours)
+
 Comprehensive learning experiences for complex systems:
+
 - **Multi-Module Structure**: Progressive complexity building
 - **Team-Based Options**: Collaborative learning support
 - **Integration Focus**: Real-world system interactions
 - **Assessment Integration**: Skill validation checkpoints
 
 ### 🤖 AI Coaching Modes
+
 Specialized AI assistants for different learning needs:
+
 - **Learning Kata Coach**: Focused practice guidance with progress tracking
 - **Learning Lab Coach**: Comprehensive system coaching for complex scenarios
 - **Learning Content Creator**: Collaborative content development partner
@@ -127,29 +141,35 @@ hve-learning/
 ```
 
 ## 🎓 Choose Your Learning Path
+
 - **Foundation Builder**: New to platform concepts
 - **Skill Developer**: Some experience, ready for structured practice
 - **Expert Practitioner**: Advanced learner seeking mastery
 
 ## 🤖 AI Coaching Modes
+
 Use the specialized agents for guided learning:
 
 **For Focused Practice (Katas):**
+
 ```
 @learning-kata-coach I'm working on [topic] and want interactive coaching
 ```
 
 **For Complex Systems (Training Labs):**
+
 ```
 @learning-lab-coach Guide me through [system/integration] learning
 ```
 
 **For Content Creation:**
+
 ```
 @learning-content-creator Help me create learning content for [topic]
 ```
 
 ## 📊 Track Your Progress
+
 - Checkbox-based progress tracking in each kata
 - Automated skill assessment and recommendations
 - Personalized learning path generation
@@ -157,18 +177,21 @@ Use the specialized agents for guided learning:
 ## 📋 Content Creation Guidelines
 
 ### Kata Development
+
 1. Use `learning/shared/templates/kata-template.md`
 2. Follow 28 YAML front-matter fields (21 required + 7 optional)
 3. Implement flat checkbox structure (no nested content)
 4. Include AI coaching integration points
 
 ### Quality Standards
+
 - **Inclusive Language**: No "master/mastery" terminology
 - **Time Accuracy**: ±10% of stated completion time
 - **Technical Validation**: All code/commands tested
 - **Progressive Difficulty**: Scaffolding appropriate to skill level
 
 ### Validation Tools
+
 - `scripts/learning/kata-validation/Validate-Katas.ps1`
 - Automated front-matter validation
 - Learning path consistency checks
@@ -177,12 +200,15 @@ Use the specialized agents for guided learning:
 ## 🎨 AI Coaching Integration
 
 ### Schema-Driven Progress Tracking
+
 The platform uses structured schemas for:
+
 - **Kata Progress**: `docs/_server/schemas/kata-progress-schema.json`
 - **Learning Paths**: `docs/_server/schemas/learning-path-progress-schema.json`
 - **Skill Assessment**: `docs/_server/schemas/self-assessment-schema.json`
 
 ### Coaching Methodologies
+
 - **Socratic Questioning**: Guides discovery rather than providing answers
 - **Progressive Hints**: Incremental guidance when learners are stuck
 - **Metacognitive Validation**: Reflection and self-explanation exercises
@@ -191,12 +217,14 @@ The platform uses structured schemas for:
 ## 📚 Learning Science Foundation
 
 ### OpenHack Methodology
+
 - **Challenge-Based**: Real problems drive learning motivation
 - **Discovery-Oriented**: Learners explore and experiment
 - **Failure-Positive**: Learning from mistakes is encouraged
 - **Coach-Supported**: Guidance available but not prescriptive
 
 ### Scaffolding Levels
+
 - **Heavy** (Beginner): Step-by-step with expected outputs
 - **Medium** (Intermediate): Framework with reference links
 - **Minimal** (Advanced): Objectives and success criteria only
@@ -204,12 +232,14 @@ The platform uses structured schemas for:
 ## 🔧 Technical Implementation
 
 ### Template System
+
 - **Consistent Structure**: All content follows validated templates
 - **YAML Front-matter**: Structured metadata for AI coaching integration
 - **Progressive Disclosure**: Information revealed as needed
 - **Cross-References**: Linked learning experiences
 
 ### Validation Pipeline
+
 - **Automated Testing**: All instructions verified in clean environments
 - **Schema Compliance**: YAML front-matter validation
 - **Link Verification**: Internal and external reference checking
@@ -218,6 +248,7 @@ The platform uses structured schemas for:
 ## 🤝 Contributing
 
 ### Content Creation Workflow
+
 1. **Discovery**: Use `@learning-content-creator` for collaborative design
 2. **Template Application**: Apply appropriate shared template
 3. **Content Development**: Write following quality guidelines
@@ -225,6 +256,7 @@ The platform uses structured schemas for:
 5. **Integration**: Deploy with progress tracking enabled
 
 ### Quality Assurance
+
 - All content must pass `Validate-Katas.ps1` checks
 - User testing with target audience required
 - Technical accuracy verification in clean environments
@@ -263,7 +295,5 @@ trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
-
-
 
 Ready to start learning? Activate a coaching mode and begin your hyper-velocity engineering journey!

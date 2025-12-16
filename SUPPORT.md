@@ -11,4 +11,3 @@ For help and questions about using this project, please add a new [GitHub Discus
 ## Microsoft Support Policy  
 
 Support for this project is limited to the resources listed above.
-

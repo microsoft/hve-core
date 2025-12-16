@@ -34,6 +34,7 @@ The upcoming docsify integration will provide:
 All progress files created by AI coaches are automatically validated against these schemas. Files must conform to the structure defined here to ensure compatibility with the future docsify functionality.
 
 For detailed information about how AI coaches should use these schemas, see:
+
 - `../.github/instructions/learning-coach-schema.instructions.md`
 
 ---

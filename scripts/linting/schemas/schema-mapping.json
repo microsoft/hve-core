@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Schema mapping configuration for frontmatter validation",
+  "mappings": [
+    {
+      "pattern": "README.md|CONTRIBUTING.md|CODE_OF_CONDUCT.md|SECURITY.md|SUPPORT.md",
+      "scope": "root",
+      "schema": "root-community-frontmatter.schema.json",
+      "description": "Root community files"
+    },
+    {
+      "pattern": "docs/**/*.md",
+      "scope": "docs",
+      "schema": "docs-frontmatter.schema.json",
+      "description": "Documentation files in docs directory"
+    },
+    {
+      "pattern": ".github/**/*.instructions.md",
+      "scope": "github-instructions",
+      "schema": "instruction-frontmatter.schema.json",
+      "description": "Instruction files in .github directory"
+    },
+    {
+      "pattern": ".github/**/*.chatmode.md",
+      "scope": "github-chatmodes",
+      "schema": "chatmode-frontmatter.schema.json",
+      "description": "ChatMode files in .github directory"
+    },
+    {
+      "pattern": ".github/**/*.prompt.md",
+      "scope": "github-prompts",
+      "schema": "prompt-frontmatter.schema.json",
+      "description": "Prompt files in .github directory"
+    },
+    {
+      "pattern": ".github/**/*.agent.md",
+      "scope": "github-agents",
+      "schema": "agent-frontmatter.schema.json",
+      "description": "Agent files in .github directory"
+    }
+  ],
+  "defaultSchema": "base-frontmatter.schema.json"
+}

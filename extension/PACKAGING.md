@@ -28,7 +28,7 @@ From the hve-learning directory:
 
 ```bash
 cd extension
-rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts . && cp -r ../learning . && vsce package && rm -rf .github scripts learning
+rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts/learning . && cp -r ../learning . && vsce package && rm -rf .github scripts learning
 ```
 
 This will create a `.vsix` file in the `extension/` folder.
@@ -46,7 +46,8 @@ export VSCE_PAT=your-token-here
 ```
 
 To get a PAT:
-1. Go to https://dev.azure.com
+
+1. Go to <https://dev.azure.com>
 2. User settings → Personal access tokens → New Token
 3. Set scope to **Marketplace (Manage)**
 4. Copy the token
@@ -55,7 +56,7 @@ To get a PAT:
 
 ```bash
 cd extension
-rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts . && cp -r ../learning . && vsce publish && rm -rf .github scripts learning
+rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts/learning . && cp -r ../learning . && vsce publish && rm -rf .github scripts learning
 ```
 
 ## What Gets Included
