@@ -1122,7 +1122,11 @@ Since you're in the same repository where this kata lives, you'll need to **rest
 
 1. **Reopen in Container**: Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux) → `Dev Containers: Reopen in Container`
 2. **Wait for container to build**: First time takes 2-3 minutes
-3. **Verify HVE Learning extension**: Ensure `hve-learning` VS Code extension is installed in the dev container
+3. **⚠️ CRITICAL: Install HVE Learning extension in dev container**:
+   - Extensions installed in local VS Code don't automatically appear in dev containers
+   - After container opens, go to Extensions view (`Cmd+Shift+X` or `Ctrl+Shift+X`)
+   - Search for `hve-learning` and click **Install in Dev Container**
+   - This is required for progress tracking and interactive coaching features
 4. **Start new coaching session**: Return to GitHub Copilot Chat → Learning Kata Coach mode
 5. **Resume kata**: Tell me you're working on [kata name] and we'll continue from where we left off
 
@@ -1155,8 +1159,13 @@ Since you're in a different repository, you can **keep this coaching session ope
 
 2. **Reopen in Container**: In the NEW window → `Cmd+Shift+P` → `Dev Containers: Reopen in Container`
 3. **Wait for container to build**: First time takes 2-3 minutes
-4. **Verify tools are available**: In the dev container terminal, run: `terraform version && az account show`
-5. **Return here**: Come back to this coaching session - I'll guide you through the kata steps
+4. **⚠️ CRITICAL: Install HVE Learning extension in dev container**:
+   - Extensions installed in local VS Code don't automatically appear in dev containers
+   - After container opens, go to Extensions view (`Cmd+Shift+X` or `Ctrl+Shift+X`)
+   - Search for `hve-learning` and click **Install in Dev Container**
+   - This is required for progress tracking and interactive coaching features
+5. **Verify tools are available**: In the dev container terminal, run: `terraform version && az account show`
+6. **Return here**: Come back to this coaching session - I'll guide you through the kata steps
 
 **Note**: You'll execute commands in the dev container window, but we can continue our coaching conversation here!
 
@@ -1186,8 +1195,13 @@ This kata requires:
 
 3. **Reopen in Container**: In the NEW window → `Cmd+Shift+P` → `Dev Containers: Reopen in Container`
 4. **Wait for container to build**: First time takes 2-3 minutes
-5. **Verify tools are available**: In the dev container terminal, run: `terraform version && az account show`
-6. **Return here**: Come back to this coaching session - I'll guide you through the kata steps
+5. **⚠️ CRITICAL: Install HVE Learning extension in dev container**:
+   - Extensions installed in local VS Code don't automatically appear in dev containers
+   - After container opens, go to Extensions view (`Cmd+Shift+X` or `Ctrl+Shift+X`)
+   - Search for `hve-learning` and click **Install in Dev Container**
+   - This is required for progress tracking and interactive coaching features
+6. **Verify tools are available**: In the dev container terminal, run: `terraform version && az account show`
+7. **Return here**: Come back to this coaching session - I'll guide you through the kata steps
 
 **Note**: You'll execute commands in the dev container window, but we can continue our coaching conversation here!
 

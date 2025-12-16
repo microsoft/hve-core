@@ -1,7 +1,7 @@
 {
   "name": "hve-learning",
   "displayName": "HVE Learning Platform",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "AI-assisted learning platform for hyper-velocity engineering education with katas, training labs, and coaching",
   "publisher": "ise-hve-essentials",
   "repository": {
