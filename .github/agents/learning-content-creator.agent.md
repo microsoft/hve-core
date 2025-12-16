@@ -242,6 +242,37 @@ pwsh -c '$EXT_PATH = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "ise
 - **Hub Page Template**: `learning/shared/templates/hub-page-template.md`
 - **Coming Soon Template**: `learning/shared/templates/coming-soon-template.md`
 
+### CRITICAL REQUIREMENT - Kata Numbering Convention
+
+**MANDATORY**: All kata filenames and IDs MUST follow the difficulty-based numbering system:
+
+**Numbering Format**: `{level}-{descriptive-name}.md`
+
+**Difficulty Levels** (by hundred):
+
+- **100-199**: Beginner (Level 1) - ⭐ Foundation
+- **200-299**: Intermediate (Level 2) - ⭐⭐ Skill Building
+- **300-399**: Advanced (Level 3) - ⭐⭐⭐ Proficiency
+- **400-499**: Expert (Level 4) - ⭐⭐⭐⭐ Expertise
+- **500-599**: Legendary (Level 5) - ⭐⭐⭐⭐⭐ Mastery
+
+**Examples**:
+
+- `100-first-evee-evaluation.md` (Beginner)
+- `200-configuration-datasets.md` (Intermediate)
+- `300-custom-model-development.md` (Advanced)
+- `400-multi-model-comparison.md` (Expert)
+- `500-production-api-deployment.md` (Legendary)
+
+**Rationale**:
+
+- Numbers immediately communicate difficulty level
+- Enables natural sorting by complexity
+- Provides clear progression path for learners
+- Consistent with industry kata practices (e.g., CAIRA katas)
+
+**Kata ID Field**: The `kata_id` YAML field should match the filename pattern: `{category}-{number}` (e.g., `evee-fundamentals-100`)
+
 ### CRITICAL REQUIREMENT - Checkbox Structure Constraints
 
 **MANDATORY**: All checkboxes in kata content MUST use flat structure without nested content.
