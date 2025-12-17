@@ -67,12 +67,15 @@ jobs:
         run: |
           $params = @()
           
-          if ("${{ inputs.version }}") {
-            $params += "-Version", "${{ inputs.version }}"
+          $version = "${{ inputs.version }}".Trim()
+          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
+          
+          if ($version -and $version -ne "") {
+            $params += "-Version", $version
           }
           
-          if ("${{ inputs.dev-patch-number }}") {
-            $params += "-DevPatchNumber", "${{ inputs.dev-patch-number }}"
+          if ($devPatch -and $devPatch -ne "") {
+            $params += "-DevPatchNumber", $devPatch
           }
           
           if (Test-Path "./CHANGELOG.md") {

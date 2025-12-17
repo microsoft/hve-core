@@ -33,9 +33,6 @@ First, update `package.json` with discovered agents and instructions:
 ```bash
 # Discover agents/instructions and update package.json
 pwsh ./scripts/extension/Prepare-Extension.ps1
-
-# With changelog
-pwsh ./scripts/extension/Prepare-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
 ```
 
 The preparation script automatically:
@@ -44,7 +41,6 @@ The preparation script automatically:
 - Discovers and registers all instruction files from `.github/instructions/`
 - Updates `package.json` with discovered components
 - Uses existing version from `package.json` (does not modify it)
-- Optionally copies changelog to extension directory
 
 **Step 2: Package the Extension**
 
@@ -62,9 +58,6 @@ pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
 
 # Package with version and dev patch number
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
-
-# Package with changelog
-pwsh ./scripts/extension/Package-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
 ```
 
 The packaging script automatically:
