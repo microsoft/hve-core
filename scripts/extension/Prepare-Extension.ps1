@@ -49,7 +49,7 @@ $ExtensionDir = Join-Path $RepoRoot "extension"
 $GitHubDir = Join-Path $RepoRoot ".github"
 $PackageJsonPath = Join-Path $ExtensionDir "package.json"
 
-Write-Host "📦 HVE Learning Extension Packager" -ForegroundColor Cyan
+Write-Host "📦 HVE Learning Extension Preparer" -ForegroundColor Cyan
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
 
