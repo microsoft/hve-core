@@ -65,25 +65,32 @@ jobs:
         id: package
         shell: pwsh
         run: |
-          $params = @()
-          
           $version = "${{ inputs.version }}".Trim()
           $devPatch = "${{ inputs.dev-patch-number }}".Trim()
           
-          if ($version -and $version -ne "") {
-            $params += "-Version", $version
+          $cmdArgs = @()
+          
+          if ($version) {
+            $cmdArgs += "-Version"
+            $cmdArgs += $version
           }
           
-          if ($devPatch -and $devPatch -ne "") {
-            $params += "-DevPatchNumber", $devPatch
+          if ($devPatch) {
+            $cmdArgs += "-DevPatchNumber"
+            $cmdArgs += $devPatch
           }
           
           if (Test-Path "./CHANGELOG.md") {
-            $params += "-ChangelogPath", "./CHANGELOG.md"
+            $cmdArgs += "-ChangelogPath"
+            $cmdArgs += "./CHANGELOG.md"
           }
           
           Write-Host "📦 Packaging extension..."
-          & ./scripts/extension/Package-Extension.ps1 @params
+          if ($cmdArgs.Count -gt 0) {
+            & ./scripts/extension/Package-Extension.ps1 @cmdArgs
+          } else {
+            & ./scripts/extension/Package-Extension.ps1
+          }
       
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
