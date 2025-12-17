@@ -1,4 +1,7 @@
-﻿<#
+﻿#!/usr/bin/env pwsh
+#Requires -Modules PowerShell-Yaml
+
+<#
 .SYNOPSIS
     Packages the HVE Learning VS Code extension.
 
@@ -31,6 +34,9 @@
 .EXAMPLE
     ./Package-Extension.ps1 -Version "1.1.0" -ChangelogPath "./CHANGELOG.md"
     # Packages with specific version and changelog
+
+.NOTES
+    Dependencies: PowerShell-Yaml module
 #>
 
 [CmdletBinding()]
@@ -76,21 +82,49 @@ if (-not (Test-Path $GitHubDir)) {
 
 # Read current package.json
 Write-Host "📖 Reading package.json..." -ForegroundColor Yellow
-$packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+try {
+    $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+} catch {
+    Write-Error "Failed to parse package.json: $_`nPlease check $PackageJsonPath for JSON syntax errors."
+    exit 1
+}
+
+# Validate package.json has required version field
+if (-not $packageJson.PSObject.Properties['version']) {
+    Write-Error "package.json is missing required 'version' field"
+    exit 1
+}
 
 # Determine version
 $currentVersion = $packageJson.version
+
+# Validate current version format
+if ($currentVersion -notmatch '^\d+\.\d+\.\d+$') {
+    Write-Error "Invalid version format in package.json: '$currentVersion'. Expected semantic version format (e.g., 1.0.0)"
+    exit 1
+}
+
 if ($Version -and $Version -ne "") {
+    # Validate specified version format
+    if ($Version -notmatch '^\d+\.\d+\.\d+$') {
+        Write-Error "Invalid version format specified: '$Version'. Expected semantic version format (e.g., 1.0.0)"
+        exit 1
+    }
     $newVersion = $Version
     Write-Host "   Using specified version: $newVersion" -ForegroundColor Green
 } else {
     # Auto-increment patch version
     $versionParts = $currentVersion -split '\.'
-    $major = [int]$versionParts[0]
-    $minor = [int]$versionParts[1]
-    $patch = [int]$versionParts[2] + 1
-    $newVersion = "$major.$minor.$patch"
-    Write-Host "   Auto-incrementing version: $currentVersion -> $newVersion" -ForegroundColor Green
+    try {
+        $major = [int]$versionParts[0]
+        $minor = [int]$versionParts[1]
+        $patch = [int]$versionParts[2] + 1
+        $newVersion = "$major.$minor.$patch"
+        Write-Host "   Auto-incrementing version: $currentVersion -> $newVersion" -ForegroundColor Green
+    } catch {
+        Write-Error "Failed to parse version '$currentVersion': $_"
+        exit 1
+    }
 }
 
 # Discover chat agents
@@ -110,10 +144,16 @@ if (Test-Path $agentsDir) {
         $content = Get-Content -Path $agentFile.FullName -Raw
         $description = ""
         
+        # Extract YAML frontmatter and parse with PowerShell-Yaml
         if ($content -match '(?s)^---\s*\n(.*?)\n---') {
-            $frontmatter = $Matches[1]
-            if ($frontmatter -match "description:\s*['""]?([^'""]+)['""]?") {
-                $description = $Matches[1].Trim()
+            $yamlContent = $Matches[1]
+            try {
+                $data = ConvertFrom-Yaml -Yaml $yamlContent
+                if ($data.ContainsKey('description')) {
+                    $description = $data.description
+                }
+            } catch {
+                Write-Warning "Failed to parse YAML frontmatter in $($agentFile.Name): $_"
             }
         }
         
@@ -149,9 +189,28 @@ if (Test-Path $instructionsDir) {
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
         
-        # Generate human-readable description
-        $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-        $description = "Instructions for $displayName"
+        # Read the file to extract description from YAML frontmatter
+        $content = Get-Content -Path $instrFile.FullName -Raw
+        $description = ""
+        
+        # Extract YAML frontmatter and parse with PowerShell-Yaml
+        if ($content -match '(?s)^---\s*\n(.*?)\n---') {
+            $yamlContent = $Matches[1]
+            try {
+                $data = ConvertFrom-Yaml -Yaml $yamlContent
+                if ($data.ContainsKey('description')) {
+                    $description = $data.description
+                }
+            } catch {
+                Write-Warning "Failed to parse YAML frontmatter in $($instrFile.Name): $_"
+            }
+        }
+        
+        # Fallback to generated description if not found in frontmatter
+        if (-not $description) {
+            $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
+            $description = "Instructions for $displayName"
+        }
         
         $instruction = [PSCustomObject]@{
             name        = $instrName
@@ -195,7 +254,7 @@ if ($DryRun) {
 }
 
 # Write updated package.json
-$packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8
+$packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
 Write-Host "   Saved package.json" -ForegroundColor Green
 
 # Handle changelog if provided
@@ -215,6 +274,9 @@ if ($ChangelogPath -and $ChangelogPath -ne "") {
 # Prepare extension directory for packaging
 Write-Host ""
 Write-Host "🗂️  Preparing extension directory..." -ForegroundColor Yellow
+
+# Initialize vsixFile variable outside try block to ensure scope
+$vsixFile = $null
 
 Push-Location $ExtensionDir
 
@@ -302,8 +364,12 @@ Write-Host ""
 
 # Output for CI/CD consumption
 if ($env:GITHUB_OUTPUT) {
-    "version=$newVersion" >> $env:GITHUB_OUTPUT
-    "vsix-file=$($vsixFile.Name)" >> $env:GITHUB_OUTPUT
+    if ($vsixFile) {
+        "version=$newVersion" >> $env:GITHUB_OUTPUT
+        "vsix-file=$($vsixFile.Name)" >> $env:GITHUB_OUTPUT
+    } else {
+        Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
+    }
 }
 
 exit 0

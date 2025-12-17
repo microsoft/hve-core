@@ -21,6 +21,9 @@ on:
         description: 'Path to the packaged VSIX file'
         value: ${{ jobs.package.outputs.vsix-file }}
 
+permissions:
+  contents: read
+
 jobs:
   package:
     runs-on: ubuntu-latest

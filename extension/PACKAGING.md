@@ -88,8 +88,8 @@ To get a PAT:
 **Publish command:**
 
 ```bash
-# Publish the packaged extension
-vsce publish --packagePath "extension/hve-learning-1.0.6.vsix"
+# Publish the packaged extension (replace X.Y.Z with actual version)
+vsce publish --packagePath "extension/hve-learning-X.Y.Z.vsix"
 
 # Or use the latest .vsix file
 VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
