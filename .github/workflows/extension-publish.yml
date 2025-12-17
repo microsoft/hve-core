@@ -59,7 +59,7 @@ jobs:
     uses: ./.github/workflows/extension-package.yml
     with:
       version: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
-      use-changelog: true
+      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
     permissions:
       contents: read
 
