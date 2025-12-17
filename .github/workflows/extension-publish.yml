@@ -95,8 +95,6 @@ jobs:
           path: ./extension
       
       - name: Publish to VS Code Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
           echo "📦 Publishing: $VSIX_FILE"

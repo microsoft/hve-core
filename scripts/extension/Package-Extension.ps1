@@ -96,7 +96,7 @@ if (-not $packageJson.PSObject.Properties['version']) {
 $baseVersion = if ($Version -and $Version -ne "") {
     # Validate specified version format
     if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-        Write-Error "Invalid version format specified: '$Version'. Expected semantic version format (e.g., 1.0.0)"
+        Write-Error "Invalid version format specified: '$Version'. Expected semantic version format (e.g., 1.0.0).`nPre-release suffixes like '-dev.123' should be added via -DevPatchNumber parameter, not in the version itself."
         exit 1
     }
     $Version
@@ -104,15 +104,12 @@ $baseVersion = if ($Version -and $Version -ne "") {
     # Use version from package.json
     $currentVersion = $packageJson.version
     if ($currentVersion -notmatch '^\d+\.\d+\.\d+') {
-        Write-Error "Invalid version format in package.json: '$currentVersion'. Expected semantic version format (e.g., 1.0.0)"
+        Write-Error "Invalid version format in package.json: '$currentVersion'. Expected semantic version format (e.g., 1.0.0).`nPre-release suffixes should not be committed to package.json. Use -DevPatchNumber parameter to add '-dev.N' suffix during packaging."
         exit 1
     }
-    # Extract base version (remove any pre-release suffix)
-    if ($currentVersion -match '^(\d+\.\d+\.\d+)') {
-        $Matches[1]
-    } else {
-        $currentVersion
-    }
+    # Extract base version (validation above ensures this will match)
+    $currentVersion -match '^(\d+\.\d+\.\d+)' | Out-Null
+    $Matches[1]
 }
 
 # Apply dev patch number if provided
