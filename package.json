@@ -11,7 +11,8 @@
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "catalog:generate": "pwsh ./scripts/learning/Generate-LearningCatalog.ps1",
     "catalog:validate": "pwsh ./scripts/learning/Validate-CatalogConsistency.ps1",
-    "extension:package": "cd extension && rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts . && cp -r ../learning . && npx @vscode/vsce package --no-dependencies && rm -rf .github scripts learning"
+    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
+    "extension:package:dry-run": "pwsh ./scripts/extension/Package-Extension.ps1 -DryRun"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.5.0",

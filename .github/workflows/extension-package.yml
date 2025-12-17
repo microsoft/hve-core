@@ -1,0 +1,91 @@
+name: Package Extension
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to package (empty for auto-increment)'
+        required: false
+        type: string
+        default: ''
+      use-changelog:
+        description: 'Whether to download and use changelog artifact'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      version:
+        description: 'Version that was packaged'
+        value: ${{ jobs.package.outputs.version }}
+      vsix-file:
+        description: 'Path to the packaged VSIX file'
+        value: ${{ jobs.package.outputs.vsix-file }}
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      vsix-file: ${{ steps.package.outputs.vsix-file }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install -g @vscode/vsce
+      
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+      
+      - name: Download changelog artifact
+        if: inputs.use-changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+          path: ./
+        continue-on-error: true
+      
+      - name: Package extension
+        id: package
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $changelogPath = if (Test-Path "./CHANGELOG.md") { "./CHANGELOG.md" } else { "" }
+          
+          if ($version) {
+            Write-Host "📦 Packaging with version: $version"
+            if ($changelogPath) {
+              Write-Host "📝 Including changelog: $changelogPath"
+              ./scripts/extension/Package-Extension.ps1 -Version $version -ChangelogPath $changelogPath
+            } else {
+              ./scripts/extension/Package-Extension.ps1 -Version $version
+            }
+          } else {
+            Write-Host "📦 Packaging with auto-incremented version"
+            if ($changelogPath) {
+              Write-Host "📝 Including changelog: $changelogPath"
+              ./scripts/extension/Package-Extension.ps1 -ChangelogPath $changelogPath
+            } else {
+              ./scripts/extension/Package-Extension.ps1
+            }
+          }
+      
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-vsix
+          path: extension/*.vsix
+          retention-days: 30

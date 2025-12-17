@@ -1,7 +1,7 @@
 {
   "name": "hve-learning",
   "displayName": "HVE Learning Platform",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "AI-assisted learning platform for hyper-velocity engineering education with katas, training labs, and coaching",
   "publisher": "ise-hve-essentials",
   "repository": {
@@ -11,55 +11,57 @@
   "engines": {
     "vscode": "^1.106.1"
   },
-  "categories": ["Chat"],
+  "categories": [
+    "Chat"
+  ],
   "contributes": {
     "chatAgents": [
       {
         "name": "learning-content-creator",
         "path": "./.github/agents/learning-content-creator.agent.md",
-        "description": "Collaborative content development partner for creating learning materials"
+        "description": "Collaborative learning content creation partner specializing in katas, labs, and assessments with template guidance"
       },
       {
         "name": "learning-kata-coach",
         "path": "./.github/agents/learning-kata-coach.agent.md",
-        "description": "Focused practice guidance with progress tracking for skill-building exercises"
+        "description": "Interactive AI coaching for focused practice exercises with progress tracking, resumption, and mode transition guidance"
       },
       {
         "name": "learning-lab-coach",
         "path": "./.github/agents/learning-lab-coach.agent.md",
-        "description": "Comprehensive system coaching for complex learning scenarios"
+        "description": "AI-powered coaching for comprehensive training labs using OpenHack-style discovery-based learning"
       }
     ],
     "chatInstructionsFiles": [
       {
-        "name": "kata-content-instructions",
-        "path": "./.github/instructions/kata-content.instructions.md",
-        "description": "Instructions for creating kata learning content"
-      },
-      {
         "name": "kata-category-readme-instructions",
         "path": "./.github/instructions/kata-category-readme.instructions.md",
-        "description": "Instructions for creating kata category README files"
+        "description": "Instructions for Kata Category Readme"
+      },
+      {
+        "name": "kata-content-instructions",
+        "path": "./.github/instructions/kata-content.instructions.md",
+        "description": "Instructions for Kata Content"
       },
       {
         "name": "learning-coach-schema-instructions",
         "path": "./.github/instructions/learning-coach-schema.instructions.md",
-        "description": "Instructions for learning coach schema and structure"
+        "description": "Instructions for Learning Coach Schema"
       },
       {
         "name": "learning-path-content-instructions",
         "path": "./.github/instructions/learning-path-content.instructions.md",
-        "description": "Instructions for creating learning path content"
-      },
-      {
-        "name": "training-lab-content-instructions",
-        "path": "./.github/instructions/training-lab-content.instructions.md",
-        "description": "Instructions for creating training lab content"
+        "description": "Instructions for Learning Path Content"
       },
       {
         "name": "markdown-instructions",
         "path": "./.github/instructions/markdown.instructions.md",
-        "description": "Instructions for markdown formatting in learning content"
+        "description": "Instructions for Markdown"
+      },
+      {
+        "name": "training-lab-content-instructions",
+        "path": "./.github/instructions/training-lab-content.instructions.md",
+        "description": "Instructions for Training Lab Content"
       }
     ]
   },

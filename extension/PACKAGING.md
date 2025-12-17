@@ -24,14 +24,47 @@ npm install -g @vscode/vsce
 
 ## Packaging the Extension
 
-From the hve-learning directory:
+### Using the Automated Script (Recommended)
+
+From the repository root:
+
+```bash
+# Package with auto-incremented version
+npm run extension:package
+
+# Or use PowerShell directly
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Preview changes without packaging (dry-run)
+npm run extension:package:dry-run
+
+# Package with specific version
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7"
+
+# Package with changelog
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7" -ChangelogPath "./CHANGELOG.md"
+```
+
+The script automatically:
+
+- Auto-increments the patch version (or uses specified version)
+- Discovers and registers all chat agents from `.github/agents/`
+- Discovers and registers all instruction files from `.github/instructions/`
+- Updates `package.json` with discovered components
+- Copies required directories (`.github`, `scripts`, `learning`)
+- Packages the extension using `vsce`
+- Cleans up temporary files
+
+This will create a `.vsix` file in the `extension/` folder.
+
+### Manual Packaging (Legacy)
+
+If you need to package manually:
 
 ```bash
 cd extension
-rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts/learning . && cp -r ../learning . && vsce package && rm -rf .github scripts learning
+rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts . && cp -r ../learning . && vsce package --no-dependencies && rm -rf .github scripts learning
 ```
-
-This will create a `.vsix` file in the `extension/` folder.
 
 ## Publishing the Extension
 
@@ -55,8 +88,12 @@ To get a PAT:
 **Publish command:**
 
 ```bash
-cd extension
-rm -rf .github scripts learning && cp -r ../.github . && cp -r ../scripts/learning . && cp -r ../learning . && vsce publish && rm -rf .github scripts learning
+# Publish the packaged extension (replace X.Y.Z with actual version)
+vsce publish --packagePath "extension/hve-learning-X.Y.Z.vsix"
+
+# Or use the latest .vsix file
+VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
+vsce publish --packagePath "$VSIX_FILE"
 ```
 
 ## What Gets Included
@@ -81,6 +118,20 @@ code --install-extension hve-learning-*.vsix
 ```
 
 ## Version Management
+
+### Automatic Version Management
+
+The packaging script handles versioning automatically:
+
+```bash
+# Auto-increment patch version (1.0.6 → 1.0.7)
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Specify exact version
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+```
+
+### Manual Version Management
 
 1. Update version in `extension/package.json`
 2. Package and test
