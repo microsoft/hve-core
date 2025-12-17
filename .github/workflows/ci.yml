@@ -23,3 +23,9 @@ jobs:
       contents: read
       security-events: write
       actions: read
+
+  extension-package:
+    name: Package VS Code Extension
+    uses: ./.github/workflows/extension-package.yml
+    permissions:
+      contents: read
