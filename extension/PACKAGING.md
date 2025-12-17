@@ -26,7 +26,7 @@ npm install -g @vscode/vsce
 
 ### Using the Automated Scripts (Recommended)
 
-**Step 1: Prepare the Extension**
+#### Step 1: Prepare the Extension
 
 First, update `package.json` with discovered agents and instructions:
 
@@ -42,7 +42,7 @@ The preparation script automatically:
 - Updates `package.json` with discovered components
 - Uses existing version from `package.json` (does not modify it)
 
-**Step 2: Package the Extension**
+#### Step 2: Package the Extension
 
 Then package the extension:
 

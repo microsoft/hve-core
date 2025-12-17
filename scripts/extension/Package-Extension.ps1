@@ -126,7 +126,6 @@ Write-Host "   Using version: $packageVersion" -ForegroundColor Green
 
 # Handle temporary version update for dev builds
 $originalVersion = $packageJson.version
-$versionRestored = $false
 
 if ($packageVersion -ne $originalVersion) {
     Write-Host ""
@@ -240,7 +239,6 @@ try {
         $packageJson.version = $originalVersion
         $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
         Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
-        $versionRestored = $true
     }
 }
 
