@@ -130,16 +130,25 @@ hve-learning/
 │   │   ├── markdown.instructions.md
 │   │   └── training-lab-content.instructions.md
 │   └── workflows/              # GitHub Actions CI/CD
+│       ├── ci.yml              # Continuous integration with dev versioning
+│       ├── extension-package.yml  # Reusable packaging workflow
+│       ├── extension-publish.yml  # Marketplace publishing
 │       ├── code-quality.yml
-│       ├── pr.yml
-│       └── ci.yml
+│       ├── markdown-lint.yml
+│       └── ps-script-analyzer.yml
+├── extension/                  # VS Code extension package
+│   ├── package.json           # Extension manifest
+│   └── README.md
 ├── learning/
 │   └── shared/                 # Reusable learning resources
 │       ├── templates/          # Content templates
 │       ├── schema/             # Validation schemas
 │       └── content-guidelines/ # Quality standards
 ├── scripts/
-│   ├── learning/              # Automation and validation tools
+│   ├── extension/             # Extension packaging automation
+│   │   ├── Prepare-Extension.ps1  # Discover and register agents/instructions
+│   │   └── Package-Extension.ps1  # Package extension with flexible versioning
+│   ├── learning/              # Learning content automation
 │   │   ├── Generate-LearningCatalog.ps1
 │   │   ├── Validate-CatalogConsistency.ps1
 │   │   └── kata-validation/
