@@ -1,6 +1,4 @@
 name: Package Extension
-permissions:
-  contents: read
 
 on:
   workflow_call:
