@@ -48,6 +48,12 @@ jobs:
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
       
+      - name: Install PowerShell-Yaml module
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Write-Host "PowerShell-Yaml module installed"
+      
       - name: Download changelog artifact
         if: inputs.use-changelog
         uses: actions/download-artifact@v4
