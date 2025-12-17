@@ -11,8 +11,8 @@
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "catalog:generate": "pwsh ./scripts/learning/Generate-LearningCatalog.ps1",
     "catalog:validate": "pwsh ./scripts/learning/Validate-CatalogConsistency.ps1",
-    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
-    "extension:package:dry-run": "pwsh ./scripts/extension/Package-Extension.ps1 -DryRun"
+    "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
+    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.5.0",

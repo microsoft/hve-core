@@ -28,5 +28,7 @@ jobs:
   extension-package:
     name: Package VS Code Extension
     uses: ./.github/workflows/extension-package.yml
+    with:
+      dev-patch-number: ${{ github.run_number }}
     permissions:
       contents: read

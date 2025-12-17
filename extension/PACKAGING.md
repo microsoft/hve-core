@@ -24,36 +24,57 @@ npm install -g @vscode/vsce
 
 ## Packaging the Extension
 
-### Using the Automated Script (Recommended)
+### Using the Automated Scripts (Recommended)
 
-From the repository root:
+**Step 1: Prepare the Extension**
+
+First, update `package.json` with discovered agents and instructions:
 
 ```bash
-# Package with auto-incremented version
-npm run extension:package
+# Discover agents/instructions and update package.json
+pwsh ./scripts/extension/Prepare-Extension.ps1
 
-# Or use PowerShell directly
+# With changelog
+pwsh ./scripts/extension/Prepare-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
+```
+
+The preparation script automatically:
+
+- Discovers and registers all chat agents from `.github/agents/`
+- Discovers and registers all instruction files from `.github/instructions/`
+- Updates `package.json` with discovered components
+- Uses existing version from `package.json` (does not modify it)
+- Optionally copies changelog to extension directory
+
+**Step 2: Package the Extension**
+
+Then package the extension:
+
+```bash
+# Package using version from package.json
 pwsh ./scripts/extension/Package-Extension.ps1
-
-# Preview changes without packaging (dry-run)
-npm run extension:package:dry-run
 
 # Package with specific version
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7"
 
+# Package with dev patch number (e.g., 1.0.7-dev.123)
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
+
+# Package with version and dev patch number
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
+
 # Package with changelog
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7" -ChangelogPath "./CHANGELOG.md"
+pwsh ./scripts/extension/Package-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
 ```
 
-The script automatically:
+The packaging script automatically:
 
-- Auto-increments the patch version (or uses specified version)
-- Discovers and registers all chat agents from `.github/agents/`
-- Discovers and registers all instruction files from `.github/instructions/`
-- Updates `package.json` with discovered components
+- Uses version from `package.json` (or specified version)
+- Optionally appends dev patch number for pre-release builds
 - Copies required directories (`.github`, `scripts`, `learning`)
 - Packages the extension using `vsce`
 - Cleans up temporary files
+- Restores original `package.json` version if temporarily modified
 
 This will create a `.vsix` file in the `extension/` folder.
 
@@ -119,23 +140,31 @@ code --install-extension hve-learning-*.vsix
 
 ## Version Management
 
-### Automatic Version Management
+### Update Version in package.json
 
-The packaging script handles versioning automatically:
+1. Manually update version in `extension/package.json`
+2. Run Prepare-Extension.ps1 to update agents/instructions
+3. Run Package-Extension.ps1 to create the `.vsix` file
+
+### Development Builds
+
+For pre-release or CI builds, use the dev patch number:
 
 ```bash
-# Auto-increment patch version (1.0.6 → 1.0.7)
-pwsh ./scripts/extension/Package-Extension.ps1
-
-# Specify exact version
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+# Creates version like 1.0.7-dev.123
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
 ```
 
-### Manual Version Management
+This temporarily modifies the version during packaging but restores it afterward.
 
-1. Update version in `extension/package.json`
-2. Package and test
-3. Publish when ready
+### Override Version at Package Time
+
+You can override the version without modifying `package.json`:
+
+```bash
+# Package as 1.1.0 without updating package.json
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+```
 
 ## Notes
 

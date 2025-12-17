@@ -4,7 +4,12 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Version to package (empty for auto-increment)'
+        description: 'Full version to use (e.g., 1.0.0 or empty to use package.json)'
+        required: false
+        type: string
+        default: ''
+      dev-patch-number:
+        description: 'Dev patch number to append (creates version like 1.0.0-dev.123)'
         required: false
         type: string
         default: ''
@@ -48,12 +53,6 @@ jobs:
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
       
-      - name: Install PowerShell-Yaml module
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
-          Write-Host "PowerShell-Yaml module installed"
-      
       - name: Download changelog artifact
         if: inputs.use-changelog
         uses: actions/download-artifact@v4
@@ -66,26 +65,22 @@ jobs:
         id: package
         shell: pwsh
         run: |
-          $version = "${{ inputs.version }}"
-          $changelogPath = if (Test-Path "./CHANGELOG.md") { "./CHANGELOG.md" } else { "" }
+          $params = @()
           
-          if ($version) {
-            Write-Host "📦 Packaging with version: $version"
-            if ($changelogPath) {
-              Write-Host "📝 Including changelog: $changelogPath"
-              ./scripts/extension/Package-Extension.ps1 -Version $version -ChangelogPath $changelogPath
-            } else {
-              ./scripts/extension/Package-Extension.ps1 -Version $version
-            }
-          } else {
-            Write-Host "📦 Packaging with auto-incremented version"
-            if ($changelogPath) {
-              Write-Host "📝 Including changelog: $changelogPath"
-              ./scripts/extension/Package-Extension.ps1 -ChangelogPath $changelogPath
-            } else {
-              ./scripts/extension/Package-Extension.ps1
-            }
+          if ("${{ inputs.version }}") {
+            $params += "-Version", "${{ inputs.version }}"
           }
+          
+          if ("${{ inputs.dev-patch-number }}") {
+            $params += "-DevPatchNumber", "${{ inputs.dev-patch-number }}"
+          }
+          
+          if (Test-Path "./CHANGELOG.md") {
+            $params += "-ChangelogPath", "./CHANGELOG.md"
+          }
+          
+          Write-Host "📦 Packaging extension..."
+          & ./scripts/extension/Package-Extension.ps1 @params
       
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
