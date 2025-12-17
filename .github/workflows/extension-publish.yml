@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   prepare-changelog:
@@ -59,18 +60,25 @@ jobs:
     uses: ./.github/workflows/extension-package.yml
     with:
       version: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
-      use-changelog: true
-    permissions:
-      contents: read
+      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
 
   publish:
     name: Publish to Marketplace
     needs: [prepare-changelog, package]
     runs-on: ubuntu-latest
+    environment: marketplace
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -87,12 +95,10 @@ jobs:
           path: ./extension
       
       - name: Publish to VS Code Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
           echo "📦 Publishing: $VSIX_FILE"
-          vsce publish --packagePath "$VSIX_FILE"
+          vsce publish --packagePath "$VSIX_FILE" --azure-credential
       
       - name: Summary
         run: |

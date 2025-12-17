@@ -22,9 +22,86 @@ Install the VS Code Extension Manager CLI:
 npm install -g @vscode/vsce
 ```
 
+## Automated CI/CD Workflows
+
+The repository includes GitHub Actions workflows for automated packaging and publishing:
+
+### CI Packaging (Automatic on Every Push)
+
+The `.github/workflows/ci.yml` workflow automatically:
+
+- Runs on every push to any branch
+- Packages the extension with a dev version (e.g., `1.0.7-dev.123` where `123` is the workflow run number)
+- Makes the `.vsix` file available as a workflow run artifact
+- Allows testing pre-release versions before publishing
+
+To download a dev build:
+
+1. Go to the Actions tab in GitHub
+2. Select a workflow run
+3. Download the `extension-vsix` artifact
+
+### Release Publishing (Automatic on GitHub Release)
+
+The `.github/workflows/extension-publish.yml` workflow automatically:
+
+- Triggers when a GitHub release is published
+- Packages the extension using the release version (e.g., `v1.0.7`)
+- Publishes directly to the VS Code Marketplace
+- Uses Azure OIDC authentication for secure publishing
+
+**Developer Responsibility:** Keep `extension/package.json` updated by running the Prepare-Extension script whenever agents or instructions are added or removed. This ensures the extension manifest reflects the current set of AI coaches and content guidelines.
+
 ## Packaging the Extension
 
-### Manual Packaging
+### Using the Automated Scripts (Recommended)
+
+#### Step 1: Prepare the Extension
+
+First, update `package.json` with discovered agents and instructions:
+
+```bash
+# Discover agents/instructions and update package.json
+pwsh ./scripts/extension/Prepare-Extension.ps1
+```
+
+The preparation script automatically:
+
+- Discovers and registers all chat agents from `.github/agents/`
+- Discovers and registers all instruction files from `.github/instructions/`
+- Updates `package.json` with discovered components
+- Uses existing version from `package.json` (does not modify it)
+
+#### Step 2: Package the Extension
+
+Then package the extension:
+
+```bash
+# Package using version from package.json
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Package with specific version
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7"
+
+# Package with dev patch number (e.g., 1.0.7-dev.123)
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
+
+# Package with version and dev patch number
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
+```
+
+The packaging script automatically:
+
+- Uses version from `package.json` (or specified version)
+- Optionally appends dev patch number for pre-release builds
+- Copies required directories (`.github`, `scripts`, `learning`)
+- Packages the extension using `vsce`
+- Cleans up temporary files
+- Restores original `package.json` version if temporarily modified
+
+This will create a `.vsix` file in the `extension/` folder.
+
+### Manual Packaging (Legacy)
 
 If you need to package manually:
 
@@ -86,23 +163,31 @@ code --install-extension hve-learning-*.vsix
 
 ## Version Management
 
-### Automatic Version Management
+### Update Version in package.json
 
-The packaging script handles versioning automatically:
+1. Manually update version in `extension/package.json`
+2. Run Prepare-Extension.ps1 to update agents/instructions
+3. Run Package-Extension.ps1 to create the `.vsix` file
+
+### Development Builds
+
+For pre-release or CI builds, use the dev patch number:
 
 ```bash
-# Auto-increment patch version (1.0.6 → 1.0.7)
-pwsh ./scripts/extension/Package-Extension.ps1
-
-# Specify exact version
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+# Creates version like 1.0.7-dev.123
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
 ```
 
-### Manual Version Management
+This temporarily modifies the version during packaging but restores it afterward.
 
-1. Update version in `extension/package.json`
-2. Package and test
-3. Publish when ready
+### Override Version at Package Time
+
+You can override the version without modifying `package.json`:
+
+```bash
+# Package as 1.1.0 without updating package.json
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+```
 
 ## Notes
 
