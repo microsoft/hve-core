@@ -22,6 +22,36 @@ Install the VS Code Extension Manager CLI:
 npm install -g @vscode/vsce
 ```
 
+## Automated CI/CD Workflows
+
+The repository includes GitHub Actions workflows for automated packaging and publishing:
+
+### CI Packaging (Automatic on Every Push)
+
+The `.github/workflows/ci.yml` workflow automatically:
+
+- Runs on every push to any branch
+- Packages the extension with a dev version (e.g., `1.0.7-dev.123` where `123` is the workflow run number)
+- Makes the `.vsix` file available as a workflow run artifact
+- Allows testing pre-release versions before publishing
+
+To download a dev build:
+
+1. Go to the Actions tab in GitHub
+2. Select a workflow run
+3. Download the `extension-vsix` artifact
+
+### Release Publishing (Automatic on GitHub Release)
+
+The `.github/workflows/extension-publish.yml` workflow automatically:
+
+- Triggers when a GitHub release is published
+- Packages the extension using the release version (e.g., `v1.0.7`)
+- Publishes directly to the VS Code Marketplace
+- Uses Azure OIDC authentication for secure publishing
+
+**Developer Responsibility:** Keep `extension/package.json` updated by running the Prepare-Extension script whenever agents or instructions are added or removed. This ensures the extension manifest reflects the current set of AI coaches and content guidelines.
+
 ## Packaging the Extension
 
 ### Using the Automated Scripts (Recommended)
