@@ -100,7 +100,7 @@ jobs:
         run: |
           VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
           echo "📦 Publishing: $VSIX_FILE"
-          vsce publish --packagePath "$VSIX_FILE"
+          vsce publish --packagePath "$VSIX_FILE" --azure-credential
       
       - name: Summary
         run: |
