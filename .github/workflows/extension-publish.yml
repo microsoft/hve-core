@@ -32,14 +32,10 @@ jobs:
       - name: Create changelog file
         id: create-changelog
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
+          CONTENT="${{ github.event.release.body || inputs.release_notes }}"
+          if [ -n "$CONTENT" ]; then
             cat > CHANGELOG.md << 'EOF'
-          ${{ github.event.release.body }}
-          EOF
-            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.release_notes }}" ]; then
-            cat > CHANGELOG.md << 'EOF'
-          ${{ inputs.release_notes }}
+          $CONTENT
           EOF
             echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
           else
@@ -63,14 +59,10 @@ jobs:
       - name: Normalize version string
         id: normalize
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-            # Strip leading 'v' if present
-            VERSION="${VERSION#v}"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          fi
+          VERSION="${{ github.event.release.tag_name || inputs.version }}"
+          # Strip leading 'v' if present
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   package:
     name: Package Extension
