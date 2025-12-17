@@ -46,6 +46,7 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7" -ChangelogPath "
 ```
 
 The script automatically:
+
 - Auto-increments the patch version (or uses specified version)
 - Discovers and registers all chat agents from `.github/agents/`
 - Discovers and registers all instruction files from `.github/instructions/`

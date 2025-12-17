@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Packages the HVE Learning VS Code extension.
 
