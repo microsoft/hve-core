@@ -18,88 +18,110 @@ permissions:
   contents: read
 
 jobs:
-  prepare-changelog:
-    name: Prepare Changelog
-    runs-on: ubuntu-latest
-    outputs:
-      changelog-path: ${{ steps.create-changelog.outputs.path }}
+  # prepare-changelog:
+  #   name: Prepare Changelog
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     changelog-path: ${{ steps.create-changelog.outputs.path }}
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
       
-      - name: Create changelog file
-        id: create-changelog
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            cat > CHANGELOG.md << 'EOF'
-          ${{ github.event.release.body }}
-          EOF
-            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.release_notes }}" ]; then
-            cat > CHANGELOG.md << 'EOF'
-          ${{ inputs.release_notes }}
-          EOF
-            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
-          else
-            echo "path=" >> $GITHUB_OUTPUT
-          fi
+  #     - name: Create changelog file
+  #       id: create-changelog
+  #       run: |
+  #         if [ "${{ github.event_name }}" == "release" ]; then
+  #           cat > CHANGELOG.md << 'EOF'
+  #         ${{ github.event.release.body }}
+  #         EOF
+  #           echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
+  #         elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.release_notes }}" ]; then
+  #           cat > CHANGELOG.md << 'EOF'
+  #         ${{ inputs.release_notes }}
+  #         EOF
+  #           echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
+  #         else
+  #           echo "path=" >> $GITHUB_OUTPUT
+  #         fi
       
-      - name: Upload changelog
-        if: steps.create-changelog.outputs.path != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelog
-          path: CHANGELOG.md
-          retention-days: 1
+  #     - name: Upload changelog
+  #       if: steps.create-changelog.outputs.path != ''
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: changelog
+  #         path: CHANGELOG.md
+  #         retention-days: 1
 
-  package:
-    name: Package Extension
-    needs: prepare-changelog
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      version: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
-      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
-    permissions:
-      contents: read
+  # package:
+  #   name: Package Extension
+  #   needs: prepare-changelog
+  #   uses: ./.github/workflows/extension-package.yml
+  #   with:
+  #     version: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
+  #     use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
+  #   permissions:
+  #     contents: read
 
   publish:
     name: Publish to Marketplace
-    needs: [prepare-changelog, package]
+    # needs: [prepare-changelog, package]
     runs-on: ubuntu-latest
+    environment: marketplace
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
         with:
-          node-version: '20'
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
       
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce
-      
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@v4
+      - name: Azure CLI script
+        uses: azure/cli@v2
         with:
-          name: extension-vsix
-          path: ./extension
-      
-      - name: Publish to VS Code Marketplace
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          azcliversion: latest
+          inlineScript: |
+            az account show
+
+     # run getid.ps1 to get Service Principal ID
+      - name: Get Service Principal ID
+        shell: pwsh
         run: |
-          VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
-          echo "📦 Publishing: $VSIX_FILE"
-          vsce publish --packagePath "$VSIX_FILE"
+          ./getid.ps1
+
       
-      - name: Summary
-        run: |
-          echo "## 🎉 Extension Published Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The extension is now available on the VS Code Marketplace!" >> $GITHUB_STEP_SUMMARY
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      
+      # - name: Install VSCE
+      #   run: npm install -g @vscode/vsce
+      
+      # - name: Download VSIX artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: extension-vsix
+      #     path: ./extension
+      
+      # - name: Publish to VS Code Marketplace
+      #   env:
+      #     VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      #   run: |
+      #     VSIX_FILE=$(ls -t extension/hve-learning-*.vsix | head -1)
+      #     echo "📦 Publishing: $VSIX_FILE"
+      #     vsce publish --packagePath "$VSIX_FILE"
+      
+      # - name: Summary
+      #   run: |
+      #     echo "## 🎉 Extension Published Successfully" >> $GITHUB_STEP_SUMMARY
+      #     echo "" >> $GITHUB_STEP_SUMMARY
+      #     echo "**Version:** ${{ needs.package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+      #     echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
+      #     echo "" >> $GITHUB_STEP_SUMMARY
+      #     echo "The extension is now available on the VS Code Marketplace!" >> $GITHUB_STEP_SUMMARY
       
