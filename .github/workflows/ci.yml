@@ -26,6 +26,7 @@ jobs:
       actions: read
 
   extension-package:
+    needs: [code-quality-validation, codeql]
     name: Package VS Code Extension
     uses: ./.github/workflows/extension-package.yml
     with:
