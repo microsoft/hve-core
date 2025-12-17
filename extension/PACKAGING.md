@@ -24,40 +24,7 @@ npm install -g @vscode/vsce
 
 ## Packaging the Extension
 
-### Using the Automated Script (Recommended)
-
-From the repository root:
-
-```bash
-# Package with auto-incremented version
-npm run extension:package
-
-# Or use PowerShell directly
-pwsh ./scripts/extension/Package-Extension.ps1
-
-# Preview changes without packaging (dry-run)
-npm run extension:package:dry-run
-
-# Package with specific version
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7"
-
-# Package with changelog
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.7" -ChangelogPath "./CHANGELOG.md"
-```
-
-The script automatically:
-
-- Auto-increments the patch version (or uses specified version)
-- Discovers and registers all chat agents from `.github/agents/`
-- Discovers and registers all instruction files from `.github/instructions/`
-- Updates `package.json` with discovered components
-- Copies required directories (`.github`, `scripts`, `learning`)
-- Packages the extension using `vsce`
-- Cleans up temporary files
-
-This will create a `.vsix` file in the `extension/` folder.
-
-### Manual Packaging (Legacy)
+### Manual Packaging
 
 If you need to package manually:
 
