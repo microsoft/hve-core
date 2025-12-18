@@ -33,10 +33,14 @@ jobs:
         id: create-changelog
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
-            echo '${{ github.event.release.body }}' > CHANGELOG.md
+            cat > CHANGELOG.md << EOF
+          ${{ github.event.release.body }}
+          EOF
             echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ inputs.release_notes }}" ]; then
-            echo '${{ inputs.release_notes }}' > CHANGELOG.md
+            cat > CHANGELOG.md << EOF
+          ${{ inputs.release_notes }}
+          EOF
             echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
           else
             echo "path=" >> $GITHUB_OUTPUT
