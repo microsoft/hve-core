@@ -65,12 +65,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
             VERSION="${{ github.event.release.tag_name }}"
-            # Strip leading 'v' if present
-            VERSION="${VERSION#v}"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
-            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+            VERSION="${{ inputs.version }}"
           fi
+          # Strip leading 'v' if present
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   package:
     name: Package Extension
