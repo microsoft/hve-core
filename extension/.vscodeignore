@@ -4,6 +4,7 @@
 # Include only the extension essentials
 !package.json
 !README.md
+!CHANGELOG.md
 !LICENSE
 
 # Include agents and instructions (but not their READMEs)
