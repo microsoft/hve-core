@@ -57,6 +57,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 ### Documentation & Process
 
 - **[Pull Request](./pull-request.prompt.md)** - PR description and review assistance
+- **[Risk Register](./risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Chat Modes
 
@@ -74,6 +75,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 6. **Checking build status?** Use [ADO Get Build Info](./ado-get-build-info.prompt.md)
 7. **Creating GitHub issues?** Use [GitHub Add Issue](./github-add-issue.prompt.md)
 8. **Working on PRs?** Use [Pull Request](./pull-request.prompt.md)
+9. **Managing project risks?** Use [Risk Register](./risk-register.prompt.md)
 
 ## Related Resources
 
