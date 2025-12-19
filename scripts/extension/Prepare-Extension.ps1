@@ -147,7 +147,7 @@ if (Test-Path $agentsDir) {
 Write-Host ""
 Write-Host "🔍 Discovering instruction files..." -ForegroundColor Yellow
 $instructionsDir = Join-Path $GitHubDir "instructions"
-$chatInstructionsFiles = @()
+$chatInstructions = @()
 
 if (Test-Path $instructionsDir) {
     $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter "*.instructions.md" | Sort-Object Name
@@ -186,7 +186,7 @@ if (Test-Path $instructionsDir) {
             description = $description
         }
         
-        $chatInstructionsFiles += $instruction
+        $chatInstructions += $instruction
         Write-Host "   ✅ $instrName" -ForegroundColor Green
     }
 } else {
@@ -206,9 +206,9 @@ if (-not $packageJson.contributes) {
 $packageJson.contributes.chatAgents = $chatAgents
 Write-Host "   Updated chatAgents: $($chatAgents.Count) agents" -ForegroundColor Green
 
-# Update chatInstructionsFiles
-$packageJson.contributes.chatInstructionsFiles = $chatInstructionsFiles
-Write-Host "   Updated chatInstructionsFiles: $($chatInstructionsFiles.Count) files" -ForegroundColor Green
+# Update chatInstructions
+$packageJson.contributes.chatInstructions = $chatInstructions
+Write-Host "   Updated chatInstructions: $($chatInstructions.Count) files" -ForegroundColor Green
 
 if ($DryRun) {
     Write-Host ""
