@@ -1,0 +1,48 @@
+name: Chat Mode or Agent Request
+description: Request a new chat mode, agent, or slash command
+title: "[Chat Mode]: "
+labels: ["chat-mode", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new chat mode, custom agent, or slash command for GitHub Copilot.
+  
+  - type: input
+    id: name
+    attributes:
+      label: Chat Mode/Agent Name
+      description: What should this be called?
+      placeholder: e.g., "/security-review"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      description: What type of enhancement is this?
+      options:
+        - Chat Mode
+        - Custom Agent
+        - Other
+    validations:
+      required: true
+  
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose
+      description: What problem does this solve?
+      placeholder: Describe when and why this would be used
+    validations:
+      required: true
+  
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: What specific behaviors should this enable?
+      placeholder: List the key capabilities or features needed
+    validations:
+      required: false

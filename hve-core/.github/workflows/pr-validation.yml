@@ -1,0 +1,85 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+jobs:
+  spell-check:
+    name: Spell Check
+    uses: ./.github/workflows/spell-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-lint:
+    name: Markdown Lint
+    uses: ./.github/workflows/markdown-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  table-format:
+    name: Table Format Check
+    uses: ./.github/workflows/table-format.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  psscriptanalyzer:
+    name: PowerShell Lint
+    uses: ./.github/workflows/ps-script-analyzer.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+
+  frontmatter-validation:
+    name: Frontmatter Validation
+    uses: ./.github/workflows/frontmatter-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      skip-footer-validation: false
+      warnings-as-errors: true
+
+  link-lang-check:
+    name: Link Language Check
+    uses: ./.github/workflows/link-lang-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-link-check:
+    name: Markdown Link Check
+    uses: ./.github/workflows/markdown-link-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: true
+
+  dependency-pinning-check:
+    name: Validate Dependency Pinning
+    uses: ./.github/workflows/dependency-pinning-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/prompt-frontmatter.schema.json",
+  "title": "Prompt File Frontmatter Schema",
+  "description": "Frontmatter schema for .prompt.md files per VS Code Copilot specification",
+  "type": "object",
+  "required": ["description"],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A short description of the prompt"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The name of the prompt, used after typing / in chat. Defaults to filename if not specified."
+    },
+    "argument-hint": {
+      "type": "string",
+      "description": "Optional hint text shown in the chat input to guide users on expected arguments"
+    },
+    "agent": {
+      "type": "string",
+      "description": "The agent used for running the prompt. Options: ask, edit, agent (default), or a custom agent name"
+    },
+    "model": {
+      "type": "string",
+      "description": "The language model to use when running the prompt. Defaults to current selection if not specified."
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of tool names or tool set names available for this prompt. Can include built-in tools, MCP tools (<server>/*), or extension tools."
+    }
+  },
+  "additionalProperties": true
+}
