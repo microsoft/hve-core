@@ -1,318 +1,131 @@
-# HVE Learning Platform
+---
+title: HVE Core
+description: Open-source library of Hypervelocity Engineering components that accelerates Azure solution development
+author: Microsoft
+ms.date: 2025-11-05
+ms.topic: overview
+keywords:
+  - hypervelocity engineering
+  - azure
+  - github copilot
+  - m365 copilot
+  - conversational workflows
+  - chat modes
+  - copilot instructions
+estimated_reading_time: 2
+---
 
-A comprehensive AI-assisted learning platform designed for hyper-velocity engineering education. This platform provides structured learning experiences through katas, training labs, and AI-powered coaching.
+An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
 
-## 🎯 Platform Purpose
+[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
 
-The HVE Learning Platform serves two primary purposes:
+**Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
 
-### 1. Central Learning Gateway
+## Overview
 
-Serves as a comprehensive learning hub that can coach you on:
+HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Copilot chat modes, along with curated instructions and prompt templates, to deliver intelligent, context-aware interactions for building solutions on Azure. Whether you're tackling greenfield projects or modernizing existing systems, HVE Core reduces time-to-value and simplifies complex engineering tasks.
 
-- **Generic Topics**: Using katas stored in this repository for foundational engineering skills
-- **Domain-Specific Topics**: Using katas stored in corresponding accelerator repositories (CAIRA, edge-ai, etc.)
-- **Scenario-Based Learning Paths**: Navigate comprehensive multi-accelerator learning journeys (e.g., "Create an AI agentic system") that orchestrate katas from multiple accelerator repositories into cohesive end-to-end experiences
+## Quick Start
 
-### 2. Learning Content Creation Tool
+### Automated Installation
 
-Empowers developers to create high-quality learning content (katas, labs) using AI-assisted workflows and validated templates.
+**Recommended:** Use the `hve-core-installer` agent for automated setup:
 
-## 🚀 Getting Started
+1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
+2. Select `hve-core-installer` from Agent list in GitHub Copilot Chat pane
+3. Say: "Install HVE-Core into my project"
+4. Follow the guided installation
+
+The installer will:
+
+* Clone the hve-core repository as a sibling to your workspace
+* Validate the repository structure
+* Update your VS Code settings.json with chat mode, prompt, and instruction paths
+* Make all HVE Core components immediately available
+
+### Manual Installation
+
+For manual setup or alternative installation methods, see the [Getting Started Guide](docs/getting-started/README.md) which covers:
+
+* [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
+* [Git-Ignored Clone](docs/getting-started/methods/git-ignored.md) - Devcontainer ephemeral setup
+* [Mounted Directory](docs/getting-started/methods/mounted.md) - Advanced container sharing
+* [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
+* [Submodule](docs/getting-started/methods/submodule.md) - Team version control
+* [GitHub Codespaces](docs/getting-started/methods/codespaces.md) - Cloud development
 
 ### Prerequisites
 
-<!-- markdownlint-disable MD036 -->
-**GitHub MCP Server in VS Code**
-<!-- markdownlint-enable MD036 -->
+* GitHub Copilot subscription
+* VS Code with GitHub Copilot extension
+* Git installed and available in PATH
+* Node.js and npm (for development and validation)
 
-The platform requires the GitHub MCP (Model Context Protocol) server to be configured in VS Code for full functionality:
+### Try the RPI Workflow
 
-1. Ensure you have the latest version of VS Code with GitHub Copilot
-2. Configure the GitHub MCP server in your VS Code settings
-3. Authenticate with your GitHub account to enable MCP capabilities
+Transform complex tasks into working code using Research → Plan → Implement:
 
-This enables AI coaches to interact with GitHub repositories, track learning progress, and provide context-aware assistance.
+1. Complete the [Your First RPI Workflow](docs/getting-started/first-workflow.md) tutorial (~15 min)
+2. For simple tasks, use [prompts](.github/prompts/README.md) directly without the full workflow
 
-### For Learners
+## What's Included
 
-You have two options to start learning:
+| Component    | Description                                                          | Documentation                                  |
+|--------------|----------------------------------------------------------------------|------------------------------------------------|
+| Chat Modes   | Specialized AI assistants for research, planning, and implementation | [Chat Modes](.github/chatmodes/README.md)      |
+| Instructions | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
+| Prompts      | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
+| Scripts      | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
-#### Option 1: Work Directly in this Repository
-
-1. Clone/open the `hve-learning` repository
-2. Select `learning-kata-coach` from the Agents dropdown
-3. Start your learning session:
-
-   ```text
-   Coach me on edge deployments katas
-   ```
-
-#### Option 2: Use the VS Code Extension
-
-1. Install the HVE Learning VS Code extension
-2. Open any accelerator repository (e.g., CAIRA, edge-ai)
-3. Select `learning-kata-coach` from the Agents dropdown
-4. Start your learning session directly in the domain context:
-
-   ```text
-   Coach me on deploying AI infra with CAIRA katas
-   ```
-
-### For Content Creators
-
-Developers working on new learning content:
-
-1. Install the HVE Learning Platform VS Code extension
-2. Open your accelerator repository (e.g., CAIRA)
-3. Select `learning-content-creator` from the Agents dropdown
-4. Start creating content:
-
-   ```text
-   Let's work on production troubleshooting kata
-   ```
-
-The extension provides all templates, schemas, and validation tools needed to create high-quality learning content in any repository.
-
-## 🌟 Platform Overview
-
-The HVE (Hyper-Velocity Engineering) Learning Platform combines AI assistance with practical engineering challenges, empowering engineers to achieve more through structured, progressive learning experiences.
-
-### Core Philosophy
-
-- **AI-Assisted Learning**: Integrated AI coaching throughout the learning journey
-- **Discovery-Based**: OpenHack-style methodology promoting hands-on exploration
-- **Progressive Mastery**: Carefully sequenced learning paths building real-world skills
-- **Practical Focus**: All exercises solve actual engineering challenges
-
-## 🎯 Learning Components
-
-### 🥋 Katas (15-45 minutes)
-
-Focused practice exercises designed for skill building:
-
-- **Quick Context**: Immediate problem understanding
-- **Essential Setup**: Minimal prerequisites
-- **Practice Tasks**: Hands-on skill development
-- **Completion Check**: Measurable outcomes
-
-### 🧪 Training Labs (2+ hours)
-
-Comprehensive learning experiences for complex systems:
-
-- **Multi-Module Structure**: Progressive complexity building
-- **Team-Based Options**: Collaborative learning support
-- **Integration Focus**: Real-world system interactions
-- **Assessment Integration**: Skill validation checkpoints
-
-### 🤖 AI Coaching Modes
-
-Specialized AI assistants for different learning needs:
-
-- **Learning Kata Coach**: Focused practice guidance with progress tracking
-- **Learning Lab Coach**: Comprehensive system coaching for complex scenarios
-- **Learning Content Creator**: Collaborative content development partner
-
-## 📁 Platform Structure
+## Project Structure
 
 ```text
-hve-learning/
-├── .github/
-│   ├── agents/                 # AI coaching agents
-│   │   ├── learning-content-creator.agent.md
-│   │   ├── learning-kata-coach.agent.md
-│   │   └── learning-lab-coach.agent.md
-│   ├── instructions/           # Learning content guidelines
-│   │   ├── kata-content.instructions.md
-│   │   ├── kata-category-readme.instructions.md
-│   │   ├── learning-coach-schema.instructions.md
-│   │   ├── learning-path-content.instructions.md
-│   │   ├── markdown.instructions.md
-│   │   └── training-lab-content.instructions.md
-│   └── workflows/              # GitHub Actions CI/CD
-│       ├── ci.yml              # Continuous integration with dev versioning
-│       ├── extension-package.yml  # Reusable packaging workflow
-│       ├── extension-publish.yml  # Marketplace publishing
-│       ├── code-quality.yml
-│       ├── markdown-lint.yml
-│       └── ps-script-analyzer.yml
-├── extension/                  # VS Code extension package
-│   ├── package.json           # Extension manifest
-│   └── README.md
-├── learning/
-│   └── shared/                 # Reusable learning resources
-│       ├── templates/          # Content templates
-│       ├── schema/             # Validation schemas
-│       └── content-guidelines/ # Quality standards
-├── scripts/
-│   ├── extension/             # Extension packaging automation
-│   │   ├── Prepare-Extension.ps1  # Discover and register agents/instructions
-│   │   └── Package-Extension.ps1  # Package extension with flexible versioning
-│   ├── learning/              # Learning content automation
-│   │   ├── Generate-LearningCatalog.ps1
-│   │   ├── Validate-CatalogConsistency.ps1
-│   │   └── kata-validation/
-│   └── linting/               # Code quality scripts
-│       ├── Invoke-SpellCheck.ps1
-│       ├── Invoke-MarkdownLint.ps1
-│       └── Invoke-TableFormat.ps1
-└── docs/_server/schemas/      # API and progress tracking schemas
+.github/
+├── chatmodes/       # Specialized Copilot chat assistants
+├── instructions/    # Repository-specific coding guidelines
+└── prompts/         # Reusable prompt templates
+docs/                # Learning guides and tutorials
+scripts/             # Validation and development tools
 ```
-
-## 🎓 Choose Your Learning Path
-
-- **Foundation Builder**: New to platform concepts
-- **Skill Developer**: Some experience, ready for structured practice
-- **Expert Practitioner**: Advanced learner seeking mastery
-
-## 🤖 Using AI Coaching Agents
-
-Use the specialized agents for guided learning:
-
-**For Focused Practice (Katas):**
-
-```text
-@learning-kata-coach I'm working on [topic] and want interactive coaching
-```
-
-**For Complex Systems (Training Labs):**
-
-```text
-@learning-lab-coach Guide me through [system/integration] learning
-```
-
-**For Content Creation:**
-
-```text
-@learning-content-creator Help me create learning content for [topic]
-```
-
-## 📊 Track Your Progress
-
-- Checkbox-based progress tracking in each kata
-- Automated skill assessment and recommendations
-- Personalized learning path generation
-
-## 📋 Content Creation Guidelines
-
-### Kata Development
-
-1. Use `learning/shared/templates/kata-template.md`
-2. Follow 28 YAML front-matter fields (21 required + 7 optional)
-3. Implement flat checkbox structure (no nested content)
-4. Include AI coaching integration points
-
-### Quality Standards
-
-- **Inclusive Language**: No "master/mastery" terminology
-- **Time Accuracy**: ±10% of stated completion time
-- **Technical Validation**: All code/commands tested
-- **Progressive Difficulty**: Scaffolding appropriate to skill level
-
-### Validation Tools
-
-- `scripts/learning/kata-validation/Validate-Katas.ps1`
-- Automated front-matter validation
-- Learning path consistency checks
-- Content quality assessments
-
-## 🎨 AI Coaching Integration
-
-### Schema-Driven Progress Tracking
-
-The platform uses structured schemas for:
-
-- **Kata Progress**: `docs/_server/schemas/kata-progress-schema.json`
-- **Learning Paths**: `docs/_server/schemas/learning-path-progress-schema.json`
-- **Skill Assessment**: `docs/_server/schemas/self-assessment-schema.json`
-
-### Coaching Methodologies
-
-- **Socratic Questioning**: Guides discovery rather than providing answers
-- **Progressive Hints**: Incremental guidance when learners are stuck
-- **Metacognitive Validation**: Reflection and self-explanation exercises
-- **Learning Transfer**: Connecting concepts across different contexts
-
-## 📚 Learning Science Foundation
-
-### OpenHack Methodology
-
-- **Challenge-Based**: Real problems drive learning motivation
-- **Discovery-Oriented**: Learners explore and experiment
-- **Failure-Positive**: Learning from mistakes is encouraged
-- **Coach-Supported**: Guidance available but not prescriptive
-
-### Scaffolding Levels
-
-- **Heavy** (Beginner): Step-by-step with expected outputs
-- **Medium** (Intermediate): Framework with reference links
-- **Minimal** (Advanced): Objectives and success criteria only
-
-## 🔧 Technical Implementation
-
-### Template System
-
-- **Consistent Structure**: All content follows validated templates
-- **YAML Front-matter**: Structured metadata for AI coaching integration
-- **Progressive Disclosure**: Information revealed as needed
-- **Cross-References**: Linked learning experiences
-
-### Validation Pipeline
-
-- **Automated Testing**: All instructions verified in clean environments
-- **Schema Compliance**: YAML front-matter validation
-- **Link Verification**: Internal and external reference checking
-- **Style Enforcement**: Markdown standards and inclusive language
-
-## 🤝 Contributing
-
-### Content Creation Workflow
-
-1. **Discovery**: Use `@learning-content-creator` for collaborative design
-2. **Template Application**: Apply appropriate shared template
-3. **Content Development**: Write following quality guidelines
-4. **Validation**: Run automated checks and user testing
-5. **Integration**: Deploy with progress tracking enabled
-
-### Quality Assurance
-
-- All content must pass `Validate-Katas.ps1` checks
-- User testing with target audience required
-- Technical accuracy verification in clean environments
-- Accessibility and inclusive language review
-
-## 📄 License
-
-MIT License
-
-## 🔒 Security
-
-See [SECURITY.md](SECURITY.md) for information on reporting security vulnerabilities.
-
-## 💬 Support
-
-See [SUPPORT.md](SUPPORT.md) for information on getting help and support.
 
 ## Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit <https://cla.opensource.microsoft.com>.
+We appreciate contributions! Whether you're fixing typos or adding new components:
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+1. Read our [Contributing Guide](CONTRIBUTING.md)
+2. Check out [open issues](https://github.com/microsoft/hve-core/issues)
+3. Join the [discussion](https://github.com/microsoft/hve-core/discussions)
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+## Documentation
 
-## Trademarks
+| Guide                                                    | Description                                  |
+|----------------------------------------------------------|----------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial            |
+| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement     |
+| [Contributing](docs/contributing/README.md)              | Create chat modes, instructions, and prompts |
+| [Chat Modes Reference](.github/chatmodes/README.md)      | All available chat modes                     |
+| [Instructions Reference](.github/instructions/README.md) | All coding instructions                      |
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
-trademarks or logos is subject to and must follow
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+## Responsible AI
 
-Ready to start learning? Activate a coaching mode and begin your hyper-velocity engineering journey!
+Microsoft encourages customers to review its Responsible AI Standard when developing AI-enabled systems to ensure ethical, safe, and inclusive AI practices. Learn more at [Microsoft's Responsible AI](https://www.microsoft.com/ai/responsible-ai).
+
+## Legal
+
+This project is licensed under the [MIT License](./LICENSE).
+
+**Security:** See [SECURITY.md](./SECURITY.md) for security policy and reporting vulnerabilities.
+
+## Trademark Notice
+
+> This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+> trademarks or logos is subject to and must follow Microsoft's Trademark & Brand Guidelines. Use of Microsoft trademarks or logos in
+> modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or
+> logos are subject to those third-party's policies.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

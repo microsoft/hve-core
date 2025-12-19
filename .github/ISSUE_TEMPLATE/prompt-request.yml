@@ -1,0 +1,51 @@
+name: Prompt Template Request
+description: Request a new prompt template
+title: "[Prompt]: "
+labels: ["prompt", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new prompt template for a specific task or workflow.
+  
+  - type: input
+    id: prompt-name
+    attributes:
+      label: Prompt Name
+      description: What should the prompt be named?
+      placeholder: e.g., "Generate Unit Tests"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What category does this prompt belong to?
+      options:
+        - Code Generation
+        - Testing
+        - Documentation
+        - Refactoring
+        - Analysis
+        - Other
+    validations:
+      required: true
+  
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: What problem does this prompt solve?
+      placeholder: Describe when and why this prompt would be used
+    validations:
+      required: true
+  
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: What specific behaviors should this prompt enable?
+      placeholder: List the key requirements for this prompt
+    validations:
+      required: false

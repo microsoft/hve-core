@@ -145,7 +145,7 @@ function Get-GitIgnorePatterns {
     Path to .gitignore file.
 
     .OUTPUTS
-    Array of wildcard patterns using platform-appropriate separators.
+    Array of wildcard patterns.
     #>
     [CmdletBinding()]
     param(
@@ -157,24 +157,19 @@ function Get-GitIgnorePatterns {
         return @()
     }
 
-    $sep = [System.IO.Path]::DirectorySeparatorChar
-
     $patterns = Get-Content $GitIgnorePath | Where-Object {
         $_ -and -not $_.StartsWith('#') -and $_.Trim() -ne ''
     } | ForEach-Object {
         $pattern = $_.Trim()
         
-        # Normalize to platform separator
-        $normalizedPattern = $pattern.Replace('/', $sep).Replace('\', $sep)
-        
         if ($pattern.EndsWith('/')) {
-            "*$sep$($normalizedPattern.TrimEnd($sep))$sep*"
+            "*\$($pattern.TrimEnd('/'))\*"
         }
-        elseif ($pattern.Contains('/') -or $pattern.Contains('\')) {
-            "*$sep$normalizedPattern*"
+        elseif ($pattern.Contains('/')) {
+            "*\$($pattern.Replace('/', '\'))*"
         }
         else {
-            "*$sep$normalizedPattern$sep*"
+            "*\$pattern\*"
         }
     }
 

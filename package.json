@@ -1,21 +1,23 @@
 {
-  "name": "hve-learning",
-  "version": "0.0.0",
-  "description": "HVE Learning Platform (repo tooling)",
+  "name": "hve-core",
+  "version": "1.0.0",
+  "description": "HVE Core",
   "private": true,
   "scripts": {
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 \"**/*.md\" --fix",
+    "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
+    "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
+    "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
+    "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
+    "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
-    "catalog:generate": "pwsh ./scripts/learning/Generate-LearningCatalog.ps1",
-    "catalog:validate": "pwsh ./scripts/learning/Validate-CatalogConsistency.ps1",
-    "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
-    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1"
+    "package:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github",
+    "publish:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github"
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.5.0",
     "cspell": "9.4.0",
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "^1.6.0",
@@ -23,8 +25,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/eedorenko/hve-learning.git"
+    "url": "https://github.com/microsoft/hve-core.git"
   },
-  "author": "HVE Essentials Team",
+  "author": "Microsoft",
   "license": "MIT"
 }

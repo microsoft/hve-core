@@ -18,43 +18,6 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 * Prefer descriptive headings and concise paragraphs; avoid trailing or leading extra spaces.
 * Keep lines reasonably short for readability; wrap where sensible without breaking URLs or code.
 
-## YAML frontmatter
-
-* README.md files SHOULD include YAML frontmatter at the very top of the file, before any content or headings.
-* The frontmatter block must be delimited by triple dashes (`---`) on separate lines at the beginning and end.
-* When creating or significantly updating a README.md file, include or update frontmatter with appropriate metadata.
-* Common frontmatter fields for README files include:
-  * `title`: Brief, descriptive title for the document (required for docs with frontmatter)
-  * `description`: One-sentence summary of the content (recommended, 80-250 characters)
-  * `author`: Author or team name (optional, e.g., "HVE Essentials Team")
-  * `ms.date`: Last significant update date in YYYY-MM-DD ISO 8601 format (optional)
-  * `ms.topic`: Document type such as `reference`, `hub-page`, `tutorial`, `concept` (optional)
-  * `keywords`: List of relevant search terms (optional, use YAML list format)
-  * `estimated_reading_time`: Reading time in minutes (optional)
-* When a frontmatter `title:` field is present, the first markdown heading in the file should match or complement it; the frontmatter title takes precedence for rendering systems that use it.
-* Non-README markdown files typically do not require frontmatter unless they are part of a documentation site that uses it.
-
-<!-- <example-readme-frontmatter> -->
-```markdown
----
-title: Component Name
-description: Brief description of what this component does and its purpose in the system
-author: HVE Essentials Team
-ms.date: 2025-11-04
-ms.topic: reference
-keywords:
-  - component
-  - infrastructure
-  - azure
-estimated_reading_time: 5
----
-
-## Component Name
-
-The main content starts here...
-```
-<!-- </example-readme-frontmatter> -->
-
 ## Headings
 
 * Start documents with a single level-1 heading that acts as the title when appropriate.
@@ -64,7 +27,7 @@ The main content starts here...
 * Surround each heading with a blank line above and below (except at file start/end).
 * Do not end headings with punctuation such as `. , ; : !` or their full-width variants.
 * Avoid duplicate headings under the same parent section; make them unique.
-* Begin the file with a top-level heading as the first line (unless YAML frontmatter with a `title:` field is present at the start of the file, which serves as the document title). Do not include preamble text before the title or frontmatter block.
+* Do NOT use an H1 heading when YAML frontmatter contains a `title:` field. The frontmatter title satisfies MD025 and MD041. Start content with H2 or below after frontmatter. If no frontmatter exists, begin the file with a top-level heading.
 * Use exactly one space after the `#` characters in headings; do not omit or use multiple spaces.
 * If you close ATX headings with trailing `#` characters, use a single space between the text and both the opening and closing hashes; do not use multiple spaces on either side.
 * Use only one top-level heading per document; subsequent sections must use lower levels.
@@ -78,6 +41,99 @@ The main content starts here...
 ### Subsection
 ```
 <!-- </example-headings> -->
+
+## YAML Frontmatter
+
+* All markdown files MUST include YAML frontmatter at the beginning of the file
+* Frontmatter MUST be the first content in the file (before H1 heading)
+* Use triple-dash delimiters (---) on separate lines to wrap frontmatter YAML
+* Frontmatter provides machine-readable metadata for validation, SEO, and site generation
+* Do NOT use an H1 heading when frontmatter includes a `title:` field; the title in frontmatter acts as the document title per MD025/MD041
+* Start document content with H2 or below when frontmatter contains a `title:` field
+
+### Required Fields by File Type
+
+| File Type | Required Fields | Schema File |
+|-----------|----------------|-------------|
+| Root community files (README.md, CONTRIBUTING.md, etc.) | `title`, `description` | `root-community-frontmatter.schema.json` |
+| Documentation files (`docs/**/*.md`) | `title`, `description` | `docs-frontmatter.schema.json` |
+| Instruction files (`.github/**/*.instructions.md`) | `description`, `applyTo` | `instruction-frontmatter.schema.json` |
+| Chat mode files (`.github/**/*.chatmode.md`) | `description` | `chatmode-frontmatter.schema.json` |
+| Prompt files (`.github/**/*.prompt.md`) | `description` | `prompt-frontmatter.schema.json` |
+
+### Recommended Fields
+
+* `author`: Author or team responsible for the content
+* `ms.date`: Last modified date in ISO 8601 format (YYYY-MM-DD)
+* `ms.topic`: Documentation topic type (overview, concept, tutorial, reference, how-to, troubleshooting)
+* `keywords`: Array of keywords for content categorization
+* `estimated_reading_time`: Positive integer (minutes)
+
+### Date Format
+
+* MUST use ISO 8601 format: YYYY-MM-DD (e.g., `ms.date: 2025-11-15`)
+* Do NOT use MM/DD/YYYY, DD/MM/YYYY, or other formats
+
+### Schema Validation
+
+* Schemas are located in `scripts/linting/schemas/`
+* Pattern-based mapping in `schema-mapping.json` determines which schema applies to each file
+* VS Code YAML extension (`redhat.vscode-yaml`) provides in-editor validation
+* Run validation: `npm run validate:frontmatter` or `pwsh scripts/linting/Validate-MarkdownFrontmatter.ps1`
+
+### Schema Pattern Matching
+
+Files are validated against schemas based on glob pattern matching:
+
+* Patterns are evaluated in order from most specific to least specific
+* First matching pattern determines the schema
+* If no pattern matches, `base-frontmatter.schema.json` is used as default
+* Pattern syntax supports:
+  * `**` for recursive directory matching
+  * `*` for single path segment wildcard
+  * `|` for alternation (e.g., `README.md|CONTRIBUTING.md`)
+
+Pattern examples:
+
+* `.github/**/*.instructions.md` - All instruction files in .github directory tree
+* `docs/**/*.md` - All markdown files under docs directory
+* `README.md|CONTRIBUTING.md` - Exact filename match (alternation)
+
+### Examples
+
+<!-- <example-frontmatter-docs> -->
+```yaml
+---
+title: Getting Started with HVE Core
+description: Quick setup guide for using HVE Core Copilot customizations in your projects
+author: Microsoft
+ms.date: 2025-11-15
+ms.topic: tutorial
+keywords:
+  - github copilot
+  - setup
+  - getting started
+estimated_reading_time: 5
+---
+
+# Getting Started with HVE Core
+
+This guide shows you how to configure your project...
+```
+<!-- </example-frontmatter-docs> -->
+
+<!-- <example-frontmatter-instructions> -->
+```yaml
+---
+description: "Required instructions for creating or editing any Markdown (.md) files"
+applyTo: '**/*.md'
+---
+
+# Markdown Instructions
+
+These instructions define the Markdown style guide...
+```
+<!-- </example-frontmatter-instructions> -->
 
 ## Lists
 
@@ -101,6 +157,28 @@ The main content starts here...
 3. Step
 ```
 <!-- </example-lists> -->
+
+### Bullet point punctuation
+
+Follow professional editorial standards for bullet point punctuation consistency:
+
+* **Fragment bullet points** (short phrases, technical terms, simple commands): Do NOT end with periods.
+* **Complete sentence bullet points** (subject + verb constructions): End with periods.
+* Based on Google, Microsoft, and GitLab style guidelines
+
+<!-- <example-bullet-punctuation> -->
+```markdown
+* Configuration file
+* API endpoint
+* User authentication
+* Enable debugging mode
+
+* This function validates the input parameters
+* The system processes requests asynchronously
+* Users can configure settings through the UI
+* When enabled, it provides detailed logging information
+```
+<!-- </example-bullet-punctuation> -->
 
 ## Code blocks and code spans
 
@@ -154,7 +232,7 @@ See <https://example.com> and [Docs](https://example.com/docs).
 
 * Use a single space after the `>` marker; avoid multiple spaces.
 * Do not place a bare blank line between adjacent blockquotes unless they are the same quote (then include `>` on the blank line to continue it).
- * Inside blockquotes, apply the same list and code rules; when creating tight lists with code fences inside blockquotes, consider whether a blank line is required for your target renderer.
+* Inside blockquotes, apply the same list and code rules; when creating tight lists with code fences inside blockquotes, consider whether a blank line is required for your target renderer.
 
 <!-- <example-blockquotes> -->
 ```markdown
@@ -180,13 +258,15 @@ See <https://example.com> and [Docs](https://example.com/docs).
 * Surround tables with a blank line before and after (unless at file start/end).
 * Use a consistent pipe style; prefer leading and trailing pipes on all rows.
 * Ensure every row has the same number of cells as the header.
- * Keep header and delimiter rows aligned in column count so the table is recognized by renderers.
+* Keep header and delimiter rows aligned in column count so the table is recognized by renderers.
+* Use aligned column style: all pipe characters must align vertically across all rows. Pad cell content with spaces so pipes line up.
 
 <!-- <example-tables> -->
 ```markdown
-| Col A | Col B |
-|-------|-------|
-| A     | B     |
+| Column A | Column B | Column C |
+| -------- | -------- | -------- |
+| Short    | Medium   | Longer   |
+| A        | BB       | CCC      |
 ```
 <!-- </example-tables> -->
 

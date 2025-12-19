@@ -1,0 +1,65 @@
+name: Main Branch CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+jobs:
+  spell-check:
+    name: Spell Check
+    uses: ./.github/workflows/spell-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  markdown-lint:
+    name: Markdown Lint
+    uses: ./.github/workflows/markdown-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  table-format:
+    name: Table Format Check
+    uses: ./.github/workflows/table-format.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  dependency-pinning-scan:
+    name: Dependency Pinning Scan
+    uses: ./.github/workflows/dependency-pinning-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
+  release-please:
+    name: Release Please
+    needs:
+      - spell-check
+      - markdown-lint
+      - table-format
+      - dependency-pinning-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Run release-please
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

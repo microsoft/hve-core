@@ -1,8 +1,8 @@
 ---
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
-author: HVE Essentials Team
-ms.date: 2025-12-15
+author: HVE Core Team
+ms.date: 2025-11-05
 ms.topic: reference
 keywords:
   - powershell
@@ -13,9 +13,7 @@ keywords:
 estimated_reading_time: 10
 ---
 
-This directory contains PowerShell scripts for validating code quality and documentation standards in the `hve-learning` repository.
-
-Some scripts were originally sourced from another internal repo and adapted here; treat this folder as the source of truth for this repository.
+This directory contains PowerShell scripts for validating code quality and documentation standards in the `hve-core` repository.
 
 ## Architecture
 
@@ -63,7 +61,7 @@ Static analysis for PowerShell scripts using PSScriptAnalyzer.
 
 **GitHub Actions Integration**:
 
-* Workflow: `.github/workflows/ps-script-analyzer.yml`
+* Workflow: `.github/workflows/psscriptanalyzer.yml`
 * Artifacts: `psscriptanalyzer-results` (JSON + markdown)
 * Exit Code: Non-zero if violations found
 
@@ -349,12 +347,12 @@ Get-Command -Module LintingHelpers
 
 All linting scripts are integrated into GitHub Actions workflows:
 
-* **PSScriptAnalyzer**: `.github/workflows/ps-script-analyzer.yml`
+* **PSScriptAnalyzer**: `.github/workflows/psscriptanalyzer.yml`
 * **Frontmatter Validation**: `.github/workflows/frontmatter-validation.yml`
 * **Link Language Check**: `.github/workflows/link-lang-check.yml`
 * **Markdown Link Check**: `.github/workflows/markdown-link-check.yml`
 
-See the `.github/workflows/` directory for how these are composed into `code-quality.yml` and PR validation.
+See [GitHub Workflows Documentation](../../.github/workflows/README.md) for details.
 
 ## Adding New Linting Scripts
 
@@ -365,8 +363,8 @@ To add a new linting script:
 3. **Implement core validation logic** with clear error reporting
 4. **Support common parameters**: `-Verbose`, `-Debug`, `-ChangedFilesOnly` (if applicable)
 5. **Create GitHub Actions workflow** in `.github/workflows/`
-6. **Add to PR validation** by wiring it into `.github/workflows/code-quality.yml`
-7. **Document** in this README
+6. **Add to PR validation** in `.github/workflows/pr-validation.yml`
+7. **Document** in this README and workflows README
 8. **Test locally** before creating PR
 
 **Template**:
@@ -447,10 +445,9 @@ When modifying linting scripts:
 
 ## Related Documentation
 
-* [Code Quality Workflow](../../.github/workflows/code-quality.yml)
-* [PR Workflow](../../.github/workflows/pr.yml)
-* [Repository README](../../README.md)
-* [Learning Contributing Guide](../../learning/contributing.md)
+* [Scripts Documentation](../README.md)
+* [GitHub Workflows Documentation](../../.github/workflows/README.md)
+* [Contributing Guidelines](../../CONTRIBUTING.md)
 
 ---
 

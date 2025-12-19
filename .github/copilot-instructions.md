@@ -1,301 +1,277 @@
-# HVE Learning Platform AI Agent Instructions
+---
+description: 'Comprehensive coding guidelines and instructions for hve-core'
+---
 
-## Architecture Overview
+# General Instructions
 
-This is an **AI-assisted learning platform** that provides structured learning through katas (15-45 min exercises), training labs (2+ hours), and learning paths. The platform operates in two modes:
+Items in **HIGHEST PRIORITY** sections from attached instructions files override any conflicting guidance.
 
-1. **Learning Mode**: AI coaches guide learners through exercises using OpenHack-style discovery methodology
-2. **Content Creation Mode**: AI assists developers in creating validated, schema-compliant learning content
+## **HIGHEST PRIORITY**
 
-**Key Components**:
+**Breaking changes:** Do not add backward-compatibility layers or legacy support unless explicitly requested. Breaking changes are acceptable.
 
-- `.github/agents/`: Chat agents for coaching (`learning-kata-coach`, `learning-lab-coach`, `learning-content-creator`)
-- `.github/instructions/`: Scoped instruction files for different content types (applied via `applyTo` patterns)
-- `learning/shared/`: Templates, schemas, and content guidelines
-- `docs/_server/schemas/`: Progress tracking and API schemas (JSON Schema format)
-- `scripts/learning/`: PowerShell validation and catalog generation scripts
+**Artifacts:** Do not create or modify tests, scripts, or one-off markdown docs unless explicitly requested.
 
-## Critical Content Standards
+**Comment policy:** Never include thought processes, step-by-step reasoning, or narrative comments in code.
 
-### YAML Frontmatter Requirements
+* Keep comments brief and factual; describe **behavior/intent, invariants, edge cases**.
+* Remove or update comments that contradict the current behavior. Do not restate obvious functionality.
+* Do NOT add temporal or plan-phase markers (e.g. "Phase 1 cleanup", "... after migration", dates, or task references) to code files. When editing or updating any code files, always remove or replace these types of comments.
 
-**ALL kata content MUST have exactly 28 YAML fields** (21 required + 7 optional). Key fields:
+**Conventions and Styling:** Always follow conventions and styling in this codebase FIRST for all changes, edits, updates, and new files.
 
-```yaml
-kata_id: "category-name-100-short-title"  # kebab-case, includes difficulty number
-kata_category: ["category-slug"]           # Array with single category matching directory
-kata_difficulty: 1-5                       # 1=Foundation, 2=Skill, 3=Advanced, 4=Expert, 5=Legendary
-estimated_time_minutes: 45                 # 5-minute increments, must be accurate ±10%
-ai_coaching_level: adaptive                # minimal|guided|adaptive
-scaffolding_level: medium-heavy            # heavy|medium-heavy|light|minimal
-hint_strategy: progressive                 # progressive|direct|minimal
+* Conventions and styling are in instruction files and must be read in with the `read_file` tool if not already added as an `<attachment>`.
+
+**Proactive fixes:** Always fix problems and errors you encounter, even if unrelated to the original request. Prefer root-cause, constructive fixes over symptom-only patches.
+
+* Always correct conventions and styling and comments.
+
+**Deleting files and folders:** Use `rm` with the run_in_terminal tool when needing to delete files or folders.
+
+**Edit tools:** Never use `insert_edit_into_file` tool when other edit and file modification tools are available.
+
+### CRITICAL - Required Prompts & Instruction Compliance
+
+**Context-first:** Evaluate the current user prompt, any attachments, target folders, repo conventions, and files already read.
+
+**Discover & match (do this BEFORE any edit):**
+
+* Run `<search-for-prompts-files>` using the rules below (see table).
+* For each matched prompts/instructions/copilot file:
+  * If it is NOT already provided as a full, non-summarized `<attachment>` in this conversation and NOT already fetched via `read_file`, then read it now.
+  * Use read_file to **page through the entire file**: read **2,000 lines per call**; make additional calls until EOF.
+  * If the file references other prompts/instructions/copilot files, **recursively read those** to completion under the same paging rule.
+
+**Apply instructions:** Treat the union of all matched files as **HIGHEST PRIORITY** for this task.
+
+**Re-check cadence:** Re-run discovery and re-read all matched instruction files if missing **before each major editing phase**.
+
+<!-- <search-for-prompts-files> -->
+## Prompts Files Search Process
+
+When working with specific types of files or contexts, you must:
+
+1. Detect patterns and contexts that match the predefined rules
+2. Search for and read the corresponding prompts files
+3. Read a minimum of 2000 lines from these files before proceeding with any changes
+
+### Matching Patterns and Files for Prompts
+
+| Pattern/Context                   | Required Prompts Files                                 |
+|-----------------------------------|--------------------------------------------------------|
+| Any pull request creation context | `./.github/prompts/pull-request.prompt.md`             |
+| Any ADO context                   | `./.github/prompts/ado-*.prompt.md`                    |
+| Any git context                   | `./.github/prompts/git-*.prompt.md`                    |
+| Any shell or bash context         | `./.github/instructions/shell.instructions.md`         |
+| Any bash in scripts context       | `./.github/instructions/bash/bash.instructions.md`     |
+| Any python context                | `./.github/instructions/python-script.instructions.md` |
+| Any PowerShell context            | PowerShell best practices and PSScriptAnalyzer rules   |
+| Any markdown context              | `./.github/instructions/markdown.instructions.md`      |
+
+<!-- </search-for-prompts-files> -->
+
+<!-- <project-structure> -->
+## Project Structure Understanding
+
+This repository contains documentation, scripts, and tooling for the HVE (Hybrid Virtual Environment) Core project.
+
+### Directory Organization
+
+The project is organized into the following main areas:
+
+* **Documentation**: `**/docs/**` - Architecture Decision Records (ADRs) and solution documentation
+* **Scripts**: `**/scripts/**` - Automation scripts for linting, security, and development
+* **GitHub Configuration**: `**/.github/**` - Workflows, instructions, prompts, and issue templates
+* **Logs**: `**/logs/**` - Output from various validation and analysis scripts
+
+### Scripts Organization
+
+Scripts are organized by function:
+
+* **Development Tools**: `**/scripts/dev-tools/**` - Development utilities like PR reference generation
+* **Linting**: `**/scripts/linting/**` - Markdown validation, link checking, PowerShell analysis
+* **Security**: `**/scripts/security/**` - Dependency pinning validation, SHA staleness checks
+
+### Documentation Structure
+
+Documentation follows a standardized pattern:
+
+* **ADR Library**: `**/docs/solution-adr-library/**` - Architecture Decision Record templates
+* **Solution Docs**: `**/docs/solution-*/**` - Solution-specific documentation
+* **Markdown Standards**: All markdown must include valid frontmatter with `description` field
+
+### GitHub Configuration
+
+**Instructions**: `**/.github/instructions/**` - Technology-specific coding standards
+
+* Applied automatically based on file patterns
+* Include guidelines for shell, bash, python, markdown, and Azure DevOps
+
+**Prompts**: `**/.github/prompts/**` - Workflow-specific guidance
+
+* ADO workflows (work items, PRs, builds)
+* Git operations (merge, commit, setup)
+* Documentation creation (ADRs)
+
+**Workflows**: `**/.github/workflows/**` - GitHub Actions automation
+<!-- </project-structure> -->
+
+<!-- <script-operations> -->
+## Script Operations Requirements
+
+### PowerShell Scripts
+
+* Follow PSScriptAnalyzer rules defined in `PSScriptAnalyzerSettings.psd1`
+* Use `npm run psscriptanalyzer` to validate PowerShell scripts
+* Scripts output JSON results to `**/logs/**` directory
+* All scripts must include proper comment-based help
+
+### Bash Scripts
+
+* Follow conventions from `.github/instructions/bash/bash.instructions.md` and `.github/instructions/shell.instructions.md`
+* Use shellcheck for validation
+* Scripts should be POSIX-compliant where possible
+
+### Python Scripts
+
+* Follow conventions from `.github/instructions/python-script.instructions.md`
+* Use appropriate virtual environment management
+* Include type hints and docstrings
+
+<!-- </script-operations> -->
+
+<!-- <copilot-tracking-instructions> -->
+## Copilot Tracking Structure
+
+The `.copilot-tracking/` directory contains AI-assisted workflow artifacts:
+
+### Tracking Organization
+
+* **Work Items**: `.copilot-tracking/workitems/**` - ADO work item discovery and planning
+* **Pull Requests**: `.copilot-tracking/pr/**` - PR reference generation and handoff
+* **Changes**: `.copilot-tracking/changes/**` - Change tracking and implementation logs
+* **Plans**: `.copilot-tracking/plans/**` - Task planning documents
+* **Research**: `.copilot-tracking/research/**` - Technical research findings
+
+### Tracking Conventions
+
+* All tracking files use markdown format with frontmatter
+* Handoff logs document completion status and next actions
+* Follow patterns from `.github/instructions/ado-*.instructions.md`
+<!-- </copilot-tracking-instructions> -->
+
+<!-- <project-structure-instructions> -->
+## Project Structure Instructions
+
+This project contains documentation, automation scripts, and tooling for the HVE Core initiative.
+
+### Root Configuration Files
+
+Configuration files that control project behavior, tooling, and metadata.
+
+```plaintext
+hve-core/
+├── .checkov.yaml                              # Security and compliance scanning configuration
+├── .cspell.json                               # Spell checker configuration
+├── .gitattributes                             # Git attributes configuration
+├── .gitignore                                 # Git ignore patterns
+├── .markdownlint.json                         # Markdown linting rules
+├── .markdownlint-cli2.jsonc                   # Markdown linting CLI configuration
+├── .npmrc                                     # NPM package manager configuration
+├── package.json                               # NPM scripts for linting and validation
+├── package-lock.json                          # NPM dependency lock file
+├── CODE_OF_CONDUCT.md                         # Community guidelines and behavioral expectations
+├── CONTRIBUTING.md                            # Guidelines for contributing to the project
+├── LICENSE                                    # Legal license terms
+├── README.md                                  # Main project documentation
+├── SECURITY.md                                # Security policy and vulnerability reporting
+└── SUPPORT.md                                 # Support resources and community assistance
 ```
 
-**Authoritative schema**: `learning/shared/schema/kata-frontmatter-schema.json` (190 lines)
-**Template**: `learning/shared/templates/kata-template.md` - ALWAYS use as starting point
+### Development Environment
 
-### Content Type Detection by File Path
+Development containers and IDE settings.
 
-The `.github/instructions/` files use `applyTo` glob patterns to scope their rules:
-
-- `learning/katas/**/!(README).md` → `kata-content.instructions.md` (28 YAML fields, Quick Context pattern)
-- `learning/katas/**/README.md` → `kata-category-readme.instructions.md` (category scaffolding structure)
-- `learning/paths/**/*.md` → `learning-path-content.instructions.md` (double checkbox navigation)
-- `learning/training-labs/**/*.md` → `training-lab-content.instructions.md` (phase table structure)
-- `**/*.md` → `markdown.instructions.md` (markdownlint compliance, ATX headings, YAML frontmatter)
-
-### Markdown File Standards
-
-When creating or editing ANY markdown file (`.md`), you MUST follow the rules in `.github/instructions/markdown.instructions.md`. Key requirements:
-
-- **YAML frontmatter**: README files SHOULD include frontmatter with `title`, `description`, `ms.date`, `ms.topic`
-- **Headings**: Use ATX style (`#`), don't skip levels, surround with blank lines
-- **Lists**: Use consistent markers (`*` preferred), surround with blank lines, 2-space indent for sublists
-- **Code blocks**: Always specify a language (use `text` if no highlighting needed), surround with blank lines
-- **Tables**: Surround with blank lines, use leading and trailing pipes
-- **Links**: Never use bare URLs, always provide link text or use autolink `<https://...>`
-- **Files must end**: With exactly one trailing newline
-
-### Mandatory Content Patterns
-
-**Quick Context Section** (all katas):
-
-```markdown
-## Quick Context
-
-**You'll Learn**: [specific outcome]
-**Real Challenge**: [one paragraph scenario]
-**Your Task**: [clear deliverable]
+```plaintext
+hve-core/
+├── .devcontainer/                             # VS Code development container configuration
+├── .github/                                   # GitHub configuration
+│   ├── chatmodes/                             # AI chat mode definitions
+│   ├── instructions/                          # Technology-specific coding standards
+│   ├── prompts/                               # Workflow-specific guidance
+│   ├── workflows/                             # GitHub Actions automation
+│   ├── ISSUE_TEMPLATE/                        # Issue templates
+│   ├── CODEOWNERS                             # Code ownership definitions
+│   ├── PULL_REQUEST_TEMPLATE.md               # PR template
+│   ├── copilot-instructions.md                # This file
+│   └── dependabot.yml                         # Dependency update configuration
+└── .vscode/                                   # VS Code workspace settings
 ```
 
-**NO COMPANY NAMES** in scenarios - use "role + industry + technical context" (e.g., "You're a platform engineer at a manufacturing company...")
+### Documentation
 
-**AI Coaching Comments** - embed hints in HTML for coach agents:
+Project documentation organized by solution area.
 
-```markdown
-<!-- HINT: If learner stuck on X, suggest checking Y -->
+```plaintext
+docs/
+├── solution-adr-library/                      # Architecture Decision Record templates
+│   └── adr-template-solutions.md              # ADR template for solutions
+└── solution-data-science/                     # Data science solution documentation
+    └── hve-ds.md                              # HVE data science documentation
 ```
 
-**Standard Footer** - all content must include AI-generated attribution
+### Automation Scripts
 
-## Validation & Quality Gates
+Utility scripts for validation, linting, and security.
 
-### Validation Script
-
-**Primary Tool**: `scripts/learning/kata-validation/Validate-Katas.ps1`
-
-```bash
-# Validate specific kata (CORRECT invocation - direct execution)
-pwsh ./scripts/learning/kata-validation/Validate-Katas.ps1 -KataPath "learning/katas/category/01-kata.md"
-
-# Validate all katas in directory
-pwsh ./scripts/learning/kata-validation/Validate-Katas.ps1 -KataDirectory "learning/katas"
-
-# ❌ NEVER use & operator - causes silent failure without validation
+```plaintext
+scripts/
+├── README.md                                  # Scripts documentation
+├── dev-tools/                                 # Development utilities
+│   ├── Generate-PrReference.ps1               # PR reference generation script
+│   └── pr-ref-gen.sh                          # PR reference generation (bash)
+├── linting/                                   # Linting and validation scripts
+│   ├── Invoke-LinkLanguageCheck.ps1           # Link language consistency checker
+│   ├── Invoke-PSScriptAnalyzer.ps1            # PowerShell script analyzer
+│   ├── Link-Lang-Check.ps1                    # Link language validation
+│   ├── Markdown-Link-Check.ps1                # Markdown link validation
+│   ├── Validate-MarkdownFrontmatter.ps1       # Markdown frontmatter validation
+│   ├── markdown-link-check.config.json        # Link checker configuration
+│   ├── PSScriptAnalyzer.psd1                  # PSScriptAnalyzer settings
+│   ├── README.md                              # Linting documentation
+│   └── Modules/                               # Shared PowerShell modules
+│       └── LintingHelpers.psm1                # Helper functions
+└── security/                                  # Security validation scripts
+    ├── Test-DependencyPinning.ps1             # Dependency pinning validation
+    ├── Test-SHAStaleness.ps1                  # SHA staleness checking
+    └── Update-ActionSHAPinning.ps1            # Update GitHub Action SHA pins
 ```
 
-**Validation Checks**:
+### Output Logs
 
-- YAML frontmatter schema compliance (all 28 fields)
-- Prerequisite chain integrity (no circular dependencies)
-- Category directory alignment
-- Checkbox structure (flat, not nested)
-- Inclusive language (no "master/mastery")
-- Time accuracy validation
-- AI coaching integration points
+Automated script outputs and validation results.
 
-### Checkbox Structure Rules
-
-✅ **CORRECT** - Flat structure:
-
-```markdown
-- [ ] Complete step 1
-- [ ] Complete step 2
-- [ ] Verify result
+```plaintext
+logs/
+├── dependency-pinning-results.json            # Dependency pinning check results
+├── frontmatter-validation-results.json        # Frontmatter validation results
+├── link-lang-check-results.json               # Link language check results
+├── markdown-link-check-results.json           # Link validation results
+├── psscriptanalyzer-results.json              # PowerShell analysis results
+├── psscriptanalyzer-summary.json              # PowerShell analysis summary
+└── test-pinning.sarif                         # SARIF format pinning results
 ```
 
-❌ **INCORRECT** - Nested content causes CSS strikethrough issues:
+### Copilot Tracking
 
-```markdown
-- [ ] Setup validation:
-  - Nested bullet (breaks rendering)
+AI-assisted workflow artifacts (gitignored, local only).
+
+```plaintext
+.copilot-tracking/
+├── workitems/                                 # ADO work item discovery and planning
+├── pr/                                        # PR reference generation
+├── changes/                                   # Change tracking logs
+├── plans/                                     # Task planning documents
+└── research/                                  # Technical research findings
 ```
-
-## Developer Workflows
-
-### Creating New Kata Content
-
-1. **Use template**: `learning/shared/templates/kata-template.md`
-2. **Follow category structure**: `learning/katas/category-name/###-kata-name.md` (numbering indicates difficulty)
-3. **Validate before commit**: Run `Validate-Katas.ps1` on your file
-4. **Test instructions**: Verify in clean environment with target scaffolding level
-
-### Working with Chat Agents
-
-When coding in this repository, you may interact with specialized chat agents:
-
-- **@learning-kata-coach**: Use Socratic method, provide progressive hints, avoid direct answers
-- **@learning-content-creator**: Collaborative content development with template application
-- **@learning-lab-coach**: Multi-phase system coaching
-
-**Agent Constraints**:
-
-- Keep responses concise for chat pane (no walls of text)
-- Never use HTML `<input>` elements in responses
-- Reference instruction files when making content edits
-
-### Progress Tracking Integration
-
-The platform uses structured JSON schemas for AI coach state management:
-
-- `docs/_server/schemas/kata-progress-schema.json` - Learner checkpoint tracking
-- `docs/_server/schemas/learning-path-progress-schema.json` - Multi-kata journey state
-- `docs/_server/schemas/self-assessment-schema.json` - Skill evaluation data
-
-Coaches read/write these during sessions to maintain context across interactions.
-
-## Project-Specific Conventions
-
-### Kata Difficulty Numbering
-
-File names encode difficulty: `100-foundation.md`, `200-skill.md`, `300-advanced.md`, `400-expert.md`, `500-legendary.md`
-
-This is separate from `kata_difficulty` YAML field (1-5 integer) but should align.
-
-### Scaffolding Levels Define Content Depth
-
-- **Heavy**: Step-by-step with expected outputs and code samples
-- **Medium-heavy**: Framework with reference links and partial guidance
-- **Light**: High-level objectives with minimal examples
-- **Minimal**: Problem statement only, reference links for context
-
-Match content detail to declared `scaffolding_level` in YAML.
-
-### OpenHack Coaching Methodology
-
-Content is designed for **discovery-based learning**:
-
-- Challenges drive motivation (not lectures)
-- Learners explore and experiment
-- Failure is expected and positive
-- AI coaches guide but don't prescribe solutions
-
-When writing kata content, phrase instructions as challenges/objectives rather than step-by-step procedures (unless scaffolding is heavy).
-
-## Integration Points
-
-### VS Code Extension
-
-`extension/package.json` registers 3 chat agents and 6 instruction files. The extension embeds all `.github/agents/` and `.github/instructions/` content, making them available in any workspace where the extension is installed.
-
-### GitHub MCP Server
-
-Required for AI coaches to:
-
-- Track progress across sessions
-- Access kata content from multiple repositories (CAIRA, edge-ai, etc.)
-- Create personalized learning paths
-- Interact with learner's GitHub context
-
-Configure in VS Code before using learning modes.
-
-## Common Pitfalls
-
-- **Forgetting kata_id format**: Must be `category-difficulty-short-name` (kebab-case)
-- **Nested checkboxes**: Causes CSS strikethrough on parent content
-- **Missing YAML fields**: Schema requires all 28 fields, check with validation script
-- **Incorrect validation invocation**: Using `&` operator causes silent failure
-- **Time estimates**: Must be realistic (±10%) and 5-minute increments
-- **Mixing content types**: Different `ms.topic` values for katas vs category READMEs vs paths
-
-## Commit Message Guidelines
-
-This document provides instructions for generating standardized commit messages.
-
-### Format Requirements
-
-- Use Conventional Commit Messages
-- All changes MUST be in imperative mood
-
-### Types
-
-Types MUST be one of the following:
-
-- `feat` - A new feature
-- `fix` - A bug fix
-- `refactor` - A code change that neither fixes a bug nor adds a feature
-- `perf` - A code change that improves performance
-- `style` - Changes that do not affect the meaning of the code
-- `test` - Adding missing tests or correcting existing tests
-- `docs` - Documentation only changes (excluding: `*.instructions.md`, `*.prompt.md`, `*.chatmode.md`, as these are prompts and instructions likely meaning the changes are `feat`, `chore`, etc)
-- `build` - Changes that affect the build system or external dependencies
-- `ops` - Changes to operational components
-- `chore` - Other changes that don't modify src or test files
-
-### Scopes
-
-Scopes MUST be one of the following:
-
-- `(prompts)`
-- `(instructions)`
-- `(settings)`
-- `(cloud)`
-- `(edge)`
-- `(application)`
-- `(tools)`
-- `(resource-group)`
-- `(security-identity)`
-- `(observability)`
-- `(data)`
-- `(fabric)`
-- `(messaging)`
-- `(vm-host)`
-- `(cncf-cluster)`
-- `(iot-ops)`
-- `(blueprints)`
-- `(terraform)`
-- `(bicep)`
-- `(scripts)`
-- `(adrs)`
-- `(build)`
-- `(azureml)`
-
-### Description
-
-- Description MUST be short and LESS THAN 100 bytes
-- Examples:
-
-```txt
-feat: update logic with new feature
-chore: cleaned up and moved code from A to B
-feat(iot-ops): add parameters to take name instead of id
-```
-
-### Body (Optional)
-
-For larger changes only:
-
-- Body starts with a blank line
-- Contains a summarized bulleted list (0-5 items AT MOST)
-- MUST be LESS THAN 300 bytes
-
-### Footer
-
-- Footer MUST start with a blank line
-- Must include an emoji that represents the change
-- Must end with `- Generated by Copilot`
-
-### Example Complete Commit Message - Large
-
-```txt
-feat(cloud): add new authentication flow
-
-- add commit message, markdown, C# along with C# test instructions
-- introduce task planner and researcher, prompt builder, and adr creation chatmodes
-- configure markdownlint and VS Code workspace settings
-- add ADO work items prompts for getting and preparing my work items
-- add .gitignore and cleanup README newlines
-
-🔐
-- Generated by Copilot
-```
+<!-- </project-structure-instructions> -->

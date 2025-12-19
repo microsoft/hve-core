@@ -2,23 +2,11 @@
 **
 
 # Include only the extension essentials
+!.github/agents/**
+!.github/chatmodes/**
+!.github/prompts/**
+!.github/instructions/**
 !package.json
 !README.md
-!CHANGELOG.md
 !LICENSE
-
-# Include agents and instructions (but not their READMEs)
-!.github/agents/*.agent.md
-!.github/instructions/*.instructions.md
-
-# Never package CI workflows
-.github/workflows/**
-
-# Include validation script and schemas
-!scripts/learning/kata-validation/**
-!learning/shared/**
-
-# Exclude all nested README files except learning/shared/README.md
-**/README.md
-!README.md
-!learning/shared/README.md
+!CHANGELOG.md
