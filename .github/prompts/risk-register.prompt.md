@@ -52,7 +52,7 @@ Include the following sections:
   - Risk Score (Numeric) = Convert qualitative ratings to numbers for sorting purposes:
     - Low = 1, Medium = 2, High = 3
     - Example: High × Medium = 3 × 2 = 6
-  - Document rationale for each rating (1–2 lines) for consistency.
+  - Document rationale for each rating (1-2 lines) for consistency.
 
 - **Overview Table of Risks**: Columns:
   - Risk ID
