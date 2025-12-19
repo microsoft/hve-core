@@ -1,6 +1,6 @@
 ---
 description: 'Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.'
-agent: agent
+agent: 'agent'
 name: risk-register
 argument-hint: "[project-name] [optional: focus-area]"
 tools: ['edit', 'search', 'runCommands', 'runTasks', 'problems', 'githubRepo']
