@@ -1352,6 +1352,7 @@ keepbackup
 checkpointed
 parameterless
 notnull
+notmatch
 gettype
 lockfiles
 workitem
@@ -1379,6 +1380,8 @@ typeparam
 colcon
 pathlib
 popen
+popd
+pushd
 expanduser
 reqwest
 pyyaml
@@ -1392,6 +1395,7 @@ cloudevents
 datasize
 mult
 reqs
+toplevel
 
 # Video & Image Processing
 drawtext
