@@ -1,0 +1,154 @@
+# Artifact Retention Policies Configuration
+#
+# This file defines retention policies for different types of artifacts generated
+# during CI/CD processes to optimize storage costs while maintaining compliance
+# and debugging capabilities.
+
+# Default retention for most build artifacts
+default_retention_days: 30
+
+# Artifact type specific retention policies
+artifact_types:
+  # Build outputs and container images
+  build_artifacts:
+    retention_days: 14
+    description: "Consolidated build outputs, SLSA bundles, and build logs"
+    compression_level: 6
+
+  # Security scan results and reports
+  security_reports:
+    retention_days: 90  # Longer retention for compliance
+    description: "Security scan results, SARIF reports, and gate enforcement results"
+    compression_level: 9  # Maximum compression for storage efficiency
+
+  # Temporary/intermediate artifacts
+  intermediate:
+    retention_days: 7
+    description: "Temporary build outputs, caches, and intermediate files"
+    compression_level: 6
+
+  # Test results and coverage reports
+  test_results:
+    retention_days: 30
+    description: "Unit test results, integration test outputs, and coverage reports"
+    compression_level: 6
+
+  # Documentation and static analysis
+  documentation:
+    retention_days: 60
+    description: "Generated documentation, linting reports, and static analysis results"
+    compression_level: 6
+
+  # Compliance and audit artifacts
+  compliance:
+    retention_days: 365  # One year for audit requirements
+    description: "Compliance reports, audit logs, and regulatory artifacts"
+    compression_level: 9
+
+# Repository-specific overrides
+# These can be customized per repository based on specific requirements
+overrides:
+  hve-core:
+    # Security reports need longer retention for this project
+    security_reports:
+      retention_days: 120
+      reason: "Enhanced security monitoring requirements"
+
+    # Build artifacts can be shorter due to frequent releases
+    build_artifacts:
+      retention_days: 10
+      reason: "Frequent release cycle with automated deployments"
+
+# Azure DevOps specific settings
+# Note: Azure DevOps retention is typically managed at organization level
+# These are guidelines for pipeline configuration
+azure_devops:
+  # Default artifact retention (if not specified, uses organization default)
+  default_retention_days: 30
+
+  # Artifact cleanup strategies
+  cleanup_strategies:
+    - name: "Delete successful build artifacts after releases"
+      enabled: true
+      conditions:
+        - release_deployed: true
+        - build_status: succeeded
+        - age_days: 7
+
+    - name: "Keep failed build artifacts longer for debugging"
+      enabled: true
+      conditions:
+        - build_status: failed
+        - retention_days: 60
+
+# GitHub Actions specific settings
+github_actions:
+  # Default retention for upload-artifact action
+  default_retention_days: 30
+
+  # Compression settings for different artifact types
+  compression:
+    security_reports: 9      # Maximum compression
+    build_outputs: 6         # Balanced compression/speed
+    test_results: 6          # Balanced compression/speed
+    logs: 3                  # Minimal compression for quick access
+
+# Storage optimization recommendations
+optimization:
+  compression:
+    enabled: true
+    default_level: 6
+    max_level: 9
+
+  cleanup:
+    # Automatic cleanup of expired artifacts
+    auto_cleanup: true
+
+    # Notification before cleanup
+    notify_before_cleanup_days: 7
+
+  monitoring:
+    # Track storage usage
+    track_storage_usage: true
+
+    # Alert thresholds
+    storage_alert_threshold_gb: 1000
+    artifact_count_threshold: 10000
+
+# Compliance and audit requirements
+compliance:
+  # Minimum retention for audit purposes
+  minimum_audit_retention_days: 90
+
+  # Required artifact types for compliance
+  required_artifacts:
+    - security_scan_results
+    - dependency_audit_reports
+    - build_provenance_data
+    - test_execution_logs
+
+  # Data protection and privacy
+  data_protection:
+    # Encrypt sensitive artifacts
+    encrypt_sensitive_data: true
+
+    # Anonymize logs where possible
+    anonymize_logs: true
+
+    # Geographic data residency requirements
+    data_residency: "us-east"
+
+# Cost optimization metrics
+cost_optimization:
+  # Target storage cost per month (USD)
+  target_monthly_cost: 50
+
+  # Storage efficiency targets
+  compression_ratio_target: 0.3  # 70% size reduction
+
+  # Cleanup efficiency
+  cleanup_frequency_days: 7
+
+  # Monitoring and reporting
+  generate_cost_reports: true
+  report_frequency: "weekly"

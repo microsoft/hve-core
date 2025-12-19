@@ -1,0 +1,27 @@
+name: General Issue
+description: Report a general issue or request a feature
+title: "[Issue]: "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to create an issue!
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: Please provide a clear and concise description of the issue or request
+      placeholder: Describe what you're seeing or what you'd like to see improved
+    validations:
+      required: true
+  
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or information about the issue
+      placeholder: Any additional details that might help
+    validations:
+      required: false

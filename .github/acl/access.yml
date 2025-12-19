@@ -1,0 +1,13 @@
+# Documentation for ACL policy: https://aka.ms/gim/docs/policy/acl
+
+---
+name: Access control list
+description: List of teams and their permission levels
+resource: repository
+where:
+configuration:
+  manageAccess:
+    - team: edge-ai-core-dev
+      role: Maintain
+    - team: isengineering998
+      role: Write
