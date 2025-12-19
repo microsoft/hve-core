@@ -129,12 +129,12 @@ Each kata defines coaching parameters in YAML frontmatter:
 
 **CRITICAL**: This is the centralized registry of all kata repositories. Update this table when adding new kata sources.
 
-| Source Name         | Repository Owner | Repository Name | Branch/Ref                                                   | Kata Folders      | Notes                               |
-|---------------------|------------------|-----------------|--------------------------------------------------------------|-------------------|-------------------------------------|
-| **customer-zero**   | microsoft        | customer-zero   | main                                                         | `docs/katas/`     | Customer zero katas                 |
-| **CAIRA**           | eedorenko        | CAIRA           | refs/heads/eedorenko/kata-troubleshooting-caira-deployments  | `learning/katas/` | Use specific branch for kata content|
-| **edge-ai**         | microsoft        | edge-ai         | main                                                         | `learning/katas/` | Edge AI platform katas              |
-| **[OTHER sources]** | [owner]          | [repo-name]     | [branch/ref]                                                 | [folder paths]    | [special notes]                     |
+| Source Name         | Repository Owner | Repository Name | Branch/Ref                                | Kata Folders      | Notes                                |
+|---------------------|------------------|-----------------|-------------------------------------------|-------------------|--------------------------------------|
+| **customer-zero**   | microsoft        | customer-zero   | main                                      | `docs/katas/`     | Customer zero katas                  |
+| **CAIRA**           | eedorenko        | CAIRA           | refs/heads/eedorenko/caira-advanced-katas | `learning/katas/` | Use specific branch for kata content |
+| **edge-ai**         | microsoft        | edge-ai         | main                                      | `learning/katas/` | Edge AI platform katas               |
+| **[OTHER sources]** | [owner]          | [repo-name]     | [branch/ref]                              | [folder paths]    | [special notes]                      |
 
 **Access Method Logic** (applies to ALL sources):
 
