@@ -1,6 +1,8 @@
 ---
 description: 'Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.'
 agent: agent
+name: risk-register
+argument-hint: "[project-name] [optional: focus-area]"
 tools: ['edit', 'search', 'runCommands', 'runTasks', 'problems', 'githubRepo']
 ---
 
@@ -30,6 +32,10 @@ If not already available in the repository, prompt the user to provide:
 - Ensure the folder `docs/risks/` exists; create it if missing.
 - Place all generated files inside the `docs/risks/` folder.
 - Use clear and direct file names and headings.
+- **File Naming Conventions**:
+  - Primary register: `risk-register.md` (or `risk-register-YYYY-MM-DD.md` for versioned snapshots)
+  - Mitigation plan: `risk-mitigation-plan.md`
+  - For multi-project repositories, use: `risk-register-[project-name].md`
 
 ## Step 3: Create `risk-register.md` in `docs/risks/`
 
@@ -42,9 +48,10 @@ Include the following sections:
   - Default scales:
     - **Probability**: Low (unlikely), Medium (possible), High (likely)
     - **Impact**: Low (minor effect), Medium (moderate effect), High (major effect)
-  - Risk Score (Profiled) = Probability × Impact (e.g., High × Medium)
-  - Numeric representation masked for scoring (Low=1, Medium=2, High=3).
-  - Risk Score (Masked) = Probability score × Impact score (e.g., High × Medium = 3 × 2 = 6)
+  - Risk Score (Qualitative) = Probability × Impact using qualitative labels (e.g., High × Medium)
+  - Risk Score (Numeric) = Convert qualitative ratings to numbers for sorting purposes:
+    - Low = 1, Medium = 2, High = 3
+    - Example: High × Medium = 3 × 2 = 6
   - Document rationale for each rating (1–2 lines) for consistency.
 
 - **Overview Table of Risks**: Columns:
@@ -53,14 +60,23 @@ Include the following sections:
   - Description (Cause → Event → Impact)
   - Probability (Low/Medium/High)
   - Impact (Low/Medium/High)
-  - Risk Score (Profiled) = Probability × Impact (e.g., High × Medium)
-  - Risk Score (Masked) = Probability × Impact (e.g., High × Medium)
+  - Risk Score (Qualitative) = Probability × Impact (e.g., High × Medium)
+  - Risk Score (Numeric) = Numeric value for sorting (e.g., 6)
+
+  **Example:**
+
+  | Risk ID | Risk Title                 | Probability | Impact | Risk Score (Qualitative) | Risk Score (Numeric) |
+  |---------|----------------------------|-------------|--------|--------------------------|----------------------|
+  | R-001   | API rate limits exceeded   | High        | Medium | High × Medium            | 6                    |
+  | R-002   | Key developer unavailable  | Medium      | High   | Medium × High            | 6                    |
+  | R-003   | Third-party service outage | Medium      | Medium | Medium × Medium          | 4                    |
 
 - **Detailed Risk Entries**:
   - Risk ID and Title
   - Description (Cause → Event → Impact)
   - Probability and Impact ratings + rationale
-  - Risk Score = Probability × Impact (e.g., High × Medium)
+  - Risk Score (Qualitative) = Probability × Impact (e.g., High × Medium)
+  - Risk Score (Numeric) = Numeric value (e.g., 6)
   - Category
   - Mitigation Strategy
   - Contingency Plan
@@ -69,7 +85,7 @@ Include the following sections:
   - Status
 
 Use short, focused descriptions. Avoid jargon and unnecessary elaboration.
-**Sort all risks by descending Risk Score to highlight the most critical risks.**
+**Sort all risks by descending Risk Score (Numeric) to highlight the most critical risks.**
 
 ## Step 4: Create `risk-mitigation-plan.md` in `docs/risks/`
 
