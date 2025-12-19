@@ -617,6 +617,8 @@ if (Test-Path $mountedPath) {
 $ErrorActionPreference = 'Stop'
 
 # Create multi-root workspace file
+# IMPORTANT: Do NOT use folder display names as path prefixes (e.g., "HVE-Core Library/.github").
+# VS Code does not resolve display names. Use actual relative paths from the workspace file location.
 $workspaceContent = @'
 {
   "folders": [
@@ -625,16 +627,16 @@ $workspaceContent = @'
   ],
   "settings": {
     "chat.modeFilesLocations": {
-      "HVE-Core Library/.github/chatmodes": true,
-      "My Project/.github/chatmodes": true
+      ".github/chatmodes": true,
+      "../hve-core/.github/chatmodes": true
     },
     "chat.promptFilesLocations": {
-      "HVE-Core Library/.github/prompts": true,
-      "My Project/.github/prompts": true
+      ".github/prompts": true,
+      "../hve-core/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {
-      "HVE-Core Library/.github/instructions": true,
-      "My Project/.github/instructions": true
+      ".github/instructions": true,
+      "../hve-core/.github/instructions": true
     }
   },
   "extensions": {
@@ -652,6 +654,8 @@ Write-Host "✅ Created hve-core.code-workspace"
 #!/usr/bin/env bash
 set -euo pipefail
 
+# IMPORTANT: Do NOT use folder display names as path prefixes (e.g., "HVE-Core Library/.github").
+# VS Code does not resolve display names. Use actual relative paths from the workspace file location.
 cat > hve-core.code-workspace << 'EOF'
 {
   "folders": [
@@ -660,16 +664,16 @@ cat > hve-core.code-workspace << 'EOF'
   ],
   "settings": {
     "chat.modeFilesLocations": {
-      "HVE-Core Library/.github/chatmodes": true,
-      "My Project/.github/chatmodes": true
+      ".github/chatmodes": true,
+      "../hve-core/.github/chatmodes": true
     },
     "chat.promptFilesLocations": {
-      "HVE-Core Library/.github/prompts": true,
-      "My Project/.github/prompts": true
+      ".github/prompts": true,
+      "../hve-core/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {
-      "HVE-Core Library/.github/instructions": true,
-      "My Project/.github/instructions": true
+      ".github/instructions": true,
+      "../hve-core/.github/instructions": true
     }
   },
   "extensions": {
