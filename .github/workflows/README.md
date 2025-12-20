@@ -231,13 +231,13 @@ This architecture ensures:
 
 **Workflow Execution Matrix**:
 
-| Event                                | Workflows That Run                                       | CodeQL Included    |
-|--------------------------------------|----------------------------------------------------------|--------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
-| Merge to main                        | `main.yml` (5 jobs)                                      | ✅ Yes              |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone) |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌ No               |
+| Event                                | Workflows That Run                                       | CodeQL Included       |
+|--------------------------------------|----------------------------------------------------------|-----------------------|
+| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
+| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
+| Merge to main                        | `main.yml` (5 jobs)                                      | ✅  Yes               |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
