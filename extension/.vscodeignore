@@ -5,6 +5,7 @@
 !.github/chatmodes/**
 !.github/prompts/**
 !.github/instructions/**
+!.github/agents/**
 !scripts/dev-tools/**
 !package.json
 !README.md
