@@ -220,14 +220,14 @@ The clone only happens if the folder doesn't exist. To force update:
 
 ## Limitations
 
-| Aspect           | Status                                                            |
-|------------------|-------------------------------------------------------------------|
+| Aspect           | Status                                                             |
+|------------------|--------------------------------------------------------------------|
 | Devcontainers    | ✅ Designed for this                                               |
-| Codespaces       | ⚠️ Works but not optimal (use [Codespaces method](codespaces.md)) |
-| Team sharing     | ⚠️ Each developer clones separately                               |
+| Codespaces       | ⚠️ Works but not optimal (use [Codespaces method](codespaces.md))  |
+| Team sharing     | ⚠️ Each developer clones separately                                |
 | Portable paths   | ✅ Relative paths work                                             |
-| Version pinning  | ⚠️ Manual (modify clone command)                                  |
-| Disk usage       | ⚠️ Per-project copy                                               |
+| Version pinning  | ⚠️ Manual (modify clone command)                                   |
+| Disk usage       | ⚠️ Per-project copy                                                |
 | Setup complexity | ✅ Simple                                                          |
 
 ## Next Steps

@@ -41,16 +41,16 @@ Answer these questions to find your recommended installation method:
 
 ### Decision Matrix
 
-| Environment               | Team | Updates    | Recommended Method                              |
-|---------------------------|------|------------|-------------------------------------------------|
-| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md)   |
-| Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)               |
-| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)    |
-| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)               |
-| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)      |
-| Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)               |
+| Environment               | Team | Updates    | Recommended Method                               |
+|---------------------------|------|------------|--------------------------------------------------|
+| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md)    |
+| Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)                |
+| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)     |
+| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)                |
+| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)       |
+| Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)                |
 | Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) ⭐ |
-| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)         |
+| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)          |
 
 ⭐ **Multi-Root Workspace** is the recommended method for most users.
 
@@ -77,10 +77,10 @@ Answer these questions to find your recommended installation method:
 
 These methods are for projects that want to use HVE-Core's customizations:
 
-| Method                                          | Best For                      | Complexity |
-|-------------------------------------------------|-------------------------------|------------|
+| Method                                           | Best For                      | Complexity |
+|--------------------------------------------------|-------------------------------|------------|
 | [Multi-Root Workspace](methods/multi-root.md) ⭐ | Any environment, portable     | Low        |
-| [Submodule](methods/submodule.md)               | Teams needing version control | Medium     |
+| [Submodule](methods/submodule.md)                | Teams needing version control | Medium     |
 
 ### Developer Methods
 
