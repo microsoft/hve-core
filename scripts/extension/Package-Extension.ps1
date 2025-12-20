@@ -151,7 +151,7 @@ Write-Host ""
 Write-Host "🗂️  Preparing extension directory..." -ForegroundColor Yellow
 
 # Clean any existing copied directories
-$dirsToClean = @(".github")
+$dirsToClean = @(".github", "scripts")
 foreach ($dir in $dirsToClean) {
     $dirPath = Join-Path $ExtensionDir $dir
     if (Test-Path $dirPath) {
@@ -163,6 +163,10 @@ foreach ($dir in $dirsToClean) {
 # Copy required directories
 Write-Host "   Copying .github..." -ForegroundColor Gray
 Copy-Item -Path "$RepoRoot/.github" -Destination "$ExtensionDir/.github" -Recurse
+
+Write-Host "   Copying scripts/dev-tools..." -ForegroundColor Gray
+New-Item -Path "$ExtensionDir/scripts" -ItemType Directory -Force | Out-Null
+Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDir/scripts/dev-tools" -Recurse
 
 Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 

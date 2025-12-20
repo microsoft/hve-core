@@ -6,6 +6,7 @@
 !.github/chatmodes/**
 !.github/prompts/**
 !.github/instructions/**
+!scripts/dev-tools/**
 !package.json
 !README.md
 !LICENSE

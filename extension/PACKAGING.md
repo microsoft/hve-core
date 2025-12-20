@@ -7,6 +7,7 @@ This folder contains the VS Code extension configuration for HVE Core.
 ```plaintext
 extension/
 ├── .github/              # Temporarily copied during packaging (removed after)
+├── scripts/dev-tools/    # Temporarily copied during packaging (removed after)
 ├── package.json          # Extension manifest with VS Code configuration
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
@@ -84,6 +85,7 @@ The packaging script automatically:
 - Uses version from `package.json` (or specified version)
 - Optionally appends dev patch number for pre-release builds
 - Copies required `.github` directory
+- Copies `scripts/dev-tools` directory (developer utilities)
 - Packages the extension using `vsce`
 - Cleans up temporary files
 - Restores original `package.json` version if temporarily modified
@@ -94,7 +96,7 @@ If you need to package manually:
 
 ```bash
 cd extension
-rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github
+rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && cp -r ../scripts/dev-tools scripts/ && vsce package && rm -rf .github scripts
 ```
 
 Or use npm script:
