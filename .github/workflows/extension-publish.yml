@@ -1,0 +1,146 @@
+name: Publish Extension
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use package.json version)'
+        required: false
+        type: string
+        default: ''
+      dry-run:
+        description: 'Dry run (package only, do not publish)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prepare-changelog:
+    name: Prepare Changelog
+    runs-on: ubuntu-latest
+    outputs:
+      changelog-path: ${{ steps.create-changelog.outputs.path }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Create changelog file
+        id: create-changelog
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            cat > CHANGELOG.md << 'EOF'
+          ${{ github.event.release.body }}
+          EOF
+            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "path=" >> $GITHUB_OUTPUT
+          else
+            echo "path=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload changelog
+        if: steps.create-changelog.outputs.path != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: changelog
+          path: CHANGELOG.md
+          retention-days: 1
+
+  normalize-version:
+    name: Normalize Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.normalize.outputs.version }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Normalize version string
+        id: normalize
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          # Strip leading 'v' if present
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  package:
+    name: Package Extension
+    needs: [prepare-changelog, normalize-version]
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.normalize-version.outputs.version }}
+      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish to Marketplace
+    needs: [prepare-changelog, package]
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    environment: marketplace
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2.2.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+
+      - name: Install VSCE
+        run: npm install -g @vscode/vsce
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: extension-vsix
+          path: ./extension
+
+      - name: Publish to VS Code Marketplace
+        run: |
+          VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+          echo "📦 Publishing: $VSIX_FILE"
+          vsce publish --packagePath "$VSIX_FILE" --azure-credential
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Extension Published Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)" >> $GITHUB_STEP_SUMMARY

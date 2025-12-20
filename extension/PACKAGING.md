@@ -23,41 +23,125 @@ Install the VS Code Extension Manager CLI:
 npm install -g @vscode/vsce
 ```
 
+## Automated CI/CD Workflows
+
+The extension is automatically packaged and published through GitHub Actions:
+
+| Workflow                                   | Trigger           | Purpose                                     |
+|--------------------------------------------|-------------------|---------------------------------------------|
+| `.github/workflows/extension-package.yml`  | Reusable workflow | Packages extension with flexible versioning |
+| `.github/workflows/extension-publish.yml`  | Release/manual    | Publishes to VS Code Marketplace            |
+| `.github/workflows/main.yml`               | Push to main      | Includes extension packaging in CI          |
+
 ## Packaging the Extension
 
-From the repository root:
+### Using the Automated Scripts (Recommended)
+
+#### Step 1: Prepare the Extension
+
+First, update `package.json` with discovered agents, chatmodes, prompts, and instructions:
 
 ```bash
-npm run package:extension
+# Discover components and update package.json
+pwsh ./scripts/extension/Prepare-Extension.ps1
+
+# Or use npm script
+npm run extension:prepare
 ```
 
-This will create a `.vsix` file in the `extension/` folder.
+The preparation script automatically:
 
-Alternatively, package manually (requires manual setup):
+- Discovers and registers all chat agents from `.github/agents/`
+- Discovers and registers all chatmodes from `.github/chatmodes/`
+- Discovers and registers all prompts from `.github/prompts/`
+- Discovers and registers all instruction files from `.github/instructions/`
+- Updates `package.json` with discovered components
+- Uses existing version from `package.json` (does not modify it)
+
+#### Step 2: Package the Extension
+
+Then package the extension:
+
+```bash
+# Package using version from package.json
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Or use npm script
+npm run extension:package
+
+# Package with specific version
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.3"
+
+# Package with dev patch number (e.g., 1.0.2-dev.123)
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
+
+# Package with version and dev patch number
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
+```
+
+The packaging script automatically:
+
+- Uses version from `package.json` (or specified version)
+- Optionally appends dev patch number for pre-release builds
+- Copies required `.github` directory
+- Packages the extension using `vsce`
+- Cleans up temporary files
+- Restores original `package.json` version if temporarily modified
+
+### Manual Packaging (Legacy)
+
+If you need to package manually:
 
 ```bash
 cd extension
 rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github
 ```
 
+Or use npm script:
+
+```bash
+npm run package:extension
+```
+
 ## Publishing the Extension
 
 **Important:** Update version in `extension/package.json` before publishing.
+
+**Setup Personal Access Token (one-time):**
+
+Set your Azure DevOps PAT as an environment variable:
+
+```bash
+export VSCE_PAT=your-token-here
+```
+
+To get a PAT:
+
+1. Go to <https://dev.azure.com>
+2. User settings → Personal access tokens → New Token
+3. Set scope to **Marketplace (Manage)**
+4. Copy the token
+
+**Publish command:**
+
+```bash
+# Publish the packaged extension (replace X.Y.Z with actual version)
+vsce publish --packagePath "extension/hve-core-X.Y.Z.vsix"
+
+# Or use the latest .vsix file
+VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+vsce publish --packagePath "$VSIX_FILE"
+```
+
+Or use npm script:
 
 ```bash
 npm run publish:extension
 ```
 
-Or manually (requires manual setup):
-
-```bash
-cd extension
-rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github
-```
-
 ## What Gets Included
 
-The `.vscodeignore` file controls what gets packaged. Currently included:
+The `extension/.vscodeignore` file controls what gets packaged. Currently included:
 
 - `.github/agents/**` - All chat agent definitions
 - `.github/chatmodes/**` - All chatmode definitions
@@ -78,14 +162,35 @@ code --install-extension hve-core-*.vsix
 
 ## Version Management
 
-1. Update version in `extension/package.json`
-2. Update `CHANGELOG.md` in the root (it will be copied)
-3. Package and test
-4. Publish when ready
+### Update Version in `package.json`
+
+1. Manually update version in `extension/package.json`
+2. Run `scripts/extension/Prepare-Extension.ps1` to update agents/chatmodes/prompts/instructions
+3. Run `scripts/extension/Package-Extension.ps1` to create the `.vsix` file
+
+### Development Builds
+
+For pre-release or CI builds, use the dev patch number:
+
+```bash
+# Creates version like 1.0.2-dev.123
+pwsh ./scripts/extension/Package-Extension.ps1 -DevPatchNumber "123"
+```
+
+This temporarily modifies the version during packaging but restores it afterward.
+
+### Override Version at Package Time
+
+You can override the version without modifying `package.json`:
+
+```bash
+# Package as 1.1.0 without updating package.json
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
+```
 
 ## Notes
 
-- The `.github/` folder is temporarily copied during packaging (not permanently stored)
+- The `.github` folder is temporarily copied during packaging (not permanently stored)
 - `LICENSE` and `CHANGELOG.md` are permanent copies from the root directory
 - Only essential extension files are included (agents, chatmodes, prompts, instructions)
 - Non-essential `.github` files are excluded (workflows, issue templates, etc.)

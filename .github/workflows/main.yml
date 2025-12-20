@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - eugene/*
+
   workflow_dispatch:
 
 # Minimal permissions for security
@@ -46,6 +48,19 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  extension-package:
+    name: Package VS Code Extension
+    needs:
+      - spell-check
+      - markdown-lint
+      - table-format
+      - dependency-pinning-scan
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      dev-patch-number: ${{ github.run_number }}
+    permissions:
+      contents: read
+
   release-please:
     name: Release Please
     needs:
@@ -53,6 +68,7 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
+      - extension-package
     runs-on: ubuntu-latest
     permissions:
       contents: write

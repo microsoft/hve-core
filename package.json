@@ -14,6 +14,8 @@
     "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
     "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
+    "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
+    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
     "package:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github",
     "publish:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github"
   },
