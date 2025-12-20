@@ -16,8 +16,8 @@
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
     "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
-    "package:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce package && rm -rf .github",
-    "publish:extension": "cd extension && rm -rf .github && cp -r ../.github . && vsce publish && rm -rf .github"
+    "package:extension": "npm run extension:prepare && npm run extension:package",
+    "publish:extension": "npm run extension:prepare && pwsh -Command \"Set-Location extension; try { vsce publish } catch { npx @vscode/vsce publish }\""
   },
   "devDependencies": {
     "cspell": "9.4.0",

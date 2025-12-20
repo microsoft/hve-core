@@ -6,8 +6,6 @@ ms.date: 2025-12-19
 ms.topic: reference
 ---
 
-# Extension Packaging Guide
-
 This folder contains the VS Code extension configuration for HVE Core.
 
 ## Structure

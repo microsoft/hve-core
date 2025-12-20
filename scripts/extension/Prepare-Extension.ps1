@@ -42,6 +42,41 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Helper function to extract description from YAML frontmatter
+function Get-DescriptionFromYaml {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath,
+        
+        [Parameter(Mandatory = $false)]
+        [string]$FallbackDescription = ""
+    )
+    
+    $content = Get-Content -Path $FilePath -Raw
+    $description = ""
+    
+    # Extract YAML frontmatter and parse with PowerShell-Yaml
+    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+        # Normalize line endings to LF for consistent parsing across platforms
+        $yamlContent = $Matches[1] -replace '\r\n', '`n' -replace '\r', '`n'
+        try {
+            $data = ConvertFrom-Yaml -Yaml $yamlContent
+            if ($data.ContainsKey('description')) {
+                $description = $data.description
+            }
+        } catch {
+            Write-Warning "Failed to parse YAML frontmatter in $(Split-Path -Leaf $FilePath): $_"
+        }
+    }
+    
+    # Return description or fallback
+    if ($description) {
+        return $description
+    } else {
+        return $FallbackDescription
+    }
+}
+
 # Determine script and repo paths
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
@@ -108,27 +143,8 @@ if (Test-Path $agentsDir) {
         # Extract agent name from filename (e.g., hve-core-installer.agent.md -> hve-core-installer)
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
         
-        # Read the file to extract description from YAML frontmatter
-        $content = Get-Content -Path $agentFile.FullName -Raw
-        $description = ""
-        
-        # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-            $yamlContent = $Matches[1]
-            try {
-                $data = ConvertFrom-Yaml -Yaml $yamlContent
-                if ($data.ContainsKey('description')) {
-                    $description = $data.description
-                }
-            } catch {
-                Write-Warning "Failed to parse YAML frontmatter in $($agentFile.Name): $_"
-            }
-        }
-        
-        # Fallback description if not found in frontmatter
-        if (-not $description) {
-            $description = "AI agent for $agentName"
-        }
+        # Extract description from YAML frontmatter
+        $description = Get-DescriptionFromYaml -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
         
         $agent = [PSCustomObject]@{
             name        = $agentName
@@ -156,28 +172,9 @@ if (Test-Path $chatmodesDir) {
         # Extract chatmode name from filename (e.g., task-planner.chatmode.md -> task-planner)
         $chatmodeName = $chatmodeFile.BaseName -replace '\.chatmode$', ''
         
-        # Read the file to extract description from YAML frontmatter
-        $content = Get-Content -Path $chatmodeFile.FullName -Raw
-        $description = ""
-        
-        # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-            $yamlContent = $Matches[1]
-            try {
-                $data = ConvertFrom-Yaml -Yaml $yamlContent
-                if ($data.ContainsKey('description')) {
-                    $description = $data.description
-                }
-            } catch {
-                Write-Warning "Failed to parse YAML frontmatter in $($chatmodeFile.Name): $_"
-            }
-        }
-        
-        # Fallback description if not found in frontmatter
-        if (-not $description) {
-            $displayName = ($chatmodeName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-            $description = "Chatmode for $displayName"
-        }
+        # Extract description from YAML frontmatter
+        $displayName = ($chatmodeName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
+        $description = Get-DescriptionFromYaml -FilePath $chatmodeFile.FullName -FallbackDescription "Chatmode for $displayName"
         
         $chatmode = [PSCustomObject]@{
             name        = $chatmodeName
@@ -205,28 +202,9 @@ if (Test-Path $promptsDir) {
         # Extract prompt name from filename (e.g., git-commit.prompt.md -> git-commit)
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
         
-        # Read the file to extract description from YAML frontmatter
-        $content = Get-Content -Path $promptFile.FullName -Raw
-        $description = ""
-        
-        # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-            $yamlContent = $Matches[1]
-            try {
-                $data = ConvertFrom-Yaml -Yaml $yamlContent
-                if ($data.ContainsKey('description')) {
-                    $description = $data.description
-                }
-            } catch {
-                Write-Warning "Failed to parse YAML frontmatter in $($promptFile.Name): $_"
-            }
-        }
-        
-        # Fallback description if not found in frontmatter
-        if (-not $description) {
-            $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-            $description = "Prompt for $displayName"
-        }
+        # Extract description from YAML frontmatter
+        $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
+        $description = Get-DescriptionFromYaml -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
         
         # Calculate relative path from .github
         $relativePath = $promptFile.FullName.Substring($GitHubDir.Length + 1) -replace '\\', '/'
@@ -258,28 +236,9 @@ if (Test-Path $instructionsDir) {
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
         
-        # Read the file to extract description from YAML frontmatter
-        $content = Get-Content -Path $instrFile.FullName -Raw
-        $description = ""
-        
-        # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-            $yamlContent = $Matches[1]
-            try {
-                $data = ConvertFrom-Yaml -Yaml $yamlContent
-                if ($data.ContainsKey('description')) {
-                    $description = $data.description
-                }
-            } catch {
-                Write-Warning "Failed to parse YAML frontmatter in $($instrFile.Name): $_"
-            }
-        }
-        
-        # Fallback to generated description if not found in frontmatter
-        if (-not $description) {
-            $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-            $description = "Instructions for $displayName"
-        }
+        # Extract description from YAML frontmatter
+        $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
+        $description = Get-DescriptionFromYaml -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
         
         # Calculate relative path from .github
         $relativePath = $instrFile.FullName.Substring($GitHubDir.Length + 1) -replace '\\', '/'

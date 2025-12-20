@@ -6,8 +6,6 @@ ms.date: 2025-12-19
 ms.topic: overview
 ---
 
-# HVE Core - AI-Powered Development Assistant
-
 > AI-powered chat agents, prompts, and instructions for hybrid virtual environments
 
 HVE Core provides a comprehensive collection of specialized AI chat agents, prompts, and instructions designed to accelerate development workflows in VS Code with GitHub Copilot.
@@ -18,13 +16,24 @@ HVE Core provides a comprehensive collection of specialized AI chat agents, prom
 
 Specialized AI assistants for specific development tasks:
 
+#### Setup & Installation
+
+- **hve-core-installer** - Decision-driven installer with 6 installation methods for local, devcontainer, and Codespaces environments
+
+#### Development Workflow
+
 - **task-researcher** - Research technical solutions and approaches
 - **task-planner** - Plan and break down complex tasks
 - **task-implementor** - Implement tasks from detailed plans
 - **pr-review** - Comprehensive pull request review assistant
 - **github-issue-manager** - Manage GitHub issues efficiently
+
+#### Architecture & Documentation
+
 - **adr-creation** - Create Architecture Decision Records
-- **prd-builder** - Build Product Requirements Documents
+- **arch-diagram-builder** - Build high-quality ASCII-art architecture diagrams
+- **brd-builder** - Build Business Requirements Documents with guided Q&A
+- **prd-builder** - Build Product Requirements Documents with guided Q&A
 - **prompt-builder** - Build and optimize AI prompts
 - **security-plan-creator** - Expert security architect for creating comprehensive cloud security plans
 

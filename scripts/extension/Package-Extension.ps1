@@ -180,6 +180,9 @@ Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 Write-Host ""
 Write-Host "📦 Packaging extension..." -ForegroundColor Yellow
 
+# Initialize vsixFile variable to avoid scope issues
+$vsixFile = $null
+
 Push-Location $ExtensionDir
 
 try {
@@ -250,8 +253,8 @@ Write-Host ""
 # Output for CI/CD consumption
 if ($env:GITHUB_OUTPUT) {
     if ($vsixFile) {
-        "version=$packageVersion" >> $env:GITHUB_OUTPUT
-        "vsix-file=$($vsixFile.Name)" >> $env:GITHUB_OUTPUT
+        "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
     } else {
         Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
     }
