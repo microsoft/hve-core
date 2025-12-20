@@ -240,12 +240,13 @@ if (Test-Path $instructionsDir) {
         $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
         $description = Get-DescriptionFromYaml -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
         
-        # Calculate relative path from .github
-        $relativePath = $instrFile.FullName.Substring($GitHubDir.Length + 1) -replace '\\', '/'
+        # Calculate relative path from .github using cross-platform APIs
+        $relativePathFromGitHub = [System.IO.Path]::GetRelativePath($GitHubDir, $instrFile.FullName)
+        $normalizedRelativePath = (Join-Path ".github" $relativePathFromGitHub) -replace '\\', '/'
         
         $instruction = [PSCustomObject]@{
             name        = $instrName
-            path        = "./.github/$relativePath"
+            path        = "./$normalizedRelativePath"
             description = $description
         }
         
