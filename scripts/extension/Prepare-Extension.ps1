@@ -58,7 +58,7 @@ function Get-DescriptionFromYaml {
     # Extract YAML frontmatter and parse with PowerShell-Yaml
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         # Normalize line endings to LF for consistent parsing across platforms
-        $yamlContent = $Matches[1] -replace '\r\n', '`n' -replace '\r', '`n'
+        $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
         try {
             $data = ConvertFrom-Yaml -Yaml $yamlContent
             if ($data.ContainsKey('description')) {
