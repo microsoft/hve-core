@@ -36,11 +36,6 @@ jobs:
       stale-count: ${{ steps.staleness.outputs.stale-count }}
       has-stale: ${{ steps.staleness.outputs.has-stale }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
-        with:
-          egress-policy: audit
-
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.2.2
         with:
