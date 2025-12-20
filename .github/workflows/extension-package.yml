@@ -76,31 +76,24 @@ jobs:
           
           Write-Host "📦 Packaging extension..."
           
-          if ($version -and $devPatch) {
-            if (Test-Path "./CHANGELOG.md") {
-              ./scripts/extension/Package-Extension.ps1 -Version $version -DevPatchNumber $devPatch -ChangelogPath "./CHANGELOG.md"
-            } else {
-              ./scripts/extension/Package-Extension.ps1 -Version $version -DevPatchNumber $devPatch
-            }
-          } elseif ($version) {
-            if (Test-Path "./CHANGELOG.md") {
-              ./scripts/extension/Package-Extension.ps1 -Version $version -ChangelogPath "./CHANGELOG.md"
-            } else {
-              ./scripts/extension/Package-Extension.ps1 -Version $version
-            }
-          } elseif ($devPatch) {
-            if (Test-Path "./CHANGELOG.md") {
-              ./scripts/extension/Package-Extension.ps1 -DevPatchNumber $devPatch -ChangelogPath "./CHANGELOG.md"
-            } else {
-              ./scripts/extension/Package-Extension.ps1 -DevPatchNumber $devPatch
-            }
-          } else {
-            if (Test-Path "./CHANGELOG.md") {
-              ./scripts/extension/Package-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
-            } else {
-              ./scripts/extension/Package-Extension.ps1
-            }
+          $arguments = @()
+          
+          if ($version) {
+            $arguments += '-Version'
+            $arguments += $version
           }
+          
+          if ($devPatch) {
+            $arguments += '-DevPatchNumber'
+            $arguments += $devPatch
+          }
+          
+          if (Test-Path "./CHANGELOG.md") {
+            $arguments += '-ChangelogPath'
+            $arguments += "./CHANGELOG.md"
+          }
+          
+          ./scripts/extension/Package-Extension.ps1 @arguments
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
