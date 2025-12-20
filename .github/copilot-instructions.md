@@ -24,9 +24,12 @@ Items in **HIGHEST PRIORITY** sections from attached instructions files override
 
 **Proactive fixes:** Always fix problems and errors you encounter, even if unrelated to the original request. Prefer root-cause, constructive fixes over symptom-only patches.
 
-* Always correct conventions and styling and comments.
-
 **Deleting files and folders:** Use `rm` with the run_in_terminal tool when needing to delete files or folders.
+
+**Prefer safe commands**: Use commands that do not have the potential to mutate files or trigger unnecessary interactive prompts.
+
+* Avoid commands like `sed -n '/pattern/p' file` to print data when non-mutating alternatives like `grep` exist.
+* Avoid shell redirects like `2>/dev/null` unless necessary, as they may trigger interactive approval prompts in certain AI assistant environments.
 
 **Edit tools:** Never use `insert_edit_into_file` tool when other edit and file modification tools are available.
 

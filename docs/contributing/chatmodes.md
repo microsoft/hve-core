@@ -1,11 +1,14 @@
 ---
 title: 'Contributing Chatmodes to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot chatmode files to hve-core'
+author: Microsoft
+ms.date: 2025-11-26
+ms.topic: how-to
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot chatmode files (`.chatmode.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is a Chatmode?
 
@@ -236,11 +239,11 @@ Brought to you by microsoft/hve-core
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](./contributing-ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](./contributing-ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
 
 ## Tool Usage Discipline
 
@@ -316,7 +319,7 @@ Report validation status:
 
 ## Research and External Sources
 
-When chatmodes integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](./contributing-ai-artifacts-common.md#attribution-requirements) for guidelines.
+When chatmodes integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
 
 ## Validation Checklist
 
@@ -342,9 +345,9 @@ Before submitting your chatmode, verify:
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](./contributing-ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](./contributing-ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](./contributing-ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
 
 ### Technical Validation
 
@@ -362,7 +365,7 @@ Before submitting your chatmode, verify:
 
 ## Testing Your Chatmode
 
-See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai-artifacts-common.md#common-testing-practices) for testing guidelines. For chatmodes specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For chatmodes specifically:
 
 1. Test with realistic scenarios matching the agent's purpose
 2. Verify tool usage patterns execute correctly
@@ -378,11 +381,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](./contributing-ai
 * **Problem**: Referencing tools that don't exist or using incorrect camelCase variants
 * **Solution**: Use exact tool names from VS Code Copilot's available tools list
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](./contributing-ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](./contributing-ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
@@ -393,14 +396,14 @@ All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](./contributing-ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Prompts](./contributing-prompts.md) - Workflow-specific guidance files
-* [Contributing Instructions](./contributing-instructions.md) - Technology-specific standards
-* [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
+* [Contributing Prompts](prompts.md) - Workflow-specific guidance files
+* [Contributing Instructions](instructions.md) - Technology-specific standards
+* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](./contributing-ai-artifacts-common.md#getting-help) for support resources. For chatmode-specific assistance, review existing examples in `.github/chatmodes/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For chatmode-specific assistance, review existing examples in `.github/chatmodes/`.
 
 ---
 

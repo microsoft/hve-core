@@ -260,15 +260,28 @@ function Get-SchemaForFile {
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
-            # Simple pattern matching for file names
-            if ($rule.pattern -match '\|') {
-                $patterns = $rule.pattern -split '\|'
-                if ($fileName -in $patterns) {
+            # Directory-based patterns (check these FIRST for proper specificity)
+            if ($rule.pattern -like "*/**/*") {
+                # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
+                $regexPattern = $rule.pattern
+                $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
+                $regexPattern = $regexPattern -replace '\*', '[^/]*'
+                $regexPattern = $regexPattern -replace '\.', '\.'
+                $regexPattern = '^' + $regexPattern + '$'
+                if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
-            # Directory-based patterns
-            elseif ($rule.pattern -like "*/**/*") {
+            # Simple pattern matching for root file names only
+            elseif ($rule.pattern -match '\|') {
+                $patterns = $rule.pattern -split '\|'
+                # Only match if file is in root (relativePath equals fileName)
+                if ($relativePath -eq $fileName -and $fileName -in $patterns) {
+                    return Join-Path -Path $schemaDir -ChildPath $rule.schema
+                }
+            }
+            # Simple file patterns
+            elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
                 # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
                 $regexPattern = $rule.pattern
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
@@ -488,31 +501,9 @@ function Test-FrontmatterValidation {
         }
     }
     
-    # Parse .gitignore patterns
-    $gitignorePatterns = @()
+    # Parse .gitignore patterns using shared helper function
     $gitignorePath = Join-Path $repoRoot ".gitignore"
-    if (Test-Path $gitignorePath) {
-        $gitignorePatterns = Get-Content $gitignorePath | Where-Object {
-            $_ -and 
-            -not $_.StartsWith('#') -and 
-            $_.Trim() -ne ''
-        } | ForEach-Object {
-            $pattern = $_.Trim()
-            # Convert gitignore patterns to PowerShell wildcard patterns
-            if ($pattern.EndsWith('/')) {
-                # Directory pattern
-                "*\$($pattern.TrimEnd('/'))\*"
-            }
-            elseif ($pattern.Contains('/')) {
-                # Path pattern
-                "*\$($pattern.Replace('/', '\'))*"
-            }
-            else {
-                # Simple pattern
-                "*\$pattern\*"
-            }
-        }
-    }
+    $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath $gitignorePath
     
     Write-Host "🔍 Validating frontmatter across markdown files..." -ForegroundColor Cyan
     
@@ -702,6 +693,7 @@ function Test-FrontmatterValidation {
                                        ($file.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 
                                                         'SECURITY.md', 'SUPPORT.md', 'README.md'))
                 $isDevContainer = $file.DirectoryName -like "*.devcontainer*" -and $file.Name -eq 'README.md'
+                $isVSCodeReadme = $file.DirectoryName -like "*.vscode*" -and $file.Name -eq 'README.md'
 
                 # Determine if file should have footer
                 $shouldHaveFooter = $false
@@ -715,6 +707,11 @@ function Test-FrontmatterValidation {
                 }
                 elseif ($isDevContainer) {
                     # DevContainer docs are custom
+                    $shouldHaveFooter = $true
+                    $footerSeverity = 'Error'
+                }
+                elseif ($isVSCodeReadme) {
+                    # VS Code configuration docs require footers
                     $shouldHaveFooter = $true
                     $footerSeverity = 'Error'
                 }
@@ -750,10 +747,10 @@ function Test-FrontmatterValidation {
                         }
                     }
 
-                    # Validate date format (ISO 8601: YYYY-MM-DD)
+                    # Validate date format (ISO 8601: YYYY-MM-DD) or placeholder (YYYY-MM-dd)
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
+                        if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
                             $warningMsg = "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
                             $warnings += $warningMsg
                             [void]$filesWithWarnings.Add($file.FullName)
@@ -763,6 +760,19 @@ function Test-FrontmatterValidation {
                 }
                 # Validate .devcontainer documentation
                 elseif ($isDevContainer) {
+                    $requiredFields = @('title', 'description')
+
+                    foreach ($field in $requiredFields) {
+                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
+                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
+                            $errors += $errorMsg
+                            [void]$filesWithErrors.Add($file.FullName)
+                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
+                        }
+                    }
+                }
+                # Validate .vscode documentation
+                elseif ($isVSCodeReadme) {
                     $requiredFields = @('title', 'description')
 
                     foreach ($field in $requiredFields) {
@@ -855,10 +865,10 @@ function Test-FrontmatterValidation {
                         }
                     }
                     
-                    # Validate date format for docs
+                    # Validate date format (ISO 8601: YYYY-MM-DD) or placeholder (YYYY-MM-dd) for docs
                     if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
                         $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
+                        if ($date -notmatch '^(\d{4}-\d{2}-\d{2}|\(YYYY-MM-dd\))$') {
                             $warnings += "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
                             [void]$filesWithWarnings.Add($file.FullName)
                             Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName

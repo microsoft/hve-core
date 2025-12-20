@@ -21,12 +21,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.2.2
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@633bb92bc0aabcae06e8ea93b85aecddd374c402 # v4.1.0
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload table format results
         if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
           name: table-format-results
           path: table-format-output.txt
