@@ -294,7 +294,7 @@ $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -En
 Write-Host "   Saved package.json" -ForegroundColor Green
 
 # Handle changelog if provided
-if ($ChangelogPath -and $ChangelogPath -ne "") {
+if ($ChangelogPath) {
     Write-Host ""
     Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
     
