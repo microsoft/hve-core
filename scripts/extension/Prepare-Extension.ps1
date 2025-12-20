@@ -173,7 +173,7 @@ if (Test-Path $chatmodesDir) {
         $chatmodeName = $chatmodeFile.BaseName -replace '\.chatmode$', ''
         
         # Extract description from YAML frontmatter
-        $displayName = ($chatmodeName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
+        $displayName = $chatmodeName -replace '-', ' '
         $description = Get-DescriptionFromYaml -FilePath $chatmodeFile.FullName -FallbackDescription "Chatmode for $displayName"
         
         $chatmode = [PSCustomObject]@{
