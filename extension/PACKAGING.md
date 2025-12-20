@@ -1,3 +1,11 @@
+---
+title: Extension Packaging Guide
+description: Developer guide for packaging and publishing the HVE Core VS Code extension
+author: Microsoft
+ms.date: 2025-12-19
+ms.topic: reference
+---
+
 # Extension Packaging Guide
 
 This folder contains the VS Code extension configuration for HVE Core.
@@ -22,6 +30,12 @@ Install the VS Code Extension Manager CLI:
 
 ```bash
 npm install -g @vscode/vsce
+```
+
+Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
+
+```powershell
+Install-Module -Name PowerShell-Yaml -Scope CurrentUser
 ```
 
 ## Automated CI/CD Workflows
@@ -192,8 +206,8 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
 
 ## Notes
 
-- The `.github` folder is temporarily copied during packaging (not permanently stored)
-- `LICENSE` and `CHANGELOG.md` are permanent copies from the root directory
-- Only essential extension files are included (agents, chatmodes, prompts, instructions)
-- Non-essential `.github` files are excluded (workflows, issue templates, etc.)
+- The `.github` and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
+- `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
+- Only essential extension files are included (chatmodes, prompts, instructions, dev-tools)
+- Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 - The root `package.json` contains development scripts for the repository

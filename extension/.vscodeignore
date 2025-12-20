@@ -2,7 +2,6 @@
 **
 
 # Include only the extension essentials
-!.github/agents/**
 !.github/chatmodes/**
 !.github/prompts/**
 !.github/instructions/**
@@ -11,3 +10,4 @@
 !README.md
 !LICENSE
 !CHANGELOG.md
+!PACKAGING.md

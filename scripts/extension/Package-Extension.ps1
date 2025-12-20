@@ -104,7 +104,13 @@ $baseVersion = if ($Version -and $Version -ne "") {
     # Use version from package.json
     $currentVersion = $packageJson.version
     if ($currentVersion -notmatch '^\d+\.\d+\.\d+') {
-        Write-Error "Invalid version format in package.json: '$currentVersion'. Expected semantic version format (e.g., 1.0.0).`nPre-release suffixes should not be committed to package.json. Use -DevPatchNumber parameter to add '-dev.N' suffix during packaging."
+        $errorMessage = @(
+            "Invalid version format in package.json: '$currentVersion'.",
+            "Expected semantic version format (e.g., 1.0.0).",
+            "Pre-release suffixes should not be committed to package.json.",
+            "Use -DevPatchNumber parameter to add '-dev.N' suffix during packaging."
+        ) -join "`n"
+        Write-Error $errorMessage
         exit 1
     }
     # Extract base version (validation above ensures this will match)

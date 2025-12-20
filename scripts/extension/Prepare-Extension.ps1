@@ -113,7 +113,7 @@ if (Test-Path $agentsDir) {
         $description = ""
         
         # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\n(.*?)\n---') {
+        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1]
             try {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
@@ -161,7 +161,7 @@ if (Test-Path $chatmodesDir) {
         $description = ""
         
         # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\n(.*?)\n---') {
+        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1]
             try {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
@@ -210,7 +210,7 @@ if (Test-Path $promptsDir) {
         $description = ""
         
         # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\n(.*?)\n---') {
+        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1]
             try {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
@@ -263,7 +263,7 @@ if (Test-Path $instructionsDir) {
         $description = ""
         
         # Extract YAML frontmatter and parse with PowerShell-Yaml
-        if ($content -match '(?s)^---\s*\n(.*?)\n---') {
+        if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1]
             try {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
