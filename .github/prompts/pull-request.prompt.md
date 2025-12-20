@@ -34,11 +34,24 @@ You WILL ALWAYS preserve template structure and formatting.
 * **If `pr-reference.xml` is NOT provided**:
   * Use `git fetch {{remote}} {{branch}}` determined from `${input:branch:origin/main}`, to update the remote branch to build a correct pull request.
   * **MANDATORY**: You MUST create `pr-reference.xml` using the repository scripts—select the command that matches your host environment. Do not use any other commands to gather git status or diffs.
-    * **Unix-like shells**: Use `./scripts/dev-tools/pr-ref-gen.sh`.
+  * **Script Location**: Scripts may be available locally at `./scripts/dev-tools/` OR bundled in a VS Code extension. Check local path first, then fall back to extension:
+    * **Local path**: `./scripts/dev-tools/pr-ref-gen.sh` or `./scripts/dev-tools/Generate-PrReference.ps1`
+    * **Extension path** (if local not found): `~/.vscode/extensions/ise-hve-essentials.hve-core-*/scripts/dev-tools/`
+    * **Locate from extension** (cross-platform):
+
+      ```bash
+      # Find PowerShell script
+      pwsh -c '$SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Generate-PrReference.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found: $SCRIPT"'
+
+      # Find shell script
+      find ~/.vscode/extensions -name "pr-ref-gen.sh" 2>/dev/null | head -1
+      ```
+
+    * **Unix-like shells**: Use `./scripts/dev-tools/pr-ref-gen.sh` (or extension path if local not available).
       * Default: `./scripts/dev-tools/pr-ref-gen.sh`.
       * If `${input:excludeMarkdown}` is true: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff` (excludes markdown).
       * If a different base branch is specified via `${input:branch}`: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}` (adjust markdown inclusion as needed).
-    * **Windows PowerShell hosts**: Use `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`.
+    * **Windows PowerShell hosts**: Use `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1` (or extension path if local not available).
       * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`.
       * If `${input:excludeMarkdown}` is true: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff` (excludes markdown).
       * If a different base branch is specified via `${input:branch}`: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff -BaseBranch ${input:branch}` (adjust markdown inclusion as needed).

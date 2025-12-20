@@ -1,0 +1,103 @@
+name: Package Extension
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Full version to use (e.g., 1.0.0 or empty to use package.json)'
+        required: false
+        type: string
+        default: ''
+      dev-patch-number:
+        description: 'Dev patch number to append (creates version like 1.0.0-dev.123)'
+        required: false
+        type: string
+        default: ''
+      use-changelog:
+        description: 'Whether to download and use changelog artifact'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      version:
+        description: 'Version that was packaged'
+        value: ${{ jobs.package.outputs.version }}
+      vsix-file:
+        description: 'Path to the packaged VSIX file'
+        value: ${{ jobs.package.outputs.vsix-file }}
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      vsix-file: ${{ steps.package.outputs.vsix-file }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install -g @vscode/vsce
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+
+      - name: Download changelog artifact
+        if: inputs.use-changelog
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: changelog
+          path: ./
+        continue-on-error: true
+
+      - name: Package extension
+        id: package
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}".Trim()
+          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
+          
+          Write-Host "📦 Packaging extension..."
+          
+          $arguments = @()
+          
+          if ($version) {
+            $arguments += '-Version'
+            $arguments += $version
+          }
+          
+          if ($devPatch) {
+            $arguments += '-DevPatchNumber'
+            $arguments += $devPatch
+          }
+          
+          if (Test-Path "./CHANGELOG.md") {
+            $arguments += '-ChangelogPath'
+            $arguments += "./CHANGELOG.md"
+          }
+          
+          ./scripts/extension/Package-Extension.ps1 @arguments
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: extension-vsix
+          path: extension/*.vsix
+          retention-days: 30
