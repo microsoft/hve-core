@@ -97,6 +97,7 @@ Outline:
 * Resource Requirements
 * Communication Plan
 * Risk Reassessment Schedule
+
 ## Guidelines
 
 * Use Cause → Event → Impact format for risk statements
