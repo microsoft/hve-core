@@ -236,8 +236,8 @@ This architecture ensures:
 
 **Workflow Execution Matrix**:
 
-| Event                                | Workflows That Run                                       | CodeQL Included    |
-|--------------------------------------|----------------------------------------------------------|--------------------|
+| Event                                | Workflows That Run                                       | CodeQL Included     |
+|--------------------------------------|----------------------------------------------------------|---------------------|
 | Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
 | Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
 | Merge to main                        | `main.yml` (5 jobs)                                      | ✅ Yes              |

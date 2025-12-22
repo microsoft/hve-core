@@ -292,13 +292,13 @@ Or modify postCreateCommand to always pull (see Auto-Update section).
 
 ## Limitations
 
-| Aspect              | Status                                   |
-|---------------------|------------------------------------------|
+| Aspect              | Status                                    |
+|---------------------|-------------------------------------------|
 | Codespaces          | ✅ Designed for this                      |
-| Local devcontainers | ⚠️ Works but consider other methods      |
+| Local devcontainers | ⚠️ Works but consider other methods       |
 | Team sharing        | ✅ Auto-setup for all contributors        |
-| Portable paths      | ⚠️ Absolute paths only                   |
-| Version pinning     | ⚠️ Modify clone command for specific tag |
+| Portable paths      | ⚠️ Absolute paths only                    |
+| Version pinning     | ⚠️ Modify clone command for specific tag  |
 | Offline support     | ❌ Requires network during creation       |
 | Setup complexity    | ✅ Low (just devcontainer.json)           |
 
