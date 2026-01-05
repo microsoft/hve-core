@@ -207,7 +207,7 @@ if (Test-Path $promptsDir) {
         $description = Get-DescriptionFromYaml -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
         
         # Calculate relative path from .github
-        $relativePath = $promptFile.FullName.Substring($GitHubDir.Length + 1) -replace '\\', '/'
+        $relativePath = [System.IO.Path]::GetRelativePath($GitHubDir, $promptFile.FullName) -replace '\\', '/'
         
         $prompt = [PSCustomObject]@{
             name        = $promptName
