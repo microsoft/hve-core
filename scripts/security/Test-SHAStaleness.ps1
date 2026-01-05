@@ -751,6 +751,43 @@ function Write-OutputResult {
     }
 }
 
+function Compare-ToolVersion {
+    <#
+    .SYNOPSIS
+        Compares two version strings using semantic versioning rules.
+    .DESCRIPTION
+        Normalizes version strings by removing v-prefix and pre-release metadata,
+        then compares using System.Version when possible.
+    .OUTPUTS
+        Returns $true if Latest is newer than Current, $false otherwise.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Current,
+
+        [Parameter(Mandatory)]
+        [string]$Latest
+    )
+
+    # Normalize: strip v prefix, remove pre-release/build metadata
+    $normCurrent = $Current -replace '^v', '' -replace '[-+].*$', ''
+    $normLatest = $Latest -replace '^v', '' -replace '[-+].*$', ''
+
+    $currentVersion = $null
+    $latestVersion = $null
+
+    if ([System.Version]::TryParse($normCurrent, [ref]$currentVersion) -and
+        [System.Version]::TryParse($normLatest, [ref]$latestVersion)) {
+        return $latestVersion -gt $currentVersion
+    }
+
+    # Fallback: string comparison (not ideal but better than nothing)
+    Write-Verbose "Version parsing failed, falling back to string comparison"
+    return $normLatest -ne $normCurrent
+}
+
 function Get-ToolStaleness {
     <#
     .SYNOPSIS
@@ -797,7 +834,7 @@ function Get-ToolStaleness {
             $latestRelease = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
             $latestVersion = $latestRelease.tag_name -replace '^v', ''
 
-            $isStale = $latestVersion -ne $tool.version
+            $isStale = Compare-ToolVersion -Current $tool.version -Latest $latestVersion
 
             $results += [PSCustomObject]@{
                 Tool           = $tool.name
@@ -807,10 +844,23 @@ function Get-ToolStaleness {
                 IsStale        = $isStale
                 CurrentSHA256  = $tool.sha256
                 Notes          = $tool.notes
+                Error          = $null
             }
         }
         catch {
-            Write-Warning "Failed to check $($tool.name): $_"
+            $errorMsg = "Failed to check $($tool.name): $_"
+            Write-Warning $errorMsg
+
+            $results += [PSCustomObject]@{
+                Tool           = $tool.name
+                Repository     = $tool.repo
+                CurrentVersion = $tool.version
+                LatestVersion  = $null
+                IsStale        = $null  # Unknown due to error
+                CurrentSHA256  = $tool.sha256
+                Notes          = $tool.notes
+                Error          = $errorMsg
+            }
         }
     }
 
@@ -825,6 +875,41 @@ Write-SecurityLog "Output format: $OutputFormat" -Level Info
 
 # Run staleness check for GitHub Actions
 Test-GitHubActionsForStaleness
+
+# Run staleness check for tools from tool-checksums.json
+Write-SecurityLog "Checking tool staleness from tool-checksums.json" -Level Info
+
+$toolResults = Get-ToolStaleness
+if ($toolResults) {
+    $staleTools = $toolResults | Where-Object { $_.IsStale -eq $true }
+    if ($staleTools.Count -gt 0) {
+        Write-SecurityLog "Found $($staleTools.Count) stale tool(s):" -Level Warning
+        foreach ($tool in $staleTools) {
+            Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
+            
+            # Add to global stale dependencies for output
+            $script:StaleDependencies += [PSCustomObject]@{
+                Type           = "Tool"
+                File           = "scripts/security/tool-checksums.json"
+                Name           = $tool.Tool
+                CurrentVersion = $tool.CurrentVersion
+                LatestVersion  = $tool.LatestVersion
+                DaysOld        = $null  # Not tracked for tools
+                Severity       = "Medium"
+                Message        = "Tool has newer version available: $($tool.CurrentVersion) -> $($tool.LatestVersion)"
+            }
+        }
+    }
+    else {
+        Write-SecurityLog "All tools are up to date" -Level Info
+    }
+
+    # Check for errors
+    $errorTools = $toolResults | Where-Object { $null -ne $_.Error }
+    if ($errorTools.Count -gt 0) {
+        Write-SecurityLog "Failed to check $($errorTools.Count) tool(s)" -Level Warning
+    }
+}
 
 # Output results
 Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath

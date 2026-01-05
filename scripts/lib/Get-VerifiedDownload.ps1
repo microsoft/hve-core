@@ -48,6 +48,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+if ($Extract -and -not $ExtractPath) {
+    $ExtractPath = Split-Path -Path $OutputPath -Parent
+    if (-not $ExtractPath) {
+        $ExtractPath = $PWD.Path
+    }
+    Write-Verbose "ExtractPath not specified, defaulting to: $ExtractPath"
+}
+
 $tempFile = [System.IO.Path]::GetTempFileName()
 
 try {
@@ -58,8 +66,7 @@ try {
     $actualHash = (Get-FileHash -Path $tempFile -Algorithm SHA256).Hash
 
     if ($actualHash -ne $ExpectedSHA256.ToUpper()) {
-        Write-Error "Checksum verification failed!`nExpected: $ExpectedSHA256`nActual:   $actualHash"
-        exit 1
+        throw "Checksum verification failed!`nExpected: $ExpectedSHA256`nActual:   $actualHash"
     }
 
     if ($Extract -and $ExtractPath) {
@@ -67,7 +74,38 @@ try {
         if (-not (Test-Path $ExtractPath)) {
             New-Item -ItemType Directory -Path $ExtractPath -Force | Out-Null
         }
-        Expand-Archive -Path $tempFile -DestinationPath $ExtractPath -Force
+        
+        switch -Regex ($Url) {
+            '\.zip$' {
+                Write-Verbose "Extracting ZIP archive to $ExtractPath"
+                Expand-Archive -Path $tempFile -DestinationPath $ExtractPath -Force
+            }
+            '\.(tar\.gz|tgz)$' {
+                $tarCmd = Get-Command -Name 'tar' -ErrorAction SilentlyContinue
+                if (-not $tarCmd) {
+                    throw "tar command not available for .tar.gz extraction"
+                }
+                Write-Verbose "Extracting tar.gz archive to $ExtractPath"
+                tar -xzf $tempFile -C $ExtractPath
+                if ($LASTEXITCODE -ne 0) {
+                    throw "tar extraction failed with exit code $LASTEXITCODE"
+                }
+            }
+            '\.tar$' {
+                $tarCmd = Get-Command -Name 'tar' -ErrorAction SilentlyContinue
+                if (-not $tarCmd) {
+                    throw "tar command not available for .tar extraction"
+                }
+                Write-Verbose "Extracting tar archive to $ExtractPath"
+                tar -xf $tempFile -C $ExtractPath
+                if ($LASTEXITCODE -ne 0) {
+                    throw "tar extraction failed with exit code $LASTEXITCODE"
+                }
+            }
+            default {
+                throw "Unsupported archive format for '$Url'. Supported: .zip, .tar.gz, .tgz, .tar"
+            }
+        }
     }
     else {
         $outputDir = Split-Path -Parent $OutputPath

@@ -102,7 +102,7 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip",
+    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
@@ -157,8 +157,7 @@ $DependencyPatterns = @{
     }
 
     'shell-downloads'  = @{
-        FilePatterns   = @('*.sh')
-        SearchPaths    = @('.devcontainer/scripts', 'scripts')
+        FilePatterns   = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
         ValidationFunc = 'Test-ShellDownloadSecurity'
         Description    = 'Shell script downloads must include checksum verification'
     }
@@ -230,7 +229,7 @@ function Test-ShellDownloadSecurity {
 
     # Pattern to match curl/wget download commands
     $downloadPattern = '(curl|wget)\s+.*https?://[^\s]+'
-    $checksumPattern = 'sha256sum|shasum'
+    $checksumPattern = 'sha256sum|shasum|Get-FileHash|openssl\s+dgst\s+-sha256|sha256sum\s+-c'
 
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = $lines[$i]
