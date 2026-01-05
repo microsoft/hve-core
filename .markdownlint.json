@@ -145,6 +145,6 @@
   "MD056": true,
   "MD058": true,
   "MD060": {
-    "style": "aligned"
+    "style": "leading_and_trailing"
   }
 }

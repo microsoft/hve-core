@@ -102,7 +102,7 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip",
+    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
@@ -143,7 +143,7 @@ $DependencyPatterns = @{
         RemediationUrl  = 'https://registry.npmjs.org/{0}/{1}'
     }
 
-    'pip'            = @{
+    'pip'              = @{
         FilePatterns    = @('**/requirements*.txt', '**/Pipfile', '**/pyproject.toml', '**/setup.py')
         VersionPatterns = @(
             @{
@@ -154,6 +154,12 @@ $DependencyPatterns = @{
         )
         SHAPattern      = '^[a-fA-F0-9]{40}$'
         RemediationUrl  = 'https://pypi.org/pypi/{0}/{1}/json'
+    }
+
+    'shell-downloads'  = @{
+        FilePatterns   = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
+        ValidationFunc = 'Test-ShellDownloadSecurity'
+        Description    = 'Shell script downloads must include checksum verification'
     }
 }
 
@@ -193,6 +199,66 @@ class ComplianceReport {
         $this.Summary = @{}
         $this.Metadata = @{}
     }
+}
+
+function Test-ShellDownloadSecurity {
+    <#
+    .SYNOPSIS
+        Scans shell scripts for curl/wget downloads lacking checksum verification.
+
+    .DESCRIPTION
+        Analyzes shell scripts to detect download commands (curl/wget) that do not
+        have corresponding checksum verification (sha256sum/shasum) within the
+        following lines.
+
+    .PARAMETER FilePath
+        Path to the shell script file to scan.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path $FilePath)) {
+        return @()
+    }
+
+    $lines = Get-Content $FilePath
+    $violations = @()
+
+    # Pattern to match curl/wget download commands
+    $downloadPattern = '(curl|wget)\s+.*https?://[^\s]+'
+    $checksumPattern = 'sha256sum|shasum|Get-FileHash|openssl\s+dgst\s+-sha256|sha256sum\s+-c'
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        if ($line -match $downloadPattern) {
+            # Check next 5 lines for checksum verification
+            $hasChecksum = $false
+            $searchEnd = [Math]::Min($i + 5, $lines.Count - 1)
+
+            for ($j = $i; $j -le $searchEnd; $j++) {
+                if ($lines[$j] -match $checksumPattern) {
+                    $hasChecksum = $true
+                    break
+                }
+            }
+
+            if (-not $hasChecksum) {
+                $violations += [PSCustomObject]@{
+                    File      = $FilePath
+                    Line      = $i + 1
+                    Pattern   = $line.Trim()
+                    Issue     = 'Download without checksum verification'
+                    Severity  = 'warning'
+                    Ecosystem = 'shell-downloads'
+                }
+            }
+        }
+    }
+
+    return $violations
 }
 
 function Write-PinningLog {
