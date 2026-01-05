@@ -3,7 +3,7 @@ description: "Initiates research for task implementation based on user requireme
 agent: 'task-researcher'
 ---
 
-# Task Researcher Research Initiation
+# Task Research
 
 ## Inputs
 
