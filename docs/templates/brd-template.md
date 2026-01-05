@@ -13,7 +13,7 @@ Version {{version}} | Status {{status}} | Owner {{docOwner}} | Sponsor {{busines
 ## Progress Tracker
 
 | Phase                | Done                          | Gaps                      | Updated                      |
-| -------------------- | ----------------------------- | ------------------------- | ---------------------------- |
+|----------------------|-------------------------------|---------------------------|------------------------------|
 | Business Context     | {{phaseContextComplete}}      | {{phaseContextGaps}}      | {{phaseContextUpdated}}      |
 | Problem & Drivers    | {{phaseProblemComplete}}      | {{phaseProblemGaps}}      | {{phaseProblemUpdated}}      |
 | Objectives & Metrics | {{phaseObjectivesComplete}}   | {{phaseObjectivesGaps}}   | {{phaseObjectivesUpdated}}   |
