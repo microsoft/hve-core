@@ -111,12 +111,6 @@ cd extension
 rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && cp -r ../scripts/dev-tools scripts/ && vsce package && rm -rf .github scripts
 ```
 
-Or use npm script:
-
-```bash
-npm run package:extension
-```
-
 ## Publishing the Extension
 
 **Important:** Update version in `extension/package.json` before publishing.
@@ -145,12 +139,6 @@ vsce publish --packagePath "extension/hve-core-X.Y.Z.vsix"
 # Or use the latest .vsix file
 VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
 vsce publish --packagePath "$VSIX_FILE"
-```
-
-Or use npm script:
-
-```bash
-npm run publish:extension
 ```
 
 ## What Gets Included
