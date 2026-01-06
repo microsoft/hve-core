@@ -237,13 +237,13 @@ git commit
 
 ## Comparison with Other Methods
 
-| Aspect               | Submodule            | Multi-Root          | Clone           |
-|----------------------|----------------------|---------------------|-----------------|
-| Version controlled   | ✅  Yes               | ⚠️  Partial         | ❌  No           |
-| Team reproducibility | ✅  Same version      | ⚠️  May vary        | ⚠️  May vary    |
-| Update control       | ✅  Explicit commits  | ⚠️  Automatic       | ⚠️  Automatic   |
-| In workspace         | ✅  Subfolder         | ✅  Workspace root   | ❌  External     |
-| Initial setup        | 🟡  Medium           | 🟡  Medium          | 🟢  Easy        |
+| Aspect               | Submodule           | Multi-Root        | Clone         |
+|----------------------|---------------------|-------------------|---------------|
+| Version controlled   | ✅  Yes              | ⚠️  Partial       | ❌  No         |
+| Team reproducibility | ✅  Same version     | ⚠️  May vary      | ⚠️  May vary  |
+| Update control       | ✅  Explicit commits | ⚠️  Automatic     | ⚠️  Automatic |
+| In workspace         | ✅  Subfolder        | ✅  Workspace root | ❌  External   |
+| Initial setup        | 🟡  Medium          | 🟡  Medium        | 🟢  Easy      |
 
 ## Next Steps
 

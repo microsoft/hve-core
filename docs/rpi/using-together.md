@@ -219,11 +219,11 @@ RPI artifacts support handoffs:
 
 ## Quick Reference
 
-| Phase     | Invoke With                   | Mode             | Output                         |
-|-----------|-------------------------------|------------------|--------------------------------|
-| Research  | `/task-research <topic>`      | Task Researcher  | research.md                    |
-| Plan      | `/task-plan [research-path]`  | Task Planner     | plan.md, details.md, prompt.md |
-| Implement | Select Task Implementor mode  | Task Implementor | code + changes.md              |
+| Phase     | Invoke With                  | Mode             | Output                         |
+|-----------|------------------------------|------------------|--------------------------------|
+| Research  | `/task-research <topic>`     | Task Researcher  | research.md                    |
+| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md, prompt.md |
+| Implement | Select Task Implementor mode | Task Implementor | code + changes.md              |
 
 > [!TIP]
 > `/task-research` and `/task-plan` automatically switch to the appropriate chat mode.
