@@ -230,15 +230,27 @@ RPI artifacts support handoffs:
 
 Remember: **Always `/clear` between phases!**
 
-## RPI Agent
+## RPI Agent: When Simplicity Fits
 
-For tasks that don't require strict phase separation, **rpi-agent** provides autonomous execution with subagent delegation. RPI-agent combines research and implementation into a single workflow, making it ideal for:
+For tasks that don't require strict phase separation, **rpi-agent** provides autonomous execution with subagent delegation. Use it when the scope is clear and you don't need the deep iterative research that comes from constraint-based separation.
 
-* Straightforward feature implementations
-* Bug fixes with clear scope
-* Discovery during implementation as deeper research can be handed off to Task Researcher from RPI Agent
+### Quick Decision Guide
 
-See [Chat Modes Reference](../../.github/chatmodes/README.md) for rpi-agent details.
+| Choose Strict RPI when...    | Choose rpi-agent when...           |
+|------------------------------|------------------------------------|
+| Deep research is critical    | Scope is clear and straightforward |
+| Multi-file pattern discovery | Minimal external research needed   |
+| Team handoff needed          | Quick iteration during development |
+| Compliance or security work  | Exploratory or prototype work      |
+
+### Escalation Path
+
+You don't have to decide upfront. Start with rpi-agent for speed, and if the task reveals hidden complexity, it can hand off to Task Researcher. This hybrid approach gives you speed for simple tasks and the verified truth that comes from constraint-based research when you need it.
+
+> [!TIP]
+> For the full explanation of why constraints change AI behavior, see [Why the RPI Workflow Works](why-rpi.md#the-counterintuitive-insight).
+
+See [Chat Modes Reference](../../.github/chatmodes/README.md) for rpi-agent implementation details.
 
 ## Related Guides
 
