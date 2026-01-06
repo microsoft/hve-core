@@ -50,11 +50,22 @@ This document includes:
 
 ## How to Use Task Researcher
 
-### Step 1: Select the Chat Mode
+### Option 1: Use the Prompt Shortcut (Recommended)
+
+Type `/task-research <topic>` in GitHub Copilot Chat where `<topic>` describes what you want to research:
+
+```text
+/task-research Azure Blob Storage integration for Python pipelines
+```
+
+This automatically switches to Task Researcher mode and begins the research protocol.
+
+### Option 2: Select the Chat Mode Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the chat mode dropdown at the top
 3. Select **Task Researcher**
+4. Describe your task
 
 ### Step 2: Describe Your Task
 

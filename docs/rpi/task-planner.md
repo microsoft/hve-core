@@ -63,7 +63,19 @@ Contains step-by-step instructions for Task Implementor, including stop controls
 
 🔴 **Start with `/clear` or a new chat** after Task Researcher completes.
 
-### Step 2: Select the Chat Mode
+### Step 2: Invoke Task Planner
+
+#### Option 1: Use the Prompt Shortcut (Recommended)
+
+Type `/task-plan` in GitHub Copilot Chat with the research document opened in the editor. This automatically switches to Task Planner mode and begins the planning protocol. You can optionally provide the research file path:
+
+```text
+/task-plan
+```
+
+If you don't specify a file, Task Planner will search for recent research documents in `.copilot-tracking/research/` and ask you to confirm which one to use.
+
+#### Option 2: Select the Chat Mode Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the chat mode dropdown
@@ -83,10 +95,10 @@ Task Planner will create all three files. Review:
 
 ## Example Prompt
 
-```text
-Using the research from .copilot-tracking/research/20250128-blob-storage-research.md,
-create an implementation plan for adding Azure Blob Storage integration.
+With `.copilot-tracking/research/20250128-blob-storage-research.md` opened in the editor
 
+```text
+/task-plan
 Focus on:
 - The streaming upload approach recommended in the research
 - Phased rollout: storage client first, then writer class, then tests

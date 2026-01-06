@@ -83,11 +83,14 @@ Research findings are preserved in files, not chat history. Clean context lets e
 ## Quick Start
 
 1. **Define the problem** clearly
-2. **Research** using Task Researcher chat mode
+2. **Research** using `/task-research <topic>` (automatically switches to Task Researcher)
 3. **Clear context** with `/clear`
-4. **Plan** using Task Planner chat mode
+4. **Plan** using `/task-plan` (automatically switches to Task Planner)
 5. **Clear context** with `/clear`
 6. **Implement** using Task Implementor chat mode
+
+> [!TIP]
+> The `/task-research` and `/task-plan` prompts automatically switch to their respective chat modes, so you don't need to manually select Task Researcher or Task Planner.
 
 ## Next Steps
 

@@ -80,14 +80,7 @@ At each stop point:
 ## Example Prompt
 
 ```text
-Implement the plan from .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md.
-Use phaseStop=true so I can review the storage client before you implement the writer.
-```
-
-**Or use the generated prompt:**
-
-```text
-@workspace /implement-blob-storage
+/implement-blob-storage
 ```
 
 ## Understanding Stop Controls

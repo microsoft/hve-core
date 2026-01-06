@@ -46,8 +46,13 @@ Let's walk through adding Azure Blob Storage to a Python data pipeline.
 
 ### Phase 1: Research
 
-1. Select Task Researcher mode
-2. Submit your research request:
+1. Use `/task-research` with your topic to start research (this automatically selects Task Researcher mode):
+
+```text
+/task-research Azure Blob Storage integration for Python data pipeline
+```
+
+1. Provide additional context in your message:
 
 ```text
 I need to add Azure Blob Storage integration to our Python data pipeline.
@@ -86,13 +91,16 @@ Key findings:
 ### Phase 2: Plan
 
 1. Clear context: `/clear`
-1. Select Task Planner mode
-1. Submit your planning request:
+1. Use `/task-plan` with the research file **open** (this automatically selects Task Planner mode):
 
    ```text
-   Using the research from .copilot-tracking/research/20250128-blob-storage-research.md,
-   create an implementation plan for adding Azure Blob Storage integration.
+   /task-plan
+   ```
 
+1. Provide additional planning guidance:
+
+   ```text
+   /task-plan
    Focus on:
    - The streaming upload approach recommended in the research
    - Phased rollout: storage client first, then writer class, then integration
@@ -130,8 +138,7 @@ Key findings:
 1. Submit your implementation request:
 
    ```text
-   Implement the plan from .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md.
-   Use phaseStop=true so I can review after each phase.
+   /implement-blob-storage
    ```
 
 1. Review at each phase. After Phase 1 completes:
@@ -212,11 +219,14 @@ RPI artifacts support handoffs:
 
 ## Quick Reference
 
-| Phase     | Mode             | Input               | Output                         |
-|-----------|------------------|---------------------|--------------------------------|
-| Research  | Task Researcher  | Problem description | research.md                    |
-| Plan      | Task Planner     | Research doc path   | plan.md, details.md, prompt.md |
-| Implement | Task Implementor | Plan path           | code + changes.md              |
+| Phase     | Invoke With                   | Mode             | Output                         |
+|-----------|-------------------------------|------------------|--------------------------------|
+| Research  | `/task-research <topic>`      | Task Researcher  | research.md                    |
+| Plan      | `/task-plan [research-path]`  | Task Planner     | plan.md, details.md, prompt.md |
+| Implement | Select Task Implementor mode  | Task Implementor | code + changes.md              |
+
+> [!TIP]
+> `/task-research` and `/task-plan` automatically switch to the appropriate chat mode.
 
 Remember: **Always `/clear` between phases!**
 
