@@ -62,10 +62,10 @@ Understanding what AI does differently in each phase helps explain why separatio
 
 Task Researcher knows it will never write the code. This single constraint transforms its behavior:
 
-* Searches for existing patterns instead of inventing new ones
-* Cites specific files and line numbers as evidence
-* Questions its own assumptions because it can't hide them in implementation
-* Documents dependencies, APIs, and conventions with precision
+* Searches for existing patterns instead of inventing new ones.
+* Cites specific files and line numbers as evidence.
+* Questions its own assumptions because it can't hide them in implementation.
+* Documents dependencies, APIs, and conventions with precision.
 
 The output is a research document that anyone can verify. No tribal knowledge. No "I think this is how it works."
 
@@ -73,10 +73,10 @@ The output is a research document that anyone can verify. No tribal knowledge. N
 
 Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on:
 
-* Breaking work into logical, sequenced tasks
-* Identifying dependencies between changes
-* Defining clear success criteria for each step
-* Anticipating edge cases before code is written
+* Breaking work into logical, sequenced tasks.
+* Identifying dependencies between changes.
+* Defining clear success criteria for each step.
+* Anticipating edge cases before code is written.
 
 The plan becomes a contract. When implementation begins, the AI follows the plan rather than making decisions on the fly.
 
@@ -84,10 +84,10 @@ The plan becomes a contract. When implementation begins, the AI follows the plan
 
 Task Implementor has one job: execute the plan using the patterns documented in research. This is where the payoff becomes obvious:
 
-* No time wasted rediscovering conventions
-* No "creative" decisions that break existing patterns
-* No assumptions about how things work, only verified facts
-* Clear accountability when something goes wrong
+* No time wasted rediscovering conventions.
+* No "creative" decisions that break existing patterns.
+* No assumptions about how things work, only verified facts.
+* Clear accountability when something goes wrong.
 
 ## The Quality Difference
 
@@ -162,17 +162,17 @@ rpi-agent can hand off to Task Researcher when it encounters complexity beyond i
 
 **Use RPI for:**
 
-* New features requiring codebase pattern research
-* Integration work needing dependency analysis
-* Infrastructure changes with compliance requirements
-* Customer-facing deliverables requiring documentation
-* Anything you'll maintain and evolve over time
+* New features requiring codebase pattern research.
+* Integration work needing dependency analysis.
+* Infrastructure changes with compliance requirements.
+* Customer-facing deliverables requiring documentation.
+* Anything you'll maintain and evolve over time.
 
 **Skip RPI for:**
 
-* One-off scripts you'll run once and delete
-* Simple bug fixes with obvious, localized solutions
-* Exploratory prototypes you expect to throw away
+* One-off scripts you'll run once and delete.
+* Simple bug fixes with obvious, localized solutions.
+* Exploratory prototypes you expect to throw away.
 
 **The rule:** If it's worth writing well, it's worth RPI.
 

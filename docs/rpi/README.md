@@ -25,9 +25,9 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 **Key benefits:**
 
-* 🔍 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones
-* 📋 **Traceability**: every decision traced to specific files and line numbers
-* 🔄 **Knowledge transfer**: research documents anyone can follow, not tribal knowledge
+* 🔍 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones.
+* 📋 **Traceability**: every decision traced to specific files and line numbers.
+* 🔄 **Knowledge transfer**: research documents anyone can follow, not tribal knowledge.
 
 > [!TIP]
 > **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and guidance on choosing between strict RPI and rpi-agent.
