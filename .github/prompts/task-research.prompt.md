@@ -10,7 +10,7 @@ agent: 'task-researcher'
 * ${input:chat:true}: (Optional, defaults to true) Include the full chat conversation context for research analysis
 * ${input:topic}: (Required) Primary topic or focus area for research, provided by user prompt or inferred from conversation
 
-## Research Steps
+## Research Protocol
 
 ### 1. Analyze User Request
 
@@ -31,7 +31,7 @@ If `${input:chat}` is true (default), review the conversation history for releva
 
 ### 3. Identify Research Targets
 
-Compile what needs to be researched based on the analysis from steps 1-2:
+Compile what needs to be researched based on the user request and conversation context:
 
 * List files to analyze, including those explicitly referenced and others likely relevant to the topic
 * Identify external sources such as documentation, APIs, or reference implementations to investigate
@@ -72,11 +72,11 @@ Communicate progress and discoveries throughout the research:
 * Flag when research reveals the scope is larger or more complex than expected
 * Pause for user input when multiple viable approaches emerge with different trade-offs
 
-At completion, provide the user with:
+When pausing or at natural stopping points, provide the user with:
 
-* A summary of what was researched and the key findings
+* A summary of what has been researched and the key findings so far
 * Any research targets that were identified but not yet explored
 
 ---
 
-Proceed with research initiation following the Research Steps.
+Proceed with research initiation following the Research Protocol.
