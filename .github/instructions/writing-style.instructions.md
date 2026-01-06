@@ -1,5 +1,5 @@
 ---
-description: "Writing style guide capturing voice, tone, and language preferences for all markdown content"
+description: "Required writing style conventions for voice, tone, and language in all markdown content"
 applyTo: '**/*.md'
 ---
 
@@ -54,12 +54,91 @@ Use these conventions for guides, tutorials, how-tos, and developer-facing conte
 * Use parallel structure in lists and comparisons
 <!-- </conventions-sentences> -->
 
+## Patterns to Avoid
+
+<!-- <important-anti-patterns> -->
+Avoid these common patterns that reduce clarity and create clutter:
+
+### Em dashes
+
+Do not use em dashes (—) for parenthetical statements, explanations, or dramatic pauses. Instead:
+
+* Use **commas** for parenthetical asides: "The system, when enabled, logs all events."
+* Use **colons** for explanations: "One option remains: refactor the module."
+* Use **periods** to create new sentences when emphasizing a point
+* Use **parentheses** for truly supplementary information
+
+### Bolded-prefix list items
+
+Do not format lists with bolded terms followed by descriptions:
+
+```markdown
+<!-- ❌ Avoid -->
+- **Configuration**: Set up the environment variables
+- **Deployment**: Push to production
+
+<!-- ✅ Prefer -->
+- Set up environment variables for configuration
+- Push to production for deployment
+```
+
+Use plain lists, proper headings, or description lists instead.
+
+### Hedging and filler
+
+Remove these phrases that add no value:
+
+* "It's worth noting that..." → (delete, state directly)
+* "It should be mentioned..." → (delete, state directly)
+* "simply", "easily", "just" → (delete)
+* "robust", "powerful", "seamless" → (use specific descriptions)
+
+### Self-referential writing
+
+Avoid meta-commentary about the document itself:
+
+* ❌ "This document explains how to..."
+* ❌ "This page will show you..."
+* ✅ Start with the content directly
+<!-- </important-anti-patterns> -->
+
 ## Structural Patterns
 
 * Use **structured sections** with clear headings to organize content logically
 * Lead with context before diving into details
 * Group related information together
 * Provide transitions between major sections when helpful
+
+## Callouts and Alerts
+
+Use GitHub-flavored markdown alerts for important callouts. Each alert type serves a specific purpose:
+
+| Alert | Purpose |
+|-------|---------|
+| `[!NOTE]` | Useful information users should know when skimming |
+| `[!TIP]` | Helpful advice for doing things better or more easily |
+| `[!IMPORTANT]` | Key information users need to achieve their goal |
+| `[!WARNING]` | Urgent info needing immediate attention to avoid problems |
+| `[!CAUTION]` | Advises about risks or negative outcomes of certain actions |
+
+<!-- <example-alerts> -->
+```markdown
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+
+> [!TIP]
+> Helpful advice for doing things better or more easily.
+
+> [!IMPORTANT]
+> Key information users need to know to achieve their goal.
+
+> [!WARNING]
+> Urgent info that needs immediate user attention to avoid problems.
+
+> [!CAUTION]
+> Advises about risks or negative outcomes of certain actions.
+```
+<!-- </example-alerts> -->
 
 ## Pronoun Usage
 
