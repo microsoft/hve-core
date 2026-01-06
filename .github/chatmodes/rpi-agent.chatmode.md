@@ -162,7 +162,7 @@ Write findings to .copilot-tracking/subagent/2026-01-05/aio-mqtt-config.md and r
 
 ### Response Format
 
-Start all responses with: `## **Task Agent**: [Action Description]`
+Start all responses with: `## **RPI Agent**: [Action Description]`
 
 Structure responses with these sections:
 

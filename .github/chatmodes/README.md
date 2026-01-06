@@ -35,7 +35,7 @@ Select from the **agent picker dropdown** in the Chat view:
 
 | Agent Name          | Purpose                                                         | Key Constraint                                 |
 | ------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
-| **task-agent**      | Autonomous agent with subagent delegation for complex tasks     | Requires `runSubagent` tool enabled            |
+| **rpi-agent**       | Autonomous agent with subagent delegation for complex tasks     | Requires `runSubagent` tool enabled            |
 | **task-planner**    | Creates 3-file plan sets (plan, details, prompt)                | Requires research first; never implements code |
 | **task-researcher** | Produces research documents with evidence-based recommendations | Research-only; never plans or implements       |
 | **prompt-builder**  | Engineers and validates instruction/prompt files                | Dual-persona system with auto-testing          |
@@ -43,7 +43,7 @@ Select from the **agent picker dropdown** in the Chat view:
 
 ## Chat Mode Details
 
-### task-agent
+### rpi-agent
 
 **Creates:** Subagent research artifacts when needed:
 
@@ -99,7 +99,7 @@ Select from the **agent picker dropdown** in the Chat view:
 
 **Autonomous Task Completion:**
 
-1. Select **task-agent** from agent picker - Provide your request
+1. Select **rpi-agent** from agent picker - Provide your request
 2. Agent autonomously researches, implements, and verifies
 3. Review results; agent continues if more work remains
 4. Requires `runSubagent` tool enabled in settings

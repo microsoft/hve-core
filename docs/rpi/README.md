@@ -28,9 +28,6 @@ Traditional AI coding assistants work well for simple tasks but struggle with co
 
 RPI solves this by separating concerns into distinct phases, each with its own specialized chat mode.
 
-> [!TIP]
-> For straightforward tasks that don't require extensive research-plan-implement separation, consider using **task-agent** instead. Task-agent provides autonomous execution with subagent delegation, handling research and implementation in a single workflow. See [Chat Modes Reference](../../.github/chatmodes/README.md) for details.
-
 ## The Three Phases
 
 ### 🔍 Research Phase (Task Researcher)
@@ -101,7 +98,7 @@ Research findings are preserved in files, not chat history. Clean context lets e
 * [Task Planner Guide](task-planner.md) - Create actionable plans
 * [Task Implementor Guide](task-implementor.md) - Execute with precision
 * [Using Them Together](using-together.md) - Complete workflow example
-* [Chat Modes Reference](../../.github/chatmodes/README.md) - All available modes including task-agent
+* [Chat Modes Reference](../../.github/chatmodes/README.md) - All available modes
 
 ---
 
