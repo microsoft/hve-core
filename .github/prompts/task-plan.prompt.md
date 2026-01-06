@@ -14,75 +14,72 @@ agent: 'task-planner'
 
 ### 1. Identify Research Document(s)
 
-* Validate the ${input:research} exists
-* Otherwise, find a likely candidate for research document(s) in the .copilot-tracking/research/ directory
-  * Avoid reading the research documents at this stage to prevent reading in the wrong information
-  * Factor in recency and the conversation context to select the correct research document based on name
-  * When multiple research documents are likely candidates then ask the user which one or several to pick (offer a recommendation)
-  * Inform the user which research document(s) you will proceed using for task planning
-* If there are no candidates for a research document then inform the user that they should use `task-researcher` before proceeding with task planning
-  * The user may proceed without a research document, use all available resources that were provided to complete task planning
+Locate a research document before reading any content:
+
+* If ${input:research} is provided, validate the file exists and use it
+* If not provided, search `.copilot-tracking/research/` for files matching `YYYYMMDD-*-research.md`
+  * Select candidates based on filename and recency—do not read content yet
+  * Factor in conversation context to identify the most relevant match
+  * When multiple candidates exist, present a ranked list with your recommendation and ask the user to confirm
+* If no candidates exist, inform the user that `task-researcher` should be used first
+  * The user may choose to proceed without a research document; use all available context to complete planning
+
+Confirm with the user which research document(s) will be used before proceeding.
 
 ### 2. Analyze User Request
 
-Identify the task(s) to plan from the conversation and the selected research document(s)
+Read the confirmed research document(s) and identify the task(s) to plan:
 
-* Read in the research document(s)
-* Review related documents as needed based on the task(s) to plan
+* Extract objectives, requirements, and scope from the research findings
+* Review documents referenced in the research as needed for additional context
+* When the task(s) to plan are unclear, offer specific suggestions based on the research and conversation
 
-Inform the user the task(s) that you will be planning
+Inform the user which task(s) you will be planning before proceeding to codebase review.
 
-* When task(s) to plan are not clear then offer suggestions to the user based on the conversation and the research document(s)
-* Inform the user which task(s) you will be planning then proceed creating the task plan files and file structure
+### 3. Review Codebase and Build Plan
 
-### 3a. Review Codebase and Context
+Use the runSubagent tool when available to parallelize context gathering:
 
-Use the runSubagent tool when available, when reviewing or reading in files needed for context gathering and planning
+* Provide runSubagent with the research document(s) and specific questions about file locations, patterns, and modification targets
+* Have runSubagent respond with reasoning on where modifications will be required
+* Keep subsequent runSubagent calls consistent by including updated context from prior responses
 
-* Provide the runSubagent tool the research document(s) and context on what information it needs to gather
-* Make sure the runSubagent tool is thorough in its own investigation and have it respond back with its reasoning on where modifications will be required
-* Keep subsequent runSubagent tool calls consistent by providing any updated context or reasoning when initiating new runSubagent tool calls
-* Use the response from the runSubagent tool to determine which files will require changes
+Based on gathered context, determine:
 
-Review the codebase deeply based on the information you've gathered from the conversation and the selected research document(s)
+* All existing files and folders requiring modifications
+* New files and folders to create
+* Instruction files to reference in the planning files
+* Conventions, standards, and styling from neighbor files to follow
 
-* Determine all existing files and folders that will require modifications
-* Determine new files and folders that will be needed
+### 4. Assess and Adjust Scope
 
-Determine conventions, standards, and styling
+Evaluate whether changes are targeted or require broader architectural work:
 
-* Make sure any instructions files that are needed are referenced in the task planning files
-* Make sure existing conventions, standards, and styling are followed based on existing related or neighbor files
+* Prefer idiomatic modifications that follow existing codebase conventions
+* Apply SOLID principles when planning code modifications
+* When a one-off change would introduce inconsistency, propose a pattern-based approach instead
+* Architectural or restructuring changes are acceptable—inform the user when this diverges from expectations
 
-### 3b. Progressively Identify and Adjust Scope of Changes
+### 5. Update Plan Files Iteratively
 
-While reviewing research document(s), codebase files/folders, tool responses for external sources of information, progressively identify if the changes needed for the task(s) to plan are small and targeted or if changes will require larger architectural and/or restructuring modifications
+As information is discovered, update the task plan files:
 
-* Always prefer building high quality idiomatic modifications that follow the existing conventions, standards, and styling of the codebase
-* Planning code modifications should typically follow SOLID principles
-* Avoid planning modifications that would introduce branching one-off logic when a new or existing pattern may need to be introduced instead
-* Planning task(s) for larger architectural and/or restructuring modifications are always acceptable and likely, be sure to inform the user when this approach may be unexpected based on the conversation and research document(s)
+* Add implementation details and file targets as they are identified
+* Revise or remove plan steps when new information changes the approach
+* Reorganize tasks and phases to maintain logical flow
 
-### 3c. Progressively Update Task Plan Files
+### 6. Keep User Informed
 
-Progressively update task plan files as information is discovered
+Provide concise updates as planning progresses:
 
-* Add implementation details and files/folders requiring modifications progressively
-* Update existing implementation details or plan steps as new information is discovered requiring changes to the plan
-* Remove implementation details, plan steps, tasks from task plan files as new information is discovered requiring changes to the plan
-* Reorganize tasks and steps as new information is added, removed, or updated
+* Format updates for the user to easily follow along
+* Adjust direction based on user interruptions or suggestions
+* Flag larger divergences for user attention, such as when a small change would benefit from introducing a new pattern
 
-### 4. Keep User Informed
+At completion, ensure the user understands:
 
-As details are identified make sure the user is updated with this information
-
-* Keep the updates to the user concise and formatted for the user to easily follow along
-* Adjust direction based on the user interrupting or making suggestions
-* Larger divergence should be brought to the user's attention while planning, e.g., when it seems like a small change would be better by introducing a new pattern
-
-Make sure the user understands which task(s) will be (or have been) planned and which task(s) or details requiring planning have not been planned
-* Identify out of the research document(s) or conversation any task(s) that were not planned
-* Identify any details that were excluded from the task plan files that should go into task planning (either future task planning documents or were accidentally excluded)
+* Which task(s) were planned and are ready for implementation
+* Any task(s) or details from the research that were not included in this planning cycle
 
 ---
 
