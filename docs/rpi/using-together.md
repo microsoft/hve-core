@@ -230,6 +230,16 @@ RPI artifacts support handoffs:
 
 Remember: **Always `/clear` between phases!**
 
+## Alternative: Task Agent
+
+For tasks that don't require strict phase separation, **task-agent** provides autonomous execution with subagent delegation. Task-agent combines research and implementation into a single workflow, making it ideal for:
+
+* Straightforward feature implementations
+* Bug fixes with clear scope
+* Tasks where context switching between modes adds overhead
+
+See [Chat Modes Reference](../../.github/chatmodes/README.md) for task-agent details.
+
 ## Related Guides
 
 * [RPI Overview](README.md) - Understand the workflow

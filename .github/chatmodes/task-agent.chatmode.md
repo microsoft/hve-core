@@ -4,7 +4,7 @@ argument-hint: 'Professional agent with subagent delegation. Requires agent/runS
 handoffs:
   - label: "🔬 Research Deeper"
     agent: task-researcher
-    prompt: /task-researcher-research
+    prompt: /task-research
     send: true
 ---
 

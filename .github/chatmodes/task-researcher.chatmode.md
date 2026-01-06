@@ -1,6 +1,6 @@
 ---
 description: 'Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core'
-tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*', 'runSubagent']
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/problems', 'read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'bicep-(experimental)/*', 'context7/*', 'microsoft-docs/*', 'terraform/*', 'agent']
 ---
 # Task Researcher Instructions
 
