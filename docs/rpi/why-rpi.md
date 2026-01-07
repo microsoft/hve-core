@@ -158,24 +158,6 @@ Use the [autonomous agent](../../.github/chatmodes/rpi-agent.chatmode.md) when:
 
 rpi-agent can hand off to Task Researcher when it encounters complexity beyond its scope. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with rpi-agent and escalate if the task reveals hidden complexity.
 
-## When to Use RPI (And When to Skip It)
-
-**Use RPI for:**
-
-* New features requiring codebase pattern research.
-* Integration work needing dependency analysis.
-* Infrastructure changes with compliance requirements.
-* Customer-facing deliverables requiring documentation.
-* Anything you'll maintain and evolve over time.
-
-**Skip RPI for:**
-
-* One-off scripts you'll run once and delete.
-* Simple bug fixes with obvious, localized solutions.
-* Exploratory prototypes you expect to throw away.
-
-**The rule:** If it's worth writing well, it's worth RPI.
-
 ## Next Steps
 
 Ready to try it yourself?
