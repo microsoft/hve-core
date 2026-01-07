@@ -32,6 +32,9 @@ Escalate to Task Researcher when your task involves:
 4. **Recommends** ONE approach per technical scenario
 5. **Outputs** a comprehensive research document
 
+> [!NOTE]
+> **Why the constraint matters:** Task Researcher knows it will never write the code. This single constraint transforms its behavior—it searches for existing patterns instead of inventing new ones, cites specific files as evidence, and questions its own assumptions because it can't hide them in implementation.
+
 ## Output Artifact
 
 Task Researcher creates a research document at:
@@ -50,11 +53,22 @@ This document includes:
 
 ## How to Use Task Researcher
 
-### Step 1: Select the Chat Mode
+### Option 1: Use the Prompt Shortcut (Recommended)
+
+Type `/task-research <topic>` in GitHub Copilot Chat where `<topic>` describes what you want to research:
+
+```text
+/task-research Azure Blob Storage integration for Python pipelines
+```
+
+This automatically switches to Task Researcher mode and begins the research protocol.
+
+### Option 2: Select the Chat Mode Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the chat mode dropdown at the top
 3. Select **Task Researcher**
+4. Describe your task
 
 ### Step 2: Describe Your Task
 

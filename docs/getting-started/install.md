@@ -26,6 +26,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 **Or visit:** [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
 **Why choose the extension:**
+
 * ✅ Zero configuration required
 * ✅ Automatic updates via VS Code
 * ✅ Works everywhere (local, devcontainers, Codespaces)
@@ -33,6 +34,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 * ✅ Instant availability
 
 **When to use alternatives:**
+
 * ❌ You need to customize components → Use custom installation methods below
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
 * ❌ Contributing to HVE-Core → Use [Peer Clone](methods/peer-clone.md)
@@ -54,18 +56,18 @@ Open Copilot Chat, select the `hve-core-installer` agent, and use this prompt. T
 Answer these questions to find your recommended installation method:
 
 1. **What's your development environment?**
-   - Local VS Code (no devcontainer)
-   - Local devcontainer (Docker Desktop)
-   - GitHub Codespaces
-   - Both local and Codespaces
+   * Local VS Code (no devcontainer)
+   * Local devcontainer (Docker Desktop)
+   * GitHub Codespaces
+   * Both local and Codespaces
 
 2. **Solo or team development?**
-   - Solo: Just you, no version control of HVE-Core needed
-   - Team: Multiple people, need reproducible setup
+   * Solo: Just you, no version control of HVE-Core needed
+   * Team: Multiple people, need reproducible setup
 
 3. **Update preference?**
-   - Auto: Always get latest HVE-Core
-   - Controlled: Pin to specific version, update explicitly
+   * Auto: Always get latest HVE-Core
+   * Controlled: Pin to specific version, update explicitly
 
 ### Decision Matrix
 
@@ -142,11 +144,11 @@ The `hve-core-installer` agent automates any installation method:
 
 The agent handles:
 
-- Environment detection (Local VS Code, Devcontainer, Codespaces)
-- Repository cloning or configuration
-- VS Code settings updates
-- Devcontainer configuration
-- Validation of the installation
+* Environment detection (Local VS Code, Devcontainer, Codespaces)
+* Repository cloning or configuration
+* VS Code settings updates
+* Devcontainer configuration
+* Validation of the installation
 
 ## Validation
 
@@ -163,9 +165,9 @@ Run the installer in validation mode:
 
 ## Next Steps
 
-- [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
-- [RPI Workflow](../rpi/README.md) - Research, Plan, Implement methodology
-- [Contributing](../contributing/README.md) - Contribute to HVE-Core
+* [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
+* [RPI Workflow](../rpi/README.md) - Research, Plan, Implement methodology
+* [Contributing](../contributing/README.md) - Contribute to HVE-Core
 
 ---
 

@@ -88,7 +88,7 @@ The extension provides all HVE-Core components:
 
 | Component      | Count | Examples                                      |
 |----------------|-------|-----------------------------------------------|
-| Chat Agents    | 18    | task-planner, pr-review, adr-creation         |
+| Chat Agents    | 16    | task-planner, pr-review, adr-creation         |
 | Prompts        | 10    | git-commit, pull-request, ado-create-pr       |
 | Instructions   | 16    | markdown, python-script, commit-message       |
 | Dev Tools      | 2     | Generate-PrReference.ps1, pr-ref-gen.sh       |
@@ -130,6 +130,7 @@ The extension updates automatically through VS Code's extension system:
 **Solution:** Install the extension from marketplace
 
 **Steps:**
+
 1. Install extension from marketplace
 2. Start using `@task-planner` and other agents
 3. That's it!
@@ -141,6 +142,7 @@ The extension updates automatically through VS Code's extension system:
 **Solution:** Install extension on all machines via Settings Sync
 
 **Steps:**
+
 1. Enable Settings Sync in VS Code
 2. Install extension on one machine
 3. Extensions automatically sync to other devices
@@ -152,6 +154,7 @@ The extension updates automatically through VS Code's extension system:
 **Solution:** Share extension link and install instructions
 
 **Steps:**
+
 1. Share marketplace link with team
 2. Team members install extension
 3. Everyone has consistent experience immediately
@@ -163,6 +166,7 @@ The extension updates automatically through VS Code's extension system:
 **Solution:** Use extension initially, migrate to Peer Clone when needed
 
 **Steps:**
+
 1. Start with extension for quick setup
 2. When customization needed, uninstall extension
 3. Follow [Peer Clone](peer-clone.md) method for local modifications

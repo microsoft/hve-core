@@ -159,15 +159,15 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 ## Limitations
 
-| Aspect           | Status                                  |
-|------------------|-----------------------------------------|
-| Devcontainers    | ❌  Not supported                        |
-| Codespaces       | ❌  Not supported                        |
-| Team sharing     | ⚠️  Each developer clones separately    |
-| Portable paths   | ⚠️  Breaks if project moves             |
-| Version pinning  | ⚠️  Manual (use git checkout)           |
-| Setup complexity | ✅  Very simple                          |
-| Update process   | ✅  Just git pull                        |
+| Aspect           | Status                               |
+|------------------|--------------------------------------|
+| Devcontainers    | ❌  Not supported                     |
+| Codespaces       | ❌  Not supported                     |
+| Team sharing     | ⚠️  Each developer clones separately |
+| Portable paths   | ⚠️  Breaks if project moves          |
+| Version pinning  | ⚠️  Manual (use git checkout)        |
+| Setup complexity | ✅  Very simple                       |
+| Update process   | ✅  Just git pull                     |
 
 ## Next Steps
 

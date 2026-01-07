@@ -102,7 +102,7 @@ All chatmode files **MUST** be placed in:
 ### Naming Convention
 
 * Use lowercase kebab-case: `security-reviewer.chatmode.md`
-* Be descriptive and action-oriented: `task-planner.chatmode.md`, `pr-review.chatmode.md`
+* Be descriptive and action-oriented: `task-planner.chatmode.md`, `pr-review.chatmode.md`, `rpi-agent.chatmode.md`
 * Avoid generic names: `helper.chatmode.md` ❌ → `ado-work-item-processor.chatmode.md` ✅
 
 ### File Format

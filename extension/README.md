@@ -16,10 +16,6 @@ HVE Core provides a comprehensive collection of specialized AI chat agents, prom
 
 Specialized AI assistants for specific development tasks:
 
-#### Setup & Installation
-
-- **hve-core-installer** - Decision-driven installer with 6 installation methods for local, devcontainer, and Codespaces environments
-
 #### Development Workflow
 
 - **task-researcher** - Research technical solutions and approaches

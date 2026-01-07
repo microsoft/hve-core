@@ -29,6 +29,12 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Available Prompts
 
+### Onboarding & Planning
+
+- **[Getting Started](./getting-started.prompt.md)** - Project onboarding and initial setup guidance
+- **[Task Research](./task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
+- **[Task Plan](./task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
+
 ### Source Control & Commit Quality
 
 - **[Git Commit (Stage + Commit)](./git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
@@ -66,14 +72,16 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Quick Start
 
-1. **Committing changes?** Use [Git Commit Message Generator](./git-commit-message.prompt.md) or [Git Commit](./git-commit.prompt.md)
-2. **Handling merge conflicts?** Use [Git Merge](./git-merge.prompt.md)
-3. **Setting up Git?** Use [Git Setup](./git-setup.prompt.md)
-4. **Tracking your work?** Run [ADO Get My Work Items](./ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado-process-my-work-items-for-task-planning.prompt.md)
-5. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado-create-pull-request.prompt.md)
-6. **Checking build status?** Use [ADO Get Build Info](./ado-get-build-info.prompt.md)
-7. **Creating GitHub issues?** Use [GitHub Add Issue](./github-add-issue.prompt.md)
-8. **Working on PRs?** Use [Pull Request](./pull-request.prompt.md)
+1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./task-research.prompt.md)
+2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./task-plan.prompt.md)
+3. **Committing changes?** Use [Git Commit Message Generator](./git-commit-message.prompt.md) or [Git Commit](./git-commit.prompt.md)
+4. **Handling merge conflicts?** Use [Git Merge](./git-merge.prompt.md)
+5. **Setting up Git?** Use [Git Setup](./git-setup.prompt.md)
+6. **Tracking your work?** Run [ADO Get My Work Items](./ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado-process-my-work-items-for-task-planning.prompt.md)
+7. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado-create-pull-request.prompt.md)
+8. **Checking build status?** Use [ADO Get Build Info](./ado-get-build-info.prompt.md)
+9. **Creating GitHub issues?** Use [GitHub Add Issue](./github-add-issue.prompt.md)
+10. **Working on PRs?** Use [Pull Request](./pull-request.prompt.md)
 
 ## Related Resources
 
