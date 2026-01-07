@@ -15,6 +15,34 @@ estimated_reading_time: 5
 
 HVE-Core provides GitHub Copilot customizations (chat modes, instructions, and prompts) that enhance your development workflow. This guide helps you choose the right installation method for your environment.
 
+## Recommended: VS Code Extension ⭐
+
+**For most users**, the simplest method is to install directly from the VS Code Marketplace:
+
+```text
+VS Code → Extensions → Search "HVE Core" → Install
+```
+
+**Or visit:** [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+
+**Why choose the extension:**
+* ✅ Zero configuration required
+* ✅ Automatic updates via VS Code
+* ✅ Works everywhere (local, devcontainers, Codespaces)
+* ✅ No project files needed
+* ✅ Instant availability
+
+**When to use alternatives:**
+* ❌ You need to customize components → Use custom installation methods below
+* ❌ Team needs version control → Use [Submodule](methods/submodule.md)
+* ❌ Contributing to HVE-Core → Use [Peer Clone](methods/peer-clone.md)
+
+See [Extension Installation Guide](methods/extension.md) for complete documentation.
+
+## Custom Installation Methods
+
+If you need customization or version control of HVE-Core, choose from the methods below.
+
 ## Quick Start
 
 > **Starter prompt:** "Help me choose how to install this library"
@@ -43,27 +71,31 @@ Answer these questions to find your recommended installation method:
 
 | Environment               | Team | Updates    | Recommended Method                              |
 |---------------------------|------|------------|-------------------------------------------------|
+| **Any** (simplest)        | Any  | Auto       | [VS Code Extension](methods/extension.md) ⭐     |
 | Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md)   |
 | Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)               |
 | Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)    |
 | Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)               |
 | Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)        |
 | Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)                 |
-| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) ⭐   |
+| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md)     |
 | Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)           |
 
-⭐ **Multi-Root Workspace** is the recommended method for most users.
+⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
 ### Quick Decision Tree
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
-│  Which environment?                                             │
+│  Want the simplest setup?                                       │
+│  └─ Yes ──────────────────────────────► VS Code Extension ⭐   │
+│                                                                 │
+│  Need to customize HVE-Core?                                    │
 │  ├─ Local VS Code only ──────────────► Peer Directory Clone    │
 │  ├─ Local devcontainer only ─────────► Git-Ignored Folder      │
 │  ├─ Codespaces only ─────────────────► GitHub Codespaces       │
-│  └─ Both local + Codespaces ─────────► Multi-Root Workspace ⭐ │
+│  └─ Both local + Codespaces ─────────► Multi-Root Workspace    │
 │                                                                 │
 │  Working in a team?                                             │
 │  └─ Yes, need version control ───────► Submodule               │
@@ -73,13 +105,19 @@ Answer these questions to find your recommended installation method:
 
 ## Installation Methods
 
-### Consumer Methods (Recommended for Most Users)
+### Simplest Method (Recommended for Most Users)
 
-These methods are for projects that want to use HVE-Core's customizations:
+| Method                                        | Best For                           | Complexity |
+|-----------------------------------------------|------------------------------------|------------|
+| [VS Code Extension](methods/extension.md) ⭐   | Anyone wanting zero-config setup   | Minimal    |
+
+### Consumer Methods (Customization + Version Control)
+
+These methods are for projects that want to use and potentially customize HVE-Core's components:
 
 | Method                                            | Best For                      | Complexity |
 |---------------------------------------------------|-------------------------------|------------|
-| [Multi-Root Workspace](methods/multi-root.md) ⭐   | Any environment, portable     | Low        |
+| [Multi-Root Workspace](methods/multi-root.md)     | Any environment, portable     | Low        |
 | [Submodule](methods/submodule.md)                 | Teams needing version control | Medium     |
 
 ### Developer Methods

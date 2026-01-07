@@ -25,9 +25,17 @@ HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Co
 
 ## Quick Start
 
-### Automated Installation
+### VS Code Extension (Simplest)
 
-**Recommended:** Use the buttons below to install the `hve-core-installer` agent in your project for fully automated setup:
+**Recommended for most users:** Install HVE Core directly from the VS Code Marketplace for zero-configuration setup:
+
+[![Install from Marketplace](https://img.shields.io/badge/Install_from_Marketplace-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+
+See [Extension Installation Guide](docs/getting-started/methods/extension.md) for details.
+
+### Automated Custom Installation
+
+For customization or team version control, use the `hve-core-installer` agent:
 
 [![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
 
@@ -49,11 +57,12 @@ The installer will:
 
 For manual setup or alternative installation methods, see the [Getting Started Guide](docs/getting-started/README.md) which covers:
 
+* [VS Code Extension](docs/getting-started/methods/extension.md) ⭐ - Marketplace install, zero config
+* [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
+* [Submodule](docs/getting-started/methods/submodule.md) - Team version control
 * [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
 * [Git-Ignored Clone](docs/getting-started/methods/git-ignored.md) - Devcontainer ephemeral setup
 * [Mounted Directory](docs/getting-started/methods/mounted.md) - Advanced container sharing
-* [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
-* [Submodule](docs/getting-started/methods/submodule.md) - Team version control
 * [GitHub Codespaces](docs/getting-started/methods/codespaces.md) - Cloud development
 
 ### Prerequisites
