@@ -282,14 +282,14 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 | Aspect              | Status                                   |
 |---------------------|------------------------------------------|
-| Devcontainers       | ✅ Full support                          |
-| Codespaces          | ❌ Not supported (no host access)        |
-| Team sharing        | ⚠️ Each developer clones on their host   |
-| Portable paths      | ⚠️ Absolute container paths              |
-| Version pinning     | ⚠️ Manual (use git checkout on host)     |
-| Shared installation | ✅ One clone serves all projects         |
-| Setup complexity    | ⚠️ High (multi-phase, requires rebuild)  |
-| Update process      | ✅ Just git pull on host                 |
+| Devcontainers       | ✅  Full support                          |
+| Codespaces          | ❌  Not supported (no host access)        |
+| Team sharing        | ⚠️  Each developer clones on their host  |
+| Portable paths      | ⚠️  Absolute container paths             |
+| Version pinning     | ⚠️  Manual (use git checkout on host)    |
+| Shared installation | ✅  One clone serves all projects         |
+| Setup complexity    | ⚠️  High (multi-phase, requires rebuild) |
+| Update process      | ✅  Just git pull on host                 |
 
 ## Next Steps
 

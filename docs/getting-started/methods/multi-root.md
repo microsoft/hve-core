@@ -154,8 +154,8 @@ Multi-root workspaces use folder names for paths:
 
 | Path Style           | Example                                    | Recommended       |
 |----------------------|--------------------------------------------|-------------------|
-| Folder name relative | `"HVE-Core Library/.github/chatmodes"`     | ✅ Yes            |
-| Absolute path        | `"/workspaces/hve-core/.github/chatmodes"` | ⚠️ Less portable  |
+| Folder name relative | `"HVE-Core Library/.github/chatmodes"`     | ✅  Yes            |
+| Absolute path        | `"/workspaces/hve-core/.github/chatmodes"` | ⚠️  Less portable |
 
 The folder names in your `.code-workspace` file (`"name": "HVE-Core Library"`) become path prefixes in settings.
 

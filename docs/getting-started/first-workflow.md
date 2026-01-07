@@ -31,6 +31,9 @@ You'll create:
 
 **Why use RPI for this?** Multiple unknowns: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
 
+> [!IMPORTANT]
+> **Why this matters:** AI can't tell the difference between investigating and implementing. When you ask for code, it writes code—patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
+
 ## Before You Start
 
 **The `/clear` command** resets Copilot's context between phases. Each RPI phase should start fresh—the artifacts (research doc, plan) carry the context forward, not the chat history.
@@ -203,18 +206,19 @@ Rename-Item docs/rpi/README.md.bak README.md
 
 ## Next Steps
 
-* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md)
-* **Simple tasks** - Skip RPI and use prompts directly
+* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md) and/or [rpi-agent](../../.github/chatmodes/README.md#rpi-agent)
+* **Simple tasks** - Use [rpi-agent](../../.github/chatmodes/README.md#rpi-agent) or prompts directly
 * **Contribute** - Read [Contributing Guide](../contributing/README.md)
 
 ## Resources
 
-| Resource                                       | Description                       |
-|------------------------------------------------|-----------------------------------|
-| [RPI Overview](../rpi/README.md)               | Full RPI workflow documentation   |
-| [Task Researcher](../rpi/task-researcher.md)   | Deep dive on research phase       |
-| [Task Planner](../rpi/task-planner.md)         | Deep dive on planning phase       |
-| [Task Implementor](../rpi/task-implementor.md) | Deep dive on implementation phase |
+| Resource                                                 | Description                          |
+|----------------------------------------------------------|--------------------------------------|
+| [RPI Overview](../rpi/README.md)                         | Full RPI workflow documentation      |
+| [Task Researcher](../rpi/task-researcher.md)             | Deep dive on research phase          |
+| [Task Planner](../rpi/task-planner.md)                   | Deep dive on planning phase          |
+| [Task Implementor](../rpi/task-implementor.md)           | Deep dive on implementation phase    |
+| [RPI Agent](../../.github/chatmodes/README.md#rpi-agent) | Autonomous single-workflow execution |
 
 ---
 

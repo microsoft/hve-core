@@ -12,13 +12,13 @@
     "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
-    "lint:all": "npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
+    "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\""
   },
   "devDependencies": {
     "cspell": "9.4.0",
     "markdown-link-check": "3.14.2",
-    "markdown-table-formatter": "^1.6.0",
+    "markdown-table-formatter": "^1.7.0",
     "markdownlint-cli2": "^0.20.0"
   },
   "repository": {

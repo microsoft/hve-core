@@ -32,6 +32,9 @@ Use Task Implementor after completing planning when you need:
 5. **Verifies** success criteria before marking complete
 6. **Pauses** at stop points for your review
 
+> [!NOTE]
+> **Why the constraint matters:** Task Implementor has one job: execute the plan using patterns documented in research. No time wasted rediscovering conventions, no "creative" decisions that break existing patterns—just verified facts applied methodically.
+
 ## Output Artifacts
 
 Task Implementor creates working code and a changes log:
@@ -80,14 +83,7 @@ At each stop point:
 ## Example Prompt
 
 ```text
-Implement the plan from .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md.
-Use phaseStop=true so I can review the storage client before you implement the writer.
-```
-
-**Or use the generated prompt:**
-
-```text
-@workspace /implement-blob-storage
+/implement-blob-storage
 ```
 
 ## Understanding Stop Controls

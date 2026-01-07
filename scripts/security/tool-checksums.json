@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tool version and checksum manifest for staleness detection",
+  "tools": [
+    {
+      "name": "gitleaks",
+      "repo": "gitleaks/gitleaks",
+      "version": "8.18.2",
+      "sha256": "6298c9235dfc9278c14b28afd9b7fa4e6f4a289cb1974bd27949fc1e9122bdee",
+      "downloadUrlTemplate": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
+      "notes": "Used in devcontainer for secret scanning"
+    }
+  ]
+}

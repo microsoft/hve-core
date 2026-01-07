@@ -294,13 +294,13 @@ Or modify postCreateCommand to always pull (see Auto-Update section).
 
 | Aspect              | Status                                    |
 |---------------------|-------------------------------------------|
-| Codespaces          | ✅ Designed for this                      |
-| Local devcontainers | ⚠️ Works but consider other methods       |
-| Team sharing        | ✅ Auto-setup for all contributors        |
-| Portable paths      | ⚠️ Absolute paths only                    |
-| Version pinning     | ⚠️ Modify clone command for specific tag  |
-| Offline support     | ❌ Requires network during creation       |
-| Setup complexity    | ✅ Low (just devcontainer.json)           |
+| Codespaces          | ✅  Designed for this                      |
+| Local devcontainers | ⚠️  Works but consider other methods      |
+| Team sharing        | ✅  Auto-setup for all contributors        |
+| Portable paths      | ⚠️  Absolute paths only                   |
+| Version pinning     | ⚠️  Modify clone command for specific tag |
+| Offline support     | ❌  Requires network during creation       |
+| Setup complexity    | ✅  Low (just devcontainer.json)           |
 
 ## Version Pinning
 
