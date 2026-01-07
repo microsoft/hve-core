@@ -100,14 +100,14 @@ Outline:
 
 ## Guidelines
 
-* Use Cause → Event → Impact format for risk statements
-* Define and document qualitative scales upfront
-* Record rationale for each rating
-* Include trigger events and assign a single accountable owner per risk
-* Establish reassessment cadence and closure
-* Use clear, concise, and simple language throughout all sections
-* Avoid unnecessary detail or verbosity
-* Do not use abbreviations for field names or headings (e.g., use "Priority" instead of "P"), unless they are widely recognized and unambiguous
-* Include both technical and non-technical risks
-* Focus on actionable mitigation strategies
-* Consider internal and external risk factors
+* Use Cause → Event → Impact format for risk statements.
+* Define and document qualitative scales upfront.
+* Record rationale for each rating.
+* Include trigger events and assign a single accountable owner per risk.
+* Establish reassessment cadence and closure.
+* Use clear, concise, and simple language throughout all sections.
+* Avoid unnecessary detail or verbosity.
+* Do not use abbreviations for field names or headings (e.g., use "Priority" instead of "P"), unless they are widely recognized and unambiguous.
+* Include both technical and non-technical risks.
+* Focus on actionable mitigation strategies.
+* Consider internal and external risk factors.
