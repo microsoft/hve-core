@@ -19,14 +19,20 @@ The RPI (Research, Plan, Implement) workflow transforms complex coding tasks int
 
 ## Why Use RPI?
 
-Traditional AI coding assistants work well for simple tasks but struggle with complex, multi-file changes. Without structure:
+AI coding assistants are brilliant at simple tasks and break everything they touch on complex ones. The root cause: AI can't tell the difference between investigating and implementing. When you ask for code, it writes code. It doesn't stop to verify that patterns match your existing modules or that the APIs it's calling actually exist.
 
-* AI makes assumptions instead of investigating
-* Context gets polluted with accumulated guesses
-* Implementation details contradict earlier decisions
-* You spend time correcting rather than building
+RPI solves this through a counterintuitive insight: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
 
-RPI solves this by separating concerns into distinct phases, each with its own specialized chat mode.
+**Key benefits:**
+
+* 🔍 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones.
+* 📋 **Traceability**: every decision traced to specific files and line numbers.
+* 🔄 **Knowledge transfer**: research documents anyone can follow, not tribal knowledge.
+
+> [!TIP]
+> **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and guidance on choosing between strict RPI and rpi-agent.
+
+RPI separates concerns into distinct phases, each with its own specialized chat mode.
 
 ## The Three Phases
 

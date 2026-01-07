@@ -31,6 +31,9 @@ You'll create:
 
 **Why use RPI for this?** Multiple unknowns: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
 
+> [!IMPORTANT]
+> **Why this matters:** AI can't tell the difference between investigating and implementing. When you ask for code, it writes code—patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
+
 ## Before You Start
 
 **The `/clear` command** resets Copilot's context between phases. Each RPI phase should start fresh—the artifacts (research doc, plan) carry the context forward, not the chat history.

@@ -32,6 +32,9 @@ Use Task Implementor after completing planning when you need:
 5. **Verifies** success criteria before marking complete
 6. **Pauses** at stop points for your review
 
+> [!NOTE]
+> **Why the constraint matters:** Task Implementor has one job: execute the plan using patterns documented in research. No time wasted rediscovering conventions, no "creative" decisions that break existing patterns—just verified facts applied methodically.
+
 ## Output Artifacts
 
 Task Implementor creates working code and a changes log:

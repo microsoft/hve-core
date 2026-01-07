@@ -65,10 +65,17 @@ For manual setup or alternative installation methods, see the [Getting Started G
 
 ### Try the RPI Workflow
 
-Transform complex tasks into working code using Research → Plan → Implement:
+AI coding assistants are brilliant at simple tasks. Ask for a function that reverses a string, and you'll get working code in seconds. Ask for a feature that touches twelve files across three services, and you'll get something that looks right, compiles cleanly, and breaks everything it touches.
 
-1. Complete the [Your First RPI Workflow](docs/getting-started/first-workflow.md) tutorial (~15 min)
-2. For simple tasks, use [prompts](.github/prompts/README.md) directly without the full workflow
+The root cause: AI can't tell the difference between investigating and implementing. When you ask for code, it writes code. It doesn't stop to verify that the patterns it chose match your existing modules. AI generally writes first and thinks never.
+
+HVE Core's RPI (Research → Plan → Implement) framework solves this by separating concerns into distinct phases. When AI knows it cannot implement during research, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
+
+Get started with RPI:
+
+* [Why the RPI Workflow Works](docs/rpi/why-rpi.md): the psychology behind constraint-based AI workflows
+* [Your First RPI Workflow](docs/getting-started/first-workflow.md): 15-minute hands-on tutorial
+* [rpi-agent](.github/chatmodes/rpi-agent.chatmode.md): autonomous mode for simpler tasks that don't need strict phase separation
 
 ## What's Included
 

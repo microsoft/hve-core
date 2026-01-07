@@ -31,6 +31,9 @@ Use Task Planner after completing research when you need:
 4. **Organizes** tasks into logical phases with dependencies
 5. **Generates** an implementation prompt for Task Implementor
 
+> [!NOTE]
+> **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria—the plan becomes a contract that prevents improvisation during implementation.
+
 ## Output Artifacts
 
 Task Planner creates three files:
