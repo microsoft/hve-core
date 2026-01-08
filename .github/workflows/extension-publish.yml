@@ -1,8 +1,10 @@
 name: Publish Extension
 
 on:
-  release:
-    types: [published]
+  # Release trigger disabled - extension publishing is manual-only
+  # Uncomment to enable auto-publish on GitHub releases:
+  # release:
+  #   types: [published]
   workflow_dispatch:
     inputs:
       version:
