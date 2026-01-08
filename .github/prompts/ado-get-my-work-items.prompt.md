@@ -1,6 +1,6 @@
 ---
-mode: "agent"
 description: "Retrieve user's current Azure DevOps work items and organize them into planning file definitions"
+agent: rpi-agent
 ---
 
 # Get My Work Items and Create Planning Files
