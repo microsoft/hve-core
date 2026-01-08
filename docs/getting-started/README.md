@@ -16,7 +16,24 @@ HVE Core provides GitHub Copilot customizations (chat modes, instructions, and p
 
 ## Installation
 
-See [Installing HVE-Core](install.md) to choose the right installation method for your environment.
+### Quick Install: VS Code Extension ⭐
+
+**Simplest method:** Install directly from VS Code Marketplace:
+
+1. Open VS Code Extensions view (`Ctrl+Shift+X`)
+2. Search for "HVE Core"
+3. Click **Install**
+
+Or visit: [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+
+**Pros:** Zero configuration, automatic updates, works everywhere  
+**Cons:** Cannot customize components
+
+See [Extension Installation Guide](methods/extension.md) for full details.
+
+### Custom Installation
+
+For customization or version control, see [Installing HVE-Core](install.md) to choose from six installation methods.
 
 > **Contributing to HVE-Core?** See the [Contributing Guide](../contributing/README.md) for development setup and contribution guidelines.
 
@@ -28,16 +45,17 @@ See [Installing HVE-Core](install.md) to choose the right installation method fo
 
 ### Installation Methods
 
-HVE-Core supports six installation methods. See the [installation guide](install.md) for a decision matrix to help you choose:
+HVE-Core supports seven installation methods. See the [installation guide](install.md) for a decision matrix to help you choose:
 
-| Method                                           | Best For                      |
-|--------------------------------------------------|-------------------------------|
-| [Multi-Root Workspace](methods/multi-root.md) ⭐ | Any environment, portable     |
-| [Submodule](methods/submodule.md)                | Teams needing version control |
-| [Peer Directory Clone](methods/peer-clone.md)    | Local VS Code, solo           |
-| [Git-Ignored Folder](methods/git-ignored.md)     | Local devcontainer, solo      |
-| [Mounted Directory](methods/mounted.md)          | Advanced devcontainer sharing |
-| [GitHub Codespaces](methods/codespaces.md)       | Codespaces-only projects      |
+| Method                                            | Best For                       |
+|---------------------------------------------------|--------------------------------|
+| [VS Code Extension](methods/extension.md) ⭐       | Simplest, no config needed     |
+| [Multi-Root Workspace](methods/multi-root.md)     | Any environment, portable      |
+| [Submodule](methods/submodule.md)                 | Teams needing version control  |
+| [Peer Directory Clone](methods/peer-clone.md)     | Local VS Code, solo            |
+| [Git-Ignored Folder](methods/git-ignored.md)      | Local devcontainer, solo       |
+| [Mounted Directory](methods/mounted.md)           | Advanced devcontainer sharing  |
+| [GitHub Codespaces](methods/codespaces.md)        | Codespaces-only projects       |
 
 ## Verifying Setup
 

@@ -13,7 +13,9 @@
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
-    "format:tables": "markdown-table-formatter \"**/*.md\""
+    "format:tables": "markdown-table-formatter \"**/*.md\"",
+    "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
+    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1"
   },
   "devDependencies": {
     "cspell": "9.4.0",

@@ -1,0 +1,237 @@
+{
+  "name": "hve-core",
+  "displayName": "HVE Core",
+  "version": "1.0.0",
+  "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
+  "publisher": "ise-hve-essentials",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/hve-core.git"
+  },
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": [
+    "Chat"
+  ],
+  "contributes": {
+    "chatAgents": [
+      {
+        "name": "ado-prd-to-wit",
+        "path": "./.github/chatmodes/ado-prd-to-wit.chatmode.md",
+        "description": "Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies"
+      },
+      {
+        "name": "adr-creation",
+        "path": "./.github/chatmodes/adr-creation.chatmode.md",
+        "description": "Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "arch-diagram-builder",
+        "path": "./.github/chatmodes/arch-diagram-builder.chatmode.md",
+        "description": "Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "brd-builder",
+        "path": "./.github/chatmodes/brd-builder.chatmode.md",
+        "description": "Business Requirements Document builder with guided Q&A and reference integration"
+      },
+      {
+        "name": "gen-data-spec",
+        "path": "./.github/chatmodes/gen-data-spec.chatmode.md",
+        "description": "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
+      },
+      {
+        "name": "gen-jupyter-notebook",
+        "path": "./.github/chatmodes/gen-jupyter-notebook.chatmode.md",
+        "description": "Create a structured exploratory data analysis Jupyter notebook leveraging available data sources & generated data dictionaries WITHOUT directly embedding raw data dumps."
+      },
+      {
+        "name": "gen-streamlit-dashboard",
+        "path": "./.github/chatmodes/gen-streamlit-dashboard.chatmode.md",
+        "description": "Develop a multi-page streamlit dashboard"
+      },
+      {
+        "name": "github-issue-manager",
+        "path": "./.github/chatmodes/github-issue-manager.chatmode.md",
+        "description": "Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues"
+      },
+      {
+        "name": "pr-review",
+        "path": "./.github/chatmodes/pr-review.chatmode.md",
+        "description": "Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "prd-builder",
+        "path": "./.github/chatmodes/prd-builder.chatmode.md",
+        "description": "Product Requirements Document builder with guided Q&A and reference integration"
+      },
+      {
+        "name": "prompt-builder",
+        "path": "./.github/chatmodes/prompt-builder.chatmode.md",
+        "description": "Expert prompt engineering and validation system for creating high-quality prompts - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "security-plan-creator",
+        "path": "./.github/chatmodes/security-plan-creator.chatmode.md",
+        "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "task-implementor",
+        "path": "./.github/chatmodes/task-implementor.chatmode.md",
+        "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "task-planner",
+        "path": "./.github/chatmodes/task-planner.chatmode.md",
+        "description": "Task planner for creating actionable implementation plans - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "task-researcher",
+        "path": "./.github/chatmodes/task-researcher.chatmode.md",
+        "description": "Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "test-streamlit-dashboard",
+        "path": "./.github/chatmodes/test-streamlit-dashboard.chatmode.md",
+        "description": "Comprehensive testing of the Streamlit dashboard using Playwright automation and issue tracking"
+      }
+    ],
+    "chatPromptFiles": [
+      {
+        "name": "ado-create-pull-request",
+        "path": "./.github/prompts/ado-create-pull-request.prompt.md",
+        "description": "Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages."
+      },
+      {
+        "name": "ado-get-build-info",
+        "path": "./.github/prompts/ado-get-build-info.prompt.md",
+        "description": "Retrieve Azure DevOps build information for a Pull Request or specific Build Number."
+      },
+      {
+        "name": "ado-get-my-work-items",
+        "path": "./.github/prompts/ado-get-my-work-items.prompt.md",
+        "description": "Retrieve user's current Azure DevOps work items and organize them into planning file definitions"
+      },
+      {
+        "name": "ado-process-my-work-items-for-task-planning",
+        "path": "./.github/prompts/ado-process-my-work-items-for-task-planning.prompt.md",
+        "description": "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
+      },
+      {
+        "name": "git-commit-message",
+        "path": "./.github/prompts/git-commit-message.prompt.md",
+        "description": "Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch"
+      },
+      {
+        "name": "git-commit",
+        "path": "./.github/prompts/git-commit.prompt.md",
+        "description": "Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit"
+      },
+      {
+        "name": "git-merge",
+        "path": "./.github/prompts/git-merge.prompt.md",
+        "description": "Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling."
+      },
+      {
+        "name": "git-setup",
+        "path": "./.github/prompts/git-setup.prompt.md",
+        "description": "Interactive, verification-first Git configuration assistant (non-destructive)"
+      },
+      {
+        "name": "github-add-issue",
+        "path": "./.github/prompts/github-add-issue.prompt.md",
+        "description": "Add a GitHub issue to the backlog using discovered issue templates from .github/ISSUE_TEMPLATE/"
+      },
+      {
+        "name": "pull-request",
+        "path": "./.github/prompts/pull-request.prompt.md",
+        "description": "Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai"
+      }
+    ],
+    "chatInstructions": [
+      {
+        "name": "ado-create-pull-request-instructions",
+        "path": "./.github/instructions/ado-create-pull-request.instructions.md",
+        "description": "Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking."
+      },
+      {
+        "name": "ado-get-build-info-instructions",
+        "path": "./.github/instructions/ado-get-build-info.instructions.md",
+        "description": "Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name."
+      },
+      {
+        "name": "ado-update-wit-items-instructions",
+        "path": "./.github/instructions/ado-update-wit-items.instructions.md",
+        "description": "Required instructions for work item updating and creation leveraging mcp ado tool calls."
+      },
+      {
+        "name": "ado-wit-discovery-instructions",
+        "path": "./.github/instructions/ado-wit-discovery.instructions.md",
+        "description": "Required protocol for discovering, planning, and handing off Azure DevOps User Stories and Bugs."
+      },
+      {
+        "name": "ado-wit-planning-instructions",
+        "path": "./.github/instructions/ado-wit-planning.instructions.md",
+        "description": "Required instructions for work item planning and creation or updating leveraging mcp ado tool calls."
+      },
+      {
+        "name": "bash-instructions",
+        "path": "./.github/instructions/bash/bash.instructions.md",
+        "description": "Instructions for bash script implementation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "bicep-instructions",
+        "path": "./.github/instructions/bicep/bicep.instructions.md",
+        "description": "Instructions for Bicep infrastructure as code implementation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "commit-message-instructions",
+        "path": "./.github/instructions/commit-message.instructions.md",
+        "description": "Required instructions for creating all commit messages - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "csharp-tests-instructions",
+        "path": "./.github/instructions/csharp/csharp-tests.instructions.md",
+        "description": "Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating"
+      },
+      {
+        "name": "csharp-instructions",
+        "path": "./.github/instructions/csharp/csharp.instructions.md",
+        "description": "Instructions for C# (CSharp) implementation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "git-merge-instructions",
+        "path": "./.github/instructions/git-merge.instructions.md",
+        "description": "Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls."
+      },
+      {
+        "name": "markdown-instructions",
+        "path": "./.github/instructions/markdown.instructions.md",
+        "description": "Required instructions for creating or editing any Markdown (.md) files"
+      },
+      {
+        "name": "python-script-instructions",
+        "path": "./.github/instructions/python-script.instructions.md",
+        "description": "Instructions for python scripting implementation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "shell-instructions",
+        "path": "./.github/instructions/shell.instructions.md",
+        "description": "Instructions for shell script implementation using Bash conventions - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "task-implementation-instructions",
+        "path": "./.github/instructions/task-implementation.instructions.md",
+        "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "uv-projects-instructions",
+        "path": "./.github/instructions/uv-projects.instructions.md",
+        "description": "Instructions for Uv Projects"
+      }
+    ]
+  },
+  "author": "Microsoft",
+  "license": "MIT"
+}

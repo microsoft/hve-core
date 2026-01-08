@@ -1,0 +1,13 @@
+# Exclude everything by default
+**
+
+# Include only the extension essentials
+!.github/chatmodes/**
+!.github/prompts/**
+!.github/instructions/**
+!.github/agents/**
+!scripts/dev-tools/**
+!package.json
+!README.md
+!LICENSE
+!CHANGELOG.md
