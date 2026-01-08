@@ -72,6 +72,11 @@
         "description": "Expert prompt engineering and validation system for creating high-quality prompts - Brought to you by microsoft/hve-core"
       },
       {
+        "name": "rpi-agent",
+        "path": "./.github/chatmodes/rpi-agent.chatmode.md",
+        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "security-plan-creator",
         "path": "./.github/chatmodes/security-plan-creator.chatmode.md",
         "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/edge-ai"
@@ -147,6 +152,16 @@
         "name": "pull-request",
         "path": "./.github/prompts/pull-request.prompt.md",
         "description": "Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "task-plan",
+        "path": "./.github/prompts/task-plan.prompt.md",
+        "description": "Initiates planning for task implementation based on validated research documents - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "task-research",
+        "path": "./.github/prompts/task-research.prompt.md",
+        "description": "Initiates research for task implementation based on user requirements and conversation context - Brought to you by microsoft/hve-core"
       }
     ],
     "chatInstructions": [
@@ -229,6 +244,11 @@
         "name": "uv-projects-instructions",
         "path": "./.github/instructions/uv-projects.instructions.md",
         "description": "Instructions for Uv Projects"
+      },
+      {
+        "name": "writing-style-instructions",
+        "path": "./.github/instructions/writing-style.instructions.md",
+        "description": "Required writing style conventions for voice, tone, and language in all markdown content"
       }
     ]
   },

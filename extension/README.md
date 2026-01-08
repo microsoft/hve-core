@@ -1,10 +1,4 @@
----
-title: HVE Core - AI-Powered Development Assistant
-description: AI-powered chat agents, prompts, and instructions for hybrid virtual environments
-author: Microsoft
-ms.date: 2025-12-19
-ms.topic: overview
----
+# HVE Core - AI-Powered Development Assistant
 
 > AI-powered chat agents, prompts, and instructions for hybrid virtual environments
 
