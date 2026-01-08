@@ -285,6 +285,7 @@ This example illustrates the complete Prompt Builder-Prompt Tester cycle:
 **User request**: "Create instructions for writing Azure Functions in Python"
 
 **Prompt Builder response**:
+
 ```markdown
 ## **Prompt Builder**: Creating Azure Functions Python Instructions
 
@@ -301,6 +302,7 @@ Switching to Prompt Tester to validate...
 ```
 
 **Prompt Tester response**:
+
 ```markdown
 ## **Prompt Tester**: Validating azure-functions-python.instructions.md
 
