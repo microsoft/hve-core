@@ -1,6 +1,6 @@
 ---
 description: "Business Requirements Document builder with guided Q&A and reference integration"
-tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*', 'azure/azure-mcp/*', 'runSubagent']
+tools: ['search/usages', 'think', 'read/problems', 'web/fetch', 'web/githubRepo', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*', 'azure/azure-mcp/*', 'agent']
 ---
 
 # BRD Builder Instructions

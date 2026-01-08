@@ -199,7 +199,7 @@ Development containers and IDE settings.
 hve-core/
 ├── .devcontainer/                             # VS Code development container configuration
 ├── .github/                                   # GitHub configuration
-│   ├── chatmodes/                             # AI chat mode definitions
+│   ├── agents/                                # AI agent definitions
 │   ├── instructions/                          # Technology-specific coding standards
 │   ├── prompts/                               # Workflow-specific guidance
 │   ├── workflows/                             # GitHub Actions automation

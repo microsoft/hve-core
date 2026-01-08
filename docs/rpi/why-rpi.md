@@ -137,7 +137,7 @@ Use the three-phase workflow ([Task Researcher](task-researcher.md) → [Task Pl
 
 ### rpi-agent: When Simplicity Fits
 
-Use the [autonomous agent](../../.github/chatmodes/rpi-agent.chatmode.md) when:
+Use the [autonomous agent](../../.github/agents/rpi-agent.agent.md) when:
 
 * ✅ **Clear scope**: straightforward feature or bug fix
 * ✅ **Minimal research**: codebase-only investigation

@@ -166,7 +166,7 @@ After Task Implementor completes:
 
 For your next task, you can start the RPI workflow again with Task Researcher.
 
-> ⚠️ **Important**: Task Implementor requires deleting the implementation prompt file (`.copilot-tracking/prompts/implement-*.prompt.md`) after completion. This is enforced by the chatmode to prevent stale prompts from accumulating.
+> ⚠️ **Important**: Task Implementor requires deleting the implementation prompt file (`.copilot-tracking/prompts/implement-*.prompt.md`) after completion. This is enforced by the agent to prevent stale prompts from accumulating.
 
 ---
 

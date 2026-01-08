@@ -84,13 +84,13 @@ Get started with RPI:
 
 * [Why the RPI Workflow Works](docs/rpi/why-rpi.md): the psychology behind constraint-based AI workflows
 * [Your First RPI Workflow](docs/getting-started/first-workflow.md): 15-minute hands-on tutorial
-* [rpi-agent](.github/chatmodes/rpi-agent.chatmode.md): autonomous mode for simpler tasks that don't need strict phase separation
+* [rpi-agent](.github/agents/rpi-agent.agent.md): autonomous mode for simpler tasks that don't need strict phase separation
 
 ## What's Included
 
 | Component    | Description                                                          | Documentation                                  |
 |--------------|----------------------------------------------------------------------|------------------------------------------------|
-| Chat Modes   | Specialized AI assistants for research, planning, and implementation | [Chat Modes](.github/chatmodes/README.md)      |
+| Agents       | Specialized AI assistants for research, planning, and implementation | [Agents](.github/agents/README.md)             |
 | Instructions | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
 | Scripts      | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
@@ -99,7 +99,7 @@ Get started with RPI:
 
 ```text
 .github/
-├── chatmodes/       # Specialized Copilot chat assistants
+├── agents/          # Specialized Copilot agents
 ├── instructions/    # Repository-specific coding guidelines
 └── prompts/         # Reusable prompt templates
 docs/                # Learning guides and tutorials
@@ -121,7 +121,7 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 | [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial            |
 | [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement     |
 | [Contributing](docs/contributing/README.md)              | Create chat modes, instructions, and prompts |
-| [Chat Modes Reference](.github/chatmodes/README.md)      | All available chat modes                     |
+| [Agents Reference](.github/agents/README.md)             | All available agents                         |
 | [Instructions Reference](.github/instructions/README.md) | All coding instructions                      |
 
 ## Responsible AI

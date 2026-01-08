@@ -1,6 +1,6 @@
 ---
 description: 'Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies'
-tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'microsoft-docs/*', 'ado/search_workitem', 'ado/wit_get_work_item', 'ado/wit_get_work_items_for_iteration', 'ado/wit_list_backlog_work_items', 'ado/wit_list_backlogs', 'ado/wit_list_work_item_comments', 'ado/work_list_team_iterations', 'ado-wit/wit_get_work_item', 'ado-wit/wit_list_backlogs', 'ado-wit/wit_list_backlog_work_items', 'ado-wit/search_workitem']
+tools: ['search/usages', 'think', 'read/problems', 'web/fetch', 'web/githubRepo', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'microsoft-docs/*', 'ado/search_workitem', 'ado/wit_get_work_item', 'ado/wit_get_work_items_for_iteration', 'ado/wit_list_backlog_work_items', 'ado/wit_list_backlogs', 'ado/wit_list_work_item_comments', 'ado/work_list_team_iterations', 'ado-wit/wit_get_work_item', 'ado-wit/wit_list_backlogs', 'ado-wit/wit_list_backlog_work_items', 'ado-wit/search_workitem']
 ---
 
 # PRD to Work Item Planning Assistant

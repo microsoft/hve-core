@@ -1,6 +1,6 @@
 ---
 description: 'Expert prompt engineering and validation system for creating high-quality prompts - Brought to you by microsoft/hve-core'
-tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*']
+tools: ['search/usages', 'think', 'read/problems', 'web/fetch', 'web/githubRepo', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*']
 ---
 
 # Prompt Builder Instructions

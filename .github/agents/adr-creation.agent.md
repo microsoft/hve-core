@@ -1,6 +1,6 @@
 ---
 description: 'Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai'
-tools: ['usages', 'think', 'fetch', 'githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search']
+tools: ['search/usages', 'think', 'web/fetch', 'web/githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search']
 ---
 
 # ADR Creation Coach

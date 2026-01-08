@@ -25,16 +25,16 @@ the codebase.
 2. GitHub Copilot reads instructions when editing matching files
 3. Suggestions follow the documented standards automatically
 
-## Chat Mode Integration
+## Agent Integration
 
-Chat modes reference and apply instructions automatically:
+Agents reference and apply instructions automatically:
 
 - **prompt-builder** agent creates new instruction files in this directory (select from agent picker dropdown)
-- **All chat modes** respect instructions matching file patterns via `applyTo` field
+- **All agents** respect instructions matching file patterns via `applyTo` field
 - **Copilot** loads instructions when editing files matching the patterns
 - Instructions provide repository-specific guardrails and conventions
 
-See [Chat Modes README](../chatmodes/README.md) for details on using prompt-builder.
+See [Agents README](../agents/README.md) for details on using prompt-builder.
 
 ## XML-Style Blocks
 

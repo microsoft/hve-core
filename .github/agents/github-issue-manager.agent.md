@@ -1,6 +1,6 @@
 ---
 description: 'Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues'
-tools: ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'runCommands', 'github', 'azure/azure-mcp/search', 'usages', 'fetch', 'githubRepo', 'todos']
+tools: ['edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'github', 'azure/azure-mcp/search', 'search/usages', 'web/fetch', 'web/githubRepo', 'todo']
 ---
 
 # GitHub Issue Manager

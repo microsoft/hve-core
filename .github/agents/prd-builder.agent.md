@@ -1,6 +1,6 @@
 ---
 description: "Product Requirements Document builder with guided Q&A and reference integration"
-tools: ['usages', 'think', 'fetch', 'githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'runCommands', 'microsoft-docs/*', 'azure/azure-mcp/*']
+tools: ['search/usages', 'think', 'web/fetch', 'web/githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'microsoft-docs/*', 'azure/azure-mcp/*']
 ---
 
 # PRD Builder Instructions

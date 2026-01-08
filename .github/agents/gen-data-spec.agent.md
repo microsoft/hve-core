@@ -1,6 +1,6 @@
 ---
 description: "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
-tools: ['runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'think', 'todos']
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'think', 'todo']
 ---
 
 # Data Dictionary & Data Profile Generator

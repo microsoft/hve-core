@@ -31,7 +31,6 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Onboarding & Planning
 
-- **[Getting Started](./getting-started.prompt.md)** - Project onboarding and initial setup guidance
 - **[Task Research](./task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
 - **[Task Plan](./task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
 
@@ -64,11 +63,11 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **[Pull Request](./pull-request.prompt.md)** - PR description and review assistance
 
-## Prompts vs Instructions vs Chat Modes
+## Prompts vs Instructions vs Agents
 
 - **Prompts** (this directory): Coaching and educational guidance for learning
 - **[Instructions](../instructions/README.md)**: Systematic implementation and automation
-- **[Chat Modes](../chatmodes/README.md)**: Specialized AI assistance with enhanced capabilities
+- **[Agents](../agents/README.md)**: Specialized AI assistance with enhanced capabilities
 
 ## Quick Start
 
@@ -87,7 +86,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
 - **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
-- **[Chat Modes](../chatmodes/README.md)** - Specialized AI assistance with enhanced capabilities
+- **[Agents](../agents/README.md)** - Specialized AI assistance with enhanced capabilities
 
 ---
 

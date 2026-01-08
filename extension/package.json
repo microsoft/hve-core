@@ -18,82 +18,92 @@
     "chatAgents": [
       {
         "name": "ado-prd-to-wit",
-        "path": "./.github/chatmodes/ado-prd-to-wit.chatmode.md",
+        "path": "./.github/agents/ado-prd-to-wit.agent.md",
         "description": "Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies"
       },
       {
         "name": "adr-creation",
-        "path": "./.github/chatmodes/adr-creation.chatmode.md",
+        "path": "./.github/agents/adr-creation.agent.md",
         "description": "Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai"
       },
       {
         "name": "arch-diagram-builder",
-        "path": "./.github/chatmodes/arch-diagram-builder.chatmode.md",
+        "path": "./.github/agents/arch-diagram-builder.agent.md",
         "description": "Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core"
       },
       {
         "name": "brd-builder",
-        "path": "./.github/chatmodes/brd-builder.chatmode.md",
+        "path": "./.github/agents/brd-builder.agent.md",
         "description": "Business Requirements Document builder with guided Q&A and reference integration"
       },
       {
         "name": "gen-data-spec",
-        "path": "./.github/chatmodes/gen-data-spec.chatmode.md",
+        "path": "./.github/agents/gen-data-spec.agent.md",
         "description": "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
       },
       {
         "name": "gen-jupyter-notebook",
-        "path": "./.github/chatmodes/gen-jupyter-notebook.chatmode.md",
+        "path": "./.github/agents/gen-jupyter-notebook.agent.md",
         "description": "Create a structured exploratory data analysis Jupyter notebook leveraging available data sources & generated data dictionaries WITHOUT directly embedding raw data dumps."
       },
       {
         "name": "gen-streamlit-dashboard",
-        "path": "./.github/chatmodes/gen-streamlit-dashboard.chatmode.md",
+        "path": "./.github/agents/gen-streamlit-dashboard.agent.md",
         "description": "Develop a multi-page streamlit dashboard"
       },
       {
         "name": "github-issue-manager",
-        "path": "./.github/chatmodes/github-issue-manager.chatmode.md",
+        "path": "./.github/agents/github-issue-manager.agent.md",
         "description": "Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues"
       },
       {
+        "name": "hve-core-installer",
+        "path": "./.github/agents/hve-core-installer.agent.md",
+        "description": "Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "pr-review",
-        "path": "./.github/chatmodes/pr-review.chatmode.md",
+        "path": "./.github/agents/pr-review.agent.md",
         "description": "Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core"
       },
       {
         "name": "prd-builder",
-        "path": "./.github/chatmodes/prd-builder.chatmode.md",
+        "path": "./.github/agents/prd-builder.agent.md",
         "description": "Product Requirements Document builder with guided Q&A and reference integration"
       },
       {
         "name": "prompt-builder",
-        "path": "./.github/chatmodes/prompt-builder.chatmode.md",
+        "path": "./.github/agents/prompt-builder.agent.md",
         "description": "Expert prompt engineering and validation system for creating high-quality prompts - Brought to you by microsoft/hve-core"
       },
       {
+        "name": "rpi-agent",
+        "path": "./.github/agents/rpi-agent.agent.md",
+        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "security-plan-creator",
-        "path": "./.github/chatmodes/security-plan-creator.chatmode.md",
+        "path": "./.github/agents/security-plan-creator.agent.md",
         "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/edge-ai"
       },
       {
         "name": "task-implementor",
-        "path": "./.github/chatmodes/task-implementor.chatmode.md",
+        "path": "./.github/agents/task-implementor.agent.md",
         "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
       },
       {
         "name": "task-planner",
-        "path": "./.github/chatmodes/task-planner.chatmode.md",
+        "path": "./.github/agents/task-planner.agent.md",
         "description": "Task planner for creating actionable implementation plans - Brought to you by microsoft/hve-core"
       },
       {
         "name": "task-researcher",
-        "path": "./.github/chatmodes/task-researcher.chatmode.md",
+        "path": "./.github/agents/task-researcher.agent.md",
         "description": "Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core"
       },
       {
         "name": "test-streamlit-dashboard",
-        "path": "./.github/chatmodes/test-streamlit-dashboard.chatmode.md",
+        "path": "./.github/agents/test-streamlit-dashboard.agent.md",
         "description": "Comprehensive testing of the Streamlit dashboard using Playwright automation and issue tracking"
       }
     ],
@@ -147,6 +157,16 @@
         "name": "pull-request",
         "path": "./.github/prompts/pull-request.prompt.md",
         "description": "Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "task-plan",
+        "path": "./.github/prompts/task-plan.prompt.md",
+        "description": "Initiates planning for task implementation based on validated research documents - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "task-research",
+        "path": "./.github/prompts/task-research.prompt.md",
+        "description": "Initiates research for task implementation based on user requirements and conversation context - Brought to you by microsoft/hve-core"
       }
     ],
     "chatInstructions": [
@@ -229,6 +249,11 @@
         "name": "uv-projects-instructions",
         "path": "./.github/instructions/uv-projects.instructions.md",
         "description": "Instructions for Uv Projects"
+      },
+      {
+        "name": "writing-style-instructions",
+        "path": "./.github/instructions/writing-style.instructions.md",
+        "description": "Required writing style conventions for voice, tone, and language in all markdown content"
       }
     ]
   },

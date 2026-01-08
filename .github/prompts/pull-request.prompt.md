@@ -155,12 +155,12 @@ Extract file paths from diff headers: `diff --git a/path/to/file b/path/to/file`
 | Dependency update          | `package.*\.json`        | `^deps/`                  | `^deps(\(.+\))?:`         |
 | Copilot instructions       | `.*\.instructions\.md$`  | —                         | —                         |
 | Copilot prompt             | `.*\.prompt\.md$`        | —                         | —                         |
-| Copilot chatmode           | `.*\.chatmode\.md$`      | —                         | —                         |
+| Copilot agent           | `.*\.chatmode\.md$`      | —                         | —                         |
 | Script/automation          | `.*\.(ps1\|sh\|py)$`     | —                         | —                         |
 
 **Priority Rules:**
 
-* AI artifact patterns (.instructions.md, .prompt.md, .chatmode.md) take precedence over Documentation update
+* AI artifact patterns (.instructions.md, .prompt.md, .agent.md) take precedence over Documentation update
 * Breaking change in ANY commit marks the PR as breaking
 * Multiple types can be selected (not mutually exclusive)
 
