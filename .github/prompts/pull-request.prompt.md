@@ -1,6 +1,6 @@
 ---
-agent: 'agent'
 description: 'Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai'
+agent: rpi-agent
 ---
 
 # Pull Request (PR) Generation Instructions
@@ -63,7 +63,7 @@ You WILL ALWAYS preserve template structure and formatting.
 * **Search for PR template files:**
   * Use file_search with pattern: `**/PULL_REQUEST_TEMPLATE.md`
   * Check for template directory: `.github/PULL_REQUEST_TEMPLATE/`
-  
+
 * **Template Location Priority:**
   1. `.github/pull_request_template.md` (hidden directory - most common)
   2. `docs/pull_request_template.md` (docs directory)
