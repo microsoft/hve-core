@@ -74,7 +74,7 @@
       {
         "name": "rpi-agent",
         "path": "./.github/chatmodes/rpi-agent.chatmode.md",
-        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core"
+        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks - Brought to you by microsoft/hve-core"
       },
       {
         "name": "security-plan-creator",
