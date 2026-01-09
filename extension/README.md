@@ -12,6 +12,7 @@ Specialized AI assistants for specific development tasks:
 
 #### Development Workflow
 
+- **rpi-agent** - Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks
 - **task-researcher** - Research technical solutions and approaches
 - **task-planner** - Plan and break down complex tasks
 - **task-implementor** - Implement tasks from detailed plans
