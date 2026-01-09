@@ -61,7 +61,7 @@ Best practice guidelines for:
 
 After installing this extension, the chat agents will be available in GitHub Copilot Chat. You can:
 
-1. **Use chat agents** by typing `@agent-name` in Copilot Chat
+1. **Use custom agents** by selecting custom agent from the drop-down list in Copilot Chat
 2. **Apply prompts** through the Copilot Chat interface
 3. **Reference instructions** - They're automatically applied based on file patterns
 
@@ -70,9 +70,9 @@ After installing this extension, the chat agents will be available in GitHub Cop
 ### Using Chat Agents
 
 ```plaintext
-@task-planner help me break down this feature into implementable tasks
-@pr-review review this pull request for security issues
-@adr-creation create an ADR for our new microservice architecture
+task-planner help me break down this feature into implementable tasks
+pr-review review this pull request for security issues
+adr-creation create an ADR for our new microservice architecture
 ```
 
 ### Applying Prompts
