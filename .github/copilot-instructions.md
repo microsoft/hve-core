@@ -65,6 +65,7 @@ When working with specific types of files or contexts, you must:
 | Any pull request creation context | `./.github/prompts/pull-request.prompt.md`             |
 | Any ADO context                   | `./.github/prompts/ado-*.prompt.md`                    |
 | Any git context                   | `./.github/prompts/git-*.prompt.md`                    |
+| Any risk management context       | `./.github/prompts/risk-register.prompt.md`            |
 | Any shell or bash context         | `./.github/instructions/shell.instructions.md`         |
 | Any bash in scripts context       | `./.github/instructions/bash/bash.instructions.md`     |
 | Any python context                | `./.github/instructions/python-script.instructions.md` |
