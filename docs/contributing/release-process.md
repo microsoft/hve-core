@@ -43,12 +43,12 @@ Your actual code changes are already on `main` from your feature PRs. The Releas
 
 Release-please determines the version bump from commit prefixes:
 
-| Commit Prefix | Version Bump | Example |
-|---------------|--------------|---------|
-| `feat:` | Minor | 1.0.0 → 1.1.0 |
-| `fix:` | Patch | 1.0.0 → 1.0.1 |
-| `feat!:` or `BREAKING CHANGE:` | Major | 1.0.0 → 2.0.0 |
-| `docs:`, `chore:`, `refactor:` | No bump | Grouped in changelog |
+| Commit Prefix                  | Version Bump | Example              |
+|--------------------------------|--------------|----------------------|
+| `feat:`                        | Minor        | 1.0.0 → 1.1.0        |
+| `fix:`                         | Patch        | 1.0.0 → 1.0.1        |
+| `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0        |
+| `docs:`, `chore:`, `refactor:` | No bump      | Grouped in changelog |
 
 ## For Contributors
 
@@ -118,9 +118,9 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action | Result |
-|--------|--------|
+| Action                   | Result                                      |
+|--------------------------|---------------------------------------------|
 | Merge feature PR to main | Release PR updates with new changelog entry |
-| Merge Release PR | GitHub Release created, tag applied |
-| Run publish workflow | Extension published to marketplace |
-| Merge docs-only PR | Changelog updated, no version bump |
+| Merge Release PR         | GitHub Release created, tag applied         |
+| Run publish workflow     | Extension published to marketplace          |
+| Merge docs-only PR       | Changelog updated, no version bump          |
