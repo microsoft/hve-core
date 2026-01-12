@@ -93,7 +93,9 @@ Build configurations: `Release` and `Debug`.
 ### Naming
 
 * Class names and filenames: `PascalCase` (e.g., `ClassName.cs`)
-* Interfaces: `IPascalCase`, defined above their class or in `IPascalCase.cs`
+* Interfaces: `IPascalCase`
+  * Standalone interfaces: separate `IPascalCase.cs` file
+  * Implementation-coupled interfaces: above the class in the same file when a single class implements the interface
 * Methods and properties: `PascalCase`
 * Fields: `camelCase`
 * Class names: noun-like (e.g., `Widget`)
@@ -109,13 +111,13 @@ Member ordering within a class:
 
 1. `const` fields
 2. `static readonly` fields
-3. `readonly` fields
+3. `readonly` fields (including `protected readonly` and `private readonly`)
 4. Instance fields
 5. Constructors
 6. Properties
 7. Methods
 
-Within each category, order by access modifier: `public`, `protected`, `private`, `internal`.
+Within each category, order by access modifier: `public`, `protected`, `private`, `internal`. For example, `protected readonly` fields appear before `private readonly` fields within the readonly fields category.
 
 ### Modern C# Patterns
 
@@ -127,6 +129,8 @@ public class Foo(ILogger<Foo> logger, Bar bar)
     // Implementation
 }
 ```
+
+Use traditional constructors when base class initialization requires multiple statements or complex logic that cannot be expressed in a single base call expression.
 
 Variable declarations:
 
@@ -185,6 +189,30 @@ public class Widget<TData>(IFoo foo) : IWidget
 
 * Use `<see cref="..."/>` for inline references
 * Use `<seealso cref="..."/>` for contextual cross-references
+* Use `<inheritdoc/>` on interface implementations and overrides to inherit documentation from the base definition
+* Use `<inheritdoc cref="..."/>` to inherit from a specific member when the default resolution is insufficient
+
+## Namespaces
+
+File-scoped namespaces are the preferred style:
+
+```csharp
+namespace Company.Project.Feature;
+
+public class Example
+{
+}
+```
+
+Namespaces align with folder structure. A class at `src/Project/Services/UserService.cs` uses namespace `Project.Services`.
+
+## Nullable Reference Types
+
+Enable nullable context in project files or globally. Annotate public APIs with nullable reference types:
+
+* Use `?` for nullable parameters and return types: `string? GetName()`
+* Avoid the null-forgiving operator (`!`) except when nullability is guaranteed by context
+* Initialize non-nullable reference fields in constructors or with default values
 
 ## Complete Example
 

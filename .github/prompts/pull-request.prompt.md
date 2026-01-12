@@ -6,168 +6,146 @@ maturity: stable
 
 # Pull Request (PR) Generation Instructions
 
-## Core Directives
+## Inputs
 
-You are an expert in `git`, with deep knowledge in Bicep and Terraform for Azure.
-You WILL ALWAYS follow ALL instructions in this document to create an accurate Pull Request (PR) title and description.
-You WILL ALWAYS analyze thoroughly to help the user create a high-quality PR.
-You WILL NEVER invent or assume changes not present in the `pr-reference.xml` file.
-You WILL NEVER claim a change "improves security" or other benefits unless explicitly stated in commit messages or code comments.
-You WILL NEVER start PR content generation before completing the analysis of `pr-reference.xml`.
-You WILL NEVER include changes related to linting errors or auto-generated Bicep/Terraform documentation.
-You WILL NEVER create follow-up tasks for documentation or tests.
-You WILL ALWAYS search for PR templates before generating content.
-You WILL ALWAYS use the repository PR template when available.
-You WILL ALWAYS auto-detect change types from file patterns.
-You WILL ALWAYS extract issue references from commits and branch names.
-You WILL NEVER check checkboxes that require manual verification (testing, security review).
-You WILL NEVER remove template sections, only populate them.
-You WILL ALWAYS preserve template structure and formatting.
+* ${input:branch:origin/main}: (Optional, defaults to origin/main) Base branch reference for diff generation
+* ${input:excludeMarkdown}: (Optional) When true, exclude markdown diffs from pr-reference generation
 
-## Process Overview
+## Core Guidance
 
-### Step 1: `pr-reference.xml` Handling (located at `.copilot-tracking/pr/pr-reference.xml`)
+* Aim to apply `git` expertise and Azure Bicep or Terraform knowledge when interpreting diffs.
+* Rely on the instructions in this prompt to shape an accurate PR title and description.
+* Keep PR content grounded in `pr-reference.xml` only.
+* Keep the writing style human-readable and high quality while maintaining technical detail.
+* Avoid claiming benefits like security improvements unless commit messages or code comments state them explicitly.
+* Avoid mentioning linting errors or auto-generated Bicep or Terraform documentation.
+* Avoid creating follow-up tasks for documentation or tests.
+* Check for PR templates before generating content and use the repository template when available.
+* Auto-detect change types from file patterns and extract issue references from commits and branch names.
+* Leave checkboxes requiring manual verification unchecked.
+* Preserve template structure and formatting without removing sections.
+* Ask the user for direction when progression is unclear.
 
-* **If `pr-reference.xml` is provided**:
-  * Verify with the user if they want to use the existing `pr-reference.xml` file that you found before proceeding. If the user does not want to use the existing `pr-reference.xml` file, use `rm` to delete the `pr-reference.xml` before proceeding to the "If `pr-reference.xml` is NOT provided" instructions.
-  * You WILL write its total line count to the chat (e.g., "Lines: 7641").
-  * You WILL proceed to Step 2 of this Process.
-* **If `pr-reference.xml` is NOT provided**:
-  * Use `git fetch {{remote}} {{branch}}` determined from `${input:branch:origin/main}`, to update the remote branch to build a correct pull request.
-  * **MANDATORY**: You MUST create `pr-reference.xml` using the repository scripts—select the command that matches your host environment. Do not use any other commands to gather git status or diffs.
-  * **Script Location**: Scripts may be available locally at `./scripts/dev-tools/` OR bundled in a VS Code extension. Check local path first, then fall back to extension:
-    * **Local path**: `./scripts/dev-tools/pr-ref-gen.sh` or `./scripts/dev-tools/Generate-PrReference.ps1`
-    * **Extension path** (if local not found): `~/.vscode/extensions/ise-hve-essentials.hve-core-*/scripts/dev-tools/`
-    * **Locate from extension** (cross-platform):
+## Required Steps
 
-      ```bash
-      # Find PowerShell script
-      pwsh -c '$SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Generate-PrReference.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found: $SCRIPT"'
+This protocol guides the PR generation flow from discovery to cleanup.
 
-      # Find shell script
-      find ~/.vscode/extensions -name "pr-ref-gen.sh" 2>/dev/null | head -1
-      ```
+### Step 1: Handle pr-reference.xml inputs
 
-    * **Unix-like shells**: Use `./scripts/dev-tools/pr-ref-gen.sh` (or extension path if local not available).
-      * Default: `./scripts/dev-tools/pr-ref-gen.sh`.
-      * If `${input:excludeMarkdown}` is true: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff` (excludes markdown).
-      * If a different base branch is specified via `${input:branch}`: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}` (adjust markdown inclusion as needed).
-    * **Windows PowerShell hosts**: Use `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1` (or extension path if local not available).
-      * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`.
-      * If `${input:excludeMarkdown}` is true: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff` (excludes markdown).
-      * If a different base branch is specified via `${input:branch}`: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff -BaseBranch ${input:branch}` (adjust markdown inclusion as needed).
-  * You WILL note the total line count from the script's output.
-  * You WILL write this line count to the chat.
+Treat `.copilot-tracking/pr/pr-reference.xml` as the canonical diff source.
 
-### Step 1.5: PR Template Discovery
+* If `pr-reference.xml` is provided, confirm with the user whether to use it before proceeding.
+* If the user declines, delete `pr-reference.xml` before continuing.
+* Plan to record the total line count and note it in the chat.
+* If `pr-reference.xml` is not provided, run `git fetch {{remote}} {{branch}}` using `${input:branch:origin/main}`.
+* Plan to create `pr-reference.xml` using the repository scripts that match the host environment. Avoid other commands for git status or diffs.
+* Check local scripts in `./scripts/dev-tools/` first, then fall back to the VS Code extension path `~/.vscode/extensions/ise-hve-essentials.hve-core-*/scripts/dev-tools/`.
+* Locate extension scripts when needed using the following commands:
 
-* **Search for PR template files:**
-  * Use file_search with pattern: `**/PULL_REQUEST_TEMPLATE.md`
-  * Check for template directory: `.github/PULL_REQUEST_TEMPLATE/`
+  ```bash
+  # Find PowerShell script
+  pwsh -c '$SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Generate-PrReference.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found: $SCRIPT"'
 
-* **Template Location Priority:**
-  1. `.github/pull_request_template.md` (hidden directory - most common)
-  2. `docs/pull_request_template.md` (docs directory)
-  3. `pull_request_template.md` (repository root)
+  # Find shell script
+  find ~/.vscode/extensions -name "pr-ref-gen.sh" 2>/dev/null | head -1
+  ```
 
-* **If template found:**
-  * Read entire template content using read_file
-  * Parse template sections by H2 headers (## Section Name)
-  * Store parsed structure for Step 3.5
-  * Report: "Found PR template at [path]. Will merge generated content."
+* For Unix-like shells, prefer `./scripts/dev-tools/pr-ref-gen.sh` when available or the extension path.
+* For Windows PowerShell hosts, prefer `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1` when available or the extension path.
+* Use the following command variants when needed:
 
-* **If multiple templates found (directory):**
-  * List available templates with first-line descriptions
-  * Ask user to select: "Multiple PR templates found. Select one:"
-  * Read selected template and continue
+  * Default: `./scripts/dev-tools/pr-ref-gen.sh`
+  * Exclude markdown: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff`
+  * Custom base branch: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}`
+  * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`
+  * Exclude markdown: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff`
+  * Custom base branch: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff -BaseBranch ${input:branch}`
 
-* **If no template found:**
-  * Report: "No PR template found. Using standard pr.md format."
-  * Skip Step 3.5
-  * Continue with existing workflow
+* Capture the total line count from the script output and note it in the chat.
 
-### Step 2: `pr-reference.xml` Analysis
+### Step 2: Discover PR templates
 
-* **CRITICAL**: You MUST read and analyze the ENTIRE `pr-reference.xml` file which contains the current branch name, commit history (compared to `origin/main` or the specified `${input:branch}`), and the full detailed diff.
-* `pr-reference.xml` WILL ONLY be used to generate `pr.md`.
-* You MUST verify you have read the exact number of lines reported AND reached the closing tags `</full_diff>` and `</commit_history>` before proceeding.
-* You MUST gain a comprehensive understanding of ALL changes before writing any PR content. ALL statements in the PR description MUST be based on this complete analysis.
+Search for PR templates and decide whether to use the repository template or fallback format.
 
-### Step 3: PR Description Generation
+* Search for template files using the `**/PULL_REQUEST_TEMPLATE.md` pattern and the `.github/PULL_REQUEST_TEMPLATE/` directory.
+* Follow this location priority when choosing a single template:
 
-* Only AFTER the complete analysis of `pr-reference.xml`, You WILL generate a Markdown PR description in a file named `pr.md`.
-* If `pr.md` already exists then use `rm` to delete the `pr.md` first WITHOUT reading it.
+  1. `.github/pull_request_template.md`
+  2. `docs/pull_request_template.md`
+  3. `pull_request_template.md`
 
-### Step 3.5: Template Integration (if template found in Step 1.5)
+* If a template is found, read the entire file, parse H2 sections, and store the structure for Step 4.
+* If multiple templates exist, list them with first-line descriptions and ask the user to choose one.
+* If none are found, report that the standard `pr.md` format is used.
 
-* **Only execute if template was discovered in Step 1.5**
+### Step 3: Analyze pr-reference.xml
 
-* **Section Mapping** - Map pr.md content to template sections:
+Read and analyze the entire `pr-reference.xml` file, which includes the branch name, commit history compared to `${input:branch:origin/main}`, and the detailed diff.
 
-  | pr.md Component       | Template Section           | Action                                        |
-  |-----------------------|----------------------------|-----------------------------------------------|
-  | H1 Title              | Document title             | Replace `# Pull Request` with generated title |
-  | Summary paragraph     | ## Description             | Insert after placeholder comment              |
-  | Change bullets        | ## Description             | Append after summary                          |
-  | Detected issue refs   | ## Related Issue(s)        | Replace placeholder comment                   |
-  | Detected change types | ## Type of Change          | Check matching `- [ ]` boxes                  |
-  | Security analysis     | ## Security Considerations | Check boxes, add notes if issues              |
-  | Notes/Important       | ## Additional Notes        | Insert content                                |
+* Confirm the read reached the reported line count and includes `</full_diff>` and `</commit_history>` before moving on.
+* Build a complete understanding of the changes before drafting any PR content.
+* Use `pr-reference.xml` only for generating `pr.md`.
 
-* **Checkbox Auto-Selection** - For each detected change type:
-  * Replace `- [ ] Bug fix` with `- [x] Bug fix` if fix detected
-  * Replace `- [ ] New feature` with `- [x] New feature` if feature detected
-  * Replace `- [ ] Documentation update` with `- [x] Documentation update` if docs changed
-  * Continue for all applicable checkbox types
+### Step 4: Generate the PR description
 
-* **Related Issues Population**:
-  * Extract issue references from commits: `Fixes #\d+`, `Closes #\d+`, `#\d+`
-  * Extract from branch name: issue numbers (e.g., `feature/123-description`)
-  * Extract ADO references: `AB#\d+`
-  * Insert formatted references replacing placeholder comment
+After completing the analysis, generate a Markdown PR description in `pr.md`.
 
-* **Security Section Population**:
-  * Check `- [ ] This PR does not contain...` if no secrets/sensitive data found
-  * Keep `- [ ] Any new dependencies...` unchecked (requires manual review)
-  * Add note if dependency changes detected
+* Delete `pr.md` before writing a new version if it already exists, and do not read the old file.
 
-* **Output Generation**:
-  * Generate final pr.md using populated template structure
-  * Preserve all template formatting (headers, checkboxes, comments)
-  * Remove placeholder comments that were filled
-  * Keep unfilled placeholders for manual completion
-  * Report: "Generated PR description using repository template"
+#### Template integration
 
-#### Change Type Detection Patterns
+Use this section only when a template was found in Step 2.
 
-Analyze changed files from pr-reference.xml `<full_diff>` section.
-Extract file paths from diff headers: `diff --git a/path/to/file b/path/to/file`
+* Map `pr.md` content to the template in a flexible way that keeps the template structure intact.
+* Use the table below as guidance for where content typically fits.
 
-| Change Type                | File Pattern             | Branch Pattern            | Commit Pattern            |
-|----------------------------|--------------------------|---------------------------|---------------------------|
-| Bug fix                    | —                        | `^(fix\|bugfix\|hotfix)/` | `^fix(\(.+\))?:`          |
-| New feature                | —                        | `^(feat\|feature)/`       | `^feat(\(.+\))?:`         |
-| Breaking change            | —                        | —                         | `BREAKING CHANGE:\|^.+!:` |
-| Documentation update       | `^docs/.*\.md$`          | `^docs/`                  | `^docs(\(.+\))?:`         |
-| GitHub Actions workflow    | `^\.github/workflows/.*` | —                         | `^ci(\(.+\))?:`           |
-| Linting configuration      | `\.markdownlint.*`       | —                         | `^lint(\(.+\))?:`         |
-| Security configuration     | `^scripts/security/.*`   | —                         | —                         |
-| DevContainer configuration | `^\.devcontainer/.*`     | —                         | —                         |
-| Dependency update          | `package.*\.json`        | `^deps/`                  | `^deps(\(.+\))?:`         |
-| Copilot instructions       | `.*\.instructions\.md$`  | —                         | —                         |
-| Copilot prompt             | `.*\.prompt\.md$`        | —                         | —                         |
-| Copilot chatmode           | `.*\.chatmode\.md$`      | —                         | —                         |
-| Script/automation          | `.*\.(ps1\|sh\|py)$`     | —                         | —                         |
+| pr.md Component       | Template Section           | Guidance                                          |
+| --------------------- | -------------------------- | ------------------------------------------------- |
+| H1 Title              | Document title             | Replace the existing title with the generated one |
+| Summary paragraph     | ## Description             | Add after the placeholder comment if present      |
+| Change bullets        | ## Description             | Append after the summary                          |
+| Detected issue refs   | ## Related Issue(s)        | Replace placeholder comment if present            |
+| Detected change types | ## Type of Change          | Check matching `- [ ]` boxes                      |
+| Security analysis     | ## Security Considerations | Check boxes and add notes when issues exist       |
+| Notes or Important    | ## Additional Notes        | Insert content                                    |
 
-**Priority Rules:**
+* For each detected change type, replace the matching `- [ ]` checkbox with `- [x]`.
+* Extract related issues from commits and branch names using the patterns below, then replace the placeholder comment when available.
+* Check the security section checkbox that confirms no secrets or sensitive data when applicable.
+* Leave dependency review checkboxes unchecked.
+* Preserve template formatting and remove only placeholder comments that were filled.
+* Keep unfilled placeholders for manual completion.
+* Report that the repository template was used once generation completes.
 
-* AI artifact patterns (.instructions.md, .prompt.md, .chatmode.md) take precedence over Documentation update
-* Breaking change in ANY commit marks the PR as breaking
-* Multiple types can be selected (not mutually exclusive)
+#### Change type detection patterns
 
-#### Issue Reference Extraction
+Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and extract file paths from diff headers like `diff --git a/path/to/file b/path/to/file`.
 
-Extract from commit messages and branch names:
+| Change Type                | File Pattern             | Branch Pattern              | Commit Pattern              |
+|----------------------------|--------------------------|-----------------------------|-----------------------------|
+| Bug fix                    | N/A                      | `^(fix\|bugfix\|hotfix)/` | `^fix(\(.+\))?:`          |
+| New feature                | N/A                      | `^(feat\|feature)/`        | `^feat(\(.+\))?:`         |
+| Breaking change            | N/A                      | N/A                         | `BREAKING CHANGE:\|^.+!:`  |
+| Documentation update       | `^docs/.*\.md$`          | `^docs/`                    | `^docs(\(.+\))?:`         |
+| GitHub Actions workflow    | `^\.github/workflows/.*` | N/A                         | `^ci(\(.+\))?:`           |
+| Linting configuration      | `\.markdownlint.*`       | N/A                         | `^lint(\(.+\))?:`         |
+| Security configuration     | `^scripts/security/.*`   | N/A                         | N/A                         |
+| DevContainer configuration | `^\.devcontainer/.*`     | N/A                         | N/A                         |
+| Dependency update          | `package.*\.json`        | `^deps/`                    | `^deps(\(.+\))?:`         |
+| Copilot instructions       | `.*\.instructions\.md$` | N/A                         | N/A                         |
+| Copilot prompt             | `.*\.prompt\.md$`       | N/A                         | N/A                         |
+| Copilot chatmode           | `.*\.chatmode\.md$`     | N/A                         | N/A                         |
+| Script or automation       | `.*\.(ps1\|sh\|py)$`    | N/A                         | N/A                         |
+
+Priority rules:
+
+* AI artifact patterns (`.instructions.md`, `.prompt.md`, `.chatmode.md`) take precedence over documentation updates.
+* Any breaking change in commits marks the PR as breaking.
+* Multiple change types can be selected.
+
+#### Issue reference extraction
+
+Extract issue references from commit messages and branch names using the following patterns.
 
 | Pattern               | Source         | Output Format     |
 |-----------------------|----------------|-------------------|
@@ -176,9 +154,9 @@ Extract from commit messages and branch names:
 | `Resolves #(\d+)`     | Commit message | `Resolves #123`   |
 | `#(\d+)` (standalone) | Commit message | `Related to #123` |
 | `/(\d+)-`             | Branch name    | `Related to #123` |
-| `AB#(\d+)`            | Commit/branch  | `AB#12345` (ADO)  |
+| `AB#(\d+)`            | Commit or branch | `AB#12345` (ADO) |
 
-**Deduplication**: Remove duplicate issue numbers, preserve action prefix from first occurrence.
+Deduplicate issue numbers and preserve the action prefix from the first occurrence.
 
 #### GHCP Maturity Detection
 
@@ -246,69 +224,68 @@ If any non-stable files detected, add:
 - [ ] Non-stable artifacts are intentional for this change
 ```
 
-### Step 4: Security and Compliance Analysis
+### Step 5: Run security and compliance analysis
 
-* After PR generation, You WILL analyze `pr-reference.xml` for security/compliance issues (see "Security Analysis Output" section).
-* You WILL output this analysis to the chat.
+After PR generation, analyze `pr-reference.xml` for security and compliance issues and report the results in the chat.
 
-### Step 5: Cleanup
+### Step 6: Clean up
 
-* You WILL delete the `pr-reference.xml` file.
+Delete `pr-reference.xml` after the analysis is complete.
 
 ## PR Content Generation Principles
 
-### Title Construction
+### Title construction
 
-* You WILL use the branch name as the primary source (e.g., `feat/add-authentication`).
-* You WILL follow the format: `{type}({scope}): {concise description}`.
-* If the branch name is not descriptive, You WILL rely on commit messages.
+* Use the branch name as the primary source for the title, for example `feat/add-authentication`.
+* Follow the format `{type}({scope}): {concise description}`.
+* Use commit messages when the branch name lacks detail.
 
-### Accuracy and Detail
+### Accuracy and detail
 
-* You WILL ONLY include changes visible in `pr-reference.xml`.
-* You WILL focus on describing WHAT changed, not speculating WHY.
-* You WILL use past tense for all descriptions.
-* You WILL ensure conclusions are based on the entire `pr-reference.xml`.
-* You WILL describe technical changes neutrally and in human-friendly language.
+* Include only changes visible in `pr-reference.xml`.
+* Describe what changed without speculating on why.
+* Use past tense in descriptions.
+* Base conclusions on the complete `pr-reference.xml` analysis.
+* Keep technical descriptions neutral and human-friendly.
 
-### Condensation and Focus
+### Condensation and focus
 
-* You WILL describe the final state of the code, not intermediate changes.
-* You WILL combine related changes into single descriptive points.
-* You WILL use the diff in `pr-reference.xml` as the source of truth.
-* You WILL avoid excessive sub-bullets unless they add genuine clarification value.
-* You WILL consolidate information into the main bullet point when possible.
+* Describe the final state of the code rather than intermediate steps.
+* Combine related changes into single descriptive points.
+* Use `pr-reference.xml` as the source of truth.
+* Avoid excessive sub-bullets unless they add genuine clarification value.
+* Consolidate information into the main bullet where possible.
 
-### Style and Structure
+### Style and structure
 
-* You WILL ALWAYS match the tone and terminology from the commit messages.
-* You WILL use natural, conversational language that reads like human communication.
-* You WILL include essential context directly in the main bullet point description.
-* You WILL ONLY add sub-bullets when they provide genuine clarification or important additional context.
-* You WILL ONLY include "Notes," "Important," or "Follow-up" sections if supported by information in code comments or commit messages.
-* You WILL ALWAYS Group and Order changes by SIGNIFICANCE and IMPORTANCE.
-  * Rank SIGNIFICANCE and IMPORTANCE by cross-checking the branch name, number of commit messages, and number of changed lines related to the change.
-  * The most significant and important changes MUST ALWAYS come first.
+* Match tone and terminology from commit messages.
+* Use natural, conversational language.
+* Include essential context directly in the main bullet point.
+* Add sub-bullets only when they add clarifying or critical context.
+* Include Notes, Important, or Follow-up sections only when supported by commit messages or code comments.
+* Group and order changes by significance and importance.
+  * Rank significance and importance by cross-checking the branch name, commit count, and changed line volume.
+  * Place the most significant changes first.
 
-### Follow-up Task Guidance
+### Follow-up task guidance
 
-* You WILL identify any necessary follow-up tasks from `pr-reference.xml`.
-* Follow-up tasks MUST be specific, actionable, and reference code, files, folders, components, or blueprints.
+* Identify follow-up tasks only when they are evidenced in `pr-reference.xml`.
+* Keep follow-up tasks specific, actionable, and tied to code, files, folders, components, or blueprints.
 
 ## PR File Format (`pr.md`)
 
-### If Template Found (Preferred)
+### If a template is found
 
-Use repository template structure with populated sections:
+Use the repository template structure with populated sections when a template is available.
 
-* Preserve all H2 headers from template
-* Fill sections with generated content
-* Check applicable checkboxes
-* Keep unfilled sections with placeholder comments
+* Preserve all H2 headers from the template.
+* Fill sections with generated content.
+* Check applicable checkboxes.
+* Keep unfilled sections with placeholder comments.
 
-### If No Template Found (Fallback)
+### If no template is found
 
-Use standalone format:
+Prefer this standalone format when no repository template is available.
 
 <!-- <example> -->
 ```markdown
@@ -316,12 +293,12 @@ Use standalone format:
 
 {{Summary paragraph of overall changes in natural, human-friendly language}}
 
-- **{{type}}**(_{{scope}}_): {{description of change with key context included}}
+- {{type}}({{scope}}): {{description of change with key context included}}
 
-- **{{type}}**(_{{scope}}_): {{description of change}}
+- {{type}}({{scope}}): {{description of change}}
   - {{sub-bullet only if it adds genuine clarification value}}
 
-- **{{type}}**: {{description of change without scope, including essential details}}
+- {{type}}: {{description of change without scope, including essential details}}
 
 ## Notes (optional)
 
@@ -342,44 +319,44 @@ Use standalone format:
 ```
 <!-- </example> -->
 
-### Type and Scope Reference
+### Type and scope reference
 
-Determine from commits provided in `pr-reference.xml`
+Determine type and scope from commits in `pr-reference.xml`.
 
-## Pre-Generation Checklist
+## Pre-generation checklist
 
-MANDATORY: Immediately before generating the PR, You WILL verify:
+Immediately before generating the PR, confirm the following:
 
-* [ ] Will I follow ALL Core Directives?
-* [ ] Will I follow ALL Process Overview steps?
-* [ ] Will I adhere to ALL PR Content Generation Principles?
-* [ ] Will the PR content match the PR File Format?
-* [ ] Will I follow ALL Markdown editing conventions (as per project linters, if applicable)?
+* [ ] The core guidance in this prompt will be followed.
+* [ ] The required steps in this prompt will be followed.
+* [ ] The PR content generation principles will be followed.
+* [ ] The PR content matches the PR file format.
+* [ ] Markdown editing conventions in this repository are applied.
 
-## Post-Generation Checklist
+## Post-generation checklist
 
-MANDATORY: After generating the PR, You WILL read your `pr.md` content and verify:
+After generating the PR, review `pr.md` and confirm the following:
 
-* [ ] Were ALL Core Directives followed?
-* [ ] Were ALL Process Overview steps followed?
-* [ ] Were ALL PR Content Generation Principles adhered to?
-* [ ] Does the PR description include ALL significant changes and omit trivial/auto-generated ones?
-* [ ] Are ALL referenced files/paths accurate?
-* [ ] Are ALL follow-up tasks actionable and clearly scoped?
+* [ ] The core guidance was followed.
+* [ ] The required steps were followed.
+* [ ] The PR content generation principles were followed.
+* [ ] The PR description includes all significant changes and omits trivial or auto-generated ones.
+* [ ] Referenced files and paths are accurate.
+* [ ] Follow-up tasks are actionable and clearly scoped.
 
 ## Security Analysis Output
 
-After PR generation, You WILL analyze `pr-reference.xml` and provide the following analysis in the chat:
+After PR generation, analyze `pr-reference.xml` and provide the following analysis in the chat.
 
 1. ✅/❌ - Customer information leaks
 2. ✅/❌ - Secrets or credentials
-3. ✅/❌ - Non-compliant language (e.g., FIXME, WIP, to-do like, in committed code)
+3. ✅/❌ - Non-compliant language (for example, FIXME, WIP, or to-do language in committed code)
 4. ✅/❌ - Unintended changes or accidental inclusion of files
 5. ✅/❌ - Missing referenced files
-6. ✅/❌ - Conventional commits compliance (for title and commit messages reviewed)
+6. ✅/❌ - Conventional commits compliance for title and reviewed commit messages
 
-You WILL provide this analysis separately AFTER generating the PR description, at the very end of the chat conversation.
+Provide this analysis after generating the PR description at the end of the conversation.
 
 ---
 
-Follow each step in the Process for Pull Request Generation and create a new pr.md file.
+Follow the required steps and create a new `pr.md` file.

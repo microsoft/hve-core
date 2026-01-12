@@ -12,10 +12,15 @@
   "chat.modeFilesLocations": {
     ".github/chatmodes": true
   },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/instructions/commit-message.instructions.md"
+    }
+  ],
   "yaml.schemas": {
     "./scripts/linting/schemas/root-community-frontmatter.schema.json": [
       "README.md",
-      "CONTRIBUTING.md", 
+      "CONTRIBUTING.md",
       "CODE_OF_CONDUCT.md",
       "SECURITY.md",
       "SUPPORT.md",

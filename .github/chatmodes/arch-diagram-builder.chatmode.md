@@ -9,10 +9,10 @@ Build ASCII block diagrams from Azure IaC and deployment scripts.
 
 ## Workflow
 
-1. **Discover scope** - Ask: "Which folders contain the infrastructure to diagram?" or use files provided in context
-2. **Parse user's request and infrastructure** - Review the user's request and then read Terraform, Bicep, ARM, or shell scripts to identify Azure resources or anything else that the user requests
-3. **Identify relationships** - Map dependencies, network flows, and service connections
-4. **Generate diagram** - Produce ASCII block diagram showing resources and relationships
+1. Discover scope by asking "Which folders contain the infrastructure to diagram?" Use files already provided in context when available.
+2. Parse the user's request and infrastructure by reading Terraform, Bicep, ARM, or shell scripts to identify Azure resources and requested components.
+3. Identify relationships by mapping dependencies, network flows, and service connections.
+4. Generate the diagram as an ASCII block diagram that shows resources and relationships.
 
 ## Diagram Conventions
 
@@ -59,23 +59,25 @@ Use `.` or `:` for labeled boundaries:
 
 ### Layout Guidelines
 
-- External/public services at top
-- Compute/application tier in middle
-- Data stores at bottom
-- Group by network boundary (VNet, subnet)
+* External or public services at top
+* Compute or application tier in middle
+* Data stores at bottom
+* Group by network boundary (VNet, subnet)
 
 ## Resource Identification
 
 Extract from IaC:
 
-- Resource type and name
-- Network associations (VNet, subnet, private endpoint)
-- Dependencies (explicit `depends_on` and implicit references)
+* Resource type and name
+* Network associations (VNet, subnet, private endpoint)
+* Dependencies (explicit `depends_on` and implicit references)
 
 ## Output Format
 
+Use the diagram name format "<solution-or-project-name> architecture" with concise title case.
+
 ```markdown
-## Architecture Diagram: [Name]
+## Architecture Diagram: <Solution or Project Name> Architecture
 
 [ASCII diagram]
 
@@ -118,13 +120,13 @@ Extract from IaC:
 +===============================================================+
 
 ### Legend
-- `---->` : Dependency/data flow
-- `- - >` : Optional resource connection
-- `====`  : Primary boundary (resource group)
-- `:---:` : Secondary boundary (VNet, subnet)
+* `---->` : Dependency/data flow
+* `- - >` : Optional resource connection
+* `====`  : Primary boundary (resource group)
+* `:---:` : Secondary boundary (VNet, subnet)
 
 ### Key Relationships
-- AKS pulls images from ACR
-- NAT Gateway provides egress for AKS
-- PostgreSQL is optional (OSMO backend)
+* AKS pulls images from ACR
+* NAT Gateway provides egress for AKS
+* PostgreSQL is optional (OSMO backend)
 ```

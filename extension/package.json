@@ -230,11 +230,7 @@
         "path": "./.github/instructions/python-script.instructions.md",
         "description": "Instructions for python scripting implementation - Brought to you by microsoft/edge-ai"
       },
-      {
-        "name": "shell-instructions",
-        "path": "./.github/instructions/shell.instructions.md",
-        "description": "Instructions for shell script implementation using Bash conventions - Brought to you by microsoft/edge-ai"
-      },
+
       {
         "name": "task-implementation-instructions",
         "path": "./.github/instructions/task-implementation.instructions.md",
