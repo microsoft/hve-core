@@ -76,21 +76,18 @@ jobs:
           
           Write-Host "📦 Packaging extension..."
           
-          $arguments = @()
+          $arguments = @{}
           
           if ($version) {
-            $arguments += '-Version'
-            $arguments += $version
+            $arguments['Version'] = $version
           }
           
           if ($devPatch) {
-            $arguments += '-DevPatchNumber'
-            $arguments += $devPatch
+            $arguments['DevPatchNumber'] = $devPatch
           }
           
           if (Test-Path "./CHANGELOG.md") {
-            $arguments += '-ChangelogPath'
-            $arguments += "./CHANGELOG.md"
+            $arguments['ChangelogPath'] = "./CHANGELOG.md"
           }
           
           ./scripts/extension/Package-Extension.ps1 @arguments
