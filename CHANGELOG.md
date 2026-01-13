@@ -10,4 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
-<!-- Releases will be automatically added by release-please -->
+## 0.0.0 (Initial)
+
+- Initial placeholder for release-please compatibility
