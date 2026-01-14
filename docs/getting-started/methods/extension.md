@@ -86,12 +86,12 @@ After installation, verify everything works:
 
 The extension provides all HVE-Core components:
 
-| Component      | Count | Examples                                      |
-|----------------|-------|-----------------------------------------------|
-| Chat Agents    | 16    | task-planner, pr-review, adr-creation         |
-| Prompts        | 10    | git-commit, pull-request, ado-create-pr       |
-| Instructions   | 16    | markdown, python-script, commit-message       |
-| Dev Tools      | 2     | Generate-PrReference.ps1, pr-ref-gen.sh       |
+| Component    | Examples                                      |
+|--------------|-----------------------------------------------|
+| Chat Agents  | task-planner, pr-review, adr-creation         |
+| Prompts      | git-commit, pull-request, ado-create-pr       |
+| Instructions | markdown, python-script, commit-message       |
+| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh       |
 
 ## Updating
 

@@ -1,10 +1,4 @@
----
-title: HVE Core - AI-Powered Development Assistant
-description: AI-powered chat agents, prompts, and instructions for hybrid virtual environments
-author: Microsoft
-ms.date: 2025-12-19
-ms.topic: overview
----
+# HVE Core - AI-Powered Development Assistant
 
 > AI-powered chat agents, prompts, and instructions for hybrid virtual environments
 
@@ -18,6 +12,7 @@ Specialized AI assistants for specific development tasks:
 
 #### Development Workflow
 
+- **rpi-agent** - Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks
 - **task-researcher** - Research technical solutions and approaches
 - **task-planner** - Plan and break down complex tasks
 - **task-implementor** - Implement tasks from detailed plans
@@ -67,7 +62,7 @@ Best practice guidelines for:
 
 After installing this extension, the chat agents will be available in GitHub Copilot Chat. You can:
 
-1. **Use chat agents** by typing `@agent-name` in Copilot Chat
+1. **Use custom agents** by selecting the custom agent from the agent picker drop-down list in Copilot Chat
 2. **Apply prompts** through the Copilot Chat interface
 3. **Reference instructions** - They're automatically applied based on file patterns
 
@@ -76,9 +71,9 @@ After installing this extension, the chat agents will be available in GitHub Cop
 ### Using Chat Agents
 
 ```plaintext
-@task-planner help me break down this feature into implementable tasks
-@pr-review review this pull request for security issues
-@adr-creation create an ADR for our new microservice architecture
+task-planner help me break down this feature into implementable tasks
+pr-review review this pull request for security issues
+adr-creation create an ADR for our new microservice architecture
 ```
 
 ### Applying Prompts

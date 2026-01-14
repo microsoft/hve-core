@@ -130,11 +130,14 @@ if ($version -notmatch '^\d+\.\d+\.\d+$') {
 
 Write-Host "   Using version: $version" -ForegroundColor Green
 
-# Discover chat agents
+# Discover chat agents (excluding hve-core-installer which is for manual installation only)
 Write-Host ""
 Write-Host "🔍 Discovering chat agents..." -ForegroundColor Yellow
 $agentsDir = Join-Path $GitHubDir "agents"
 $chatAgents = @()
+
+# Agents to exclude from extension packaging
+$excludedAgents = @('hve-core-installer')
 
 if (Test-Path $agentsDir) {
     $agentFiles = Get-ChildItem -Path $agentsDir -Filter "*.agent.md" | Sort-Object Name
@@ -142,6 +145,12 @@ if (Test-Path $agentsDir) {
     foreach ($agentFile in $agentFiles) {
         # Extract agent name from filename (e.g., hve-core-installer.agent.md -> hve-core-installer)
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
+        
+        # Skip excluded agents
+        if ($excludedAgents -contains $agentName) {
+            Write-Host "   ⏭️  $agentName (excluded)" -ForegroundColor DarkGray
+            continue
+        }
         
         # Extract description from YAML frontmatter
         $description = Get-DescriptionFromYaml -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
