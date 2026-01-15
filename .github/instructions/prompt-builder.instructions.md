@@ -65,7 +65,9 @@ Validation guidelines:
 
 #### Example Structure
 
-````markdown
+Examples use fenced code blocks with language tags and include required frontmatter.
+
+```markdown
 ---
 description: "Initiates research for task implementation - Brought to you by microsoft/hve-core"
 agent: 'task-researcher'
@@ -79,7 +81,7 @@ argument-hint: "topic=<research-topic> [chat={true|false}]"
 * ${input:topic}: (Required) Primary topic or focus area for research.
 * ${input:chat:true}: (Optional, defaults to true) Include conversation context.
 
-## Research Protocol
+## Required Steps
 
 ### Step 1: Analyze User Request
 
@@ -99,8 +101,8 @@ Use runSubagent to parallelize investigation.
 
 ---
 
-Proceed with research initiation following the Research Protocol.
-````
+Proceed with research initiation following the Required Steps.
+```
 
 ### Chatmode Files
 
@@ -126,7 +128,9 @@ Phase structure guidelines when using phases:
 
 #### Example Structure
 
-````markdown
+Examples use fenced code blocks with language tags and include required frontmatter.
+
+```markdown
 ---
 description: 'Product Manager expert for PRD analysis and work item planning'
 tools: ['search', 'edit/createFile', 'ado/*']
@@ -149,7 +153,7 @@ Actions:
 * Review PRD artifacts and update planning files.
 * Suggest potential work items.
 * Capture keyword groupings for related item discovery.
-````
+```
 
 ### Agent Files
 
@@ -185,6 +189,8 @@ Validation guidelines:
 * Wrap examples in fenced code blocks.
 
 #### Example Structure
+
+Examples use fenced code blocks with language tags and include required frontmatter.
 
 ````markdown
 ---
@@ -228,10 +234,24 @@ argument-hint: "file=<path> requirements=<text>"
 * ${input:file}: (Optional) Target prompt file path.
 * ${input:requirements}: (Optional) Additional requirements.
 
+## Required Steps
+
+### Step 1: Gather Inputs
+
+Review the provided inputs and infer missing context when required.
+
+### Step 2: Build the Prompt
+
+Draft the prompt content using the required structure and conventions.
+
 ---
 
-Proceed with the research build workflow.
+Start the research build workflow.
 ```
+
+---
+
+Start applying the prompt engineering instructions.
 ````
 
 ## Protocol Patterns

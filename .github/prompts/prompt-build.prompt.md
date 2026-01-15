@@ -1,6 +1,5 @@
 ---
 description: "Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core"
-ms.date: 2026-01-14
 agent: 'prompt-builder'
 argument-hint: "file=... [requirements=...]"
 ---
