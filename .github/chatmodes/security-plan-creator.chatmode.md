@@ -1,5 +1,6 @@
 ---
 description: "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/edge-ai"
+maturity: stable
 tools: ['usages', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'crisp/*']
 
 ---

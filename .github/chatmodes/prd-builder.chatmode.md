@@ -1,5 +1,6 @@
 ---
 description: "Product Requirements Document builder with guided Q&A and reference integration"
+maturity: stable
 tools: ['usages', 'think', 'fetch', 'githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'runCommands', 'microsoft-docs/*', 'azure/azure-mcp/*']
 ---
 

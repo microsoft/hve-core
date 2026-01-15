@@ -1,5 +1,6 @@
 ---
 description: 'Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core'
+maturity: stable
 argument-hint: 'Professional agent with subagent delegation. Requires agent/runSubagent tool enabled.'
 handoffs:
   - label: "🔬 Research Deeper"

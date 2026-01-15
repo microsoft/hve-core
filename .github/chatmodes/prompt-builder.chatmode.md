@@ -1,5 +1,6 @@
 ---
 description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, chatmodes, agents, and instructions files - Brought to you by microsoft/hve-core'
+maturity: stable
 ---
 
 # Prompt Builder

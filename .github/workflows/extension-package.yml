@@ -18,6 +18,11 @@ on:
         required: false
         type: boolean
         default: false
+      channel:
+        description: 'Release channel (Stable or PreRelease) controlling agent maturity filtering'
+        required: false
+        type: string
+        default: 'Stable'
     outputs:
       version:
         description: 'Version that was packaged'
@@ -58,6 +63,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
 
       - name: Download changelog artifact
         if: inputs.use-changelog
@@ -66,6 +72,16 @@ jobs:
           name: changelog
           path: ./
         continue-on-error: true
+
+      - name: Prepare extension resources
+        id: prepare
+        shell: pwsh
+        run: |
+          $channel = "${{ inputs.channel }}".Trim()
+          if (-not $channel) { $channel = 'Stable' }
+          
+          Write-Host "🔧 Preparing extension for $channel channel..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel
 
       - name: Package extension
         id: package

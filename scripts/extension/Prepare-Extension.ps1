@@ -8,6 +8,7 @@
 .DESCRIPTION
     This script prepares the VS Code extension by:
     - Auto-discovering chat agents, chatmodes, prompts, and instruction files
+    - Filtering agents and chatmodes by maturity level based on channel
     - Updating package.json with discovered components
     - Updating changelog if provided
     
@@ -16,12 +17,21 @@
 .PARAMETER ChangelogPath
     Optional. Path to a changelog file to include in the package.
 
+.PARAMETER Channel
+    Optional. Release channel controlling which maturity levels are included.
+    'Stable' (default): Only includes agents/chatmodes with maturity 'stable'.
+    'PreRelease': Includes 'stable', 'preview', and 'experimental' maturity levels.
+
 .PARAMETER DryRun
     Optional. If specified, shows what would be done without making changes.
 
 .EXAMPLE
     ./Prepare-Extension.ps1
-    # Prepares using existing version from package.json
+    # Prepares stable channel using existing version from package.json
+
+.EXAMPLE
+    ./Prepare-Extension.ps1 -Channel PreRelease
+    # Prepares pre-release channel including experimental agents
 
 .EXAMPLE
     ./Prepare-Extension.ps1 -ChangelogPath "./CHANGELOG.md"
@@ -37,13 +47,24 @@ param(
     [string]$ChangelogPath = "",
 
     [Parameter(Mandatory = $false)]
+    [ValidateSet('Stable', 'PreRelease')]
+    [string]$Channel = 'Stable',
+
+    [Parameter(Mandatory = $false)]
     [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
 
-# Helper function to extract description from YAML frontmatter
-function Get-DescriptionFromYaml {
+# Define allowed maturity levels based on channel
+$allowedMaturities = if ($Channel -eq 'PreRelease') {
+    @('stable', 'preview', 'experimental')
+} else {
+    @('stable')
+}
+
+# Helper function to extract frontmatter data from YAML
+function Get-FrontmatterData {
     param(
         [Parameter(Mandatory = $true)]
         [string]$FilePath,
@@ -54,6 +75,7 @@ function Get-DescriptionFromYaml {
     
     $content = Get-Content -Path $FilePath -Raw
     $description = ""
+    $maturity = "stable"
     
     # Extract YAML frontmatter and parse with PowerShell-Yaml
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
@@ -64,16 +86,18 @@ function Get-DescriptionFromYaml {
             if ($data.ContainsKey('description')) {
                 $description = $data.description
             }
+            if ($data.ContainsKey('maturity')) {
+                $maturity = $data.maturity
+            }
         } catch {
             Write-Warning "Failed to parse YAML frontmatter in $(Split-Path -Leaf $FilePath): $_"
         }
     }
     
-    # Return description or fallback
-    if ($description) {
-        return $description
-    } else {
-        return $FallbackDescription
+    # Return hashtable with description and maturity
+    return @{
+        description = if ($description) { $description } else { $FallbackDescription }
+        maturity    = $maturity
     }
 }
 
@@ -86,6 +110,7 @@ $PackageJsonPath = Join-Path $ExtensionDir "package.json"
 
 Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
 Write-Host "==============================" -ForegroundColor Cyan
+Write-Host "   Channel: $Channel" -ForegroundColor Cyan
 Write-Host ""
 
 # Verify paths exist
@@ -152,8 +177,16 @@ if (Test-Path $agentsDir) {
             continue
         }
         
-        # Extract description from YAML frontmatter
-        $description = Get-DescriptionFromYaml -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
+        # Extract frontmatter data
+        $frontmatter = Get-FrontmatterData -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
+        $description = $frontmatter.description
+        $maturity = $frontmatter.maturity
+        
+        # Filter by maturity based on channel
+        if ($allowedMaturities -notcontains $maturity) {
+            Write-Host "   ⏭️  $agentName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
+            continue
+        }
         
         $agent = [PSCustomObject]@{
             name        = $agentName
@@ -181,9 +214,17 @@ if (Test-Path $chatmodesDir) {
         # Extract chatmode name from filename (e.g., task-planner.chatmode.md -> task-planner)
         $chatmodeName = $chatmodeFile.BaseName -replace '\.chatmode$', ''
         
-        # Extract description from YAML frontmatter
+        # Extract frontmatter data
         $displayName = $chatmodeName -replace '-', ' '
-        $description = Get-DescriptionFromYaml -FilePath $chatmodeFile.FullName -FallbackDescription "Chatmode for $displayName"
+        $frontmatter = Get-FrontmatterData -FilePath $chatmodeFile.FullName -FallbackDescription "Chatmode for $displayName"
+        $description = $frontmatter.description
+        $maturity = $frontmatter.maturity
+        
+        # Filter by maturity based on channel
+        if ($allowedMaturities -notcontains $maturity) {
+            Write-Host "   ⏭️  $chatmodeName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
+            continue
+        }
         
         $chatmode = [PSCustomObject]@{
             name        = $chatmodeName
@@ -211,9 +252,17 @@ if (Test-Path $promptsDir) {
         # Extract prompt name from filename (e.g., git-commit.prompt.md -> git-commit)
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
         
-        # Extract description from YAML frontmatter
+        # Extract frontmatter data
         $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-        $description = Get-DescriptionFromYaml -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
+        $frontmatter = Get-FrontmatterData -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
+        $description = $frontmatter.description
+        $maturity = $frontmatter.maturity
+
+        # Filter by maturity based on channel
+        if ($allowedMaturities -notcontains $maturity) {
+            Write-Host "   ⏭️  $promptName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
+            continue
+        }
         
         # Calculate relative path from .github
         $relativePath = [System.IO.Path]::GetRelativePath($GitHubDir, $promptFile.FullName) -replace '\\', '/'
@@ -245,9 +294,17 @@ if (Test-Path $instructionsDir) {
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
         
-        # Extract description from YAML frontmatter
+        # Extract frontmatter data
         $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-        $description = Get-DescriptionFromYaml -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
+        $frontmatter = Get-FrontmatterData -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
+        $description = $frontmatter.description
+        $maturity = $frontmatter.maturity
+
+        # Filter by maturity based on channel
+        if ($allowedMaturities -notcontains $maturity) {
+            Write-Host "   ⏭️  $instrName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
+            continue
+        }
         
         # Calculate relative path from .github using cross-platform APIs
         $relativePathFromGitHub = [System.IO.Path]::GetRelativePath($GitHubDir, $instrFile.FullName)
@@ -322,6 +379,7 @@ Write-Host "🎉 Done!" -ForegroundColor Green
 Write-Host ""
 Write-Host "📊 Summary:" -ForegroundColor Cyan
 Write-Host "   Version: $version" -ForegroundColor White
+Write-Host "   Channel: $Channel" -ForegroundColor White
 Write-Host "   Chat Agents: $($chatAgents.Count)" -ForegroundColor White
 Write-Host "   Chatmodes: $($chatmodes.Count)" -ForegroundColor White
 Write-Host "   Prompts: $($chatPromptFiles.Count)" -ForegroundColor White

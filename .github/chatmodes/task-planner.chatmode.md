@@ -1,5 +1,6 @@
 ---
 description: 'Task planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
+maturity: stable
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/problems', 'read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'bicep-(experimental)/*', 'context7/*', 'microsoft-docs/*', 'terraform/*', 'agent']
 ---
 # Task Planner Instructions

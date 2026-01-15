@@ -1,5 +1,6 @@
 ---
 description: "Business Requirements Document builder with guided Q&A and reference integration"
+maturity: stable
 tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*', 'azure/azure-mcp/*', 'runSubagent']
 ---
 

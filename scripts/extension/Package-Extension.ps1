@@ -8,6 +8,7 @@
     This script packages the VS Code extension into a .vsix file.
     It uses the version from package.json or a specified version.
     Optionally adds a dev patch number for pre-release builds.
+    Supports VS Code Marketplace pre-release channel with -PreRelease switch.
 
 .PARAMETER Version
     Optional. The version to use for the package.
@@ -18,6 +19,10 @@
 
 .PARAMETER ChangelogPath
     Optional. Path to a changelog file to include in the package.
+
+.PARAMETER PreRelease
+    Optional. When specified, packages the extension for VS Code Marketplace pre-release channel.
+    Uses vsce --pre-release flag which marks the extension for the pre-release track.
 
 .EXAMPLE
     ./Package-Extension.ps1
@@ -34,6 +39,14 @@
 .EXAMPLE
     ./Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber "456"
     # Packages with specific dev version (1.1.0-dev.456)
+
+.EXAMPLE
+    ./Package-Extension.ps1 -PreRelease
+    # Packages for VS Code Marketplace pre-release channel
+
+.EXAMPLE
+    ./Package-Extension.ps1 -Version "1.1.0" -PreRelease
+    # Packages with ODD minor version for pre-release channel
 #>
 
 [CmdletBinding()]
@@ -45,7 +58,10 @@ param(
     [string]$DevPatchNumber = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$ChangelogPath = ""
+    [string]$ChangelogPath = "",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$PreRelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -180,8 +196,18 @@ Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 Write-Host ""
 Write-Host "📦 Packaging extension..." -ForegroundColor Yellow
 
+if ($PreRelease) {
+    Write-Host "   Mode: Pre-release channel" -ForegroundColor Magenta
+}
+
 # Initialize vsixFile variable to avoid scope issues
 $vsixFile = $null
+
+# Build vsce arguments
+$vsceArgs = @('package', '--no-dependencies')
+if ($PreRelease) {
+    $vsceArgs += '--pre-release'
+}
 
 Push-Location $ExtensionDir
 
@@ -192,14 +218,14 @@ try {
         $vsceCmd = Get-Command npx -ErrorAction SilentlyContinue
         if ($vsceCmd) {
             Write-Host "   Using npx @vscode/vsce..." -ForegroundColor Gray
-            & npx @vscode/vsce package --no-dependencies
+            & npx @vscode/vsce @vsceArgs
         } else {
             Write-Error "Neither vsce nor npx found. Please install @vscode/vsce globally or ensure npm is available."
             exit 1
         }
     } else {
         Write-Host "   Using vsce..." -ForegroundColor Gray
-        & vsce package --no-dependencies
+        & vsce @vsceArgs
     }
     
     if ($LASTEXITCODE -ne 0) {
@@ -255,6 +281,7 @@ if ($env:GITHUB_OUTPUT) {
     if ($vsixFile) {
         "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
         "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
     } else {
         Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
     }

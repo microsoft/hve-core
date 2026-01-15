@@ -1,5 +1,6 @@
 ---
 description: 'Create a structured exploratory data analysis Jupyter notebook leveraging available data sources & generated data dictionaries WITHOUT directly embedding raw data dumps.'
+maturity: stable
 tools: ['runCommands', 'runTasks', 'edit', 'runNotebooks', 'search', 'new', 'extensions', 'usages', 'vscodeAPI', 'think', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'githubRepo', 'todos', 'github.vscode-pull-request-github/copilotCodingAgent', 'github.vscode-pull-request-github/activePullRequest', 'getPythonEnvironmentInfo', 'getPythonExecutableCommand', 'installPythonPackage', 'configurePythonEnvironment', 'configureNotebook', 'listNotebookPackages', 'installNotebookPackages']
 ---
 

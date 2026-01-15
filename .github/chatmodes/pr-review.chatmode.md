@@ -1,5 +1,6 @@
 ---
 description: 'Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core'
+maturity: stable
 tools: ['usages', 'think', 'problems', 'fetch', 'githubRepo', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'runCommands', 'runTasks', 'Bicep (EXPERIMENTAL)/*', 'terraform/*', 'context7/*', 'microsoft-docs/*']
 ---
 

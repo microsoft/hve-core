@@ -190,6 +190,56 @@ You can override the version without modifying `package.json`:
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0"
 ```
 
+## Pre-Release Channel
+
+The extension supports dual-channel publishing to VS Code Marketplace with separate stable and pre-release tracks.
+
+### EVEN/ODD Versioning Strategy
+
+| Minor Version | Channel      | Example  | Agent Maturity Included           |
+|---------------|--------------|----------|-----------------------------------|
+| EVEN (0, 2, 4...)| Stable    | 1.0.0, 1.2.0 | `stable` only                  |
+| ODD (1, 3, 5...) | Pre-Release| 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
+
+Users can switch between channels in VS Code via the "Switch to Pre-Release Version" button on the extension page.
+
+### Pre-Release Packaging
+
+Package for the pre-release channel with the `-PreRelease` switch:
+
+```bash
+# Package for pre-release channel (includes experimental agents)
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
+
+# Prepare with PreRelease channel filtering first
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
+```
+
+The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the package for the Marketplace pre-release track.
+
+### Pre-Release Workflow
+
+Use the manual workflow for publishing pre-releases:
+
+1. Go to **Actions** > **Publish Pre-Release Extension**
+2. Enter an ODD minor version (e.g., `1.1.0`, `1.3.0`)
+3. Optionally enable dry-run to test packaging without publishing
+4. Run the workflow
+
+The workflow validates the version is ODD before proceeding.
+
+### Agent Maturity Filtering
+
+When packaging, agents and chatmodes are filtered by their `maturity` frontmatter field:
+
+| Channel     | Included Maturity Levels               |
+|-------------|----------------------------------------|
+| Stable      | `stable`                               |
+| PreRelease  | `stable`, `preview`, `experimental`    |
+
+See [Agent Maturity Levels](../docs/contributing/agent-maturity.md) for contributor guidance on setting maturity levels.
+
 ## Notes
 
 - The `.github` and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
