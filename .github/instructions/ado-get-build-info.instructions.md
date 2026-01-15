@@ -1,6 +1,7 @@
 ---
 description: "Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name."
 applyTo: '**/.copilot-tracking/pr/*-build-*.md'
+maturity: stable
 ---
 
 # Azure DevOps Build Info Instructions

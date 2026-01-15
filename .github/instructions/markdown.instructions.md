@@ -1,6 +1,7 @@
 ---
 description: "Required instructions for creating or editing any Markdown (.md) files"
 applyTo: '**/*.md'
+maturity: stable
 ---
 # Markdown Instructions
 

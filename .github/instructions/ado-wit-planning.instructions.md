@@ -1,6 +1,7 @@
 ---
 description: "Required instructions for work item planning and creation or updating leveraging mcp ado tool calls."
 applyTo: '**/.copilot-tracking/workitems/**'
+maturity: stable
 ---
 
 # Azure DevOps Work Items Planning File Instructions

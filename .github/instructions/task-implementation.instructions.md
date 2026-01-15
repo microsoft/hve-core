@@ -1,6 +1,7 @@
 ---
 applyTo: '**/.copilot-tracking/changes/*.md'
 description: 'Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai'
+maturity: stable
 ---
 # Task Plan Implementation Instructions
 

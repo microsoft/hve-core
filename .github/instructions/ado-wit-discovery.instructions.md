@@ -1,6 +1,7 @@
 ---
 description: "Required protocol for discovering, planning, and handing off Azure DevOps User Stories and Bugs."
 applyTo: '**/.copilot-tracking/workitems/discovery/**'
+maturity: stable
 ---
 
 # Azure DevOps Work Item Discovery & Handoff

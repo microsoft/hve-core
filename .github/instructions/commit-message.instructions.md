@@ -1,5 +1,6 @@
 ---
 description: 'Required instructions for creating all commit messages - Brought to you by microsoft/edge-ai'
+maturity: stable
 ---
 
 # Commit Message Guidelines

@@ -1,6 +1,7 @@
 ---
 applyTo: '**/src/**/*.sh'
 description: 'Instructions for bash script implementation - Brought to you by microsoft/edge-ai'
+maturity: stable
 ---
 # Bash Instructions
 

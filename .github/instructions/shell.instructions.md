@@ -1,6 +1,7 @@
 ---
 applyTo: '**/*.sh'
 description: 'Instructions for shell script implementation using Bash conventions - Brought to you by microsoft/edge-ai'
+maturity: stable
 ---
 # Shell Code Instructions
 

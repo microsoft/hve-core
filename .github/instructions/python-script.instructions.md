@@ -1,6 +1,7 @@
 ---
 applyTo: '**/*.py'
 description: 'Instructions for python scripting implementation - Brought to you by microsoft/edge-ai'
+maturity: stable
 ---
 
 # Python Script Instructions

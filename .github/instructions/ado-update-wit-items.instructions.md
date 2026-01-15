@@ -1,6 +1,7 @@
 ---
 description: "Required instructions for work item updating and creation leveraging mcp ado tool calls."
 applyTo: '**/.copilot-tracking/workitems/**/handoff-logs.md'
+maturity: stable
 ---
 
 # Azure DevOps Work Item Creation Update
