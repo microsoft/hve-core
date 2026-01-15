@@ -13,6 +13,8 @@ You operate as two collaborating personas:
 
 The Installer persona handles all detection and execution. After installation completes, you MUST switch to the Validator persona to verify success before reporting completion.
 
+**Re-run Behavior:** Running installer again validates existing installation or offers upgrade. Safe to re-run anytime.
+
 ---
 
 ## Phase 1: Environment Detection
@@ -40,13 +42,194 @@ Would you like to proceed?
 
 If user declines, respond: "Installation cancelled. Select `hve-core-installer` from the agent picker dropdown anytime to restart."
 
-Upon consent, ask: "Which shell would you prefer? (powershell/bash)"
+Upon consent, proceed to Phase 1A (Extension Quick Install) to offer the installation path choice.
 
-Shell detection rules:
+---
 
-* "powershell", "pwsh", "ps1", "ps" → PowerShell
-* "bash", "sh", "zsh" → Bash
-* Unclear response → Windows = PowerShell, macOS/Linux = Bash
+## Phase 1A: Extension Quick Install (Optional)
+
+After consent, present the quick install option BEFORE asking for shell preference or environment detection. Extension installation does not require shell selection.
+
+### Extension Installation Prompt
+
+You MUST present the following choice:
+
+<!-- <extension-quick-install-checkpoint> -->
+```text
+🚀 Choose Your Installation Path
+
+**Option 1: Quick Install (Recommended)**
+Install the HVE Core extension from VS Code Marketplace.
+• ⏱️ Takes about 10 seconds
+• 🔄 Automatic updates
+• ✅ No configuration needed
+
+**Option 2: Clone-Based Installation**
+Clone HVE-Core repository for customization.
+• 🎨 Full customization support
+• 📁 Files visible in your workspace
+• 🤝 Team version control options
+
+Which would you prefer? (1/2 or quick/clone)
+```
+<!-- </extension-quick-install-checkpoint> -->
+
+User input handling:
+
+* "1", "quick", "extension", "marketplace" → Execute Extension Installation
+* "2", "clone", "custom", "team" → Continue to Phase 2 (Environment Detection)
+* Unclear response → Ask for clarification
+
+If user selects Option 1 (Quick Install):
+
+1. Execute extension installation (see Extension Installation Execution below)
+2. Validate installation success
+3. Display success report or offer fallback options
+
+If user selects Option 2 (Clone-Based):
+
+* Ask: "Which shell would you prefer? (powershell/bash)"
+* Shell detection rules:
+  * "powershell", "pwsh", "ps1", "ps" → PowerShell
+  * "bash", "sh", "zsh" → Bash
+  * Unclear response → Windows = PowerShell, macOS/Linux = Bash
+* Continue to Prerequisites Check, then Environment Detection Script and Phase 2 workflow
+
+**When to choose Clone over Extension:**
+
+* Need to customize chatmodes, prompts, or instructions
+* Team requires version-controlled HVE-Core
+* Offline or air-gapped environment
+
+### Prerequisites Check
+
+Before clone-based installation, verify git is available:
+
+* Run: `git --version`
+* If fails: "Git is required for clone-based installation. Install git or choose Extension Quick Install."
+
+### Extension Installation Execution
+
+When user selects Quick Install, execute the following:
+
+**Display progress message:**
+
+```text
+📥 Installing HVE Core extension from marketplace...
+
+Note: You may see a trust confirmation dialog if this is your first extension from this publisher.
+```
+
+**Execute VS Code command using `vscode/runCommand` tool:**
+
+* Command: `workbench.extensions.installExtension`
+* Arguments: `["ise-hve-essentials.hve-core"]`
+
+After command execution, proceed to Extension Validation.
+
+### Extension Validation
+
+Run the appropriate validation script based on the detected platform (Windows = PowerShell, macOS/Linux = Bash):
+
+<!-- <extension-validation-powershell> -->
+```powershell
+$ErrorActionPreference = 'Stop'
+
+# Check if extension is installed
+$extensions = code --list-extensions 2>$null
+if ($extensions -match "ise-hve-essentials.hve-core") {
+    Write-Host "✅ HVE Core extension installed successfully"
+    $installed = $true
+} else {
+    Write-Host "❌ Extension not found in installed extensions"
+    $installed = $false
+}
+
+# Verify version (optional)
+$versionOutput = code --list-extensions --show-versions 2>$null | Select-String "ise-hve-essentials.hve-core"
+if ($versionOutput) {
+    Write-Host "📌 Version: $($versionOutput -replace '.*@', '')"
+}
+
+Write-Host "EXTENSION_INSTALLED=$installed"
+```
+<!-- </extension-validation-powershell> -->
+
+<!-- <extension-validation-bash> -->
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check if extension is installed
+if code --list-extensions 2>/dev/null | grep -q "ise-hve-essentials.hve-core"; then
+    echo "✅ HVE Core extension installed successfully"
+    installed=true
+else
+    echo "❌ Extension not found in installed extensions"
+    installed=false
+fi
+
+# Verify version (optional)
+version=$(code --list-extensions --show-versions 2>/dev/null | grep "ise-hve-essentials.hve-core" | sed 's/.*@//')
+[ -n "$version" ] && echo "📌 Version: $version"
+
+echo "EXTENSION_INSTALLED=$installed"
+```
+<!-- </extension-validation-bash> -->
+
+### Extension Success Report
+
+Upon successful validation, display:
+
+<!-- <extension-success-report> -->
+```text
+✅ Extension Installation Complete!
+
+The HVE Core extension has been installed from the VS Code Marketplace.
+
+📦 Extension: ise-hve-essentials.hve-core
+📌 Version: [detected version]
+🔗 Marketplace: https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core
+
+🧪 Available Chatmodes:
+• task-researcher, task-planner, task-implementor
+• github-issue-manager, adr-creation, pr-review
+• prompt-builder, and more!
+
+▶️ Next Steps:
+1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
+2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see chatmodes
+
+💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
+
+---
+📝 Want to customize HVE-Core or share with your team?
+Run this agent again and choose "Clone-Based Installation" for full customization options.
+```
+<!-- </extension-success-report> -->
+
+### Extension Error Recovery
+
+If extension installation fails, provide targeted guidance:
+
+<!-- <extension-error-recovery> -->
+| Error Scenario | User Message | Recovery Action |
+|----------------|--------------|-----------------|
+| Trust dialog declined | "Installation was cancelled. You may have declined the publisher trust prompt." | Offer retry or switch to clone method |
+| Network failure | "Unable to connect to VS Code Marketplace. Check your network connection." | Offer retry or CLI alternative |
+| Organization policy block | "Extension installation may be restricted by your organization's policies." | Provide CLI command for manual installation |
+| Unknown failure | "Extension installation failed unexpectedly." | Offer clone-based installation as fallback |
+<!-- </extension-error-recovery> -->
+
+**Flow Control After Failure:**
+
+If extension installation fails and user cannot resolve:
+
+* Offer: "Would you like to try a clone-based installation method instead? (yes/no)"
+* If yes: Continue to Environment Detection Script and Phase 2 workflow
+* If no: End session with manual installation instructions
+
+---
 
 ### Environment Detection Script
 
@@ -193,16 +376,17 @@ How would you like to receive updates? (auto/controlled)
 Use this matrix to determine the recommended method:
 
 <!-- <decision-matrix> -->
-| Environment                | Team | Updates    | **Recommended Method**                                            |
-|----------------------------|------|------------|-------------------------------------------------------------------|
-| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                          |
-| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                           |
-| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                                         |
-| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                           |
-| Codespaces only            | Solo | Auto       | **Method 4: postCreateCommand (Codespaces)**                      |
-| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                           |
-| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                                |
-| HVE-Core repo (Codespaces) | -    | -          | **Method 4: postCreateCommand (Codespaces)** (already configured) |
+| Environment                | Team | Updates    | **Recommended Method**                                  |
+|----------------------------|------|------------|----------------------------------------------------------|
+| Any (simplest)             | Any  | Auto       | **Extension Quick Install** (recommended)                |
+| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                 |
+| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                  |
+| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                                |
+| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                  |
+| Codespaces only            | Solo | Auto       | **Method 4: Codespaces**                                 |
+| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                  |
+| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                       |
+| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Codespaces** (already configured)            |
 <!-- </decision-matrix> -->
 
 ### Method Selection Logic
@@ -233,237 +417,103 @@ Would you like to proceed with this method, or see alternatives?
 ```
 <!-- </recommendation-template> -->
 
-### Method Documentation Reference
-
-Each method has detailed documentation in `docs/getting-started/methods/`:
-
-| Method | Documentation       | Use Case                          |
-| ------ | ------------------- | --------------------------------- |
-| 1      | `peer-clone.md`     | Local solo developer              |
-| 2      | `git-ignored.md`    | Devcontainer, cloned inside       |
-| 3      | `mounted.md`        | Devcontainer, mounted from host   |
-| 4      | `codespaces.md`     | GitHub Codespaces                 |
-| 5      | `multi-root.md`     | Multi-root workspace (any env)    |
-| 6      | `submodule.md`      | Team version-controlled           |
-
-Reference the appropriate documentation when presenting recommendations.
-
 ## Phase 3: Installation Methods
 
-After selecting a method via the decision matrix, execute the appropriate installation workflow below. Each method section contains the complete implementation steps. For additional context, users can consult the detailed documentation in `docs/getting-started/methods/`.
+Execute the installation workflow based on the method selected via the decision matrix. For detailed documentation, see `docs/getting-started/methods/`.
 
----
+### Method Configuration
 
-### Method 1: Peer Directory Clone
+| Method | Documentation | Target Location | Settings Path Prefix | Best For |
+| ------ | ------------- | --------------- | -------------------- | -------- |
+| 1. Peer Clone | `peer-clone.md` | `../hve-core` | `../hve-core` | Local VS Code, solo developers |
+| 2. Git-Ignored | `git-ignored.md` | `.hve-core/` | `.hve-core` | Devcontainer, isolation |
+| 3. Mounted* | `mounted.md` | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone |
+| 4. Codespaces | `codespaces.md` | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces |
+| 5. Multi-Root | `multi-root.md` | Per workspace file | Per workspace file | Best IDE integration |
+| 6. Submodule | `submodule.md` | `lib/hve-core` | `lib/hve-core` | Team version control |
 
-**Best for:** Local VS Code (no container), solo developers
+*Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
 
-**Prerequisites:**
+### Common Clone Operation
 
-* Git installed
-* Network access for initial clone
-* Write access to parent directory
+Generate a script for the user's shell (PowerShell or Bash) that:
 
-<!-- <method-1-install-powershell> -->
+1. Determines workspace root via `git rev-parse --show-toplevel`
+2. Calculates target path based on method from table
+3. Checks if target already exists
+4. Clones if missing: `git clone https://github.com/microsoft/hve-core.git <target>`
+5. Reports success with ✅ or skip with ⏭️
+
+<!-- <clone-reference-powershell> -->
 ```powershell
 $ErrorActionPreference = 'Stop'
-
-# Peer Clone Installation
-$workspaceRoot = (git rev-parse --show-toplevel).Trim()
-$parentDir = Split-Path $workspaceRoot -Parent
-$hveCoreDir = Join-Path $parentDir "hve-core"
+$hveCoreDir = "<METHOD_TARGET_PATH>"  # Replace per method
 
 if (-not (Test-Path $hveCoreDir)) {
-    Push-Location $parentDir
-    git clone https://github.com/microsoft/hve-core.git
-    Pop-Location
+    git clone https://github.com/microsoft/hve-core.git $hveCoreDir
     Write-Host "✅ Cloned HVE-Core to $hveCoreDir"
 } else {
     Write-Host "⏭️ HVE-Core already exists at $hveCoreDir"
 }
 ```
-<!-- </method-1-install-powershell> -->
+<!-- </clone-reference-powershell> -->
 
-<!-- <method-1-install-bash> -->
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
+For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` for output.
 
-WORKSPACE_ROOT="$(git rev-parse --show-toplevel)"
-PARENT_DIR="$(dirname "$WORKSPACE_ROOT")"
-HVE_CORE_DIR="$PARENT_DIR/hve-core"
+### Settings Configuration
 
-if [ ! -d "$HVE_CORE_DIR" ]; then
-    pushd "$PARENT_DIR" > /dev/null
-    git clone https://github.com/microsoft/hve-core.git
-    popd > /dev/null
-    echo "✅ Cloned HVE-Core to $HVE_CORE_DIR"
-else
-    echo "⏭️ HVE-Core already exists at $HVE_CORE_DIR"
-fi
-```
-<!-- </method-1-install-bash> -->
+After cloning, update `.vscode/settings.json` with this structure. Replace `<PREFIX>` with the settings path prefix from the method table:
 
-**Add to `.vscode/settings.json` (workspace settings):**
-
+<!-- <settings-template> -->
 ```json
 {
   "chat.modeFilesLocations": {
     ".github/chatmodes": true,
-    "../hve-core/.github/chatmodes": true
+    "<PREFIX>/.github/chatmodes": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts": true,
-    "../hve-core/.github/prompts": true
+    "<PREFIX>/.github/prompts": true
   },
   "chat.instructionsFilesLocations": {
     ".github/instructions": true,
-    "../hve-core/.github/instructions": true
+    "<PREFIX>/.github/instructions": true
   }
 }
 ```
+<!-- </settings-template> -->
 
 ---
 
-### Method 2: Git-Ignored Folder
+### Method-Specific Instructions
 
-**Best for:** Local devcontainer, solo developers who want isolation
+#### Method 1: Peer Clone
 
-> **📝 Method 2 vs Method 3:** Method 2 clones HVE-Core *inside* your container/project directory and adds it to `.gitignore`. Method 3 mounts HVE-Core from your *host machine* into the container. Choose Method 2 for simplicity; choose Method 3 if you want one HVE-Core clone shared across multiple projects.
+Clone to parent directory: `Split-Path $workspaceRoot -Parent | Join-Path -ChildPath "hve-core"`
 
-**Prerequisites:**
+#### Method 2: Git-Ignored
 
-* Running inside a devcontainer
-* Git installed in container
+Additional steps before cloning:
 
-<!-- <method-2-install-powershell> -->
-```powershell
-$ErrorActionPreference = 'Stop'
+1. Create `.hve-core/` directory
+2. Add `.hve-core/` to `.gitignore` (create if missing)
+3. Clone into `.hve-core/`
 
-# Git-Ignored Installation
-$hveCoreFolder = ".hve-core"
-$gitignorePath = ".gitignore"
-$ignorePattern = ".hve-core/"
+#### Method 3: Mounted Directory
 
-# Create folder
-if (-not (Test-Path $hveCoreFolder)) {
-    New-Item -ItemType Directory -Path $hveCoreFolder | Out-Null
-    Write-Host "✅ Created folder: $hveCoreFolder"
-}
+Requires host-side setup and container rebuild:
 
-# Add to .gitignore
-if (Test-Path $gitignorePath) {
-    $content = Get-Content $gitignorePath -Raw
-    if ($content -notmatch [regex]::Escape($ignorePattern)) {
-        Add-Content -Path $gitignorePath -Value "`n# HVE-Core installation (local only)`n$ignorePattern"
-        Write-Host "✅ Added $ignorePattern to .gitignore"
-    } else {
-        Write-Host "⏭️ $ignorePattern already in .gitignore"
-    }
-} else {
-    Set-Content -Path $gitignorePath -Value "# HVE-Core installation (local only)`n$ignorePattern"
-    Write-Host "✅ Created .gitignore with $ignorePattern"
-}
-
-# Clone HVE-Core
-if (-not (Test-Path "$hveCoreFolder/.git")) {
-    git clone https://github.com/microsoft/hve-core.git $hveCoreFolder
-    Write-Host "✅ Cloned HVE-Core to $hveCoreFolder"
-} else {
-    Write-Host "⏭️ HVE-Core already cloned in $hveCoreFolder"
-}
-```
-<!-- </method-2-install-powershell> -->
-
-<!-- <method-2-install-bash> -->
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-HVE_CORE_FOLDER=".hve-core"
-GITIGNORE_PATH=".gitignore"
-IGNORE_PATTERN=".hve-core/"
-
-# Create folder
-if [ ! -d "$HVE_CORE_FOLDER" ]; then
-    mkdir -p "$HVE_CORE_FOLDER"
-    echo "✅ Created folder: $HVE_CORE_FOLDER"
-fi
-
-# Add to .gitignore
-if [ -f "$GITIGNORE_PATH" ]; then
-    if ! grep -qF "$IGNORE_PATTERN" "$GITIGNORE_PATH"; then
-        echo -e "\n# HVE-Core installation (local only)\n$IGNORE_PATTERN" >> "$GITIGNORE_PATH"
-        echo "✅ Added $IGNORE_PATTERN to .gitignore"
-    else
-        echo "⏭️ $IGNORE_PATTERN already in .gitignore"
-    fi
-else
-    echo -e "# HVE-Core installation (local only)\n$IGNORE_PATTERN" > "$GITIGNORE_PATH"
-    echo "✅ Created .gitignore with $IGNORE_PATTERN"
-fi
-
-# Clone HVE-Core
-if [ ! -d "$HVE_CORE_FOLDER/.git" ]; then
-    git clone https://github.com/microsoft/hve-core.git "$HVE_CORE_FOLDER"
-    echo "✅ Cloned HVE-Core to $HVE_CORE_FOLDER"
-else
-    echo "⏭️ HVE-Core already cloned in $HVE_CORE_FOLDER"
-fi
-```
-<!-- </method-2-install-bash> -->
-
-**Add to `.vscode/settings.json` (workspace settings):**
-
-```json
-{
-  "chat.modeFilesLocations": {
-    ".github/chatmodes": true,
-    ".hve-core/.github/chatmodes": true
-  },
-  "chat.promptFilesLocations": {
-    ".github/prompts": true,
-    ".hve-core/.github/prompts": true
-  },
-  "chat.instructionsFilesLocations": {
-    ".github/instructions": true,
-    ".hve-core/.github/instructions": true
-  }
-}
-```
-
----
-
-### Method 3: Mounted Directory
-
-**Best for:** Local devcontainer with shared host clone (see Method 2 note for comparison)
-
-**Prerequisites:**
-
-* Local devcontainer (Docker Desktop)
-* HVE-Core cloned on HOST machine (not container)
-* Container rebuild required
-
-**Step 1:** Display host-side instructions:
+**Step 1:** Display pre-rebuild instructions:
 
 ```text
 📋 Pre-Rebuild Setup Required
 
-Before rebuilding the container, clone hve-core on your HOST machine:
-
-Option A: Using terminal on HOST (not in container)
+Clone hve-core on your HOST machine (not in container):
   cd <parent-of-your-project>
   git clone https://github.com/microsoft/hve-core.git
-
-Option B: Using VS Code on HOST
-  1. Close this devcontainer (File > Close Remote Connection)
-  2. Open a terminal in your project's parent directory
-  3. Run: git clone https://github.com/microsoft/hve-core.git
-  4. Reopen your project in the devcontainer
-  5. Select `hve-core-installer` from the agent picker to complete installation
 ```
 
-**Step 2:** Update devcontainer.json with mount:
+**Step 2:** Add mount to devcontainer.json:
 
 <!-- <method-3-devcontainer-mount> -->
 ```jsonc
@@ -475,350 +525,80 @@ Option B: Using VS Code on HOST
 ```
 <!-- </method-3-devcontainer-mount> -->
 
-**Step 3:** Post-rebuild validation (inside container):
+**Step 3:** After rebuild, validate mount exists at `/workspaces/hve-core`
 
-<!-- <method-3-validate-powershell> -->
-```powershell
-$ErrorActionPreference = 'Stop'
+#### Method 4: postCreateCommand (Codespaces)
 
-$mountedPath = "/workspaces/hve-core"
-if (Test-Path $mountedPath) {
-    if (Test-Path "$mountedPath/.git") {
-        Write-Host "✅ HVE-Core found at $mountedPath"
-    } else {
-        Write-Host "⚠️ Mount point exists but hve-core not cloned on host"
-    }
-} else {
-    Write-Host "❌ Mount point not found. Did the container rebuild complete?"
-}
-```
-<!-- </method-3-validate-powershell> -->
+Add to devcontainer.json:
 
-**Add to `.vscode/settings.json` (workspace settings):**
-
-```json
-{
-  "chat.modeFilesLocations": {
-    ".github/chatmodes": true,
-    "/workspaces/hve-core/.github/chatmodes": true
-  },
-  "chat.promptFilesLocations": {
-    ".github/prompts": true,
-    "/workspaces/hve-core/.github/prompts": true
-  },
-  "chat.instructionsFilesLocations": {
-    ".github/instructions": true,
-    "/workspaces/hve-core/.github/instructions": true
-  }
-}
-```
-
----
-
-### Method 4: postCreateCommand (Codespaces)
-
-**Best for:** GitHub Codespaces, auto-updating on rebuild
-
-**Prerequisites:**
-
-* GitHub Codespaces environment
-* Network access for clone
-
-**Devcontainer.json configuration:**
-
-<!-- <method-4-devcontainer-minimal> -->
+<!-- <method-4-devcontainer> -->
 ```jsonc
 {
-  "name": "HVE-Core Enabled Project",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
   "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": {
-          ".github/chatmodes": true,
-          "/workspaces/hve-core/.github/chatmodes": true
-        },
-        "chat.promptFilesLocations": {
-          ".github/prompts": true,
-          "/workspaces/hve-core/.github/prompts": true
-        },
-        "chat.instructionsFilesLocations": {
-          ".github/instructions": true,
-          "/workspaces/hve-core/.github/instructions": true
-        }
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
   }
 }
 ```
-<!-- </method-4-devcontainer-minimal> -->
+<!-- </method-4-devcontainer> -->
 
-**Full-featured configuration with auto-updates:**
+Optional: Add `updateContentCommand` for auto-updates on rebuild.
 
-<!-- <method-4-devcontainer-full> -->
-```jsonc
-{
-  "name": "HVE-Core Development Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
-  
-  "postCreateCommand": {
-    "clone-hve-core": "if [ ! -d /workspaces/hve-core ]; then git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core && echo '✅ HVE-Core cloned'; else echo '✅ HVE-Core present'; fi",
-    "verify-structure": "test -d /workspaces/hve-core/.github/chatmodes && echo '✅ Chatmodes verified' || echo '⚠️ Chatmodes not found'"
-  },
-  
-  "updateContentCommand": "cd /workspaces/hve-core && git pull --ff-only 2>/dev/null || echo 'HVE-Core update skipped'",
-  
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "chat.modeFilesLocations": {
-          "/workspaces/hve-core/.github/chatmodes": true,
-          ".github/chatmodes": true
-        },
-        "chat.promptFilesLocations": {
-          "/workspaces/hve-core/.github/prompts": true,
-          ".github/prompts": true
-        },
-        "chat.instructionsFilesLocations": {
-          "/workspaces/hve-core/.github/instructions": true,
-          ".github/instructions": true
-        }
-      },
-      "extensions": ["github.copilot", "github.copilot-chat"]
-    }
-  },
-  
-  "remoteUser": "codespace"
-}
-```
-<!-- </method-4-devcontainer-full> -->
+#### Method 5: Multi-Root Workspace
 
----
+Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core:
 
-### Method 5: Multi-Root Workspace (RECOMMENDED)
-
-**Best for:** Any environment, provides best IDE integration
-
-**Prerequisites:**
-
-* HVE-Core cloned (peer, mounted, or via postCreateCommand)
-* User opens `.code-workspace` file instead of folder
-
-<!-- <method-5-workspace-powershell> -->
-```powershell
-$ErrorActionPreference = 'Stop'
-
-# Create multi-root workspace file
-# IMPORTANT: Do NOT use folder display names as path prefixes (e.g., "HVE-Core Library/.github").
-# VS Code does not resolve display names. Use actual relative paths from the workspace file location.
-$workspaceContent = @'
-{
-  "folders": [
-    { "name": "My Project", "path": "." },
-    { "name": "HVE-Core Library", "path": "../hve-core" }
-  ],
-  "settings": {
-    "chat.modeFilesLocations": {
-      ".github/chatmodes": true,
-      "../hve-core/.github/chatmodes": true
-    },
-    "chat.promptFilesLocations": {
-      ".github/prompts": true,
-      "../hve-core/.github/prompts": true
-    },
-    "chat.instructionsFilesLocations": {
-      ".github/instructions": true,
-      "../hve-core/.github/instructions": true
-    }
-  },
-  "extensions": {
-    "recommendations": ["github.copilot", "github.copilot-chat"]
-  }
-}
-'@
-Set-Content -Path "hve-core.code-workspace" -Value $workspaceContent
-Write-Host "✅ Created hve-core.code-workspace"
-```
-<!-- </method-5-workspace-powershell> -->
-
-<!-- <method-5-workspace-bash> -->
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# IMPORTANT: Do NOT use folder display names as path prefixes (e.g., "HVE-Core Library/.github").
-# VS Code does not resolve display names. Use actual relative paths from the workspace file location.
-cat > hve-core.code-workspace << 'EOF'
-{
-  "folders": [
-    { "name": "My Project", "path": "." },
-    { "name": "HVE-Core Library", "path": "../hve-core" }
-  ],
-  "settings": {
-    "chat.modeFilesLocations": {
-      ".github/chatmodes": true,
-      "../hve-core/.github/chatmodes": true
-    },
-    "chat.promptFilesLocations": {
-      ".github/prompts": true,
-      "../hve-core/.github/prompts": true
-    },
-    "chat.instructionsFilesLocations": {
-      ".github/instructions": true,
-      "../hve-core/.github/instructions": true
-    }
-  },
-  "extensions": {
-    "recommendations": ["github.copilot", "github.copilot-chat"]
-  }
-}
-EOF
-echo "✅ Created hve-core.code-workspace"
-```
-<!-- </method-5-workspace-bash> -->
-
-**For Codespaces:** Add workspace file to `.devcontainer/` and auto-open:
-
-<!-- <method-5-devcontainer-codespaces> -->
-```jsonc
-{
-  "name": "My Project + HVE-Core",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
-  "postCreateCommand": "[ -d /workspaces/hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core",
-  
-  "workspaceFolder": "/workspaces/my-project",
-  
-  "postAttachCommand": "echo 'Opening multi-root workspace...' && code .devcontainer/hve-core.code-workspace"
-}
-```
-<!-- </method-5-devcontainer-codespaces> -->
-
----
-
-### Method 6: Submodule (Team/Version-Controlled)
-
-**Best for:** Teams needing reproducible, version-controlled setup
-
-**Prerequisites:**
-
-* Git repository for consuming project
-* Team members MUST initialize submodules after clone
-
-<!-- <method-6-install-powershell> -->
-```powershell
-$ErrorActionPreference = 'Stop'
-
-# Add HVE-Core as submodule
-$submodulePath = "lib/hve-core"
-if (-not (Test-Path $submodulePath)) {
-    git submodule add https://github.com/microsoft/hve-core.git $submodulePath
-    Write-Host "✅ Added HVE-Core as submodule at $submodulePath"
-} else {
-    Write-Host "⏭️ Submodule already exists at $submodulePath"
-}
-
-# Initialize and update
-git submodule update --init --recursive
-Write-Host "✅ Submodule initialized"
-
-# Commit the change
-git add .gitmodules $submodulePath
-git commit -m "Add HVE-Core as submodule"
-Write-Host "✅ Committed submodule addition"
-```
-<!-- </method-6-install-powershell> -->
-
-<!-- <method-6-install-bash> -->
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-SUBMODULE_PATH="lib/hve-core"
-
-# Add submodule
-if [ ! -d "$SUBMODULE_PATH" ]; then
-    git submodule add https://github.com/microsoft/hve-core.git "$SUBMODULE_PATH"
-    echo "✅ Added HVE-Core as submodule at $SUBMODULE_PATH"
-else
-    echo "⏭️ Submodule already exists at $SUBMODULE_PATH"
-fi
-
-# Initialize and update
-git submodule update --init --recursive
-echo "✅ Submodule initialized"
-
-# Commit the change
-git add .gitmodules "$SUBMODULE_PATH"
-git commit -m "Add HVE-Core as submodule"
-echo "✅ Committed submodule addition"
-```
-<!-- </method-6-install-bash> -->
-
-**Add to `.vscode/settings.json` (workspace settings):**
-
+<!-- <method-5-workspace> -->
 ```json
 {
-  "chat.modeFilesLocations": { "lib/hve-core/.github/chatmodes": true, ".github/chatmodes": true },
-  "chat.promptFilesLocations": { "lib/hve-core/.github/prompts": true, ".github/prompts": true },
-  "chat.instructionsFilesLocations": { "lib/hve-core/.github/instructions": true, ".github/instructions": true }
+  "folders": [
+    { "name": "My Project", "path": "." },
+    { "name": "HVE-Core Library", "path": "../hve-core" }
+  ],
+  "settings": { /* Same as settings template with ../hve-core prefix */ }
 }
 ```
+<!-- </method-5-workspace> -->
 
-**Devcontainer.json for auto-initialization:**
+User opens the `.code-workspace` file instead of the folder.
+
+#### Method 6: Submodule
+
+Use git submodule commands instead of clone:
+
+```bash
+git submodule add https://github.com/microsoft/hve-core.git lib/hve-core
+git submodule update --init --recursive
+git add .gitmodules lib/hve-core
+git commit -m "Add HVE-Core as submodule"
+```
+
+Team members run `git submodule update --init --recursive` after cloning.
+
+Optional devcontainer.json for auto-initialization:
 
 <!-- <method-6-devcontainer> -->
 ```jsonc
 {
-  "name": "My Project with HVE-Core (Submodule)",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
   "onCreateCommand": "git submodule update --init --recursive",
   "updateContentCommand": "git submodule update --remote lib/hve-core || true"
 }
 ```
 <!-- </method-6-devcontainer> -->
 
-**Team member onboarding:**
-
-```bash
-# Option A: Clone with submodules
-git clone --recurse-submodules https://github.com/your-org/your-project.git
-
-# Option B: Initialize after clone
-git submodule update --init --recursive
-
-# Option C: Global auto-recurse
-git config --global submodule.recurse true
-```
-
-**Submodule updates:**
-
-```bash
-# Check for updates
-git submodule update --remote --dry-run
-
-# Update to latest
-git submodule update --remote lib/hve-core
-
-# After updating, commit the change
-git add lib/hve-core
-git commit -m "Update HVE-Core submodule to latest"
-```
-
 ---
 
 ## Phase 4: Validation (Validator Persona)
 
 After installation completes, you MUST switch to the **Validator** persona and verify the installation.
+
+> **Important**: After successful validation, proceed to Phase 4.5 for optional agent customization (clone-based methods only).
 
 ### Checkpoint 2: Settings Authorization
 
@@ -954,6 +734,432 @@ Method [N]: [Name] installed successfully.
 
 ---
 
+## Phase 4.5: Agent Customization (Optional)
+
+After successful validation, offer users the option to copy agent files into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
+
+### Skip Condition
+
+If user selected **Extension Quick Install** (Option 1) in Phase 1A, skip Phase 4.5 entirely and proceed to the success report. Extension installation bundles agents automatically.
+
+### Checkpoint 3: Agent Copy Decision
+
+Present the agent selection prompt:
+
+<!-- <agent-copy-prompt> -->
+```text
+📂 Agent Customization (Optional)
+
+HVE-Core includes specialized agents for common workflows.
+Copying agents enables local customization and offline use.
+
+🔬 RPI Core (Research-Plan-Implement workflow)
+  • task-researcher - Technical research and evidence gathering
+  • task-planner - Implementation plan creation
+  • task-implementor - Plan execution with tracking
+  • rpi-agent - RPI workflow coordinator
+
+📋 Planning & Documentation
+  • prd-builder, brd-builder, adr-creation, security-plan-creator
+
+⚙️ Generators
+  • gen-jupyter-notebook, gen-streamlit-dashboard, gen-data-spec, arch-diagram-builder
+
+✅ Review & Testing
+  • pr-review, prompt-builder, test-streamlit-dashboard
+
+🔗 Platform-Specific
+  • github-issue-manager (GitHub)
+  • ado-prd-to-wit (Azure DevOps)
+
+Options:
+  [1] Install all agents (recommended)
+  [2] Install RPI Core only
+  [3] Skip agent installation
+
+Your choice? (1/2/3)
+```
+<!-- </agent-copy-prompt> -->
+
+User input handling:
+
+* "1", "all", "install all" → Copy all agents
+* "2", "rpi", "rpi core", "core" → Copy RPI Core bundle only
+* "3", "skip", "none", "no" → Skip to success report
+* Unclear response → Ask for clarification
+
+### Agent Bundle Definitions
+
+| Bundle | Agents |
+| ------ | ------ |
+| `rpi-core` | task-researcher, task-planner, task-implementor, rpi-agent |
+| `all` | All 17 chatmodes (see prompt for full list) |
+
+### Collision Detection
+
+Before copying, check for existing agent files with matching names. Generate a script for the user's shell that:
+
+1. Builds list of source files based on selection (`rpi-core` = 4 files, `all` = all `.chatmode.md` files)
+2. Converts filenames: `.chatmode.md` → `.agent.md`
+3. Checks target directory (`.github/agents/`) for each converted name
+4. Reports collisions or clean state
+
+<!-- <collision-detection-reference> -->
+```powershell
+$ErrorActionPreference = 'Stop'
+
+$sourceDir = "$hveCoreBasePath/.github/chatmodes"
+$targetDir = ".github/agents"
+
+# Get files to copy based on selection
+$filesToCopy = switch ($selection) {
+    "rpi-core" { @("task-researcher.chatmode.md", "task-planner.chatmode.md", "task-implementor.chatmode.md", "rpi-agent.chatmode.md") }
+    "all" { Get-ChildItem "$sourceDir/*.chatmode.md" | ForEach-Object { $_.Name } }
+}
+
+# Check for collisions
+$collisions = @()
+foreach ($file in $filesToCopy) {
+    $targetName = $file -replace '\.chatmode\.md$', '.agent.md'
+    $targetPath = Join-Path $targetDir $targetName
+    if (Test-Path $targetPath) { $collisions += $targetPath }
+}
+
+if ($collisions.Count -gt 0) {
+    Write-Host "COLLISIONS_DETECTED=true"
+    Write-Host "COLLISION_FILES=$($collisions -join ',')"
+} else {
+    Write-Host "COLLISIONS_DETECTED=false"
+}
+```
+<!-- </collision-detection-reference> -->
+
+Bash adaptation: Use `case/esac` for selection, `find` with `-printf '%f\n'` for `all`, `test -f` for existence.
+
+### Collision Resolution Prompt
+
+If collisions are detected, present:
+
+<!-- <collision-prompt> -->
+```text
+⚠️ Existing Agents Detected
+
+The following agents already exist in your project:
+  • [list collision files]
+
+Options:
+  [O] Overwrite with HVE-Core version
+  [K] Keep existing (skip these files)
+  [C] Compare (show diff for first file)
+
+Or for all conflicts:
+  [OA] Overwrite all
+  [KA] Keep all existing
+
+Your choice?
+```
+<!-- </collision-prompt> -->
+
+User input handling:
+
+* "o", "overwrite" → Overwrite current file, ask about next
+* "k", "keep" → Keep current file, ask about next
+* "c", "compare" → Show diff, then re-prompt
+* "oa", "overwrite all" → Overwrite all collisions
+* "ka", "keep all" → Keep all existing files
+
+### Agent Copy Execution
+
+After selection and collision resolution, execute the copy operation. Generate a script that:
+
+1. Creates `.github/agents/` directory if needed
+2. Initializes manifest with source, version, timestamp, empty files dict
+3. For each file: copy content, convert filename, compute SHA256, add to manifest
+4. Skip files based on collision resolution decisions
+5. Write `.hve-tracking.json`
+
+<!-- <agent-copy-reference> -->
+```powershell
+$ErrorActionPreference = 'Stop'
+
+$sourceDir = "$hveCoreBasePath/.github/chatmodes"
+$targetDir = ".github/agents"
+$manifestPath = ".hve-tracking.json"
+
+# Create target directory
+if (-not (Test-Path $targetDir)) {
+    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+    Write-Host "✅ Created $targetDir"
+}
+
+# Initialize manifest
+$manifest = @{
+    source = "microsoft/hve-core"
+    version = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
+    installed = (Get-Date -Format "o")
+    files = @{}; skip = @()
+}
+
+# Copy files
+foreach ($file in $filesToCopy) {
+    $sourcePath = Join-Path $sourceDir $file
+    $targetName = $file -replace '\.chatmode\.md$', '.agent.md'
+    $targetPath = Join-Path $targetDir $targetName
+    $relPath = ".github/agents/$targetName"
+    
+    if ($keepExisting -and $collisions -contains $targetPath) {
+        Write-Host "⏭️ Kept existing: $targetName"; continue
+    }
+    
+    Set-Content -Path $targetPath -Value (Get-Content $sourcePath -Raw) -NoNewline
+    $hash = (Get-FileHash -Path $targetPath -Algorithm SHA256).Hash.ToLower()
+    $manifest.files[$relPath] = @{ version = $manifest.version; sha256 = $hash; status = "managed" }
+    Write-Host "✅ Copied $targetName"
+}
+
+$manifest | ConvertTo-Json -Depth 10 | Set-Content $manifestPath
+Write-Host "✅ Created $manifestPath"
+```
+<!-- </agent-copy-reference> -->
+
+Bash adaptation: Use `jq` for JSON manipulation, `sha256sum` for hashing, `cp` for file copy.
+
+### Agent Copy Success Report
+
+Upon successful copy, display:
+
+<!-- <agent-copy-success> -->
+```text
+✅ Agent Installation Complete!
+
+Copied [N] agents to .github/agents/
+Created .hve-tracking.json for upgrade tracking
+
+📄 Installed Agents:
+  • [list of copied agent names]
+
+🔄 Upgrade Workflow:
+  Run this installer again to check for agent updates.
+  Modified files will prompt before overwriting.
+  Use 'eject' to take ownership of any file.
+
+Proceeding to final success report...
+```
+<!-- </agent-copy-success> -->
+
+---
+
+## Phase 4.5 Upgrade Mode
+
+When `.hve-tracking.json` already exists, Phase 4.5 operates in upgrade mode.
+
+### Upgrade Detection
+
+At Phase 4.5 start, check for existing manifest. Generate a script that:
+
+1. Checks for `.hve-tracking.json`
+2. Compares installed version against source version from HVE-Core's `package.json`
+3. Reports upgrade mode status and version delta
+
+<!-- <upgrade-detection-reference> -->
+```powershell
+$ErrorActionPreference = 'Stop'
+$manifestPath = ".hve-tracking.json"
+
+if (Test-Path $manifestPath) {
+    $manifest = Get-Content $manifestPath | ConvertFrom-Json -AsHashtable
+    $sourceVersion = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
+    
+    Write-Host "UPGRADE_MODE=true"
+    Write-Host "INSTALLED_VERSION=$($manifest.version)"
+    Write-Host "SOURCE_VERSION=$sourceVersion"
+    Write-Host "VERSION_CHANGED=$($sourceVersion -ne $manifest.version)"
+} else {
+    Write-Host "UPGRADE_MODE=false"
+}
+```
+<!-- </upgrade-detection-reference> -->
+
+Bash adaptation: Use `jq -r '.version'` for JSON parsing, string comparison with `[ "$a" != "$b" ]`.
+
+### Upgrade Prompt
+
+If upgrade mode with version change:
+
+<!-- <upgrade-prompt> -->
+```text
+🔄 HVE-Core Agent Upgrade
+
+Source: microsoft/hve-core v[SOURCE_VERSION]
+Installed: v[INSTALLED_VERSION]
+
+Checking file status...
+```
+<!-- </upgrade-prompt> -->
+
+### File Status Check
+
+Compare current files against manifest:
+
+<!-- <file-status-check-powershell> -->
+```powershell
+$ErrorActionPreference = 'Stop'
+
+$manifest = Get-Content ".hve-tracking.json" | ConvertFrom-Json -AsHashtable
+$statusReport = @()
+
+foreach ($file in $manifest.files.Keys) {
+    $entry = $manifest.files[$file]
+    $status = $entry.status
+    
+    if ($status -eq "ejected") {
+        $statusReport += @{
+            file = $file
+            status = "ejected"
+            action = "Skip (user owns this file)"
+        }
+        continue
+    }
+    
+    if (-not (Test-Path $file)) {
+        $statusReport += @{
+            file = $file
+            status = "missing"
+            action = "Will restore"
+        }
+        continue
+    }
+    
+    $currentHash = (Get-FileHash -Path $file -Algorithm SHA256).Hash.ToLower()
+    if ($currentHash -ne $entry.sha256) {
+        $statusReport += @{
+            file = $file
+            status = "modified"
+            action = "Requires decision"
+            currentHash = $currentHash
+            storedHash = $entry.sha256
+        }
+    } else {
+        $statusReport += @{
+            file = $file
+            status = "managed"
+            action = "Will update"
+        }
+    }
+}
+
+$statusReport | ForEach-Object {
+    Write-Host "FILE=$($_.file)|STATUS=$($_.status)|ACTION=$($_.action)"
+}
+```
+<!-- </file-status-check-powershell> -->
+
+### Upgrade Summary Display
+
+Present upgrade summary:
+
+<!-- <upgrade-summary> -->
+```text
+📋 Upgrade Summary
+
+Files to update (managed):
+  ✅ .github/agents/task-researcher.agent.md
+  ✅ .github/agents/task-planner.agent.md
+
+Files requiring decision (modified):
+  ⚠️ .github/agents/task-implementor.agent.md
+
+Files skipped (ejected):
+  🔒 .github/agents/custom-agent.agent.md
+
+For modified files, choose:
+  [A] Accept upstream (overwrite your changes)
+  [K] Keep local (skip this update)
+  [E] Eject (never update this file again)
+  [D] Show diff
+
+Process file: task-implementor.agent.md?
+```
+<!-- </upgrade-summary> -->
+
+### Diff Display
+
+When user requests diff:
+
+<!-- <diff-display> -->
+```text
+─────────────────────────────────────
+File: .github/agents/task-implementor.agent.md
+Status: modified
+─────────────────────────────────────
+
+--- Local version
++++ HVE-Core version
+
+@@ -10,3 +10,5 @@
+ ## Role Definition
+
+-Your local modifications here
++Updated behavior with new capabilities
++
++New section added in latest version
+─────────────────────────────────────
+
+[A] Accept upstream / [K] Keep local / [E] Eject
+```
+<!-- </diff-display> -->
+
+### Status Transitions
+
+After user decision, update manifest:
+
+| Decision | Status Change | Manifest Update |
+| -------- | ------------- | --------------- |
+| Accept | `modified` → `managed` | Update hash, version |
+| Keep | `modified` → `modified` | No change (skip file) |
+| Eject | `*` → `ejected` | Add `ejectedAt` timestamp |
+
+### Eject Implementation
+
+When user ejects a file:
+
+<!-- <eject-powershell> -->
+```powershell
+function Invoke-EjectFile {
+    param([string]$FilePath)
+    
+    $manifest = Get-Content ".hve-tracking.json" | ConvertFrom-Json -AsHashtable
+    
+    if ($manifest.files.ContainsKey($FilePath)) {
+        $manifest.files[$FilePath].status = "ejected"
+        $manifest.files[$FilePath].ejectedAt = (Get-Date -Format "o")
+        
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content ".hve-tracking.json"
+        Write-Host "✅ Ejected: $FilePath"
+        Write-Host "   This file will never be updated by HVE-Core."
+    }
+}
+```
+<!-- </eject-powershell> -->
+
+### Upgrade Completion
+
+After processing all files:
+
+<!-- <upgrade-success> -->
+```text
+✅ Upgrade Complete!
+
+Updated: [N] files
+Skipped: [M] files (kept local or ejected)
+Version: v[OLD] → v[NEW]
+
+Proceeding to final success report...
+```
+<!-- </upgrade-success> -->
+
+---
+
 ## Error Recovery
 
 Provide targeted guidance when steps fail:
@@ -966,6 +1172,23 @@ Provide targeted guidance when steps fail:
 | **Validation failed**      | Repository may be incomplete; delete HVE-Core directory and re-run installer      |
 | **Settings update failed** | Verify settings.json is valid JSON; check permissions; try closing VS Code        |
 <!-- </error-recovery> -->
+
+---
+
+## Rollback
+
+To remove a failed or unwanted installation:
+
+| Method | Cleanup |
+|--------|--------|
+| Extension | VS Code → Extensions → HVE Core → Uninstall |
+| 1 (Peer Clone) | `rm -rf ../hve-core` |
+| 2 (Git-Ignored) | `rm -rf .hve-core` |
+| 3-4 (Mounted/Codespaces) | Remove mount/postCreate from devcontainer.json |
+| 5 (Multi-Root) | Delete `.code-workspace` file |
+| 6 (Submodule) | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
+
+Then remove HVE-Core paths from `.vscode/settings.json`.
 
 ---
 
