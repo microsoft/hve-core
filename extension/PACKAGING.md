@@ -238,7 +238,7 @@ When packaging, agents and chatmodes are filtered by their `maturity` frontmatte
 | Stable      | `stable`                               |
 | PreRelease  | `stable`, `preview`, `experimental`    |
 
-See [Agent Maturity Levels](../docs/contributing/agent-maturity.md) for contributor guidance on setting maturity levels.
+See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
 
 ## Notes
 

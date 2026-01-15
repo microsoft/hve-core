@@ -83,6 +83,7 @@ All AI artifacts (chatmodes, instructions, prompts) **MUST** target the **latest
 1. **Feature parity**: Latest models support the most advanced features and capabilities
 2. **Maintenance burden**: Supporting multiple model versions creates testing and compatibility overhead
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
+4. **Future-proofing**: Older models will be deprecated and removed from service
 
 ## Maturity Field Requirements
 
@@ -123,7 +124,6 @@ tools: ['codebase', 'search']
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
-4. **Future-proofing**: Older models will be deprecated and removed from service
 
 **Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
 

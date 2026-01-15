@@ -15,7 +15,7 @@
       "type": "string",
       "enum": ["stable", "preview", "experimental", "deprecated"],
       "default": "stable",
-      "description": "Agent maturity level affecting visibility in stable vs pre-release builds. Stable agents appear in all builds; preview/experimental only in pre-release"
+      "description": "Maturity level affecting visibility in stable vs pre-release builds. Stable appears in all builds; preview/experimental only in pre-release."
     },
     "tools": {
       "type": "array",
