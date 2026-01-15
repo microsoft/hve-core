@@ -80,6 +80,19 @@ adr-creation create an ADR for our new microservice architecture
 
 Prompts are available in the Copilot Chat prompt picker and can be used to generate consistent, high-quality outputs for common tasks.
 
+## Pre-release Channel
+
+HVE Core offers two installation channels:
+
+| Channel     | Description                                              | Maturity Levels                     |
+|-------------|----------------------------------------------------------|-------------------------------------|
+| Stable      | Production-ready artifacts only                          | `stable`                            |
+| Pre-release | Early access to new features and experimental artifacts  | `stable`, `preview`, `experimental` |
+
+To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code, or use the Extensions view and switch to the pre-release channel.
+
+For more details on maturity levels and the release process, see the [contributing documentation](https://github.com/microsoft/hve-core/blob/main/docs/contributing/release-process.md#extension-channels-and-maturity).
+
 ## Requirements
 
 - VS Code version 1.106.1 or higher

@@ -124,3 +124,44 @@ Documentation-only releases may not require an extension publish.
 | Merge Release PR         | GitHub Release created, tag applied         |
 | Run publish workflow     | Extension published to marketplace          |
 | Merge docs-only PR       | Changelog updated, no version bump          |
+
+## Extension Channels and Maturity
+
+The VS Code extension is published to two channels with different stability expectations.
+
+### Extension Channels
+
+| Channel    | Stability       | Included Maturity Levels           | Audience          |
+|------------|-----------------|-------------------------------------|-------------------|
+| Stable     | Production-ready | `stable` only                      | All users         |
+| Pre-release | Early access    | `stable`, `preview`, `experimental` | Early adopters    |
+
+### Maturity Levels
+
+Each prompt, instruction, and chatmode declares a `maturity` field in its frontmatter:
+
+| Level          | Description                                      | Included In       |
+|----------------|--------------------------------------------------|-------------------|
+| `stable`       | Production-ready, fully tested                   | Stable, Pre-release |
+| `preview`      | Feature-complete but may have rough edges        | Pre-release only  |
+| `experimental` | Early development, may change significantly      | Pre-release only  |
+| `deprecated`   | Scheduled for removal, excluded from all builds  | Neither           |
+
+### Maturity Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> experimental : New artifact
+    experimental --> preview : Core features complete
+    preview --> stable : Production tested
+    stable --> deprecated : Superseded or obsolete
+    deprecated --> [*] : Removed
+```
+
+### Contributor Guidelines
+
+* **New contributions**: Default to `maturity: stable` unless explicitly targeting early adopters
+* **Experimental work**: Use `maturity: experimental` for proof-of-concept or rapidly evolving artifacts
+* **Preview promotions**: Move to `maturity: preview` when core functionality is complete
+* **Stable promotions**: Move to `maturity: stable` after production validation
+* **Deprecation**: Set `maturity: deprecated` before removal to provide transition time

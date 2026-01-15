@@ -23,6 +23,7 @@ Guidelines and standards for contributing AI artifacts to hve-core.
 | [Chat Modes](chatmodes.md)                 | How to create and submit new chat mode definitions                              |
 | [Instructions](instructions.md)            | How to create repository-specific coding guidelines                             |
 | [Prompts](prompts.md)                      | How to create reusable prompt templates                                         |
+| [Release Process](release-process.md)      | Extension channels, maturity levels, and publishing workflow                    |
 
 ## Before You Start
 

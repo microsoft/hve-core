@@ -72,6 +72,17 @@ Prompt files **MUST**:
   * `workflow` - Automated workflow/pipeline context
 * **Example**: `workflow`
 
+**`maturity`** (string enum, MANDATORY)
+
+* **Purpose**: Controls which extension channel includes this prompt
+* **Valid values**:
+  * `stable` - Production-ready, included in Stable and Pre-release channels
+  * `preview` - Feature-complete, included in Pre-release channel only
+  * `experimental` - Early development, included in Pre-release channel only
+  * `deprecated` - Scheduled for removal, excluded from all channels
+* **Default**: New prompts should use `stable` unless targeting early adopters
+* **Example**: `stable`
+
 ### Optional Fields
 
 **`category`** (string enum)
@@ -105,6 +116,7 @@ Prompt files **MUST**:
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
 mode: 'workflow'
+maturity: 'stable'
 category: 'ado'
 version: '1.0.0'
 author: 'microsoft/hve-core'
@@ -417,6 +429,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
+* [ ] Maturity field set appropriately (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

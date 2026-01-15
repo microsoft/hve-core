@@ -84,6 +84,17 @@ Instruction files **MUST**:
   * Directory scope: `**/src/**/*.sh`
   * Specific paths: `**/.copilot-tracking/pr/new/**`
 
+**`maturity`** (string enum, MANDATORY)
+
+* **Purpose**: Controls which extension channel includes this instruction
+* **Valid values**:
+  * `stable` - Production-ready, included in Stable and Pre-release channels
+  * `preview` - Feature-complete, included in Pre-release channel only
+  * `experimental` - Early development, included in Pre-release channel only
+  * `deprecated` - Scheduled for removal, excluded from all channels
+* **Default**: New instructions should use `stable` unless targeting early adopters
+* **Example**: `stable`
+
 ### Optional Fields
 
 **`version`** (string)
@@ -108,6 +119,7 @@ Instruction files **MUST**:
 ---
 description: 'Required instructions for Python script implementation with type hints, docstrings, and error handling'
 applyTo: '**/*.py, **/*.ipynb'
+maturity: 'stable'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'

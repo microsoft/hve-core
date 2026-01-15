@@ -125,6 +125,17 @@ Chatmode files **MUST**:
 * **Style**: Sentence case with proper punctuation
 * **Example**: `'Validates contributed content for quality and compliance with hve-core standards'`
 
+**`maturity`** (string enum, MANDATORY)
+
+* **Purpose**: Controls which extension channel includes this chatmode
+* **Valid values**:
+  * `stable` - Production-ready, included in Stable and Pre-release channels
+  * `preview` - Feature-complete, included in Pre-release channel only
+  * `experimental` - Early development, included in Pre-release channel only
+  * `deprecated` - Scheduled for removal, excluded from all channels
+* **Default**: New chatmodes should use `stable` unless targeting early adopters
+* **Example**: `stable`
+
 ### Optional Fields
 
 **`tools`** (array of strings)
