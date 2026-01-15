@@ -188,35 +188,49 @@ Validation guidelines:
 
 ````markdown
 ---
-description: 'Python coding standards and conventions'
-applyTo: '**/*.py'
+description: 'Prompt engineering standards and conventions'
+applyTo: '**/*.prompt.md'
 ---
 
-# Python Instructions
+# Prompt Engineering Instructions
 
-## Naming Conventions
+## Structure Requirements
 
-* Use snake_case for functions and variables.
-* Use PascalCase for class names.
-* Prefix private methods with underscore.
+* Include frontmatter with required fields for prompt files.
+* Add an Inputs section when variables are used.
+* End with a horizontal rule and activation line.
 
-## Import Organization
+## Protocol Design
 
-Organize imports in this order:
+Use a step-based or phase-based protocol when sequencing matters.
 
-1. Standard library imports
-2. Third-party imports
-3. Local application imports
+* Use `## Required Steps` or `## Required Phases` to frame the workflow.
+* Keep step or phase headings concise and descriptive.
+* Include outcomes that indicate completion for each step or phase.
 
-```python
-import os
-import sys
+## Language Guidelines
 
-import requests
-import pandas as pd
+* Use action-oriented, unambiguous instructions.
+* Avoid vague qualifiers such as "etc." or "as needed".
+* Keep sentences concise and direct.
 
-from myapp import utils
-from myapp.models import User
+```markdown
+---
+description: 'Builds a prompt for research tasks'
+agent: 'prompt-builder'
+argument-hint: "file=<path> requirements=<text>"
+---
+
+# Research Prompt
+
+## Inputs
+
+* ${input:file}: (Optional) Target prompt file path.
+* ${input:requirements}: (Optional) Additional requirements.
+
+---
+
+Proceed with the research build workflow.
 ```
 ````
 
@@ -330,17 +344,17 @@ Execution patterns:
 
 ## Prompt Quality Criteria
 
-Every item in this checklist applies to the entire prompt file. Review the entire prompt file against each item. Validation fails if any single checklist item is not satisfied.
+Every item in this checklist applies to the entire file when authoring prompt, instructions, chatmode, or agent files. Review the entire file against each item. Validation fails if any single checklist item is not satisfied.
 
-* [ ] The entire prompt file and all instructions match the Prompt Writing Style.
-* [ ] The entire prompt file and all instructions follow all Prompt Key Criteria.
-* [ ] Few-shot examples are in correctly fenced code blocks.
-* [ ] Few-shot examples match the prompt instructions exactly without confusion.
-* [ ] Prompt file structure follows the appropriate file type guidelines.
-* [ ] Protocols in the prompt file follow all Protocol Patterns.
-* [ ] The user's request and requirements are implemented completely into the prompt files.
-* [ ] Existing prompt instructions have been updated to satisfy this checklist.
-* [ ] New or updated prompt instructions satisfy this checklist.
+* [ ] The entire file and all instructions match the Prompt Writing Style for prompt, instructions, chatmode, or agent files.
+* [ ] The entire file and all instructions follow all Prompt Key Criteria for prompt, instructions, chatmode, or agent files.
+* [ ] Few-shot examples are in correctly fenced code blocks for prompt, instructions, chatmode, or agent files.
+* [ ] Few-shot examples match the prompt instructions exactly without confusion across prompt, instructions, chatmode, or agent files.
+* [ ] File structure follows the appropriate file type guidelines for prompt, instructions, chatmode, or agent files.
+* [ ] Protocols in the file follow all Protocol Patterns for prompt, instructions, chatmode, or agent files.
+* [ ] The user's request and requirements are implemented completely into prompt, instructions, chatmode, or agent files.
+* [ ] Existing instructions have been updated to satisfy this checklist for prompt, instructions, chatmode, or agent files.
+* [ ] New or updated instructions satisfy this checklist for prompt, instructions, chatmode, or agent files.
 
 ## External Source Integration
 
