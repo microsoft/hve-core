@@ -378,7 +378,7 @@ Use this matrix to determine the recommended method:
 <!-- <decision-matrix> -->
 | Environment                | Team | Updates    | **Recommended Method**                                  |
 |----------------------------|------|------------|----------------------------------------------------------|
-| Any (simplest)             | Any  | Auto       | **Extension Quick Install** (works in all environments) |
+| Any (simplest)             | Any  | -          | **Extension Quick Install** (works in all environments) |
 | Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                 |
 | Local (no container)       | Team | Controlled | **Method 6: Submodule**                                  |
 | Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                                |
@@ -836,7 +836,7 @@ if ($collisions.Count -gt 0) {
 ```
 <!-- </collision-detection-reference> -->
 
-Bash adaptation: Use `case/esac` for selection, `find` with `-printf '%f\n'` for `all`, `test -f` for existence.
+Bash adaptation: Use `case/esac` for selection, `find ... -exec basename {} \;` for `all` (portable across GNU/BSD), `test -f` for existence.
 
 ### Collision Resolution Prompt
 
@@ -1191,6 +1191,8 @@ To remove a failed or unwanted installation:
 | 6 (Submodule) | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
 
 Then remove HVE-Core paths from `.vscode/settings.json`.
+
+If you used Phase 4.5 agent copy, also delete `.hve-tracking.json` and optionally `.github/agents/` if you no longer need copied agents.
 
 ---
 
