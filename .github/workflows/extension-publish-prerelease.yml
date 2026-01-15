@@ -1,0 +1,166 @@
+name: Publish Pre-Release Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ODD minor version (e.g., 1.1.0, 1.3.0). Must use ODD minor number.'
+        required: true
+        type: string
+      dry-run:
+        description: 'Dry run (package only, do not publish)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-version:
+    name: Validate Pre-Release Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Validate ODD minor version
+        id: validate
+        run: |
+          VERSION="${{ inputs.version }}"
+          # Strip leading 'v' if present
+          VERSION="${VERSION#v}"
+          
+          # Validate format
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 1.1.0)"
+            exit 1
+          fi
+          
+          # Extract minor version
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          
+          # Check if ODD (pre-release channel uses ODD minor versions)
+          if (( MINOR % 2 == 0 )); then
+            echo "::error::Pre-release requires ODD minor version. Got: $VERSION (minor=$MINOR is EVEN)"
+            echo "::error::Use version like 1.1.0, 1.3.0, 2.1.0 for pre-release channel"
+            exit 1
+          fi
+          
+          echo "✅ Valid pre-release version: $VERSION (minor=$MINOR is ODD)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  package:
+    name: Package Pre-Release Extension
+    needs: validate-version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      vsix-file: ${{ steps.package.outputs.vsix-file }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '20'
+
+      - name: Install VSCE
+        run: npm install -g @vscode/vsce
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Prepare extension resources
+        id: prepare
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Preparing extension for PreRelease channel..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+
+      - name: Package pre-release extension
+        id: package
+        shell: pwsh
+        run: |
+          $version = "${{ needs.validate-version.outputs.version }}"
+          Write-Host "📦 Packaging pre-release extension v$version..."
+          ./scripts/extension/Package-Extension.ps1 -Version $version -PreRelease
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: extension-vsix-prerelease
+          path: extension/*.vsix
+          retention-days: 30
+
+  publish:
+    name: Publish Pre-Release to Marketplace
+    needs: [validate-version, package]
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    environment: marketplace
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '20'
+
+      - name: Install VSCE
+        run: npm install -g @vscode/vsce
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: extension-vsix-prerelease
+          path: ./extension
+
+      - name: Publish pre-release to VS Code Marketplace
+        run: |
+          VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+          echo "📦 Publishing pre-release: $VSIX_FILE"
+          vsce publish --packagePath "$VSIX_FILE" --pre-release --azure-credential
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Pre-Release Extension Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel:** Pre-Release (ODD minor)" >> $GITHUB_STEP_SUMMARY
+          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Users can install via **Switch to Pre-Release Version** in VS Code." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)" >> $GITHUB_STEP_SUMMARY
