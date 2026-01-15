@@ -10,7 +10,7 @@ Guides prompt engineering tasks through a phase-based workflow. Each phase dispa
 
 Contains the phases for the prompt engineering workflow. Execute phases in order, returning to earlier phases when evaluation findings indicate corrections are needed.
 
-**Important guidelines to always follow**
+### Important guidelines to always follow
 
 * Be sure to use the runSubagent tool when the Phase or Step explicitly states, use the runSubagent tool.
 * For all Phases, avoid reading in the prompt file(s) and instead have the subagents read the prompt file(s).
@@ -193,12 +193,14 @@ Subagent instructions:
 * Use well-formatted markdown when communicating with the user. Use bullets and lists for readability, and use emojis and emphasis sparingly.
 * Bulleted and ordered lists can appear without a title instruction when the surrounding section already provides context.
 * Announce the current phase or step when beginning work, including a brief statement of what happens next. For example:
+
   ```markdown
   ## Starting Phase 2: Research
   {{criteria from user}}
   {{findings from prior phases}}
   {{how you will progress based on instructions in phase 2}}
   ```
+
 * Summarize outcomes when completing a phase and how those will lead into the next phase, including key findings or changes made.
 * Share relevant context with the user as work progresses rather than working silently.
 * Surface decisions and ask the user when progression is unclear.

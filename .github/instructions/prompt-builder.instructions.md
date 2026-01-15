@@ -63,7 +63,7 @@ Validation guidelines:
 * End with `---` activation line followed by instruction to begin.
 * Document input variables in an Inputs section when present.
 
-#### Example Structure
+#### Prompt Example Structure
 
 Examples use fenced code blocks with language tags and include required frontmatter.
 
@@ -126,7 +126,7 @@ Phase structure guidelines when using phases:
 * Follow conversation guidelines for phase transitions.
 * Specify planning files for state persistence when needed.
 
-#### Example Structure
+#### Chatmode Example Structure
 
 Examples use fenced code blocks with language tags and include required frontmatter.
 
@@ -188,7 +188,7 @@ Validation guidelines:
 * Content defines standards and conventions.
 * Wrap examples in fenced code blocks.
 
-#### Example Structure
+#### Instructions Example Structure
 
 Examples use fenced code blocks with language tags and include required frontmatter.
 
