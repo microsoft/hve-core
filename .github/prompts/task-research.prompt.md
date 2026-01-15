@@ -1,6 +1,7 @@
 ---
 description: "Initiates research for task implementation based on user requirements and conversation context - Brought to you by microsoft/hve-core"
 agent: 'task-researcher'
+maturity: stable
 ---
 
 # Task Research

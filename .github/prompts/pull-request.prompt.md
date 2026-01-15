@@ -1,6 +1,7 @@
 ---
 description: 'Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai'
 agent: rpi-agent
+maturity: stable
 ---
 
 # Pull Request (PR) Generation Instructions
@@ -178,6 +179,72 @@ Extract from commit messages and branch names:
 | `AB#(\d+)`            | Commit/branch  | `AB#12345` (ADO)  |
 
 **Deduplication**: Remove duplicate issue numbers, preserve action prefix from first occurrence.
+
+#### GHCP Maturity Detection
+
+After detecting GHCP files from Change Type Detection, analyze frontmatter for maturity levels:
+
+1. For each file matching `.instructions.md`, `.prompt.md`, `.chatmode.md`, or `.agent.md` patterns:
+   * Extract file content from `<full_diff>` section (look for `+++ b/...` paths)
+   * Parse YAML frontmatter between `---` delimiters in the added content
+   * Read `maturity` field value (default: `stable` if not present)
+
+2. Categorize files by maturity:
+
+   | Maturity Level | Risk Level | Indicator | Action |
+   |----------------|------------|-----------|--------|
+   | stable | ✅ Low | Production-ready | Include in standard change list |
+   | preview | 🔶 Medium | Pre-release feature | Flag in dedicated section |
+   | experimental | ⚠️ High | May have breaking changes | Add warning banner |
+   | deprecated | 🚫 Critical | Scheduled for removal | Add deprecation notice |
+
+3. If non-stable GHCP files detected, generate "GHCP Artifact Maturity" section in `pr.md`
+
+#### GHCP Maturity Output
+
+If non-stable GHCP files are detected, add this section to `pr.md` before the Notes section:
+
+##### Warning Banners
+
+For experimental files:
+
+```markdown
+> [!WARNING]
+> This PR includes **experimental** GHCP artifacts that may have breaking changes.
+> - `path/to/file.prompt.md`
+```
+
+For deprecated files:
+
+```markdown
+> [!CAUTION]
+> This PR includes **deprecated** GHCP artifacts scheduled for removal.
+> - `path/to/legacy.chatmode.md`
+```
+
+##### Maturity Summary Table
+
+Always include when any GHCP files are detected:
+
+```markdown
+## GHCP Artifact Maturity
+
+| File | Type | Maturity | Notes |
+|------|------|----------|-------|
+| `new-feature.prompt.md` | Prompt | ⚠️ experimental | Pre-release only |
+| `helper.chatmode.md` | Chatmode | 🔶 preview | Pre-release only |
+| `coding.instructions.md` | Instructions | ✅ stable | All builds |
+```
+
+##### Maturity Checklist
+
+If any non-stable files detected, add:
+
+```markdown
+### GHCP Maturity Acknowledgment
+- [ ] I acknowledge this PR includes non-stable GHCP artifacts
+- [ ] Non-stable artifacts are intentional for this change
+```
 
 ### Step 4: Security and Compliance Analysis
 

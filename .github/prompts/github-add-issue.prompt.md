@@ -1,6 +1,7 @@
 ---
 agent: "agent"
 description: "Add a GitHub issue to the backlog using discovered issue templates from .github/ISSUE_TEMPLATE/"
+maturity: stable
 ---
 
 # Add GitHub Issue to Backlog

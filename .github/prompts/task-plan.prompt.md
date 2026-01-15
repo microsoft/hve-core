@@ -1,6 +1,7 @@
 ---
 description: "Initiates planning for task implementation based on validated research documents - Brought to you by microsoft/hve-core"
 agent: 'task-planner'
+maturity: stable
 ---
 
 # Task Plan
