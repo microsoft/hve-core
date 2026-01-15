@@ -378,7 +378,7 @@ Use this matrix to determine the recommended method:
 <!-- <decision-matrix> -->
 | Environment                | Team | Updates    | **Recommended Method**                                  |
 |----------------------------|------|------------|----------------------------------------------------------|
-| Any (simplest)             | Any  | Auto       | **Extension Quick Install** (recommended)                |
+| Any (simplest)             | Any  | Auto       | **Extension Quick Install** (works in all environments) |
 | Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                 |
 | Local (no container)       | Team | Controlled | **Method 6: Submodule**                                  |
 | Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                                |
@@ -735,6 +735,8 @@ Method [N]: [Name] installed successfully.
 ---
 
 ## Phase 4.5: Agent Customization (Optional)
+
+> **Requirement**: Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported.
 
 After successful validation, offer users the option to copy agent files into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
 
