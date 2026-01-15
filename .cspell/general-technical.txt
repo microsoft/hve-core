@@ -1396,6 +1396,8 @@ datasize
 mult
 reqs
 toplevel
+mapfile
+Hashtable
 
 # Video & Image Processing
 drawtext
