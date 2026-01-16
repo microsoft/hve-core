@@ -12,9 +12,9 @@ keywords:
 estimated_reading_time: 3
 ---
 
-Guidelines and configuration for GitHub branch protection rules in hve-core.
-
 ## Overview
+
+Guidelines and configuration for GitHub branch protection rules in hve-core.
 
 Branch protection rules ensure code quality and security by requiring:
 
