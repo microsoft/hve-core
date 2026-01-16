@@ -64,47 +64,6 @@ Validation guidelines:
 * End with `---` activation line followed by instruction to begin.
 * Document input variables in an Inputs section when present.
 
-#### Prompt Example Structure
-
-Examples use fenced code blocks with language tags and include required frontmatter.
-
-```markdown
----
-description: "Initiates research for task implementation - Brought to you by microsoft/hve-core"
-agent: 'task-researcher'
-argument-hint: "topic=<research-topic> [chat={true|false}]"
----
-
-# Task Research
-
-## Inputs
-
-* ${input:topic}: (Required) Primary topic or focus area for research.
-* ${input:chat:true}: (Optional, defaults to true) Include conversation context.
-
-## Required Steps
-
-### Step 1: Analyze User Request
-
-Identify the primary objective from the user prompt.
-
-### Step 2: Synthesize Conversation Context
-
-Review the conversation history when `${input:chat}` is true (the default).
-
-### Step 3: Identify Research Targets
-
-Compile what needs investigation.
-
-### Step 4: Execute Deep Research
-
-Use runSubagent to parallelize investigation.
-
----
-
-Proceed with research initiation following the Required Steps.
-```
-
 ### Chatmode Files
 
 *Extension*: `.chatmode.md`
@@ -126,35 +85,6 @@ Phase structure guidelines when using phases:
 * Name phases with descriptive titles (Phase 1: Analyze, Phase 2: Discover).
 * Follow conversation guidelines for phase transitions.
 * Specify planning files for state persistence when needed.
-
-#### Chatmode Example Structure
-
-Examples use fenced code blocks with language tags and include required frontmatter.
-
-```markdown
----
-description: 'Product Manager expert for PRD analysis and work item planning'
-tools: ['search', 'edit/createFile', 'ado/*']
----
-
-# PRD to Work Item Planning Assistant
-
-## Required Phases
-
-This section contains the phases for PRD analysis and work item planning.
-
-### Phase 1: Analyze PRD Artifacts
-
-This phase reviews PRD documents and identifies potential work items.
-
-Planning files: *planning-log.md*, *artifact-analysis.md*
-
-Actions:
-
-* Review PRD artifacts and update planning files.
-* Suggest potential work items.
-* Capture keyword groupings for related item discovery.
-```
 
 ### Agent Files
 
@@ -188,72 +118,6 @@ Validation guidelines:
 * Include `applyTo` frontmatter with valid glob patterns.
 * Content defines standards and conventions.
 * Wrap examples in fenced code blocks.
-
-#### Instructions Example Structure
-
-Examples use fenced code blocks with language tags and include required frontmatter.
-
-````markdown
----
-description: 'Prompt engineering standards and conventions'
-applyTo: '**/*.prompt.md'
----
-
-# Prompt Engineering Instructions
-
-## Structure Requirements
-
-* Include frontmatter with required fields for prompt files.
-* Add an Inputs section when variables are used.
-* End with a horizontal rule and activation line.
-
-## Protocol Design
-
-Use a step-based or phase-based protocol when sequencing matters.
-
-* Use `## Required Steps` or `## Required Phases` to frame the workflow.
-* Keep step or phase headings concise and descriptive.
-* Include outcomes that indicate completion for each step or phase.
-
-## Language Guidelines
-
-* Use action-oriented, unambiguous instructions.
-* Avoid vague qualifiers such as "etc." or "as needed".
-* Keep sentences concise and direct.
-
-```markdown
----
-description: 'Builds a prompt for research tasks'
-agent: 'prompt-builder'
-argument-hint: "file=<path> requirements=<text>"
----
-
-# Research Prompt
-
-## Inputs
-
-* ${input:file}: (Optional) Target prompt file path.
-* ${input:requirements}: (Optional) Additional requirements.
-
-## Required Steps
-
-### Step 1: Gather Inputs
-
-Review the provided inputs and infer missing context when required.
-
-### Step 2: Build the Prompt
-
-Draft the prompt content using the required structure and conventions.
-
----
-
-Start the research build workflow.
-```
-
----
-
-Start applying the prompt engineering instructions.
-````
 
 ## Protocol Patterns
 
@@ -381,6 +245,6 @@ Every item in this checklist applies to the entire file when authoring prompt, i
 
 When referencing SDKs or APIs for prompt instructions:
 
-* Prefer official repositories with recent activity and clear licensing.
+* Prefer official repositories with recent activity.
 * Extract only the smallest snippet demonstrating the pattern for few-shot examples.
 * Get official documentation using tools and from the web for accurate prompt instructions and examples.
