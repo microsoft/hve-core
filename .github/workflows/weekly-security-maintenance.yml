@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   # Job 1: Validate all dependencies are SHA-pinned

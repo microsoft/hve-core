@@ -37,6 +37,8 @@ permissions:
 jobs:
   package:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.package.outputs.version }}
       vsix-file: ${{ steps.package.outputs.vsix-file }}
