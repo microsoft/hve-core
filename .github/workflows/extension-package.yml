@@ -57,7 +57,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install -g @vscode/vsce
+        run: npm install -g @vscode/vsce@3.7.1
 
       - name: Setup PowerShell
         shell: pwsh

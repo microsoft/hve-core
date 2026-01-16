@@ -7,7 +7,7 @@ set -euo pipefail
 
 main() {
   echo "Installing NPM dependencies..."
-  npm install
+  npm ci
   echo "NPM dependencies installed successfully"
 }
 
