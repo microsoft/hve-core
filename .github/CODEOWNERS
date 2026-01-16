@@ -7,8 +7,20 @@
 # Syntax: <file-pattern> @owner1 @owner2
 # More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# GitHub Actions
-/.github/workflows/ @microsoft/edge-ai-core-dev
+# Default owner for all files (fallback)
+* @microsoft/edge-ai-core-dev
+
+# Self-protection: CODEOWNERS file changes require core team approval
+/.github/CODEOWNERS @microsoft/edge-ai-core-dev
+
+# GitHub configuration (workflows, templates, instructions)
+/.github/ @microsoft/edge-ai-core-dev
 
 # Automation Scripts
-/scripts/security/ @microsoft/edge-ai-core-dev
+/scripts/ @microsoft/edge-ai-core-dev
+
+# VS Code Extension
+/extension/ @microsoft/edge-ai-core-dev
+
+# Documentation
+/docs/ @microsoft/edge-ai-core-dev
