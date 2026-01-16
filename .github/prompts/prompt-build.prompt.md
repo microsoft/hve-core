@@ -7,6 +7,8 @@ maturity: stable
 
 # Prompt Build
 
+This prompt delegates to the *prompt-builder* chatmode, which provides the phase-based protocol for authoring prompt engineering artifacts. The steps below prepare inputs and track progress while the mode handles research, authoring, and validation phases.
+
 ## Inputs
 
 * ${input:file}: (Optional) Target file for the existing or new prompt instructions file. Defaults to the current open file or attached file.
@@ -19,25 +21,37 @@ maturity: stable
 * Leverage subagents for all research including reading and discovering related files and folders.
 * Follow all of the below steps and be sure to follow all instructions from the Required Phases section.
 
-### Step 1: Interpret the user request
+### Step 1: Interpret User Request
 
 * Work with the user as needed to interpret their request accurately.
 * Update the conversation and keep track of requirements as they're identified.
 
-When no requirements are provided then use the following:
+When no explicit requirements are provided, infer the operation:
 
-* When referencing an existing prompt instructions file then refactor, cleanup, and improve all instructions in the prompt instructions file.
-* When referencing any other file then first search for any related prompt instructions files and update them with the conventions, standards, examples, identified from the referenced and related files.
-* When no other prompt instructions file is found then assume the user wants to build a new prompt instructions file based on the referenced and related files.
+* When referencing an existing prompt instructions file, refactor, clean up, and improve all instructions in that file.
+* When referencing any other file, search for related prompt instructions files and update them with conventions, standards, and examples identified from the referenced and related files.
+* When no related prompt instructions file is found, build a new prompt instructions file based on the referenced and related files.
 
-### Step 2: Iterate the Required Protocol
+### Step 2: Iterate the Protocol
 
-* Pass all requirements while iterating on the Required Protocol.
-* Continue to iterate until all requirements are met and all of the Prompt Quality Criteria passes for all related prompt instructions files.
+Pass all identified requirements to the prompt-builder mode's protocol phases. Continue iterating until:
 
-### Step 3: Reprot outcomes
+1. All requirements are addressed.
+2. Prompt Quality Criteria from the mode's instructions pass for all related prompt instructions files.
 
-* Report outcomes after iterating the protocol to completion
+When dispatching subagents for research or editing tasks:
+
+* Specify which instructions files or chatmodes the subagent follows.
+* Provide a structured response format or target file for subagent output.
+* Allow subagents to respond with clarifying questions rather than guessing.
+
+### Step 3: Report Outcomes
+
+After protocol completion, summarize the session:
+
+* Files created or modified with paths.
+* Requirements addressed and any deferred items.
+* Validation results from Prompt Quality Criteria.
 
 ---
 
