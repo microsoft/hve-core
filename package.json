@@ -23,6 +23,9 @@
     "markdown-table-formatter": "^1.7.0",
     "markdownlint-cli2": "^0.20.0"
   },
+  "overrides": {
+    "undici": "7.18.2"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/hve-core.git"
