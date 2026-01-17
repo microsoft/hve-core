@@ -41,11 +41,69 @@ jobs:
           Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
           Import-Module Pester -MinimumVersion 5.0.0
 
-      - name: Run Pester Tests
-        id: pester
+      - name: Get changed PowerShell files
+        id: changed-files
+        if: inputs.changed-files-only
         shell: pwsh
         run: |
-          $config = & './scripts/tests/pester.config.ps1' -CI
+          # Get changed PowerShell files between base and head
+          $diffOutput = git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ps1' '*.psm1' 2>$null
+          $changedFiles = @($diffOutput -split "`n" | Where-Object { $_ -and $_.Trim() })
+          
+          if ($changedFiles.Count -eq 0) {
+            Write-Host "No changed PowerShell files found"
+            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            exit 0
+          }
+          
+          Write-Host "Changed PowerShell files:"
+          $changedFiles | ForEach-Object { Write-Host "  - $_" }
+
+          # Map source files to their test files
+          $testFiles = @()
+          foreach ($file in $changedFiles) {
+            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
+            # Look for corresponding test file anywhere in scripts/tests
+            $matchingTests = Get-ChildItem -Path "scripts/tests" -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            if ($matchingTests) {
+              $testFiles += $matchingTests.FullName
+            }
+          }
+
+          # Also include any directly changed test files
+          $changedTests = @($changedFiles | Where-Object { $_ -like '*.Tests.ps1' })
+          foreach ($test in $changedTests) {
+            $fullPath = Join-Path (Get-Location) $test
+            if (Test-Path $fullPath) {
+              $testFiles += $fullPath
+            }
+          }
+
+          $testFiles = @($testFiles | Select-Object -Unique)
+          if ($testFiles.Count -eq 0) {
+            Write-Host "No matching test files for changed PowerShell files"
+            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            Write-Host "Found $($testFiles.Count) test file(s) to run:"
+            $testFiles | ForEach-Object { Write-Host "  - $_" }
+            "HAS_CHANGES=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "TEST_PATHS=$($testFiles -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+      - name: Run Pester Tests
+        id: pester
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        shell: pwsh
+        run: |
+          $params = @{ CI = $true }
+          
+          # Use specific test paths if changed-files-only is enabled
+          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:TEST_PATHS) {
+            $testPaths = $env:TEST_PATHS -split ';'
+            $params['TestPath'] = $testPaths
+          }
+          
+          $config = & './scripts/tests/pester.config.ps1' @params
           $results = Invoke-Pester -Configuration $config
 
           if ($results.FailedCount -gt 0) {
@@ -54,7 +112,7 @@ jobs:
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload test results
-        if: always()
+        if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
           name: pester-test-results
@@ -63,7 +121,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Check results
-        if: "!inputs.soft-fail"
+        if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
         shell: pwsh
         run: |
           if ($env:PESTER_FAILED -eq 'true') {
