@@ -1,5 +1,11 @@
+#!/usr/bin/env pwsh
+#
 # pester.config.ps1
-# Pester 5.x configuration for HVE-Core PowerShell testing
+#
+# Purpose: Pester 5.x configuration for HVE-Core PowerShell testing
+# Author: HVE Core Team
+# Created: 2026-01-16
+#
 # Usage: $config = & './scripts/tests/pester.config.ps1'; Invoke-Pester -Configuration $config
 
 [CmdletBinding()]

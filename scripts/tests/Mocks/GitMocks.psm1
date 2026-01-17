@@ -1,5 +1,8 @@
 # GitMocks.psm1
-# Reusable mock helpers for Git CLI and GitHub Actions testing in Pester
+#
+# Purpose: Reusable mock helpers for Git CLI and GitHub Actions testing in Pester
+# Author: HVE Core Team
+# Created: 2026-01-16
 
 #region Environment State Management
 
@@ -54,6 +57,12 @@ function Initialize-MockGitHubEnvironment {
     <#
     .SYNOPSIS
     Sets up a mock GitHub Actions environment with temp files.
+
+    .DESCRIPTION
+    Creates temporary files for GITHUB_OUTPUT, GITHUB_ENV, and GITHUB_STEP_SUMMARY,
+    then sets all standard GitHub Actions environment variables to simulate a CI
+    environment. Returns a hashtable of temp file paths for verification in tests.
+    Use with Remove-MockGitHubFiles for cleanup in AfterEach blocks.
 
     .PARAMETER BaseRef
     The base branch for PR context (default: main).
@@ -162,6 +171,13 @@ function Initialize-GitMocks {
     .SYNOPSIS
     Sets up standard git command mocks for a test context.
 
+    .DESCRIPTION
+    Configures Pester mocks for git merge-base, git diff --name-only, and git rev-parse
+    commands within a specified module scope. Enables isolated testing of scripts that
+    depend on git CLI output without requiring an actual git repository. The mocks set
+    $LASTEXITCODE appropriately based on configured exit codes. Optionally mocks Test-Path
+    for file existence checks when MockTestPath is specified.
+
     .PARAMETER ModuleName
     The module to inject mocks into (e.g., 'LintingHelpers').
 
@@ -234,7 +250,8 @@ function Initialize-GitMocks {
         Mock Test-Path {
             return $true
         } -ModuleName $ModuleName -ParameterFilter {
-            $PathType -eq 'Leaf'
+            # Match explicit -PathType Leaf OR no PathType specified (default file check)
+            $PathType -eq 'Leaf' -or $null -eq $PathType
         }
     }
 
