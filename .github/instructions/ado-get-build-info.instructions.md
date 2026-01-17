@@ -1,104 +1,203 @@
 ---
-description: "Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name."
+description: 'Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name.'
 applyTo: '**/.copilot-tracking/pr/*-build-*.md'
 maturity: stable
 ---
 
 # Azure DevOps Build Info Instructions
 
-Required Azure DevOps (azdo or ado) tooling usage for Required Protocol:
+These instructions define the protocol for retrieving Azure DevOps (ADO) build information including status, logs, changes, and stage details. The protocol supports both conversational responses and persistent tracking file output.
 
-* Set `project` parameter to current project
-* If not already provided and needed, get [PR number] by using `mcp_ado_repo_list_pull_request_by_project` tool and setting `created_by_me` to `true` and `status` to `Active`
-* [branch name] is `refs/pull/[PR number]/merge` (if provided or identified from below protocol)
-* Get [build ID] by using `mcp_ado_build_get_builds` tool
-  * Set `branchName` to [branch name] if provided
-  * Set `top` to 1 if getting based on [PR Number] from [branch name] or any prompt for "most recent", "latest", "current", etc. singleton style prompting
-  * Otherwise, set `top` to at most 5 for any other prompt requesting filtering of builds
-  * Set `[type]Filter` parameters as needed based on prompt
-  * Set `queryOrder` based on prompt, e.g., "latest build" would be `[scheduling]Descending`, "earliest build" would be `[scheduling]Ascending`
-* Get build status by using `mcp_ado_build_get_status` tool
-* Get build logs, only if requested or identified from below protocol, by using `mcp_ado_build_get_log` to get high-level information and the [log ID]'s
-  * Get actual logs by using `mcp_ado_build_get_log_by_id` tool and setting `logId` to discovered [log ID] and be sure to correctly set `startLine` and `endLine`
+## Scope
 
-## Required Summarization Rules
+This protocol applies when:
 
-When summarizing the user's conversation context:
+* Retrieving build status, logs, or changes from Azure DevOps pipelines.
+* Investigating build failures or issues for a pull request or branch.
+* Saving build information to tracking files for later reference.
 
-* Must always keep exact inputs and their exact values provided by prompt in summary
-* Must retain derived values and identified values (such as [PR number], [branch name], [build ID], etc) in summary
-* Must provide full paths to all files being edited or read in (this instruction file, the prompt that kicked off the process, the tracking file if used)
+## Tooling
 
-After summarizing the user's conversation context:
+<!-- <pipeline-tools> -->
+### Pipeline Tools
 
-* Must read in and follow all of these instructions
-* Must regain entire context, read-in files, figure out exactly where left off
-* Must then resume protocol and continue to collect information and write out relevant information as requested
+**mcp_ado_pipelines_get_builds** - Retrieve builds list
 
-## General User Conversation Guidance
+* `project` (string, required): Project ID or name.
+* `branchName` (string): Filter by branch name (for example, `refs/pull/{{prNumber}}/merge`).
+* `top` (number): Maximum builds to return.
+* `queryOrder` (string): Sort order (`queueTimeDescending`, `queueTimeAscending`, `startTimeDescending`, `startTimeAscending`, `finishTimeDescending`, `finishTimeAscending`).
+* `statusFilter` (string): Filter by status (`all`, `cancelling`, `completed`, `inProgress`, `none`, `notStarted`, `postponed`).
+* `resultFilter` (string): Filter by result (`canceled`, `failed`, `none`, `partiallySucceeded`, `succeeded`).
+* `buildNumber` (string): Filter by build number.
+* `requestedFor` (string): Filter by user who requested the build.
 
-Keep the user up-to-date while processing ado build information.
+**mcp_ado_pipelines_get_build_status** - Get build status by ID
 
-Follow these guidelines whenever interacting with the user through conversation:
+* `project` (string, required): Project ID or name.
+* `buildId` (number, required): ID of the build.
 
-* Utilize markdown styling whenever interacting with the user.
-* Provide double newlines for each paragraph or new section.
-* Use bolding for title words and italics for emphasis.
-* For all unordered lists use markdown `*` instead of only using newlines.
-* Use emojis to help get your point across.
-* Avoid giving the user an overwhelming amount of information.
-* Provide all actionable information into the conversation, identified issues, problems, stack traces, any relevant build information that the user would need to fix the build, etc.
+**mcp_ado_pipelines_get_build_log** - Get build log entries
 
-## Required Protocol
+* `project` (string, required): Project ID or name.
+* `buildId` (number, required): ID of the build.
 
-Follow the required protocol in order
+**mcp_ado_pipelines_get_build_log_by_id** - Get specific log by ID
 
-### 1. Determine if tracking file was requested
+* `project` (string, required): Project ID or name.
+* `buildId` (number, required): ID of the build.
+* `logId` (number, required): ID of the log to retrieve.
+* `startLine` (number): Starting line number.
+* `endLine` (number): Ending line number.
 
-* If tracking file will be needed, create under `.copilot-tracking/pr/[YYYYMMDD]-build-[build id].md`
-* If tracking file provided (as attachment or referenced by user), read in the file and continue updating it
+**mcp_ado_pipelines_get_build_changes** - Get changes in a build
 
-User will indicate if they want information saved into tracking file:
+* `project` (string, required): Project ID or name.
+* `buildId` (number, required): ID of the build.
+* `top` (number, default 100): Number of changes to retrieve.
+* `includeSourceChange` (boolean): Include source changes in results.
 
-* e.g., "Output the stack traces from the build logs for pr [PR number]"
-* e.g., "Save the relevant information for the most recent build"
+**mcp_ado_pipelines_update_build_stage** - Update build stage status
 
-User may ask to just get the build information, DO NOT save to tracking file:
+* `project` (string, required): Project ID or name.
+* `buildId` (number, required): ID of the build.
+* `stageName` (string, required): Name of the stage to update.
+* `status` (string, required): New status (`Cancel`, `Retry`, `Run`).
+* `forceRetryAllJobs` (boolean, default false): Force retry all jobs in the stage.
+<!-- </pipeline-tools> -->
 
-* e.g., "get the build status for pullrequest [PR number]"
-* e.g., "Tell me what's wrong with my most recent build in azdo"
+### Supporting Tools
 
-### 2. Correctly identify requested ado build information to retrieve
+**mcp_ado_repo_list_pull_request_by_project** - Find PR numbers when not provided
 
-User will indicate what type of information to retrieve:
+* Set `created_by_me` to `true` and `status` to `Active` to find the user's active PRs.
 
-* e.g., "build status", "status", "state of the build", "build summary", "error", "information", "build issue", etc.
-  * Must get build status using `mcp_ado_build_get_status` tool
-* e.g., "build logs", "logs", "stack trace", "detailed", etc.
-  * Must get build logs using `mcp_ado_build_get_log` and `mcp_ado_build_get_log_by_id` tools
+## Deliverables
 
-### 3. Correctly find requested ado build
+**Conversational response**: Summarize build status, errors, and actionable information directly in conversation.
 
-User may indicate where to find build information:
+**Tracking file** (when requested): Create or update `.copilot-tracking/pr/{{YYYYMMDD}}-build-{{buildId}}.md` with structured build information.
 
-* e.g., "pullrequest [PR number]", "PR [PR number]", "pr [PR number]", etc.
-* e.g., "build [build ID]"
+## Conversation Guidelines
 
-User may use generic terms:
+Keep the user informed while processing build information:
 
-* e.g., "my pull request", "My branch", "Current branch", "This branch"
-  * Must derive [PR number] to get [branch name] from current git branch
-* e.g., "latest build", "failing build, "current build"
-  * Must derive [build ID] using `mcp_ado_build_get_builds` and
-    set parameters based on the user's prompt.
+* Use markdown styling with double newlines between sections.
+* Apply **bold** for key terms and *italics* for emphasis.
+* Use `*` for unordered lists.
+* Include emojis to indicate status (✅ success, ❌ failure, ⚠️ warning).
+* Focus on actionable information: errors, stack traces, and steps to resolve issues.
+* Avoid overwhelming detail; summarize and offer to provide more on request.
 
-### 3. Iterate gathering ado build info (update tracking file if requested)
+## Summarization Rules
 
-* Gather information from `mcp_ado_build_get_status` or `mcp_ado_build_get_log`
-* If using tracking file, update tracking file with gathered information
-* If all information gathered move on to the next protocol step
-* Otherwise, iterate using `mcp_ado_build_get_log_by_id` and updating the tracking file after each log until complete
+When summarizing conversation context, retain:
 
-### 4. Provide accurate information and summary to user
+* Exact user inputs and their values ({{prNumber}}, {{buildId}}, {{branchName}}).
+* Derived values identified during the protocol.
+* Full paths to files being edited or read.
 
-Follow the General User Conversation Guidance and provide all actionable information
+After context summarization, read these instructions, regain context from referenced files, determine the current protocol step, and resume.
+
+## Required Steps
+
+Follow these steps in order to retrieve and present Azure DevOps build information.
+
+### Step 1: Determine Output Mode
+
+Identify whether the user requests persistent tracking or conversational output.
+
+**Tracking file requested** (save, output, persist keywords):
+
+* Create file at `.copilot-tracking/pr/{{YYYYMMDD}}-build-{{buildId}}.md`.
+* If a tracking file is already attached or referenced, read and continue updating it.
+
+**Conversational output** (get, tell, check, what keywords):
+
+* Provide information directly in conversation without creating a tracking file.
+
+### Step 2: Identify Build Information Type
+
+Determine what information to retrieve based on user keywords:
+
+* **Status keywords** (status, state, summary, error, information, issue): Retrieve build status using `mcp_ado_pipelines_get_build_status`.
+* **Log keywords** (logs, stack trace, detailed, output): Retrieve logs using `mcp_ado_pipelines_get_build_log` and `mcp_ado_pipelines_get_build_log_by_id`.
+* **Changes keywords** (changes, commits, what changed): Retrieve changes using `mcp_ado_pipelines_get_build_changes`.
+
+### Step 3: Locate the Target Build
+
+Determine the build to query based on user input:
+
+**Explicit identifiers**:
+
+* PR reference (pullrequest {{prNumber}}, PR {{prNumber}}): Derive branch as `refs/pull/{{prNumber}}/merge`.
+* Build ID (build {{buildId}}): Use directly with status and log tools.
+
+**Generic references**:
+
+* Current context (my pull request, this branch, current branch): Derive {{prNumber}} from the current git branch, then construct the branch name.
+* Latest build (latest, current, failing, recent): Use `mcp_ado_pipelines_get_builds` with `top` set to 1 and `queryOrder` set to `queueTimeDescending`.
+
+**Query parameters**:
+
+* Set `top` to 1 for singleton requests (latest, most recent).
+* Set `top` to 5 or less for filtered queries.
+* Set `queryOrder` based on recency (descending for latest, ascending for earliest).
+* Apply `statusFilter` or `resultFilter` based on user keywords (failing → `resultFilter: failed`).
+
+### Step 4: Gather Build Information
+
+Collect information iteratively:
+
+1. Retrieve initial data using `mcp_ado_pipelines_get_build_status` or `mcp_ado_pipelines_get_build_log`.
+2. If using a tracking file, update it with gathered information after each retrieval.
+3. For detailed logs, iterate through log entries using `mcp_ado_pipelines_get_build_log_by_id` with appropriate `startLine` and `endLine` values.
+4. Continue until all requested information is collected.
+
+### Step 5: Present Results
+
+Follow conversation guidelines to deliver actionable information:
+
+* Summarize overall build status and result.
+* Highlight errors, failures, and stack traces.
+* Provide specific line numbers and log references for debugging.
+* Suggest next steps for resolving issues when applicable.
+
+## Tracking File Template
+
+Use this template when creating build tracking files:
+
+```markdown
+---
+type: build-info
+buildId: {{buildId}}
+prNumber: {{prNumber}}
+branchName: {{branchName}}
+status: {{status}}
+result: {{result}}
+created: {{YYYY-MM-DD}}
+---
+
+# Build {{buildId}} Information
+
+<!-- <build-summary> -->
+## Summary
+
+* **Status**: {{status}}
+* **Result**: {{result}}
+* **Branch**: {{branchName}}
+* **PR**: {{prNumber}}
+<!-- </build-summary> -->
+
+<!-- <build-errors> -->
+## Errors
+
+(Add error details and stack traces here)
+<!-- </build-errors> -->
+
+<!-- <build-logs> -->
+## Log Excerpts
+
+(Add relevant log excerpts here)
+<!-- </build-logs> -->
+```
