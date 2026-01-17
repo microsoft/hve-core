@@ -15,7 +15,7 @@ param(
     [switch]$CodeCoverage,
 
     [Parameter()]
-    [string]$TestPath = "$PSScriptRoot"
+    [string[]]$TestPath = @("$PSScriptRoot")
 )
 
 $configuration = New-PesterConfiguration

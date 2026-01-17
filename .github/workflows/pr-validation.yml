@@ -46,6 +46,15 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  pester-tests:
+    name: PowerShell Tests
+    uses: ./.github/workflows/pester-tests.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+
   frontmatter-validation:
     name: Frontmatter Validation
     uses: ./.github/workflows/frontmatter-validation.yml
