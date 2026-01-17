@@ -163,6 +163,68 @@ Describe 'Get-ChangedFilesFromGit' {
             $result | Should -Not -Contain '   '
         }
     }
+
+    Context 'Both merge-base and HEAD~1 fail, third fallback' {
+        BeforeEach {
+            # Merge-base fails
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+            
+            # rev-parse fails for HEAD~1 check
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+            
+            # diff returns files from third fallback (git diff --name-only HEAD)
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('unstaged-file.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+            
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Falls back to git diff --name-only HEAD and returns files' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.ps1')
+            $result | Should -Contain 'unstaged-file.ps1'
+        }
+    }
+
+    Context 'Git diff command fails' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+            
+            # Diff fails with non-zero exit code
+            Mock git {
+                $global:LASTEXITCODE = 1
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+        }
+
+        It 'Returns empty array when git diff fails' {
+            $result = Get-ChangedFilesFromGit
+            $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Exception during execution' {
+        BeforeEach {
+            Mock git {
+                throw "Simulated git failure"
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+        }
+
+        It 'Catches exceptions and returns empty array' {
+            $result = Get-ChangedFilesFromGit
+            $result | Should -BeNullOrEmpty
+        }
+    }
 }
 
 #endregion
@@ -277,24 +339,27 @@ Describe 'Get-GitIgnorePatterns' {
             $gitignorePath = Join-Path $TestDrive '.gitignore-dir'
             'node_modules/' | Set-Content $gitignorePath
             $result = @(Get-GitIgnorePatterns -GitIgnorePath $gitignorePath)
-            # Function wraps directory patterns as *\node_modules\*
-            $result[0] | Should -BeLike "*node_modules*"
+            $sep = [System.IO.Path]::DirectorySeparatorChar
+            # Function wraps directory patterns with platform separator
+            $result[0] | Should -Be "*${sep}node_modules${sep}*"
         }
 
         It 'Converts file patterns with paths correctly' {
             $gitignorePath = Join-Path $TestDrive '.gitignore-path'
             'build/output.log' | Set-Content $gitignorePath
             $result = @(Get-GitIgnorePatterns -GitIgnorePath $gitignorePath)
+            $sep = [System.IO.Path]::DirectorySeparatorChar
             # Function normalizes paths and wraps with wildcards
-            $result[0] | Should -BeLike "*build*output.log*"
+            $result[0] | Should -Be "*${sep}build${sep}output.log*"
         }
 
         It 'Handles simple file patterns' {
             $gitignorePath = Join-Path $TestDrive '.gitignore-simple'
             '*.log' | Set-Content $gitignorePath
             $result = @(Get-GitIgnorePatterns -GitIgnorePath $gitignorePath)
+            $sep = [System.IO.Path]::DirectorySeparatorChar
             # Function wraps simple patterns with wildcards
-            $result[0] | Should -BeLike "*.log*"
+            $result[0] | Should -Be "*${sep}*.log${sep}*"
         }
 
         It 'Processes multiple patterns' {
