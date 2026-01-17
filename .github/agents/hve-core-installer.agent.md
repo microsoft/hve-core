@@ -110,7 +110,26 @@ Before clone-based installation, verify git is available:
 
 ### Extension Installation Execution
 
-When user selects Quick Install, execute the following:
+When user selects Quick Install, first ask which VS Code variant they are using:
+
+<!-- <vscode-variant-prompt> -->
+```text
+Which VS Code variant are you using?
+
+  [1] VS Code (stable)
+  [2] VS Code Insiders
+
+Your choice? (1/2)
+```
+<!-- </vscode-variant-prompt> -->
+
+User input handling:
+
+* "1", "code", "stable" → Use `code` CLI
+* "2", "insiders", "code-insiders" → Use `code-insiders` CLI
+* Unclear response → Ask for clarification
+
+Store the user's choice as the `code_cli` variable for use in validation scripts.
 
 **Display progress message:**
 
@@ -129,14 +148,17 @@ After command execution, proceed to Extension Validation.
 
 ### Extension Validation
 
-Run the appropriate validation script based on the detected platform (Windows = PowerShell, macOS/Linux = Bash):
+Run the appropriate validation script based on the detected platform (Windows = PowerShell, macOS/Linux = Bash). Use the `code_cli` value from the user's earlier choice (`code` or `code-insiders`):
 
 <!-- <extension-validation-powershell> -->
 ```powershell
 $ErrorActionPreference = 'Stop'
 
+# Set based on user's earlier choice: 'code' or 'code-insiders'
+$codeCli = "<USER_CHOICE>"
+
 # Check if extension is installed
-$extensions = code --list-extensions 2>$null
+$extensions = & $codeCli --list-extensions 2>$null
 if ($extensions -match "ise-hve-essentials.hve-core") {
     Write-Host "✅ HVE Core extension installed successfully"
     $installed = $true
@@ -146,7 +168,7 @@ if ($extensions -match "ise-hve-essentials.hve-core") {
 }
 
 # Verify version (optional)
-$versionOutput = code --list-extensions --show-versions 2>$null | Select-String "ise-hve-essentials.hve-core"
+$versionOutput = & $codeCli --list-extensions --show-versions 2>$null | Select-String "ise-hve-essentials.hve-core"
 if ($versionOutput) {
     Write-Host "📌 Version: $($versionOutput -replace '.*@', '')"
 }
@@ -160,8 +182,11 @@ Write-Host "EXTENSION_INSTALLED=$installed"
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Set based on user's earlier choice: 'code' or 'code-insiders'
+code_cli="<USER_CHOICE>"
+
 # Check if extension is installed
-if code --list-extensions 2>/dev/null | grep -q "ise-hve-essentials.hve-core"; then
+if "$code_cli" --list-extensions 2>/dev/null | grep -q "ise-hve-essentials.hve-core"; then
     echo "✅ HVE Core extension installed successfully"
     installed=true
 else
@@ -170,7 +195,7 @@ else
 fi
 
 # Verify version (optional)
-version=$(code --list-extensions --show-versions 2>/dev/null | grep "ise-hve-essentials.hve-core" | sed 's/.*@//')
+version=$("$code_cli" --list-extensions --show-versions 2>/dev/null | grep "ise-hve-essentials.hve-core" | sed 's/.*@//')
 [ -n "$version" ] && echo "📌 Version: $version"
 
 echo "EXTENSION_INSTALLED=$installed"
@@ -207,6 +232,8 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 Run this agent again and choose "Clone-Based Installation" for full customization options.
 ```
 <!-- </extension-success-report> -->
+
+After displaying the extension success report, proceed to **Checkpoint 3: Gitignore Recommendation** (in Phase 4) to offer adding `.copilot-tracking/` to `.gitignore`. This applies to all installation methods.
 
 ### Extension Error Recovery
 
@@ -419,18 +446,18 @@ Would you like to proceed with this method, or see alternatives?
 
 ## Phase 3: Installation Methods
 
-Execute the installation workflow based on the method selected via the decision matrix. For detailed documentation, see `docs/getting-started/methods/`.
+Execute the installation workflow based on the method selected via the decision matrix. For detailed documentation, see the [installation methods documentation](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/).
 
 ### Method Configuration
 
 | Method | Documentation | Target Location | Settings Path Prefix | Best For |
 | ------ | ------------- | --------------- | -------------------- | -------- |
-| 1. Peer Clone | `peer-clone.md` | `../hve-core` | `../hve-core` | Local VS Code, solo developers |
-| 2. Git-Ignored | `git-ignored.md` | `.hve-core/` | `.hve-core` | Devcontainer, isolation |
-| 3. Mounted* | `mounted.md` | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone |
-| 4. Codespaces | `codespaces.md` | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces |
-| 5. Multi-Root | `multi-root.md` | Per workspace file | Per workspace file | Best IDE integration |
-| 6. Submodule | `submodule.md` | `lib/hve-core` | `lib/hve-core` | Team version control |
+| 1. Peer Clone | [peer-clone.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/peer-clone.md) | `../hve-core` | `../hve-core` | Local VS Code, solo developers |
+| 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/` | `.hve-core` | Devcontainer, isolation |
+| 3. Mounted* | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md) | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone |
+| 4. Codespaces | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md) | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces |
+| 5. Multi-Root | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md) | Per workspace file | Per workspace file | Best IDE integration |
+| 6. Submodule | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md) | `lib/hve-core` | `lib/hve-core` | Team version control |
 
 *Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
 
@@ -473,7 +500,8 @@ After cloning, update `.vscode/settings.json` with this structure. Replace `<PRE
   },
   "chat.promptFilesLocations": {
     ".github/prompts": true,
-    "<PREFIX>/.github/prompts": true
+    "<PREFIX>/.github/prompts": true,
+    ".copilot-tracking/prompts": true
   },
   "chat.instructionsFilesLocations": {
     ".github/instructions": true,
@@ -539,7 +567,7 @@ Add to devcontainer.json:
     "vscode": {
       "settings": {
         "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
+        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true, ".copilot-tracking/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
     }
@@ -717,7 +745,7 @@ Method [N]: [Name] installed successfully.
 
 📍 Location: [path based on method]
 ⚙️ Settings: [settings file or workspace file]
-📖 Documentation: docs/getting-started/methods/[method-doc].md
+📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
 🧪 Available Chatmodes:
 • task-researcher, task-planner, task-implementor
@@ -731,6 +759,50 @@ Method [N]: [Name] installed successfully.
 💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
 ```
 <!-- </success-report> -->
+
+### Checkpoint 3: Gitignore Recommendation
+
+After displaying the success report (for **any** installation method, including Extension Quick Install), check if `.copilot-tracking/` should be added to `.gitignore`. This directory stores local AI workflow artifacts (plans, changes, research notes) that are typically user-specific and not meant for version control.
+
+**Detection:** Use the `read` tool to check if `.gitignore` exists and contains `.copilot-tracking/` or `.copilot-tracking`.
+
+* If pattern found → Skip this checkpoint silently
+* If `.gitignore` missing or pattern not found → Present the prompt below
+
+<!-- <gitignore-prompt> -->
+```text
+📋 Gitignore Recommendation
+
+The `.copilot-tracking/` directory stores local AI workflow artifacts:
+• Plans and implementation tracking
+• Research notes and change records
+• User-specific prompts and handoff logs
+
+These files are typically not meant for version control.
+
+Would you like to add `.copilot-tracking/` to your .gitignore? (yes/no)
+```
+<!-- </gitignore-prompt> -->
+
+User input handling:
+
+* "yes", "y" → Add entry to `.gitignore`
+* "no", "n", "skip" → Skip without changes
+* Unclear response → Ask for clarification
+
+**Modification:** If user approves:
+
+* If `.gitignore` exists: Use `edit/editFiles` to append the following at the end of the file
+* If `.gitignore` missing: Use `edit/createFile` to create it with the content below
+
+<!-- <gitignore-entry> -->
+```text
+# HVE-Core AI workflow artifacts (local only)
+.copilot-tracking/
+```
+<!-- </gitignore-entry> -->
+
+Report: "✅ Added `.copilot-tracking/` to .gitignore"
 
 ---
 

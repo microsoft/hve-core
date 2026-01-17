@@ -66,6 +66,10 @@ After installing this extension, the chat agents will be available in GitHub Cop
 2. **Apply prompts** through the Copilot Chat interface
 3. **Reference instructions** - They're automatically applied based on file patterns
 
+### Post-Installation Setup
+
+Some chat agents create workflow artifacts in your project directory. See the [installation guide](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/install.md#post-installation-update-your-gitignore) for recommended `.gitignore` configuration and other setup details.
+
 ## Usage Examples
 
 ### Using Chat Agents

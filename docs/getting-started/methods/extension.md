@@ -82,6 +82,17 @@ After installation, verify everything works:
    * pr-review
    * adr-creation
 
+## Post-Installation: Update Your .gitignore
+
+HVE-Core chatmodes create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. Add this line to your project's `.gitignore`:
+
+```text
+.copilot-tracking/
+```
+
+> [!NOTE]
+> This applies even when using the extension. The folder is created in your project directory when you use chatmodes like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+
 ## What's Included
 
 The extension provides all HVE-Core components:

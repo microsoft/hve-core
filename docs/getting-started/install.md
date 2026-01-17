@@ -163,6 +163,29 @@ Run the installer in validation mode:
 
 > "Validate my HVE-Core installation"
 
+## Post-Installation: Update Your .gitignore
+
+HVE-Core chatmodes create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. These files include research documents, implementation plans, PR review tracking, and other machine-generated content that should typically not be committed to version control.
+
+**Add this line to your project's `.gitignore`:**
+
+```text
+.copilot-tracking/
+```
+
+> [!IMPORTANT]
+> This applies to all installation methods (extension, submodule, peer clone, etc.). The `.copilot-tracking/` folder is created in your project directory, not in HVE-Core itself.
+
+**What gets stored there:**
+
+* Research documents from `task-researcher`
+* Implementation plans from `task-planner`
+* PR review artifacts from `pr-review`
+* Work item planning files for ADO workflows
+* Temporary prompt files used by chatmodes
+
+These artifacts are useful during your workflow session but are ephemeral by design. They help chatmodes/custom agents maintain context across sessions without polluting your repository history.
+
 ## Next Steps
 
 * [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
