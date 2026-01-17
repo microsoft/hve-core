@@ -1,128 +1,218 @@
 ---
-description: "Required instructions for work item updating and creation leveraging mcp ado tool calls."
+description: 'Work item creation and update protocol using MCP ADO tools with handoff tracking'
 applyTo: '**/.copilot-tracking/workitems/**/handoff-logs.md'
 maturity: stable
 ---
 
-# Azure DevOps Work Item Creation Update
+# Azure DevOps Work Item Update Instructions
 
-Follow all instructions from #file:../instructions/ado-wit-planning.instructions.md for work item planning and planning files.
-Do not make any edits to any planning files.
-All edits and tracking will go into handoff-logs.md next to ${input:handoffFile}
+Follow all instructions from #file:./ado-wit-planning.instructions.md for work item planning, templates, and field definitions.
 
-## General User Conversation Guidance
+## Scope
 
-Keep the user up-to-date while processing work items.
+**Inputs**:
 
-Follow these guidelines whenever interacting with the user through conversation:
+* `${input:handoffFile}`: Path to handoff.md containing work items to process (required)
+* `${input:project}`: Azure DevOps project name (inferred from handoff.md if not provided)
+* `${input:areaPath}`: Area path for work items (optional, uses handoff.md value)
+* `${input:iterationPath}`: Iteration path for work items (optional, uses handoff.md value)
 
-* Utilize markdown styling whenever interacting with the user.
-* Provide double newlines for each paragraph or new section.
-* Use bolding for title words and italics for emphasis.
-* For all unordered lists use markdown `*` instead of only using newlines.
-* Use emojis to help get your point across.
-* Avoid giving the user an overwhelming amount of information.
+**Outputs**:
 
-## handoff-logs.md
+* handoff-logs.md created next to ${input:handoffFile} containing processing status and results
+* Work items created or updated in Azure DevOps
 
-handoff-logs.md is a living document: sections are routinely added, updated, and extended in-place
+**Trigger conditions**: These instructions apply when processing work items from a handoff.md file through MCP ADO tool calls.
 
-* Add all provided inputs to the handoff-logs.md (e.g., ${input:handoffFile}, ${input:project}, ${input:areaPath}, ${input:iterationPath})
-* Update handoff-logs.md from work-items.md and ${input:handoffFile} with:
-  * List of checklist work items from ${input:handoffFile} (e.g., `1. [ ] (Create) WI001 Feature`)
-  * All relationships for each work item (under each work item as an unordered list)
-  * Line items of notes as items are processed (e.g., Resulting System.Id after creation, ADO Work Item URL, Errors unsuccessful operations, etc.)
+## Work Item Type Hierarchy
 
-## 1. Required Protocol
+Work items follow this parent-child hierarchy:
 
-Resuming protocol:
+1. Epic (top level)
+2. Feature (child of Epic)
+3. User Story (child of Feature)
+4. Task or Bug (child of User Story)
 
-* Read handoff-logs.md entirely if exists
-* Review ${input:handoffFile} and determine where to continue processing
-* Resume processing protocol after updating task list
+Process work items in hierarchy order: create parent items before children to ensure relationship links resolve correctly.
 
-Processing protocol:
+## Required Steps
 
-* Create handoff-logs.md (if not already created)
-* Read ${input:handoffFile} document entirely and update handoff-logs.md
-* Determine order to process work items based on Determine Work Item Process Order
-* Update task list with `[ ]` work items from handoff-logs.md
-* Iteratively process remaining work items in work-items.md based on Process Work Items
-  * Update handoff-logs.md work items checkbox `[x]` after completing mcp ado tool calls and making updates
-  * Update handoff-logs.md with notes about processing work items
-  * Update task list after completing processing each work item
-  * Provide conversational updates to the user after processing each work item
-* Final review of all of handoff-logs.md by reading in file again, reviewing with ${input:handoffFile}, address any issues or process any missed work items
-* Finish by providing a review of handoff-logs.md through a conversational summary of completed work to the user (include all items in unordered list with ADO Work Item URLs, ADO System.Id's, Titles)
+### Step 1: Initialize or Resume
 
-## 2. Determine Work Item Process Order
+When handoff-logs.md exists:
 
-1. Work Item Type hierarchy
-2. Operation (Create|Update)
-3. Relationship is-a mapping (WI002 - Child - WI001, WI002 is-a Child of WI001)
+* Read handoff-logs.md and ${input:handoffFile}
+* Identify work items with unchecked `[ ]` status
+* Continue from the first unchecked item
 
-## 3. Process Work Items
+When handoff-logs.md does not exist:
 
-* Mandatory: must continually map temporary WI[Reference Number] to ADO System.Id for relationships
-* Mandatory: when a field must store Markdown content, include the `format` parameter and set it to `Markdown`
-* Mandatory: use `mcp_ado_wit_update_work_items_batch` to add or update any Acceptance Criteria fields; other tools must not be used for this purpose
-* Mandatory: payloads must mirror the content in `work-items.md` and related planning files exactly—do not revise wording, structure, or Markdown beyond formatting required by Azure DevOps
+* Create handoff-logs.md using the template in the Templates section
+* Populate the Work Items section from ${input:handoffFile}
+* Record all inputs in the Inputs section
 
-### MCP Tool Parameter Guidance
+### Step 2: Process Work Items
 
-Always source parameter values from the active planning artifacts (`work-items.md`, `handoff.md`, `planning-log.md`) before issuing a tool call. Confirm the latest `System.Id` for every WI reference prior to constructing payloads, and keep field text identical to the planning content.
+Determine processing order:
 
-**`mcp_ado_wit_create_work_item`**
+1. Work item type hierarchy (Epic → Feature → User Story → Task/Bug)
+2. Operation type (Create before Update)
+3. Relationship dependencies (parent before child)
 
-* `project`: use the `Project` value from `work-items.md`.
-* `workItemType`: use the Work Item Type recorded for the WI reference.
-* `fields`: supply an array of objects with `name` and `value`; include `format: "Markdown"` for multi-line fields such as `System.Description` or `Microsoft.VSTS.Common.AcceptanceCriteria`. Preserve existing organization-specific fields when provided, and copy values verbatim from planning artifacts.
+For each work item:
 
-**`mcp_ado_wit_add_child_work_items`**
+* Map temporary WI[Reference Number] to ADO System.Id after creation
+* Include `format: "Markdown"` for Description, Acceptance Criteria, and Repro Steps fields
+* Copy field values verbatim from planning artifacts
+* Use `mcp_ado_wit_update_work_items_batch` for Acceptance Criteria fields
 
-* `parentId`: resolved `System.Id` of the parent work item (usually sourced from a previously created item or an Update entry).
-* `project`: same value used for the parent.
-* `workItemType`: child type (e.g., `User Story`, `Bug`).
-* `items`: each child must include `title` and `description`; set `format: "Markdown"` whenever the description block is Markdown. Apply `areaPath` and `iterationPath` only when explicitly provided in planning artifacts. Do not modify the text captured in planning.
+Tool sequence:
 
-**`mcp_ado_wit_update_work_items_batch`**
+1. `mcp_ado_wit_create_work_item` for new top-level items
+   * Parameters: `project`, `workItemType`, `fields[]` with `name`, `value`, and optional `format` ("Html" or "Markdown")
+2. `mcp_ado_wit_add_child_work_items` for creating child items under an existing parent
+   * Parameters: `parentId`, `project`, `workItemType`, `items[]` with `title`, `description`, optional `format`, `areaPath`, `iterationPath`
+3. `mcp_ado_wit_update_work_items_batch` for field updates including Acceptance Criteria
+   * Parameters: `updates[]` with `id`, `path` (e.g., "/fields/System.Title"), `value`, `op` ("Add", "Replace", "Remove"), optional `format`
+4. `mcp_ado_wit_work_items_link` for relationship links between work items
+   * Parameters: `project`, `updates[]` with `id`, `linkToId`, `type`, optional `comment`
+   * Link types: "parent", "child", "related", "predecessor", "successor", "duplicate", "duplicate of", "tested by", "tests", "affects", "affected by"
+5. `mcp_ado_wit_add_artifact_link` for linking to repositories, branches, commits, or builds
+   * Parameters: `workItemId`, `project`, `linkType`, plus artifact-specific parameters (`branchName`, `commitId`, `buildId`, `pullRequestId`)
 
-* Each entry in `updates` must include `id` (resolved ADO `System.Id`), `path` (e.g., `/fields/System.Description`), and `value`. The `value` must match the planning document content exactly.
-* Choose `op` (`add`, `replace`, or `remove`) based on whether the field is new, changed, or cleared. Default `add` is acceptable when replacing entire field content.
-* Set `format: "Markdown"` on updates for Markdown-backed fields (Acceptance Criteria, Description, Repro Steps, etc.).
-* Batch related field edits together to minimize tool calls while keeping payloads readable in `handoff-logs.md`.
+After each item completes:
 
-**`mcp_ado_wit_work_items_link`**
+* Update checkbox to `[x]` in handoff-logs.md
+* Record the ADO System.Id, URL, and any notes
+* Notify the user with a brief status update
 
-* Provide `project` from `work-items.md`.
-* Each item in `updates` must declare `id` (source work item), `linkToId` (target `System.Id`), and `type` (e.g., `Child`, `Parent`, `Related`). Add a `comment` when the planning documents capture rationale that should appear in ADO history. Use the note text exactly as written in planning files.
+When a work item has no pending changes:
+
+* Mark checkbox as `[x]` with note "No changes required"
+* Skip API calls for that item
+* Continue to the next item in the processing queue
+
+### Step 3: Finalize and Report
+
+* Re-read handoff-logs.md and compare against ${input:handoffFile}
+* Process any missed work items
+* Provide a summary listing all items with ADO URLs, System.Ids, and titles
+
+## Error Handling
+
+**Authentication and permissions**: When API calls fail with 401 or 403 errors, notify the user and pause processing. Do not retry authentication errors.
+
+**Rate limits**: When encountering 429 responses, wait and retry with exponential backoff. Note the delay in handoff-logs.md.
+
+**Item already exists**: Mark as `[x]` in handoff-logs.md with a note, then continue to the next item.
+
+**Missing field or invalid property**: Verify the field path and retry. If the field is unsupported, note it in handoff-logs.md with `[ ]` status and reprocess without that field.
+
+**Missing parent work item**: A relationship cannot be created because the target does not exist. Leave `[ ]` status, add "Pending: parent" to notes, and revisit after processing remaining items. Track these items separately in the Processing Summary under "Pending revisit: [count]".
+
+**Network or transient failures**: Retry up to three times with backoff. If failures persist, note the error and continue with remaining items.
+
+## Conversation Guidance
+
+Keep the user informed during processing:
+
+* Use markdown formatting with proper paragraph spacing
+* Use emojis sparingly to indicate status (✅ success, ⚠️ warning, ❌ error)
+* Provide brief updates after each work item completes
+* Avoid overwhelming the user with verbose output
+
+## Templates
+
+### handoff-logs.md
 
 ````markdown
-<!-- <example-ado-wit-update-batch> -->
+# Work Item Processing Log
+
+## Inputs
+* **Handoff File**: [path to handoff.md]
+* **Project**: [project name]
+* **Area Path**: [area path if provided]
+* **Iteration Path**: [iteration path if provided]
+
+## Work Items
+* [ ] (Create) WI[Reference Number] [Work Item Type] - [Title Summary]
+  * [Relationship entries from handoff.md]
+  * Notes: [processing notes, System.Id after creation, URL, errors]
+* [ ] (Update) WI[Reference Number] [Work Item Type] - System.Id [ID] - [Title Summary]
+  * [Relationship entries from handoff.md]
+  * Notes: [processing notes, URL, errors]
+
+## Processing Summary
+* Started: [ISO 8601 timestamp, e.g., 2026-01-16T14:30:00Z]
+* Completed: [ISO 8601 timestamp]
+* Total: [count] items
+* Created: [count]
+* Updated: [count]
+* Errors: [count]
+* Pending revisit: [count]
+````
+
+### Create Work Item Example
+
+<example>
+
 ```json
 {
-  "project": "hve-core",
+  "project": "edge-ai",
+  "workItemType": "User Story",
+  "fields": [
+    { "name": "System.Title", "value": "As a user, I want feature X" },
+    { "name": "System.Description", "value": "## User Goal\nDescription content here.", "format": "Markdown" },
+    { "name": "System.AreaPath", "value": "edge-ai\\Team" },
+    { "name": "System.IterationPath", "value": "edge-ai\\Sprint 1" }
+  ]
+}
+```
+
+</example>
+
+### Batch Update Example
+
+<example>
+
+```json
+{
   "updates": [
     {
       "id": 1234,
+      "path": "/fields/System.Description",
+      "value": "## User Goal\nAs a user, I want to update component functionality.",
+      "op": "Add",
+      "format": "Markdown"
+    },
+    {
+      "id": 1234,
       "path": "/fields/Microsoft.VSTS.Common.AcceptanceCriteria",
-      "value": "* Acceptance criterion pulled from handoff-logs.md",
-      "op": "add",
+      "value": "* Criterion one from planning artifacts\n* Criterion two from planning artifacts",
+      "op": "Add",
       "format": "Markdown"
     }
   ]
 }
 ```
-<!-- </example-ado-wit-update-batch> -->
-````
 
-1. **Create Top Level Work Items**: mcp_ado_wit_create_work_item
-2. **Create Child Work Items**: mcp_ado_wit_add_child_work_items
-3. **Update Existing Work Items**: mcp_ado_wit_update_work_items_batch
-4. **Create Additional Relationship Links**: mcp_ado_wit_work_items_link
+</example>
 
-**Error Handling**:
+### Link Work Items Example
 
-* Failed creation because item already exists: Likely already created, note it in handoff-logs.md `[x]` work item and move to next work item
-* Failed update because item is missing property: Verify the field and tool call then re-process if different, otherwise note it in handoff-logs.md leave `[ ]` and re-process work item without field
-* Failed adding relationship because work item doesn't exist: Likely order mistake, note it in handoff-logs.md leave `[ ]` and come back to it later
+<example>
+
+```json
+{
+  "project": "edge-ai",
+  "updates": [
+    { "id": 1234, "linkToId": 1000, "type": "parent" },
+    { "id": 1235, "linkToId": 1234, "type": "child", "comment": "Adding subtask" },
+    { "id": 1234, "linkToId": 1236, "type": "related" }
+  ]
+}
+```
+
+</example>
+
+_Brought to you by microsoft/hve-core_

@@ -1,165 +1,94 @@
 ---
-description: "Analyze prompt files without modification, producing quality reports, comparisons, or documentation - Brought to you by microsoft/hve-core"
-agent: 'prompt-builder'
-argument-hint: "[mode={validate|compare|document}] [file=<path>] [file1=<path> file2=<path>]"
+description: "Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core"
+argument-hint: "file=..."
 ---
 
 # Prompt Analyze
 
+This prompt evaluates prompt engineering artifacts against the Prompt Quality Criteria defined in the prompt-builder protocol. The analyzer dispatches subagents to understand the target prompt's intent and validate it against all quality requirements, then reports findings without modifying the target file.
+
 ## Inputs
 
-* ${input:mode:validate}: (Optional, defaults to validate) Analysis mode - validate for quality assessment, compare for side-by-side analysis, document for generating usage documentation
-* ${input:file}: (Optional) Target prompt file for validate or document modes; defaults to current open file or attached file
-* ${input:file1}: (Required for compare mode unless inferred) First prompt file; can be inferred from attached files or user prompt
-* ${input:file2}: (Required for compare mode unless inferred) Second prompt file; can be inferred from open editor, attachments, or user prompt
-* ${input:output}: (Optional, document mode) Output path for generated documentation; defaults to `.copilot-tracking/prompt-docs/`
+* ${input:file}: (Required) Target prompt file to analyze. Accepts `.prompt.md`, `.chatmode.md`, `.agent.md`, or `.instructions.md` files.
 
-## Analysis Protocol
+## Required Steps
 
-### 1. Determine Analysis Mode
+Follow each step in order. Read the prompt-builder instructions at `.github/instructions/prompt-builder.instructions.md` before beginning analysis.
 
-Analyze the user prompt to establish the analysis mode:
+### Step 1: Load Target and Instructions
 
-When `${input:mode}` is explicitly provided, use that mode directly.
+Read the target file at `${input:file}` along with the prompt-builder instructions to establish the evaluation baseline:
 
-When mode is not explicit, infer from user prompt signals:
+* Capture the full content of the target file for analysis.
+* Identify the file type from the extension to determine applicable validation rules.
+* Note the frontmatter fields present and their values.
 
-<!-- <analyze-mode-signals> -->
-| Signal Words | Mode |
-|--------------|------|
-| validate, check, audit, review, quality, assess | validate |
-| compare, diff, versus, vs, between, which is better | compare |
-| document, docs, explain, describe, usage, help | document |
-<!-- </analyze-mode-signals> -->
+### Step 2: Dispatch Execution Analysis Subagent
 
-When no clear signal is present, default to **validate** mode.
+Use `runSubagent` to analyze what the target prompt does. When `runSubagent` is unavailable, perform this analysis directly.
 
-### 2. Locate Target Files
+Provide the subagent with these instructions:
 
-Identify the files to analyze based on the selected mode:
+* Read the target file content and identify its purpose.
+* Determine the intended workflow: single-session, conversational, or autonomous.
+* Catalog the main capabilities and features the prompt provides.
+* Identify any protocols, phases, or steps defined in the file.
+* Note input variables and their purposes.
+* Return a structured summary covering purpose, workflow type, capabilities, and structure.
 
-For validate mode:
+### Step 3: Dispatch Evaluation Subagent
 
-* Use `${input:file}` if provided
-* Otherwise use the currently open editor file
-* Otherwise check for attached files in the conversation
-* Confirm the file exists and is a prompt engineering artifact (.prompt.md, .chatmode.md, .agent.md, or .instructions.md)
+Use `runSubagent` to validate the target against all Prompt Quality Criteria. When `runSubagent` is unavailable, perform this evaluation directly.
 
-For compare mode:
+Provide the subagent with these instructions:
 
-* Resolve two files from available sources in priority order:
-  1. Explicit inputs: use `${input:file1}` and `${input:file2}` if both provided
-  2. Mixed sources: combine attached file(s) with currently open editor file
-  3. Multiple attachments: use the first two attached prompt files in order
-  4. User prompt mentions: extract file paths mentioned in the user prompt
-* When only one file is identifiable, prompt the user to specify the second file
-* Confirm both files exist before proceeding
+* Read the prompt-builder instructions at `.github/instructions/prompt-builder.instructions.md`.
+* Read the writing-style instructions at `.github/instructions/writing-style.instructions.md`.
+* Evaluate the target file against each item in the Prompt Quality Criteria checklist.
+* Check writing style compliance against the Prompt Writing Style section.
+* Validate key criteria: clarity, consistency, alignment, coherence, calibration, correctness.
+* Verify few-shot examples are in fenced code blocks and match instructions exactly.
+* Confirm file structure follows the appropriate file type guidelines.
+* Validate protocol patterns if protocols are present.
+* Return findings as a list with severity (critical, major, minor), category (research gap, implementation issue), description, and suggested fix.
 
-For document mode:
+### Step 4: Format Analysis Report
 
-* Follow the same resolution as validate mode for the target file
-* Determine output location from `${input:output}` or use default path `.copilot-tracking/prompt-docs/<filename>-docs.md`
+Compile results from both subagents into a structured report with these sections:
 
-### 3. Execute Mode-Specific Analysis
+Purpose and Capabilities:
 
-#### Validate Mode
+* State the prompt's purpose in one sentence.
+* List the workflow type and key capabilities.
+* Describe the protocol structure if present.
 
-Assess the quality of a single prompt file through Prompt Tester evaluation:
+Issues Found:
 
-* Read the target file in full
-* Identify the file type (prompt, chatmode/agent, or instructions) from extension and content
-* Construct a representative test scenario appropriate to the file's purpose
-* Dispatch Prompt Tester with the constructed scenario
+* Group issues by severity: critical first, then major, then minor.
+* For each issue, include the category, a concise description, and an actionable suggestion.
+* Reference specific sections or line numbers when relevant.
 
-Compile a quality report from Prompt Tester findings:
+Quality Assessment:
 
-<!-- <validate-report-structure> -->
-* **File Overview**: Path, file type, description from frontmatter, and primary purpose
-* **Compliance Assessment**: Adherence to prompt-builder.chatmode.md standards for the file type
-* **Issues Found**: Categorized by severity (critical, major, minor) with specific line references
-* **Strengths**: Aspects of the prompt that follow best practices
-* **Recommendations**: Suggested improvements without applying them
-<!-- </validate-report-structure> -->
+* Summarize which Prompt Quality Criteria passed and which failed.
+* Note any patterns of concern across multiple criteria.
 
-#### Compare Mode
+### Step 5: Deliver Verdict
 
-Analyze two prompt files to identify differences and recommend which approach to prefer:
+When issues are found:
 
-* Read both files in full
-* Identify file types and verify they are comparable (warn if comparing different file types)
+* Present the analysis report with all sections.
+* Highlight the most impactful issues that should be addressed first.
+* Provide a count of issues by severity.
 
-Perform structural comparison:
+When no issues are found:
 
-* Compare frontmatter fields (description, agent, tools, applyTo)
-* Compare input variables and their defaults
-* Compare steps or phases (count, naming, structure)
-* Compare referenced files and external dependencies
-* Compare activation patterns and exit conditions
-
-Dispatch Prompt Tester on both files using identical test scenarios:
-
-* Use the same representative scenario for both files
-* Record quality scores and issues for each
-
-Compile a comparison report:
-
-<!-- <compare-report-structure> -->
-* **File Summaries**: Brief overview of each file's purpose and approach
-* **Structural Differences**: Table of key differences in structure, inputs, and references
-* **Quality Comparison**: Side-by-side Prompt Tester results (issues, severity counts)
-* **Approach Analysis**: How each file handles the same use case differently
-* **Recommendation**: Which file to prefer and why, or when each is more appropriate
-<!-- </compare-report-structure> -->
-
-#### Document Mode
-
-Generate usage documentation from a prompt file for users and contributors:
-
-* Read the target file in full
-* Extract all documentable elements from the content
-
-Generate documentation covering:
-
-<!-- <document-output-structure> -->
-* **Purpose**: What the prompt accomplishes, derived from frontmatter description and content
-* **When to Use**: Scenarios where this prompt is appropriate
-* **Prerequisites**: Required tools, files, or state before invocation
-* **Inputs**: Table of input variables with types, defaults, and descriptions
-* **Execution Flow**: Summary of steps or phases with brief descriptions
-* **Outputs**: What the prompt produces (files, reports, state changes)
-* **Examples**: Sample invocations with expected outcomes
-* **Related Prompts**: Links to prompts that complement or extend this one
-<!-- </document-output-structure> -->
-
-Create or update documentation at the output path:
-
-* Format as markdown suitable for docs/ inclusion
-* Include cross-references to the source prompt file
-
-### 4. Report Findings
-
-Present analysis results based on the mode:
-
-For validate mode:
-
-* Display the quality report with clear section headings
-* Highlight critical issues first, followed by major and minor
-* Provide line-specific references for each issue
-* List recommendations as actionable next steps
-
-For compare mode:
-
-* Display the comparison report with both files clearly identified
-* Use tables for structural differences
-* Present the recommendation with supporting rationale
-* Note any caveats about the comparison (different file types, different purposes)
-
-For document mode:
-
-* Confirm the documentation file path created or updated
-* Display a summary of what was documented
-* Note any sections that could not be generated due to missing information
+* Present the purpose and capabilities section.
+* Display: ✅ **Quality Assessment Passed** - This prompt meets all Prompt Quality Criteria.
+* Summarize the criteria validated.
 
 ---
 
-Proceed with prompt analysis following the Analysis Protocol.
+Proceed with analysis of the target file following the Required Steps.
+
+```

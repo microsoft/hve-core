@@ -6,254 +6,133 @@ maturity: stable
 
 # C# Test Instructions
 
-These instructions define conventions for C# test code. All C# coding conventions from [csharp.instructions.md](csharp.instructions.md) apply to test code.
+Conventions for C# test code. All conventions from [csharp.instructions.md](csharp.instructions.md) apply, including member ordering and field naming with underscore prefix.
 
 ## Test Framework
 
-* Test projects use XUnit
-* Mocking uses the latest Moq library
-* Tests follow BDD-style conventions for naming and structure
-* Tests focus on class behaviors rather than internal implementation details
+Use XUnit with NSubstitute for mocking. Focus on class behaviors rather than implementation details. Follow BDD-style naming and Arrange/Act/Assert structure.
 
-## Test Structure
+### Mocking Libraries
 
-Test file naming matches the class under test (e.g., `PipelineServiceTests`).
+| Library | Usage |
+|---------|-------|
+| NSubstitute | Preferred for new projects |
+| FakeItEasy | Acceptable alternative |
+| Moq | Existing projects only (pin to 4.18.x or 4.20.2+) |
 
-Test methods follow the BDD `Given/When/Then` pattern, implemented as `Arrange/Act/Assert` blocks.
+## Test Naming
 
-Test method naming format: `(GivenSomething)_(WhenSomething)_ActingCall_Assertion`
+Test file naming matches the class under test: `PipelineServiceTests`.
 
-<!-- <example-test-naming> -->
+Test method format: `GivenContext_WhenAction_ExpectedResult`
+
 ```text
 WhenValidRequest_ProcessDataAsync_ReturnsParsedResponse
 GivenEmptyInput_ProcessDataAsync_ThrowsArgumentException
 ```
-<!-- </example-test-naming> -->
 
-* One assertion per test is preferred; related assertions validating the same behavior are acceptable
-* Logger mocks are not verified or validated
+Prefer one assertion per test. Related assertions validating the same behavior are acceptable. Do not verify logger mocks.
+
+Use `[Theory]` with `[InlineData]` for simple parameterized cases or `[MemberData]` for complex test data.
 
 ## Test Organization
 
-* Member fields at the top of the class in alphabetical order
-* Fields are `readonly` when possible
-* Service under test is named `sut`
-* Utility methods appear after the constructor but before test methods
-* Test methods grouped logically by behavior, ordered alphabetically within groups
-* Mock setup in the constructor for common setup; in individual test methods for specific behavior
+* Fields at class top, alphabetically by name after underscore (`_httpClient` before `_sut`), `readonly` when possible
+* Service under test named `_sut`
+* Utility methods after constructor, before test methods
+* Test methods grouped by behavior, alphabetically within groups
+* Common mock setup in constructor; specific setup in test methods
 
-## Test Examples
+## NSubstitute Patterns
 
-<!-- <example-test-class> -->
+Common mocking patterns:
+
+```csharp
+// Create substitutes
+var service = Substitute.For<IDataService>();
+var options = Substitute.For<IOptions<Config>>();
+
+// Configure returns
+service.GetAsync(Arg.Any<int>()).Returns(Task.FromResult(data));
+options.Value.Returns(new Config { Endpoint = "https://api.test" });
+
+// Argument matching
+service.Process(Arg.Is<Request>(r => r.Id > 0)).Returns(result);
+
+// Verify calls
+await service.Received(1).SaveAsync(Arg.Any<Data>());
+service.DidNotReceive().Delete(Arg.Any<int>());
+```
+
+## Lifecycle Interfaces
+
+Implement `IAsyncLifetime` for per-test setup and teardown:
+
+* `InitializeAsync` runs before each test
+* `DisposeAsync` runs after each test
+
+## Base Classes
+
+Create base classes when multiple test classes share setup logic. Name base class `*TestsBase` and derived class `ClassUnderTest_GivenContext` or `ClassUnderTest_WhenAction`. Define fake classes once in the base class.
+
+## Complete Example
+
+Using NSubstitute:
+
 ```csharp
 public class EndpointDataProcessorTests
 {
-    private readonly string endpointUri = "https://test-endpoint.com/predict";
-    private readonly FakeSinkData expectedSinkData;
-    private readonly HttpClient httpClient;
-    private readonly Mock<HttpMessageHandler> httpMessageHandlerMock;
-    private readonly Mock<ILogger<EndpointDataProcessor<FakeSourceData, FakeSinkData>>> loggerMock;
-    private readonly Mock<IOptions<InferencePipelineOptions>> optionsMock;
-    private readonly FakeSourceData sourceData;
-    private readonly EndpointDataProcessor<FakeSourceData, FakeSinkData> sut;
+    private readonly HttpClient _httpClient;
+    private readonly MockHttpMessageHandler _httpHandler = new();
+    private readonly IOptions<PipelineOptions> _options;
+    private readonly EndpointDataProcessor<FakeSource, FakeSink> _sut;
 
     public EndpointDataProcessorTests()
     {
-        loggerMock = new Mock<ILogger<EndpointDataProcessor<FakeSourceData, FakeSinkData>>>();
+        _options = Substitute.For<IOptions<PipelineOptions>>();
+        _options.Value.Returns(new PipelineOptions { EndpointUri = "https://test.com/predict" });
 
-        optionsMock = new Mock<IOptions<InferencePipelineOptions>>();
-        optionsMock.Setup(o => o.Value).Returns(new InferencePipelineOptions
-        {
-            EndpointUri = endpointUri,
-            SourceTopic = "source/topic",
-            SinkTopic = "sink/topic"
-        });
-
-        httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        httpClient = new HttpClient(httpMessageHandlerMock.Object);
-
-        sourceData = new FakeSourceData { Id = 42, Name = "Test Data" };
-        expectedSinkData = new FakeSinkData { Result = "Processed", Score = 0.95 };
-
-        sut = new EndpointDataProcessor<FakeSourceData, FakeSinkData>(
-            loggerMock.Object,
-            optionsMock.Object,
-            httpClient);
-    }
-
-    private void SendAsyncSetup(HttpResponseMessage responseMessage)
-    {
-        httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(responseMessage);
+        _httpClient = new HttpClient(_httpHandler);
+        _sut = new EndpointDataProcessor<FakeSource, FakeSink>(_options, _httpClient);
     }
 
     [Fact]
     public async Task WhenValidRequest_ProcessDataAsync_ReturnsParsedResponse()
     {
         // Arrange
-        var responseContent = JsonSerializer.Serialize(expectedSinkData);
-        SendAsyncSetup(new HttpResponseMessage
+        var expected = new FakeSink { Result = "Processed", Score = 0.95 };
+        _httpHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(responseContent)
-        });
+            Content = new StringContent(JsonSerializer.Serialize(expected))
+        };
 
         // Act
-        var actual = await sut.ProcessDataAsync(sourceData, CancellationToken.None);
+        var actual = await _sut.ProcessDataAsync(new FakeSource { Id = 1 }, CancellationToken.None);
 
         // Assert
         Assert.NotNull(actual);
-        Assert.Equivalent(expectedSinkData, actual);
+        Assert.Equivalent(expected, actual);
     }
 
     [Fact]
-    public async Task WhenNonSuccessfulStatusCode_ProcessDataAsync_ThrowsHttpRequestException()
+    public async Task WhenServerError_ProcessDataAsync_ThrowsHttpRequestException()
     {
         // Arrange
-        var errorResponse = "Testing internal server error";
-        SendAsyncSetup(new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.InternalServerError,
-            Content = new StringContent(errorResponse)
-        });
+        _httpHandler.Response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<HttpRequestException>(
-            () => sut.ProcessDataAsync(sourceData, CancellationToken.None)
-        );
-
-        Assert.Contains("500", exception.Message);
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => _sut.ProcessDataAsync(new FakeSource { Id = 1 }, CancellationToken.None));
     }
 
-    public class FakeSourceData
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-    }
+    public record FakeSource { public int Id { get; init; } }
+    public record FakeSink { public string? Result { get; init; } public double Score { get; init; } }
 
-    public class FakeSinkData
+    private class MockHttpMessageHandler : HttpMessageHandler
     {
-        public string? Result { get; set; }
-        public double Score { get; set; }
+        public HttpResponseMessage Response { get; set; } = new(HttpStatusCode.OK);
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(Response);
     }
 }
 ```
-<!-- </example-test-class> -->
-
-## Lifecycle Interfaces
-
-For setup/teardown before and after each test, implement `IAsyncLifetime`:
-
-* `InitializeAsync` runs before each test
-* `DisposeAsync` runs after each test
-
-<!-- <example-async-lifecycle> -->
-```csharp
-public class PipelineService_WhenReceivingOneTests : PipelineServiceTestsBase, IAsyncLifetime
-{
-    private readonly CancellationTokenSource cancellationTokenSource;
-    private readonly FakeSinkData sinkData;
-    private readonly FakeSourceData sourceData;
-
-    public PipelineService_WhenReceivingOneTests()
-    {
-        sourceData = new FakeSourceData { Id = 1, Name = "Test" };
-        sinkData = new FakeSinkData { Result = "Processed", Score = 0.95 };
-        cancellationTokenSource = new CancellationTokenSource();
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        await sut.StartAsync(cancellationTokenSource.Token);
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        return ValueTask.CompletedTask;
-    }
-
-    [Fact]
-    public async Task WhenValidData_OnTelemetryReceived_SendsToSink()
-    {
-        // Arrange
-        dataProcessorMock
-            .Setup(p =>
-                p.ProcessDataAsync(It.IsAny<FakeSourceData?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sinkData);
-
-        // Act
-        await OnTelemetryReceived(sourceData);
-
-        // Assert
-        sinkSenderMock.Verify(s => s.SendTelemetryAsync(
-                It.Is<FakeSinkData>(actual => sinkData == actual),
-                It.IsAny<Dictionary<string, string>>(),
-                It.IsAny<MqttQualityOfServiceLevel>(),
-                It.IsAny<TimeSpan?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-}
-```
-<!-- </example-async-lifecycle> -->
-
-## Test Base Classes
-
-Base classes contain shared setup logic and utility methods for multiple derived test classes.
-
-Naming conventions:
-
-* Base class: `*TestsBase` (e.g., `PipelineServiceTestsBase`)
-* Derived class: `ClassUnderTest_(Given/When)Something` (e.g., `PipelineService_WhenReceivingOneMessage`)
-
-Base class structure:
-
-* Protected members for derived class access
-* Fields ordered alphabetically
-* Create a base class only when more than one implementing test class exists
-
-<!-- <example-test-base-class> -->
-```csharp
-public abstract class PipelineServiceTestsBase
-{
-    protected readonly Mock<IPipelineDataProcessor<FakeSourceData, FakeSinkData>> dataProcessorMock;
-    protected readonly Mock<IHostApplicationLifetime> lifetimeMock;
-    protected readonly Mock<ILogger<PipelineService<FakeSourceData, FakeSinkData>>> loggerMock;
-    protected readonly Mock<ISinkSenderFactory<FakeSinkData>> sinkSenderFactoryMock;
-    protected readonly Mock<ISinkSender<FakeSinkData>> sinkSenderMock;
-    protected readonly Mock<ISourceReceiverFactory<FakeSourceData>> sourceReceiverFactoryMock;
-    protected readonly Mock<ISourceReceiver<FakeSourceData>> sourceReceiverMock;
-    protected readonly PipelineService<FakeSourceData, FakeSinkData> sut;
-
-    protected Func<string, FakeSourceData, IncomingTelemetryMetadata, Task> capturedOnTelemetryReceived =
-        (_, _, _) => Task.CompletedTask;
-
-    protected PipelineServiceTestsBase()
-    {
-        // Common setup code
-    }
-
-    protected async Task OnTelemetryReceived(FakeSourceData sourceData, string senderId = "test-sender-id")
-    {
-        // Implementation
-    }
-
-    public class FakeSourceData
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-    }
-
-    public class FakeSinkData
-    {
-        public string? Result { get; set; }
-        public double Score { get; set; }
-    }
-}
-```
-<!-- </example-test-base-class> -->

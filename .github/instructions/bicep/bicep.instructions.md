@@ -7,91 +7,43 @@ maturity: stable
 
 These instructions define conventions for Bicep Infrastructure as Code (IaC) development in this codebase. Bicep files deploy Azure resources declaratively through ARM templates.
 
+> [!NOTE]
+> These instructions target Bicep 0.36+ and include generally available features through January 2026. The `providers` keyword is deprecated; use `extension` instead.
+
 ## MCP Tools
 
 Bicep MCP tools provide schema information and best practices:
 
 <!-- <reference-mcp-tools> -->
-| Tool | Purpose |
-|------|---------|
-| `mcp_bicep_experim_get_az_resource_type_schema` | Retrieves the schema for a specific Azure resource type and API version |
-| `mcp_bicep_experim_list_az_resource_types_for_provider` | Lists all available resource types for a provider namespace |
-| `mcp_bicep_experim_get_bicep_best_practices` | Returns current Bicep authoring best practices |
-| `mcp_bicep_experim_list_avm_metadata` | Lists all Azure Verified Modules with versions and documentation |
+| Tool | Purpose | Parameters |
+|------|---------|------------|
+| `mcp_bicep_experim_get_az_resource_type_schema` | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
+| `mcp_bicep_experim_list_az_resource_types_for_provider` | Lists all available resource types for a provider namespace | `providerNamespace` (required) |
+| `mcp_bicep_experim_get_bicep_best_practices` | Returns current Bicep authoring best practices | None |
 <!-- </reference-mcp-tools> -->
 
 ## Project Structure
 
-### Component Structure
+Organize Bicep files in a dedicated folder (e.g., `infra/`, `deploy/`, or environment-specific names):
 
-Components are reusable Bicep modules for specific Azure resource deployments:
-
-<!-- <example-component-structure> -->
+<!-- <example-project-structure> -->
 ```text
-src/
-  100-edge/
-    110-iot-ops/
-      bicep/                          # Component module
-        main.bicep                    # Main orchestration file
-        types.bicep                   # Component-specific types with defaults
-        types.core.bicep              # Core shared types
-        README.md                     # Auto-generated documentation
-        modules/
-          iot-ops-init.bicep          # Internal module
-          iot-ops-instance.bicep      # Internal module
+main.bicep                    # Main orchestration
+main.bicepparam               # Parameter values
+types.bicep                   # Shared type definitions
+README.md                     # Documentation
+modules/                      # Reusable sub-modules
+  networking.bicep
+  storage.bicep
+  compute.bicep
 ```
-<!-- </example-component-structure> -->
+<!-- </example-project-structure> -->
 
-File organization within components:
+File organization:
 
 * `main.bicep` - Primary resource definitions and orchestration
-* `types.core.bicep` - Core type definitions shared across components
-* `types.bicep` - Component-specific types and default values
-* `modules/` - Internal modules for the component
-
-### Blueprint Structure
-
-Blueprints compose multiple components into complete infrastructure stamps:
-
-<!-- <example-blueprint-structure> -->
-```text
-blueprints/
-  full-multi-node-cluster/
-    bicep/                            # Blueprint module
-      main.bicep                      # Calls component modules only
-      types.core.bicep                # Core types for the blueprint
-    README.md                         # Deployment instructions
-```
-<!-- </example-blueprint-structure> -->
-
-Blueprints call component modules but never reference internal modules directly.
-
-### CI Directories
-
-CI configurations reference component modules for validation:
-
-<!-- <example-ci-directory> -->
-```bicep
-import * as core from '../../bicep/types.core.bicep'
-
-/*
-  Common Parameters
-*/
-
-@description('The common component configuration.')
-param common core.Common
-
-/*
-  Modules
-*/
-
-module ci '../../bicep/main.bicep' = {
-  params: {
-    common: common
-  }
-}
-```
-<!-- </example-ci-directory> -->
+* `types.bicep` - Shared type definitions and default values
+* `modules/` - Reusable sub-modules for logical grouping
 
 ## Coding Standards
 
@@ -120,6 +72,18 @@ Parameter conventions:
 * Define related parameter types in `types.bicep`
 * Use `??` (null coalescing) and `.?` (safe dereference) instead of ternary operators with null checks
 * Organize parameters by functional grouping, then alphabetically within groups
+
+Functional groupings organize parameters by their purpose:
+
+| Group | Description | Examples |
+| ----- | ----------- | -------- |
+| Identity | Authentication and authorization | Managed identity names, RBAC assignments |
+| Networking | Network connectivity and security | VNet names, subnet configurations, private endpoints |
+| Storage | Data persistence | Storage account settings, container names |
+| Monitoring | Observability and diagnostics | Log Analytics workspace, diagnostic settings |
+| Compute | Processing resources | VM sizes, instance counts, scaling rules |
+| Security | Encryption and secrets | Key Vault names, encryption settings |
+
 * Boolean parameters start with `should` or `is`
 * Required parameters have no defaults
 * Empty string defaults are not permitted; use `null` instead
@@ -151,248 +115,191 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 
 * Every output includes a meaningful `@description()`
 * Conditional resources require conditional output expressions
-* Nullable outputs use the `?` type modifier
+* Nullable outputs use the `?` type modifier: `output id string? = condition ? resource.id : null`
 
 ### Resource Scoping
 
-* Default `targetScope` is `'resourceGroup'` except for blueprints
-* The `scope:` property does not use ID strings directly
+* Default `targetScope` is `'resourceGroup'`; use `'subscription'` or `'managementGroup'` for cross-resource-group or policy deployments
+* Use symbolic references for `scope:` (not ID strings): `scope: resourceGroup('networking-rg')`
 * Existing resources use `existing =` syntax
-* Resource group scope changes use internal modules
+* Cross-resource-group deployments use sub-modules with `scope:` property
 
-## Component Conventions
+## Module Conventions
 
-<!-- <conventions-components> -->
-Components follow these rules:
-
-* Parameters that can have defaults include defaults
-* Resources belong in `main.bicep`
-* Components do not reference other components directly
-* Components do not reference another component's internal modules
-* Components receive resource names for `existing` lookups rather than resource IDs
-<!-- </conventions-components> -->
-
-## Internal Module Conventions
-
-<!-- <conventions-internal-modules> -->
-Internal modules follow these rules:
-
-* Parameters have no defaults (parent component provides all values)
-* Files are located at `{component}/bicep/modules/{module-name}.bicep`
-* Internal modules do not reference components or other components' internal modules
-<!-- </conventions-internal-modules> -->
+| Aspect | Main Module | Sub-Module |
+| ------ | ----------- | ---------- |
+| Location | `bicep/main.bicep` | `bicep/modules/{name}.bicep` |
+| Parameters | Include defaults when sensible | No defaults (parent provides all values) |
+| Resources | Defined in `main.bicep` | Scoped to specific functionality |
+| References | Orchestrates sub-modules | Cannot reference other sub-modules directly |
+| Lookups | Receive resource names for `existing` lookups (not IDs) | Inherit scope from parent |
 
 ## Type System
 
-### Core Types
+### Shared Types
 
-The `Common` type provides shared configuration across components:
+Types define configuration with `@export()` for reuse across modules:
 
-<!-- <example-types-core> -->
+<!-- <example-types> -->
 ```bicep
 @export()
-@description('Common settings for the components.')
-type Common = {
-  @description('Prefix for all resources in this module.')
-  resourcePrefix: string
+@description('Common deployment configuration.')
+type DeploymentConfig = {
+  @description('Resource name prefix.')
+  prefix: string
 
-  @description('Location for all resources in this module.')
+  @description('Azure region for resources.')
   location: string
 
-  @description('Environment for all resources in this module: dev, test, or prod.')
-  environment: string
-
-  @description('Instance identifier for naming resources: 001, 002, etc.')
-  instance: string
-}
-```
-<!-- </example-types-core> -->
-
-### Component Types
-
-Component types define configuration with sensible defaults:
-
-<!-- <example-types-component> -->
-```bicep
-@export()
-@description('The settings for the Azure IoT Operations Extension.')
-type AioExtension = {
-  @description('The common settings for the extension.')
-  release: Release
-
-  settings: {
-    @description('The namespace in the cluster where Azure IoT Operations will be installed.')
-    namespace: string
-
-    @description('The distro for Kubernetes for the cluster.')
-    kubernetesDistro: 'K3s' | 'K8s' | 'MicroK8s'
-
-    @description('The length of time in minutes before an operation for an agent times out.')
-    agentOperationTimeoutInMinutes: int
-  }
+  @description('Environment: dev, test, or prod.')
+  environment: 'dev' | 'test' | 'prod'
 }
 
 @export()
-var aioExtensionDefaults = {
-  release: {
-    version: '1.0.9'
-    train: 'stable'
-  }
-  settings: {
-    namespace: 'azure-iot-operations'
-    kubernetesDistro: 'K3s'
-    agentOperationTimeoutInMinutes: 120
-  }
+var deploymentDefaults = {
+  prefix: 'myapp'
+  location: 'eastus2'
+  environment: 'dev'
 }
 ```
-<!-- </example-types-component> -->
+<!-- </example-types> -->
 
 Type conventions:
 
-* All types and default values include `@export()`
-* All elements include `@description()`
+* All types and default values include `@export()` and `@description()`
 * Sensitive values include `@secure()`
-* Type literals (e.g., `'K3s' | 'K8s'`) constrain parameters with known valid values
+* Type literals (e.g., `'dev' | 'test' | 'prod'`) constrain parameters with known valid values
+* Use `@sealed()` to prevent extra properties on configuration types (strict enforcement)
+* Use `@discriminator('propertyName')` for type-safe unions with multiple variants (e.g., `@discriminator('type') type pet = cat | dog`)
+* Prefer `resourceInput<>` and `resourceOutput<>` over open `object` types for resource configurations
+
+### Resource-Derived Types
+
+Resource-derived types provide compile-time validation for resource inputs and outputs:
+
+<!-- <example-resource-derived-types> -->
+```bicep
+@description('Storage account input configuration.')
+type storageAccountInput = resourceInput<'Microsoft.Storage/storageAccounts@2023-05-01'>
+
+@description('Storage account output properties.')
+type storageAccountOutput = resourceOutput<'Microsoft.Storage/storageAccounts@2023-05-01'>
+
+@description('Accepts any valid storage account configuration.')
+param storageConfig storageAccountInput
+```
+<!-- </example-resource-derived-types> -->
+
+Resource-derived types validate property names and types against the resource schema at compile time.
+
+## User-Defined Functions
+
+<!-- <example-user-defined-functions> -->
+```bicep
+@export()
+@description('Generates a storage account name within the 3-24 character Azure limit.')
+func getStorageAccountName(prefix string, environment string, instance string) string =>
+  take('st${prefix}${environment}${instance}', 24)
+```
+<!-- </example-user-defined-functions> -->
+
+Function conventions:
+
+* All exported functions include `@export()` and `@description()`
+* Place shared functions in a `functions.bicep` file within the module
+* Use lambda syntax (`=>`) for single-expression functions
+* Function names follow `camelCase` naming
+* Import shared functions using standard syntax: `import { functionName } from 'shared/functions.bicep'`
+
+## Built-in Functions
+
+Bicep 0.36+ includes these additional built-in functions:
+
+| Function | Purpose | Example |
+| -------- | ------- | ------- |
+| `parseUri(uri)` | Parses URI into components (scheme, host, port, path, query) | `parseUri('https://example.com/path?q=1').host` |
+| `buildUri(scheme, host, path?, port?, query?)` | Constructs URI from components | `buildUri('https', 'api.example.com', '/v1', 443)` |
+| `loadDirectoryFileInfo(path)` | Gets file metadata from directory at compile time | `loadDirectoryFileInfo('./configs/')` |
+| `deployer().userPrincipalName` | Gets the deploying user's principal | `deployer().userPrincipalName` |
+
+## Resource Decorators
+
+Use `@onlyIfNotExists()` for idempotent deployments where existing resources must be preserved. The decorator creates resources only when they do not already exist.
 
 ## File Organization
 
 Every Bicep file includes metadata at the top:
 
 ```bicep
-metadata name = 'Component or Blueprint Name'
-metadata description = 'Description of what this component does and how it works.'
+metadata name = 'Module Name'
+metadata description = 'Description of what this module deploys and how it works.'
 ```
 
-Main file sections appear in this order:
-
-<!-- <example-main-organization> -->
-```bicep
-metadata name = 'Azure IoT Operations'
-metadata description = 'Deploys Azure IoT Operations extensions and instances on Arc-enabled Kubernetes clusters.'
-
-import * as core from './types.core.bicep'
-import * as types from './types.bicep'
-
-/*
-  Common Parameters
-*/
-
-@description('The common component configuration.')
-param common core.Common
-
-/*
-  Component Parameters
-*/
-
-@description('The settings for the Azure IoT Operations Platform Extension.')
-param aioPlatformConfig types.AioPlatformExtension = types.aioPlatformExtensionDefaults
-
-/*
-  Variables
-*/
-
-var deploymentPrefix = '${deployment().name}'
-
-/*
-  Resources
-*/
-
-resource example 'Microsoft.Example/resources@2024-01-01' = if (shouldCreateExample) {
-  name: 'example-${common.resourcePrefix}-${common.environment}-${common.instance}'
-}
-
-/*
-  Modules
-*/
-
-module exampleInternalModule 'modules/example-internal-module.bicep' = {
-  params: {
-    common: common
-  }
-}
-
-/*
-  Outputs
-*/
-
-@description('The ADR Schema Registry Name.')
-output schemaRegistryName string? = exampleInternalModule.outputs.schemaRegistryName
-```
-<!-- </example-main-organization> -->
-
-Section order:
+Section order with `/* */` comment headers:
 
 1. Metadata and imports
 2. Common parameters
-3. Component-specific parameters (grouped by functionality)
+3. Module-specific parameters (grouped by functionality)
 4. Variables (when needed)
 5. Resources
 6. Modules
 7. Outputs
 
-Each section has a `/* */` comment header with whitespace separation.
-
 ## API Versioning
 
-API version selection follows these guidelines:
-
-* Use `mcp_bicep_experim_list_az_resource_types_for_provider` to discover available API versions
-* Use `mcp_bicep_experim_get_az_resource_type_schema` to get the schema for a specific version
-* Identical resource types within a file use the same API version
-* New resources use the latest stable API version
-* Existing resources retain their API version unless significant changes warrant an upgrade
-
-## Azure Verified Modules
-
-Before implementing custom Bicep modules, check for existing Azure Verified Modules:
-
-* Use `mcp_bicep_experim_list_avm_metadata` to list available modules
-* AVM modules provide tested, Microsoft-supported implementations
-* Prefer AVM modules over custom implementations when functionality aligns
-* Document the decision when choosing custom implementation over AVM
+| Guideline | Details |
+| --------- | ------- |
+| Discover versions | Use `mcp_bicep_experim_list_az_resource_types_for_provider` and `get_az_resource_type_schema` |
+| Version consistency | Identical resource types within a file use the same API version |
+| New resources | Use the latest stable API version |
+| Existing resources | Retain API version unless significant changes warrant upgrade |
 
 ## Best Practices
 
 <!-- <reference-best-practices> -->
-Current Bicep best practices (retrieved via `mcp_bicep_experim_get_bicep_best_practices`):
+Best practices retrieved via `mcp_bicep_experim_get_bicep_best_practices`:
 
-General:
+| Category | Practice |
+| -------- | -------- |
+| Modules | Omit `name` field for `module` statements (auto-generated GUID prevents concurrency issues) |
+| Parameters | Group logically related values into single `param`/`output` with user-defined types |
+| Params Files | Use `.bicepparam` files with variables and expressions instead of `.json` |
+| Resources | Use `parent` property instead of `/` in child resource names |
+| Resources | Add `existing` resources for parents when defining child resources without parent present |
+| Resources | Diagnostic codes `BCP036`, `BCP037`, `BCP081` may indicate hallucinated types/properties |
+| Types | Avoid open types (`array`, `object`); prefer user-defined types |
+| Types | Use typed variables: `var foo string = 'value'` |
+| Syntax | Prefer `.?` with `??` over `!` or verbose ternary: `a.?b ?? c` |
 
-* Omit the `name` field for `module` statements (auto-generated GUID prevents concurrency issues)
-* Group logically related values into single `param` or `output` with user-defined types
-* Generate Bicep parameters files (`*.bicepparam`) instead of ARM parameters files (`*.json`)
+Parameters Files (`.bicepparam`) support variables and expressions:
 
-Resources:
+<!-- <example-bicepparam> -->
+```bicep
+using 'main.bicep'
 
-* Use the `parent` property instead of `/` characters in child resource `name` properties
-* Add `existing` resources for parents when defining child resources without the parent present
-* Use symbolic names (`foo.id`, `foo.properties.id`) instead of `resourceId()` or `reference()` functions
-* Diagnostic codes `BCP036`, `BCP037`, or `BCP081` may indicate hallucinated resource types or properties
-
-Types:
-
-* Avoid open types (`array`, `object`) in favor of user-defined types
-* Use typed variables with `@export()`: `var foo string = 'value'`
-* Use `resourceInput<'type@version'>` and `resourceOutput<'type@version'>` for resource-derived types
-
-Security:
-
-* Apply `@secure()` to any `param` or `output` containing sensitive data
-
-Syntax:
-
-* Prefer safe-dereference (`.?`) with coalesce (`??`) over null assertion (`!`) or verbose ternary expressions: `a.?b ?? c`
+var rgPrefix = 'myapp'
+param resourceGroupName = '${rgPrefix}-rg'
+param tags = { environment: 'prod', costCenter: 'engineering' }
+param location = 'eastus2'
+```
+<!-- </example-bicepparam> -->
 <!-- </reference-best-practices> -->
 
-## Reference and Validation
+## Experimental Features
 
-When no codebase reference exists for a resource type:
+> [!CAUTION]
+> Experimental features require explicit opt-in via `bicepconfig.json` and may change or be removed in future releases.
 
-1. Use MCP tools to retrieve the official schema
-2. Reference Microsoft documentation: `https://learn.microsoft.com/azure/templates/{provider-namespace}/{resource-type}`
+| Feature | Config Key | Syntax Example |
+| ------- | ---------- | -------------- |
+| Testing Framework | `testFramework` | `test storageTest 'tests/storage.tests.bicep' = { params: { location: 'eastus' } }` |
+| Assertions | `assertions` | `assert locationValid = location != 'centralus'` |
+| Parameter Validation | `userDefinedConstraints` | `@validate(length(value) >= 3 && length(value) <= 24) param storageName string` |
 
-Validation:
+Enable features in `bicepconfig.json`: `{ "experimentalFeaturesEnabled": { "featureName": true } }`
 
-* Search the codebase for existing Bicep patterns before implementing
-* Run `az bicep build` to verify syntax
-* Address all diagnostic warnings and errors before committing
+## Validation
+
+* Search codebase for existing Bicep patterns before implementing
+* Use MCP tools or Microsoft docs (`learn.microsoft.com/azure/templates/{provider}/{type}`) for schema reference
+* Run `az bicep build` and address all diagnostic warnings and errors before committing

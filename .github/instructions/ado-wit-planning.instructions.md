@@ -1,14 +1,57 @@
 ---
-description: "Required instructions for work item planning and creation or updating leveraging mcp ado tool calls."
+name: 'ADO Work Item Planning'
+description: 'Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols'
 applyTo: '**/.copilot-tracking/workitems/**'
 maturity: stable
 ---
 
 # Azure DevOps Work Items Planning File Instructions
 
-ADO Work Item Project: hve-core
+## Purpose and Scope
 
-<!-- <planning-folder-structure> -->
+This file is a reference specification that defines templates, field conventions, and search protocols for work item planning files. Workflow files consume this specification by including a cross-reference at the top of their content.
+
+Cross-reference pattern for consuming files:
+
+```markdown
+Follow all instructions from #file:./ado-wit-planning.instructions.md while executing this workflow.
+```
+
+Inline reference pattern when citing specific sections:
+
+```markdown
+per templates in #file:./ado-wit-planning.instructions.md
+using the matrix from #file:./ado-wit-planning.instructions.md
+```
+
+## MCP ADO Tools
+
+Work item operations reference these MCP ADO tools:
+
+Discovery and retrieval:
+
+* `mcp_ado_search_workitem`: Search work items by text, project, type, or state. Key params: `searchText` (required), `project`, `workItemType`, `state`, `top`, `skip`.
+* `mcp_ado_wit_get_work_item`: Retrieve a single work item. Key params: `id` (required), `project` (required), `expand`, `fields`.
+* `mcp_ado_wit_get_work_items_batch_by_ids`: Retrieve multiple work items. Key params: `ids` (required), `project` (required), `fields`.
+
+Creation and updates:
+
+* `mcp_ado_wit_create_work_item`: Create a new work item. Key params: `project` (required), `workItemType` (required), `fields` (required array of name/value pairs).
+* `mcp_ado_wit_add_child_work_items`: Add child items to a parent. Key params: `parentId` (required), `project` (required), `workItemType` (required), `items` (required array).
+* `mcp_ado_wit_update_work_item`: Update a single work item. Key params: `id` (required), `updates` (required array with path/value).
+* `mcp_ado_wit_update_work_items_batch`: Batch update multiple items. Key params: `updates` (required array with id/path/value).
+
+Relationships and linking:
+
+* `mcp_ado_wit_work_items_link`: Link work items together. Key params: `project` (required), `updates` (required array with id/linkToId/type).
+* `mcp_ado_wit_link_work_item_to_pull_request`: Link to a PR. Key params: `workItemId`, `projectId` (GUID), `repositoryId` (GUID), `pullRequestId`.
+* `mcp_ado_wit_add_artifact_link`: Add artifact links (branch, commit, build). Key params: `workItemId` (required), `project` (required), `linkType`.
+
+History and comments:
+
+* `mcp_ado_wit_list_work_item_revisions`: Get revision history. Key params: `workItemId` (required), `project` (required), `top`.
+* `mcp_ado_wit_add_work_item_comment`: Add a comment. Key params: `workItemId` (required), `project` (required), `comment` (required).
+
 ## Planning File Definitions & Directory Conventions
 
 Root planning workspace structure:
@@ -20,32 +63,46 @@ Root planning workspace structure:
       <artifact-normalized-name>/
         artifact-analysis.md                    # Human-readable table + recommendations
         work-items.md                           # Human/Machine-readable plan (source of truth)
-        handoff.md                              # Handoff for workitem execution (optionally references work-items.json if JSON variant produced)
+        handoff.md                              # Handoff for workitem execution
         planning-log.md                         # Structured operational & state log (routinely updated sections)
 ```
-**Normalization:**
-* Lower-case, hyphenated base filename without extension (e.g. `docs/Customer Onboarding PRD.md` → `docs--customer-onboarding-prd`).
-* Avoid spaces and punctuation besides hyphens (replace with hyphens).
-* Choose primary artifact when multiple artifacts and documents are provided or best effort.
-<!-- </planning-folder-structure> -->
+
+Valid `<planning-type>` values:
+
+* `discovery`: Work item discovery from artifacts, PRDs, or user requests
+* `pr`: Pull request work item linking and validation
+* `sprint`: Sprint planning and work item organization
+* `backlog`: Backlog refinement and prioritization
+
+Normalization rules for `<artifact-normalized-name>`:
+
+* Use lower-case, hyphenated base filename without extension (for example, `docs/Customer Onboarding PRD.md` becomes `docs--customer-onboarding-prd`).
+* Replace spaces and punctuation with hyphens.
+* Choose the primary artifact when multiple artifacts and documents are provided.
 
 ## Planning File Requirements
 
-* Planning markdown files MUST start with:
-  ```
-  <!-- markdownlint-disable-file -->
-  <!-- markdown-table-prettify-ignore-start -->
-  ```
-* Planning markdown files MUST end with (before last newline):
-  ```
-  <!-- markdown-table-prettify-ignore-end -->
-  ```
+Planning markdown files start with:
 
-<!-- <artifact-analysis-md> -->
+```markdown
+<!-- markdownlint-disable-file -->
+<!-- markdown-table-prettify-ignore-start -->
+```
+
+Planning markdown files end with (before the final newline):
+
+```markdown
+<!-- markdown-table-prettify-ignore-end -->
+```
+
 ## artifact-analysis.md
 
-**Detailed Template:**
-<!-- <template-artifact-analysis-md> -->
+Create artifact-analysis.md when beginning work item discovery from PRDs, user requests, or codebase artifacts. This file captures the human-readable analysis of planned work items before finalizing in work-items.md.
+
+Populate sections by extracting requirements from referenced artifacts, searching ADO for related items, and incorporating user feedback. Update the file iteratively as discovery progresses.
+
+### Template
+
 ````markdown
 # [Planning Type] Work Item Analysis - [Summarized Title]
 * **Artifact(s)**: [e.g., relative/path/to/artifact-a.md, relative/path/to/artifact-b.md]
@@ -85,14 +142,13 @@ Root planning workspace structure:
 ## Notes
 * [(Optional) Notes worth mentioning (e.g., PRD specifically included two Epics (WI001, WI002))]
 ````
-<!-- </template-artifact-analysis-md> -->
-<!-- </artifact-analysis-md> -->
 
-<!-- <work-items-md> -->
 ## work-items.md
 
-**Detailed Template:**
-<!-- <template-work-items-md> -->
+work-items.md is the source of truth for planned work item operations. Capture the `System.State` field for every referenced work item, highlighting `Resolved` items. When a `Resolved` User Story satisfies the requirement without updates, keep the action as `No Change` and add a `Related` link from any new stories back to that item.
+
+### Template
+
 ````markdown
 # Work Items
 * **Project**: [`projects` field for mcp ado tool]
@@ -103,7 +159,7 @@ Root planning workspace structure:
 ## WI[Reference Number (e.g, 002)] - [Action (one of, Create|Update|No Change)] - [Summarized Title (e.g., Update Component Functionality A)]
 [1-5 Sentence Explanation of Change (e.g., Adding user story for functionality A called out in Section 2.3 of the referenced document)]
 
-[(Optional) WI[Reference Number] - Similarity: [System.Id Similarity Score (e.g., ADO-1024=0.5, ADO-901=0.8, ADO-1071=0.9)]]
+[(Optional) WI[Reference Number] - Similarity: [System.Id=Category (e.g., ADO-1024=Similar, ADO-901=Match, ADO-1071=Distinct)]]
 
 * WI[Reference Number] - [Work Item Type Fields for single-line values (e.g., System.Id, System.WorkItemType, System.Title, System.Tags)]: [Single Line Value (e.g., As a user, I want functionality A in Component)]
 
@@ -115,73 +171,52 @@ Root planning workspace structure:
 ### WI[Reference Number] - Relationships
 * WI[Reference Number] - [is-a Link Type (e.g., Child, Predecessor, Successor, Related)] - [Relation ID (either, WI[Related Reference Number], System.Id: [Work Item ID from mcp ado tool])]: [Single Line Reason (e.g., New user story for feature around component)]
 ````
-<!-- </template-work-items-md> -->
 
-* Capture the `System.State` field for every referenced work item in `work-items.md`, highlighting `Resolved` items that remain unchanged.
-* When a `Resolved` User Story satisfies the requirement without updates, keep the action as `No Change` and ensure any new or updated stories include a `Related` link back to that item.
+### Example
 
-**Detailed Example:**
-<!-- <example-work-items-md> -->
 ````markdown
 # Work Items
 * **Project**: Project Name
 * **Area Path**: Project Name\\Area\\Path
-* **Iteration Path**: Project Name\\Sprint 1
 * **Repository**: project-repo
 
 ## WI002 - Update - Update Component Functionality A
-Updating existing user story to add functionality A captured in Section 2.3 of the provided document. Found User Story Title (https://dev.azure.com/Organization/Project%20Name/_workitems/edit/1071/) through conversation with the user and agreed to update. User agreed System.Title should be updated as well.
+Updating existing user story for functionality A from Section 2.3.
 
-WI002 - Similarity: ADO-901=0.8, ADO-1071=0.9
+WI002 - Similarity: ADO-901=Match, ADO-1071=Similar (titles align on functionality A; ADO-1071 has broader scope)
 
 * WI002 - System.Id: 1071
+* WI002 - System.State: Active
 * WI002 - System.WorkItemType: User Story
-* WI002 - System.Title: As a user, I want to update component and include functionality A with functionality B
+* WI002 - System.Title: As a user, I want functionality A with functionality B
 
 ### WI002 - System.Description
 ```markdown
-## As a user (continue to match existing style and tone)
-As a user, I want to update component with new functionality B and new functionality A. So I can do this specific thing that I want with this component.
+## User Goal
+As a user, I want to update component with functionality A and B.
 
-## Functional Requirements
+## Requirements
 * Functionality A becomes possible
 * Functionality B becomes possible
-* Side-effect is then something
-* Existing requirement from workitem that should stay in
-
-## Non-Functional Requirements
-* Non-functional requirement from parent feature
-* Non-functional requirement from document.md
-* Non-functional requirement mentioned by user
-* Existing non-functional requirement that should stay in
-```
-
-### WI002 - Microsoft.VSTS.Common.AcceptanceCriteria
-```markdown
-* Able to do specific thing
-* Able to do something else for verification
-* Existing acceptance criteria that should stay in
 ```
 
 ### WI002 - Relationships
-* WI002 - Predecessor - WI003: Functionality A required in Component before able to add Functionality C in new User Story WI003
 * WI002 - Child - WI001: Functionality A needed for Feature WI001
 ````
-<!-- </example-work-items-md> -->
-<!-- </work-items-md> -->
 
-<!-- <planning-log-md> -->
 ## planning-log.md
 
-* planning-log.md is a living document: sections are routinely added, updated, extended, and removed in-place.
-* Iterating on any planning files requires updates to planning-log.md in order to track progress.
-* Track all new, in-progress, and completed steps for Phases routinely.
-* Update Status section with in-progress review of completed and proposed steps.
-* Update Previous Phase when moving onto any other Phase (not required to be in-order (meaning, Phase-1 could be repeated after Phase-2 due to discovery)).
+planning-log.md is a living document with sections that are routinely added, updated, extended, and removed in-place.
+
+Phase tracking applies when the consuming workflow file defines phases (see the workflow file's Required Phases section for phase definitions):
+
+* Track all new, in-progress, and completed steps for each phase.
+* Update the Status section with in-progress review of completed and proposed steps.
+* Update Previous Phase when moving to any other phase (phases can repeat based on discovery needs).
 * Update Current Phase and Previous Phase when transitioning phases.
 
-**Detailed Template:**
-<!-- <template-planning-log-md> -->
+### Template
+
 ````markdown
 # [Planning Type] - Work Item Planning Log
 * **Project**: [`projects` field for mcp ado tool]
@@ -204,7 +239,7 @@ As a user, I want to update component with new functionality B and new functiona
 ### **WI[Reference Number]** - [WorkItemType (e.g., User Story)] - [one of, In-Progress|Complete]
 * WI[Reference Number] - Work Item Section (see artifact-analysis.md)
 * Working Search Keywords: [Working Keywords (e.g., "the keyword OR another keyword")]
-* Related ADO Work Items - Similarity: [System.Id Similarity Score (e.g., ADO-1023=0.5, ADO-102=0.7, ADO-103=0.8)]
+* Related ADO Work Items - Similarity: [System.Id=Category (Rationale) (e.g., ADO-1023=Similar (overlapping scope), ADO-102=Match (same user goal))]
 * Suggested Action: [one of, Create|Update|No Change]
 
 [Collected & Discovered Information]
@@ -221,39 +256,29 @@ As a user, I want to update component with new functionality B and new functiona
 ### ADO-[ADO Work Item ID]
 [All content from mcp_ado_wit_get_work_item]
 ````
-<!-- </template-planning-log-md> -->
 
-**Example Possible Work Item Field Value**:
-<!-- <example-planning-log-md-field-values> -->
+### Field Value Example
+
 ````markdown
-* Working **System.Title**: As a user, I want a title that can be updated as new information is discovered
+* Working **System.Title**: As a user, I want a title that can be updated
 * Working **System.Description**:
   ```markdown
-  ## As a user (updated to match style and tone from mcp ado searched work items)
-  As a user, I want to update component with new functionality A. So I can do this specific thing that I want with this component that was called out in the document.
-
-  ## Requirements
-  * Functionality A becomes possible
-  ```
-* Working **Microsoft.VSTS.Common.AcceptanceCriteria**:
-  ```markdown
-  * Able to do specific thing
+  As a user, I want to update component with functionality A.
   ```
 ````
-<!-- </example-planning-log-md-field-values> -->
-<!-- </planning-log-md> -->
 
-<!-- <handoff-md> -->
-#### handoff.md
+## handoff.md
 
-* Must have a reference to each work item in work-items.md for proper handoff.
-* Create work items must always be before Update work items, and any `No Change` entries must follow Updates. When operating in discovery-only mode, list the `No Change` entries while noting that no modifications are planned.
-* Must have a markdown checkbox next to each work item and include summary.
-* Must have a project relative path to planning files (handoff.md, work-items.md, planning-log.md).
-* Must update Summary section when Work Items section is updated.
+Handoff file requirements:
 
-Template:
-<!-- <template-handoff-md> -->
+* Include a reference to each work item defined in work-items.md.
+* Order entries with Create actions first, Update actions second, and No Change entries last. When operating in discovery-only mode, list the No Change entries while noting that no modifications are planned.
+* Include a markdown checkbox next to each work item with a summary.
+* Include project-relative paths to all planning files (handoff.md, work-items.md, planning-log.md).
+* Update the Summary section whenever the Work Items section changes.
+
+### Template
+
 ```markdown
 # Work Item Handoff
 * **Project**: [`projects` field for mcp ado tool]
@@ -280,15 +305,13 @@ Template:
   * [(Optional) all WI[Reference Number] Relationships as individual line items]
   * [Summary (e.g., Existing story covers telemetry tasks requested; no updates required)]
 ```
-<!-- </template-handoff-md> -->
-<!-- </handoff-md> -->
 
-<!-- <work-item-fields> -->
 ## Work Item Fields
 
-Track field usage explicitly so downstream automation can rely on consistent data. When discovering existing items, capture the current values for every field you plan to modify and preserve any organization-specific custom fields that already exist on the work item.
+Track field usage explicitly so downstream automation can rely on consistent data. When discovering existing items, capture the current values for every field planned for modification and preserve any organization-specific custom fields that already exist on the work item.
 
-**Relative Work Item Type Fields:**
+Relative Work Item Type Fields:
+
 * Core: "System.Id", "System.WorkItemType", "System.Title", "System.State", "System.Reason", "System.Parent", "System.AreaPath", "System.IterationPath", "System.TeamProject", "System.Description", "System.AssignedTo", "System.CreatedBy", "System.CreatedDate", "System.ChangedBy", "System.ChangedDate", "System.CommentCount"
 * Board: "System.BoardColumn", "System.BoardColumnDone", "System.BoardLane"
 * Classification / Tags: "System.Tags"
@@ -304,78 +327,134 @@ Track field usage explicitly so downstream automation can rely on consistent dat
 | Bug        | System.Title, Microsoft.VSTS.TCM.ReproSteps, Microsoft.VSTS.Common.Severity, Microsoft.VSTS.Common.Priority, Microsoft.VSTS.Common.StackRank, Microsoft.VSTS.Common.ValueArea, Microsoft.VSTS.Scheduling.StoryPoints (optional), System.AreaPath, System.IterationPath |
 
 Rules:
+
 * Feature requires Epic parent.
 * User Story requires Feature parent.
 * Bug links are optional; add relationships when they provide helpful traceability, but do not create placeholder links just to satisfy this checklist.
-<!-- </work-item-fields> -->
 
 ## Search Keyword & Search Text Protocol
 
 Goal: Deterministic, resumable discovery of existing work items.
 
-<!-- <search-keyword-protocol> -->
-Steps:
-1. Maintain ACTIVE KEYWORD GROUPS: ordered list, each group = 1-4 specific terms (multi‑word allowed) joined by OR.
-2. Compose `searchText`:
-  * Single group → `(term1 OR "multi word")`
-  * Multiple groups → `(group1) AND (group2)` etc.
-3. Execute search (page size suggested: 50). For every related result ID:
-  * Fetch full work item immediately and update planning-log.md.
-  * Compute similarity (semantic intent focus, not token count).
-  * Assign action via matrix.
+### Step 1: Maintain Active Keyword Groups
 
-Similarity Computation Guidance:
-* Use combined semantic representation of (title + description + acceptance).
-* Boost for aligned outcome/goal verbs; penalize scope or persona mismatch.
-* Store raw float, round to 2 decimals for `similarity` field.
-<!-- </search-keyword-protocol> -->
+Build an ordered list where each group contains 1-4 specific terms (multi-word phrases allowed) joined by OR.
 
-<!-- <similarity-decision-matrix> -->
-| Similarity | Action | Interpretation                                 |
-|------------|--------|------------------------------------------------|
-| ≥ 0.70     | update | Strong alignment with existing item intent     |
-| 0.50-0.69  | review | Potential alignment; needs manual confirmation |
-| < 0.50     | create | No sufficiently aligned existing item          |
-<!-- </similarity-decision-matrix> -->
+### Step 2: Compose Search Text
 
-<!-- <state-persistence-protocol> -->
-## Routine State Persistence & Summarization Tool Call Protocol
+Format the `searchText` parameter:
 
-* Must maintain planning-log.md routinely by keeping it up to date as information is discovered.
+* Single group: `(term1 OR "multi word")`
+* Multiple groups: `(group1) AND (group2)`
 
-### Required Pre-Summarization
-Summarization must also include the following (or else you will likely cause breaking changes):
-* Full paths to all working files with a summary describing each file and its purpose
-* Anything that was not captured into the planning-log.md file or other planning files that should have been captured before summarization
-  * Specifically state exactly what needs to be done again (e.g., use the mcp_ado_wit_get_work_item tool with ID ### again, etc)
-* Exact work item IDs that were already reviewed
-* Exact work item IDs that are left to be reviewed
-* Exact work item IDs that were already reviewed but likely not captured into the planning-log.md file or other planning files
-* Exact planning steps that you were previously on (must repeat if data was not captured into planning files)
-* Exact planning steps that are still required
-* Any potential work item search criteria that is still required
+### Step 3: Execute Search and Process Results
 
-### Required Post-Summarization Recovery
-If context has `<summary>` and only one tool call, then immediately do the following protocol before any additional edits/decisions:
+Execute `mcp_ado_search_workitem` with a page size of 50.
 
-1. **State File Validation**:
-  * It's likely you've lost valuable information and you are now required to recover your context to avoid broken changes
-  * Use the `list_dir` tool under the `.copilot-tracking/workitems/<planning-type>/<artifact-normalized-name>` working folder
-  * Use the `read_file` tool to read back in all of the planning-log.md to build back context
+Filter results to identify candidates for similarity assessment:
 
-2. **Context Reconstruction User Update**:
-  Let the user know that you are working on rebuilding your context:
+* Search highlights contain terms matching the planned item's core concepts
+* Work item type is the same or one level above/below (for example, User Story results when planning a User Story, or Feature/Task results)
+* Work item is not already linked to the planned item
 
-  ```markdown
-  ## Resuming After Context Summarization
+Assess the candidates by relevance. For each candidate:
 
-  I notice our conversation history was summarized. Let me rebuild context:
+1. Fetch full work item using `mcp_ado_wit_get_work_item` and update planning-log.md.
+2. Perform similarity assessment (see guidance below).
+3. Assign action using the Similarity Categories table.
+4. Record the assessment in planning-log.md under the Discovered Work Items section.
 
-  📋 **[Analyzing Title]**: [Analyze planning-log.md and current work item content]
+### Similarity Assessment
 
-  To ensure continuity, I'll do the following:
-  * [List protocol that you plan to follow next]
+Analyze the relationship between the planned work item and each discovered item through aspect-by-aspect comparison:
 
-  Would you like me to proceed with this approach?
-  ```
-<!-- </state-persistence-protocol> -->
+1. **Title comparison**: Identify the core intent of each title. Determine whether they describe the same goal or outcome.
+2. **Description comparison**: Examine whether they address the same problem or user need. Note any scope differences.
+3. **Acceptance criteria comparison**: Evaluate whether completing one item would satisfy the requirements of the other.
+
+When a field is absent from the discovered item:
+
+* Missing acceptance criteria: Compare against scope and deliverables mentioned in the description. Capabilities and Epics typically lack acceptance criteria.
+* Missing description: Use title and any linked child items to infer scope. Apply the Uncertain category when insufficient information remains.
+* Different work item types: A User Story and Capability at different abstraction levels cannot be a Match. Evaluate whether the planned item should become a child of the discovered item.
+
+Based on the analysis, classify the relationship using the Similarity Categories table.
+
+### Similarity Categories
+
+| Category | Meaning | Action |
+|----------|---------|--------|
+| Match | Same work item; creating both would duplicate effort | Update existing item |
+| Similar | Related enough that consolidation may be appropriate | Review with user before deciding |
+| Distinct | Different items with minimal overlap | Create new item |
+| Uncertain | Insufficient information or conflicting signals | Request user guidance |
+
+### Human Review Triggers
+
+Request user guidance when:
+
+* Either item lacks a title or description
+* Discovered item lacks acceptance criteria and is a different work item type than the planned item
+* Title suggests alignment but acceptance criteria diverge significantly
+* Work item types differ by more than one abstraction level (for example, User Story compared to Epic)
+* Domain-specific terminology requires expert interpretation
+* The relationship is genuinely ambiguous after analysis
+
+### Recording Similarity Assessments
+
+Record each assessment in planning-log.md under a Discovered Work Items section with:
+
+* ADO ID and title of the discovered item
+* Category assigned (Match, Similar, Distinct, or Uncertain)
+* Brief rationale explaining the classification
+* Recommended action based on the category
+
+Format: `ADO-{id}: {Category} - {rationale}`
+
+Example:
+
+```markdown
+## Discovered Work Items
+
+* ADO-1019: Similar - Edge inferencing framework overlaps with model validation goals; scope is broader (framework vs specific validation feature)
+* ADO-1176: Similar - Cloud training capability addresses model lifecycle; planned item focuses on edge validation subset
+* ADO-1179: Distinct - MLOps toolchain is infrastructure-level; planned item is user-facing validation feature
+```
+
+## State Persistence Protocol
+
+Update planning-log.md as information is discovered to ensure continuity when context is summarized.
+
+### Pre-Summarization Capture
+
+Before summarization occurs, capture in planning-log.md:
+
+* Full paths to all working files with a summary of each file's purpose
+* Any uncaptured information that belongs in planning files
+* Work item IDs already reviewed
+* Work item IDs pending review
+* Current phase and remaining steps
+* Outstanding search criteria
+
+### Post-Summarization Recovery
+
+When context contains `<summary>` with only one tool call, recover state before continuing:
+
+1. List the working folder with `list_dir` under `.copilot-tracking/workitems/<planning-type>/<artifact-normalized-name>/`.
+2. Read planning-log.md to rebuild context.
+3. Notify the user that context is being rebuilt and confirm the approach before proceeding.
+
+Recovery notification format:
+
+```markdown
+## Resuming After Context Summarization
+
+Context history was summarized. Rebuilding from planning files:
+
+📋 **Analyzing**: [planning-log.md summary]
+
+Next steps:
+* [Planned actions]
+
+Proceed with this approach?
+```
