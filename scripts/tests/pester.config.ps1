@@ -4,9 +4,7 @@
 #
 # Purpose: Pester 5.x configuration for HVE-Core PowerShell testing
 # Author: HVE Core Team
-# Created: 2026-01-16
 #
-# Usage: $config = & './scripts/tests/pester.config.ps1'; Invoke-Pester -Configuration $config
 
 [CmdletBinding()]
 param(
@@ -42,7 +40,7 @@ $configuration.TestResult.OutputFormat = 'NUnitXml'
 $configuration.TestResult.OutputPath = Join-Path $PSScriptRoot '../../logs/pester-results.xml'
 $configuration.TestResult.TestSuiteName = 'HVE-Core-PowerShell-Tests'
 
-# Code coverage configuration (optional, stretch goal)
+# Code coverage configuration
 if ($CodeCoverage.IsPresent) {
     $configuration.CodeCoverage.Enabled = $true
     $configuration.CodeCoverage.OutputFormat = 'JaCoCo'

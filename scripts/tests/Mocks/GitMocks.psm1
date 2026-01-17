@@ -2,7 +2,7 @@
 #
 # Purpose: Reusable mock helpers for Git CLI and GitHub Actions testing in Pester
 # Author: HVE Core Team
-# Created: 2026-01-16
+#
 
 #region Environment State Management
 
