@@ -64,13 +64,41 @@ This protocol applies when:
 * `stageName` (string, required): Name of the stage to update.
 * `status` (string, required): New status (`Cancel`, `Retry`, `Run`).
 * `forceRetryAllJobs` (boolean, default false): Force retry all jobs in the stage.
+
+**mcp_ado_pipelines_get_build_definitions** - Get pipeline definitions
+
+* `project` (string, required): Project ID or name.
+* `name` (string): Filter by definition name.
+* `path` (string): Filter by definition path.
+* `top` (number): Maximum definitions to return.
+* `includeLatestBuilds` (boolean): Include latest builds for each definition.
+
+**mcp_ado_pipelines_get_build_definition_revisions** - Get definition revision history
+
+* `project` (string, required): Project ID or name.
+* `definitionId` (number, required): ID of the build definition.
+
+**mcp_ado_pipelines_get_run** - Get a specific pipeline run
+
+* `project` (string, required): Project ID or name.
+* `pipelineId` (number, required): ID of the pipeline.
+* `runId` (number, required): ID of the run.
+
+**mcp_ado_pipelines_list_runs** - List pipeline runs (up to 10,000)
+
+* `project` (string, required): Project ID or name.
+* `pipelineId` (number, required): ID of the pipeline.
 <!-- </pipeline-tools> -->
 
 ### Supporting Tools
 
-**mcp_ado_repo_list_pull_request_by_project** - Find PR numbers when not provided
+**mcp_ado_repo_list_pull_requests_by_repo_or_project** - Find PR numbers when not provided
 
-* Set `created_by_me` to `true` and `status` to `Active` to find the user's active PRs.
+* `project` (string): Project ID or name.
+* `repositoryId` (string): Repository ID (optional, filters to specific repo).
+* `created_by_me` (boolean, default false): Filter to PRs created by the current user.
+* `status` (string, default `Active`): Filter by status (`NotSet`, `Active`, `Abandoned`, `Completed`, `All`).
+* `top` (number, default 100): Maximum PRs to return.
 
 ## Deliverables
 
