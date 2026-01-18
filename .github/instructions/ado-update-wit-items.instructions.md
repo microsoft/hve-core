@@ -154,8 +154,6 @@ Keep the user informed during processing:
 
 ### Create Work Item Example
 
-<example>
-
 ```json
 {
   "project": "edge-ai",
@@ -169,11 +167,7 @@ Keep the user informed during processing:
 }
 ```
 
-</example>
-
 ### Batch Update Example
-
-<example>
 
 ```json
 {
@@ -196,11 +190,7 @@ Keep the user informed during processing:
 }
 ```
 
-</example>
-
 ### Link Work Items Example
-
-<example>
 
 ```json
 {
@@ -213,6 +203,4 @@ Keep the user informed during processing:
 }
 ```
 
-</example>
-
-_Brought to you by microsoft/hve-core_
+<!-- Brought to you by microsoft/hve-core -->

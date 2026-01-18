@@ -90,5 +90,3 @@ When no issues are found:
 ---
 
 Proceed with analysis of the target file following the Required Steps.
-
-```

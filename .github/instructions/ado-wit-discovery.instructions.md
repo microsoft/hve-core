@@ -75,7 +75,7 @@ Add an **External References** section to work item descriptions when authoritat
 
 Select the appropriate discovery path based on user intent.
 
-**Path A: User-Centric Discovery**
+#### Path A: User-Centric Discovery
 
 Use when user requests:
 
@@ -96,7 +96,7 @@ Execution:
 5. Present results grouped by type and state.
 6. Skip Phases 2-3; no planning files are required for user-centric discovery.
 
-**Path B: Artifact-Driven Discovery**
+#### Path B: Artifact-Driven Discovery
 
 Use when:
 
@@ -129,7 +129,7 @@ Execution:
 9. Compute similarity per #file:ado-wit-planning.instructions.md and log in `planning-log.md`.
 10. For User Stories, search for parent Features when linking is required.
 
-**Path C: Search-Based Discovery**
+#### Path C: Search-Based Discovery
 
 Use when:
 

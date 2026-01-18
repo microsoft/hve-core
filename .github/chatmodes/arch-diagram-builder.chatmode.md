@@ -74,7 +74,7 @@ Extract from IaC:
 
 ## Output Format
 
-Use the diagram name format "<solution-or-project-name> architecture" with concise title case.
+Use the diagram name format "\<solution-or-project-name\> architecture" with concise title case.
 
 ```markdown
 ## Architecture Diagram: <Solution or Project Name> Architecture

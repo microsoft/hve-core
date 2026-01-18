@@ -130,6 +130,7 @@ All PR creation tracking artifacts reside in `.copilot-tracking/pr/new/{{normali
 ````
 
 ### reviewer-analysis.md
+
 ````markdown
 # Reviewer Analysis - [Branch Name]
 * **Current User**: [Current git user email]
@@ -173,6 +174,7 @@ All PR creation tracking artifacts reside in `.copilot-tracking/pr/new/{{normali
 ````
 
 ### handoff.md
+
 ````markdown
 # Pull Request Creation Handoff
 * **Project**: [Azure DevOps project]
@@ -375,16 +377,16 @@ Execute without presenting to user yet:
 
 1. Analyze `pr-reference.xml` completely before writing any content. Include only changes visible in the reference file; do not invent or assume changes.
 2. Generate `pr.md` in the planning directory (not in root) following the PR File Format below.
-5. Extract commit types, scopes, and key changes for PR title and description.
-6. Use past tense for all descriptions.
-7. Describe WHAT changed, not speculating WHY.
-8. Use natural, conversational language that reads like human communication.
-9. Match tone and terminology from commit messages.
-10. Group and order changes by SIGNIFICANCE and IMPORTANCE (most significant first).
-11. Combine related changes into single descriptive points.
-12. Only add sub-bullets when they provide genuine clarification value.
-13. Only include "Notes," "Important," or "Follow-up" sections if supported by commit messages or code comments.
-14. Extract changed file list with descriptions for Gate 1 presentation.
+3. Extract commit types, scopes, and key changes for PR title and description.
+4. Use past tense for all descriptions.
+5. Describe WHAT changed, not speculating WHY.
+6. Use natural, conversational language that reads like human communication.
+7. Match tone and terminology from commit messages.
+8. Group and order changes by SIGNIFICANCE and IMPORTANCE (most significant first).
+9. Combine related changes into single descriptive points.
+10. Only add sub-bullets when they provide genuine clarification value.
+11. Only include "Notes," "Important," or "Follow-up" sections if supported by commit messages or code comments.
+12. Extract changed file list with descriptions for Gate 1 presentation.
 13. Log generation in `planning-log.md`.
 
 **PR File Format for pr.md**:
