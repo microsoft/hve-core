@@ -9,10 +9,12 @@ Build ASCII block diagrams from Azure IaC and deployment scripts.
 
 ## Workflow
 
-1. Discover scope by asking "Which folders contain the infrastructure to diagram?" Use files already provided in context when available.
-2. Parse the user's request and infrastructure by reading Terraform, Bicep, ARM, or shell scripts to identify Azure resources and requested components.
-3. Identify relationships by mapping dependencies, network flows, and service connections.
-4. Generate the diagram as an ASCII block diagram that shows resources and relationships.
+This workflow guides diagram generation through four stages:
+
+* **Discovery**: Ask "Which folders contain the infrastructure to diagram?" when scope is unclear. Files already in context serve as the starting point.
+* **Parsing**: Read Terraform, Bicep, ARM, or shell scripts to identify Azure resources and components.
+* **Relationship mapping**: Map dependencies, network flows, and service connections between resources.
+* **Generation**: Produce an ASCII block diagram showing resources and their relationships.
 
 ## Diagram Conventions
 
@@ -66,7 +68,7 @@ Use `.` or `:` for labeled boundaries:
 
 ## Resource Identification
 
-Extract from IaC:
+Resource identification extracts the following from IaC files:
 
 * Resource type and name
 * Network associations (VNet, subnet, private endpoint)
@@ -74,15 +76,15 @@ Extract from IaC:
 
 ## Output Format
 
-Use the diagram name format "\<solution-or-project-name\> architecture" with concise title case.
+Diagram titles follow the format `<Solution or Project Name> Architecture` in title case.
 
 ```markdown
-## Architecture Diagram: <Solution or Project Name> Architecture
+## Architecture Diagram: <Name> Architecture
 
 [ASCII diagram]
 
 ### Legend
-[Arrow meanings used in this diagram]
+[Arrow meanings from this diagram; reference Arrow Types above]
 
 ### Key Relationships
 [Notable connections and dependencies]
@@ -91,42 +93,34 @@ Use the diagram name format "\<solution-or-project-name\> architecture" with con
 ## Example
 
 ```markdown
-## Architecture Diagram: AKS Platform
+## Architecture Diagram: AKS Platform Architecture
 
 +===============================================================+
 |  Resource Group                                               |
-|                                                               |
 |  :--- Virtual Network -----------------------------------:    |
-|  :                                                       :    |
 |  :  +------------------+        +------------------+     :    |
 |  :  |   NAT Gateway    |------->|   AKS Cluster    |     :    |
 |  :  +------------------+        +--------+---------+     :    |
-|  :                                       |               :    |
 |  :                              +--------v---------+     :    |
 |  :                              |       ACR        |     :    |
 |  :                              +------------------+     :    |
-|  :                                                       :    |
-|  :  +------------------+        +------------------+     :    |
-|  :  |   PostgreSQL     |- - - ->|   Key Vault      |     :    |
-|  :  |   (optional)     |        +------------------+     :    |
-|  :  +------------------+                                 :    |
-|  :                                                       :    |
 |  :-------------------------------------------------------:    |
-|                                                               |
 |  +------------------+        +------------------+             |
 |  | Log Analytics    |<-------|  App Insights    |             |
 |  +------------------+        +------------------+             |
-|                                                               |
 +===============================================================+
 
 ### Legend
-* `---->` : Dependency/data flow
-* `- - >` : Optional resource connection
-* `====`  : Primary boundary (resource group)
-* `:---:` : Secondary boundary (VNet, subnet)
+See Arrow Types above. Additional symbols: `====` primary boundary, `:---:` secondary boundary.
 
 ### Key Relationships
-* AKS pulls images from ACR
-* NAT Gateway provides egress for AKS
-* PostgreSQL is optional (OSMO backend)
+* AKS pulls images from ACR via private endpoint
+* NAT Gateway provides egress for AKS workloads
 ```
+
+## Conversation Guidelines
+
+* Ask clarifying questions when infrastructure scope is ambiguous, limiting to one or two questions per turn.
+* Announce the current workflow stage when transitioning between discovery, parsing, and generation.
+* Present diagram drafts with a summary of resources included and ask if adjustments are needed.
+* Share notable parsing decisions (for example, inferred dependencies) before finalizing the diagram.
