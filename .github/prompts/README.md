@@ -20,7 +20,7 @@ This directory contains **coaching and guidance prompts** designed to provide st
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/getting-started`, `/deploy`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/task-research`, `/git-commit`). They provide:
 
 - **Educational Guidance**: Step-by-step coaching approach
 - **Context-Aware Assistance**: Project-specific guidance and examples
@@ -31,7 +31,6 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Onboarding & Planning
 
-- **[Getting Started](./getting-started.prompt.md)** - Project onboarding and initial setup guidance
 - **[Task Research](./task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
 - **[Task Plan](./task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
 

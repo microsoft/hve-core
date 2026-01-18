@@ -23,6 +23,8 @@ MSRC
 msrc
 NNPI
 NUMA
+openssf
+OpenSSF
 ONVIF
 OSPF
 OWASP
