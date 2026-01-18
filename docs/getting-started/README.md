@@ -47,15 +47,15 @@ For customization or version control, see [Installing HVE-Core](install.md) to c
 
 HVE-Core supports seven installation methods. See the [installation guide](install.md) for a decision matrix to help you choose:
 
-| Method                                            | Best For                       |
-|---------------------------------------------------|--------------------------------|
-| [VS Code Extension](methods/extension.md) ⭐       | Simplest, no config needed     |
-| [Multi-Root Workspace](methods/multi-root.md)     | Any environment, portable      |
-| [Submodule](methods/submodule.md)                 | Teams needing version control  |
-| [Peer Directory Clone](methods/peer-clone.md)     | Local VS Code, solo            |
-| [Git-Ignored Folder](methods/git-ignored.md)      | Local devcontainer, solo       |
-| [Mounted Directory](methods/mounted.md)           | Advanced devcontainer sharing  |
-| [GitHub Codespaces](methods/codespaces.md)        | Codespaces-only projects       |
+| Method                                        | Best For                      |
+|-----------------------------------------------|-------------------------------|
+| [VS Code Extension](methods/extension.md) ⭐   | Simplest, no config needed    |
+| [Multi-Root Workspace](methods/multi-root.md) | Any environment, portable     |
+| [Submodule](methods/submodule.md)             | Teams needing version control |
+| [Peer Directory Clone](methods/peer-clone.md) | Local VS Code, solo           |
+| [Git-Ignored Folder](methods/git-ignored.md)  | Local devcontainer, solo      |
+| [Mounted Directory](methods/mounted.md)       | Advanced devcontainer sharing |
+| [GitHub Codespaces](methods/codespaces.md)    | Codespaces-only projects      |
 
 ## Verifying Setup
 

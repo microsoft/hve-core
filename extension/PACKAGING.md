@@ -40,11 +40,11 @@ Install-Module -Name PowerShell-Yaml -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                   | Trigger           | Purpose                                     |
-|--------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml`  | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/extension-publish.yml`  | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/main.yml`               | Push to main      | Includes extension packaging in CI          |
+| Workflow                                  | Trigger           | Purpose                                     |
+|-------------------------------------------|-------------------|---------------------------------------------|
+| `.github/workflows/extension-package.yml` | Reusable workflow | Packages extension with flexible versioning |
+| `.github/workflows/extension-publish.yml` | Release/manual    | Publishes to VS Code Marketplace            |
+| `.github/workflows/main.yml`              | Push to main      | Includes extension packaging in CI          |
 
 ## Packaging the Extension
 
@@ -196,10 +196,10 @@ The extension supports dual-channel publishing to VS Code Marketplace with separ
 
 ### EVEN/ODD Versioning Strategy
 
-| Minor Version | Channel      | Example  | Agent Maturity Included           |
-|---------------|--------------|----------|-----------------------------------|
-| EVEN (0, 2, 4...)| Stable    | 1.0.0, 1.2.0 | `stable` only                  |
-| ODD (1, 3, 5...) | Pre-Release| 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
+| Minor Version     | Channel     | Example      | Agent Maturity Included             |
+|-------------------|-------------|--------------|-------------------------------------|
+| EVEN (0, 2, 4...) | Stable      | 1.0.0, 1.2.0 | `stable` only                       |
+| ODD (1, 3, 5...)  | Pre-Release | 1.1.0, 1.3.0 | `stable`, `preview`, `experimental` |
 
 Users can switch between channels in VS Code via the "Switch to Pre-Release Version" button on the extension page.
 
@@ -233,10 +233,10 @@ The workflow validates the version is ODD before proceeding.
 
 When packaging, agents and chatmodes are filtered by their `maturity` frontmatter field:
 
-| Channel     | Included Maturity Levels               |
-|-------------|----------------------------------------|
-| Stable      | `stable`                               |
-| PreRelease  | `stable`, `preview`, `experimental`    |
+| Channel    | Included Maturity Levels            |
+|------------|-------------------------------------|
+| Stable     | `stable`                            |
+| PreRelease | `stable`, `preview`, `experimental` |
 
 See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
 
