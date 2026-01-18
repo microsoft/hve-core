@@ -88,10 +88,10 @@ Prompts are available in the Copilot Chat prompt picker and can be used to gener
 
 HVE Core offers two installation channels:
 
-| Channel     | Description                                              | Maturity Levels                     |
-|-------------|----------------------------------------------------------|-------------------------------------|
-| Stable      | Production-ready artifacts only                          | `stable`                            |
-| Pre-release | Early access to new features and experimental artifacts  | `stable`, `preview`, `experimental` |
+| Channel     | Description                                             | Maturity Levels                     |
+|-------------|---------------------------------------------------------|-------------------------------------|
+| Stable      | Production-ready artifacts only                         | `stable`                            |
+| Pre-release | Early access to new features and experimental artifacts | `stable`, `preview`, `experimental` |
 
 To install the pre-release version, select **Install Pre-Release Version** from the extension page in VS Code, or use the Extensions view and switch to the pre-release channel.
 

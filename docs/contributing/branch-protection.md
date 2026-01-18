@@ -26,27 +26,27 @@ Branch protection rules ensure code quality and security by requiring:
 
 The following CI jobs must pass before a PR can be merged:
 
-| Check Name                   | Purpose                               |
-| ---------------------------- | ------------------------------------- |
-| Spell Check                  | Validates spelling in markdown        |
-| Markdown Lint                | Enforces markdown formatting          |
-| Table Format Check           | Validates table formatting            |
-| PowerShell Lint              | PSScriptAnalyzer validation           |
-| Frontmatter Validation       | Validates YAML frontmatter            |
-| Validate Dependency Pinning  | Ensures dependencies are pinned       |
-| npm Security Audit           | Scans for vulnerable dependencies     |
-| CodeQL Security Analysis     | Security vulnerability scanning       |
+| Check Name                  | Purpose                           |
+|-----------------------------|-----------------------------------|
+| Spell Check                 | Validates spelling in markdown    |
+| Markdown Lint               | Enforces markdown formatting      |
+| Table Format Check          | Validates table formatting        |
+| PowerShell Lint             | PSScriptAnalyzer validation       |
+| Frontmatter Validation      | Validates YAML frontmatter        |
+| Validate Dependency Pinning | Ensures dependencies are pinned   |
+| npm Security Audit          | Scans for vulnerable dependencies |
+| CodeQL Security Analysis    | Security vulnerability scanning   |
 
 **Note**: `Markdown Link Check` uses soft-fail and is not a required check.
 
 ## Review Requirements
 
-| Setting              | Value   | Rationale                                    |
-| -------------------- | ------- | -------------------------------------------- |
-| Required reviewers   | 1       | Team size decision                           |
-| Dismiss stale reviews| Enabled | Prevents post-approval malicious commits     |
-| Last push approval   | Enabled | Requires non-author approval of final changes|
-| Code owner review    | Enabled | Ensures domain experts review changes        |
+| Setting               | Value   | Rationale                                     |
+|-----------------------|---------|-----------------------------------------------|
+| Required reviewers    | 1       | Team size decision                            |
+| Dismiss stale reviews | Enabled | Prevents post-approval malicious commits      |
+| Last push approval    | Enabled | Requires non-author approval of final changes |
+| Code owner review     | Enabled | Ensures domain experts review changes         |
 
 ## CODEOWNERS
 
