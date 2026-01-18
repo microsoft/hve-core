@@ -120,6 +120,18 @@ title: Test
             $result = ConvertFrom-YamlFrontmatter -Content $content
             $result.FrontmatterEndIndex | Should -Be 3
         }
+
+        It 'Falls back to raw value when JSON array parsing fails' {
+            # Malformed JSON array with trailing comma should fall back to raw string
+            $content = @"
+---
+tags: [a, b,]
+---
+"@
+            $result = ConvertFrom-YamlFrontmatter -Content $content
+            # When ConvertFrom-Json fails, the raw value is preserved
+            $result.Frontmatter.tags | Should -Be '[a, b,]'
+        }
     }
 }
 
@@ -203,7 +215,7 @@ Content
 Describe 'Get-FileTypeInfo' -Tag 'Unit' {
     BeforeAll {
         # Create temporary test files for FileInfo objects
-        $script:TempTestDir = Join-Path ([System.IO.Path]::GetTempPath()) "FrontmatterTests_$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:TempTestDir = Join-Path ([System.IO.Path]::GetTempPath()) "FrontmatterTests_$([guid]::NewGuid().ToString('N'))"
         New-Item -ItemType Directory -Path $script:TempTestDir -Force | Out-Null
 
         # Create subdirectories to simulate repo structure
@@ -414,6 +426,25 @@ Describe 'Test-MarkdownFooter' -Tag 'Unit' {
 
 #endregion
 
+#region Initialize-JsonSchemaValidation Tests
+
+Describe 'Initialize-JsonSchemaValidation' -Tag 'Unit' {
+    Context 'Normal operation' {
+        It 'Returns true when JSON processing is available' {
+            $result = Initialize-JsonSchemaValidation
+            $result | Should -BeTrue
+        }
+
+        It 'Validates JSON can be parsed' {
+            # Function internally tests JSON parsing
+            $result = Initialize-JsonSchemaValidation
+            $result | Should -BeOfType [bool]
+        }
+    }
+}
+
+#endregion
+
 #region Get-SchemaForFile Tests
 
 Describe 'Get-SchemaForFile' -Tag 'Unit' {
@@ -451,6 +482,24 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
         It 'Returns base schema for unknown file types' {
             $result = Get-SchemaForFile -FilePath 'random/file.md' -SchemaDirectory $script:SchemaDir -RepoRoot $script:RepoRoot
             $result | Should -Match 'base-frontmatter\.schema\.json'
+        }
+    }
+}
+
+#endregion
+
+#region Initialize-JsonSchemaValidation Tests
+
+Describe 'Initialize-JsonSchemaValidation' -Tag 'Unit' {
+    Context 'JSON processing availability' {
+        It 'Returns true when JSON processing is available' {
+            $result = Initialize-JsonSchemaValidation
+            $result | Should -BeTrue
+        }
+
+        It 'Returns boolean type' {
+            $result = Initialize-JsonSchemaValidation
+            $result | Should -BeOfType [bool]
         }
     }
 }
@@ -682,7 +731,7 @@ Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
         # Change to test repo root so function detects it as repo root
         Push-Location $script:TestRepoRoot
         # Initialize minimal git repo for function's repo root detection
-        git init --quiet 2>$null
+        git init --quiet
     }
 
     AfterEach {
