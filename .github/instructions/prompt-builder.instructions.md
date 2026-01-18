@@ -60,13 +60,14 @@ argument-hint: "topic=... [chat={true|false}]"
 
 Validation guidelines:
 
-* When steps are used, format them as `### Step N: Short Summary`.
-* End with `---` activation line followed by instruction to begin.
+* When steps are used, follow the Step-Based Protocols section for structure.
 * Document input variables in an Inputs section when present.
 
 ### Chatmode Files
 
 *Extension*: `.chatmode.md`
+
+Note: VS Code has renamed chatmodes to "agents" in the UI. The `.chatmode.md` extension remains valid and functions correctly. New files can use either `.chatmode.md` or `.agent.md` extension. Existing chatmodes do not require migration.
 
 Purpose: Conversational workflows where users interact across multiple turns through a specialized assistant persona.
 
@@ -77,14 +78,7 @@ Characteristics:
 * Frontmatter defines available `tools` and optional `handoffs` to other agents.
 * Typically represents a domain expert or specialized assistant role.
 
-Consider adding phases when the workflow involves distinct stages that users move between interactively. Simple conversational assistants that respond to varied requests do not need protocol structure.
-
-Phase structure guidelines when using phases:
-
-* Create a `## Required Phases` section to contain all phases.
-* Name phases with descriptive titles (Phase 1: Analyze, Phase 2: Discover).
-* Follow conversation guidelines for phase transitions.
-* Specify planning files for state persistence when needed.
+Consider adding phases when the workflow involves distinct stages that users move between interactively. Simple conversational assistants that respond to varied requests do not need protocol structure. Follow the Phase-Based Protocols section for phase structure guidelines.
 
 ### Agent Files
 
@@ -119,6 +113,38 @@ Validation guidelines:
 * Content defines standards and conventions.
 * Wrap examples in fenced code blocks.
 
+## Frontmatter Requirements
+
+This section defines frontmatter field requirements for prompt engineering artifacts.
+
+### Required Fields
+
+All prompt engineering artifacts include these frontmatter fields:
+
+* `description:` - Brief description of the artifact's purpose.
+* `maturity:` - Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.
+
+Note: VS Code shows a validation warning for the `maturity:` field as it's not in VS Code's schema. This is expected; the field is required by the HVE-Core codebase for artifact lifecycle tracking. Ignore VS Code validation warnings for the `maturity:` attribute.
+
+### Optional Fields
+
+Optional fields vary by file type:
+
+* `applyTo:` - Glob patterns (required for instructions files only).
+* `tools:` - Tool restrictions for chatmodes and agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
+* `handoffs:` - Agent handoff declarations for chatmodes and agents.
+* `agent:` - Agent delegation for prompt files.
+* `argument-hint:` - Hint text for prompt picker display.
+* `model:` - Model specification.
+
+### Tool Availability
+
+When authoring prompts that reference specific tools:
+
+* Verify tool availability in the current VS Code context before including in `tools:` frontmatter.
+* When a user references tools not available in the active context, inform them which tools need to be enabled.
+* Do not include tools that VS Code flags as unknown.
+
 ## Protocol Patterns
 
 ### Step-Based Protocols
@@ -137,7 +163,25 @@ Step conventions:
 * Include prompt instructions to follow while implementing the step.
 * Steps can repeat or move to a previous step based on instructions.
 
-Prompt file activation line: End the prompt file with a horizontal rule (`---`) followed by an instruction to begin (for example, "Proceed with research initiation following the Research Protocol.").
+Activation line: End the prompt file with a horizontal rule (`---`) followed by an instruction to begin.
+
+```markdown
+## Required Steps
+
+### Step 1: Gather Context
+
+* Read the target file and identify related files in the same directory.
+* Document findings in a research log.
+
+### Step 2: Apply Changes
+
+* Update the target file based on research findings.
+* Return to Step 1 if additional context is needed.
+
+---
+
+Proceed with the user's request following the Required Steps.
+```
 
 ### Phase-Based Protocols
 
@@ -158,18 +202,39 @@ Phase conventions:
 * Include instructions on when to complete the phase and move onto the next phase.
 * Completing the phase can be signaled from the user or from some ending condition.
 
+```markdown
+## Required Phases
+
+### Phase 1: Research
+
+* Gather context from the user request and related files.
+* Document findings and proceed to Phase 2 when research is complete.
+
+### Phase 2: Build
+
+* Apply changes based on research findings.
+* Return to Phase 1 if gaps are identified during implementation.
+* Proceed to Phase 3 when changes are complete.
+
+### Phase 3: Validate
+
+* Review changes against requirements.
+* Return to Phase 2 if corrections are needed.
+```
+
 ### Shared Protocol Placement
 
-Protocols can be shared with multiple prompt, chatmode, instructions, or agent files by placing the protocol into a `{{name}}.instructions.md` file. Use `#file:` only when the prompt must pull in the full contents of the shared protocol file; otherwise, refer to the file by path or to the relevant section.
-
-For prompt-build.prompt.md, the agent already provides the prompt-builder chatmode context, so a direct `#file:` reference is not required. Referring to the relevant section or protocol is sufficient.
+Protocols can be shared across multiple files by placing the protocol into a `{{name}}.instructions.md` file. Use `#file:` only when the full contents of the protocol file are needed; otherwise, refer to the file by path or to the relevant section.
 
 ## Prompt Writing Style
 
 Prompt instructions have the following characteristics:
 
-* Guide the model on what to do, rather than command it. For example, "Search for files in the provided folder and collect related conventions into the research document."
+* Guide the model on what to do, rather than command it.
 * Written with proper grammar and formatting.
+
+Additional characteristics:
+
 * Use protocol-based structure with descriptive language when phases or ordered steps are needed.
 * Use `*` bulleted lists for groupings and `1.` ordered lists for sequential instruction steps.
 * Use **bold** only for human readability when drawing attention to a key concept.
@@ -177,6 +242,16 @@ Prompt instructions have the following characteristics:
 * Each line other than section headers and frontmatter requirements is treated as a prompt instruction.
 * Follow standard markdown conventions and instructions for the codebase.
 * Bulleted and ordered lists can appear without a title instruction when the section heading already provides context.
+
+Prefer guidance style over command style:
+
+```markdown
+<!-- Avoid command style -->
+You must search the folder and you will collect all conventions.
+
+<!-- Use guidance style -->
+Search the folder and collect conventions into the research document.
+```
 
 ### Patterns to Avoid
 
@@ -229,17 +304,17 @@ Execution patterns:
 
 ## Prompt Quality Criteria
 
-Every item in this checklist applies to the entire file when authoring prompt, instructions, chatmode, or agent files. Review the entire file against each item. Validation fails if any single checklist item is not satisfied.
+Every item applies to the entire file. Validation fails if any item is not satisfied.
 
-* [ ] The entire file and all instructions match the Prompt Writing Style for prompt, instructions, chatmode, or agent files.
-* [ ] The entire file and all instructions follow all Prompt Key Criteria for prompt, instructions, chatmode, or agent files.
-* [ ] Few-shot examples are in correctly fenced code blocks for prompt, instructions, chatmode, or agent files.
-* [ ] Few-shot examples match the prompt instructions exactly without confusion across prompt, instructions, chatmode, or agent files.
-* [ ] File structure follows the appropriate file type guidelines for prompt, instructions, chatmode, or agent files.
-* [ ] Protocols in the file follow all Protocol Patterns for prompt, instructions, chatmode, or agent files.
-* [ ] The user's request and requirements are implemented completely into prompt, instructions, chatmode, or agent files.
-* [ ] Existing instructions have been updated to satisfy this checklist for prompt, instructions, chatmode, or agent files.
-* [ ] New or updated instructions satisfy this checklist for prompt, instructions, chatmode, or agent files.
+* [ ] File structure follows the File Types guidelines for the artifact type.
+* [ ] Frontmatter includes required fields and follows Frontmatter Requirements.
+* [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
+* [ ] Instructions match the Prompt Writing Style.
+* [ ] Instructions follow all Prompt Key Criteria.
+* [ ] Subagent prompts follow Subagent Prompt Criteria when dispatching subagents.
+* [ ] External sources follow External Source Integration when referencing SDKs or APIs.
+* [ ] Few-shot examples are in correctly fenced code blocks and match the instructions exactly.
+* [ ] The user's request and requirements are implemented completely.
 
 ## External Source Integration
 
