@@ -514,10 +514,10 @@ function Get-SchemaForFile {
 
         foreach ($rule in $mapping.mappings) {
             if ($rule.pattern -like "*/**/*") {
-                $regexPattern = $rule.pattern
+                # Escape dots BEFORE converting glob to regex groups
+                $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
-                $regexPattern = $regexPattern -replace '\.', '\.'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
@@ -530,10 +530,10 @@ function Get-SchemaForFile {
                 }
             }
             elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
-                $regexPattern = $rule.pattern
+                # Escape dots BEFORE converting glob to regex groups
+                $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
-                $regexPattern = $regexPattern -replace '\.', '\.'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
