@@ -22,6 +22,9 @@ param(
     [string[]]$Files = @(),
 
     [Parameter(Mandatory = $false)]
+    [string[]]$ExcludePaths = @(),
+
+    [Parameter(Mandatory = $false)]
     [switch]$WarningsAsErrors,
 
     [Parameter(Mandatory = $false)]
@@ -888,6 +891,10 @@ function Test-FrontmatterValidation {
         [string[]]$Files = @(),
 
         [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$ExcludePaths = @(),
+
+        [Parameter(Mandatory = $false)]
         [switch]$WarningsAsErrors,
 
         [Parameter(Mandatory = $false)]
@@ -1014,6 +1021,18 @@ function Test-FrontmatterValidation {
                         if ($f.FullName -like $pattern) {
                             $excluded = $true
                             break
+                        }
+                    }
+                    
+                    # Check against explicit exclude paths
+                    if (-not $excluded -and $ExcludePaths.Count -gt 0) {
+                        $relativePath = $f.FullName.Replace($repoRoot, '').TrimStart('\', '/').Replace('\', '/')
+                        foreach ($excludePattern in $ExcludePaths) {
+                            if ($relativePath -like $excludePattern) {
+                                $excluded = $true
+                                Write-Verbose "Excluding file matching pattern '$excludePattern': $relativePath"
+                                break
+                            }
                         }
                     }
                     
@@ -1538,13 +1557,13 @@ function Get-ChangedMarkdownFileGroup {
 # Main execution
 if ($MyInvocation.InvocationName -ne '.') {
     if ($ChangedFilesOnly) {
-        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
     }
     elseif ($Files.Count -gt 0) {
-        $result = Test-FrontmatterValidation -Files $Files -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
     }
     else {
-        $result = Test-FrontmatterValidation -Paths $Paths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
     }
 
     if ($result.HasIssues) {
