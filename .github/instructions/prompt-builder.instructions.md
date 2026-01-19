@@ -132,7 +132,7 @@ Optional fields vary by file type:
 
 * `applyTo:` - Glob patterns (required for instructions files only).
 * `tools:` - Tool restrictions for chatmodes and agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations for chatmodes and agents.
+* `handoffs:` - Agent handoff declarations for chatmodes and agents. Use `agent:` for the target reference regardless of whether the target file uses `.chatmode.md` or `.agent.md` extension.
 * `agent:` - Agent delegation for prompt files.
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Model specification.
