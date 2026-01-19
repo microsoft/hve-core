@@ -9,7 +9,7 @@ maturity: stable
 ## Inputs
 
 * ${input:plan}: (Optional) Implementation plan file, could be determined come from the conversation or prompt
-* ${input:phaseStop:false}: (Optional, defaults to true) Stop after each phase for user review
+* ${input:phaseStop:false}: (Optional, defaults to false) Stop after each phase for user review
 * ${input:stepStop:false}: (Optional, defaults to false) Stop after each step for user review
 
 ## Required Steps
