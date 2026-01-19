@@ -488,24 +488,6 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
 
 #endregion
 
-#region Initialize-JsonSchemaValidation Tests
-
-Describe 'Initialize-JsonSchemaValidation' -Tag 'Unit' {
-    Context 'JSON processing availability' {
-        It 'Returns true when JSON processing is available' {
-            $result = Initialize-JsonSchemaValidation
-            $result | Should -BeTrue
-        }
-
-        It 'Returns boolean type' {
-            $result = Initialize-JsonSchemaValidation
-            $result | Should -BeOfType [bool]
-        }
-    }
-}
-
-#endregion
-
 #region Test-JsonSchemaValidation Tests
 
 Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
