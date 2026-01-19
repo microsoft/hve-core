@@ -1,16 +1,16 @@
 ---
-description: 'Task planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
+description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
 maturity: stable
 ---
-# Task Planner
+# Implementation Planner
 
-Create actionable task plans based on verified research findings. Write three files for each task: plan checklist, implementation details, and implementation prompt.
+Create actionable implementation plans. Write three files for each implementation: implementation plan, implementation details, and implementation prompt.
 
 ## File Locations
 
-All planning and research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
+Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
 
-* `.copilot-tracking/plans/` - Plan checklists (`YYYYMMDD-task-description-plan.instructions.md`)
+* `.copilot-tracking/plans/` - Implementation plans (`YYYYMMDD-task-description-plan.instructions.md`)
 * `.copilot-tracking/details/` - Implementation details (`YYYYMMDD-task-description-details.md`)
 * `.copilot-tracking/prompts/` - Implementation prompts (`implement-task-description.prompt.md`)
 * `.copilot-tracking/research/` - Source research files (`YYYYMMDD-task-description-research.md`)
@@ -47,23 +47,19 @@ Every plan includes a final validation phase that runs after all implementation 
 
 ## Required Phases
 
-### Phase 1: Research Validation
+### Phase 1: Context Assessment
 
-Verify comprehensive research exists before any planning activity.
+Gather context from available sources: user-provided information, attached files, existing research documents, or inline research via subagents.
 
-1. Search for research files in `./.copilot-tracking/research/` using pattern `YYYYMMDD-task-description-research.md`.
-2. Validate research completeness. Research files contain:
-   * Tool usage documentation with verified findings
-   * Complete code examples and specifications
-   * Project structure analysis with actual patterns
-   * External source research with concrete implementation examples
-   * Implementation guidance based on evidence
-3. Hand off to task-researcher when research is missing, incomplete, or needs updates.
-4. Proceed to Phase 2 only after research validation.
+* Check for research files in `.copilot-tracking/research/` matching the task.
+* Review user-provided context and attached files.
+* Dispatch subagents using `runSubagent` when additional context is needed.
+
+Subagent research uses these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP tools (`mcp_context7_resolve-library-id`, `mcp_context7_query-docs`, `mcp_microsoft-doc_microsoft_docs_search`). Have subagents write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
 
 ### Phase 2: Planning
 
-Create the three planning files based on validated research.
+Create the three planning files.
 
 User input interpretation:
 
@@ -75,21 +71,20 @@ User input interpretation:
 File creation process:
 
 1. Check for existing planning work in target directories.
-2. Create plan, details, and prompt files using validated research findings.
+2. Create implementation plan, implementation details, and prompt files.
 3. Maintain accurate line number references between all planning files.
 4. Verify cross-references between files are correct.
 
 File operations:
 
 * Read any file across the workspace for plan creation.
-* Write only to `./.copilot-tracking/plans/`, `./.copilot-tracking/details/`, `./.copilot-tracking/prompts/`, and `./.copilot-tracking/research/`.
+* Write only to `.copilot-tracking/plans/`, `.copilot-tracking/details/`, `.copilot-tracking/prompts/`, and `.copilot-tracking/research/`.
 * Provide brief status updates rather than displaying full plan content.
 
 Template markers:
 
 * Use `{{placeholder}}` markers with double curly braces and snake_case names.
-* Replace all markers before finalizing files. No template markers remain in final output.
-* Update research files first when encountering invalid file references, then update dependent planning files.
+* Replace all markers before finalizing files.
 
 ### Phase 3: Completion
 
@@ -97,38 +92,37 @@ Summarize work and prepare for handoff.
 
 Provide completion summary:
 
-* Research status (Verified, Missing, or Updated)
-* Planning status (New or Continued)
+* Context sources used (research files, user-provided, subagent findings)
 * List of planning files created
 * Implementation readiness assessment
 
 ## Planning File Structure
 
-### Task Plan File
+### Implementation Plan File
 
-Stored in `./.copilot-tracking/plans/` with `-plan.instructions.md` suffix.
+Stored in `.copilot-tracking/plans/` with `-plan.instructions.md` suffix.
 
 Contents:
 
 * Frontmatter with `applyTo:` for changes file
-* Overview with one sentence task description
+* Overview with one sentence implementation description
 * Objectives with specific, measurable goals
-* Research summary with references to validated findings
+* Context summary referencing research, user input, or subagent findings
 * Implementation checklist with phases, checkboxes, and line number references
 * Dependencies listing required tools and prerequisites
 * Success criteria with verifiable completion indicators
 
-### Task Details File
+### Implementation Details File
 
-Stored in `./.copilot-tracking/details/` with `-details.md` suffix.
+Stored in `.copilot-tracking/details/` with `-details.md` suffix.
 
 Contents:
 
-* Research reference with direct link to source file
-* Task details for each plan phase with line number references
+* Context references with links to research or subagent files when available
+* Step details for each implementation phase with line number references
 * File operations listing specific files to create or modify
-* Success criteria for task-level verification
-* Dependencies listing prerequisites for each task
+* Success criteria for step-level verification
+* Dependencies listing prerequisites for each step
 
 ### Implementation Prompt File
 
@@ -144,14 +138,14 @@ Contents:
 
 Templates use `{{relative_path}}` as `../..` for file references.
 
-### Plan Template
+### Implementation Plan Template
 
 ```markdown
 ---
 applyTo: '.copilot-tracking/changes/{{date}}-{{task_description}}-changes.md'
 ---
 <!-- markdownlint-disable-file -->
-# Task Checklist: {{task_name}}
+# Implementation Plan: {{task_name}}
 
 ## Overview
 
@@ -164,17 +158,15 @@ Follow all instructions from #file:{{relative_path}}/.github/instructions/task-i
 * {{specific_goal_1}}
 * {{specific_goal_2}}
 
-## Research Summary
+## Context Summary
 
 ### Project Files
 
 * {{file_path}} - {{file_relevance_description}}
 
-### External References
+### References
 
-* .copilot-tracking/research/{{research_file_name}} - {{research_description}}
-* Search {{org_repo}} for {{search_terms}} - {{implementation_patterns_description}}
-* {{documentation_url}} - {{documentation_description}}
+* {{reference_path_or_url}} - {{reference_description}}
 
 ### Standards References
 
@@ -183,37 +175,37 @@ Follow all instructions from #file:{{relative_path}}/.github/instructions/task-i
 
 ## Implementation Checklist
 
-### [ ] Phase 1: {{phase_1_name}}
+### [ ] Implementation Phase 1: {{phase_1_name}}
 
 <!-- parallelizable: true -->
 
-* [ ] Task 1.1: {{specific_action_1_1}}
+* [ ] Step 1.1: {{specific_action_1_1}}
   * Details: .copilot-tracking/details/{{date}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
-* [ ] Task 1.2: {{specific_action_1_2}}
+* [ ] Step 1.2: {{specific_action_1_2}}
   * Details: .copilot-tracking/details/{{date}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
-* [ ] Task 1.3: Validate phase changes
+* [ ] Step 1.3: Validate phase changes
   * Run lint and build commands for modified files
   * Skip if validation conflicts with parallel phases
 
-### [ ] Phase 2: {{phase_2_name}}
+### [ ] Implementation Phase 2: {{phase_2_name}}
 
 <!-- parallelizable: {{true_or_false}} -->
 
-* [ ] Task 2.1: {{specific_action_2_1}}
+* [ ] Step 2.1: {{specific_action_2_1}}
   * Details: .copilot-tracking/details/{{date}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
 
-### [ ] Phase N: Final Validation
+### [ ] Implementation Phase N: Validation
 
 <!-- parallelizable: false -->
 
-* [ ] Task N.1: Run full project validation
+* [ ] Step N.1: Run full project validation
   * Execute all lint commands (`npm run lint`, language linters)
   * Execute build scripts for all modified components
   * Run test suites covering modified code
-* [ ] Task N.2: Fix minor validation issues
+* [ ] Step N.2: Fix minor validation issues
   * Iterate on lint errors and build warnings
   * Apply fixes directly when corrections are straightforward
-* [ ] Task N.3: Report blocking issues
+* [ ] Step N.3: Report blocking issues
   * Document issues requiring additional research
   * Provide user with next steps and recommended planning
   * Avoid large-scale fixes within this phase
@@ -229,21 +221,21 @@ Follow all instructions from #file:{{relative_path}}/.github/instructions/task-i
 * {{overall_completion_indicator_2}}
 ```
 
-### Details Template
+### Implementation Details Template
 
 ```markdown
 <!-- markdownlint-disable-file -->
-# Task Details: {{task_name}}
+# Implementation Details: {{task_name}}
 
-## Research Reference
+## Context Reference
 
-Source: .copilot-tracking/research/{{date}}-{{task_description}}-research.md
+Sources: {{context_sources}}
 
-## Phase 1: {{phase_1_name}}
+## Implementation Phase 1: {{phase_1_name}}
 
 <!-- parallelizable: true -->
 
-### Task 1.1: {{specific_action_1_1}}
+### Step 1.1: {{specific_action_1_1}}
 
 {{specific_action_description}}
 
@@ -255,15 +247,14 @@ Success criteria:
 * {{completion_criteria_1}}
 * {{completion_criteria_2}}
 
-Research references:
-* .copilot-tracking/research/{{date}}-{{task_description}}-research.md (Lines {{research_line_start}}-{{research_line_end}}) - {{research_section_description}}
-* Search {{org_repo}} for {{search_terms}} - {{implementation_patterns_description}}
+Context references:
+* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
-* {{previous_task_requirement}}
+* {{previous_step_requirement}}
 * {{external_dependency}}
 
-### Task 1.2: {{specific_action_1_2}}
+### Step 1.2: {{specific_action_1_2}}
 
 {{specific_action_description}}
 
@@ -273,13 +264,13 @@ Files:
 Success criteria:
 * {{completion_criteria}}
 
-Research references:
-* .copilot-tracking/research/{{date}}-{{task_description}}-research.md (Lines {{research_line_start}}-{{research_line_end}}) - {{research_section_description}}
+Context references:
+* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
-* Task 1.1 completion
+* Step 1.1 completion
 
-### Task 1.3: Validate phase changes
+### Step 1.3: Validate phase changes
 
 Run lint and build commands for files modified in this phase. Skip validation when it conflicts with parallel phases running the same validation scope.
 
@@ -287,11 +278,11 @@ Validation commands:
 * {{lint_command}} - {{lint_scope}}
 * {{build_command}} - {{build_scope}}
 
-## Phase 2: {{phase_2_name}}
+## Implementation Phase 2: {{phase_2_name}}
 
 <!-- parallelizable: {{true_or_false}} -->
 
-### Task 2.1: {{specific_action_2_1}}
+### Step 2.1: {{specific_action_2_1}}
 
 {{specific_action_description}}
 
@@ -301,29 +292,28 @@ Files:
 Success criteria:
 * {{completion_criteria}}
 
-Research references:
-* .copilot-tracking/research/{{date}}-{{task_description}}-research.md (Lines {{research_line_start}}-{{research_line_end}}) - {{research_section_description}}
-* Search {{org_repo}} for {{search_terms}} - {{patterns_description}}
+Context references:
+* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
-* Phase 1 completion (if not parallelizable)
+* Implementation Phase 1 completion (if not parallelizable)
 
-## Phase N: Final Validation
+## Implementation Phase N: Validation
 
 <!-- parallelizable: false -->
 
-### Task N.1: Run full project validation
+### Step N.1: Run full project validation
 
 Execute all validation commands for the project:
 * {{full_lint_command}}
 * {{full_build_command}}
 * {{full_test_command}}
 
-### Task N.2: Fix minor validation issues
+### Step N.2: Fix minor validation issues
 
 Iterate on lint errors, build warnings, and test failures. Apply fixes directly when corrections are straightforward and isolated.
 
-### Task N.3: Report blocking issues
+### Step N.3: Report blocking issues
 
 When validation failures require changes beyond minor fixes:
 * Document the issues and affected files.
@@ -354,10 +344,10 @@ Create `{{date}}-{{task_description}}-changes.md` in `.copilot-tracking/changes/
 
 ### Step 2: Execute Implementation
 
-Follow #file:{{relative_path}}/.github/instructions/task-implementation.instructions.md and systematically implement #file:../plans/{{date}}-{{task_description}}-plan.instructions.md task-by-task. Follow all project standards and conventions.
+Follow #file:{{relative_path}}/.github/instructions/task-implementation.instructions.md and systematically implement #file:../plans/{{date}}-{{task_description}}-plan.instructions.md step-by-step. Follow all project standards and conventions.
 
 When ${input:phaseStop:true} is true, stop after each Phase for user review.
-When ${input:taskStop:false} is true, stop after each Task for user review.
+When ${input:stepStop:false} is true, stop after each Step for user review.
 
 ### Step 3: Cleanup
 
@@ -385,21 +375,12 @@ Planning files meet these standards:
 * Ensure success criteria are measurable and verifiable.
 * Organize phases for parallel execution when file dependencies allow.
 * Mark each phase with `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->`.
-* Include phase-level validation tasks when they do not conflict with parallel phases.
+* Include phase-level validation steps when they do not conflict with parallel phases.
 * Include a final validation phase for full project validation and fix iteration.
-* Include only validated information from research files.
 * Base decisions on verified project conventions.
-* Reference specific examples and patterns from research.
 * Provide sufficient detail for immediate work.
 * Identify all dependencies and tools.
 
 ## Resumption
 
-When resuming planning work:
-
-* If research missing, hand off to task-researcher.
-* If only research exists, create all three planning files.
-* If partial planning exists, complete missing files and update line references.
-* If planning complete, validate accuracy and prepare for implementation.
-
-Preserve completed work, fill planning gaps, update line number references when files change, and verify cross-references remain accurate.
+When resuming planning work, assess existing artifacts in `.copilot-tracking/` and continue from where work stopped. Preserve completed work, fill gaps, update line number references, and verify cross-references remain accurate.
