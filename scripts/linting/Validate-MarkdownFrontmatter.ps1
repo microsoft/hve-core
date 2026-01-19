@@ -516,8 +516,8 @@ function Get-SchemaForFile {
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
+            # Handle recursive glob patterns (e.g., docs/**/*.md)
             if ($rule.pattern -like "*/**/*") {
-                # Escape dots BEFORE converting glob to regex groups
                 $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
@@ -526,14 +526,15 @@ function Get-SchemaForFile {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
+            # Handle pipe-separated filename alternatives (e.g., README.md|CONTRIBUTING.md)
             elseif ($rule.pattern -match '\|') {
                 $patterns = $rule.pattern -split '\|'
                 if ($relativePath -eq $fileName -and $fileName -in $patterns) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
+            # Handle simple glob patterns with wildcard pre-filter
             elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
-                # Escape dots BEFORE converting glob to regex groups
                 $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
@@ -541,9 +542,6 @@ function Get-SchemaForFile {
                 if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
-            }
-            elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
-                return Join-Path -Path $schemaDir -ChildPath $rule.schema
             }
         }
 
