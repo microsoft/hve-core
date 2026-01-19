@@ -1,12 +1,12 @@
 ---
 description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
-applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md'
+applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 maturity: stable
 ---
 
 # Prompt Builder Instructions
 
-These instructions define authoring standards for prompt engineering artifacts. Apply these standards when creating or modifying prompt, agent, or instructions files.
+These instructions define authoring standards for prompt engineering artifacts. Apply these standards when creating or modifying prompt, agent, instructions, or skill files.
 
 ## File Types
 
@@ -109,6 +109,54 @@ Validation guidelines:
 * Content defines standards and conventions.
 * Wrap examples in fenced code blocks.
 
+### Skill Files
+
+*File Name*: `SKILL.md`
+
+*Location*: `.github/skills/<skill-name>/SKILL.md`
+
+Purpose: Self-contained packages that bundle documentation with executable scripts for specific tasks. Skills differ from prompts and agents by providing concrete utilities rather than conversational guidance.
+
+Characteristics:
+
+* Frontmatter includes `platforms` and `dependencies` for cross-platform support.
+* Bundled with bash and PowerShell scripts in the same directory.
+* Provides step-by-step instructions for task execution.
+* Includes prerequisites, parameters, and troubleshooting sections.
+
+Skill directory structure:
+
+```text
+.github/skills/<skill-name>/
+├── SKILL.md                    # Main skill definition (required)
+├── <action>.sh                 # Bash script for macOS/Linux
+├── <action>.ps1                # PowerShell script for Windows
+└── examples/
+    └── README.md               # Usage examples (recommended)
+```
+
+#### Skill Content Structure
+
+Skill files include these sections in order:
+
+1. **Title (H1)**: Clear heading matching skill purpose.
+2. **Overview**: Brief explanation of what the skill does.
+3. **Prerequisites**: Platform-specific installation requirements.
+4. **Quick Start**: Basic usage with default settings.
+5. **Parameters Reference**: Table documenting all options with defaults.
+6. **Script Reference**: Usage examples for bash and PowerShell.
+7. **Troubleshooting**: Common issues and solutions.
+8. **Attribution Footer**: Standard footer with attribution.
+
+Validation guidelines:
+
+* Include `name` frontmatter matching the skill directory name (required).
+* Include `description` frontmatter (required).
+* Include `maturity` frontmatter (required).
+* Provide parallel script implementations for bash and PowerShell.
+* Document prerequisites for each supported platform.
+* Additional sections can be added between Parameters Reference and Troubleshooting as needed.
+
 ## Frontmatter Requirements
 
 This section defines frontmatter field requirements for prompt engineering artifacts.
@@ -126,6 +174,7 @@ Note: VS Code shows a validation warning for the `maturity:` field as it's not i
 
 Optional fields vary by file type:
 
+* `name:` - Skill identifier (required for skill files only). Must match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns (required for instructions files only).
 * `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
@@ -142,6 +191,8 @@ When authoring prompts that reference specific tools:
 * Do not include tools that VS Code flags as unknown.
 
 ## Protocol Patterns
+
+Protocol patterns apply to prompt and agent files. Skill files follow their own content structure defined in the Skill Content Structure section rather than step-based or phase-based protocols.
 
 ### Step-Based Protocols
 

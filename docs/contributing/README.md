@@ -23,6 +23,7 @@ Guidelines and standards for contributing AI artifacts to hve-core.
 | [Custom Agents](custom-agents.md)          | How to create and submit new agent definitions                                  |
 | [Instructions](instructions.md)            | How to create repository-specific coding guidelines                             |
 | [Prompts](prompts.md)                      | How to create reusable prompt templates                                         |
+| [Skills](skills.md)                        | How to create skill packages with scripts and documentation                     |
 | [Release Process](release-process.md)      | Extension channels, maturity levels, and publishing workflow                    |
 
 ## Before You Start
@@ -36,6 +37,7 @@ Guidelines and standards for contributing AI artifacts to hve-core.
 - [Agents Directory](../../.github/agents/)
 - [Instructions Directory](../../.github/instructions/)
 - [Prompts Directory](../../.github/prompts/)
+- [Skills Directory](../../.github/skills/)
 
 ---
 

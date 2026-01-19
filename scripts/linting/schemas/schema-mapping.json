@@ -37,6 +37,12 @@
       "scope": "github-agents",
       "schema": "agent-frontmatter.schema.json",
       "description": "Agent files in .github directory"
+    },
+    {
+      "pattern": ".github/skills/**/SKILL.md",
+      "scope": "github-skills",
+      "schema": "skill-frontmatter.schema.json",
+      "description": "Skill definition files in .github/skills directory"
     }
   ],
   "defaultSchema": "base-frontmatter.schema.json"
