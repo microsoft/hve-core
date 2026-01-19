@@ -10,7 +10,7 @@ keywords:
   - github copilot
   - m365 copilot
   - conversational workflows
-  - chat modes
+  - custom agents
   - copilot instructions
 estimated_reading_time: 2
 ---
@@ -21,7 +21,7 @@ An open-source library of Hypervelocity Engineering components that accelerates 
 
 ## Overview
 
-HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Copilot chat modes, along with curated instructions and prompt templates, to deliver intelligent, context-aware interactions for building solutions on Azure. Whether you're tackling greenfield projects or modernizing existing systems, HVE Core reduces time-to-value and simplifies complex engineering tasks.
+HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Copilot custom agents, along with curated instructions and prompt templates, to deliver intelligent, context-aware interactions for building solutions on Azure. Whether you're tackling greenfield projects or modernizing existing systems, HVE Core reduces time-to-value and simplifies complex engineering tasks.
 
 ## Quick Start
 
@@ -50,7 +50,7 @@ The installer will:
 
 * Clone the hve-core repository as a sibling to your workspace
 * Validate the repository structure
-* Update your VS Code settings.json with chat mode, prompt, and instruction paths
+* Update your VS Code settings.json with custom agent, prompt, and instruction paths
 * Make all HVE Core components immediately available
 
 ### Manual Installation
@@ -120,7 +120,7 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 |----------------------------------------------------------|----------------------------------------------|
 | [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial            |
 | [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement     |
-| [Contributing](docs/contributing/README.md)              | Create chat modes, instructions, and prompts |
+| [Contributing](docs/contributing/README.md)              | Create custom agents, instructions, and prompts |
 | [Agents Reference](.github/README.md)                    | All available agents                         |
 | [Instructions Reference](.github/instructions/README.md) | All coding instructions                      |
 

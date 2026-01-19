@@ -32,7 +32,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 > [!TIP]
 > **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and guidance on choosing between strict RPI and rpi-agent.
 
-RPI separates concerns into distinct phases, each with its own specialized chat mode.
+RPI separates concerns into distinct phases, each with its own specialized custom agent.
 
 ## The Three Phases
 
@@ -67,7 +67,7 @@ RPI separates concerns into distinct phases, each with its own specialized chat 
 
 🔴 **Always use `/clear` or start a new chat between phases.**
 
-Each chat mode has different instructions. Accumulated context causes confusion:
+Each custom agent has different instructions. Accumulated context causes confusion:
 
 ```text
 Task Researcher → /clear → Task Planner → /clear → Task Implementor
@@ -96,7 +96,7 @@ Research findings are preserved in files, not chat history. Clean context lets e
 6. **Implement** using `/task-implement` (automatically switches to Task Implementor)
 
 > [!TIP]
-> The `/task-research`, `/task-plan`, and `/task-implement` prompts automatically switch to their respective chat modes, so you don't need to manually select them.
+> The `/task-research`, `/task-plan`, and `/task-implement` prompts automatically switch to their respective custom agents, so you don't need to manually select them.
 
 ## Next Steps
 

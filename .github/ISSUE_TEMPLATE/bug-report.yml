@@ -16,7 +16,7 @@ body:
       options:
         - Instruction Files
         - Prompts
-        - Chat Modes/Agents
+        - Custom Agents
         - Scripts
         - Documentation
         - Other

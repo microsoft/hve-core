@@ -1,6 +1,6 @@
 ---
 title: Task Implementor Guide
-description: Use the Task Implementor chat mode to execute implementation plans with precision and tracking
+description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 author: Microsoft
 ms.date: 2025-01-28
 ms.topic: tutorial
@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Implementor chat mode transforms planning files into working code. It executes plans task by task, tracks all changes, and supports stop controls for review between phases.
+The Task Implementor custom agent transforms planning files into working code. It executes plans task by task, tracks all changes, and supports stop controls for review between phases.
 
 ## When to Use Task Implementor
 
@@ -53,10 +53,10 @@ Plus all the actual code files created or modified during implementation.
 
 🔴 **Start with `/clear` or a new chat** after Task Planner completes.
 
-### Step 2: Select the Chat Mode
+### Step 2: Select the Custom Agent
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the chat mode dropdown
+2. Click the agent picker dropdown
 3. Select **Task Implementor**
 
 ### Step 3: Reference Your Plan

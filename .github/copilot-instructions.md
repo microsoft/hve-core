@@ -64,7 +64,7 @@ Skills are self-contained packages providing guidance and utilities:
 * Getting Started (`docs/getting-started/`) - Installation and first workflow guides with multiple setup methods.
 * RPI (`docs/rpi/`) - Task researcher, planner, and implementor workflow documentation.
 * Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
-* Templates (`docs/templates/`) - Templates for chat modes, agent modes, and instructions or prompts.
+* Templates (`docs/templates/`) - Templates for custom agents, instructions, and prompts.
 
 ### Copilot Tracking
 

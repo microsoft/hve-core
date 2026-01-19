@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-HVE-Core provides GitHub Copilot customizations (chat modes, instructions, and prompts) that enhance your development workflow. This guide helps you choose the right installation method for your environment.
+HVE-Core provides GitHub Copilot customizations (custom agents, instructions, and prompts) that enhance your development workflow. This guide helps you choose the right installation method for your environment.
 
 ## Recommended: VS Code Extension ⭐
 

@@ -145,10 +145,9 @@ vsce publish --packagePath "$VSIX_FILE"
 
 The `extension/.vscodeignore` file controls what gets packaged. Currently included:
 
-- `.github/agents/**` - All chat agent definitions
+- `.github/agents/**` - All custom agent definitions
 - `.github/prompts/**` - All prompt templates
 - `.github/instructions/**` - All instruction files
-- `.github/chatmodes/**` - All chat mode definitions
 - `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
 - `scripts/dev-tools/**` - Developer utilities (PR reference generation)
 - `package.json` - Extension manifest

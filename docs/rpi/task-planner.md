@@ -1,6 +1,6 @@
 ---
 title: Task Planner Guide
-description: Use the Task Planner chat mode to create actionable implementation plans from research findings
+description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 author: Microsoft
 ms.date: 2025-01-28
 ms.topic: tutorial
@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Planner chat mode transforms research findings into actionable implementation plans. It creates coordinated planning files with checkboxes, detailed specifications, and line number references for precise execution.
+The Task Planner custom agent transforms research findings into actionable implementation plans. It creates coordinated planning files with checkboxes, detailed specifications, and line number references for precise execution.
 
 ## When to Use Task Planner
 
@@ -78,10 +78,10 @@ Type `/task-plan` in GitHub Copilot Chat with the research document opened in th
 
 If you don't specify a file, Task Planner will search for recent research documents in `.copilot-tracking/research/` and ask you to confirm which one to use.
 
-#### Option 2: Select the Chat Mode Manually
+#### Option 2: Select the Custom Agent Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the chat mode dropdown
+2. Click the agent picker dropdown
 3. Select **Task Planner**
 
 ### Step 3: Reference Your Research

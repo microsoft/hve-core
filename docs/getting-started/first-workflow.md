@@ -43,7 +43,7 @@ You'll create:
 ### Switch to Task Researcher
 
 1. Open Copilot Chat (`Ctrl+Alt+I`)
-1. Click the chat mode dropdown at the top
+1. Click the agent picker dropdown at the top
 1. Select **Task Researcher**
 
 ### Your Research Prompt
@@ -86,7 +86,7 @@ From the research output, identify:
 ### Clear and Switch
 
 1. Type `/clear` in the chat to reset context
-1. Click the chat mode dropdown
+1. Click the agent picker dropdown
 1. Select **Task Planner**
 
 ### Your Planning Prompt
@@ -128,7 +128,7 @@ Task Planner creates a structured plan with:
 ### Clear and Switch to Implementor
 
 1. Type `/clear` in the chat to reset context
-1. Click the chat mode dropdown
+1. Click the agent picker dropdown
 1. Select **Task Implementor**
 
 ### Your Implementation Prompt

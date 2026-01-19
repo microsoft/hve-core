@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-This guide walks through a complete RPI workflow, showing how the three chat modes work together to transform a complex task into working code.
+This guide walks through a complete RPI workflow, showing how the three custom agents work together to transform a complex task into working code.
 
 ## The Complete Workflow
 
@@ -231,7 +231,7 @@ RPI artifacts support handoffs:
 | Implement | `/task-implement`            | Task Implementor | code + changes.md              |
 
 > [!TIP]
-> `/task-research`, `/task-plan`, and `/task-implement` all automatically switch to the appropriate chat mode.
+> `/task-research`, `/task-plan`, and `/task-implement` all automatically switch to the appropriate custom agent.
 
 Remember: **Always `/clear` between phases!**
 

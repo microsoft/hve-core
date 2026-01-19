@@ -65,7 +65,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 - **[Pull Request](./pull-request.prompt.md)** - PR description and review assistance
 - **[Risk Register](./risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
-## Prompts vs Instructions vs Chat Modes
+## Prompts vs Instructions vs Custom Agents
 
 - **Prompts** (this directory): Coaching and educational guidance for learning
 - **[Instructions](../instructions/README.md)**: Systematic implementation and automation

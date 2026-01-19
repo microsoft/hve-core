@@ -1,6 +1,6 @@
 ---
 title: Task Researcher Guide
-description: Use the Task Researcher chat mode to conduct deep, evidence-based research before coding
+description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
 author: Microsoft
 ms.date: 2025-01-28
 ms.topic: tutorial
@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Researcher chat mode transforms uncertainty into verified knowledge through deep, autonomous research. It investigates your codebase, external documentation, and APIs to create evidence-backed recommendations.
+The Task Researcher custom agent transforms uncertainty into verified knowledge through deep, autonomous research. It investigates your codebase, external documentation, and APIs to create evidence-backed recommendations.
 
 ## When to Use Task Researcher
 
@@ -63,10 +63,10 @@ Type `/task-research <topic>` in GitHub Copilot Chat where `<topic>` describes w
 
 This automatically switches to Task Researcher mode and begins the research protocol.
 
-### Option 2: Select the Chat Mode Manually
+### Option 2: Select the Custom Agent Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the chat mode dropdown at the top
+2. Click the agent picker dropdown at the top
 3. Select **Task Researcher**
 4. Describe your task
 

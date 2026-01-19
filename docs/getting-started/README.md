@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-HVE Core provides GitHub Copilot customizations (chat modes, instructions, and prompts) that enhance your development workflow. This guide helps you get started quickly.
+HVE Core provides GitHub Copilot customizations (custom agents, instructions, and prompts) that enhance your development workflow. This guide helps you get started quickly.
 
 ## Installation
 

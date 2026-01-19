@@ -110,7 +110,7 @@ The workflow packages the extension and publishes to the VS Code Marketplace usi
 
 Publish the extension after merging a Release PR that includes extension-relevant changes:
 
-* New prompts, instructions, or chat modes
+* New prompts, instructions, or custom agents
 * Bug fixes affecting extension behavior
 * Updated extension metadata or documentation
 

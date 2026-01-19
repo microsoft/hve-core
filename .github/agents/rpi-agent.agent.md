@@ -147,7 +147,7 @@ When additional guidance is needed, consult these authoritative sources:
 * Repository Conventions: `.github/copilot-instructions.md`
 * Technology Instructions: `.github/instructions/*.instructions.md`
 * Prompt Templates: `.github/prompts/*.prompt.md`
-* Related Chat Modes:
+* Related Custom Agents:
   * `task-researcher.agent.md` for deep research operations
   * `task-planner.agent.md` for task planning workflows
   * `task-implementor.agent.md` for implementation execution
