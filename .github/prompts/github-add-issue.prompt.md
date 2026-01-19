@@ -6,7 +6,7 @@ maturity: stable
 
 # Add GitHub Issue to Backlog
 
-This prompt is invoked by `github-issue-manager.chatmode.md` for issue creation workflow.
+This prompt is invoked by `github-issue-manager.agent.md` for issue creation workflow.
 It can also be run standalone for direct issue creation tasks.
 
 Follow all instructions from #file:../instructions/markdown.instructions.md
