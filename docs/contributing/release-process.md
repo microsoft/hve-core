@@ -131,21 +131,21 @@ The VS Code extension is published to two channels with different stability expe
 
 ### Extension Channels
 
-| Channel    | Stability       | Included Maturity Levels           | Audience          |
-|------------|-----------------|-------------------------------------|-------------------|
-| Stable     | Production-ready | `stable` only                      | All users         |
-| Pre-release | Early access    | `stable`, `preview`, `experimental` | Early adopters    |
+| Channel     | Stability        | Included Maturity Levels            | Audience       |
+|-------------|------------------|-------------------------------------|----------------|
+| Stable      | Production-ready | `stable` only                       | All users      |
+| Pre-release | Early access     | `stable`, `preview`, `experimental` | Early adopters |
 
 ### Maturity Levels
 
 Each prompt, instruction, and agent declares a `maturity` field in its frontmatter:
 
-| Level          | Description                                      | Included In       |
-|----------------|--------------------------------------------------|-------------------|
-| `stable`       | Production-ready, fully tested                   | Stable, Pre-release |
-| `preview`      | Feature-complete but may have rough edges        | Pre-release only  |
-| `experimental` | Early development, may change significantly      | Pre-release only  |
-| `deprecated`   | Scheduled for removal, excluded from all builds  | Neither           |
+| Level          | Description                                     | Included In         |
+|----------------|-------------------------------------------------|---------------------|
+| `stable`       | Production-ready, fully tested                  | Stable, Pre-release |
+| `preview`      | Feature-complete but may have rough edges       | Pre-release only    |
+| `experimental` | Early development, may change significantly     | Pre-release only    |
+| `deprecated`   | Scheduled for removal, excluded from all builds | Neither             |
 
 ### Maturity Lifecycle
 

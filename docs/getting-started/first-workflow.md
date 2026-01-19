@@ -212,13 +212,13 @@ Rename-Item docs/rpi/README.md.bak README.md
 
 ## Resources
 
-| Resource                                                 | Description                          |
-|----------------------------------------------------------|--------------------------------------|
-| [RPI Overview](../rpi/README.md)                         | Full RPI workflow documentation      |
-| [Task Researcher](../rpi/task-researcher.md)             | Deep dive on research phase          |
-| [Task Planner](../rpi/task-planner.md)                   | Deep dive on planning phase          |
-| [Task Implementor](../rpi/task-implementor.md)           | Deep dive on implementation phase    |
-| [RPI Agent](../../.github/README.md#rpi-agent)           | Autonomous single-workflow execution |
+| Resource                                       | Description                          |
+|------------------------------------------------|--------------------------------------|
+| [RPI Overview](../rpi/README.md)               | Full RPI workflow documentation      |
+| [Task Researcher](../rpi/task-researcher.md)   | Deep dive on research phase          |
+| [Task Planner](../rpi/task-planner.md)         | Deep dive on planning phase          |
+| [Task Implementor](../rpi/task-implementor.md) | Deep dive on implementation phase    |
+| [RPI Agent](../../.github/README.md#rpi-agent) | Autonomous single-workflow execution |
 
 ---
 

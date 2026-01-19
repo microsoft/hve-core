@@ -1327,6 +1327,8 @@ Upselling
 
 # Development & DevOps
 agile
+choco
+chocolatey
 cicd
 devops
 scrum
@@ -1340,6 +1342,8 @@ shellcheck
 nslookup
 journalctl
 vimdiff
+virtualenv
+venv
 mergetool
 gitmessage
 pipefail

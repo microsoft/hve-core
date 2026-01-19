@@ -15,10 +15,12 @@ Confirm prerequisites and prepare the test environment.
 
 1. Ask the user for the Streamlit application path and port (default: 8501).
 2. Verify Playwright and pytest-playwright are installed. Install if missing:
+
    ```bash
    pip install playwright pytest-playwright pytest-asyncio
    playwright install chromium
    ```
+
 3. Launch the Streamlit application and confirm it responds at the expected URL.
 4. Establish baseline performance metrics (initial load time).
 
@@ -29,6 +31,7 @@ Transition: Proceed to Phase 2 when the application launches without errors and 
 Execute core functionality tests across all dashboard pages.
 
 Navigation tests:
+
 * Verify sidebar navigation between all pages
 * Confirm data loads correctly on each page
 * Test interactive elements (dropdowns, multiselect boxes, sliders, buttons)
@@ -36,6 +39,7 @@ Navigation tests:
 * Test error handling with invalid inputs
 
 Page-specific validation:
+
 * Summary Statistics: metrics display, data quality sections, variable summaries
 * Univariate Analysis: variable selection, histogram rendering, statistical summaries
 * Multivariate Analysis: column selection, correlation heatmaps, scatter matrices
@@ -56,6 +60,7 @@ Verify data integrity against specifications.
 4. Check temporal data consistency and ordering.
 
 Reference data expectations:
+
 * Records: ~100,002 rows, 13 columns
 * Temperature ranges: -3.1°C to 34.6°C (outside), 11.1°C to 24.2°C (inside)
 * Signal strength: -89.8 to -30.8 dBm
@@ -81,6 +86,7 @@ Transition: Proceed to Phase 5 when performance testing completes.
 Generate structured test reports and prioritize findings.
 
 Create documentation covering:
+
 1. Test results summary with pass/fail counts per category
 2. Issue registry with reproduction steps, severity, and category
 3. Performance metrics and benchmarks

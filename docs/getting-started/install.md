@@ -71,17 +71,17 @@ Answer these questions to find your recommended installation method:
 
 ### Decision Matrix
 
-| Environment               | Team | Updates    | Recommended Method                              |
-|---------------------------|------|------------|-------------------------------------------------|
-| **Any** (simplest)        | Any  | Auto       | [VS Code Extension](methods/extension.md) ⭐     |
-| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md)   |
-| Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)               |
-| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)    |
-| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)               |
-| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)        |
-| Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)                 |
-| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md)     |
-| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)           |
+| Environment               | Team | Updates    | Recommended Method                            |
+|---------------------------|------|------------|-----------------------------------------------|
+| **Any** (simplest)        | Any  | Auto       | [VS Code Extension](methods/extension.md) ⭐   |
+| Local (no container)      | Solo | Manual     | [Peer Directory Clone](methods/peer-clone.md) |
+| Local (no container)      | Team | Controlled | [Submodule](methods/submodule.md)             |
+| Local devcontainer        | Solo | Auto       | [Git-Ignored Folder](methods/git-ignored.md)  |
+| Local devcontainer        | Team | Controlled | [Submodule](methods/submodule.md)             |
+| Codespaces only           | Solo | Auto       | [GitHub Codespaces](methods/codespaces.md)    |
+| Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)             |
+| Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) |
+| Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
@@ -109,18 +109,18 @@ Answer these questions to find your recommended installation method:
 
 ### Simplest Method (Recommended for Most Users)
 
-| Method                                        | Best For                           | Complexity |
-|-----------------------------------------------|------------------------------------|------------|
-| [VS Code Extension](methods/extension.md) ⭐   | Anyone wanting zero-config setup   | Minimal    |
+| Method                                      | Best For                         | Complexity |
+|---------------------------------------------|----------------------------------|------------|
+| [VS Code Extension](methods/extension.md) ⭐ | Anyone wanting zero-config setup | Minimal    |
 
 ### Consumer Methods (Customization + Version Control)
 
 These methods are for projects that want to use and potentially customize HVE-Core's components:
 
-| Method                                            | Best For                      | Complexity |
-|---------------------------------------------------|-------------------------------|------------|
-| [Multi-Root Workspace](methods/multi-root.md)     | Any environment, portable     | Low        |
-| [Submodule](methods/submodule.md)                 | Teams needing version control | Medium     |
+| Method                                        | Best For                      | Complexity |
+|-----------------------------------------------|-------------------------------|------------|
+| [Multi-Root Workspace](methods/multi-root.md) | Any environment, portable     | Low        |
+| [Submodule](methods/submodule.md)             | Teams needing version control | Medium     |
 
 ### Developer Methods
 

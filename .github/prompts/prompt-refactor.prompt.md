@@ -67,4 +67,3 @@ After validation passes, summarize the refactoring session:
 ---
 
 Proceed with refactoring the target file following the Required Steps.
-

@@ -97,12 +97,12 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 
 The extension provides all HVE-Core components:
 
-| Component    | Examples                                      |
-|--------------|-----------------------------------------------|
-| Chat Agents  | task-planner, pr-review, adr-creation         |
-| Prompts      | git-commit, pull-request, ado-create-pr       |
-| Instructions | markdown, python-script, commit-message       |
-| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh       |
+| Component    | Examples                                |
+|--------------|-----------------------------------------|
+| Chat Agents  | task-planner, pr-review, adr-creation   |
+| Prompts      | git-commit, pull-request, ado-create-pr |
+| Instructions | markdown, python-script, commit-message |
+| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh |
 
 ## Updating
 
@@ -254,15 +254,15 @@ If you need customization:
 
 ## Limitations
 
-| Aspect           | Status                                                      |
-|------------------|-------------------------------------------------------------|
-| Customization    | ❌ Cannot modify components                                 |
-| Version control  | ⚠️ Extension updates only, no git control                   |
-| Team enforcement | ⚠️ Each member installs independently                       |
-| Dev/testing      | ⚠️ Pre-release channel only, not custom branches            |
-| Portable paths   | ✅ Works everywhere                                         |
-| Setup complexity | ✅ Simplest possible                                        |
-| Disk usage       | ✅ Single installation across all projects                  |
+| Aspect           | Status                                           |
+|------------------|--------------------------------------------------|
+| Customization    | ❌ Cannot modify components                       |
+| Version control  | ⚠️ Extension updates only, no git control        |
+| Team enforcement | ⚠️ Each member installs independently            |
+| Dev/testing      | ⚠️ Pre-release channel only, not custom branches |
+| Portable paths   | ✅ Works everywhere                               |
+| Setup complexity | ✅ Simplest possible                              |
+| Disk usage       | ✅ Single installation across all projects        |
 
 ## Next Steps
 

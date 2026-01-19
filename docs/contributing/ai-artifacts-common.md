@@ -98,12 +98,12 @@ The maturity field controls which extension channel includes the artifact:
 
 ### Valid Values
 
-| Value          | Description                                      | Stable Channel | Pre-release Channel |
-|----------------|--------------------------------------------------|----------------|---------------------|
-| `stable`       | Production-ready, fully tested                   | ✅ Included    | ✅ Included         |
-| `preview`      | Feature-complete, may have rough edges           | ❌ Excluded    | ✅ Included         |
-| `experimental` | Early development, may change significantly      | ❌ Excluded    | ✅ Included         |
-| `deprecated`   | Scheduled for removal                            | ❌ Excluded    | ❌ Excluded         |
+| Value          | Description                                 | Stable Channel | Pre-release Channel |
+|----------------|---------------------------------------------|----------------|---------------------|
+| `stable`       | Production-ready, fully tested              | ✅ Included     | ✅ Included          |
+| `preview`      | Feature-complete, may have rough edges      | ❌ Excluded     | ✅ Included          |
+| `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
+| `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
 
 ### Default for New Contributions
 

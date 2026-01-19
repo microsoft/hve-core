@@ -75,7 +75,7 @@ Analyze the selected blueprint infrastructure:
 * Check for Terraform (`./blueprints/{blueprint-name}/terraform/`) or Bicep (`./blueprints/{blueprint-name}/bicep/`) directories.
 * If both exist, prompt user to select which implementation to analyze.
 * Use `readFile` to examine the blueprint README.md for architecture overview.
-* Use `fileSearch` to find all infrastructure files (*.tf or *.bicep).
+* Use `fileSearch` to find all infrastructure files (`*.tf` or `*.bicep`).
 * Examine infrastructure code files for resource definitions.
 
 Document findings:

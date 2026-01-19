@@ -21,11 +21,11 @@ A **skill** is a self-contained package that provides guidance and utilities for
 
 ## Skill vs Agent vs Prompt
 
-| Artifact | Purpose | Includes Scripts | User Interaction |
-| -------- | ------- | ---------------- | ---------------- |
-| Skill | Task execution with utilities | Yes | Minimal after invocation |
-| Agent | Conversational guidance | No | Multi-turn conversation |
-| Prompt | Single-session workflow | No | One-shot execution |
+| Artifact | Purpose                       | Includes Scripts | User Interaction         |
+|----------|-------------------------------|------------------|--------------------------|
+| Skill    | Task execution with utilities | Yes              | Minimal after invocation |
+| Agent    | Conversational guidance       | No               | Multi-turn conversation  |
+| Prompt   | Single-session workflow       | No               | One-shot execution       |
 
 ## Use Cases for Skills
 
@@ -163,10 +163,10 @@ Documents all configurable options with defaults:
 ```markdown
 ## Parameters
 
-| Parameter | Default | Description |
-| --------- | ------- | ----------- |
-| --fps | 10 | Frame rate |
-| --width | 480 | Output width |
+| Parameter | Default | Description  |
+|-----------|---------|--------------|
+| --fps     | 10      | Frame rate   |
+| --width   | 480     | Output width |
 ```
 
 #### 6. Script Reference
