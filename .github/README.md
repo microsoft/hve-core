@@ -301,7 +301,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 3. Clear context or start new chat
 4. Select **task-planner** from agent picker and attach research doc
 5. Generate 3-file plan set
-6. Use implementation prompt to execute (separate step with **task-implementor**)
+6. Use `/task-implement` to execute the plan (automatically switches to **task-implementor**)
 
 ### Code Review
 

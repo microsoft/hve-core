@@ -134,8 +134,13 @@ Key findings:
 ### Phase 3: Implement
 
 1. Clear context: `/clear`
-1. Select Task Implementor mode
-1. Submit your implementation request:
+1. Use `/task-implement` to start implementation (automatically switches to Task Implementor mode):
+
+   ```text
+   /task-implement
+   ```
+
+   Or use the generated prompt for a specific plan:
 
    ```text
    /implement-blob-storage
@@ -223,10 +228,10 @@ RPI artifacts support handoffs:
 |-----------|------------------------------|------------------|--------------------------------|
 | Research  | `/task-research <topic>`     | Task Researcher  | research.md                    |
 | Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md, prompt.md |
-| Implement | Select Task Implementor mode | Task Implementor | code + changes.md              |
+| Implement | `/task-implement`            | Task Implementor | code + changes.md              |
 
 > [!TIP]
-> `/task-research` and `/task-plan` automatically switch to the appropriate chat mode.
+> `/task-research`, `/task-plan`, and `/task-implement` all automatically switch to the appropriate chat mode.
 
 Remember: **Always `/clear` between phases!**
 

@@ -333,6 +333,10 @@ When validation failures require changes beyond minor fixes:
 ### Implementation Prompt Template
 
 ````markdown
+---
+agent: 'task-implementor'
+---
+
 <!-- markdownlint-disable-file -->
 # Implementation Prompt: {{task_name}}
 

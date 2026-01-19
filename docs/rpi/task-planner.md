@@ -166,9 +166,9 @@ After Task Planner completes:
 
 1. **Review** all three planning files
 2. **Clear context** using `/clear` or starting a new chat
-3. **Proceed to implementation** with [Task Implementor](task-implementor.md)
+3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor.md)
 
-Use the generated implementation prompt (`.copilot-tracking/prompts/implement-*.prompt.md`) with Task Implementor.
+The `/task-implement` prompt automatically locates the plan and switches to Task Implementor mode. You can also use the generated implementation prompt (`.copilot-tracking/prompts/implement-*.prompt.md`) directly.
 
 ---
 

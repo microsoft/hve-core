@@ -61,7 +61,7 @@ Plus all the actual code files created or modified during implementation.
 
 ### Step 3: Reference Your Plan
 
-Provide the path to your plan file or use the generated implementation prompt.
+Use `/task-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor mode. Alternatively, provide the path to your plan file directly.
 
 ### Step 4: Set Stop Controls
 
@@ -81,6 +81,12 @@ At each stop point:
 4. Continue to next phase/task
 
 ## Example Prompt
+
+```text
+/task-implement
+```
+
+Or reference a specific generated prompt:
 
 ```text
 /implement-blob-storage
