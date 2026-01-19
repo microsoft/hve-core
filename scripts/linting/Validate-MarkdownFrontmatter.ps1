@@ -986,8 +986,23 @@ function Test-FrontmatterValidation {
                 if ($file -like "*.md") {
                     $fileItem = Get-Item $file
                     if ($null -ne $fileItem -and -not [string]::IsNullOrEmpty($fileItem.FullName)) {
-                        $markdownFiles += $fileItem
-                        Write-Verbose "Added specific file: $file"
+                        # Check against explicit exclude paths
+                        $excluded = $false
+                        if ($ExcludePaths.Count -gt 0) {
+                            $relativePath = $fileItem.FullName.Replace($repoRoot, '').TrimStart('\', '/').Replace('\', '/')
+                            foreach ($excludePattern in $ExcludePaths) {
+                                if ($relativePath -like $excludePattern) {
+                                    $excluded = $true
+                                    Write-Verbose "Excluding file matching pattern '$excludePattern': $relativePath"
+                                    break
+                                }
+                            }
+                        }
+                        
+                        if (-not $excluded) {
+                            $markdownFiles += $fileItem
+                            Write-Verbose "Added specific file: $file"
+                        }
                     }
                 }
                 else {
