@@ -11,6 +11,13 @@ maturity: stable
 * ${input:chat:true}: (Optional, defaults to true) Include conversation context for research analysis
 * ${input:topic}: (Required) Primary topic or focus area, from user prompt or inferred from conversation
 
+## Tool Availability
+
+This workflow dispatches subagents for all research activities using the runSubagent tool.
+
+* When runSubagent is available, proceed with subagent dispatch as described in each step.
+* When runSubagent is unavailable, inform the user that subagent dispatch is required for this workflow and stop.
+
 ## Required Steps
 
 ### Step 1: Define Research Scope
@@ -28,21 +35,54 @@ Check `.copilot-tracking/research/` for existing files matching `YYYYMMDD-*-rese
 * Extend an existing document when relevant to the topic.
 * Create a new document at `.copilot-tracking/research/YYYYMMDD-<topic>-research.md` otherwise.
 
-### Step 3: Execute Research
+### Step 3: Dispatch Research Subagents
 
-Use `runSubagent` to parallelize investigation:
+Use the runSubagent tool to dispatch subagents for all research activities. Subagents can run in parallel when investigating independent topics.
 
-* Dispatch subagents with specific questions, targets, and conversation context.
-* Have subagents write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
-* Synthesize findings into the main research document continuously.
+#### Subagent Instructions
 
-Update the research document as findings emerge:
+Provide each subagent with the following:
+
+* Read and follow `.github/instructions/` files relevant to the research topic.
+* Reference the task-researcher agent for research patterns and tool usage.
+* Assign a specific research question or investigation target.
+* Use semantic_search, grep_search, file reads, and external documentation tools.
+* Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+* Include source references, file paths with line numbers, and evidence.
+
+#### Subagent Response Format
+
+Each subagent returns a structured response:
+
+```markdown
+## Research Summary
+
+**Question:** {{research_question}}
+**Status:** Complete | Incomplete | Blocked
+**Output File:** {{file_path}}
+
+### Key Findings
+
+* {{finding_1}}
+* {{finding_2}}
+
+### Clarifying Questions (if any)
+
+* {{question_for_parent}}
+```
+
+Subagents may respond with clarifying questions when instructions are ambiguous.
+
+### Step 4: Synthesize Findings
+
+Consolidate subagent outputs into the main research document:
 
 * Add objectives to **Task Implementation Requests**.
 * Record leads in **Potential Next Research**.
 * Remove or revise content when new findings contradict earlier assumptions.
+* Dispatch additional subagents when gaps are identified.
 
-### Step 4: Return Findings
+### Step 5: Return Findings
 
 Summarize research outcomes:
 
