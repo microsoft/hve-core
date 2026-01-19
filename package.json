@@ -4,6 +4,7 @@
   "description": "HVE Core",
   "private": true,
   "scripts": {
+    "test:ps": "pwsh -NoProfile -Command \"Invoke-Pester -Configuration (& ./scripts/tests/pester.config.ps1)\"",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
@@ -11,7 +12,7 @@
     "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
     "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
-    "lint:frontmatter": "pwsh -NoProfile -File scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation",
+    "lint:frontmatter": "pwsh -NoProfile -Command \"& scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation -ExcludePaths 'scripts/tests/Fixtures/**'\"",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",

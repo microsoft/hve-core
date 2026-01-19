@@ -60,6 +60,9 @@ jobs:
             $params['WarningsAsErrors'] = $true
           }
           
+          # Exclude test fixture files (intentionally invalid frontmatter for testing)
+          $params['ExcludePaths'] = @('scripts/tests/Fixtures/**')
+          
           & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
         continue-on-error: true
 
