@@ -158,7 +158,7 @@ if ($packageVersion -ne $originalVersion) {
 if ($ChangelogPath -and $ChangelogPath -ne "") {
     Write-Host ""
     Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
-    
+
     if (Test-Path $ChangelogPath) {
         $changelogDest = Join-Path $ExtensionDir "CHANGELOG.md"
         Copy-Item -Path $ChangelogPath -Destination $changelogDest -Force
@@ -173,7 +173,7 @@ Write-Host ""
 Write-Host "🗂️  Preparing extension directory..." -ForegroundColor Yellow
 
 # Clean any existing copied directories
-$dirsToClean = @(".github", "scripts")
+$dirsToClean = @(".github", "docs", "scripts")
 foreach ($dir in $dirsToClean) {
     $dirPath = Join-Path $ExtensionDir $dir
     if (Test-Path $dirPath) {
@@ -189,6 +189,10 @@ Copy-Item -Path "$RepoRoot/.github" -Destination "$ExtensionDir/.github" -Recurs
 Write-Host "   Copying scripts/dev-tools..." -ForegroundColor Gray
 New-Item -Path "$ExtensionDir/scripts" -ItemType Directory -Force | Out-Null
 Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDir/scripts/dev-tools" -Recurse
+
+Write-Host "   Copying docs/templates..." -ForegroundColor Gray
+New-Item -Path "$ExtensionDir/docs" -ItemType Directory -Force | Out-Null
+Copy-Item -Path "$RepoRoot/docs/templates" -Destination "$ExtensionDir/docs/templates" -Recurse
 
 Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 
@@ -227,15 +231,15 @@ try {
         Write-Host "   Using vsce..." -ForegroundColor Gray
         & vsce @vsceArgs
     }
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to package extension"
         exit 1
     }
-    
+
     # Find the generated vsix file
     $vsixFile = Get-ChildItem -Path $ExtensionDir -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    
+
     if ($vsixFile) {
         Write-Host ""
         Write-Host "✅ Extension packaged successfully!" -ForegroundColor Green
@@ -246,14 +250,14 @@ try {
         Write-Error "No .vsix file found after packaging"
         exit 1
     }
-    
+
 } finally {
     Pop-Location
-    
+
     # Cleanup copied directories
     Write-Host ""
     Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
-    
+
     foreach ($dir in $dirsToClean) {
         $dirPath = Join-Path $ExtensionDir $dir
         if (Test-Path $dirPath) {
@@ -261,7 +265,7 @@ try {
             Write-Host "   Removed $dir" -ForegroundColor Gray
         }
     }
-    
+
     # Restore original version if it was changed
     if ($packageVersion -ne $originalVersion) {
         Write-Host ""

@@ -6,6 +6,7 @@
 !.github/prompts/**
 !.github/instructions/**
 !.github/agents/**
+!docs/templates/**
 !scripts/dev-tools/**
 !package.json
 !README.md

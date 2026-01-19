@@ -13,6 +13,7 @@ This folder contains the VS Code extension configuration for HVE Core.
 ```plaintext
 extension/
 ├── .github/              # Temporarily copied during packaging (removed after)
+├── docs/templates/       # Temporarily copied during packaging (removed after)
 ├── scripts/dev-tools/    # Temporarily copied during packaging (removed after)
 ├── package.json          # Extension manifest with VS Code configuration
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
@@ -147,6 +148,9 @@ The `extension/.vscodeignore` file controls what gets packaged. Currently includ
 - `.github/agents/**` - All chat agent definitions
 - `.github/prompts/**` - All prompt templates
 - `.github/instructions/**` - All instruction files
+- `.github/chatmodes/**` - All chat mode definitions
+- `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
+- `scripts/dev-tools/**` - Developer utilities (PR reference generation)
 - `package.json` - Extension manifest
 - `README.md` - Extension description
 - `LICENSE` - License file
@@ -240,8 +244,8 @@ See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity
 
 ## Notes
 
-- The `.github` and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
+- The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
 - `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-- Only essential extension files are included (agents, prompts, instructions, dev-tools)
+- Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
 - Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 - The root `package.json` contains development scripts for the repository

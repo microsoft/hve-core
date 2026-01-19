@@ -44,12 +44,12 @@
       {
         "name": "gen-jupyter-notebook",
         "path": "./.github/agents/gen-jupyter-notebook.agent.md",
-        "description": "Create a structured exploratory data analysis Jupyter notebook leveraging available data sources & generated data dictionaries WITHOUT directly embedding raw data dumps."
+        "description": "Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries"
       },
       {
         "name": "gen-streamlit-dashboard",
         "path": "./.github/agents/gen-streamlit-dashboard.agent.md",
-        "description": "Develop a multi-page streamlit dashboard"
+        "description": "Develop a multi-page Streamlit dashboard"
       },
       {
         "name": "github-issue-manager",
@@ -69,27 +69,27 @@
       {
         "name": "prompt-builder",
         "path": "./.github/agents/prompt-builder.agent.md",
-        "description": "Expert prompt engineering and validation system for creating high-quality prompts - Brought to you by microsoft/hve-core"
+        "description": "Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core"
       },
       {
         "name": "rpi-agent",
         "path": "./.github/agents/rpi-agent.agent.md",
-        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks - Brought to you by microsoft/hve-core"
+        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core"
       },
       {
         "name": "security-plan-creator",
         "path": "./.github/agents/security-plan-creator.agent.md",
-        "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/edge-ai"
+        "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core"
       },
       {
         "name": "task-implementor",
         "path": "./.github/agents/task-implementor.agent.md",
-        "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
+        "description": "Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records"
       },
       {
         "name": "task-planner",
         "path": "./.github/agents/task-planner.agent.md",
-        "description": "Task planner for creating actionable implementation plans - Brought to you by microsoft/hve-core"
+        "description": "Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core"
       },
       {
         "name": "task-researcher",
@@ -99,7 +99,7 @@
       {
         "name": "test-streamlit-dashboard",
         "path": "./.github/agents/test-streamlit-dashboard.agent.md",
-        "description": "Comprehensive testing of the Streamlit dashboard using Playwright automation and issue tracking"
+        "description": "Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting"
       }
     ],
     "chatPromptFiles": [
@@ -122,6 +122,11 @@
         "name": "ado-process-my-work-items-for-task-planning",
         "path": "./.github/prompts/ado-process-my-work-items-for-task-planning.prompt.md",
         "description": "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
+      },
+      {
+        "name": "ado-update-wit-items",
+        "path": "./.github/prompts/ado-update-wit-items.prompt.md",
+        "description": "Prompt to update work items based on planning files"
       },
       {
         "name": "git-commit-message",
@@ -149,19 +154,44 @@
         "description": "Add a GitHub issue to the backlog using discovered issue templates from .github/ISSUE_TEMPLATE/"
       },
       {
+        "name": "prompt-analyze",
+        "path": "./.github/prompts/prompt-analyze.prompt.md",
+        "description": "Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "prompt-build",
+        "path": "./.github/prompts/prompt-build.prompt.md",
+        "description": "Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "prompt-refactor",
+        "path": "./.github/prompts/prompt-refactor.prompt.md",
+        "description": "Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "pull-request",
         "path": "./.github/prompts/pull-request.prompt.md",
         "description": "Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai"
       },
       {
+        "name": "risk-register",
+        "path": "./.github/prompts/risk-register.prompt.md",
+        "description": "Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix."
+      },
+      {
+        "name": "task-implement",
+        "path": "./.github/prompts/task-implement.prompt.md",
+        "description": "Locates and executes implementation plans using task-implementor mode - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "task-plan",
         "path": "./.github/prompts/task-plan.prompt.md",
-        "description": "Initiates planning for task implementation based on validated research documents - Brought to you by microsoft/hve-core"
+        "description": "Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core"
       },
       {
         "name": "task-research",
         "path": "./.github/prompts/task-research.prompt.md",
-        "description": "Initiates research for task implementation based on user requirements and conversation context - Brought to you by microsoft/hve-core"
+        "description": "Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core"
       }
     ],
     "chatInstructions": [
@@ -178,17 +208,17 @@
       {
         "name": "ado-update-wit-items-instructions",
         "path": "./.github/instructions/ado-update-wit-items.instructions.md",
-        "description": "Required instructions for work item updating and creation leveraging mcp ado tool calls."
+        "description": "Work item creation and update protocol using MCP ADO tools with handoff tracking"
       },
       {
         "name": "ado-wit-discovery-instructions",
         "path": "./.github/instructions/ado-wit-discovery.instructions.md",
-        "description": "Required protocol for discovering, planning, and handing off Azure DevOps User Stories and Bugs."
+        "description": "Protocol for discovering Azure DevOps work items via user assignment or artifact analysis with planning file output"
       },
       {
         "name": "ado-wit-planning-instructions",
         "path": "./.github/instructions/ado-wit-planning.instructions.md",
-        "description": "Required instructions for work item planning and creation or updating leveraging mcp ado tool calls."
+        "description": "Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols"
       },
       {
         "name": "bash-instructions",
@@ -198,7 +228,7 @@
       {
         "name": "bicep-instructions",
         "path": "./.github/instructions/bicep/bicep.instructions.md",
-        "description": "Instructions for Bicep infrastructure as code implementation - Brought to you by microsoft/edge-ai"
+        "description": "Instructions for Bicep infrastructure as code implementation - Brought to you by microsoft/hve-core"
       },
       {
         "name": "commit-message-instructions",
@@ -208,12 +238,12 @@
       {
         "name": "csharp-tests-instructions",
         "path": "./.github/instructions/csharp/csharp-tests.instructions.md",
-        "description": "Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating"
+        "description": "Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core"
       },
       {
         "name": "csharp-instructions",
         "path": "./.github/instructions/csharp/csharp.instructions.md",
-        "description": "Instructions for C# (CSharp) implementation - Brought to you by microsoft/edge-ai"
+        "description": "Required instructions for C# (CSharp) research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core"
       },
       {
         "name": "git-merge-instructions",
@@ -226,15 +256,24 @@
         "description": "Required instructions for creating or editing any Markdown (.md) files"
       },
       {
+        "name": "prompt-builder-instructions",
+        "path": "./.github/instructions/prompt-builder.instructions.md",
+        "description": "Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "python-script-instructions",
         "path": "./.github/instructions/python-script.instructions.md",
-        "description": "Instructions for python scripting implementation - Brought to you by microsoft/edge-ai"
+        "description": "Instructions for Python scripting implementation - Brought to you by microsoft/hve-core"
       },
-
       {
         "name": "task-implementation-instructions",
         "path": "./.github/instructions/task-implementation.instructions.md",
         "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
+      },
+      {
+        "name": "terraform-instructions",
+        "path": "./.github/instructions/terraform/terraform.instructions.md",
+        "description": "Instructions for Terraform infrastructure as code implementation - Brought to you by microsoft/hve-core"
       },
       {
         "name": "uv-projects-instructions",
