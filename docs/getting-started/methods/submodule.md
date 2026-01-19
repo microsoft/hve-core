@@ -39,7 +39,7 @@ your-project/
 ├── lib/
 │   └── hve-core/        ← Submodule (points to specific commit)
 │       └── .github/
-│           ├── chatmodes/
+│           ├── agents/
 │           ├── prompts/
 │           └── instructions/
 └── .vscode/
@@ -81,8 +81,8 @@ Create or update `.vscode/settings.json`:
 ```jsonc
 {
   "chat.modeFilesLocations": {
-    "lib/hve-core/.github/chatmodes": true,
-    ".github/chatmodes": true
+    "lib/hve-core/.github/agents": true,
+    ".github/agents": true
   },
   "chat.promptFilesLocations": {
     "lib/hve-core/.github/prompts": true,
@@ -212,7 +212,7 @@ git submodule update --init --recursive
 
 * **Check settings paths:** Verify `.vscode/settings.json` paths match submodule location
 * **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
-* **Verify submodule content:** `ls lib/hve-core/.github/chatmodes/`
+* **Verify submodule content:** `ls lib/hve-core/.github/agents/`
 
 ### "Detached HEAD" warning in submodule
 

@@ -9,7 +9,7 @@ This prompt evaluates prompt engineering artifacts against the Prompt Quality Cr
 
 ## Inputs
 
-* ${input:file}: (Required) Target prompt file to analyze. Accepts `.prompt.md`, `.chatmode.md`, `.agent.md`, or `.instructions.md` files.
+* ${input:file}: (Required) Target prompt file to analyze. Accepts `.prompt.md`, `.agent.md`, or `.instructions.md` files.
 
 ## Required Steps
 

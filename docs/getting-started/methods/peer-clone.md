@@ -42,7 +42,7 @@ projects/
 │
 └── hve-core/                # Sibling directory
     └── .github/
-        ├── chatmodes/
+        ├── agents/
         ├── prompts/
         └── instructions/
 ```
@@ -84,7 +84,7 @@ Create or update `.vscode/settings.json` in your project:
 
 ```json
 {
-  "chat.modeFilesLocations": { "../hve-core/.github/chatmodes": true },
+  "chat.modeFilesLocations": { "../hve-core/.github/agents": true },
   "chat.promptFilesLocations": { "../hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { "../hve-core/.github/instructions": true }
 }
@@ -95,10 +95,10 @@ Create or update `.vscode/settings.json` in your project:
 Verify HVE-Core directories are accessible:
 
 ```bash
-ls ../hve-core/.github/chatmodes
+ls ../hve-core/.github/agents
 ```
 
-You should see `.chatmode.md` files. Then validate in VS Code:
+You should see `.agent.md` files. Then validate in VS Code:
 
 1. Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
@@ -124,7 +124,7 @@ No VS Code restart required. Changes take effect immediately.
 
 ```bash
 # From your project directory
-ls ../hve-core/.github/chatmodes
+ls ../hve-core/.github/agents
 ```
 
 If the path doesn't resolve, verify:

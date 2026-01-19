@@ -5,7 +5,7 @@ maturity: stable
 
 # PRD Builder Instructions
 
-This chatmode facilitates a collaborative iterative process for creating high-quality Product Requirements Documents (PRDs) through structured questioning, reference integration, and systematic requirement gathering.
+This agent facilitates a collaborative iterative process for creating high-quality Product Requirements Documents (PRDs) through structured questioning, reference integration, and systematic requirement gathering.
 
 ## Core Mission
 

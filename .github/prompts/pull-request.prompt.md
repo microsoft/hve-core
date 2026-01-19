@@ -134,12 +134,12 @@ Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and e
 | Dependency update          | `package.*\.json`        | `^deps/`                    | `^deps(\(.+\))?:`         |
 | Copilot instructions       | `.*\.instructions\.md$` | N/A                         | N/A                         |
 | Copilot prompt             | `.*\.prompt\.md$`       | N/A                         | N/A                         |
-| Copilot chatmode           | `.*\.chatmode\.md$`     | N/A                         | N/A                         |
+| Copilot agent              | `.*\.agent\.md$`       | N/A                         | N/A                         |
 | Script or automation       | `.*\.(ps1\|sh\|py)$`    | N/A                         | N/A                         |
 
 Priority rules:
 
-* AI artifact patterns (`.instructions.md`, `.prompt.md`, `.chatmode.md`) take precedence over documentation updates.
+* AI artifact patterns (`.instructions.md`, `.prompt.md`, `.agent.md`) take precedence over documentation updates.
 * Any breaking change in commits marks the PR as breaking.
 * Multiple change types can be selected.
 
@@ -162,7 +162,7 @@ Deduplicate issue numbers and preserve the action prefix from the first occurren
 
 After detecting GHCP files from Change Type Detection, analyze frontmatter for maturity levels:
 
-1. For each file matching `.instructions.md`, `.prompt.md`, `.chatmode.md`, or `.agent.md` patterns:
+1. For each file matching `.instructions.md`, `.prompt.md`, or `.agent.md` patterns:
    * Extract file content from `<full_diff>` section (look for `+++ b/...` paths)
    * Parse YAML frontmatter between `---` delimiters in the added content
    * Read `maturity` field value (default: `stable` if not present)
@@ -197,7 +197,7 @@ For deprecated files:
 ```markdown
 > [!CAUTION]
 > This PR includes **deprecated** GHCP artifacts scheduled for removal.
-> - `path/to/legacy.chatmode.md`
+> - `path/to/legacy.agent.md`
 ```
 
 ##### Maturity Summary Table
@@ -210,7 +210,7 @@ Always include when any GHCP files are detected:
 | File | Type | Maturity | Notes |
 |------|------|----------|-------|
 | `new-feature.prompt.md` | Prompt | ⚠️ experimental | Pre-release only |
-| `helper.chatmode.md` | Chatmode | 🔶 preview | Pre-release only |
+| `helper.agent.md` | Agent | 🔶 preview | Pre-release only |
 | `coding.instructions.md` | Instructions | ✅ stable | All builds |
 ```
 

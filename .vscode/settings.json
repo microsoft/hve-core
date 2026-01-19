@@ -10,7 +10,7 @@
     ".github/prompts/**/*.prompt.md": true
   },
   "chat.modeFilesLocations": {
-    ".github/chatmodes": true
+    ".github/agents": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {

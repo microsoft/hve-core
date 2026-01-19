@@ -206,8 +206,8 @@ Rename-Item docs/rpi/README.md.bak README.md
 
 ## Next Steps
 
-* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md) and/or [rpi-agent](../../.github/chatmodes/README.md#rpi-agent)
-* **Simple tasks** - Use [rpi-agent](../../.github/chatmodes/README.md#rpi-agent) or prompts directly
+* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md) and/or [rpi-agent](../../.github/README.md#rpi-agent)
+* **Simple tasks** - Use [rpi-agent](../../.github/README.md#rpi-agent) or prompts directly
 * **Contribute** - Read [Contributing Guide](../contributing/README.md)
 
 ## Resources
@@ -218,7 +218,7 @@ Rename-Item docs/rpi/README.md.bak README.md
 | [Task Researcher](../rpi/task-researcher.md)             | Deep dive on research phase          |
 | [Task Planner](../rpi/task-planner.md)                   | Deep dive on planning phase          |
 | [Task Implementor](../rpi/task-implementor.md)           | Deep dive on implementation phase    |
-| [RPI Agent](../../.github/chatmodes/README.md#rpi-agent) | Autonomous single-workflow execution |
+| [RPI Agent](../../.github/README.md#rpi-agent)           | Autonomous single-workflow execution |
 
 ---
 

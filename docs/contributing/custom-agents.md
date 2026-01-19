@@ -1,22 +1,22 @@
 ---
-title: 'Contributing Chatmodes to HVE Core'
-description: 'Requirements and standards for contributing GitHub Copilot chatmode files to hve-core'
+title: 'Contributing Agents to HVE Core'
+description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
 ---
 
-This guide defines the requirements, standards, and best practices for contributing GitHub Copilot chatmode files (`.chatmode.md`) to the hve-core library.
+This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.
 
 **⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
-## What is a Chatmode?
+## What is an Agent?
 
-A **chatmode** is a specialized AI agent configuration that defines behavior, available tools, and instructions for GitHub Copilot to follow when performing specific tasks. Chatmodes enable consistent, repeatable workflows for complex development activities.
+An **agent** is a specialized AI configuration that defines behavior, available tools, and instructions for GitHub Copilot to follow when performing specific tasks. Agents enable consistent, repeatable workflows for complex development activities.
 
-## Use Cases for Chatmodes
+## Use Cases for Agents
 
-Create a chatmode when you need to:
+Create an agent when you need to:
 
 * Define a specialized AI agent role (e.g., security reviewer, PR analyzer, documentation generator)
 * Orchestrate multi-step workflows requiring specific tool sequences
@@ -24,63 +24,63 @@ Create a chatmode when you need to:
 * Provide domain-specific expertise (e.g., ADR creation, work item processing)
 * Automate complex decision-making with predefined logic flows
 
-## Chatmodes Not Accepted
+## Agents Not Accepted
 
-The following chatmode types will likely be **rejected or closed automatically** because **equivalent chatmodes already exist in hve-core**:
+The following agent types will likely be **rejected or closed automatically** because **equivalent agents already exist in hve-core**:
 
-### Duplicate Chatmode Categories
+### Duplicate Agent Categories
 
-* **Research or Discovery Agents**: Chatmodes that search for, gather, or discover information
-  * ❌ Reason: Existing chatmodes already handle research and discovery workflows
-  * ✅ Alternative: Use existing research-focused chatmodes in `.github/chatmodes/`
+* **Research or Discovery Agents**: Agents that search for, gather, or discover information
+  * ❌ Reason: Existing agents already handle research and discovery workflows
+  * ✅ Alternative: Use existing research-focused agents in `.github/agents/`
 
-* **Indexing or Referencing Agents**: Chatmodes that catalog, index, or create references to existing projects
-  * ❌ Reason: Existing chatmodes already provide indexing and referencing capabilities
-  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core chatmodes
-  * ✅ Alternative: Use existing reference management chatmodes that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+* **Indexing or Referencing Agents**: Agents that catalog, index, or create references to existing projects
+  * ❌ Reason: Existing agents already provide indexing and referencing capabilities
+  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
+  * ✅ Alternative: Use existing reference management agents that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
 
-* **Planning Agents**: Chatmodes that plan work, break down tasks, or organize backlog items
-  * ❌ Reason: Existing chatmodes already handle work planning and task organization
-  * ✅ Alternative: Use existing planning-focused chatmodes in `.github/chatmodes/`
+* **Planning Agents**: Agents that plan work, break down tasks, or organize backlog items
+  * ❌ Reason: Existing agents already handle work planning and task organization
+  * ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
 
 * **Implementation Agents**: General-purpose coding agents that implement features
-  * ❌ Reason: Existing chatmodes already provide implementation guidance
-  * ✅ Alternative: Use existing implementation-focused chatmodes
+  * ❌ Reason: Existing agents already provide implementation guidance
+  * ✅ Alternative: Use existing implementation-focused agents
 
 ### Rationale for Rejection
 
-These chatmode types are rejected because:
+These agent types are rejected because:
 
-1. **Existing chatmodes are hardened and heavily utilized**: The hve-core library already contains production-tested chatmodes in these categories
-2. **Consistency and maintenance**: Coalescing around existing chatmodes reduces fragmentation and maintenance burden
-3. **Avoid duplication**: Multiple chatmodes serving the same purpose create confusion and divergent behavior
-4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing chatmodes
+1. **Existing agents are hardened and heavily utilized**: The hve-core library already contains production-tested agents in these categories
+2. **Consistency and maintenance**: Coalescing around existing agents reduces fragmentation and maintenance burden
+3. **Avoid duplication**: Multiple agents serving the same purpose create confusion and divergent behavior
+4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing agents
 
 ### Before Submitting
 
-When planning to submit a chatmode that falls into these categories:
+When planning to submit an agent that falls into these categories:
 
-1. **Question necessity**: Does your use case truly require a new chatmode, or can existing chatmodes meet your needs?
-2. **Review existing chatmodes**: Examine `.github/chatmodes/` to identify chatmodes that already serve your purpose
-3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing chatmodes
-4. **Consider enhancement over creation**: If existing chatmodes don't fully meet your requirements, evaluate whether your changes are:
+1. **Question necessity**: Does your use case truly require a new agent, or can existing agents meet your needs?
+2. **Review existing agents**: Examine `.github/agents/` to identify agents that already serve your purpose
+3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. **Consider enhancement over creation**: If existing agents don't fully meet your requirements, evaluate whether your changes are:
    * **Generic enough** to benefit all users
-   * **Valuable enough** to justify modifying the existing chatmode
-5. **Propose enhancements**: Submit a PR to enhance an existing chatmode rather than creating a duplicate
+   * **Valuable enough** to justify modifying the existing agent
+5. **Propose enhancements**: Submit a PR to enhance an existing agent rather than creating a duplicate
 
-### What Makes a Good New Chatmode
+### What Makes a Good New Agent
 
-Focus on chatmodes that:
+Focus on agents that:
 
-* **Fill gaps**: Address use cases not covered by existing chatmodes
+* **Fill gaps**: Address use cases not covered by existing agents
 * **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
-* **Are non-overlapping**: Have clearly distinct purposes from existing chatmodes
-* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing chatmodes
+* **Are non-overlapping**: Have clearly distinct purposes from existing agents
+* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing agents
 * **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
 
 ### Model Version Requirements
 
-All chatmodes **MUST** target the **latest available models** from **Anthropic and OpenAI only**.
+All agents **MUST** target the **latest available models** from **Anthropic and OpenAI only**.
 
 **Accepted**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) and latest GPT models (e.g., GPT-5.1, o1)
 
@@ -92,24 +92,24 @@ All chatmodes **MUST** target the **latest available models** from **Anthropic a
 
 ### Location
 
-All chatmode files **MUST** be placed in:
+All agent files **MUST** be placed in:
 
 ```text
-.github/chatmodes/
-└── your-chatmode-name.chatmode.md
+.github/agents/
+└── your-agent-name.agent.md
 ```
 
 ### Naming Convention
 
-* Use lowercase kebab-case: `security-reviewer.chatmode.md`
-* Be descriptive and action-oriented: `task-planner.chatmode.md`, `pr-review.chatmode.md`, `rpi-agent.chatmode.md`
-* Avoid generic names: `helper.chatmode.md` ❌ → `ado-work-item-processor.chatmode.md` ✅
+* Use lowercase kebab-case: `security-reviewer.agent.md`
+* Be descriptive and action-oriented: `task-planner.agent.md`, `pr-review.agent.md`, `rpi-agent.agent.md`
+* Avoid generic names: `helper.agent.md` ❌ → `ado-work-item-processor.agent.md` ✅
 
 ### File Format
 
-Chatmode files **MUST**:
+Agent files **MUST**:
 
-1. Use the `.chatmode.md` extension
+1. Use the `.agent.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
 3. Begin content directly after frontmatter
 4. End with single newline character
@@ -120,20 +120,20 @@ Chatmode files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of chatmode functionality
+* **Purpose**: Concise explanation of agent functionality
 * **Format**: Single sentence, 10-200 characters
 * **Style**: Sentence case with proper punctuation
 * **Example**: `'Validates contributed content for quality and compliance with hve-core standards'`
 
 **`maturity`** (string enum, MANDATORY)
 
-* **Purpose**: Controls which extension channel includes this chatmode
+* **Purpose**: Controls which extension channel includes this agent
 * **Valid values**:
   * `stable` - Production-ready, included in Stable and Pre-release channels
   * `preview` - Feature-complete, included in Pre-release channel only
   * `experimental` - Early development, included in Pre-release channel only
   * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New chatmodes should use `stable` unless targeting early adopters
+* **Default**: New agents should use `stable` unless targeting early adopters
 * **Example**: `stable`
 
 ### Optional Fields
@@ -171,19 +171,19 @@ Chatmode files **MUST**:
 
 **`version`** (string)
 
-* **Purpose**: Tracks chatmode revisions
+* **Purpose**: Tracks agent revisions
 * **Format**: Semantic versioning (e.g., `1.0.0`)
 
 **`author`** (string)
 
-* **Purpose**: Attribution for chatmode creator
+* **Purpose**: Attribution for agent creator
 * **Example**: `microsoft/hve-core`, `your-team-name`
 
 ### Frontmatter Example
 
 ```yaml
 ---
-description: 'Validates and reviews contributed chatmodes, prompts, and instructions for quality and compliance'
+description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
 tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
 mode: 'agent'
 version: '1.0.0'
@@ -191,13 +191,13 @@ author: 'microsoft/hve-core'
 ---
 ```
 
-## Chatmode Content Structure Standards
+## Agent Content Structure Standards
 
 ### Required Sections
 
 #### 1. Title (H1)
 
-* Clear, action-oriented heading matching chatmode purpose
+* Clear, action-oriented heading matching agent purpose
 * Should align with filename and description
 
 ```markdown
@@ -211,7 +211,7 @@ author: 'microsoft/hve-core'
 * Sets expectations for users
 
 ```markdown
-You are an expert reviewer for GitHub Copilot chatmodes, prompts, and instruction files.
+You are an expert reviewer for GitHub Copilot agents, prompts, and instruction files.
 Your mission is to ensure all contributed guidance files meet hve-core quality standards
 before they're merged into the library.
 ```
@@ -258,7 +258,7 @@ Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Stan
 
 ## Tool Usage Discipline
 
-When chatmodes use tools, they **MUST** follow these patterns:
+When agents use tools, they **MUST** follow these patterns:
 
 ### Tool Usage Preambles
 
@@ -286,11 +286,11 @@ found [N] related files for comparison."
 
 ## Output Formatting Requirements
 
-Define how the chatmode communicates with users:
+Define how the agent communicates with users:
 
 ### Response Format
 
-* Start all responses with: `## **[Chatmode Name]**: [Action Description]`
+* Start all responses with: `## **[Agent Name]**: [Action Description]`
 * Use short, action-oriented section headers
 * Employ proper markdown formatting
 * Include emojis for visual clarity (when appropriate)
@@ -306,7 +306,7 @@ Specify formats for:
 
 ### Requirements Checklist
 
-For chatmodes performing edits or validations:
+For agents performing edits or validations:
 
 ```markdown
 ### Requirements Checklist
@@ -330,11 +330,11 @@ Report validation status:
 
 ## Research and External Sources
 
-When chatmodes integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
+When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
 
 ## Validation Checklist
 
-Before submitting your chatmode, verify:
+Before submitting your agent, verify:
 
 ### Frontmatter
 
@@ -365,18 +365,18 @@ Before submitting your chatmode, verify:
 * [ ] All file references point to existing files
 * [ ] External links are valid and accessible
 * [ ] Tool names in frontmatter are correct
-* [ ] No conflicts with existing chatmodes
+* [ ] No conflicts with existing agents
 
 ### Integration
 
 * [ ] Aligns with `.github/copilot-instructions.md`
 * [ ] Follows repository conventions
 * [ ] Compatible with existing workflows
-* [ ] Does not duplicate existing chatmode functionality
+* [ ] Does not duplicate existing agent functionality
 
-## Testing Your Chatmode
+## Testing Your Agent
 
-See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For chatmodes specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For agents specifically:
 
 1. Test with realistic scenarios matching the agent's purpose
 2. Verify tool usage patterns execute correctly
@@ -385,7 +385,7 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ## Common Issues and Fixes
 
-### Chatmode-Specific Issues
+### Agent-Specific Issues
 
 ### Invalid Tool Names
 
@@ -414,7 +414,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For chatmode-specific assistance, review existing examples in `.github/chatmodes/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/`.
 
 ---
 

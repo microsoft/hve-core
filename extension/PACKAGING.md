@@ -52,7 +52,7 @@ The extension is automatically packaged and published through GitHub Actions:
 
 #### Step 1: Prepare the Extension
 
-First, update `package.json` with discovered agents, chatmodes, prompts, and instructions:
+First, update `package.json` with discovered agents, prompts, and instructions:
 
 ```bash
 # Discover components and update package.json
@@ -65,7 +65,6 @@ npm run extension:prepare
 The preparation script automatically:
 
 - Discovers and registers all chat agents from `.github/agents/`
-- Discovers and registers all chatmodes from `.github/chatmodes/`
 - Discovers and registers all prompts from `.github/prompts/`
 - Discovers and registers all instruction files from `.github/instructions/`
 - Updates `package.json` with discovered components
@@ -146,7 +145,6 @@ vsce publish --packagePath "$VSIX_FILE"
 The `extension/.vscodeignore` file controls what gets packaged. Currently included:
 
 - `.github/agents/**` - All chat agent definitions
-- `.github/chatmodes/**` - All chatmode definitions
 - `.github/prompts/**` - All prompt templates
 - `.github/instructions/**` - All instruction files
 - `package.json` - Extension manifest
@@ -167,7 +165,7 @@ code --install-extension hve-core-*.vsix
 ### Update Version in `package.json`
 
 1. Manually update version in `extension/package.json`
-2. Run `scripts/extension/Prepare-Extension.ps1` to update agents/chatmodes/prompts/instructions
+2. Run `scripts/extension/Prepare-Extension.ps1` to update agents/prompts/instructions
 3. Run `scripts/extension/Package-Extension.ps1` to create the `.vsix` file
 
 ### Development Builds
@@ -231,7 +229,7 @@ The workflow validates the version is ODD before proceeding.
 
 ### Agent Maturity Filtering
 
-When packaging, agents and chatmodes are filtered by their `maturity` frontmatter field:
+When packaging, agents are filtered by their `maturity` frontmatter field:
 
 | Channel     | Included Maturity Levels               |
 |-------------|----------------------------------------|
@@ -244,6 +242,6 @@ See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity
 
 - The `.github` and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
 - `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-- Only essential extension files are included (chatmodes, prompts, instructions, dev-tools)
+- Only essential extension files are included (agents, prompts, instructions, dev-tools)
 - Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 - The root `package.json` contains development scripts for the repository

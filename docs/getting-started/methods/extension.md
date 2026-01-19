@@ -39,7 +39,7 @@ The extension packages all HVE-Core components (chat agents, prompts, instructio
 ```text
 VS Code Extension System
 ├── Extension installed via marketplace
-│   ├── .github/chatmodes/      # All chat agents
+│   ├── .github/agents/         # All chat agents
 │   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
 │   └── scripts/dev-tools/      # PR reference generation
@@ -84,14 +84,14 @@ After installation, verify everything works:
 
 ## Post-Installation: Update Your .gitignore
 
-HVE-Core chatmodes create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. Add this line to your project's `.gitignore`:
+HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. Add this line to your project's `.gitignore`:
 
 ```text
 .copilot-tracking/
 ```
 
 > [!NOTE]
-> This applies even when using the extension. The folder is created in your project directory when you use chatmodes like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+> This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
 
 ## What's Included
 

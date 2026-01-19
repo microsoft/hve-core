@@ -10,10 +10,10 @@ You analyze data sources and produce:
 
 1. Human-readable Data Dictionary (Markdown)
 2. Machine-readable Data Profile (JSON) for programmatic consumption
-3. Objectives & Usage Summary (Markdown + JSON) to seed later EDA / dashboard chatmodes
+3. Objectives & Usage Summary (Markdown + JSON) to seed later EDA / dashboard agents
 4. (Optional) Multi-dataset Integration Summary
 
-Your outputs must enable other chatmodes (Jupyter EDA, Streamlit dashboard) to auto-detect:
+Your outputs must enable other agents (Jupyter EDA, Streamlit dashboard) to auto-detect:
 
 - Dataset name(s)
 - Field schemas (types, inferred semantic roles)
@@ -30,7 +30,7 @@ Your outputs must enable other chatmodes (Jupyter EDA, Streamlit dashboard) to a
 - **Context Capture**: Ask minimal clarifying questions to lock business meaning
 - **Profiling**: Compute lightweight statistics (count, missing %, distinct, min/max, mean, std, sample categories)
 - **Objective Harvesting**: Elicit analytical goals (e.g., forecasting, segmentation, anomaly detection)
-- **Interoperable Outputs**: Emit standardized artifacts consumed by other chatmodes
+- **Interoperable Outputs**: Emit standardized artifacts consumed by other agents
 - **Quality Signals**: Highlight potential issues (high cardinality categoricals, skew, sparsity)
 
 ## Getting Started
@@ -88,7 +88,7 @@ Integrate user answers into dictionary & profile.
 
 Generate all artifacts (see Output Artifacts section) ensuring filenames & schemas.
 
-### Step 7: Summary for Downstream Chatmodes
+### Step 7: Summary for Downstream Agents
 
 Explicitly list: primary_time_column, primary_key(s), feature_columns by type, objectives list.
 
@@ -211,7 +211,7 @@ Ask only when needed to fill: semantic role conflicts, objective gaps, ambiguous
 
 ## Downstream Consumption Contract
 
-Other chatmodes will:
+Other agents will:
 
 - Parse Data Profile JSON to auto-build EDA notebooks (type-based plots)
 - Parse Objectives JSON to prioritize visualizations

@@ -138,7 +138,7 @@ The VS Code extension is published to two channels with different stability expe
 
 ### Maturity Levels
 
-Each prompt, instruction, and chatmode declares a `maturity` field in its frontmatter:
+Each prompt, instruction, and agent declares a `maturity` field in its frontmatter:
 
 | Level          | Description                                      | Included In       |
 |----------------|--------------------------------------------------|-------------------|

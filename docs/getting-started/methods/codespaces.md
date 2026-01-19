@@ -80,7 +80,7 @@ Add the clone command and VS Code settings:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -122,7 +122,7 @@ git push
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -145,7 +145,7 @@ git push
   
   "postCreateCommand": {
     "clone-hve-core": "if [ ! -d /workspaces/hve-core ]; then git clone --depth 1 https://github.com/microsoft/hve-core.git /workspaces/hve-core && echo '✅ HVE-Core cloned'; else echo '✅ HVE-Core present'; fi",
-    "verify": "test -d /workspaces/hve-core/.github/chatmodes && echo '✅ Verified' || echo '⚠️ Missing'"
+    "verify": "test -d /workspaces/hve-core/.github/agents && echo '✅ Verified' || echo '⚠️ Missing'"
   },
   
   "updateContentCommand": "cd /workspaces/hve-core && git pull --ff-only 2>/dev/null || echo 'Update skipped'",
@@ -162,8 +162,8 @@ git push
           ".github/instructions": true
         },
         "chat.modeFilesLocations": {
-          "/workspaces/hve-core/.github/chatmodes": true,
-          ".github/chatmodes": true
+          "/workspaces/hve-core/.github/agents": true,
+          ".github/agents": true
         }
       }
     }
@@ -201,8 +201,8 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
           "../hve-core/.github/instructions": true
         },
         "chat.modeFilesLocations": {
-          "/workspaces/hve-core/.github/chatmodes": true,
-          "../hve-core/.github/chatmodes": true
+          "/workspaces/hve-core/.github/agents": true,
+          "../hve-core/.github/agents": true
         }
       }
     }
@@ -250,7 +250,7 @@ To always get the latest version on rebuild:
 **Check HVE-Core was cloned:**
 
 ```bash
-ls /workspaces/hve-core/.github/chatmodes
+ls /workspaces/hve-core/.github/agents
 ```
 
 **Check postCreateCommand ran:**

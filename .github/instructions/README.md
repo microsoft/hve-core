@@ -48,7 +48,7 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | ---- | ---------- | ------- |
 | [markdown.instructions.md](markdown.instructions.md) | `**/*.md` | Markdown formatting standards |
 | [writing-style.instructions.md](writing-style.instructions.md) | `**/*.md` | Voice, tone, and language conventions |
-| [prompt-builder.instructions.md](prompt-builder.instructions.md) | `**/*.prompt.md, **/*.chatmode.md, **/*.agent.md, **/*.instructions.md` | Prompt engineering artifact authoring |
+| [prompt-builder.instructions.md](prompt-builder.instructions.md) | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md` | Prompt engineering artifact authoring |
 
 ### Git and Workflow
 

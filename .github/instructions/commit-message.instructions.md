@@ -22,7 +22,7 @@ Types MUST be one of the following:
 - `perf` - A code change that improves performance
 - `style` - Changes that do not affect the meaning of the code
 - `test` - Adding missing tests or correcting existing tests
-- `docs` - Documentation only changes (excluding: `*.instructions.md`, `*.prompt.md`, `*.chatmode.md`, as these are prompts and instructions likely meaning the changes are `feat`, `chore`, etc)
+- `docs` - Documentation only changes (excluding: `*.instructions.md`, `*.prompt.md`, `*.agent.md`, as these are prompts and instructions likely meaning the changes are `feat`, `chore`, etc)
 - `build` - Changes that affect the build system or external dependencies
 - `ops` - Changes to operational components
 - `chore` - Other changes that don't modify src or test files
@@ -86,7 +86,7 @@ For larger changes only:
 feat(cloud): add new authentication flow
 
 - add commit message, markdown, C# along with C# test instructions
-- introduce task planner and researcher, prompt builder, and adr creation chatmodes
+- introduce task planner and researcher, prompt builder, and adr creation agents
 - configure markdownlint and VS Code workspace settings
 - add ADO work items prompts for getting and preparing my work items
 - add .gitignore and cleanup README newlines

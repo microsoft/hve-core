@@ -1,5 +1,5 @@
 ---
-description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, chatmodes, agents, and instructions files - Brought to you by microsoft/hve-core'
+description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
 maturity: stable
 ---
 
@@ -18,7 +18,7 @@ Contains the phases for the prompt engineering workflow. Execute phases in order
 
 ### Phase 1: Baseline Testing
 
-This phase applies when the user points to an existing prompt, chatmode, agent, or instructions file for improvement. Proceed to Phase 2 when creating a new file from scratch.
+This phase applies when the user points to an existing prompt, agent, or instructions file for improvement. Proceed to Phase 2 when creating a new file from scratch.
 
 #### Step 1: Baseline Testing Subagent
 
@@ -70,7 +70,7 @@ Subagent instructions:
 * Read and follow prompt-builder.instructions.md instructions.
 * Compile all requirements from Phase 1 baseline issues (if applicable) and Phase 2 research findings.
 * Identify the target file path for creation or modification.
-* Include the target file path and file type (prompt, chatmode, agent, or instructions).
+* Include the target file path and file type (prompt, agent, or instructions).
 * Include a summary of user requirements and research findings.
 * Include baseline issues when improving an existing file.
 * Apply the appropriate file type structure from the instructions.

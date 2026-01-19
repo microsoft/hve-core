@@ -50,7 +50,7 @@ projects/
 │
 └── hve-core/                      # Peer directory on HOST
     └── .github/
-        ├── chatmodes/
+        ├── agents/
         ├── prompts/
         └── instructions/
 
@@ -160,7 +160,7 @@ After rebuild, update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+  "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
   "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
 }
@@ -173,7 +173,7 @@ After rebuild, update `.vscode/settings.json`:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -191,7 +191,7 @@ After rebuild, update `.vscode/settings.json`:
 **Verify mount from container terminal:**
 
 ```bash
-ls /workspaces/hve-core/.github/chatmodes
+ls /workspaces/hve-core/.github/agents
 ```
 
 ## Complete Devcontainer Example
@@ -208,7 +208,7 @@ ls /workspaces/hve-core/.github/chatmodes
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -265,7 +265,7 @@ ls /path/to/projects/hve-core/.github
 
 ```bash
 # Inside container
-ls /workspaces/hve-core/.github/chatmodes
+ls /workspaces/hve-core/.github/agents
 ```
 
 **Check settings paths match:**

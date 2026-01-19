@@ -7,7 +7,7 @@ maturity: stable
 
 # Prompt Build
 
-This prompt delegates to the *prompt-builder* chatmode, which provides the phase-based protocol for authoring prompt engineering artifacts. The steps below prepare inputs and track progress while the mode handles research, authoring, and validation phases.
+This prompt delegates to the *prompt-builder* agent, which provides the phase-based protocol for authoring prompt engineering artifacts. The steps below prepare inputs and track progress while the mode handles research, authoring, and validation phases.
 
 ## Inputs
 
@@ -43,7 +43,7 @@ Pass all identified requirements to the prompt-builder mode's protocol phases. C
 When dispatching subagents for research or editing tasks:
 
 * Use the runSubagent tool to dispatch each subagent. When it is unavailable, follow the subagent instructions directly or stop if the task requires runSubagent.
-* Specify which instructions files or chatmodes the subagent follows.
+* Specify which instructions files or agents the subagent follows.
 * Provide a structured response format or target file for subagent output.
 * Allow subagents to respond with clarifying questions rather than guessing.
 
@@ -57,7 +57,7 @@ After protocol completion, summarize the session:
 
 ## Required Phases
 
-* Follow the prompt-builder chatmode Required Phases in order. Use the chatmode to manage phase transitions and validation criteria.
+* Follow the prompt-builder agent Required Phases in order. Use the agent to manage phase transitions and validation criteria.
 
 ---
 

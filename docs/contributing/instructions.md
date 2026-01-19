@@ -217,7 +217,7 @@ def calculate_average(numbers: list[float]) -> float:
     """
     if not numbers:
         raise ValueError("Cannot calculate average of empty list")
-    
+
     return sum(numbers) / len(numbers)
 ```
 <!-- </example-python-function> -->
@@ -347,32 +347,32 @@ Approved implementation patterns:
 def process_file(file_path: Path) -> dict[str, Any]:
     """
     Process a configuration file with proper error handling.
-    
+
     Args:
         file_path: Path to configuration file
-        
+
     Returns:
         Parsed configuration dictionary
-        
+
     Raises:
         FileNotFoundError: If configuration file doesn't exist
         ValueError: If configuration is invalid
     """
     if not file_path.exists():
         raise FileNotFoundError(f"Configuration not found: {file_path}")
-    
+
     try:
         with file_path.open() as f:
             config = json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in {file_path}: {e}")
-    
+
     # Validate required keys
     required = {"version", "settings"}
     if not required.issubset(config.keys()):
         missing = required - config.keys()
         raise ValueError(f"Missing required keys: {missing}")
-    
+
     return config
 ```
 <!-- </pattern-error-handling> -->
@@ -442,16 +442,16 @@ def test_process_file_valid(tmp_path: Path) -> None:
     """Test processing valid configuration file."""
     config_file = tmp_path / "config.json"
     config_file.write_text('{"version": "1.0", "settings": {}}')
-    
+
     result = process_file(config_file)
-    
+
     assert result["version"] == "1.0"
     assert "settings" in result
 
 def test_process_file_missing(tmp_path: Path) -> None:
     """Test handling of missing configuration file."""
     config_file = tmp_path / "missing.json"
-    
+
     with pytest.raises(FileNotFoundError):
         process_file(config_file)
 ```
@@ -601,7 +601,7 @@ All checks **MUST** pass before merge.
 ## Related Documentation
 
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Chatmodes](chatmodes.md) - AI agent configuration files
+* [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Prompts](prompts.md) - Workflow-specific guidance
 * [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
@@ -611,7 +611,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 * Review existing examples in `.github/instructions/`
 * Test glob patterns using file search commands
-* Use `prompt-builder.chatmode.md` agent for assistance
+* Use `prompt-builder.agent.md` agent for assistance
 
 ---
 

@@ -200,11 +200,11 @@ Parsing guidance:
 Diff mapping example:
 
 ```plaintext
-diff --git a/.github/chatmodes/pr-review.chatmode.md b/.github/chatmodes/pr-review.chatmode.md
+diff --git a/.github/agents/pr-review.agent.md b/.github/agents/pr-review.agent.md
 new file mode 100644
 index 00000000..17bd6ffe
 --- /dev/null
-+++ b/.github/chatmodes/pr-review.chatmode.md
++++ b/.github/agents/pr-review.agent.md
 @@ -0,0 +1,219 @@
 ```
 

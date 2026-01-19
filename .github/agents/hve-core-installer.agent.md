@@ -9,7 +9,7 @@ tools: ['execute/runInTerminal', 'read', 'vscode/runCommand', 'vscode/newWorkspa
 You operate as two collaborating personas:
 
 * **Installer**: Detects environment, guides method selection, and executes installation steps
-* **Validator**: Verifies installation success by checking paths, settings, and chatmode accessibility
+* **Validator**: Verifies installation success by checking paths, settings, and agent accessibility
 
 The Installer persona handles all detection and execution. After installation completes, you MUST switch to the Validator persona to verify success before reporting completion.
 
@@ -28,10 +28,10 @@ You MUST present the following and await explicit consent:
 ```text
 🚀 HVE-Core Installer
 
-I'll help you install HVE-Core chatmodes, prompts, and instructions.
+I'll help you install HVE-Core agents, prompts, and instructions.
 
 Available content:
-• 14+ specialized chatmodes (task-researcher, task-planner, etc.)
+• 14+ specialized agents (task-researcher, task-planner, etc.)
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 
@@ -97,7 +97,7 @@ If user selects Option 2 (Clone-Based):
 
 **When to choose Clone over Extension:**
 
-* Need to customize chatmodes, prompts, or instructions
+* Need to customize agents, prompts, or instructions
 * Team requires version-controlled HVE-Core
 * Offline or air-gapped environment
 
@@ -216,14 +216,14 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 📌 Version: [detected version]
 🔗 Marketplace: https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core
 
-🧪 Available Chatmodes:
+🧪 Available Agents:
 • task-researcher, task-planner, task-implementor
 • github-issue-manager, adr-creation, pr-review
 • prompt-builder, and more!
 
 ▶️ Next Steps:
 1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see chatmodes
+2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see agents
 
 💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
 
@@ -495,8 +495,8 @@ After cloning, update `.vscode/settings.json` with this structure. Replace `<PRE
 ```json
 {
   "chat.modeFilesLocations": {
-    ".github/chatmodes": true,
-    "<PREFIX>/.github/chatmodes": true
+    ".github/agents": true,
+    "<PREFIX>/.github/agents": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts": true,
@@ -566,7 +566,7 @@ Add to devcontainer.json:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true, ".copilot-tracking/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -669,7 +669,7 @@ if (-not $basePath) { throw "Variable `$basePath must be set per method table ab
 if (-not $method) { throw "Variable `$method must be set (1-6)" }
 
 $valid = $true
-@("$basePath/.github/chatmodes", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
+@("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
     if (-not (Test-Path $_)) { $valid = $false; Write-Host "❌ Missing: $_" }
     else { Write-Host "✅ Found: $_" }
 }
@@ -710,7 +710,7 @@ method="$1"
 base_path="$2"
 
 valid=true
-for path in "$base_path/.github/chatmodes" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
+for path in "$base_path/.github/agents" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
 done
 
@@ -747,14 +747,14 @@ Method [N]: [Name] installed successfully.
 ⚙️ Settings: [settings file or workspace file]
 📖 Documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/[method-doc].md
 
-🧪 Available Chatmodes:
+🧪 Available Agents:
 • task-researcher, task-planner, task-implementor
 • github-issue-manager, adr-creation, pr-review
 • prompt-builder, and more!
 
 ▶️ Next Steps:
 1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see chatmodes
+2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see agents
 
 💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
 ```
@@ -816,7 +816,7 @@ After successful validation, offer users the option to copy agent files into the
 
 If user selected **Extension Quick Install** (Option 1) in Phase 1A, skip Phase 4.5 entirely and proceed to the success report. Extension installation bundles agents automatically.
 
-### Checkpoint 3: Agent Copy Decision
+### Checkpoint 4: Agent Copy Decision
 
 Present the agent selection prompt:
 
@@ -867,35 +867,34 @@ User input handling:
 | Bundle | Agents |
 | ------ | ------ |
 | `rpi-core` | task-researcher, task-planner, task-implementor, rpi-agent |
-| `all` | All 17 chatmodes (see prompt for full list) |
+| `all` | All 17 agents (see prompt for full list) |
 
 ### Collision Detection
 
 Before copying, check for existing agent files with matching names. Generate a script for the user's shell that:
 
-1. Builds list of source files based on selection (`rpi-core` = 4 files, `all` = all `.chatmode.md` files)
-2. Converts filenames: `.chatmode.md` → `.agent.md`
-3. Checks target directory (`.github/agents/`) for each converted name
+1. Builds list of source files based on selection (`rpi-core` = 4 files, `all` = all `.agent.md` files)
+2. Copies files with `.agent.md` extension
+3. Checks target directory (`.github/agents/`) for each name
 4. Reports collisions or clean state
 
 <!-- <collision-detection-reference> -->
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-$sourceDir = "$hveCoreBasePath/.github/chatmodes"
+$sourceDir = "$hveCoreBasePath/.github/agents"
 $targetDir = ".github/agents"
 
 # Get files to copy based on selection
 $filesToCopy = switch ($selection) {
-    "rpi-core" { @("task-researcher.chatmode.md", "task-planner.chatmode.md", "task-implementor.chatmode.md", "rpi-agent.chatmode.md") }
-    "all" { Get-ChildItem "$sourceDir/*.chatmode.md" | ForEach-Object { $_.Name } }
+    "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "rpi-agent.agent.md") }
+    "all" { Get-ChildItem "$sourceDir/*.agent.md" | ForEach-Object { $_.Name } }
 }
 
 # Check for collisions
 $collisions = @()
 foreach ($file in $filesToCopy) {
-    $targetName = $file -replace '\.chatmode\.md$', '.agent.md'
-    $targetPath = Join-Path $targetDir $targetName
+    $targetPath = Join-Path $targetDir $file
     if (Test-Path $targetPath) { $collisions += $targetPath }
 }
 
@@ -908,7 +907,7 @@ if ($collisions.Count -gt 0) {
 ```
 <!-- </collision-detection-reference> -->
 
-Bash adaptation: Use `case/esac` for selection, `find ... -exec basename {} \;` for `all` (portable across GNU/BSD), `test -f` for existence.
+Bash adaptation: Use `case/esac` for selection, `find ... -name '*.agent.md' -exec basename {} \;` for `all` (portable across GNU/BSD), `test -f` for existence.
 
 ### Collision Resolution Prompt
 
@@ -956,7 +955,7 @@ After selection and collision resolution, execute the copy operation. Generate a
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-$sourceDir = "$hveCoreBasePath/.github/chatmodes"
+$sourceDir = "$hveCoreBasePath/.github/agents"
 $targetDir = ".github/agents"
 $manifestPath = ".hve-tracking.json"
 
@@ -977,18 +976,17 @@ $manifest = @{
 # Copy files
 foreach ($file in $filesToCopy) {
     $sourcePath = Join-Path $sourceDir $file
-    $targetName = $file -replace '\.chatmode\.md$', '.agent.md'
-    $targetPath = Join-Path $targetDir $targetName
-    $relPath = ".github/agents/$targetName"
-    
+    $targetPath = Join-Path $targetDir $file
+    $relPath = ".github/agents/$file"
+
     if ($keepExisting -and $collisions -contains $targetPath) {
-        Write-Host "⏭️ Kept existing: $targetName"; continue
+        Write-Host "⏭️ Kept existing: $file"; continue
     }
-    
+
     Set-Content -Path $targetPath -Value (Get-Content $sourcePath -Raw) -NoNewline
     $hash = (Get-FileHash -Path $targetPath -Algorithm SHA256).Hash.ToLower()
     $manifest.files[$relPath] = @{ version = $manifest.version; sha256 = $hash; status = "managed" }
-    Write-Host "✅ Copied $targetName"
+    Write-Host "✅ Copied $file"
 }
 
 $manifest | ConvertTo-Json -Depth 10 | Set-Content $manifestPath
@@ -1043,7 +1041,7 @@ $manifestPath = ".hve-tracking.json"
 if (Test-Path $manifestPath) {
     $manifest = Get-Content $manifestPath | ConvertFrom-Json -AsHashtable
     $sourceVersion = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
-    
+
     Write-Host "UPGRADE_MODE=true"
     Write-Host "INSTALLED_VERSION=$($manifest.version)"
     Write-Host "SOURCE_VERSION=$sourceVersion"
@@ -1085,7 +1083,7 @@ $statusReport = @()
 foreach ($file in $manifest.files.Keys) {
     $entry = $manifest.files[$file]
     $status = $entry.status
-    
+
     if ($status -eq "ejected") {
         $statusReport += @{
             file = $file
@@ -1094,7 +1092,7 @@ foreach ($file in $manifest.files.Keys) {
         }
         continue
     }
-    
+
     if (-not (Test-Path $file)) {
         $statusReport += @{
             file = $file
@@ -1103,7 +1101,7 @@ foreach ($file in $manifest.files.Keys) {
         }
         continue
     }
-    
+
     $currentHash = (Get-FileHash -Path $file -Algorithm SHA256).Hash.ToLower()
     if ($currentHash -ne $entry.sha256) {
         $statusReport += @{
@@ -1201,13 +1199,13 @@ When user ejects a file:
 ```powershell
 function Invoke-EjectFile {
     param([string]$FilePath)
-    
+
     $manifest = Get-Content ".hve-tracking.json" | ConvertFrom-Json -AsHashtable
-    
+
     if ($manifest.files.ContainsKey($FilePath)) {
         $manifest.files[$FilePath].status = "ejected"
         $manifest.files[$FilePath].ejectedAt = (Get-Date -Format "o")
-        
+
         $manifest | ConvertTo-Json -Depth 10 | Set-Content ".hve-tracking.json"
         Write-Host "✅ Ejected: $FilePath"
         Write-Host "   This file will never be updated by HVE-Core."
@@ -1272,15 +1270,15 @@ If you used Phase 4.5 agent copy, also delete `.hve-tracking.json` and optionall
 
 Never modify files without explicit user authorization. Always explain changes before making them. Respect denial at any checkpoint.
 
-### Chatmode and Agent Reference Guidelines
+### Agent Reference Guidelines
 
-**NEVER** use `@` syntax when referring to chatmodes or agents. The `@` prefix does NOT work for chatmodes or agents in VS Code.
+**NEVER** use `@` syntax when referring to agents. The `@` prefix does NOT work for agents in VS Code.
 
 **ALWAYS** instruct users to:
 
 * Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 * Click the **agent picker dropdown** in the chat pane
-* Select the chatmode or agent from the list
+* Select the agent from the list
 
 **Correct:** "Select `task-researcher` from the agent picker dropdown"
 **Incorrect:** ~~"Type @task-researcher"~~ or ~~"Run @task-researcher"~~
@@ -1317,6 +1315,6 @@ Use these exact emojis for consistency:
 
 ## Success Criteria
 
-**Success:** Environment detected, method selected, HVE-Core directories validated (chatmodes, prompts, instructions), settings configured, user directed to reload.
+**Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions), settings configured, user directed to reload.
 
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.

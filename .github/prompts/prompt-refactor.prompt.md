@@ -10,7 +10,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ## Inputs
 
-* ${input:file}: (Required) Target prompt file to refactor. Accepts `.prompt.md`, `.chatmode.md`, `.agent.md`, or `.instructions.md` files.
+* ${input:file}: (Required) Target prompt file to refactor. Accepts `.prompt.md`, `.agent.md`, or `.instructions.md` files.
 * ${input:requirements}: (Optional) Additional refactoring requirements or focus areas.
 
 ## Required Steps

@@ -66,7 +66,7 @@ Prompt files **MUST**:
 
 * **Purpose**: Defines when/how the prompt is invoked
 * **Valid values**:
-  * `agent` - Used by specialized AI agents/chatmodes
+  * `agent` - Used by specialized AI agents
   * `assistant` - General-purpose assistance context
   * `copilot` - GitHub Copilot-specific workflows
   * `workflow` - Automated workflow/pipeline context
@@ -504,7 +504,7 @@ All checks **MUST** pass before merge.
 ## Related Documentation
 
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Chatmodes](chatmodes.md) - AI agent configuration files
+* [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
 * [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 

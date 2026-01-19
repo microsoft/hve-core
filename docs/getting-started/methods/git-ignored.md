@@ -40,7 +40,7 @@ my-project/
 │   └── devcontainer.json    # postCreateCommand clones HVE-Core
 ├── .hve-core/               # Git-ignored, contains HVE-Core
 │   └── .github/
-│       ├── chatmodes/
+│       ├── agents/
 │       ├── prompts/
 │       └── instructions/
 ├── .gitignore               # Includes .hve-core/
@@ -99,7 +99,7 @@ Create or update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { ".hve-core/.github/chatmodes": true },
+  "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
   "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
 }
@@ -136,7 +136,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { ".hve-core/.github/chatmodes": true },
+        "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
         "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
       }
@@ -175,7 +175,7 @@ The `postCreateCommand` re-clones on each container creation. To update, rebuild
 **Check the folder exists:**
 
 ```bash
-ls .hve-core/.github/chatmodes
+ls .hve-core/.github/agents
 ```
 
 **Check settings are applied:**

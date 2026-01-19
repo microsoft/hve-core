@@ -1,12 +1,12 @@
 ---
 description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
-applyTo: '**/*.prompt.md, **/*.chatmode.md, **/*.agent.md, **/*.instructions.md'
+applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md'
 maturity: stable
 ---
 
 # Prompt Builder Instructions
 
-These instructions define authoring standards for prompt engineering artifacts. Apply these standards when creating or modifying prompt, chatmode, agent, or instructions files.
+These instructions define authoring standards for prompt engineering artifacts. Apply these standards when creating or modifying prompt, agent, or instructions files.
 
 ## File Types
 
@@ -21,7 +21,7 @@ Purpose: Single-session workflows where users invoke a prompt and Copilot execut
 Characteristics:
 
 * Single invocation completes the workflow.
-* Frontmatter includes `agent: 'agent-name'` to delegate to a chatmode or agent.
+* Frontmatter includes `agent: 'agent-name'` to delegate to an agent.
 * Content ends with `---` followed by an activation instruction.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
 * When the full contents are not required, refer to the file by path or to the relevant section.
@@ -63,15 +63,15 @@ Validation guidelines:
 * When steps are used, follow the Step-Based Protocols section for structure.
 * Document input variables in an Inputs section when present.
 
-### Chatmode Files
+### Agent Files
 
-*Extension*: `.chatmode.md`
+*Extension*: `.agent.md`
 
-Note: VS Code has renamed chatmodes to "agents" in the UI. The `.chatmode.md` extension remains valid and functions correctly. New files can use either `.chatmode.md` or `.agent.md` extension. Existing chatmodes do not require migration.
+Purpose: Agent files support both conversational workflows (multi-turn interactions with a specialized assistant) and autonomous workflows (task execution with minimal user interaction).
 
-Purpose: Conversational workflows where users interact across multiple turns through a specialized assistant persona.
+#### Conversational Agents
 
-Characteristics:
+Conversational agents guide users through multi-turn interactions:
 
 * Users guide the conversation through different activities or stages.
 * State persists across conversation turns via planning files when needed.
@@ -80,20 +80,16 @@ Characteristics:
 
 Consider adding phases when the workflow involves distinct stages that users move between interactively. Simple conversational assistants that respond to varied requests do not need protocol structure. Follow the Phase-Based Protocols section for phase structure guidelines.
 
-### Agent Files
+#### Autonomous Agents
 
-*Extension*: `.agent.md`
-
-Purpose: Autonomous workflows where the agent executes tasks with minimal user interaction after initial direction.
-
-Characteristics:
+Autonomous agents execute tasks with minimal user interaction:
 
 * Executes autonomously after receiving initial instructions.
 * Frontmatter defines available `tools` and optional `handoffs` to other agents.
 * Typically completes a bounded task and reports results.
 * May dispatch subagents for parallelizable work.
 
-Use agent files when the workflow benefits from autonomous execution rather than conversational back-and-forth.
+Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
 
 ### Instructions Files
 
@@ -131,8 +127,8 @@ Note: VS Code shows a validation warning for the `maturity:` field as it's not i
 Optional fields vary by file type:
 
 * `applyTo:` - Glob patterns (required for instructions files only).
-* `tools:` - Tool restrictions for chatmodes and agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations for chatmodes and agents. Use `agent:` for the target reference regardless of whether the target file uses `.chatmode.md` or `.agent.md` extension.
+* `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
+* `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
 * `agent:` - Agent delegation for prompt files.
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Model specification.
@@ -286,7 +282,7 @@ Tool invocation:
 
 Task specification:
 
-* Specify which chatmodes, custom agents, or instructions files to follow.
+* Specify which custom agents or instructions files to follow.
 * Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
 * Indicate the types of tasks the subagent completes.
 * Provide the subagent a step-based protocol when multiple steps are needed.

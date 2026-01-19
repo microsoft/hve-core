@@ -5,7 +5,7 @@ maturity: stable
 
 # Streamlit Dashboard Testing
 
-Test Streamlit dashboards using Playwright automation. Use this chatmode when validating dashboard functionality, performance, or user experience after implementing new features or modifying data processing logic.
+Test Streamlit dashboards using Playwright automation. Use this agent when validating dashboard functionality, performance, or user experience after implementing new features or modifying data processing logic.
 
 ## Required Phases
 

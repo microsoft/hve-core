@@ -7,11 +7,11 @@
 
 .DESCRIPTION
     This script prepares the VS Code extension by:
-    - Auto-discovering chat agents, chatmodes, prompts, and instruction files
-    - Filtering agents and chatmodes by maturity level based on channel
+    - Auto-discovering chat agents, prompts, and instruction files
+    - Filtering agents by maturity level based on channel
     - Updating package.json with discovered components
     - Updating changelog if provided
-    
+
     The package.json version is not modified.
 
 .PARAMETER ChangelogPath
@@ -19,7 +19,7 @@
 
 .PARAMETER Channel
     Optional. Release channel controlling which maturity levels are included.
-    'Stable' (default): Only includes agents/chatmodes with maturity 'stable'.
+    'Stable' (default): Only includes agents with maturity 'stable'.
     'PreRelease': Includes 'stable', 'preview', and 'experimental' maturity levels.
 
 .PARAMETER DryRun
@@ -68,15 +68,15 @@ function Get-FrontmatterData {
     param(
         [Parameter(Mandatory = $true)]
         [string]$FilePath,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$FallbackDescription = ""
     )
-    
+
     $content = Get-Content -Path $FilePath -Raw
     $description = ""
     $maturity = "stable"
-    
+
     # Extract YAML frontmatter and parse with PowerShell-Yaml
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         # Normalize line endings to LF for consistent parsing across platforms
@@ -93,7 +93,7 @@ function Get-FrontmatterData {
             Write-Warning "Failed to parse YAML frontmatter in $(Split-Path -Leaf $FilePath): $_"
         }
     }
-    
+
     # Return hashtable with description and maturity
     return @{
         description = if ($description) { $description } else { $FallbackDescription }
@@ -166,77 +166,39 @@ $excludedAgents = @('hve-core-installer')
 
 if (Test-Path $agentsDir) {
     $agentFiles = Get-ChildItem -Path $agentsDir -Filter "*.agent.md" | Sort-Object Name
-    
+
     foreach ($agentFile in $agentFiles) {
         # Extract agent name from filename (e.g., hve-core-installer.agent.md -> hve-core-installer)
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
-        
+
         # Skip excluded agents
         if ($excludedAgents -contains $agentName) {
             Write-Host "   ⏭️  $agentName (excluded)" -ForegroundColor DarkGray
             continue
         }
-        
+
         # Extract frontmatter data
         $frontmatter = Get-FrontmatterData -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
         $description = $frontmatter.description
         $maturity = $frontmatter.maturity
-        
+
         # Filter by maturity based on channel
         if ($allowedMaturities -notcontains $maturity) {
             Write-Host "   ⏭️  $agentName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
             continue
         }
-        
+
         $agent = [PSCustomObject]@{
             name        = $agentName
             path        = "./.github/agents/$($agentFile.Name)"
             description = $description
         }
-        
+
         $chatAgents += $agent
         Write-Host "   ✅ $agentName" -ForegroundColor Green
     }
 } else {
     Write-Warning "Agents directory not found: $agentsDir"
-}
-
-# Discover chatmodes
-Write-Host ""
-Write-Host "🔍 Discovering chatmodes..." -ForegroundColor Yellow
-$chatmodesDir = Join-Path $GitHubDir "chatmodes"
-$chatmodes = @()
-
-if (Test-Path $chatmodesDir) {
-    $chatmodeFiles = Get-ChildItem -Path $chatmodesDir -Filter "*.chatmode.md" | Sort-Object Name
-    
-    foreach ($chatmodeFile in $chatmodeFiles) {
-        # Extract chatmode name from filename (e.g., task-planner.chatmode.md -> task-planner)
-        $chatmodeName = $chatmodeFile.BaseName -replace '\.chatmode$', ''
-        
-        # Extract frontmatter data
-        $displayName = $chatmodeName -replace '-', ' '
-        $frontmatter = Get-FrontmatterData -FilePath $chatmodeFile.FullName -FallbackDescription "Chatmode for $displayName"
-        $description = $frontmatter.description
-        $maturity = $frontmatter.maturity
-        
-        # Filter by maturity based on channel
-        if ($allowedMaturities -notcontains $maturity) {
-            Write-Host "   ⏭️  $chatmodeName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
-            continue
-        }
-        
-        $chatmode = [PSCustomObject]@{
-            name        = $chatmodeName
-            path        = "./.github/chatmodes/$($chatmodeFile.Name)"
-            description = $description
-        }
-        
-        $chatmodes += $chatmode
-        Write-Host "   ✅ $chatmodeName" -ForegroundColor Green
-    }
-} else {
-    Write-Warning "Chatmodes directory not found: $chatmodesDir"
 }
 
 # Discover prompts
@@ -247,11 +209,11 @@ $chatPromptFiles = @()
 
 if (Test-Path $promptsDir) {
     $promptFiles = Get-ChildItem -Path $promptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
-    
+
     foreach ($promptFile in $promptFiles) {
         # Extract prompt name from filename (e.g., git-commit.prompt.md -> git-commit)
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
-        
+
         # Extract frontmatter data
         $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
         $frontmatter = Get-FrontmatterData -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
@@ -263,16 +225,16 @@ if (Test-Path $promptsDir) {
             Write-Host "   ⏭️  $promptName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
             continue
         }
-        
+
         # Calculate relative path from .github
         $relativePath = [System.IO.Path]::GetRelativePath($GitHubDir, $promptFile.FullName) -replace '\\', '/'
-        
+
         $prompt = [PSCustomObject]@{
             name        = $promptName
             path        = "./.github/$relativePath"
             description = $description
         }
-        
+
         $chatPromptFiles += $prompt
         Write-Host "   ✅ $promptName" -ForegroundColor Green
     }
@@ -288,12 +250,12 @@ $chatInstructions = @()
 
 if (Test-Path $instructionsDir) {
     $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
-    
+
     foreach ($instrFile in $instructionFiles) {
         # Extract instruction name from filename (e.g., commit-message.instructions.md -> commit-message-instructions)
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
-        
+
         # Extract frontmatter data
         $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
         $frontmatter = Get-FrontmatterData -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
@@ -305,17 +267,17 @@ if (Test-Path $instructionsDir) {
             Write-Host "   ⏭️  $instrName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
             continue
         }
-        
+
         # Calculate relative path from .github using cross-platform APIs
         $relativePathFromGitHub = [System.IO.Path]::GetRelativePath($GitHubDir, $instrFile.FullName)
         $normalizedRelativePath = (Join-Path ".github" $relativePathFromGitHub) -replace '\\', '/'
-        
+
         $instruction = [PSCustomObject]@{
             name        = $instrName
             path        = "./$normalizedRelativePath"
             description = $description
         }
-        
+
         $chatInstructions += $instruction
         Write-Host "   ✅ $instrName" -ForegroundColor Green
     }
@@ -332,12 +294,9 @@ if (-not $packageJson.contributes) {
     $packageJson | Add-Member -NotePropertyName "contributes" -NotePropertyValue ([PSCustomObject]@{})
 }
 
-# Combine agents and chatmodes into chatAgents (VS Code treats chatmodes as chatAgents)
-$allChatAgents = $chatAgents + $chatmodes
-
 # Update chatAgents
-$packageJson.contributes.chatAgents = $allChatAgents
-Write-Host "   Updated chatAgents: $($allChatAgents.Count) items ($($chatAgents.Count) agents + $($chatmodes.Count) chatmodes)" -ForegroundColor Green
+$packageJson.contributes.chatAgents = $chatAgents
+Write-Host "   Updated chatAgents: $($chatAgents.Count) agents" -ForegroundColor Green
 
 # Update chatPromptFiles
 $packageJson.contributes.chatPromptFiles = $chatPromptFiles
@@ -364,7 +323,7 @@ Write-Host "   Saved package.json" -ForegroundColor Green
 if ($ChangelogPath) {
     Write-Host ""
     Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
-    
+
     if (Test-Path $ChangelogPath) {
         $changelogDest = Join-Path $ExtensionDir "CHANGELOG.md"
         Copy-Item -Path $ChangelogPath -Destination $changelogDest -Force
@@ -380,8 +339,7 @@ Write-Host ""
 Write-Host "📊 Summary:" -ForegroundColor Cyan
 Write-Host "   Version: $version" -ForegroundColor White
 Write-Host "   Channel: $Channel" -ForegroundColor White
-Write-Host "   Chat Agents: $($chatAgents.Count)" -ForegroundColor White
-Write-Host "   Chatmodes: $($chatmodes.Count)" -ForegroundColor White
+Write-Host "   Agents: $($chatAgents.Count)" -ForegroundColor White
 Write-Host "   Prompts: $($chatPromptFiles.Count)" -ForegroundColor White
 Write-Host "   Instructions: $($chatInstructions.Count)" -ForegroundColor White
 Write-Host ""

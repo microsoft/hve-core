@@ -40,7 +40,7 @@ A `.code-workspace` file defines multiple folders as a single workspace. VS Code
 │  📁 My Project (primary)                    │
 │     └── Your code                           │
 │  📁 HVE-Core Library (secondary)            │
-│     └── .github/chatmodes, prompts, etc.    │
+│     └── .github/agents, prompts, etc.       │
 └─────────────────────────────────────────────┘
          ↑
    .code-workspace file defines this
@@ -87,8 +87,8 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
   ],
   "settings": {
     "chat.modeFilesLocations": {
-      "HVE-Core Library/.github/chatmodes": true,
-      "My Project/.github/chatmodes": true
+      "HVE-Core Library/.github/agents": true,
+      "My Project/.github/agents": true
     },
     "chat.promptFilesLocations": {
       "HVE-Core Library/.github/prompts": true,
@@ -154,8 +154,8 @@ Multi-root workspaces use folder names for paths:
 
 | Path Style           | Example                                    | Recommended       |
 |----------------------|--------------------------------------------|-------------------|
-| Folder name relative | `"HVE-Core Library/.github/chatmodes"`     | ✅  Yes            |
-| Absolute path        | `"/workspaces/hve-core/.github/chatmodes"` | ⚠️  Less portable |
+| Folder name relative | `"HVE-Core Library/.github/agents"`     | ✅  Yes            |
+| Absolute path        | `"/workspaces/hve-core/.github/agents"` | ⚠️  Less portable |
 
 The folder names in your `.code-workspace` file (`"name": "HVE-Core Library"`) become path prefixes in settings.
 
