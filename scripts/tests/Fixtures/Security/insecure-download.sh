@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Test fixture: Shell script with insecure download (no checksum)
 
 echo "Downloading tool without verification..."

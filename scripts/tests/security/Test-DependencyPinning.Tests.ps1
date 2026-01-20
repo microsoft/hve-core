@@ -2,7 +2,57 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
-    . $scriptPath
+    $scriptContent = Get-Content $scriptPath -Raw
+
+    # Extract class and function definitions using AST to avoid executing main block
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
+
+    # Extract and execute script-level variable assignments (e.g., $DependencyPatterns)
+    # These are direct children of the script block that are assignments
+    $scriptStatements = $ast.EndBlock.Statements
+    foreach ($stmt in $scriptStatements) {
+        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
+            $varCode = $stmt.Extent.Text
+            try {
+                $scriptBlock = [scriptblock]::Create($varCode)
+                . $scriptBlock
+            } catch {
+                # Skip assignments that fail (may depend on other variables)
+            }
+        }
+    }
+
+    # Build a combined script with classes and functions (classes must come first)
+    $combinedScript = [System.Text.StringBuilder]::new()
+
+    # Extract class definitions
+    $typeDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.TypeDefinitionAst] }, $true)
+    foreach ($typeDef in $typeDefs) {
+        [void]$combinedScript.AppendLine($typeDef.Extent.Text)
+        [void]$combinedScript.AppendLine()
+    }
+
+    # Extract function definitions (exclude class methods/constructors)
+    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+    $topLevelFunctions = $functionDefs | Where-Object {
+        $parent = $_.Parent
+        while ($parent) {
+            if ($parent -is [System.Management.Automation.Language.TypeDefinitionAst]) { return $false }
+            $parent = $parent.Parent
+        }
+        return $true
+    }
+    foreach ($func in $topLevelFunctions) {
+        [void]$combinedScript.AppendLine($func.Extent.Text)
+        [void]$combinedScript.AppendLine()
+    }
+
+    # Write to temp file and dot-source (required for class definitions)
+    $script:TempScriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "Test-DependencyPinning-Extracted-$([guid]::NewGuid().ToString('N')).ps1"
+    Set-Content -Path $script:TempScriptPath -Value $combinedScript.ToString() -Encoding UTF8
+    . $script:TempScriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -13,7 +63,10 @@ BeforeAll {
 }
 
 AfterAll {
-    # Cleanup if needed
+    # Cleanup temp script file
+    if ($script:TempScriptPath -and (Test-Path $script:TempScriptPath)) {
+        Remove-Item $script:TempScriptPath -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Describe 'Test-SHAPinning' -Tag 'Unit' {
@@ -68,7 +121,7 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
 
     Context 'File not found' {
         It 'Returns empty array for non-existent file' {
-            $result = Test-ShellDownloadSecurity -FilePath 'C:\nonexistent\file.sh'
+            $result = Test-ShellDownloadSecurity -FilePath 'TestDrive:/nonexistent/file.sh'
             $result | Should -BeNullOrEmpty
         }
     }
@@ -131,7 +184,7 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
     Context 'Non-existent file' {
         It 'Returns empty array for non-existent file' {
             $fileInfo = @{
-                Path         = 'C:\nonexistent\file.yml'
+                Path         = 'TestDrive:/nonexistent/file.yml'
                 Type         = 'github-actions'
                 RelativePath = 'file.yml'
             }

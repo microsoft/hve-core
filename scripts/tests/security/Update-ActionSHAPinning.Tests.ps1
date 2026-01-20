@@ -2,7 +2,36 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Update-ActionSHAPinning.ps1'
-    . $scriptPath
+    $scriptContent = Get-Content $scriptPath -Raw
+
+    # Extract function definitions and script-level variables using AST to avoid executing main block
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
+
+    # Extract and execute script-level variable assignments (e.g., $ActionSHAMap)
+    # These are direct children of the script block that are assignments
+    $scriptStatements = $ast.EndBlock.Statements
+    foreach ($stmt in $scriptStatements) {
+        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
+            $varCode = $stmt.Extent.Text
+            try {
+                $scriptBlock = [scriptblock]::Create($varCode)
+                . $scriptBlock
+            } catch {
+                # Skip assignments that fail (may depend on other variables)
+            }
+        }
+    }
+
+    # Extract and define all function definitions
+    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+
+    foreach ($func in $functionDefs) {
+        $funcCode = $func.Extent.Text
+        $scriptBlock = [scriptblock]::Create($funcCode)
+        . $scriptBlock
+    }
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -76,26 +105,17 @@ Describe 'Get-SHAForAction' -Tag 'Unit' {
         }
     }
 
-    Context 'API fallback' {
-        It 'Returns result for unknown action with API mock' {
-            Mock Invoke-RestMethod {
-                return @{
-                    object = @{
-                        sha = 'api123456789012345678901234567890abcdef'
-                    }
-                }
-            } -ParameterFilter {
-                $Uri -match 'api.github.com/repos'
-            }
-
+    Context 'Unmapped actions' {
+        It 'Returns null when action not in map and no API call is made' {
+            # Get-SHAForAction returns null for unmapped actions without attempting API
             $result = Get-SHAForAction -ActionRef 'unknown/action@v1'
-            # May return null if ActionSHAMap lookup fails and API isn't reached
-            # or returns full ref if lookup succeeds
-            if ($null -ne $result) {
-                $result | Should -BeOfType [string]
-            } else {
-                $result | Should -BeNullOrEmpty
-            }
+            $result | Should -BeNullOrEmpty
+        }
+
+        It 'Returns null for unmapped actions requiring manual review' {
+            # The function logs a warning and returns null for unmapped actions
+            $result = Get-SHAForAction -ActionRef 'test-org/test-action@v1'
+            $result | Should -BeNullOrEmpty
         }
     }
 }

@@ -255,7 +255,7 @@ Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
 
     Context 'Missing manifest' {
         It 'Handles missing manifest gracefully' {
-            $result = Get-ToolStaleness -ManifestPath 'C:\nonexistent\manifest.json'
+            $result = Get-ToolStaleness -ManifestPath 'TestDrive:/nonexistent/manifest.json'
             $result | Should -BeNullOrEmpty
         }
     }
