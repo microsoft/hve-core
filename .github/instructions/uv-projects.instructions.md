@@ -1,6 +1,6 @@
 ---
 description: 'Create and manage Python virtual environments using uv commands'
-applyTo: **/*.py, **/*.ipynb
+applyTo: '**/*.py, **/*.ipynb'
 maturity: stable
 ---
 
