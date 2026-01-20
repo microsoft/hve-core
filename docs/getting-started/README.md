@@ -116,6 +116,6 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 ---
 
 <!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨GitHub Copilot following brilliant human instruction,
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*
 <!-- markdownlint-enable MD036 -->

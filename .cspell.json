@@ -21,7 +21,8 @@
     "package-lock.json",
     "**/package-lock.json",
     "Cargo.lock",
-    "**/Cargo.lock"
+    "**/Cargo.lock",
+    "logs/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -59,10 +60,12 @@
   ],
   "words": [
     "ˈpræksɪs",
+    "autobuild",
     "behaviour",
     "Chronograf",
     "edgeai",
     "GHCP",
+    "GHSA",
     "Kapacitor",
     "kata",
     "katas",
