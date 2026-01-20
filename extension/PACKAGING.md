@@ -248,3 +248,10 @@ See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity
 - Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
 - Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 - The root `package.json` contains development scripts for the repository
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

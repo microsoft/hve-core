@@ -165,3 +165,10 @@ stateDiagram-v2
 * **Preview promotions**: Move to `maturity: preview` when core functionality is complete
 * **Stable promotions**: Move to `maturity: stable` after production validation
 * **Deprecation**: Set `maturity: deprecated` before removal to provide transition time
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
