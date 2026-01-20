@@ -116,13 +116,13 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 
 ## Documentation
 
-| Guide                                                    | Description                                  |
-|----------------------------------------------------------|----------------------------------------------|
-| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial            |
-| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement     |
+| Guide                                                    | Description                                     |
+|----------------------------------------------------------|-------------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial               |
+| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement        |
 | [Contributing](docs/contributing/README.md)              | Create custom agents, instructions, and prompts |
-| [Agents Reference](.github/README.md)                    | All available agents                         |
-| [Instructions Reference](.github/instructions/README.md) | All coding instructions                      |
+| [Agents Reference](.github/README.md)                    | All available agents                            |
+| [Instructions Reference](.github/instructions/README.md) | All coding instructions                         |
 
 ## Responsible AI
 

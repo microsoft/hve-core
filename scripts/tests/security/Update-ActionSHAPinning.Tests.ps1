@@ -20,6 +20,7 @@ BeforeAll {
                 . $scriptBlock
             } catch {
                 # Skip assignments that fail (may depend on other variables)
+                $null = $_
             }
         }
     }
