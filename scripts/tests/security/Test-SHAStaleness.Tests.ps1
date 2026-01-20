@@ -1,8 +1,33 @@
 #Requires -Modules Pester
 
+<#
+.SYNOPSIS
+    Pester tests for Test-SHAStaleness.ps1 functions.
+
+.DESCRIPTION
+    Tests the staleness checking functions without executing the main script.
+    Uses AST function extraction to avoid running main execution block.
+#>
+
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Test-SHAStaleness.ps1'
-    . $scriptPath
+    $scriptContent = Get-Content $scriptPath -Raw
+
+    # Extract function definitions from the script without executing main block
+    # Parse the AST to get function definitions
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
+
+    # Extract all function definitions
+    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+
+    # Define each function in the current scope using ScriptBlock
+    foreach ($func in $functionDefs) {
+        $funcCode = $func.Extent.Text
+        $scriptBlock = [scriptblock]::Create($funcCode)
+        . $scriptBlock
+    }
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -28,23 +53,63 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
         Clear-MockGitHubEnvironment
     }
 
-    Context 'Token present' {
-        It 'Returns true when GITHUB_TOKEN is set' {
-            $env:GITHUB_TOKEN = 'ghp_test123456789'
-            Test-GitHubToken | Should -BeTrue
+    Context 'No token provided' {
+        It 'Returns hashtable with Valid=false when empty token provided' {
+            $result = Test-GitHubToken -Token ''
+            $result | Should -BeOfType [hashtable]
+            $result.Valid | Should -BeFalse
         }
 
-        It 'Returns true when GH_TOKEN is set' {
-            $env:GH_TOKEN = 'ghp_test123456789'
-            Test-GitHubToken | Should -BeTrue
+        It 'Returns Authenticated=false when no token provided' {
+            $result = Test-GitHubToken -Token ''
+            $result.Authenticated | Should -BeFalse
+        }
+
+        It 'Returns rate limit of 60 when no token provided' {
+            $result = Test-GitHubToken -Token ''
+            $result.RateLimit | Should -Be 60
         }
     }
 
-    Context 'Token absent' {
-        It 'Returns false when no token environment variable is set' {
-            $env:GITHUB_TOKEN = $null
-            $env:GH_TOKEN = $null
-            Test-GitHubToken | Should -BeFalse
+    Context 'Invalid token' {
+        BeforeEach {
+            Mock Invoke-RestMethod {
+                throw 'Bad credentials'
+            }
+        }
+
+        It 'Returns Valid=false for invalid token' {
+            $result = Test-GitHubToken -Token 'invalid-token'
+            $result.Valid | Should -BeFalse
+        }
+    }
+
+    Context 'Valid token' {
+        BeforeEach {
+            Mock Invoke-RestMethod {
+                return @{
+                    data = @{
+                        viewer    = @{ login = 'testuser' }
+                        rateLimit = @{ limit = 5000; remaining = 4999; resetAt = '2024-01-01T00:00:00Z' }
+                    }
+                }
+            }
+        }
+
+        It 'Returns Valid=true for valid token' {
+            $result = Test-GitHubToken -Token 'ghp_validtoken123456789'
+            $result.Valid | Should -BeTrue
+        }
+
+        It 'Returns user information for valid token' {
+            $result = Test-GitHubToken -Token 'ghp_validtoken123456789'
+            $result.User | Should -Be 'testuser'
+        }
+
+        It 'Returns rate limit information for valid token' {
+            $result = Test-GitHubToken -Token 'ghp_validtoken123456789'
+            $result.RateLimit | Should -Be 5000
+            $result.Remaining | Should -Be 4999
         }
     }
 }
@@ -52,7 +117,6 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
 Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     BeforeEach {
         Initialize-MockGitHubEnvironment
-        $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
     AfterEach {
@@ -62,129 +126,137 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     Context 'Successful requests' {
         It 'Returns response on first successful call' {
             Mock Invoke-RestMethod {
-                return @{ sha = 'abc123def456789012345678901234567890abcd' }
+                return @{ data = 'success' }
             }
 
-            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/repos/test/test'
-            $result.sha | Should -Be 'abc123def456789012345678901234567890abcd'
+            $headers = @{ 'Authorization' = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/graphql' -Method 'POST' -Headers $headers -Body '{}'
+            $result.data | Should -Be 'success'
         }
     }
 
     Context 'Rate limiting' {
-        It 'Retries on 403 rate limit response' {
-            $script:CallCount = 0
+        It 'Throws on non-rate-limit errors' {
             Mock Invoke-RestMethod {
-                $script:CallCount++
-                if ($script:CallCount -lt 3) {
-                    $ex = [System.Net.WebException]::new("Rate limit exceeded")
-                    throw $ex
-                }
-                return @{ sha = 'abc123' }
+                throw [System.Exception]::new('Network error')
             }
 
-            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -MaxRetries 5
-            $script:CallCount | Should -BeGreaterOrEqual 3
-            $result.sha | Should -Be 'abc123'
-        }
-    }
-
-    Context 'Error handling' {
-        It 'Throws after max retries exceeded' {
-            Mock Invoke-RestMethod {
-                throw [System.Net.WebException]::new("Network error")
-            }
-
-            { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -MaxRetries 2 } | Should -Throw
+            $headers = @{ 'Authorization' = 'Bearer test' }
+            { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/graphql' -Method 'POST' -Headers $headers -Body '{}' } | Should -Throw
         }
     }
 }
 
-Describe 'Test-GitHubActionsForStaleness' -Tag 'Unit' {
-    BeforeEach {
-        Initialize-MockGitHubEnvironment
-        $env:GITHUB_TOKEN = 'ghp_test123456789'
-
-        Mock Invoke-RestMethod {
-            return @{
-                sha = 'newsha123456789012345678901234567890abcd'
-                commit = @{
-                    committer = @{
-                        date = (Get-Date).AddDays(-5).ToString('o')
-                    }
-                }
-            }
+Describe 'Write-SecurityLog' -Tag 'Unit' {
+    Context 'Log output' {
+        It 'Does not throw for Info level' {
+            { Write-SecurityLog -Message 'Test message' -Level Info } | Should -Not -Throw
         }
-    }
 
-    AfterEach {
-        Clear-MockGitHubEnvironment
-    }
-
-    Context 'Stale detection' {
-        It 'Detects stale SHA when newer commit exists' {
-            $action = @{
-                Owner = 'actions'
-                Repo = 'checkout'
-                CurrentSHA = 'oldsha123456789012345678901234567890abcd'
-                Version = 'v4'
-            }
-
-            $result = Test-GitHubActionsForStaleness -Actions @($action)
-            $result | Should -Not -BeNullOrEmpty
-            $result[0].IsStale | Should -BeTrue
+        It 'Does not throw for Warning level' {
+            { Write-SecurityLog -Message 'Warning message' -Level Warning } | Should -Not -Throw
         }
-    }
 
-    Context 'MaxAge parameter' {
-        It 'Respects MaxAge parameter for staleness threshold' {
-            Mock Invoke-RestMethod {
-                return @{
-                    sha = 'newsha123456789012345678901234567890abcd'
-                    commit = @{
-                        committer = @{
-                            date = (Get-Date).AddDays(-10).ToString('o')
-                        }
-                    }
-                }
-            }
+        It 'Does not throw for Error level' {
+            { Write-SecurityLog -Message 'Error message' -Level Error } | Should -Not -Throw
+        }
 
-            $action = @{
-                Owner = 'actions'
-                Repo = 'checkout'
-                CurrentSHA = 'newsha123456789012345678901234567890abcd'
-                Version = 'v4'
-            }
-
-            $result = Test-GitHubActionsForStaleness -Actions @($action) -MaxAge 30
-            $result[0].IsStale | Should -BeFalse
+        It 'Does not throw for Success level' {
+            { Write-SecurityLog -Message 'Success message' -Level Success } | Should -Not -Throw
         }
     }
 }
 
 Describe 'Compare-ToolVersion' -Tag 'Unit' {
-    Context 'Version comparisons' {
-        It 'Returns 0 for equal versions' {
-            Compare-ToolVersion -Current '8.18.2' -Latest '8.18.2' | Should -Be 0
+    Context 'Semantic version comparison' {
+        It 'Returns true when latest is newer major version' {
+            Compare-ToolVersion -Current '1.0.0' -Latest '2.0.0' | Should -BeTrue
         }
 
-        It 'Returns negative for older current version' {
-            Compare-ToolVersion -Current '8.16.0' -Latest '8.18.2' | Should -BeLessThan 0
+        It 'Returns true when latest is newer minor version' {
+            Compare-ToolVersion -Current '1.0.0' -Latest '1.1.0' | Should -BeTrue
         }
 
-        It 'Returns positive for newer current version' {
-            Compare-ToolVersion -Current '9.0.0' -Latest '8.18.2' | Should -BeGreaterThan 0
+        It 'Returns true when latest is newer patch version' {
+            Compare-ToolVersion -Current '1.0.0' -Latest '1.0.1' | Should -BeTrue
         }
 
-        It 'Handles major version differences' {
-            Compare-ToolVersion -Current '7.0.0' -Latest '8.0.0' | Should -BeLessThan 0
+        It 'Returns false when current equals latest' {
+            Compare-ToolVersion -Current '1.0.0' -Latest '1.0.0' | Should -BeFalse
         }
 
-        It 'Handles minor version differences' {
-            Compare-ToolVersion -Current '8.17.0' -Latest '8.18.0' | Should -BeLessThan 0
+        It 'Returns false when current is newer than latest' {
+            Compare-ToolVersion -Current '2.0.0' -Latest '1.0.0' | Should -BeFalse
         }
 
-        It 'Handles patch version differences' {
-            Compare-ToolVersion -Current '8.18.1' -Latest '8.18.2' | Should -BeLessThan 0
+        It 'Handles major version differences correctly' {
+            Compare-ToolVersion -Current '7.0.0' -Latest '8.0.0' | Should -BeTrue
+        }
+
+        It 'Handles minor version differences correctly' {
+            Compare-ToolVersion -Current '8.17.0' -Latest '8.18.0' | Should -BeTrue
+        }
+
+        It 'Handles patch version differences correctly' {
+            Compare-ToolVersion -Current '8.18.1' -Latest '8.18.2' | Should -BeTrue
+        }
+    }
+
+    Context 'Version with v prefix' {
+        It 'Handles v-prefixed versions' {
+            Compare-ToolVersion -Current 'v1.0.0' -Latest 'v2.0.0' | Should -BeTrue
+        }
+
+        It 'Handles mixed v-prefix versions' {
+            Compare-ToolVersion -Current '1.0.0' -Latest 'v2.0.0' | Should -BeTrue
+        }
+
+        It 'Returns false for equal v-prefixed versions' {
+            Compare-ToolVersion -Current 'v1.0.0' -Latest 'v1.0.0' | Should -BeFalse
+        }
+    }
+
+    Context 'Pre-release versions' {
+        It 'Strips pre-release metadata for comparison' {
+            Compare-ToolVersion -Current '1.0.0-alpha' -Latest '1.0.0' | Should -BeFalse
+        }
+
+        It 'Handles build metadata' {
+            Compare-ToolVersion -Current '1.0.0+build123' -Latest '2.0.0' | Should -BeTrue
+        }
+    }
+}
+
+Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
+    Context 'With mock manifest' {
+        BeforeEach {
+            # Create a temporary manifest file
+            $script:TempManifest = Join-Path $TestDrive 'tool-checksums.json'
+            $manifestContent = @{
+                tools = @(
+                    @{
+                        name    = 'test-tool'
+                        repo    = 'test-org/test-repo'
+                        version = '1.0.0'
+                        sha256  = 'abc123'
+                        notes   = 'Test tool'
+                    }
+                )
+            } | ConvertTo-Json -Depth 10
+            Set-Content -Path $script:TempManifest -Value $manifestContent
+        }
+
+        It 'Returns results array' -Skip:$true {
+            # Skip by default - requires actual GitHub API access
+            $result = Get-ToolStaleness -ManifestPath $script:TempManifest
+            $result | Should -BeOfType [System.Object[]]
+        }
+    }
+
+    Context 'Missing manifest' {
+        It 'Handles missing manifest gracefully' {
+            $result = Get-ToolStaleness -ManifestPath 'C:\nonexistent\manifest.json'
+            $result | Should -BeNullOrEmpty
         }
     }
 }
