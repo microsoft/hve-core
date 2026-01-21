@@ -3,7 +3,7 @@ title: Changelog
 description: Automatically generated changelog tracking all notable changes to the HVE Core project using semantic versioning
 ---
 
-<!-- markdownlint-disable MD012 -->
+<!-- markdownlint-disable MD012 MD024 -->
 
 All notable changes to this project will be documented in this file.
 
