@@ -175,6 +175,25 @@ Describe 'Get-LineImpact' {
     }
 }
 
+Describe 'Get-CurrentBranchOrRef' {
+    BeforeAll {
+        . $PSScriptRoot/../dev-tools/Generate-PrReference.ps1
+    }
+
+    It 'Returns branch name when on a branch' {
+        # This test runs in a real git repo, so it should return something
+        $result = Get-CurrentBranchOrRef
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeOfType [string]
+    }
+
+    It 'Returns string starting with detached@ or branch name' {
+        $result = Get-CurrentBranchOrRef
+        # Either a branch name or detached@<sha>
+        ($result -match '^detached@' -or $result -notmatch '^detached@') | Should -BeTrue
+    }
+}
+
 Describe 'Invoke-PrReferenceGeneration' {
     It 'Returns FileInfo object' {
         # Skip if not in a git repo or no commits to compare

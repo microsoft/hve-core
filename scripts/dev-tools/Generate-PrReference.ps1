@@ -154,6 +154,34 @@ System.String
     return $commit
 }
 
+function Get-CurrentBranchOrRef {
+<#
+.SYNOPSIS
+Retrieves the current branch name or a fallback reference.
+.DESCRIPTION
+Returns the current branch name when on a branch. In detached HEAD state
+(common in CI environments), falls back to a short commit SHA prefixed with
+'detached@'.
+.OUTPUTS
+System.String
+#>
+    [OutputType([string])]
+    param()
+
+    $branchOutput = & git --no-pager branch --show-current 2>$null
+    if ($branchOutput) {
+        return $branchOutput.Trim()
+    }
+
+    # Detached HEAD - fall back to short SHA
+    $sha = (& git rev-parse --short HEAD 2>$null)
+    if ($LASTEXITCODE -eq 0 -and $sha) {
+        return "detached@$($sha.Trim())"
+    }
+
+    return 'unknown'
+}
+
 function Get-CommitEntry {
 <#
 .SYNOPSIS
@@ -418,7 +446,7 @@ System.IO.FileInfo
 
     Push-Location $repoRoot
     try {
-        $currentBranch = (& git --no-pager branch --show-current).Trim()
+        $currentBranch = Get-CurrentBranchOrRef
         $comparisonInfo = Resolve-ComparisonReference -BaseBranch $BaseBranch
         $baseCommit = Get-ShortCommitHash -Ref $comparisonInfo.Ref
     $commitEntries = Get-CommitEntry -ComparisonRef $comparisonInfo.Ref
