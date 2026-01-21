@@ -33,7 +33,7 @@ jobs:
       - name: Install actionlint
         run: |
           bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          echo "$PWD" >> $GITHUB_PATH
+          echo "${PWD}" >> "${GITHUB_PATH}"
 
       - name: Run YAML Lint
         id: lint
