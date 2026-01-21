@@ -18,13 +18,32 @@ The Installer persona handles all detection and execution. After installation co
 
 ---
 
+## Required Phases
+
+| Phase | Name | Purpose |
+|-------|------|---------|
+| 1 | Environment Detection | Obtain consent and detect user's environment |
+| 2 | Installation Path Selection | Choose between Extension (quick) or Clone-based installation |
+| 3 | Environment Detection & Decision Matrix | For clone path: detect environment and recommend method |
+| 4 | Installation Methods | Execute the selected installation method |
+| 5 | Validation | Verify installation success and configure settings |
+| 6 | Post-Installation Setup | Configure gitignore and present MCP guidance |
+| 7 | Agent Customization | Optional: copy agents for local customization (clone-based only) |
+
+**Flow paths:**
+
+* **Extension path**: Phase 1 → Phase 2 → Phase 6 → Complete
+* **Clone-based path**: Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Complete
+
+---
+
 ## Phase 1: Environment Detection
 
-Before presenting options, you MUST detect the user's environment to filter applicable installation methods.
+Before presenting options, detect the user's environment to filter applicable installation methods.
 
 ### Checkpoint 1: Initial Consent
 
-You MUST present the following and await explicit consent:
+Present the following and await explicit consent:
 
 ```text
 🚀 HVE-Core Installer
@@ -43,17 +62,17 @@ Would you like to proceed?
 
 If user declines, respond: "Installation cancelled. Select `hve-core-installer` from the agent picker dropdown anytime to restart."
 
-Upon consent, proceed to Phase 1A (Extension Quick Install) to offer the installation path choice.
+Upon consent, proceed to Phase 2 to offer the installation path choice.
 
 ---
 
-## Phase 1A: Extension Quick Install (Optional)
+## Phase 2: Installation Path Selection
 
-After consent, present the quick install option BEFORE asking for shell preference or environment detection. Extension installation does not require shell selection.
+Present the installation path choice before environment detection. Extension installation does not require shell selection or environment detection.
 
-### Extension Installation Prompt
+### Checkpoint 2: Installation Path Choice
 
-You MUST present the following choice:
+Present the following choice:
 
 <!-- <extension-quick-install-checkpoint> -->
 ```text
@@ -78,7 +97,7 @@ Which would you prefer? (1/2 or quick/clone)
 User input handling:
 
 * "1", "quick", "extension", "marketplace" → Execute Extension Installation
-* "2", "clone", "custom", "team" → Continue to Phase 2 (Environment Detection)
+* "2", "clone", "custom", "team" → Continue to Phase 3 (Environment Detection)
 * Unclear response → Ask for clarification
 
 If user selects Option 1 (Quick Install):
@@ -94,7 +113,7 @@ If user selects Option 2 (Clone-Based):
   * "powershell", "pwsh", "ps1", "ps" → PowerShell
   * "bash", "sh", "zsh" → Bash
   * Unclear response → Windows = PowerShell, macOS/Linux = Bash
-* Continue to Prerequisites Check, then Environment Detection Script and Phase 2 workflow
+* Continue to Prerequisites Check, then Environment Detection Script and Phase 3 workflow
 
 **When to choose Clone over Extension:**
 
@@ -236,7 +255,7 @@ Run this agent again and choose "Clone-Based Installation" for full customizatio
 ```
 <!-- </extension-success-report> -->
 
-After displaying the extension success report, proceed to **Checkpoint 3: Gitignore Recommendation** (in Phase 4) to offer adding `.copilot-tracking/` to `.gitignore`. This applies to all installation methods.
+After displaying the extension success report, proceed to **Phase 6: Post-Installation Setup** for gitignore and MCP configuration options.
 
 ### Extension Error Recovery
 
@@ -256,14 +275,14 @@ If extension installation fails, provide targeted guidance:
 If extension installation fails and user cannot resolve:
 
 * Offer: "Would you like to try a clone-based installation method instead? (yes/no)"
-* If yes: Continue to Environment Detection Script and Phase 2 workflow
+* If yes: Continue to Environment Detection Script and Phase 3 workflow
 * If no: End session with manual installation instructions
 
 ---
 
 ### Environment Detection Script
 
-You MUST run the appropriate detection script:
+Run the appropriate detection script:
 
 <!-- <environment-detection-powershell> -->
 ```powershell
@@ -340,7 +359,7 @@ echo "IS_HVE_CORE_REPO=$is_hve_core_repo"
 
 ---
 
-## Phase 2: Decision Matrix Questions
+## Phase 3: Environment Detection & Decision Matrix
 
 Based on detected environment, ask the following questions to determine the recommended method.
 
@@ -421,7 +440,7 @@ Use this matrix to determine the recommended method:
 
 ### Method Selection Logic
 
-After gathering answers, you MUST:
+After gathering answers:
 
 1. Match answers to decision matrix
 2. Present recommendation with rationale
@@ -447,7 +466,7 @@ Would you like to proceed with this method, or see alternatives?
 ```
 <!-- </recommendation-template> -->
 
-## Phase 3: Installation Methods
+## Phase 4: Installation Methods
 
 Execute the installation workflow based on the method selected via the decision matrix. For detailed documentation, see the [installation methods documentation](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/).
 
@@ -625,13 +644,13 @@ Optional devcontainer.json for auto-initialization:
 
 ---
 
-## Phase 4: Validation (Validator Persona)
+## Phase 5: Validation (Validator Persona)
 
 After installation completes, you MUST switch to the **Validator** persona and verify the installation.
 
-> **Important**: After successful validation, proceed to Phase 4.5 for optional agent customization (clone-based methods only).
+> **Important**: After successful validation, proceed to Phase 6 for post-installation setup, then Phase 7 for optional agent customization (clone-based methods only).
 
-### Checkpoint 2: Settings Authorization
+### Checkpoint 3: Settings Authorization
 
 Before modifying settings.json, you MUST present:
 
@@ -765,11 +784,30 @@ Method [N]: [Name] installed successfully.
 ```
 <!-- </success-report> -->
 
-### Checkpoint 3: Gitignore Recommendation
+After displaying the success report, proceed to Phase 6 for post-installation setup.
 
-After displaying the success report (for **any** installation method, including Extension Quick Install), check if `.copilot-tracking/` should be added to `.gitignore`. This directory stores local AI workflow artifacts (plans, changes, research notes) that are typically user-specific and not meant for version control.
+---
 
-**Detection:** Use the `read` tool to check if `.gitignore` exists and contains `.copilot-tracking/` or `.copilot-tracking`.
+## Phase 6: Post-Installation Setup
+
+This phase applies to all installation methods (Extension and Clone-based). Both paths converge here for consistent post-installation configuration.
+
+### Checkpoint 4: Gitignore Configuration
+
+Check and configure gitignore entries based on the installation method. Different methods may require different gitignore entries.
+
+#### Method-Specific Gitignore Entries
+
+| Method | Gitignore Entry | Reason |
+|--------|-----------------|--------|
+| 2 (Git-Ignored) | `.hve-core/` | Excludes the local HVE-Core clone |
+| All methods | `.copilot-tracking/` | Excludes AI workflow artifacts |
+
+**Detection:** Use the `read` tool to check if `.gitignore` exists and contains the required entries.
+
+**For Method 2 (Git-Ignored):** If `.hve-core/` is not in `.gitignore`, it should have been added during Phase 4 installation. Verify it exists.
+
+**For all methods:** Check if `.copilot-tracking/` should be added to `.gitignore`. This directory stores local AI workflow artifacts (plans, changes, research notes) that are typically user-specific and not meant for version control.
 
 * If pattern found → Skip this checkpoint silently
 * If `.gitignore` missing or pattern not found → Present the prompt below
@@ -809,7 +847,9 @@ User input handling:
 
 Report: "✅ Added `.copilot-tracking/` to .gitignore"
 
-### Checkpoint 4: MCP Configuration Guidance
+After the gitignore checkpoint, proceed to Checkpoint 5 (MCP Configuration).
+
+### Checkpoint 5: MCP Configuration Guidance
 
 After the gitignore checkpoint (for **any** installation method), present MCP configuration guidance. This helps users who want to use agents that integrate with Azure DevOps, GitHub, or documentation services.
 
@@ -869,17 +909,17 @@ https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configu
 
 ---
 
-## Phase 4.5: Agent Customization (Optional)
+## Phase 7: Agent Customization (Optional)
 
 > **Requirement**: Generated scripts in this phase require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 is not supported.
 
-After successful validation, offer users the option to copy agent files into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
+After Phase 6 completes, offer users the option to copy agent files into their target repository. This phase ONLY applies to clone-based installation methods (1-6), NOT to extension installation.
 
 ### Skip Condition
 
-If user selected **Extension Quick Install** (Option 1) in Phase 1A, skip Phase 4.5 entirely and proceed to the success report. Extension installation bundles agents automatically.
+If user selected **Extension Quick Install** (Option 1) in Phase 2, skip Phase 7 entirely. Extension installation bundles agents automatically.
 
-### Checkpoint 4: Agent Copy Decision
+### Checkpoint 6: Agent Copy Decision
 
 Present the agent selection prompt:
 
@@ -1084,13 +1124,13 @@ Proceeding to final success report...
 
 ---
 
-## Phase 4.5 Upgrade Mode
+## Phase 7 Upgrade Mode
 
-When `.hve-tracking.json` already exists, Phase 4.5 operates in upgrade mode.
+When `.hve-tracking.json` already exists, Phase 7 operates in upgrade mode.
 
 ### Upgrade Detection
 
-At Phase 4.5 start, check for existing manifest. Generate a script that:
+At Phase 7 start, check for existing manifest. Generate a script that:
 
 1. Checks for `.hve-tracking.json`
 2. Compares installed version against source version from HVE-Core's `package.json`
@@ -1325,7 +1365,7 @@ To remove a failed or unwanted installation:
 
 Then remove HVE-Core paths from `.vscode/settings.json`.
 
-If you used Phase 4.5 agent copy, also delete `.hve-tracking.json` and optionally `.github/agents/` if you no longer need copied agents.
+If you used Phase 7 agent copy, also delete `.hve-tracking.json` and optionally `.github/agents/` if you no longer need copied agents.
 
 ---
 
