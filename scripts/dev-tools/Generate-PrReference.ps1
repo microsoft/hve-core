@@ -31,6 +31,9 @@ Verifies the git executable is available.
 .DESCRIPTION
 Throws a terminating error when git can't be resolved from PATH.
 #>
+    [OutputType([void])]
+    param()
+
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is required but was not found on PATH."
     }
@@ -45,6 +48,9 @@ Runs git rev-parse --show-toplevel and throws when the command fails.
 .OUTPUTS
 System.String
 #>
+    [OutputType([string])]
+    param()
+
     $repoRoot = (& git rev-parse --show-toplevel).Trim()
     if (-not $repoRoot) {
         throw "Unable to determine repository root."
@@ -65,6 +71,7 @@ Absolute path to the git repository root.
 System.String
 #>
     [CmdletBinding(SupportsShouldProcess = $true)]
+    [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot
@@ -91,6 +98,7 @@ Branch name supplied by the caller.
 .OUTPUTS
 PSCustomObject
 #>
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$BaseBranch
@@ -132,6 +140,7 @@ Git reference to resolve.
 .OUTPUTS
 System.String
 #>
+    [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Ref
@@ -145,6 +154,34 @@ System.String
     return $commit
 }
 
+function Get-CurrentBranchOrRef {
+<#
+.SYNOPSIS
+Retrieves the current branch name or a fallback reference.
+.DESCRIPTION
+Returns the current branch name when on a branch. In detached HEAD state
+(common in CI environments), falls back to a short commit SHA prefixed with
+'detached@'.
+.OUTPUTS
+System.String
+#>
+    [OutputType([string])]
+    param()
+
+    $branchOutput = & git --no-pager branch --show-current 2>$null
+    if ($branchOutput) {
+        return $branchOutput.Trim()
+    }
+
+    # Detached HEAD - fall back to short SHA
+    $sha = (& git rev-parse --short HEAD 2>$null)
+    if ($LASTEXITCODE -eq 0 -and $sha) {
+        return "detached@$($sha.Trim())"
+    }
+
+    return 'unknown'
+}
+
 function Get-CommitEntry {
 <#
 .SYNOPSIS
@@ -156,6 +193,7 @@ Git reference that acts as the diff base.
 .OUTPUTS
 System.String[]
 #>
+    [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$ComparisonRef
@@ -188,6 +226,7 @@ Git reference that acts as the diff base.
 .OUTPUTS
 System.Int32
 #>
+    [OutputType([int])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$ComparisonRef
@@ -218,6 +257,7 @@ Switch to omit markdown files from the diff.
 .OUTPUTS
 System.String[]
 #>
+    [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$ComparisonRef,
@@ -252,6 +292,7 @@ Switch to omit markdown files from the summary.
 .OUTPUTS
 System.String
 #>
+    [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$ComparisonRef,
@@ -294,6 +335,7 @@ Diff lines produced by Get-DiffOutput.
 .OUTPUTS
 System.String
 #>
+    [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$CurrentBranch,
@@ -352,6 +394,7 @@ Short diff summary text.
 .OUTPUTS
 System.Int32
 #>
+    [OutputType([int])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$DiffSummary
@@ -381,6 +424,7 @@ Switch to omit markdown files from the diff and summary.
 .OUTPUTS
 System.IO.FileInfo
 #>
+    [OutputType([System.IO.FileInfo])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$BaseBranch,
@@ -402,7 +446,7 @@ System.IO.FileInfo
 
     Push-Location $repoRoot
     try {
-        $currentBranch = (& git --no-pager branch --show-current).Trim()
+        $currentBranch = Get-CurrentBranchOrRef
         $comparisonInfo = Resolve-ComparisonReference -BaseBranch $BaseBranch
         $baseCommit = Get-ShortCommitHash -Ref $comparisonInfo.Ref
     $commitEntries = Get-CommitEntry -ComparisonRef $comparisonInfo.Ref
@@ -436,4 +480,9 @@ System.IO.FileInfo
     return Get-Item -LiteralPath $prReferencePath
 }
 
-Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+#region Entry Point
+# Execute only when run directly, not when dot-sourced for testing
+if ($MyInvocation.InvocationName -ne '.') {
+    Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+}
+#endregion Entry Point
