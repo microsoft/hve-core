@@ -1,15 +1,4 @@
----
-title: HVE Core Extension
-description: VS Code extension packaging documentation for HVE Core Copilot customizations
-author: Microsoft
-ms.date: 2025-06-23
-ms.topic: reference
-keywords:
-  - vscode extension
-  - packaging
-  - copilot customizations
-estimated_reading_time: 3
----
+# HVE Core Extension
 
 > AI-powered chat agents, prompts, and instructions for hybrid virtual environments
 
