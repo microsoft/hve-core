@@ -4,6 +4,7 @@
     "**/packages/**",
     ".copilot-tracking/**",
     "venv/**",
-    "scripts/tests/Fixtures/**"
+    "scripts/tests/Fixtures/**",
+    "extension/README.md"
   ]
 }
