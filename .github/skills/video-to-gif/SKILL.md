@@ -12,6 +12,16 @@ This skill converts video files to optimized GIF animations using FFmpeg two-pas
 
 The two-pass conversion process generates superior quality GIFs compared to single-pass approaches. Pass one analyzes the video and creates an optimized color palette. Pass two applies that palette to produce the final GIF with better color fidelity and smaller file sizes.
 
+## Response Format
+
+After successful conversion, include the GIF in the response using markdown image syntax with the absolute file path:
+
+```markdown
+![filename.gif](/absolute/path/to/filename.gif)
+```
+
+This allows the user to preview the result directly in the chat response.
+
 ## Prerequisites
 
 FFmpeg is required and must be available in your system PATH.
