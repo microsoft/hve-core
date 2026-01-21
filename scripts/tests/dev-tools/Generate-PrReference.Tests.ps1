@@ -1,7 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    . $PSScriptRoot/../dev-tools/Generate-PrReference.ps1
+    . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
 }
 
 Describe 'Test-GitAvailability' {
