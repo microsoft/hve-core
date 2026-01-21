@@ -88,7 +88,7 @@ function Get-FrontmatterData {
     .SYNOPSIS
         Extracts description and maturity from YAML frontmatter.
     .DESCRIPTION
-        Pure function that parses YAML frontmatter from a markdown file
+        Function that parses YAML frontmatter from a markdown file
         and returns a hashtable with description and maturity values.
     .PARAMETER FilePath
         Path to the markdown file to parse.
@@ -138,7 +138,7 @@ function Test-PathsExist {
     .SYNOPSIS
         Validates that required paths exist for extension preparation.
     .DESCRIPTION
-        Pure function that checks whether extension directory, package.json,
+        Validation function that checks whether extension directory, package.json,
         and .github directory exist at the specified locations.
     .PARAMETER ExtensionDir
         Path to the extension directory.
@@ -190,7 +190,7 @@ function Get-DiscoveredAgents {
     .SYNOPSIS
         Discovers chat agent files from the agents directory.
     .DESCRIPTION
-        Pure function that scans the agents directory for .agent.md files,
+        Discovery function that scans the agents directory for .agent.md files,
         extracts frontmatter data, filters by maturity and exclusion list,
         and returns structured agent objects.
     .PARAMETER AgentsDir
@@ -258,7 +258,7 @@ function Get-DiscoveredPrompts {
     .SYNOPSIS
         Discovers prompt files from the prompts directory.
     .DESCRIPTION
-        Pure function that scans the prompts directory for .prompt.md files,
+        Discovery function that scans the prompts directory for .prompt.md files,
         extracts frontmatter data, filters by maturity, and returns structured
         prompt objects with relative paths.
     .PARAMETER PromptsDir
@@ -323,7 +323,7 @@ function Get-DiscoveredInstructions {
     .SYNOPSIS
         Discovers instruction files from the instructions directory.
     .DESCRIPTION
-        Pure function that scans the instructions directory for .instructions.md files,
+        Discovery function that scans the instructions directory for .instructions.md files,
         extracts frontmatter data, filters by maturity, and returns structured
         instruction objects with normalized paths.
     .PARAMETER InstructionsDir
