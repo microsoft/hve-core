@@ -119,7 +119,6 @@ Purpose: Self-contained packages that bundle documentation with executable scrip
 
 Characteristics:
 
-* Frontmatter includes `platforms` and `dependencies` for cross-platform support.
 * Bundled with bash and PowerShell scripts in the same directory.
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
