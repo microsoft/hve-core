@@ -1,5 +1,4 @@
 ﻿#!/usr/bin/env pwsh
-#Requires -Modules PowerShell-Yaml
 
 <#
 .SYNOPSIS
@@ -458,6 +457,13 @@ function Update-PackageJsonContributes {
 #region Entry Point
 
 if ($MyInvocation.InvocationName -ne '.') {
+    # Verify PowerShell-Yaml module is available (runtime check instead of #Requires)
+    if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+        Write-Error "Required module 'PowerShell-Yaml' is not installed. Install with: Install-Module -Name PowerShell-Yaml -Scope CurrentUser"
+        exit 1
+    }
+    Import-Module PowerShell-Yaml -ErrorAction Stop
+
     # Define allowed maturity levels based on channel
     $allowedMaturities = Get-AllowedMaturities -Channel $Channel
 

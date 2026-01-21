@@ -452,4 +452,9 @@ System.IO.FileInfo
     return Get-Item -LiteralPath $prReferencePath
 }
 
-Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+#region Entry Point
+# Execute only when run directly, not when dot-sourced for testing
+if ($MyInvocation.InvocationName -ne '.') {
+    Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+}
+#endregion Entry Point
