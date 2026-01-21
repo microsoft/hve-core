@@ -191,6 +191,32 @@ author: 'microsoft/hve-core'
 ---
 ```
 
+### MCP Tool Dependencies
+
+When agents reference MCP tools in their `tools:` frontmatter or body content, document the dependencies clearly.
+
+**Frontmatter declaration:**
+
+```yaml
+tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
+```
+
+**Curated MCP servers referenced by HVE-Core agents:**
+
+| Server | Tool Pattern | Purpose |
+|--------|-------------|---------|
+| github | `github/*` | GitHub repository and issue management |
+| ado | `ado/*` | Azure DevOps work items, pipelines, repos |
+| context7 | `context7/*` | Library and SDK documentation lookup |
+| microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation |
+
+**Guidelines for MCP tool references:**
+
+* Document MCP dependencies in agent body text when using `mcp_*` tool patterns
+* Agents should gracefully handle missing MCP servers (tools unavailable)
+* Reference the [MCP Server Configuration](../getting-started/mcp-configuration.md) guide when agents require MCP tools
+* Prefer built-in VS Code Copilot tools when equivalent functionality exists
+
 ## Agent Content Structure Standards
 
 ### Required Sections

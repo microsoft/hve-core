@@ -198,6 +198,15 @@ After setup, verify HVE-Core is working:
 3. Click the agent picker dropdown
 4. Verify HVE-Core agents appear (task-planner, task-researcher, etc.)
 
+## MCP Server Configuration (Optional)
+
+Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
+
+If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions.
+
+> [!NOTE]
+> Create `.vscode/mcp.json` in your workspace root (not inside the lib/hve-core submodule). VS Code reads MCP configuration only from the workspace root.
+
 ## Troubleshooting
 
 ### Submodule folder is empty

@@ -182,6 +182,15 @@ The extension updates automatically through VS Code's extension system:
 2. When customization needed, uninstall extension
 3. Follow [Peer Clone](peer-clone.md) method for local modifications
 
+## MCP Server Configuration (Optional)
+
+Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
+
+If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions.
+
+> [!NOTE]
+> Create `.vscode/mcp.json` in your project directory if you want to use MCP-dependent features. The extension provides agents without MCP configuration.
+
 ## Troubleshooting
 
 ### Extension Not Appearing

@@ -228,6 +228,8 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 
 💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
 
+📋 Additional setup options follow...
+
 ---
 📝 Want to customize HVE-Core or share with your team?
 Run this agent again and choose "Clone-Based Installation" for full customization options.
@@ -758,6 +760,8 @@ Method [N]: [Name] installed successfully.
 2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see agents
 
 💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
+
+📋 Additional setup options follow...
 ```
 <!-- </success-report> -->
 
@@ -804,6 +808,64 @@ User input handling:
 <!-- </gitignore-entry> -->
 
 Report: "✅ Added `.copilot-tracking/` to .gitignore"
+
+### Checkpoint 4: MCP Configuration Guidance
+
+After the gitignore checkpoint (for **any** installation method), present MCP configuration guidance. This helps users who want to use agents that integrate with Azure DevOps, GitHub, or documentation services.
+
+<!-- <mcp-guidance-prompt> -->
+```text
+📡 MCP Server Configuration (Optional)
+
+Some HVE-Core agents integrate with external services via MCP (Model Context Protocol):
+
+| Agent | MCP Server | Purpose |
+|-------|-----------|--------|
+| ado-prd-to-wit | ado | Azure DevOps work items |
+| github-issue-manager | github | GitHub issues |
+| task-researcher | context7, microsoft-docs | Documentation lookup |
+
+⚡ Quick setup:
+• GitHub users: Configure `github` server only
+• Azure DevOps users: Configure `ado` server only
+• Other Git/work item systems: Not documented
+
+📖 See the full configuration guide:
+   https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configuration.md
+
+Note: MCP is optional. Agents work without MCP - these features enhance specific workflows.
+
+Press Enter to continue, or type 'mcp' for more details.
+```
+<!-- </mcp-guidance-prompt> -->
+
+User input handling:
+
+* Enter, "continue", "skip", "done" → Proceed to completion
+* "mcp", "details", "more" → Display the expanded guidance below
+* Unclear response → Proceed to completion (non-blocking)
+
+**Expanded guidance (if requested):**
+
+<!-- <mcp-expanded-guidance> -->
+```text
+📡 MCP Configuration Details
+
+VS Code reads MCP configuration from `.vscode/mcp.json` in your workspace root.
+
+HVE-Core documents four curated MCP servers:
+• github - GitHub repository and issue management
+• ado - Azure DevOps work items, pipelines
+• context7 - Library/SDK documentation
+• microsoft-docs - Microsoft Learn docs
+
+⚠️ Important: Configure EITHER github OR ado based on where your repo is hosted.
+   Configuring both is unnecessary.
+
+For the complete mcp.json template and setup instructions, see:
+https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configuration.md
+```
+<!-- </mcp-expanded-guidance> -->
 
 ---
 
