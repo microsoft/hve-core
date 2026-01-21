@@ -14,13 +14,13 @@ The two-pass conversion process generates superior quality GIFs compared to sing
 
 ## Response Format
 
-After successful conversion, include the GIF in the response using markdown image syntax with the absolute file path:
+After successful conversion, include a file link to the GIF in the response with the absolute file path:
 
 ```markdown
-![filename.gif](/absolute/path/to/filename.gif)
+/absolute/path/to/filename.gif
 ```
 
-This allows the user to preview the result directly in the chat response.
+This allows the user to open the file and review it.
 
 ## Prerequisites
 
