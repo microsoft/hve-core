@@ -47,6 +47,10 @@
 .EXAMPLE
     ./Package-Extension.ps1 -Version "1.1.0" -PreRelease
     # Packages with ODD minor version for pre-release channel
+
+.EXAMPLE
+    . ./Package-Extension.ps1
+    # Dot-source to import functions for testing without executing packaging.
 #>
 
 [CmdletBinding()]
@@ -64,7 +68,274 @@ param(
     [switch]$PreRelease
 )
 
-$ErrorActionPreference = "Stop"
+#region Pure Functions
+
+function Test-VsceAvailable {
+    <#
+    .SYNOPSIS
+        Checks if vsce or npx is available for packaging.
+    .OUTPUTS
+        Hashtable with IsAvailable, CommandType ('vsce', 'npx', or $null), and Command path.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+
+    $vsceCmd = Get-Command vsce -ErrorAction SilentlyContinue
+    if ($vsceCmd) {
+        return @{
+            IsAvailable = $true
+            CommandType = 'vsce'
+            Command     = $vsceCmd.Source
+        }
+    }
+
+    $npxCmd = Get-Command npx -ErrorAction SilentlyContinue
+    if ($npxCmd) {
+        return @{
+            IsAvailable = $true
+            CommandType = 'npx'
+            Command     = $npxCmd.Source
+        }
+    }
+
+    return @{
+        IsAvailable = $false
+        CommandType = $null
+        Command     = $null
+    }
+}
+
+function Get-ExtensionOutputPath {
+    <#
+    .SYNOPSIS
+        Constructs the expected .vsix output path from extension directory and version.
+    .PARAMETER ExtensionDirectory
+        The path to the extension directory.
+    .PARAMETER ExtensionName
+        The name of the extension (from package.json).
+    .PARAMETER PackageVersion
+        The version string to use in the filename.
+    .OUTPUTS
+        String path to the expected .vsix file.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$PackageVersion
+    )
+
+    $vsixFileName = "$ExtensionName-$PackageVersion.vsix"
+    return Join-Path $ExtensionDirectory $vsixFileName
+}
+
+function Test-ExtensionManifestValid {
+    <#
+    .SYNOPSIS
+        Validates an extension manifest (package.json content) for required fields and format.
+    .PARAMETER ManifestContent
+        The parsed package.json content as a PSObject.
+    .OUTPUTS
+        Hashtable with IsValid boolean and Errors array.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSObject]$ManifestContent
+    )
+
+    $errors = @()
+
+    # Check required fields
+    if (-not $ManifestContent.PSObject.Properties['name']) {
+        $errors += "Missing required 'name' field"
+    }
+
+    if (-not $ManifestContent.PSObject.Properties['version']) {
+        $errors += "Missing required 'version' field"
+    } elseif ($ManifestContent.version -notmatch '^\d+\.\d+\.\d+') {
+        $errors += "Invalid version format: '$($ManifestContent.version)'. Expected semantic version (e.g., 1.0.0)"
+    }
+
+    if (-not $ManifestContent.PSObject.Properties['publisher']) {
+        $errors += "Missing required 'publisher' field"
+    }
+
+    if (-not $ManifestContent.PSObject.Properties['engines']) {
+        $errors += "Missing required 'engines' field"
+    } elseif (-not $ManifestContent.engines.PSObject.Properties['vscode']) {
+        $errors += "Missing required 'engines.vscode' field"
+    }
+
+    return @{
+        IsValid = ($errors.Count -eq 0)
+        Errors  = $errors
+    }
+}
+
+function Get-VscePackageCommand {
+    <#
+    .SYNOPSIS
+        Builds the vsce package command arguments without executing.
+    .PARAMETER CommandType
+        The type of command to use ('vsce' or 'npx').
+    .PARAMETER PreRelease
+        Whether to include the --pre-release flag.
+    .OUTPUTS
+        Hashtable with Executable and Arguments array.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('vsce', 'npx')]
+        [string]$CommandType,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$PreRelease
+    )
+
+    $vsceArgs = @('package', '--no-dependencies')
+    if ($PreRelease) {
+        $vsceArgs += '--pre-release'
+    }
+
+    if ($CommandType -eq 'npx') {
+        return @{
+            Executable = 'npx'
+            Arguments  = @('@vscode/vsce') + $vsceArgs
+        }
+    }
+
+    return @{
+        Executable = 'vsce'
+        Arguments  = $vsceArgs
+    }
+}
+
+function New-PackagingResult {
+    <#
+    .SYNOPSIS
+        Creates a standardized packaging result object.
+    .PARAMETER Success
+        Whether the packaging operation succeeded.
+    .PARAMETER OutputPath
+        Path to the generated .vsix file (if successful).
+    .PARAMETER Version
+        The package version used.
+    .PARAMETER ErrorMessage
+        Error message if the operation failed.
+    .OUTPUTS
+        Hashtable with Success, OutputPath, Version, and ErrorMessage.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Success,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "",
+
+        [Parameter(Mandatory = $false)]
+        [string]$Version = "",
+
+        [Parameter(Mandatory = $false)]
+        [string]$ErrorMessage = ""
+    )
+
+    return @{
+        Success      = $Success
+        OutputPath   = $OutputPath
+        Version      = $Version
+        ErrorMessage = $ErrorMessage
+    }
+}
+
+function Get-ResolvedPackageVersion {
+    <#
+    .SYNOPSIS
+        Resolves the package version from parameters or manifest content.
+    .PARAMETER SpecifiedVersion
+        Version specified via parameter (may be empty).
+    .PARAMETER ManifestVersion
+        Version from the package.json manifest.
+    .PARAMETER DevPatchNumber
+        Optional dev patch number to append.
+    .OUTPUTS
+        Hashtable with IsValid, BaseVersion, PackageVersion, and ErrorMessage.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$SpecifiedVersion = "",
+
+        [Parameter(Mandatory = $true)]
+        [string]$ManifestVersion,
+
+        [Parameter(Mandatory = $false)]
+        [string]$DevPatchNumber = ""
+    )
+
+    $baseVersion = ""
+
+    if ($SpecifiedVersion -and $SpecifiedVersion -ne "") {
+        # Validate specified version format
+        if ($SpecifiedVersion -notmatch '^\d+\.\d+\.\d+$') {
+            return @{
+                IsValid        = $false
+                BaseVersion    = ""
+                PackageVersion = ""
+                ErrorMessage   = "Invalid version format specified: '$SpecifiedVersion'. Expected semantic version format (e.g., 1.0.0)."
+            }
+        }
+        $baseVersion = $SpecifiedVersion
+    } else {
+        # Validate manifest version
+        if ($ManifestVersion -notmatch '^\d+\.\d+\.\d+') {
+            return @{
+                IsValid        = $false
+                BaseVersion    = ""
+                PackageVersion = ""
+                ErrorMessage   = "Invalid version format in package.json: '$ManifestVersion'. Expected semantic version format (e.g., 1.0.0)."
+            }
+        }
+        # Extract base version
+        $ManifestVersion -match '^(\d+\.\d+\.\d+)' | Out-Null
+        $baseVersion = $Matches[1]
+    }
+
+    # Apply dev patch number if provided
+    $packageVersion = if ($DevPatchNumber -and $DevPatchNumber -ne "") {
+        "$baseVersion-dev.$DevPatchNumber"
+    } else {
+        $baseVersion
+    }
+
+    return @{
+        IsValid        = $true
+        BaseVersion    = $baseVersion
+        PackageVersion = $packageVersion
+        ErrorMessage   = ""
+    }
+}
+
+#endregion Pure Functions
+
+#region Entry Point
+
+# Only execute main logic when run directly, not when dot-sourced
+if ($MyInvocation.InvocationName -ne '.') {
+    $ErrorActionPreference = "Stop"
 
 # Determine script and repo paths
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -276,19 +547,22 @@ try {
     }
 }
 
-Write-Host ""
-Write-Host "🎉 Done!" -ForegroundColor Green
-Write-Host ""
+    Write-Host ""
+    Write-Host "🎉 Done!" -ForegroundColor Green
+    Write-Host ""
 
-# Output for CI/CD consumption
-if ($env:GITHUB_OUTPUT) {
-    if ($vsixFile) {
-        "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-        "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-        "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-    } else {
-        Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
+    # Output for CI/CD consumption
+    if ($env:GITHUB_OUTPUT) {
+        if ($vsixFile) {
+            "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        } else {
+            Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
+        }
     }
+
+    exit 0
 }
 
-exit 0
+#endregion Entry Point
