@@ -10,6 +10,7 @@ set -euo pipefail
 DEFAULT_FPS=10
 DEFAULT_WIDTH=1280
 DEFAULT_DITHER="sierra2_4a"
+DEFAULT_TONEMAP="hable"
 DEFAULT_LOOP=0
 
 usage() {
@@ -24,6 +25,8 @@ usage() {
   echo "  --width N         Output width in pixels (default: ${DEFAULT_WIDTH})"
   echo "  --dither ALG      Dithering algorithm (default: ${DEFAULT_DITHER})"
   echo "                    Options: sierra2_4a, floyd_steinberg, bayer, none"
+  echo "  --tonemap ALG     HDR tonemapping algorithm (default: ${DEFAULT_TONEMAP})"
+  echo "                    Options: hable, reinhard, mobius, bt2390"
   echo "  --start N         Start time in seconds (default: 0)"
   echo "  --duration N      Duration to convert in seconds (default: full video)"
   echo "  --loop N          GIF loop count, 0=infinite (default: ${DEFAULT_LOOP})"
@@ -62,29 +65,63 @@ format_size() {
   fi
 }
 
+# Find file using prefix matching to handle Unicode whitespace mismatches
+# macOS screen recordings use non-breaking spaces (U+00A0) that look like ASCII spaces
+find_by_prefix() {
+  local dir="$1"
+  local basename="$2"
+
+  [[ -d "${dir}" ]] || return 1
+
+  local base_no_ext="${basename%.*}"
+  local ext="${basename##*.}"
+  local prefix="${base_no_ext:0:15}"
+
+  local found_file
+  while IFS= read -r -d '' found_file; do
+    echo "${found_file}"
+    return 0
+  done < <(find "${dir}" -maxdepth 1 -type f -name "${prefix}*.${ext}" -print0 2>/dev/null)
+
+  return 1
+}
+
 # Search for file in workspace and common directories
 find_video_file() {
   local filename="$1"
 
-  # If absolute path or file exists at given path, return as-is
+  # Direct path lookup
   if [[ -f "${filename}" ]]; then
     echo "${filename}"
     return 0
   fi
 
-  # Search locations in priority order
-  local search_dirs=(
-    "."                          # Current directory
-    "${PWD}"                     # Explicit current directory
-  )
+  # Extract directory and basename for prefix matching
+  local dir_part base_part
+  if [[ "${filename}" == */* ]]; then
+    dir_part="${filename%/*}"
+    base_part="${filename##*/}"
+  else
+    dir_part=""
+    base_part="${filename}"
+  fi
 
-  # Add workspace root if in a git repository
+  # For absolute paths, try prefix matching in the specified directory
+  if [[ "${filename}" == /* ]]; then
+    if find_by_prefix "${dir_part}" "${base_part}"; then
+      return 0
+    fi
+    return 1
+  fi
+
+  # Build search locations for relative paths
+  local search_dirs=("." "${PWD}")
+
   local git_root
   if git_root=$(git rev-parse --show-toplevel 2>/dev/null); then
     search_dirs+=("${git_root}")
   fi
 
-  # Add common video directories
   if [[ "$(uname)" == "Darwin" ]]; then
     search_dirs+=("${HOME}/Movies" "${HOME}/Downloads" "${HOME}/Desktop")
   else
@@ -92,14 +129,17 @@ find_video_file() {
   fi
 
   for dir in "${search_dirs[@]}"; do
+    # Try exact match first
     if [[ -f "${dir}/${filename}" ]]; then
       echo "${dir}/${filename}"
       return 0
     fi
+    # Fall back to prefix matching for Unicode whitespace issues
+    if find_by_prefix "${dir}" "${base_part}"; then
+      return 0
+    fi
   done
 
-  # File not found in any location
-  echo ""
   return 1
 }
 
@@ -131,6 +171,7 @@ main() {
   local fps="${DEFAULT_FPS}"
   local width="${DEFAULT_WIDTH}"
   local dither="${DEFAULT_DITHER}"
+  local tonemap="${DEFAULT_TONEMAP}"
   local loop="${DEFAULT_LOOP}"
   local start_time=""
   local duration=""
@@ -172,6 +213,13 @@ main() {
           err "--dither requires an algorithm name"
         fi
         dither="$2"
+        shift 2
+        ;;
+      --tonemap)
+        if [[ -z "${2:-}" || "$2" == --* ]]; then
+          err "--tonemap requires an algorithm name"
+        fi
+        tonemap="$2"
         shift 2
         ;;
       --start)
@@ -246,6 +294,14 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
       ;;
   esac
 
+  # Validate tonemapping algorithm
+  case "${tonemap}" in
+    hable|reinhard|mobius|bt2390) ;;
+    *)
+      err "Invalid tonemapping algorithm: ${tonemap}. Options: hable, reinhard, mobius, bt2390"
+      ;;
+  esac
+
   # Check for FFmpeg
   if ! command -v ffmpeg &>/dev/null; then
     echo "ERROR: FFmpeg is required but not installed." >&2
@@ -277,15 +333,16 @@ Searched: current directory, workspace root, ~/Movies (or ~/Videos), ~/Downloads
     echo "Time range: start=${start_time:-0}s, duration=${duration:-full}"
   fi
   if [[ "${is_hdr}" == "true" ]]; then
-    echo "HDR:        Detected, applying Hable tonemapping"
+    echo "HDR:        Detected, applying ${tonemap} tonemapping"
   fi
 
   # Build video filter chain
   local base_filter="fps=${fps},scale=${width}:-1:flags=lanczos"
 
   # Add HDR tonemapping if detected
+  # Convert HDR to SDR using selected tonemapping algorithm, then explicitly convert to sRGB for accurate GIF colors
   if [[ "${is_hdr}" == "true" ]]; then
-    base_filter="zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p,${base_filter}"
+    base_filter="zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=${tonemap}:desat=0,zscale=t=iec61966-2-1:m=bt709:r=full,format=rgb24,${base_filter}"
   fi
 
   if [[ "${skip_palette}" == true ]]; then

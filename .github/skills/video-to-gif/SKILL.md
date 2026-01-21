@@ -76,7 +76,16 @@ This allows natural commands like `convert.sh demo.mov` without specifying full 
 
 ### HDR Handling
 
-The script automatically detects HDR video content via ffprobe by checking for BT.2020 color primaries or SMPTE 2084 transfer characteristics. When HDR is detected, Hable tonemapping is applied automatically to produce SDR-compatible GIF output with proper color preservation. No user intervention is required.
+The script automatically detects HDR video content via ffprobe by checking for BT.2020 color primaries or SMPTE 2084 transfer characteristics. When HDR is detected, tonemapping is applied automatically to produce SDR-compatible GIF output with proper color preservation.
+
+Use `--tonemap` to select the tonemapping algorithm:
+
+| Algorithm | Characteristics                              |
+| --------- | -------------------------------------------- |
+| hable     | Filmic curve, good highlight rolloff (default) |
+| reinhard  | Preserves more color saturation              |
+| mobius    | Similar to reinhard with better highlights   |
+| bt2390    | ITU standard, more conservative              |
 
 ## Parameters Reference
 
@@ -87,6 +96,7 @@ The script automatically detects HDR video content via ffprobe by checking for B
 | Frame rate       | `--fps`         | `-Fps`            | 10           | Frames per second                      |
 | Width            | `--width`       | `-Width`          | 1280         | Output width in pixels                 |
 | Dithering        | `--dither`      | `-Dither`         | sierra2_4a   | Dithering algorithm                    |
+| Tonemapping      | `--tonemap`     | `-Tonemap`        | hable        | HDR tonemapping algorithm              |
 | Skip palette     | `--skip-palette`| `-SkipPalette`    | false        | Use single-pass mode                   |
 | Start time       | `--start`       | `-Start`          | 0            | Start time in seconds                  |
 | Duration         | `--duration`    | `-Duration`       | (full video) | Duration to convert in seconds         |
@@ -192,6 +202,9 @@ Use single-pass via `--skip-palette` (bash) or `-SkipPalette` (PowerShell).
 # Adjust quality parameters
 ./convert.sh --input video.mp4 --fps 15 --width 640 --dither floyd_steinberg
 
+# HDR video with custom tonemapping
+./convert.sh --input hdr-video.mov --tonemap reinhard
+
 # Extract a 10-second clip starting at 5 seconds
 ./convert.sh --input video.mp4 --start 5 --duration 10
 
@@ -214,6 +227,9 @@ Use single-pass via `--skip-palette` (bash) or `-SkipPalette` (PowerShell).
 # Adjust quality parameters
 ./convert.ps1 -InputPath video.mp4 -Fps 15 -Width 640 -Dither floyd_steinberg
 
+# HDR video with custom tonemapping
+./convert.ps1 -InputPath hdr-video.mov -Tonemap reinhard
+
 # Extract a 10-second clip starting at 5 seconds
 ./convert.ps1 -InputPath video.mp4 -Start 5 -Duration 10
 
@@ -234,7 +250,12 @@ HDR content is detected automatically. No special flags are needed:
 ./convert.sh hdr-footage.mov
 ```
 
-The script applies Hable tonemapping when HDR is detected, producing natural-looking SDR output.
+The script applies hable tonemapping by default. Use `--tonemap` to try different algorithms:
+
+```bash
+# Use reinhard for more saturated colors
+./convert.sh --input hdr-footage.mov --tonemap reinhard
+```
 
 ### Time Range Extraction
 
@@ -295,6 +316,8 @@ brew reinstall ffmpeg
 # Ubuntu
 sudo apt install libzimg-dev
 ```
+
+If colors still appear off, try a different tonemapping algorithm with `--tonemap`. The `reinhard` algorithm preserves more saturation, while `bt2390` provides more conservative results.
 
 ### Conversion fails with filter error
 

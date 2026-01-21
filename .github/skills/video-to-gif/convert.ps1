@@ -81,6 +81,10 @@ param(
     [string]$Dither = 'sierra2_4a',
 
     [Parameter(Mandatory = $false)]
+    [ValidateSet('hable', 'reinhard', 'mobius', 'bt2390')]
+    [string]$Tonemap = 'hable',
+
+    [Parameter(Mandatory = $false)]
     [ValidateRange(0, [int]::MaxValue)]
     [int]$Loop = 0,
 
@@ -367,8 +371,9 @@ $isHDR = Test-HDRContent -FilePath $resolvedInput
 $baseFilter = "fps=$Fps,scale=${Width}:-1:flags=lanczos"
 
 # Add HDR tonemapping if detected
+# Convert HDR to SDR using selected tonemapping algorithm, then explicitly convert to sRGB for accurate GIF colors
 if ($isHDR) {
-    $hdrFilter = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p"
+    $hdrFilter = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=${Tonemap}:desat=0,zscale=t=iec61966-2-1:m=bt709:r=full,format=rgb24"
     $baseFilter = "$hdrFilter,$baseFilter"
 }
 
@@ -395,7 +400,7 @@ if ($PSBoundParameters.ContainsKey('Start') -or $PSBoundParameters.ContainsKey('
 }
 
 if ($isHDR) {
-    Write-Host "HDR:        Detected, applying Hable tonemapping"
+    Write-Host "HDR:        Detected, applying $Tonemap tonemapping"
 }
 
 if ($SkipPalette) {
