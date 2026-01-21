@@ -2,6 +2,8 @@
 
 BeforeAll {
     . $PSScriptRoot/../extension/Prepare-Extension.ps1
+    # Check for ConvertFrom-Yaml availability (PowerShell-Yaml module)
+    $script:hasYamlSupport = $null -ne (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)
 }
 
 Describe 'Get-AllowedMaturities' {
@@ -30,6 +32,10 @@ Describe 'Get-FrontmatterData' {
     }
 
     It 'Extracts description and maturity from frontmatter' {
+        if (-not $script:hasYamlSupport) {
+            Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+            return
+        }
         $testFile = Join-Path $script:tempDir 'test.md'
         @'
 ---
@@ -143,6 +149,10 @@ maturity: preview
     }
 
     It 'Filters agents by maturity' {
+        if (-not $script:hasYamlSupport) {
+            Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+            return
+        }
         $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -ExcludedAgents @()
         $result.Agents.Count | Should -Be 1
         $result.Skipped.Count | Should -Be 1
@@ -182,6 +192,10 @@ maturity: stable
     }
 
     It 'Discovers prompts in directory' {
+        if (-not $script:hasYamlSupport) {
+            Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+            return
+        }
         $result = Get-DiscoveredPrompts -PromptsDir $script:promptsDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeTrue
         $result.Prompts.Count | Should -BeGreaterThan 0
@@ -216,6 +230,10 @@ maturity: stable
     }
 
     It 'Discovers instructions in directory' {
+        if (-not $script:hasYamlSupport) {
+            Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+            return
+        }
         $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeTrue
         $result.Instructions.Count | Should -BeGreaterThan 0
