@@ -23,23 +23,23 @@ MCP tools extend GitHub Copilot's capabilities by connecting to external service
 
 Most teams use one primary platform for repository hosting and work item management:
 
-| Repository Hosted On | Configure | Do Not Configure |
-|----------------------|-----------|------------------|
-| GitHub | `github` server | `ado` server |
-| Azure DevOps | `ado` server | `github` server |
-| GitLab, Bitbucket, etc. | Neither | Both |
+| Repository Hosted On    | Configure       | Do Not Configure |
+|-------------------------|-----------------|------------------|
+| GitHub                  | `github` server | `ado` server     |
+| Azure DevOps            | `ado` server    | `github` server  |
+| GitLab, Bitbucket, etc. | Neither         | Both             |
 
 Configuring both is unnecessary unless you work across platforms. If you use other Git hosting or work item systems (GitLab, Jira, etc.), configuration differs and is not documented here.
 
 ## Agent MCP Dependencies
 
-| Agent | MCP Servers Used | Notes |
-|-------|------------------|-------|
-| ado-prd-to-wit | ado, microsoft-docs | ADO work item creation |
-| github-issue-manager | github | GitHub issue management |
-| task-researcher | context7, microsoft-docs | Documentation lookup (optional) |
-| task-planner | context7, microsoft-docs | Documentation lookup (optional) |
-| rpi-agent | Varies by subagent | Delegates to specialized agents |
+| Agent                | MCP Servers Used         | Notes                           |
+|----------------------|--------------------------|---------------------------------|
+| ado-prd-to-wit       | ado, microsoft-docs      | ADO work item creation          |
+| github-issue-manager | github                   | GitHub issue management         |
+| task-researcher      | context7, microsoft-docs | Documentation lookup (optional) |
+| task-planner         | context7, microsoft-docs | Documentation lookup (optional) |
+| rpi-agent            | Varies by subagent       | Delegates to specialized agents |
 
 Agents without MCP dependencies work without any MCP configuration.
 

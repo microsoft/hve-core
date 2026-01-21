@@ -224,7 +224,7 @@ echo "EXTENSION_INSTALLED=$installed"
 
 ### Extension Success Report
 
-Upon successful validation, display:
+Upon successful validation, display a brief progress indicator:
 
 <!-- <extension-success-report> -->
 ```text
@@ -241,17 +241,7 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • github-issue-manager, adr-creation, pr-review
 • prompt-builder, and more!
 
-▶️ Next Steps:
-1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see agents
-
-💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
-
-📋 Additional setup options follow...
-
----
-📝 Want to customize HVE-Core or share with your team?
-Run this agent again and choose "Clone-Based Installation" for full customization options.
+📋 Configuring optional settings...
 ```
 <!-- </extension-success-report> -->
 
@@ -757,11 +747,11 @@ fi
 
 ### Success Report
 
-Upon successful validation, display:
+Upon successful validation, display a brief progress indicator:
 
 <!-- <success-report> -->
 ```text
-✅ Installation Complete!
+✅ Core Installation Complete!
 
 Method [N]: [Name] installed successfully.
 
@@ -774,13 +764,7 @@ Method [N]: [Name] installed successfully.
 • github-issue-manager, adr-creation, pr-review
 • prompt-builder, and more!
 
-▶️ Next Steps:
-1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
-2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown to see agents
-
-💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
-
-📋 Additional setup options follow...
+📋 Configuring optional settings...
 ```
 <!-- </success-report> -->
 
@@ -793,6 +777,8 @@ After displaying the success report, proceed to Phase 6 for post-installation se
 This phase applies to all installation methods (Extension and Clone-based). Both paths converge here for consistent post-installation configuration.
 
 ### Checkpoint 4: Gitignore Configuration
+
+🛡️ Configuring gitignore...
 
 Check and configure gitignore entries based on the installation method. Different methods may require different gitignore entries.
 
@@ -865,47 +851,171 @@ Some HVE-Core agents integrate with external services via MCP (Model Context Pro
 | github-issue-manager | github | GitHub issues |
 | task-researcher | context7, microsoft-docs | Documentation lookup |
 
-⚡ Quick setup:
-• GitHub users: Configure `github` server only
-• Azure DevOps users: Configure `ado` server only
-• Other Git/work item systems: Not documented
-
-📖 See the full configuration guide:
-   https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configuration.md
-
-Note: MCP is optional. Agents work without MCP - these features enhance specific workflows.
-
-Press Enter to continue, or type 'mcp' for more details.
+Would you like to configure MCP servers? (yes/no)
 ```
 <!-- </mcp-guidance-prompt> -->
 
 User input handling:
 
-* Enter, "continue", "skip", "done" → Proceed to completion
-* "mcp", "details", "more" → Display the expanded guidance below
-* Unclear response → Proceed to completion (non-blocking)
+* "yes", "y" → Ask which servers to configure (see MCP Server Selection below)
+* "no", "n", "skip" → Proceed to Final Completion Report
+* Enter, "continue", "done" → Proceed to Final Completion Report
+* Unclear response → Proceed to Final Completion Report (non-blocking)
 
-**Expanded guidance (if requested):**
+### MCP Server Selection
 
-<!-- <mcp-expanded-guidance> -->
+If user chooses to configure MCP, present:
+
+<!-- <mcp-server-selection> -->
 ```text
-📡 MCP Configuration Details
+Which MCP servers would you like to configure?
 
-VS Code reads MCP configuration from `.vscode/mcp.json` in your workspace root.
+| Server | Purpose | Recommended For |
+|--------|---------|-----------------|
+| github | GitHub issues and repos | GitHub-hosted repositories |
+| ado | Azure DevOps work items | Azure DevOps repositories |
+| context7 | SDK/library documentation | All users (optional) |
+| microsoft-docs | Microsoft Learn docs | All users (optional) |
 
-HVE-Core documents four curated MCP servers:
-• github - GitHub repository and issue management
-• ado - Azure DevOps work items, pipelines
-• context7 - Library/SDK documentation
-• microsoft-docs - Microsoft Learn docs
+⚠️ Suggest EITHER github OR ado based on where your repo is hosted, not both.
 
-⚠️ Important: Configure EITHER github OR ado based on where your repo is hosted.
-   Configuring both is unnecessary.
-
-For the complete mcp.json template and setup instructions, see:
-https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configuration.md
+Enter server names separated by commas (e.g., "github, context7"):
 ```
-<!-- </mcp-expanded-guidance> -->
+<!-- </mcp-server-selection> -->
+
+Parse the user's response to determine which servers to include.
+
+### MCP Configuration Templates
+
+Create `.vscode/mcp.json` using ONLY the templates below. Use HTTP type with managed authentication where available.
+
+**Important**: These are the only correct configurations. Do not use stdio/npx for servers that support HTTP.
+
+#### github server (HTTP with managed auth)
+
+```json
+{
+  "github": {
+    "type": "http",
+    "url": "https://api.githubcopilot.com/mcp/"
+  }
+}
+```
+
+#### ado server (stdio with inputs)
+
+```json
+{
+  "inputs": [
+    {
+      "id": "ado_org",
+      "type": "promptString",
+      "description": "Azure DevOps organization name (e.g. 'contoso')",
+      "default": ""
+    },
+    {
+      "id": "ado_tenant",
+      "type": "promptString",
+      "description": "Azure tenant ID (required for multi-tenant scenarios)",
+      "default": ""
+    }
+  ],
+  "servers": {
+    "ado": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic/azure-devops-mcp", "${input:ado_org}", "--tenant", "${input:ado_tenant}", "-d", "core", "work", "work-items", "search", "repositories", "pipelines"]
+    }
+  }
+}
+```
+
+#### context7 server (stdio)
+
+```json
+{
+  "context7": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@upstash/context7-mcp"]
+  }
+}
+```
+
+#### microsoft-docs server (HTTP)
+
+```json
+{
+  "microsoft-docs": {
+    "type": "http",
+    "url": "https://learn.microsoft.com/api/mcp"
+  }
+}
+```
+
+### MCP File Generation
+
+When creating `.vscode/mcp.json`:
+
+1. Create `.vscode/` directory if it does not exist
+2. Combine only the selected server configurations into a single JSON object
+3. Include `inputs` array only if `ado` server is selected
+4. Merge all selected servers under a single `servers` object
+
+Example combined configuration for "github, context7":
+
+<!-- <mcp-combined-example> -->
+```json
+{
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}
+```
+<!-- </mcp-combined-example> -->
+
+After creating the file, display:
+
+```text
+✅ Created .vscode/mcp.json with [server names] configuration
+
+📖 Full documentation: https://github.com/microsoft/hve-core/blob/main/docs/getting-started/mcp-configuration.md
+```
+
+### Final Completion Report
+
+After gitignore and MCP checkpoints complete, display the final completion message:
+
+<!-- <final-completion-report> -->
+```text
+✅ Setup Complete!
+
+▶️ Next Steps:
+1. Reload VS Code (Ctrl+Shift+P → "Reload Window")
+2. Open Copilot Chat (`Ctrl+Alt+I`) and click the agent picker dropdown
+3. Select an agent to start working
+
+💡 Select `task-researcher` from the picker to explore HVE-Core capabilities
+```
+<!-- </final-completion-report> -->
+
+For **Extension** installations, also include:
+
+```text
+---
+📝 Want to customize HVE-Core or share with your team?
+Run this agent again and choose "Clone-Based Installation" for full customization options.
+```
+
+For **Clone-based** installations, proceed to Phase 7 for optional agent customization.
 
 ---
 
@@ -1407,6 +1517,8 @@ Use these exact emojis for consistency:
 * "📥 Installing HVE-Core..."
 * "🔍 Validating installation..."
 * "⚙️ Updating settings..."
+* "🛡️ Configuring gitignore..."
+* "📡 Configuring MCP servers..."
 
 **Completion indicators:**
 

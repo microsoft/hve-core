@@ -203,12 +203,12 @@ tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
 
 **Curated MCP servers referenced by HVE-Core agents:**
 
-| Server | Tool Pattern | Purpose |
-|--------|-------------|---------|
-| github | `github/*` | GitHub repository and issue management |
-| ado | `ado/*` | Azure DevOps work items, pipelines, repos |
-| context7 | `context7/*` | Library and SDK documentation lookup |
-| microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation |
+| Server         | Tool Pattern       | Purpose                                   |
+|----------------|--------------------|-------------------------------------------|
+| github         | `github/*`         | GitHub repository and issue management    |
+| ado            | `ado/*`            | Azure DevOps work items, pipelines, repos |
+| context7       | `context7/*`       | Library and SDK documentation lookup      |
+| microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation             |
 
 **Guidelines for MCP tool references:**
 
