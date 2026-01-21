@@ -924,7 +924,7 @@ Create `.vscode/mcp.json` using ONLY the templates below. Use HTTP type with man
     "ado": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@anthropic/azure-devops-mcp", "${input:ado_org}", "--tenant", "${input:ado_tenant}", "-d", "core", "work", "work-items", "search", "repositories", "pipelines"]
+      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}", "--tenant", "${input:ado_tenant}", "-d", "core", "work", "work-items", "search", "repositories", "pipelines"]
     }
   }
 }
