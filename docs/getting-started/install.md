@@ -186,6 +186,17 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 
 These artifacts are useful during your workflow session but are ephemeral by design. They help agents maintain context across sessions without polluting your repository history.
 
+## MCP Server Configuration (Optional)
+
+Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
+
+If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](mcp-configuration.md) for setup instructions. That guide includes:
+
+* Which agents require which MCP servers
+* Complete configuration templates
+* Method-specific placement notes (extension, submodule, Codespaces, etc.)
+* Troubleshooting for common issues
+
 ## Next Steps
 
 * [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task

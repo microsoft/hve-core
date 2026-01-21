@@ -228,15 +228,6 @@ git pull
 
 Changes are immediately available in all containers using the mount. No rebuild required for content updates.
 
-## MCP Server Configuration (Optional)
-
-Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
-
-If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions.
-
-> [!NOTE]
-> Create `.vscode/mcp.json` in your workspace root. Since this method uses container paths, ensure the mcp.json is in your project's `.vscode/` folder, not inside the mounted hve-core directory.
-
 ## Troubleshooting
 
 ### Mount Point Empty After Rebuild

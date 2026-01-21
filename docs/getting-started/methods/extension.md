@@ -96,12 +96,6 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 
 This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
 
-### MCP Server Configuration
-
-Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. Agents work without MCP configuration, but these integrations unlock additional capabilities.
-
-If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions. Create `.vscode/mcp.json` in your project directory to enable MCP-dependent features.
-
 ## What's Included
 
 The extension provides all HVE-Core components:
