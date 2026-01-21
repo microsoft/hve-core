@@ -65,6 +65,49 @@ Static analysis for PowerShell scripts using PSScriptAnalyzer.
 * Artifacts: `psscriptanalyzer-results` (JSON + markdown)
 * Exit Code: Non-zero if violations found
 
+### YAML Linting
+
+#### `Invoke-YamlLint.ps1`
+
+Static analysis for GitHub Actions workflow files using actionlint.
+
+**Purpose**: Validate GitHub Actions workflow YAML syntax and best practices.
+
+**Features**:
+
+* Validates `.github/workflows/*.yml` files
+* Detects changed workflow files via Git
+* Supports analyzing all files or changed files only
+* Creates GitHub Actions annotations for violations
+* Exports JSON results and markdown summary
+* Configurable via `.github/actionlint.yaml`
+
+**Parameters**:
+
+* `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
+* `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
+* `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
+
+**Usage**:
+
+```powershell
+# Analyze all workflow files
+./scripts/linting/Invoke-YamlLint.ps1 -Verbose
+
+# Analyze only changed files
+./scripts/linting/Invoke-YamlLint.ps1 -ChangedFilesOnly
+
+# View detailed output
+./scripts/linting/Invoke-YamlLint.ps1 -Verbose -Debug
+```
+
+**GitHub Actions Integration**:
+
+* Workflow: `.github/workflows/yaml-lint.yml`
+* Configuration: `.github/actionlint.yaml`
+* Artifacts: `yaml-lint-results` (JSON)
+* Exit Code: Non-zero if violations found
+
 #### `PSScriptAnalyzer.psd1`
 
 Configuration file for PSScriptAnalyzer rules.
@@ -348,6 +391,7 @@ Get-Command -Module LintingHelpers
 All linting scripts are integrated into GitHub Actions workflows:
 
 * **PSScriptAnalyzer**: `.github/workflows/psscriptanalyzer.yml`
+* **YAML Lint**: `.github/workflows/yaml-lint.yml`
 * **Frontmatter Validation**: `.github/workflows/frontmatter-validation.yml`
 * **Link Language Check**: `.github/workflows/link-lang-check.yml`
 * **Markdown Link Check**: `.github/workflows/markdown-link-check.yml`

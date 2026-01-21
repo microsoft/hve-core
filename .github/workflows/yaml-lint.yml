@@ -1,0 +1,72 @@
+name: YAML Lint
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on YAML lint violations'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only analyze changed workflow files'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install actionlint
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "$PWD" >> $GITHUB_PATH
+
+      - name: Run YAML Lint
+        id: lint
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $params = @{}
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+          
+          & scripts/linting/Invoke-YamlLint.ps1 @params
+          if ($LASTEXITCODE -ne 0) {
+            "YAML_LINT_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: yaml-lint-results
+          path: |
+            logs/yaml-lint-results.json
+            logs/yaml-lint-summary.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Check results
+        if: "!inputs.soft-fail"
+        shell: pwsh
+        run: |
+          if ($env:YAML_LINT_FAILED -eq 'true') {
+            Write-Error "YAML Lint found violations"
+            exit 1
+          }
