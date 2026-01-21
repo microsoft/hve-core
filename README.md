@@ -90,7 +90,7 @@ Get started with RPI:
 
 | Component    | Description                                                          | Documentation                                  |
 |--------------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | Specialized AI assistants for research, planning, and implementation | [Agents](.github/README.md)                    |
+| Agents       | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
 | Instructions | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
 | Scripts      | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
@@ -121,7 +121,7 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 | [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial               |
 | [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement        |
 | [Contributing](docs/contributing/README.md)              | Create custom agents, instructions, and prompts |
-| [Agents Reference](.github/README.md)                    | All available agents                            |
+| [Agents Reference](.github/CUSTOM-AGENTS.md)             | All available agents                            |
 | [Instructions Reference](.github/instructions/README.md) | All coding instructions                         |
 
 ## Responsible AI

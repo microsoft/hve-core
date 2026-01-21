@@ -104,7 +104,7 @@ Research findings are preserved in files, not chat history. Clean context lets e
 * [Task Planner Guide](task-planner.md) - Create actionable plans
 * [Task Implementor Guide](task-implementor.md) - Execute with precision
 * [Using Them Together](using-together.md) - Complete workflow example
-* [Agents Reference](../../.github/README.md) - All available modes
+* [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available modes
 
 ---
 

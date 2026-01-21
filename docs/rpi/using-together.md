@@ -255,7 +255,7 @@ You don't have to decide upfront. Start with rpi-agent for speed, and if the tas
 > [!TIP]
 > For the full explanation of why constraints change AI behavior, see [Why the RPI Workflow Works](why-rpi.md#the-counterintuitive-insight).
 
-See [Agents Reference](../../.github/README.md) for rpi-agent implementation details.
+See [Agents Reference](../../.github/CUSTOM-AGENTS.md) for rpi-agent implementation details.
 
 ## Related Guides
 

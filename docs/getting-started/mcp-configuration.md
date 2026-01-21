@@ -160,6 +160,8 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 
 * [VS Code MCP Documentation](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)
 * [GitHub MCP Server](https://github.com/github/github-mcp-server)
+* [Azure DevOps MCP Server](https://learn.microsoft.com/azure/devops/mcp-server/mcp-server-overview?view=azure-devops)
+* [Microsoft Learn MCP Server](https://github.com/microsoftdocs/mcp)
 
 ---
 
