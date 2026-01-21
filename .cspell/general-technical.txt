@@ -1194,6 +1194,7 @@ auditifnotexists
 gdpr
 hipaa
 oidc
+oldsha
 OSSF
 passwordless
 siem

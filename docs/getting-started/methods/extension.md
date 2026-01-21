@@ -43,7 +43,7 @@ VS Code Extension System
 │   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
 │   └── scripts/dev-tools/      # PR reference generation
-└── No workspace configuration needed!
+└── Only optional workspace configuration needed!
 ```
 
 ## Quick Start
@@ -82,7 +82,11 @@ After installation, verify everything works:
    * pr-review
    * adr-creation
 
-## Post-Installation: Update Your .gitignore
+## Post-Installation (Optional)
+
+These optional configurations enhance your HVE-Core experience but are not required for basic functionality.
+
+### Update Your .gitignore
 
 HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. Add this line to your project's `.gitignore`:
 
@@ -90,8 +94,13 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 .copilot-tracking/
 ```
 
-> [!NOTE]
-> This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+
+### MCP Server Configuration
+
+Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. Agents work without MCP configuration, but these integrations unlock additional capabilities.
+
+If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions. Create `.vscode/mcp.json` in your project directory to enable MCP-dependent features.
 
 ## What's Included
 
@@ -143,7 +152,7 @@ The extension updates automatically through VS Code's extension system:
 **Steps:**
 
 1. Install extension from marketplace
-2. Start using `@task-planner` and other agents
+2. Start using `task-planner` and other agents
 3. That's it!
 
 ### Scenario 2: Multi-Machine Developer
@@ -181,15 +190,6 @@ The extension updates automatically through VS Code's extension system:
 1. Start with extension for quick setup
 2. When customization needed, uninstall extension
 3. Follow [Peer Clone](peer-clone.md) method for local modifications
-
-## MCP Server Configuration (Optional)
-
-Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
-
-If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](../mcp-configuration.md) for setup instructions.
-
-> [!NOTE]
-> Create `.vscode/mcp.json` in your project directory if you want to use MCP-dependent features. The extension provides agents without MCP configuration.
 
 ## Troubleshooting
 
