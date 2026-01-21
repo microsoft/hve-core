@@ -201,4 +201,5 @@ Describe 'Invoke-PrReferenceGeneration' {
 
         $result = Invoke-PrReferenceGeneration -BaseBranch $baseBranch
         $result | Should -BeOfType [System.IO.FileInfo]
-        $result.Extension | Should -Be '.xml'
+        $result.Extension | Should -Be '.xml'    }
+}
