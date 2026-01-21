@@ -58,19 +58,26 @@ Describe 'Test-HashMatch' {
 }
 
 Describe 'Get-DownloadTargetPath' {
+    BeforeAll {
+        $script:testDir = [System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+    }
+
     It 'Uses filename from URL when FileName not specified' {
-        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip' -DestinationDirectory 'C:\temp'
-        $result | Should -Be 'C:\temp\file.zip'
+        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip' -DestinationDirectory $script:testDir
+        $expected = [System.IO.Path]::Combine($script:testDir, 'file.zip')
+        $result | Should -Be $expected
     }
 
     It 'Uses explicit FileName when specified' {
-        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip' -DestinationDirectory 'C:\temp' -FileName 'custom.zip'
-        $result | Should -Be 'C:\temp\custom.zip'
+        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip' -DestinationDirectory $script:testDir -FileName 'custom.zip'
+        $expected = [System.IO.Path]::Combine($script:testDir, 'custom.zip')
+        $result | Should -Be $expected
     }
 
     It 'Handles URL with query parameters' {
-        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip?token=abc' -DestinationDirectory 'C:\temp'
-        $result | Should -Be 'C:\temp\file.zip'
+        $result = Get-DownloadTargetPath -Url 'https://example.com/file.zip?token=abc' -DestinationDirectory $script:testDir
+        $expected = [System.IO.Path]::Combine($script:testDir, 'file.zip')
+        $result | Should -Be $expected
     }
 }
 
@@ -99,7 +106,8 @@ Describe 'Test-ExistingFileValid' {
     }
 
     It 'Returns false when file does not exist' {
-        $result = Test-ExistingFileValid -Path 'C:\nonexistent\file.txt' -ExpectedHash 'ABC123' -Algorithm 'SHA256'
+        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-dir-12345', 'file.txt')
+        $result = Test-ExistingFileValid -Path $nonexistentPath -ExpectedHash 'ABC123' -Algorithm 'SHA256'
         $result | Should -BeFalse
     }
 }

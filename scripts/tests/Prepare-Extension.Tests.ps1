@@ -94,13 +94,17 @@ Describe 'Test-PathsExist' {
     }
 
     It 'Returns invalid when extension dir missing' {
-        $result = Test-PathsExist -ExtensionDir 'C:\nonexistent' -PackageJsonPath $script:pkgJson -GitHubDir $script:ghDir
+        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-ext-dir-12345')
+        $result = Test-PathsExist -ExtensionDir $nonexistentPath -PackageJsonPath $script:pkgJson -GitHubDir $script:ghDir
         $result.IsValid | Should -BeFalse
-        $result.MissingPaths | Should -Contain 'C:\nonexistent'
+        $result.MissingPaths | Should -Contain $nonexistentPath
     }
 
     It 'Collects multiple missing paths' {
-        $result = Test-PathsExist -ExtensionDir 'C:\missing1' -PackageJsonPath 'C:\missing2' -GitHubDir 'C:\missing3'
+        $missing1 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-1')
+        $missing2 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-2')
+        $missing3 = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'missing-path-3')
+        $result = Test-PathsExist -ExtensionDir $missing1 -PackageJsonPath $missing2 -GitHubDir $missing3
         $result.IsValid | Should -BeFalse
         $result.MissingPaths.Count | Should -Be 3
     }
@@ -150,7 +154,8 @@ maturity: preview
     }
 
     It 'Returns empty when directory does not exist' {
-        $result = Get-DiscoveredAgents -AgentsDir 'C:\nonexistent' -AllowedMaturities @('stable') -ExcludedAgents @()
+        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-agents-dir-12345')
+        $result = Get-DiscoveredAgents -AgentsDir $nonexistentPath -AllowedMaturities @('stable') -ExcludedAgents @()
         $result.DirectoryExists | Should -BeFalse
         $result.Agents | Should -BeNullOrEmpty
     }
@@ -183,7 +188,8 @@ maturity: stable
     }
 
     It 'Returns empty when directory does not exist' {
-        $result = Get-DiscoveredPrompts -PromptsDir 'C:\nonexistent' -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-prompts-dir-12345')
+        $result = Get-DiscoveredPrompts -PromptsDir $nonexistentPath -GitHubDir $script:ghDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeFalse
     }
 }
@@ -216,7 +222,8 @@ maturity: stable
     }
 
     It 'Returns empty when directory does not exist' {
-        $result = Get-DiscoveredInstructions -InstructionsDir 'C:\nonexistent' -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $nonexistentPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'nonexistent-instr-dir-12345')
+        $result = Get-DiscoveredInstructions -InstructionsDir $nonexistentPath -GitHubDir $script:ghDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeFalse
     }
 }

@@ -21,14 +21,20 @@ Describe 'Test-VsceAvailable' {
 }
 
 Describe 'Get-ExtensionOutputPath' {
+    BeforeAll {
+        $script:testDir = [System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+    }
+
     It 'Constructs correct output path' {
-        $result = Get-ExtensionOutputPath -ExtensionDirectory 'C:\ext' -ExtensionName 'my-extension' -PackageVersion '1.0.0'
-        $result | Should -Be 'C:\ext\my-extension-1.0.0.vsix'
+        $result = Get-ExtensionOutputPath -ExtensionDirectory $script:testDir -ExtensionName 'my-extension' -PackageVersion '1.0.0'
+        $expected = [System.IO.Path]::Combine($script:testDir, 'my-extension-1.0.0.vsix')
+        $result | Should -Be $expected
     }
 
     It 'Handles pre-release version numbers' {
-        $result = Get-ExtensionOutputPath -ExtensionDirectory 'C:\ext' -ExtensionName 'ext' -PackageVersion '2.1.0-preview.1'
-        $result | Should -Be 'C:\ext\ext-2.1.0-preview.1.vsix'
+        $result = Get-ExtensionOutputPath -ExtensionDirectory $script:testDir -ExtensionName 'ext' -PackageVersion '2.1.0-preview.1'
+        $expected = [System.IO.Path]::Combine($script:testDir, 'ext-2.1.0-preview.1.vsix')
+        $result | Should -Be $expected
     }
 }
 
@@ -123,10 +129,14 @@ Describe 'Get-VscePackageCommand' {
 }
 
 Describe 'New-PackagingResult' {
+    BeforeAll {
+        $script:testVsixPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar), 'ext.vsix')
+    }
+
     It 'Creates success result with all properties' {
-        $result = New-PackagingResult -Success $true -OutputPath 'C:\ext.vsix' -Version '1.0.0' -ErrorMessage $null
+        $result = New-PackagingResult -Success $true -OutputPath $script:testVsixPath -Version '1.0.0' -ErrorMessage $null
         $result.Success | Should -BeTrue
-        $result.OutputPath | Should -Be 'C:\ext.vsix'
+        $result.OutputPath | Should -Be $script:testVsixPath
         $result.Version | Should -Be '1.0.0'
         $result.ErrorMessage | Should -BeNullOrEmpty
     }
