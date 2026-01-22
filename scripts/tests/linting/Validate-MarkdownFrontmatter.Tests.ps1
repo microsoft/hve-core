@@ -858,3 +858,92 @@ Content
 }
 
 #endregion
+
+#region ExcludePaths Filtering Tests
+
+Describe 'ExcludePaths Filtering' -Tag 'Unit' {
+    BeforeAll {
+        # Create test directory structure with files to include and exclude
+        $script:ExcludeTestDir = Join-Path $TestDrive 'exclude-test'
+        New-Item -ItemType Directory -Path "$script:ExcludeTestDir/docs" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$script:ExcludeTestDir/tests/fixtures" -Force | Out-Null
+
+        # Valid file that should be included
+        @"
+---
+title: Include This
+description: File that should be validated
+---
+Content
+"@ | Set-Content -Path "$script:ExcludeTestDir/docs/include.md" -Encoding UTF8
+
+        # File in tests directory that should be excluded
+        @"
+---
+title: Exclude This
+description: File in tests folder
+---
+Content
+"@ | Set-Content -Path "$script:ExcludeTestDir/tests/fixtures/exclude.md" -Encoding UTF8
+    }
+
+    Context 'Excludes files matching single pattern' {
+        It 'Excludes files matching pattern with wildcard prefix' {
+            # Use wildcard prefix since ExcludePaths computes relative path from repo root
+            # For files outside repo, the full path is used, so we match with *tests*
+            $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*')
+            # Should only check docs/include.md, not tests/fixtures/exclude.md
+            $result.TotalFilesChecked | Should -Be 1
+        }
+    }
+
+    Context 'Excludes files matching multiple patterns' {
+        BeforeAll {
+            # Add another directory to exclude
+            New-Item -ItemType Directory -Path "$script:ExcludeTestDir/vendor" -Force | Out-Null
+            @"
+---
+title: Vendor File
+description: Third party content
+---
+Content
+"@ | Set-Content -Path "$script:ExcludeTestDir/vendor/third-party.md" -Encoding UTF8
+        }
+
+        It 'Excludes files matching multiple patterns' {
+            $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*', '*vendor*')
+            # Should only check docs/include.md
+            $result.TotalFilesChecked | Should -Be 1
+        }
+    }
+
+    Context 'Processes all files when ExcludePaths is empty' {
+        It 'Validates all markdown files without exclusions' {
+            $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @()
+            # Should check all markdown files (docs + tests + vendor)
+            $result.TotalFilesChecked | Should -BeGreaterOrEqual 2
+        }
+    }
+
+    Context 'Pattern matching behavior' {
+        It 'Matches glob pattern with double asterisk for relative paths' {
+            $relativePath = 'tests/fixtures/exclude.md'
+            $pattern = 'tests/**'
+            $relativePath -like $pattern | Should -BeTrue
+        }
+
+        It 'Does not match non-matching patterns' {
+            $relativePath = 'docs/include.md'
+            $pattern = 'tests/**'
+            $relativePath -like $pattern | Should -BeFalse
+        }
+
+        It 'Matches pattern with single asterisk for file names' {
+            $relativePath = 'docs/README.md'
+            $pattern = 'docs/*.md'
+            $relativePath -like $pattern | Should -BeTrue
+        }
+    }
+}
+
+#endregion

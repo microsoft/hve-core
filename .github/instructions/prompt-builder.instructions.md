@@ -119,7 +119,6 @@ Purpose: Self-contained packages that bundle documentation with executable scrip
 
 Characteristics:
 
-* Frontmatter includes `platforms` and `dependencies` for cross-platform support.
 * Bundled with bash and PowerShell scripts in the same directory.
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
@@ -129,11 +128,42 @@ Skill directory structure:
 ```text
 .github/skills/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
-├── <action>.sh                 # Bash script for macOS/Linux
-├── <action>.ps1                # PowerShell script for Windows
+├── scripts/                    # Executable scripts (optional)
+│   ├── <action>.sh             # Bash script for macOS/Linux
+│   └── <action>.ps1            # PowerShell script for Windows
+├── references/                 # Additional documentation (optional)
+│   └── REFERENCE.md            # Detailed technical reference
+├── assets/                     # Static resources (optional)
+│   └── templates/              # Document or configuration templates
 └── examples/
     └── README.md               # Usage examples (recommended)
 ```
+
+### Optional Directories
+
+#### scripts/
+
+Contains executable code that agents run to perform tasks:
+
+* Scripts are self-contained or clearly document dependencies.
+* Include helpful error messages and handle edge cases gracefully.
+* Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
+
+#### references/
+
+Contains additional documentation that agents read when needed:
+
+* *REFERENCE.md* for detailed technical reference material.
+* Domain-specific files such as `finance.md` or `legal.md`.
+* Keep individual reference files focused; agents load these on demand.
+
+#### assets/
+
+Contains static resources:
+
+* Templates for documents or configuration files.
+* Images such as diagrams or examples.
+* Data files such as lookup tables or schemas.
 
 #### Skill Content Structure
 
@@ -148,13 +178,37 @@ Skill files include these sections in order:
 7. **Troubleshooting**: Common issues and solutions.
 8. **Attribution Footer**: Standard footer with attribution.
 
+### Progressive Disclosure
+
+Structure skills for efficient context usage:
+
+1. **Metadata** (~100 tokens): The `name` and `description` frontmatter fields load at startup for all skills.
+2. **Instructions** (<5000 tokens recommended): The full *SKILL.md* body loads when the skill activates.
+3. **Resources** (as needed): Files in `scripts/`, `references/`, or `assets/` load only when required.
+
+Keep the main *SKILL.md* under 500 lines. Move detailed reference material to separate files.
+
+### File References
+
+When referencing other files in the skill, use relative paths from the skill root:
+
+```markdown
+See [the reference guide](references/REFERENCE.md) for details.
+
+Run the extraction script:
+scripts/extract.py
+```
+
+Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
+
 Validation guidelines:
 
 * Include `name` frontmatter matching the skill directory name (required).
 * Include `description` frontmatter (required).
 * Include `maturity` frontmatter (required).
-* Provide parallel script implementations for bash and PowerShell.
+* Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Document prerequisites for each supported platform.
+* Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
 * Additional sections can be added between Parameters Reference and Troubleshooting as needed.
 
 ## Frontmatter Requirements

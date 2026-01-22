@@ -32,7 +32,7 @@ jobs:
       - name: Run Link Language Check
         shell: pwsh
         run: |
-          & scripts/linting/Invoke-LinkLanguageCheck.ps1
+          & scripts/linting/Invoke-LinkLanguageCheck.ps1 -ExcludePaths 'scripts/tests/**'
         continue-on-error: true
 
       - name: Upload results
