@@ -31,18 +31,18 @@ Types MUST be one of the following:
 
 Scopes MUST be one of the following:
 
-- `(docs)`
 - `(prompts)`
 - `(instructions)`
 - `(settings)`
 - `(cloud)`
+- `(data)`
+- `(docs)`
 - `(edge)`
 - `(application)`
 - `(tools)`
 - `(resource-group)`
 - `(security-identity)`
 - `(observability)`
-- `(data)`
 - `(fabric)`
 - `(messaging)`
 - `(vm-host)`

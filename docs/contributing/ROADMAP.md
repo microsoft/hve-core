@@ -13,6 +13,8 @@ keywords:
 estimated_reading_time: 8
 ---
 
+## Overview
+
 HVE Core intends to accelerate Azure solution development over the next 12-18 months by providing optimized GitHub Copilot customizations (agents, instructions, and prompts) that transform AI coding assistants from suggestion engines into reliable engineering partners. The RPI (Research, Plan, Implement) framework remains central to this vision, ensuring AI produces verified, context-aware code rather than plausible-looking hallucinations.
 
 Actual delivery may vary based on contributor availability, community feedback, and evolving AI capabilities.
