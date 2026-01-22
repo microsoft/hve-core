@@ -537,8 +537,8 @@ function Export-ComplianceReport {
         [string]$OutputPath
     )
 
-    # Validate required properties on duck-typed $Report parameter
-    $requiredProperties = @('FilePath', 'LineNumber', 'Status', 'Component', 'Pattern', 'FoundVersion')
+    # Validate required properties on duck-typed $Report parameter (ComplianceReport schema)
+    $requiredProperties = @('ComplianceScore', 'Violations', 'TotalDependencies', 'UnpinnedDependencies', 'Metadata')
     foreach ($prop in $requiredProperties) {
         if ($null -eq $Report.PSObject.Properties[$prop]) {
             throw "Report object missing required property: $prop"
