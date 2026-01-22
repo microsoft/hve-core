@@ -136,18 +136,20 @@ jobs:
 
       - name: Publish pre-release to VS Code Marketplace
         run: |
-          VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+          VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
           echo "📦 Publishing pre-release: $VSIX_FILE"
           vsce publish --packagePath "$VSIX_FILE" --pre-release --azure-credential
 
       - name: Summary
         run: |
-          echo "## 🚀 Pre-Release Extension Published" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Channel:** Pre-Release (ODD minor)" >> $GITHUB_STEP_SUMMARY
-          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Users can install via **Switch to Pre-Release Version** in VS Code." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🚀 Pre-Release Extension Published"
+            echo ""
+            echo "**Version:** ${{ needs.validate-version.outputs.version }}"
+            echo "**Channel:** Pre-Release (ODD minor)"
+            echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}"
+            echo ""
+            echo "Users can install via **Switch to Pre-Release Version** in VS Code."
+            echo ""
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -121,15 +121,17 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         run: |
-          VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+          VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
           echo "📦 Publishing: $VSIX_FILE"
           vsce publish --packagePath "$VSIX_FILE" --azure-credential
 
       - name: Summary
         run: |
-          echo "## 🎉 Extension Published Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🎉 Extension Published Successfully"
+            echo ""
+            echo "**Version:** ${{ needs.package.outputs.version }}"
+            echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}"
+            echo ""
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)"
+          } >> "$GITHUB_STEP_SUMMARY"
