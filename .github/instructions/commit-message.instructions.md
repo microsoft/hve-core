@@ -31,6 +31,7 @@ Types MUST be one of the following:
 
 Scopes MUST be one of the following:
 
+- `(docs)`
 - `(prompts)`
 - `(instructions)`
 - `(settings)`
