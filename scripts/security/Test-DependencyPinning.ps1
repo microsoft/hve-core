@@ -716,81 +716,86 @@ $(if ($Report.UnpinnedDependencies -gt 0) { "⚠️ **Action Required:** $($Repo
     Write-PinningLog "Compliance artifacts prepared for CI/CD consumption" -Level Success
 }
 
-# Main execution
-try {
-    Write-PinningLog "Starting dependency pinning compliance analysis..." -Level Info
-    Write-PinningLog "PowerShell Version: $($PSVersionTable.PSVersion)" -Level Info
-    Write-PinningLog "Platform: $($PSVersionTable.Platform)" -Level Info
+#region Script Entry Point
 
-    # Parse include types and exclude paths
-    $typesToCheck = $IncludeTypes.Split(',') | ForEach-Object { $_.Trim() }
-    $excludePatterns = if ($ExcludePaths) { $ExcludePaths.Split(',') | ForEach-Object { $_.Trim() } } else { @() }
+# Only execute when invoked directly (not dot-sourced)
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Write-PinningLog "Starting dependency pinning compliance analysis..." -Level Info
+        Write-PinningLog "PowerShell Version: $($PSVersionTable.PSVersion)" -Level Info
+        Write-PinningLog "Platform: $($PSVersionTable.Platform)" -Level Info
 
-    Write-PinningLog "Scanning path: $Path" -Level Info
-    Write-PinningLog "Include types: $($typesToCheck -join ', ')" -Level Info
-    if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
+        # Parse include types and exclude paths
+        $typesToCheck = $IncludeTypes.Split(',') | ForEach-Object { $_.Trim() }
+        $excludePatterns = if ($ExcludePaths) { $ExcludePaths.Split(',') | ForEach-Object { $_.Trim() } } else { @() }
 
-    # Discover files to scan
-    $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive
-    Write-PinningLog "Found $($filesToScan.Count) files to scan" -Level Info
+        Write-PinningLog "Scanning path: $Path" -Level Info
+        Write-PinningLog "Include types: $($typesToCheck -join ', ')" -Level Info
+        if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
 
-    # Scan for violations
-    $allViolations = @()
-    foreach ($fileInfo in $filesToScan) {
-        Write-PinningLog "Scanning: $($fileInfo.RelativePath)" -Level Info
-        $violations = Get-DependencyViolation -FileInfo $fileInfo
+        # Discover files to scan
+        $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive
+        Write-PinningLog "Found $($filesToScan.Count) files to scan" -Level Info
 
-        # Add remediation suggestions
-        foreach ($violation in $violations) {
-            $violation.Remediation = Get-RemediationSuggestion -Violation $violation -Remediate:$Remediate
+        # Scan for violations
+        $allViolations = @()
+        foreach ($fileInfo in $filesToScan) {
+            Write-PinningLog "Scanning: $($fileInfo.RelativePath)" -Level Info
+            $violations = Get-DependencyViolation -FileInfo $fileInfo
+
+            # Add remediation suggestions
+            foreach ($violation in $violations) {
+                $violation.Remediation = Get-RemediationSuggestion -Violation $violation -Remediate:$Remediate
+            }
+
+            $allViolations += $violations
         }
 
-        $allViolations += $violations
-    }
+        Write-PinningLog "Found $($allViolations.Count) dependency pinning violations" -Level Info
 
-    Write-PinningLog "Found $($allViolations.Count) dependency pinning violations" -Level Info
+        # Generate compliance report
+        $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
 
-    # Generate compliance report
-    $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
+        # Export report
+        Export-ComplianceReport -Report $report -Format $Format -OutputPath $OutputPath
 
-    # Export report
-    Export-ComplianceReport -Report $report -Format $Format -OutputPath $OutputPath
+        # Export CI/CD artifacts
+        Export-CICDArtifact -Report $report -ReportPath $OutputPath
 
-    # Export CI/CD artifacts
-    Export-CICDArtifact -Report $report -ReportPath $OutputPath
+        # Display summary
+        Write-PinningLog "Compliance Analysis Complete!" -Level Success
+        Write-PinningLog "Compliance Score: $($report.ComplianceScore)%" -Level Info
+        Write-PinningLog "Total Dependencies: $($report.TotalDependencies)" -Level Info
+        Write-PinningLog "Unpinned Dependencies: $($report.UnpinnedDependencies)" -Level Info
 
-    # Display summary
-    Write-PinningLog "Compliance Analysis Complete!" -Level Success
-    Write-PinningLog "Compliance Score: $($report.ComplianceScore)%" -Level Info
-    Write-PinningLog "Total Dependencies: $($report.TotalDependencies)" -Level Info
-    Write-PinningLog "Unpinned Dependencies: $($report.UnpinnedDependencies)" -Level Info
+        if ($report.UnpinnedDependencies -gt 0) {
+            Write-PinningLog "$($report.UnpinnedDependencies) dependencies require SHA pinning for security compliance" -Level Warning
 
-    if ($report.UnpinnedDependencies -gt 0) {
-        Write-PinningLog "$($report.UnpinnedDependencies) dependencies require SHA pinning for security compliance" -Level Warning
+            # Check threshold compliance
+            if ($report.ComplianceScore -lt $Threshold) {
+                Write-PinningLog "Compliance score $($report.ComplianceScore)% is below threshold $Threshold%" -Level Error
 
-        # Check threshold compliance
-        if ($report.ComplianceScore -lt $Threshold) {
-            Write-PinningLog "Compliance score $($report.ComplianceScore)% is below threshold $Threshold%" -Level Error
-            
-            if ($FailOnUnpinned) {
-                Write-PinningLog "Failing build due to compliance threshold violation (-FailOnUnpinned enabled)" -Level Error
-                exit 1
+                if ($FailOnUnpinned) {
+                    Write-PinningLog "Failing build due to compliance threshold violation (-FailOnUnpinned enabled)" -Level Error
+                    exit 1
+                }
+                else {
+                    Write-PinningLog "Threshold violation detected but continuing (soft-fail mode)" -Level Warning
+                }
             }
             else {
-                Write-PinningLog "Threshold violation detected but continuing (soft-fail mode)" -Level Warning
+                Write-PinningLog "Compliance score $($report.ComplianceScore)% meets threshold $Threshold%" -Level Info
             }
         }
         else {
-            Write-PinningLog "Compliance score $($report.ComplianceScore)% meets threshold $Threshold%" -Level Info
+            Write-PinningLog "All dependencies are properly pinned! ✅ (100% compliance, exceeds $Threshold% threshold)" -Level Success
         }
     }
-    else {
-        Write-PinningLog "All dependencies are properly pinned! ✅ (100% compliance, exceeds $Threshold% threshold)" -Level Success
+    catch {
+        Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
+        Write-PinningLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
+        exit 1
     }
+}
 
-}
-catch {
-    Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
-    Write-PinningLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
-    exit 1
-}
+#endregion
