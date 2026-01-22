@@ -1,7 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    . $PSScriptRoot/../lib/Get-VerifiedDownload.ps1
+    . $PSScriptRoot/../../lib/Get-VerifiedDownload.ps1
 }
 
 Describe 'Get-FileHashValue' {
