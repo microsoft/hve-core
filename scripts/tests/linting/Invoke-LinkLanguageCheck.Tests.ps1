@@ -33,14 +33,7 @@ Describe 'Link-Lang-Check.ps1 Invocation' -Tag 'Unit' {
     }
 
     Context 'Normal execution' {
-        BeforeEach {
-            Mock Set-GitHubOutput {} -ModuleName 'LintingHelpers'
-            Mock Set-GitHubEnv {} -ModuleName 'LintingHelpers'
-            Mock Write-GitHubStepSummary {} -ModuleName 'LintingHelpers'
-            Mock Write-GitHubAnnotation {} -ModuleName 'LintingHelpers'
-        }
-
-        It 'Executes without errors when no issues found' {
+        It 'Invoke-LinkLanguageCheck.ps1 exists' {
             $scriptExists = Test-Path $script:ScriptPath
             $scriptExists | Should -BeTrue
         }
@@ -129,9 +122,17 @@ Describe 'GitHub Actions Integration' -Tag 'Unit' {
 
     Context 'GitHub Actions detection' {
         It 'Detects GitHub Actions via GITHUB_ACTIONS env var' {
-            # Scripts check $env:GITHUB_ACTIONS directly
-            $envVarName = 'GITHUB_ACTIONS'
-            $envVarName | Should -Be 'GITHUB_ACTIONS'
+            $originalValue = $env:GITHUB_ACTIONS
+            try {
+                $env:GITHUB_ACTIONS = 'true'
+                $env:GITHUB_ACTIONS | Should -Be 'true'
+
+                $env:GITHUB_ACTIONS = $null
+                $env:GITHUB_ACTIONS | Should -BeNullOrEmpty
+            }
+            finally {
+                $env:GITHUB_ACTIONS = $originalValue
+            }
         }
     }
 }
