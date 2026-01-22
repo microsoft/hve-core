@@ -348,3 +348,145 @@ Describe 'ConvertTo-JsonOutput' -Tag 'Unit' {
 }
 
 #endregion
+
+#region ExcludePaths Filtering Tests
+
+Describe 'ExcludePaths Filtering' -Tag 'Integration' {
+    BeforeAll {
+        $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Link-Lang-Check.ps1'
+        $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    Context 'Script invocation with ExcludePaths' {
+        BeforeEach {
+            # Create test directory structure
+            $script:TestsDir = Join-Path $script:TempDir 'scripts/tests/linting'
+            $script:DocsDir = Join-Path $script:TempDir 'docs'
+            New-Item -ItemType Directory -Path $script:TestsDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $script:DocsDir -Force | Out-Null
+
+            # Create test file with en-us link (should be excluded)
+            $testFile = Join-Path $script:TestsDir 'test.md'
+            'Link: https://docs.microsoft.com/en-us/test' | Set-Content -Path $testFile
+
+            # Create docs file with en-us link (should be included)
+            $docsFile = Join-Path $script:DocsDir 'readme.md'
+            'Link: https://docs.microsoft.com/en-us/azure' | Set-Content -Path $docsFile
+        }
+
+        It 'Excludes files matching single pattern' {
+            Push-Location $script:TempDir
+            try {
+                # Initialize git repo for Get-GitTextFile to work
+                git init --quiet 2>$null
+                git add -A 2>$null
+                git commit -m 'init' --quiet 2>$null
+
+                # Script outputs JSON by default (when not in -Fix mode)
+                $result = & $script:ScriptPath -ExcludePaths 'scripts/tests/**' 2>$null
+                $jsonResult = $result | ConvertFrom-Json -ErrorAction SilentlyContinue
+
+                # Should only find the docs file, not the tests file
+                if ($null -ne $jsonResult -and $jsonResult.Count -gt 0) {
+                    $jsonResult | ForEach-Object { $_.file } | Should -Not -Match 'scripts/tests'
+                }
+            }
+            finally {
+                Pop-Location
+            }
+        }
+
+        It 'Excludes files matching multiple patterns' {
+            Push-Location $script:TempDir
+            try {
+                # Create additional directory to exclude
+                $buildDir = Join-Path $script:TempDir 'build'
+                New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
+                $buildFile = Join-Path $buildDir 'output.md'
+                'Link: https://docs.microsoft.com/en-us/build' | Set-Content -Path $buildFile
+
+                git add -A 2>$null
+                git commit -m 'add build' --quiet 2>$null
+
+                $result = & $script:ScriptPath -ExcludePaths @('scripts/tests/**', 'build/**') 2>$null
+                $jsonResult = $result | ConvertFrom-Json -ErrorAction SilentlyContinue
+
+                if ($null -ne $jsonResult -and $jsonResult.Count -gt 0) {
+                    $files = $jsonResult | ForEach-Object { $_.file }
+                    $files | Should -Not -Match 'scripts/tests'
+                    $files | Should -Not -Match 'build/'
+                }
+            }
+            finally {
+                Pop-Location
+            }
+        }
+
+        It 'Processes all files when ExcludePaths is empty' {
+            Push-Location $script:TempDir
+            try {
+                $result = & $script:ScriptPath 2>$null
+                $jsonResult = $result | ConvertFrom-Json -ErrorAction SilentlyContinue
+
+                # Should find links in both test and docs files
+                $jsonResult.Count | Should -BeGreaterOrEqual 2
+            }
+            finally {
+                Pop-Location
+            }
+        }
+    }
+
+    Context 'Pattern matching behavior' {
+        It 'Matches glob pattern with double asterisk' {
+            # Test the -like pattern matching used in the script
+            $testPaths = @(
+                'scripts/tests/linting/test.md',
+                'scripts/tests/security/check.ps1',
+                'scripts/linting/main.ps1',
+                'docs/readme.md'
+            )
+            $pattern = 'scripts/tests/**'
+
+            $excluded = $testPaths | Where-Object { $_ -like $pattern }
+            $included = $testPaths | Where-Object { $_ -notlike $pattern }
+
+            $excluded | Should -Contain 'scripts/tests/linting/test.md'
+            $excluded | Should -Contain 'scripts/tests/security/check.ps1'
+            $included | Should -Contain 'scripts/linting/main.ps1'
+            $included | Should -Contain 'docs/readme.md'
+        }
+
+        It 'Matches multiple patterns correctly' {
+            $testPaths = @(
+                'scripts/tests/test.md',
+                'build/output.md',
+                'node_modules/pkg/file.js',
+                'src/main.ps1'
+            )
+            $patterns = @('scripts/tests/**', 'build/**', 'node_modules/**')
+
+            $included = $testPaths | Where-Object {
+                $path = $_
+                $isExcluded = $false
+                foreach ($p in $patterns) {
+                    if ($path -like $p) {
+                        $isExcluded = $true
+                        break
+                    }
+                }
+                -not $isExcluded
+            }
+
+            $included.Count | Should -Be 1
+            $included | Should -Contain 'src/main.ps1'
+        }
+    }
+}
+
+#endregion

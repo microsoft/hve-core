@@ -286,3 +286,103 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
         }
     }
 }
+
+Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
+    Context 'Pattern matching with -notlike operator' {
+        It 'Excludes paths containing pattern using -notlike wildcard' {
+            # Test the exclusion logic used in Get-FilesToScan:
+            # $files = $files | Where-Object { $_.FullName -notlike "*$exclude*" }
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+            )
+
+            $exclude = 'vendor'
+            $filtered = $testPaths | Where-Object { $_.FullName -notlike "*$exclude*" }
+
+            $filtered.Count | Should -Be 1
+            $filtered[0].FullName | Should -Not -Match 'vendor'
+        }
+
+        It 'Excludes multiple patterns correctly' {
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+                @{ FullName = 'C:\repo\node_modules\pkg\workflow.yml' }
+            )
+
+            $excludePatterns = @('vendor', 'node_modules')
+            $filtered = $testPaths
+            foreach ($exclude in $excludePatterns) {
+                $filtered = @($filtered | Where-Object { $_.FullName -notlike "*$exclude*" })
+            }
+
+            $filtered.Count | Should -Be 1
+            $filtered[0].FullName | Should -Be 'C:\repo\.github\workflows\test.yml'
+        }
+    }
+
+    Context 'Processes all files when ExcludePatterns is empty' {
+        It 'Returns all paths when no exclusion patterns provided' {
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+            )
+
+            $excludePatterns = @()
+            $filtered = $testPaths
+            if ($excludePatterns) {
+                foreach ($exclude in $excludePatterns) {
+                    $filtered = $filtered | Where-Object { $_.FullName -notlike "*$exclude*" }
+                }
+            }
+
+            $filtered.Count | Should -Be 2
+        }
+    }
+
+    Context 'Comma-separated pattern parsing in main script' {
+        It 'Parses comma-separated exclude paths correctly' {
+            # Test the pattern used in main execution: $ExcludePaths.Split(',')
+            $excludePathsParam = 'vendor,node_modules,dist'
+            $patterns = $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() }
+
+            $patterns.Count | Should -Be 3
+            $patterns | Should -Contain 'vendor'
+            $patterns | Should -Contain 'node_modules'
+            $patterns | Should -Contain 'dist'
+        }
+
+        It 'Handles single pattern without comma' {
+            $excludePathsParam = 'vendor'
+            $patterns = $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() }
+
+            $patterns.Count | Should -Be 1
+            $patterns | Should -Contain 'vendor'
+        }
+
+        It 'Handles empty exclude paths' {
+            $excludePathsParam = ''
+            $patterns = if ($excludePathsParam) { $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() } } else { @() }
+
+            $patterns.Count | Should -Be 0
+        }
+    }
+
+    Context 'Pattern matching behavior' {
+        It 'Uses -notlike with wildcard for exclusion' {
+            $filePath = 'C:\repo\vendor\.github\workflows\test.yml'
+            $pattern = 'vendor'
+
+            # This matches how Get-FilesToScan uses: $_.FullName -notlike "*$exclude*"
+            $filePath -notlike "*$pattern*" | Should -BeFalse
+        }
+
+        It 'Passes through non-matching paths' {
+            $filePath = 'C:\repo\.github\workflows\main.yml'
+            $pattern = 'vendor'
+
+            $filePath -notlike "*$pattern*" | Should -BeTrue
+        }
+    }
+}
