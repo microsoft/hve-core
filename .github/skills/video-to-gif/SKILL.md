@@ -63,11 +63,11 @@ ffmpeg -version
 Convert a video using default settings (10 FPS, 1280px width, sierra2_4a dithering):
 
 ```bash
-./.github/skills/video-to-gif/convert.sh input.mp4
+./.github/skills/video-to-gif/scripts/convert.sh input.mp4
 ```
 
 ```powershell
-./.github/skills/video-to-gif/convert.ps1 -InputPath input.mp4
+./.github/skills/video-to-gif/scripts/convert.ps1 -InputPath input.mp4
 ```
 
 Output saves to `input.gif` by default.
