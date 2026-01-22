@@ -136,6 +136,8 @@ This project is licensed under the [MIT License](./LICENSE).
 
 **Governance:** See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.
 
+**OpenSSF Best Practices:** [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
+
 ## Trademark Notice
 
 > This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
