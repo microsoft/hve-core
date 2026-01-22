@@ -177,7 +177,7 @@ Describe 'Get-LineImpact' {
 
 Describe 'Get-CurrentBranchOrRef' {
     BeforeAll {
-        . $PSScriptRoot/../dev-tools/Generate-PrReference.ps1
+        . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
     }
 
     It 'Returns branch name when on a branch' {

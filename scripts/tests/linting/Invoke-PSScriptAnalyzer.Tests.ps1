@@ -94,6 +94,7 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
     Context 'Module not installed' {
         BeforeEach {
             Mock Get-Module { $null } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
+            Mock Install-Module {} -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Import-Module { throw 'Module not found' } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Write-Error {}
         }

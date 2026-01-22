@@ -90,7 +90,7 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         It 'Returns absolute paths' {
             $result = Get-MarkdownTarget -InputPath $script:TempDir
             if ($result) {
-                $result[0] | Should -Match '^[A-Z]:\\'
+                [System.IO.Path]::IsPathRooted($result[0]) | Should -BeTrue
             }
         }
     }
