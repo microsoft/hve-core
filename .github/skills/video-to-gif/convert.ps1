@@ -142,7 +142,7 @@ function Find-VideoFile {
         }
     }
     catch {
-        # Git not available or not in a repository
+        Write-Verbose "Git not available or not in a repository: $_"
     }
 
     # Add common video directories
@@ -206,7 +206,7 @@ function Test-HDRContent {
         }
     }
     catch {
-        # ffprobe failed, assume SDR
+        Write-Verbose "ffprobe failed, assuming SDR content: $_"
     }
 
     return $false
@@ -230,8 +230,6 @@ function Invoke-SinglePassConversion {
     param(
         [string]$SourcePath,
         [string]$DestinationPath,
-        [int]$FrameRate,
-        [int]$OutputWidth,
         [int]$LoopCount,
         [string]$BaseFilter,
         [double[]]$TimeArgs
@@ -266,8 +264,6 @@ function Invoke-TwoPassConversion {
     param(
         [string]$SourcePath,
         [string]$DestinationPath,
-        [int]$FrameRate,
-        [int]$OutputWidth,
         [string]$DitherAlgorithm,
         [int]$LoopCount,
         [string]$BaseFilter,
@@ -410,8 +406,6 @@ if ($SkipPalette) {
     $success = Invoke-SinglePassConversion `
         -SourcePath $resolvedInput `
         -DestinationPath $OutputPath `
-        -FrameRate $Fps `
-        -OutputWidth $Width `
         -LoopCount $Loop `
         -BaseFilter $baseFilter `
         -TimeArgs $timeArgs
@@ -423,8 +417,6 @@ else {
     $success = Invoke-TwoPassConversion `
         -SourcePath $resolvedInput `
         -DestinationPath $OutputPath `
-        -FrameRate $Fps `
-        -OutputWidth $Width `
         -DitherAlgorithm $Dither `
         -LoopCount $Loop `
         -BaseFilter $baseFilter `
