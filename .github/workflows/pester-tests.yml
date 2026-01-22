@@ -13,9 +13,11 @@ on:
         required: false
         type: boolean
         default: true
-
-permissions:
-  contents: read
+      code-coverage:
+        description: 'Enable code coverage reporting'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   pester:
@@ -23,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write  # Required for Codecov OIDC when enable-code-coverage is true
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.2.2
@@ -97,6 +100,12 @@ jobs:
         run: |
           $params = @{ CI = $true }
           
+          # Enable code coverage if requested
+          $codeCoverage = ('${{ inputs.code-coverage }}' -eq 'true')
+          if ($codeCoverage) {
+            $params['CodeCoverage'] = $true
+          }
+          
           # Use specific test paths if changed-files-only is enabled
           if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:TEST_PATHS) {
             $testPaths = $env:TEST_PATHS -split ';'
@@ -109,6 +118,13 @@ jobs:
           if ($results.FailedCount -gt 0) {
             "PESTER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
+
+          # Output coverage percentage if available
+          if ($codeCoverage -and $results.CodeCoverage) {
+            $coveragePercent = [math]::Round($results.CodeCoverage.CoveragePercent, 2)
+            Write-Host "Code coverage: $coveragePercent%"
+            "coverage=$coveragePercent" >> $env:GITHUB_OUTPUT
+          }
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload test results
@@ -119,6 +135,47 @@ jobs:
           path: logs/pester-results.xml
           retention-days: 30
           if-no-files-found: ignore
+
+      - name: Upload Coverage Report
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: coverage-report
+          path: logs/coverage.xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload to Codecov
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: codecov/codecov-action@0561704f0f02c16a585d4c7555e57fa2e44cf909 # v5.5.2
+        with:
+          files: logs/coverage.xml
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: pester
+          name: pester-coverage
+
+      - name: Coverage Threshold Check
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        shell: pwsh
+        run: |
+          $coverageValue = '${{ steps.pester.outputs.coverage }}'
+          if ([string]::IsNullOrWhiteSpace($coverageValue)) {
+            Write-Warning "Coverage output is empty - skipping threshold check"
+            exit 0
+          }
+          $percentage = [double]$coverageValue
+          $threshold = 18  # Informational baseline
+
+          Write-Host "Coverage: $percentage%"
+          Write-Host "Baseline threshold: $threshold%"
+
+          if ($percentage -lt $threshold) {
+            Write-Warning "Coverage $percentage% is below baseline $threshold% - informational only"
+          } else {
+            Write-Host "Coverage meets or exceeds baseline threshold" -ForegroundColor Green
+          }
 
       - name: Check results
         if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"

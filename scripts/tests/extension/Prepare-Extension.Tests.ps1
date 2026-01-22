@@ -1,7 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    . $PSScriptRoot/../extension/Prepare-Extension.ps1
+    . $PSScriptRoot/../../extension/Prepare-Extension.ps1
     # Check for ConvertFrom-Yaml availability (PowerShell-Yaml module)
     $script:hasYamlSupport = $null -ne (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)
 }

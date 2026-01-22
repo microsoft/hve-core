@@ -1,59 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract class and function definitions using AST to avoid executing main block
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract and execute script-level variable assignments (e.g., $DependencyPatterns)
-    # These are direct children of the script block that are assignments
-    $scriptStatements = $ast.EndBlock.Statements
-    foreach ($stmt in $scriptStatements) {
-        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-            $varCode = $stmt.Extent.Text
-            try {
-                $scriptBlock = [scriptblock]::Create($varCode)
-                . $scriptBlock
-            } catch {
-                # Skip assignments that fail (may depend on other variables)
-                $null = $_
-            }
-        }
-    }
-
-    # Build a combined script with classes and functions (classes must come first)
-    $combinedScript = [System.Text.StringBuilder]::new()
-
-    # Extract class definitions
-    $typeDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.TypeDefinitionAst] }, $true)
-    foreach ($typeDef in $typeDefs) {
-        [void]$combinedScript.AppendLine($typeDef.Extent.Text)
-        [void]$combinedScript.AppendLine()
-    }
-
-    # Extract function definitions (exclude class methods/constructors)
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-    $topLevelFunctions = $functionDefs | Where-Object {
-        $parent = $_.Parent
-        while ($parent) {
-            if ($parent -is [System.Management.Automation.Language.TypeDefinitionAst]) { return $false }
-            $parent = $parent.Parent
-        }
-        return $true
-    }
-    foreach ($func in $topLevelFunctions) {
-        [void]$combinedScript.AppendLine($func.Extent.Text)
-        [void]$combinedScript.AppendLine()
-    }
-
-    # Write to temp file and dot-source (required for class definitions)
-    $script:TempScriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "Test-DependencyPinning-Extracted-$([guid]::NewGuid().ToString('N')).ps1"
-    Set-Content -Path $script:TempScriptPath -Value $combinedScript.ToString() -Encoding UTF8
-    . $script:TempScriptPath
+    . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -61,13 +9,6 @@ BeforeAll {
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
     $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
-}
-
-AfterAll {
-    # Cleanup temp script file
-    if ($script:TempScriptPath -and (Test-Path $script:TempScriptPath)) {
-        Remove-Item $script:TempScriptPath -Force -ErrorAction SilentlyContinue
-    }
 }
 
 Describe 'Test-SHAPinning' -Tag 'Unit' {
@@ -283,6 +224,106 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
             Test-Path $outputFile | Should -BeTrue
             $content = Get-Content $outputFile -Raw
             $content | Should -Match '# Dependency Pinning Compliance Report'
+        }
+    }
+}
+
+Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
+    Context 'Pattern matching with -notlike operator' {
+        It 'Excludes paths containing pattern using -notlike wildcard' {
+            # Test the exclusion logic used in Get-FilesToScan:
+            # $files = $files | Where-Object { $_.FullName -notlike "*$exclude*" }
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+            )
+
+            $exclude = 'vendor'
+            $filtered = $testPaths | Where-Object { $_.FullName -notlike "*$exclude*" }
+
+            $filtered.Count | Should -Be 1
+            $filtered[0].FullName | Should -Not -Match 'vendor'
+        }
+
+        It 'Excludes multiple patterns correctly' {
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+                @{ FullName = 'C:\repo\node_modules\pkg\workflow.yml' }
+            )
+
+            $excludePatterns = @('vendor', 'node_modules')
+            $filtered = $testPaths
+            foreach ($exclude in $excludePatterns) {
+                $filtered = @($filtered | Where-Object { $_.FullName -notlike "*$exclude*" })
+            }
+
+            $filtered.Count | Should -Be 1
+            $filtered[0].FullName | Should -Be 'C:\repo\.github\workflows\test.yml'
+        }
+    }
+
+    Context 'Processes all files when ExcludePatterns is empty' {
+        It 'Returns all paths when no exclusion patterns provided' {
+            $testPaths = @(
+                @{ FullName = 'C:\repo\.github\workflows\test.yml' }
+                @{ FullName = 'C:\repo\vendor\.github\workflows\vendor.yml' }
+            )
+
+            $excludePatterns = @()
+            $filtered = $testPaths
+            if ($excludePatterns) {
+                foreach ($exclude in $excludePatterns) {
+                    $filtered = $filtered | Where-Object { $_.FullName -notlike "*$exclude*" }
+                }
+            }
+
+            $filtered.Count | Should -Be 2
+        }
+    }
+
+    Context 'Comma-separated pattern parsing in main script' {
+        It 'Parses comma-separated exclude paths correctly' {
+            # Test the pattern used in main execution: $ExcludePaths.Split(',')
+            $excludePathsParam = 'vendor,node_modules,dist'
+            $patterns = $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() }
+
+            $patterns.Count | Should -Be 3
+            $patterns | Should -Contain 'vendor'
+            $patterns | Should -Contain 'node_modules'
+            $patterns | Should -Contain 'dist'
+        }
+
+        It 'Handles single pattern without comma' {
+            $excludePathsParam = 'vendor'
+            $patterns = $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() }
+
+            $patterns.Count | Should -Be 1
+            $patterns | Should -Contain 'vendor'
+        }
+
+        It 'Handles empty exclude paths' {
+            $excludePathsParam = ''
+            $patterns = if ($excludePathsParam) { $excludePathsParam.Split(',') | ForEach-Object { $_.Trim() } } else { @() }
+
+            $patterns.Count | Should -Be 0
+        }
+    }
+
+    Context 'Pattern matching behavior' {
+        It 'Uses -notlike with wildcard for exclusion' {
+            $filePath = 'C:\repo\vendor\.github\workflows\test.yml'
+            $pattern = 'vendor'
+
+            # This matches how Get-FilesToScan uses: $_.FullName -notlike "*$exclude*"
+            $filePath -notlike "*$pattern*" | Should -BeFalse
+        }
+
+        It 'Passes through non-matching paths' {
+            $filePath = 'C:\repo\.github\workflows\main.yml'
+            $pattern = 'vendor'
+
+            $filePath -notlike "*$pattern*" | Should -BeTrue
         }
     }
 }

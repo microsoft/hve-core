@@ -45,14 +45,21 @@ if ($CodeCoverage.IsPresent) {
     $configuration.CodeCoverage.Enabled = $true
     $configuration.CodeCoverage.OutputFormat = 'JaCoCo'
     $configuration.CodeCoverage.OutputPath = Join-Path $PSScriptRoot '../../logs/coverage.xml'
-    $configuration.CodeCoverage.Path = @(
-        (Join-Path $PSScriptRoot '../linting/**/*.ps1'),
-        (Join-Path $PSScriptRoot '../linting/**/*.psm1'),
-        (Join-Path $PSScriptRoot '../security/**/*.ps1'),
-        (Join-Path $PSScriptRoot '../dev-tools/**/*.ps1'),
-        (Join-Path $PSScriptRoot '../lib/**/*.ps1'),
-        (Join-Path $PSScriptRoot '../extension/**/*.ps1')
-    )
+
+    # Resolve coverage paths explicitly - Join-Path with wildcards returns literal paths without file system expansion in Pester configuration
+    $scriptRoot = Split-Path $PSScriptRoot -Parent
+    $coverageDirs = @('linting', 'security', 'dev-tools', 'lib', 'extension')
+
+    $coveragePaths = $coverageDirs | ForEach-Object {
+        Get-ChildItem -Path (Join-Path $scriptRoot $_) -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
+    } | Where-Object {
+        $_.FullName -notmatch '\.Tests\.ps1$'
+    } | Select-Object -ExpandProperty FullName
+
+    if ($coveragePaths.Count -gt 0) {
+        $configuration.CodeCoverage.Path = $coveragePaths
+    }
+
     $configuration.CodeCoverage.ExcludeTests = $true
     $configuration.CodeCoverage.CoveragePercentTarget = 70
 }
