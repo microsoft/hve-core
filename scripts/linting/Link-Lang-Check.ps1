@@ -16,6 +16,9 @@
 .PARAMETER Fix
     Fix URLs by removing "en-us/" instead of just reporting them
 
+.PARAMETER ExcludePaths
+    Glob patterns for paths to exclude from checking (e.g., 'scripts/tests/**')
+
 .EXAMPLE
     # Search for URLs containing 'en-us' and output as JSON
     .\Link-Lang-Check.ps1
@@ -42,7 +45,8 @@
 
 [CmdletBinding()]
 param(
-    [switch]$Fix
+    [switch]$Fix,
+    [string[]]$ExcludePaths = @()
 )
 
 function Get-GitTextFile {
@@ -274,6 +278,26 @@ try {
     }
 
     $files = Get-GitTextFile
+
+    # Apply exclusion patterns
+    if ($ExcludePaths.Count -gt 0) {
+        $originalCount = $files.Count
+        $files = $files | Where-Object {
+            $filePath = $_
+            $excluded = $false
+            foreach ($pattern in $ExcludePaths) {
+                if ($filePath -like $pattern) {
+                    $excluded = $true
+                    break
+                }
+            }
+            -not $excluded
+        }
+        if ($Verbose) {
+            $excludedCount = $originalCount - $files.Count
+            Write-Information "Excluded $excludedCount files matching exclusion patterns" -InformationAction Continue
+        }
+    }
 
     if ($Verbose) {
         Write-Information "Found $($files.Count) git-tracked text files" -InformationAction Continue

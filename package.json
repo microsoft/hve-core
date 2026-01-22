@@ -10,7 +10,7 @@
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 \"**/*.md\" --fix",
     "lint:ps": "pwsh -File scripts/linting/Invoke-PSScriptAnalyzer.ps1",
-    "lint:links": "pwsh -File scripts/linting/Invoke-LinkLanguageCheck.ps1",
+    "lint:links": "pwsh -NoProfile -Command \"& scripts/linting/Invoke-LinkLanguageCheck.ps1 -ExcludePaths 'scripts/tests/**'\"",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -Command \"& scripts/linting/Validate-MarkdownFrontmatter.ps1 -WarningsAsErrors -EnableSchemaValidation -ExcludePaths 'scripts/tests/Fixtures/**'\"",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:links && npm run lint:frontmatter",
