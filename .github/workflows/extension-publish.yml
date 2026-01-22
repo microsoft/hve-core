@@ -28,11 +28,6 @@ jobs:
     outputs:
       changelog-path: ${{ steps.create-changelog.outputs.path }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
-        with:
-          egress-policy: audit
-
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -45,11 +40,11 @@ jobs:
             cat > CHANGELOG.md << 'EOF'
           ${{ github.event.release.body }}
           EOF
-            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
+            echo "path=CHANGELOG.md" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "path=" >> $GITHUB_OUTPUT
+            echo "path=" >> "$GITHUB_OUTPUT"
           else
-            echo "path=" >> $GITHUB_OUTPUT
+            echo "path=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload changelog
@@ -66,11 +61,6 @@ jobs:
     outputs:
       version: ${{ steps.normalize.outputs.version }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
-        with:
-          egress-policy: audit
-
       - name: Normalize version string
         id: normalize
         run: |
@@ -81,7 +71,7 @@ jobs:
           fi
           # Strip leading 'v' if present
           VERSION="${VERSION#v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Extension
@@ -103,11 +93,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
-        with:
-          egress-policy: audit
-
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -136,15 +121,17 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         run: |
-          VSIX_FILE=$(ls -t extension/hve-core-*.vsix | head -1)
+          VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
           echo "📦 Publishing: $VSIX_FILE"
           vsce publish --packagePath "$VSIX_FILE" --azure-credential
 
       - name: Summary
         run: |
-          echo "## 🎉 Extension Published Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ needs.package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🎉 Extension Published Successfully"
+            echo ""
+            echo "**Version:** ${{ needs.package.outputs.version }}"
+            echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}"
+            echo ""
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)"
+          } >> "$GITHUB_STEP_SUMMARY"
