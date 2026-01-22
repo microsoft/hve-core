@@ -7,7 +7,9 @@
 # Created: 2025-11-05
 
 [CmdletBinding()]
-param()
+param(
+    [string[]]$ExcludePaths = @()
+)
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
@@ -28,7 +30,11 @@ if (-not (Test-Path $logsDir)) {
 Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
 
 # Run the language check script
-$jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") 2>&1
+$scriptArgs = @{}
+if ($ExcludePaths.Count -gt 0) {
+    $scriptArgs['ExcludePaths'] = $ExcludePaths
+}
+$jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") @scriptArgs 2>&1
 
 try {
     $results = $jsonOutput | ConvertFrom-Json

@@ -80,6 +80,8 @@ This project and everyone participating in it is governed by the
 [Code of Conduct](./CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please see the [Code of Conduct](./CODE_OF_CONDUCT.md) instructions on how to report unacceptable behavior.
 
+For maintainer authority, decision-making processes, and role definitions, see [GOVERNANCE.md](./GOVERNANCE.md).
+
 ## I Have a Question
 
 > If you want to ask a question, we assume that you have read the [README](./README.md) and available documentation in [`.github/`](./.github/).

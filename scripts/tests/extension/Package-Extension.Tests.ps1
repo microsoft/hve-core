@@ -1,7 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    . $PSScriptRoot/../extension/Package-Extension.ps1
+    . $PSScriptRoot/../../extension/Package-Extension.ps1
 }
 
 Describe 'Test-VsceAvailable' {

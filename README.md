@@ -134,6 +134,8 @@ This project is licensed under the [MIT License](./LICENSE).
 
 **Security:** See [SECURITY.md](./SECURITY.md) for security policy and reporting vulnerabilities.
 
+**Governance:** See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.
+
 ## Trademark Notice
 
 > This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft

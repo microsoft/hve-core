@@ -1,0 +1,25 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://example\\.com"
+    }
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^/docs",
+      "replacement": "{{BASEURL}}/docs"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com"],
+      "headers": {
+        "Accept": "text/html"
+      }
+    }
+  ],
+  "timeout": "10s",
+  "retryOn429": true,
+  "retryCount": 2,
+  "aliveStatusCodes": [200, 203]
+}

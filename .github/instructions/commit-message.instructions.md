@@ -35,13 +35,14 @@ Scopes MUST be one of the following:
 - `(instructions)`
 - `(settings)`
 - `(cloud)`
+- `(data)`
+- `(docs)`
 - `(edge)`
 - `(application)`
 - `(tools)`
 - `(resource-group)`
 - `(security-identity)`
 - `(observability)`
-- `(data)`
 - `(fabric)`
 - `(messaging)`
 - `(vm-host)`

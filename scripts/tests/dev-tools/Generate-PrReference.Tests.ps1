@@ -1,7 +1,7 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    . $PSScriptRoot/../dev-tools/Generate-PrReference.ps1
+    . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
 }
 
 Describe 'Test-GitAvailability' {
@@ -109,10 +109,9 @@ Describe 'Get-DiffOutput' {
     }
 
     It 'Excludes markdown when specified' {
-        $withMarkdown = Get-DiffOutput -ComparisonRef 'HEAD~1'
-        # Results may differ if there are .md file changes - just verify both calls work
-        $withMarkdown | Should -Not -BeNullOrEmpty
-        Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeMarkdownDiff | Should -Not -BeNullOrEmpty
+        # Verify the function executes without error when excluding markdown
+        # The result may be empty if only markdown files were changed
+        { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeMarkdownDiff } | Should -Not -Throw
     }
 }
 
@@ -177,7 +176,7 @@ Describe 'Get-LineImpact' {
 
 Describe 'Get-CurrentBranchOrRef' {
     BeforeAll {
-        . $PSScriptRoot/../dev-tools/Generate-PrReference.ps1
+        . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
     }
 
     It 'Returns branch name when on a branch' {
