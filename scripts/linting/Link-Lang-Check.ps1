@@ -108,7 +108,7 @@ function Find-LinksInFile {
     $linksFound = @()
 
     try {
-        $lines = Get-Content -Path $FilePath -Encoding UTF8 -ErrorAction Stop
+        $lines = @(Get-Content -Path $FilePath -Encoding UTF8 -ErrorAction Stop)
     }
     catch {
         Write-Verbose "Could not read $FilePath`: $_"
