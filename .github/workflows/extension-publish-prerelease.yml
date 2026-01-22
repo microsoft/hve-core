@@ -47,7 +47,7 @@ jobs:
           fi
           
           echo "✅ Valid pre-release version: $VERSION (minor=$MINOR is ODD)"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Pre-Release Extension

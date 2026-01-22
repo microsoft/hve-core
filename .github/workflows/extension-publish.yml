@@ -40,11 +40,11 @@ jobs:
             cat > CHANGELOG.md << 'EOF'
           ${{ github.event.release.body }}
           EOF
-            echo "path=CHANGELOG.md" >> $GITHUB_OUTPUT
+            echo "path=CHANGELOG.md" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "path=" >> $GITHUB_OUTPUT
+            echo "path=" >> "$GITHUB_OUTPUT"
           else
-            echo "path=" >> $GITHUB_OUTPUT
+            echo "path=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload changelog
@@ -71,7 +71,7 @@ jobs:
           fi
           # Strip leading 'v' if present
           VERSION="${VERSION#v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Extension
