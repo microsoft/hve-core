@@ -131,10 +131,10 @@ SKILL.md          → skill-frontmatter.schema.json
 
 The validation system provides:
 
-* Typed frontmatter validation provides structured error reporting
-* Pattern-based schema mapping enables automatic file type detection
-* Maturity enforcement ensures artifacts declare stability level
-* Link and language checks validate cross-references
+* Typed frontmatter validation provides structured error reporting.
+* Pattern-based schema mapping enables automatic file type detection.
+* Maturity enforcement ensures artifacts declare stability level.
+* Link and language checks validate cross-references.
 
 Run `npm run lint:frontmatter` locally before committing changes.
 

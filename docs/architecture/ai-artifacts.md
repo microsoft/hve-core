@@ -1,7 +1,7 @@
 ---
 title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
-author: WilliamBerryiii
+author: Microsoft
 ms.date: 2026-01-22
 ms.topic: concept
 ---
@@ -149,10 +149,10 @@ graph LR
 
 **Flow mechanics:**
 
-1. User invokes a prompt through `/prompt` commands or workflow triggers
-2. Prompt references an agent via `agent:` frontmatter, delegating execution
-3. Agent executes with instructions auto-applied based on file context
-4. Agent invokes skills for specialized utilities with executable scripts
+1. User invokes a prompt through `/prompt` commands or workflow triggers.
+2. Prompt references an agent via `agent:` frontmatter, delegating execution.
+3. Agent executes with instructions auto-applied based on file context.
+4. Agent invokes skills for specialized utilities with executable scripts.
 
 This delegation model separates concerns. Prompts handle user interaction, agents manage orchestration, and instructions provide standards.
 
@@ -228,9 +228,9 @@ Instructions activate based on the current file's path matching `applyTo:` patte
 
 The extension provides these contribution points:
 
-* **Prompt commands**: `/prompt <name>` invokes prompts by filename
-* **Agent activation**: Agents activate through prompt references or direct invocation
-* **Instruction injection**: Matching instructions inject into Copilot context automatically
+* `/prompt <name>` invokes prompts by filename.
+* Agents activate through prompt references or direct invocation.
+* Matching instructions inject into Copilot context automatically.
 
 ## Related Documentation
 
