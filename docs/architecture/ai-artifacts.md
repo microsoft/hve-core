@@ -1,6 +1,7 @@
 ---
 title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
+author: WilliamBerryiii
 ms.date: 2026-01-22
 ms.topic: concept
 ---

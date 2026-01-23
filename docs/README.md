@@ -1,6 +1,7 @@
 ---
 title: HVE Core Documentation
 description: Documentation index for HVE Core Copilot customizations
+author: WilliamBerryiii
 ms.date: 2026-01-22
 ms.topic: overview
 ---

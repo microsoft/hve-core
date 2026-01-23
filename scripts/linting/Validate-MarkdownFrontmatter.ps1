@@ -799,7 +799,10 @@ function Get-FileTypeInfo {
         ($File.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'README.md'))
     $info.IsDevContainer = $File.DirectoryName -like "*.devcontainer*" -and $File.Name -eq 'README.md'
     $info.IsVSCodeReadme = $File.DirectoryName -like "*.vscode*" -and $File.Name -eq 'README.md'
-    $info.IsDocsFile = $File.DirectoryName -like "*docs*" -and -not $info.IsGitHub
+    # Exclude .copilot-tracking (gitignored workflow artifacts) and GitHub templates from docs validation
+    $isCopilotTracking = $File.DirectoryName -like "*.copilot-tracking*"
+    $isTemplate = $File.Name -like "*TEMPLATE*"
+    $info.IsDocsFile = $File.DirectoryName -like "*docs*" -and -not $info.IsGitHub -and -not $isCopilotTracking -and -not $isTemplate
 
     return $info
 }
@@ -1273,8 +1276,8 @@ function Test-FrontmatterValidation {
                 }
 
                 # Manual validation enforces critical rules (fails builds); schema validation above provides comprehensive advisory feedback (soft mode).
-                $isDocsFile = $file.DirectoryName -like "*docs*" -and -not $isGitHubLocal
-                if ($isDocsFile) {
+                # Use $fileTypeInfo.IsDocsFile which is calculated correctly for each file
+                if ($fileTypeInfo.IsDocsFile) {
                     # Documentation files should have comprehensive frontmatter
                     $requiredDocsFields = @('title', 'description')
                     $suggestedDocsFields = @('author', 'ms.date', 'ms.topic')
