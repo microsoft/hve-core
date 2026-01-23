@@ -198,7 +198,7 @@ Skills provide self-contained utilities through the `SKILL.md` file:
     └── README.md
 ```
 
-Agents reference skills by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
+Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
 ## Extension Integration
 

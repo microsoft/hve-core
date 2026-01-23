@@ -106,7 +106,7 @@ HVE Core provides a structured approach to prompt engineering with four artifact
 |----------|---------|------------|
 | **Instructions** | Passive reference guidance applied by file pattern | Automatic via `applyTo` glob |
 | **Prompts** | Task-specific procedures with input variables | Manual via `/` command |
-| **Agents** | Specialized personas with tool access and constraints | Manual via `@` mention |
+| **Agents** | Specialized personas with tool access and constraints | Manual via agent picker |
 | **Skills** | Executable utilities with cross-platform scripts | Read by Copilot on demand |
 
 **Key capabilities:**
@@ -116,7 +116,7 @@ HVE Core provides a structured approach to prompt engineering with four artifact
 * Subagent delegation provides a first-class pattern for tool-heavy work via `runSubagent`
 * Maturity lifecycle follows a four-stage model (`experimental` → `preview` → `stable` → `deprecated`)
 
-Use the `@prompt-builder` agent to create new artifacts following these patterns.
+Use the `prompt-builder` agent to create new artifacts following these patterns.
 
 ## Enterprise Validation Pipeline
 
