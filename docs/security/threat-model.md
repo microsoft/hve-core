@@ -34,6 +34,21 @@ The repository contains no runtime services, databases, or user data storage. Pr
 | Vulnerability Management | Strong  | 3 controls    | 100%      |
 | Total                    | **18+** | **18**        | **100%**  |
 
+## Contents
+
+- [System Description](#system-description)
+- [Trust Boundaries](#trust-boundaries)
+- [Threat Model](#threat-model)
+  - [STRIDE Threats](#stride-threats)
+  - [Dev Container Threats](#dev-container-threats)
+  - [AI-Specific Threats](#ai-specific-threats)
+  - [Responsible AI Threats](#responsible-ai-threats)
+- [Security Controls](#security-controls)
+- [Assurance Argument](#assurance-argument)
+- [MCP Server Trust Analysis](#mcp-server-trust-analysis)
+- [Quantitative Security Metrics](#quantitative-security-metrics)
+- [References](#references)
+
 ## System Description
 
 ### Components
@@ -135,11 +150,12 @@ HVE Core artifacts are consumed by GitHub Copilot, which provides foundational s
 
 ### Boundary Descriptions
 
-| Boundary              | Assets Protected                       | Controls Enforced                        |
-|-----------------------|----------------------------------------|------------------------------------------|
-| Repository Contents   | Source code, prompts, scripts          | CODEOWNERS, branch protection, PR review |
-| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, SHA pinning         |
-| External Dependencies | npm packages, Actions, MCP servers     | Dependency review, staleness monitoring  |
+| Boundary              | Assets Protected                       | Controls Enforced                         |
+|-----------------------|----------------------------------------|-------------------------------------------|
+| Repository Contents   | Source code, prompts, scripts          | CODEOWNERS, branch protection, PR review  |
+| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, SHA pinning          |
+| External Dependencies | npm packages, Actions, MCP servers     | Dependency review, staleness monitoring   |
+| Dev Container         | Development environment, tooling       | SHA256 verification, first-party features |
 
 ## Threat Model
 
@@ -289,6 +305,49 @@ This section documents threats using STRIDE methodology (Spoofing, Tampering, Re
 | **Mitigations**   | Branch protection rules, audit logging, "Do not allow bypassing" |
 | **Residual Risk** | Low                                                              |
 | **Status**        | Mitigated                                                        |
+
+### Dev Container Threats
+
+These threats address risks in the development container configuration used for Codespaces and local container development.
+
+#### DC-1: Feature Tag Substitution Attack
+
+| Field             | Value                                                                    |
+|-------------------|--------------------------------------------------------------------------|
+| **Category**      | Spoofing                                                                 |
+| **Asset**         | Dev container configuration                                              |
+| **Threat**        | Malicious update to a feature version tag introduces compromised tooling |
+| **Likelihood**    | Low (first-party Microsoft features only)                                |
+| **Impact**        | Medium (development environment compromise)                              |
+| **Mitigations**   | First-party features only, PR review of devcontainer.json changes        |
+| **Residual Risk** | Low (Microsoft-maintained features with release controls)                |
+| **Status**        | Mitigated                                                                |
+
+#### DC-2: Lifecycle Script Tampering
+
+| Field             | Value                                                           |
+|-------------------|-----------------------------------------------------------------|
+| **Category**      | Tampering                                                       |
+| **Asset**         | Container initialization scripts                                |
+| **Threat**        | Attacker modifies on-create.sh or post-create.sh to inject code |
+| **Likelihood**    | Low (requires PR approval, CODEOWNERS protection)               |
+| **Impact**        | High (arbitrary code execution in dev environment)              |
+| **Mitigations**   | CODEOWNERS, PR review, branch protection                        |
+| **Residual Risk** | Low                                                             |
+| **Status**        | Mitigated                                                       |
+
+#### DC-3: External Binary Download Compromise
+
+| Field             | Value                                                       |
+|-------------------|-------------------------------------------------------------|
+| **Category**      | Spoofing                                                    |
+| **Asset**         | External tools (gitleaks, shellcheck)                       |
+| **Threat**        | Compromised download source serves malicious binary         |
+| **Likelihood**    | Very Low (SHA256 verification enforced)                     |
+| **Impact**        | High (malicious tooling in dev environment)                 |
+| **Mitigations**   | SHA256 checksum verification in on-create.sh                |
+| **Residual Risk** | Very Low (cryptographic verification prevents substitution) |
+| **Status**        | Mitigated                                                   |
 
 ### AI-Specific Threats
 
