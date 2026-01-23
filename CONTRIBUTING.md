@@ -53,7 +53,7 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Required Tools](#required-tools)
   - [Validation Commands](#validation-commands)
   - [Development Environment](#development-environment)
-  - [Code of Conduct](#code-of-conduct)
+- [Code of Conduct](#code-of-conduct)
   - [I Have a Question](#i-have-a-question)
   - [I Want To Contribute](#i-want-to-contribute)
     - [Reporting Bugs](#reporting-bugs)
@@ -67,6 +67,11 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Style Guides](#style-guides)
     - [Local Development Setup](#local-development-setup)
     - [Coding Conventions](#coding-conventions)
+  - [Testing Requirements](#testing-requirements)
+    - [Requirements for New Code](#requirements-for-new-code)
+    - [Test Conventions](#test-conventions)
+    - [Running Tests Locally](#running-tests-locally)
+    - [Automated Validation](#automated-validation)
   - [Release Process](#release-process)
     - [How Releases Work](#how-releases-work)
     - [Version Determination](#version-determination)
@@ -196,6 +201,36 @@ Refer to the [DevContainer README](./.devcontainer/README.md) for detailed infor
 - Use consistent formatting as enforced by markdownlint
 - Run spell checking before committing changes
 - Format tables using the markdown-table-formatter tool
+
+## Testing Requirements
+
+New functionality MUST include tests. This policy ensures code quality and prevents regressions.
+
+### Requirements for New Code
+
+- All new PowerShell scripts require corresponding test files
+- Test coverage for new code should meet the 70% target
+- Tests must pass locally before submitting a PR
+
+### Test Conventions
+
+| Item      | Convention                                            |
+|-----------|-------------------------------------------------------|
+| Location  | `scripts/tests/` (mirrors source directory structure) |
+| Naming    | `*.Tests.ps1` suffix matching source script name      |
+| Framework | Pester 5.x                                            |
+
+### Running Tests Locally
+
+```bash
+npm run test:ps
+```
+
+### Automated Validation
+
+All PRs run Pester tests automatically via GitHub Actions. Tests must pass before merge.
+
+For detailed testing documentation, see [Testing Architecture](./docs/architecture/testing.md).
 
 ## Release Process
 
