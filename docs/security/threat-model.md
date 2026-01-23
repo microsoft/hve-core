@@ -77,29 +77,36 @@ HVE Core contains four primary component categories:
 
 ### Data Flow
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Developer Workstation                            │
-│  ┌────────────────┐    ┌────────────────┐    ┌─────────────────────────┐   │
-│  │  VS Code IDE   │───▶│ GitHub Copilot │───▶│ HVE Core Artifacts      │   │
-│  │                │    │   Extension    │    │ (.instructions.md, etc) │   │
-│  └────────────────┘    └────────────────┘    └─────────────────────────┘   │
-│                               │                          │                  │
-│                               ▼                          ▼                  │
-│                        ┌────────────┐           ┌─────────────────┐        │
-│                        │ MCP Server │           │ Local Scripts   │        │
-│                        │ (optional) │           │ (PowerShell)    │        │
-│                        └────────────┘           └─────────────────┘        │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           GitHub Platform                                   │
-│  ┌────────────────┐    ┌────────────────┐    ┌─────────────────────────┐   │
-│  │  Pull Request  │───▶│ GitHub Actions │───▶│ Security Scanning       │   │
-│  │                │    │   Runners      │    │ (CodeQL, Dep Review)    │   │
-│  └────────────────┘    └────────────────┘    └─────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph DEV["Developer Workstation"]
+        ARTIFACTS["HVE Core Artifacts<br/>(.instructions.md, .prompt.md, etc)"]
+        IDE["VS Code IDE"]
+        COPILOT["GitHub Copilot Extension"]
+        LOCALMCP["Local MCP Servers<br/>(optional)"]
+        SCRIPTS["Local Scripts<br/>(PowerShell)"]
+        DEVCON["Dev Container<br/>(optional)"]
+    end
+
+    subgraph GITHUB["GitHub Platform (Network Boundary)"]
+        LLMAPI["LLM API Service"]
+        REMOTEMCP["GitHub MCP Server"]
+        REPO["Repository"]
+        ACTIONS["GitHub Actions Runners"]
+        SCANNING["Security Scanning<br/>(CodeQL, Dep Review)"]
+    end
+
+    ARTIFACTS -->|"read into context"| COPILOT
+    IDE --> COPILOT
+    COPILOT -->|"prompts + context (HTTPS)"| LLMAPI
+    LLMAPI -->|"suggestions"| COPILOT
+    COPILOT <-->|"tool calls"| LOCALMCP
+    COPILOT <-->|"tool calls (HTTPS)"| REMOTEMCP
+    DEVCON -.->|"contains"| IDE
+    DEVCON -.->|"contains"| SCRIPTS
+    DEV -->|"git push"| REPO
+    REPO -->|"triggers"| ACTIONS
+    ACTIONS --> SCANNING
 ```
 
 ### Security Inheritance from GitHub Copilot
