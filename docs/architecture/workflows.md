@@ -39,10 +39,6 @@ flowchart TD
         DISPATCH[Manual Trigger] --> PUB[extension-publish.yml]
         PUB --> VSCE[Publish to Marketplace]
     end
-
-    PR --> MAIN
-    MAIN --> SCHED
-    SCHED --> MANUAL
 ```
 
 ## Workflow Inventory

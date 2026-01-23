@@ -94,7 +94,7 @@ Get started with RPI:
 |--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
 | Agents       | 18    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
 | Instructions | 17+   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
-| Prompts      | 19    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
+| Prompts      | 18    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
 | Skills       | 1     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
 | Scripts      | —     | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
