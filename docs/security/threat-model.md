@@ -166,7 +166,7 @@ HVE Core artifacts are consumed by GitHub Copilot, which provides foundational s
 
 ## Threat Model
 
-This section documents threats using STRIDE methodology (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), supplemented with AI-specific and Responsible AI threat categories.
+This section documents threats using [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) methodology (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), supplemented with AI-specific and Responsible AI threat categories.
 
 ### STRIDE Threats
 
@@ -237,16 +237,16 @@ This section documents threats using STRIDE methodology (Spoofing, Tampering, Re
 
 #### I-1: Secret Exposure in Logs or Artifacts
 
-| Field             | Value                                                          |
-|-------------------|----------------------------------------------------------------|
-| **Category**      | Information Disclosure                                         |
-| **Asset**         | Repository secrets, tokens                                     |
-| **Threat**        | Secrets accidentally logged or included in build artifacts     |
-| **Likelihood**    | Low (minimal secret usage)                                     |
-| **Impact**        | High (credential compromise)                                   |
-| **Mitigations**   | GitHub secret masking, gitleaks scanning, minimal secret usage |
-| **Residual Risk** | Low                                                            |
-| **Status**        | Mitigated                                                      |
+| Field             | Value                                                               |
+|-------------------|---------------------------------------------------------------------|
+| **Category**      | Information Disclosure                                              |
+| **Asset**         | Repository secrets, tokens                                          |
+| **Threat**        | Secrets accidentally logged or included in build artifacts          |
+| **Likelihood**    | Low (minimal secret usage)                                          |
+| **Impact**        | High (credential compromise)                                        |
+| **Mitigations**   | GitHub secret masking, GitHub secret scanning, minimal secret usage |
+| **Residual Risk** | Low                                                                 |
+| **Status**        | Mitigated                                                           |
 
 #### I-2: Sensitive Information in Prompt Artifacts
 
@@ -257,7 +257,7 @@ This section documents threats using STRIDE methodology (Spoofing, Tampering, Re
 | **Threat**        | Internal URLs, API keys, or proprietary patterns exposed in prompts |
 | **Likelihood**    | Low (review process catches obvious cases)                          |
 | **Impact**        | Medium (information leakage)                                        |
-| **Mitigations**   | PR review, gitleaks, documentation guidelines                       |
+| **Mitigations**   | PR review, GitHub secret scanning, documentation guidelines         |
 | **Residual Risk** | Low                                                                 |
 | **Status**        | Mitigated                                                           |
 
@@ -358,7 +358,7 @@ These threats address risks in the development container configuration used for 
 
 ### AI-Specific Threats
 
-These threats address risks specific to AI/ML systems as documented by OWASP LLM Top 10 and MITRE ATLAS.
+These threats address risks specific to AI/ML systems as documented by [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/) and [MITRE ATLAS](https://atlas.mitre.org/).
 
 #### AI-1: Prompt Injection via Artifact Content
 
@@ -726,7 +726,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 | ID   | Control                         | Implementation             | Validates Against |
 |------|---------------------------------|----------------------------|-------------------|
 | VM-1 | Coordinated Disclosure          | SECURITY.md                | I-1               |
-| VM-2 | Secret Scanning                 | gitleaks, GitHub native    | I-1, I-2          |
+| VM-2 | Secret Scanning                 | GitHub native              | I-1, I-2          |
 | VM-3 | Credential Persistence Disabled | persist-credentials: false | I-1, E-1          |
 
 ## Assurance Argument
@@ -777,13 +777,17 @@ HVE Core achieves acceptable security through:
 
 HVE Core documents integrations with Model Context Protocol servers. This section analyzes the trust posture of each server.
 
+> [!NOTE]
+> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE-Core development experience. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
+
 ### Server Summary
 
-| Server           | Provider  | Classification | Trust Level | Data Flow Risk |
-|------------------|-----------|----------------|-------------|----------------|
-| GitHub MCP       | GitHub    | First-party    | High        | Low            |
-| Azure DevOps MCP | Microsoft | First-party    | High        | Low            |
-| Context7 MCP     | Upstash   | Third-party    | Medium      | Medium         |
+| Server             | Provider  | Classification | Trust Level | Data Flow Risk | Default |
+|--------------------|-----------|----------------|-------------|----------------|---------|
+| GitHub MCP         | GitHub    | First-party    | High        | Low            | Yes     |
+| Azure DevOps MCP   | Microsoft | First-party    | High        | Low            | No      |
+| Microsoft Docs MCP | Microsoft | First-party    | High        | Low            | No      |
+| Context7 MCP       | Upstash   | Third-party    | Medium      | Medium         | No      |
 
 ### GitHub MCP Server
 
@@ -809,6 +813,18 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 | **Audit**          | Azure DevOps audit log                                |
 | **Recommendation** | Low risk; standard Microsoft security practices apply |
 
+### Microsoft Docs MCP Server
+
+| Attribute          | Assessment                                                      |
+|--------------------|-----------------------------------------------------------------|
+| **Operator**       | Microsoft                                                       |
+| **Deployment**     | Remote (learn.microsoft.com API)                                |
+| **Authentication** | None required (public documentation)                            |
+| **Authorization**  | Rate limiting only                                              |
+| **Data Handling**  | Read-only queries; no user data transmitted beyond search terms |
+| **Audit**          | Standard Microsoft API logging                                  |
+| **Recommendation** | Low risk; queries limited to public documentation               |
+
 ### Context7 MCP Server
 
 | Attribute          | Assessment                                                   |
@@ -823,7 +839,7 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Trust Recommendations
 
-1. **First-party servers (GitHub, Azure DevOps)**: Enable by default with organization policy controls
+1. **First-party servers (GitHub, Azure DevOps, Microsoft Docs)**: Enable with organization policy controls; GitHub MCP is enabled by default
 2. **Third-party servers (Context7)**: Evaluate data flow, use API key rotation, review Upstash trust center
 
 ## Quantitative Security Metrics
@@ -868,6 +884,6 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 - [OpenSSF Best Practices Silver Criteria](https://www.bestpractices.dev/en/criteria/1)
 - [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 - [MITRE ATLAS](https://atlas.mitre.org/)
-- [Microsoft Responsible AI Standard](https://www.microsoft.com/en-us/ai/responsible-ai)
-- [STRIDE Threat Model](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats)
+- [Microsoft Responsible AI Standard](https://www.microsoft.com/ai/responsible-ai)
+- [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
 - [GitHub Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
