@@ -1,6 +1,6 @@
 ---
 title: Security Assurance Case and Threat Model
-description: Comprehensive threat model and security assurance documentation for OpenSSF Silver badge compliance
+description: Comprehensive threat model and security assurance documentation demonstrating enterprise security practices
 author: Microsoft
 ms.date: 2026-01-23
 ms.topic: reference
@@ -8,7 +8,7 @@ keywords:
   - security
   - threat model
   - STRIDE
-  - OSSF
+  - defense-in-depth
   - assurance case
 estimated_reading_time: 25
 ---

@@ -13,7 +13,7 @@ estimated_reading_time: 2
 
 ## Overview
 
-This directory contains security documentation for HVE Core, supporting OpenSSF Best Practices Silver badge compliance.
+This directory contains security documentation for HVE Core, demonstrating defense-in-depth security practices.
 
 ## Documents
 
