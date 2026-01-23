@@ -67,12 +67,6 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [ado-wit-discovery.instructions.md](ado-wit-discovery.instructions.md) | `**/.copilot-tracking/workitems/discovery/**` | Work item discovery protocol |
 | [ado-wit-planning.instructions.md](ado-wit-planning.instructions.md) | `**/.copilot-tracking/workitems/**` | Work item planning specifications |
 
-### Task Implementation
-
-| File | Applies To | Purpose |
-| ---- | ---------- | ------- |
-| [task-implementation.instructions.md](task-implementation.instructions.md) | `**/.copilot-tracking/changes/*.md` | Task plan implementation with tracking |
-
 ## XML-Style Blocks
 
 Instructions use XML-style comment blocks for structured content:
@@ -125,7 +119,6 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 ├── markdown.instructions.md
 ├── prompt-builder.instructions.md
 ├── python-script.instructions.md
-├── task-implementation.instructions.md
 ├── uv-projects.instructions.md
 ├── writing-style.instructions.md
 └── README.md

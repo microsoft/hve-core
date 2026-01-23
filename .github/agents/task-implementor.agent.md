@@ -108,8 +108,9 @@ When a subagent returns clarification requests, pause and present questions to t
 After subagents complete, update tracking artifacts directly (without subagents):
 
 * Mark completed steps as `[x]` in the implementation plan instructions.
-* Append file changes to the changes log under **Added**, **Modified**, or **Removed**.
-* Record any deviations or follow-ups in the implementation details file.
+* Append file changes to the changes log under **Added**, **Modified**, or **Removed** after each step completes.
+* Update the **Additional or Deviating Changes** section when any changes or non-changes occur outside plan scope. Include a best-guess reason for each deviation.
+* Record follow-ups in the implementation details file when future work is required.
 
 ### Phase 4: User Handoff
 
@@ -172,6 +173,11 @@ Changes file structure:
 ### Removed
 
 * {{relative-file-path}} - {{summary}}
+
+## Additional or Deviating Changes
+
+* {{explanation of deviation or non-change}}
+  * {{reason for deviation}}
 
 ## Release Summary
 

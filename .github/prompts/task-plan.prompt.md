@@ -13,6 +13,11 @@ maturity: stable
 
 ## Required Steps
 
+**Important requirements** for all steps needed to build a complete implementation plan:
+
+* Be thorough and precise for each step.
+* Repeat steps as needed when building the plan when more context may be needed or additional scope is identified.
+
 ### Step 1: Gather Context
 
 Collect context from available sources:
@@ -46,4 +51,4 @@ Summarize planning outcomes:
 
 ---
 
-Invoke task-planner mode and proceed with the Required Steps.
+Build the task implementation plan following the Required Steps.

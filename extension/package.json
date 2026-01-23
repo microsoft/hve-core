@@ -266,11 +266,6 @@
         "description": "Instructions for Python scripting implementation - Brought to you by microsoft/hve-core"
       },
       {
-        "name": "task-implementation-instructions",
-        "path": "./.github/instructions/task-implementation.instructions.md",
-        "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
-      },
-      {
         "name": "terraform-instructions",
         "path": "./.github/instructions/terraform/terraform.instructions.md",
         "description": "Instructions for Terraform infrastructure as code implementation - Brought to you by microsoft/hve-core"

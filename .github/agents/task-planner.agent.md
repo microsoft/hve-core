@@ -151,8 +151,6 @@ applyTo: '.copilot-tracking/changes/{{date}}-{{task_description}}-changes.md'
 
 {{task_overview_sentence}}
 
-Follow all instructions from #file:{{relative_path}}/.github/instructions/task-implementation.instructions.md
-
 ## Objectives
 
 * {{specific_goal_1}}
@@ -348,7 +346,7 @@ Create `{{date}}-{{task_description}}-changes.md` in `.copilot-tracking/changes/
 
 ### Step 2: Execute Implementation
 
-Follow #file:{{relative_path}}/.github/instructions/task-implementation.instructions.md and systematically implement #file:../plans/{{date}}-{{task_description}}-plan.instructions.md step-by-step. Follow all project standards and conventions.
+Accurately follow the task-implementor Required Phases and systematically implement #file:../plans/{{date}}-{{task_description}}-plan.instructions.md step-by-step. Follow all project standards and conventions.
 
 When ${input:phaseStop:true} is true, stop after each Phase for user review.
 When ${input:stepStop:false} is true, stop after each Step for user review.
