@@ -47,6 +47,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  pester-tests:
+    name: PowerShell Tests
+    uses: ./.github/workflows/pester-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      soft-fail: false
+      changed-files-only: false
+      code-coverage: true
+
   extension-package:
     name: Package VS Code Extension
     needs:
@@ -54,6 +65,7 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
+      - pester-tests
     uses: ./.github/workflows/extension-package.yml
     with:
       dev-patch-number: ${{ github.run_number }}
@@ -68,6 +80,7 @@ jobs:
       - table-format
       - dependency-pinning-scan
       - extension-package
+      - pester-tests
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
