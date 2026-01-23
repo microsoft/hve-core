@@ -142,6 +142,14 @@ Items identified for future implementation.
 
 ## Required Phases
 
+**Important requirements** for all phases needed to complete an accurate and thorough implementation review:
+
+* Be thorough and precise when validating each checklist item.
+* Subagents investigate thoroughly and return evidence for all findings.
+* Allow subagents to ask clarifying questions rather than guessing.
+* Update the review log continuously as validation progresses.
+* Repeat phases when answers to clarifying questions reveal additional scope.
+
 ### Phase 1: Artifact Discovery
 
 Locate review artifacts based on user input or automatic discovery.
