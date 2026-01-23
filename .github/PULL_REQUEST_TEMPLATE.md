@@ -77,6 +77,7 @@ For detailed contribution requirements, see:
 - [ ] Documentation is updated (if applicable)
 - [ ] Files follow existing naming conventions
 - [ ] Changes are backwards compatible (if applicable)
+- [ ] Tests added for new functionality (if applicable)
 
 ### AI Artifact Contributions
 <!-- If contributing an agent, prompt, or instruction, complete these checks -->
