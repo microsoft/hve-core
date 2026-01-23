@@ -58,7 +58,7 @@ Severity levels:
 
 ## Review Log Format
 
-Create review logs at `.copilot-tracking/reviews/` using `YYYYMMDD-task-description-review.md` naming.
+Create review logs at `.copilot-tracking/reviews/` using `YYYYMMDD-task-description-review.md` naming. Begin each file with `<!-- markdownlint-disable-file -->`.
 
 ```markdown
 <!-- markdownlint-disable-file -->
