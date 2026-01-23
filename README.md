@@ -96,7 +96,7 @@ Get started with RPI:
 | Instructions | 17+   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | 18    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
 | Skills       | 1     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
-| Scripts      | —     | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
+| Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Prompt Engineering Framework
 
@@ -111,10 +111,10 @@ HVE Core provides a structured approach to prompt engineering with four artifact
 
 **Key capabilities:**
 
-* **Protocol patterns** - Step-based (sequential) and phase-based (conversational) workflow formats
-* **Input variables** - `${input:variableName}` syntax with defaults and VS Code integration
-* **Subagent delegation** - First-class pattern for tool-heavy work via `runSubagent`
-* **Maturity lifecycle** - Four-stage model (`experimental` → `preview` → `stable` → `deprecated`)
+* Protocol patterns support step-based (sequential) and phase-based (conversational) workflow formats
+* Input variables use `${input:variableName}` syntax with defaults and VS Code integration
+* Subagent delegation provides a first-class pattern for tool-heavy work via `runSubagent`
+* Maturity lifecycle follows a four-stage model (`experimental` → `preview` → `stable` → `deprecated`)
 
 Use the `@prompt-builder` agent to create new artifacts following these patterns.
 
@@ -131,10 +131,10 @@ SKILL.md          → skill-frontmatter.schema.json
 
 The validation system provides:
 
-* **Typed frontmatter validation** with structured error reporting
-* **Pattern-based schema mapping** for automatic file type detection
-* **Maturity enforcement** ensuring artifacts declare stability level
-* **Link and language checks** validating cross-references
+* Typed frontmatter validation provides structured error reporting
+* Pattern-based schema mapping enables automatic file type detection
+* Maturity enforcement ensures artifacts declare stability level
+* Link and language checks validate cross-references
 
 Run `npm run lint:frontmatter` locally before committing changes.
 

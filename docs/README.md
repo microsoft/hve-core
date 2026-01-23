@@ -51,7 +51,7 @@ HVE Core provides a structured approach to building AI artifacts with protocol p
 
 * [Prompt Builder Agent](../.github/agents/prompt-builder.agent.md) - Interactive artifact creation with sandbox testing
 * [AI Artifacts Overview](contributing/ai-artifacts-common.md) - Common patterns across artifact types
-* [Protocol Patterns](architecture/ai-artifacts.md#activation-context) - Step-based vs phase-based workflows
+* [Activation Context](architecture/ai-artifacts.md#activation-context) - When artifacts activate within workflows
 
 Key differentiators:
 

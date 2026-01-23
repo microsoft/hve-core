@@ -149,10 +149,10 @@ graph LR
 
 **Flow mechanics:**
 
-1. **User → Prompt**: User invokes a prompt through `/prompt` commands or workflow triggers
-2. **Prompt → Agent**: Prompt references an agent via `agent:` frontmatter, delegating execution
-3. **Agent → Instructions**: Agent executes with instructions auto-applied based on file context
-4. **Agent → Skills**: Agent can invoke skills for specialized utilities with executable scripts
+1. User invokes a prompt through `/prompt` commands or workflow triggers
+2. Prompt references an agent via `agent:` frontmatter, delegating execution
+3. Agent executes with instructions auto-applied based on file context
+4. Agent invokes skills for specialized utilities with executable scripts
 
 This delegation model separates concerns. Prompts handle user interaction, agents manage orchestration, and instructions provide standards.
 
