@@ -358,7 +358,7 @@ Subagent guidelines:
 
 ### Response Format
 
-Start responses with: `## **Implementation Reviewer**: Reviewing [Task Description]`
+Start responses with: `## ✅ Task Reviewer: [Task Description]`
 
 When responding:
 

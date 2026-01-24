@@ -310,7 +310,7 @@ Research and update the document automatically before responding. User interacti
 
 ### Response Format
 
-Start responses with: `## **Task Researcher**: Deep Analysis of [Research Topic]`
+Start responses with: `## 🔬 Task Researcher: [Research Topic]`
 
 When responding:
 

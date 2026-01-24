@@ -164,7 +164,7 @@ After Task Planner completes:
 The `/task-implement` prompt automatically locates the plan and switches to Task Implementor.
 
 > [!TIP]
-> Use the **🛠️ Implement** handoff button when available to transition directly to Task Implementor with context.
+> Use the **⚡ Implement** handoff button when available to transition directly to Task Implementor with context.
 
 After implementation, continue to [Task Reviewer](task-reviewer.md) to validate against specifications.
 

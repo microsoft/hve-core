@@ -26,7 +26,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 **Key benefits:**
 
-* 🔍 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones.
+* 🔬 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones.
 * 📋 **Traceability**: every decision traced to specific files and line numbers.
 * 🔄 **Knowledge transfer**: research documents anyone can follow, not tribal knowledge.
 
@@ -37,7 +37,7 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 
 ## The Four Phases
 
-### 🔍 Research Phase (Task Researcher)
+### 🔬 Research Phase (Task Researcher)
 
 **Purpose:** Transform uncertainty into verified knowledge
 

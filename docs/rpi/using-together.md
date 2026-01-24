@@ -21,7 +21,7 @@ This guide walks through a complete RPI workflow, showing how the four custom ag
 ```text
 ┌─────────────────┐   Handoff    ┌─────────────────┐   Handoff    ┌─────────────────┐   Handoff    ┌─────────────────┐
 │ Task Researcher │ ──────────→ │  Task Planner   │ ──────────→ │ Task Implementor│ ──────────→ │  Task Reviewer  │
-│                 │  📋 Create   │                 │  🛠️ Implement │                 │  ✅ Review   │                 │
+│                 │  📋 Create   │                 │  ⚡ Implement  │                 │  ✅ Review   │                 │
 │ Uncertainty     │    Plan      │ Knowledge       │              │ Strategy        │              │ Working Code    │
 │     ↓           │              │     ↓           │              │     ↓           │              │     ↓           │
 │ Knowledge       │              │ Strategy        │              │ Working Code    │              │ Validated Code  │
@@ -80,7 +80,7 @@ Focus on approaches that match our existing patterns in the codebase.
 1. Review the output:
 
 ```text
-## **Task Researcher**: Deep Analysis of Azure Blob Storage Integration
+## 🔬 Task Researcher: Azure Blob Storage Integration
 
 ✅ Research document created at:
 .copilot-tracking/research/20250128-blob-storage-research.md
@@ -200,7 +200,7 @@ Ready for review.
 4. Review the findings:
 
 ```text
-## **Implementation Reviewer**: Reviewing Blob Storage Integration
+## ✅ Task Reviewer: Blob Storage Integration
 
 | 📊 Summary | |
 |-------------|-|
@@ -328,7 +328,7 @@ RPI agents include handoff buttons that streamline transitions between workflow 
 | From Agent       | Handoff Button      | Target Agent     | Action                          |
 |------------------|---------------------|------------------|---------------------------------|
 | Task Researcher  | 📋 Create Plan      | Task Planner     | Starts planning with research   |
-| Task Planner     | 🛠️ Implement        | Task Implementor | Executes the plan               |
+| Task Planner     | ⚡ Implement         | Task Implementor | Executes the plan               |
 | Task Implementor | ✅ Review           | Task Reviewer    | Reviews implementation          |
 | Task Reviewer    | 🔬 Research More    | Task Researcher  | Researches identified gaps      |
 | Task Reviewer    | 📋 Revise Plan      | Task Planner     | Updates plan based on findings  |

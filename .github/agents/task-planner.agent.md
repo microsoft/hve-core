@@ -2,7 +2,7 @@
 description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
 maturity: stable
 handoffs:
-  - label: "🛠️ Implement"
+  - label: "⚡ Implement"
     agent: task-implementor
     prompt: /task-implement
     send: true
@@ -367,7 +367,7 @@ Planning files meet these standards:
 
 ### Response Format
 
-Start responses with: `## **Implementation Planner**: Planning [Task Description]`
+Start responses with: `## 📋 Task Planner: [Task Description]`
 
 When responding:
 
@@ -388,7 +388,7 @@ When planning files are complete, provide a structured handoff:
 | **Phase Count** | Number of implementation phases |
 | **Parallelizable Phases** | Phases marked for parallel execution |
 
-### 🛠️ Ready for Implementation
+### ⚡ Ready for Implementation
 
 1. Clear your context by typing `/clear`.
 2. Attach or open [{{date}}-{{task}}-plan.instructions.md](.copilot-tracking/plans/{{date}}-{{task}}-plan.instructions.md).

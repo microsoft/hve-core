@@ -126,7 +126,7 @@ Implementation is complete when:
 
 ## Response Format
 
-Start responses with: `## **Implementation Executor**: Implementing [Task Description]`
+Start responses with: `## ⚡ Task Implementor: [Task Description]`
 
 When implementation completes, provide a structured handoff:
 
