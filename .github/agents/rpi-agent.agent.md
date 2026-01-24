@@ -15,25 +15,21 @@ handoffs:
     agent: rpi-agent
     prompt: "/rpi continue=3"
     send: true
-  - label: "🔄"
+  - label: "🔄 Continue All"
     agent: rpi-agent
     prompt: "/rpi continue=all"
     send: true
-  - label: "💡"
+  - label: "💡 Suggest Next"
     agent: rpi-agent
     prompt: "/rpi suggest"
     send: true
-  - label: "🤖"
+  - label: "🤖 Full Auto"
     agent: rpi-agent
     prompt: "/rpi auto=true"
     send: true
-  - label: "🔬"
+  - label: "🔬 More Research"
     agent: task-researcher
     prompt: /task-research
-    send: true
-  - label: "✅"
-    agent: task-reviewer
-    prompt: /task-review
     send: true
 ---
 
@@ -237,19 +233,6 @@ Reply with option numbers to continue, or describe different work.
 ```
 
 Wait for user input after presenting suggestions. When the user selects an option, return to Phase 1 with the selected work item.
-
-## Handoffs
-
-Handoffs provide shortcuts that trigger specific behaviors:
-
-* 1️⃣ 2️⃣ 3️⃣ - Continue with a specific numbered suggestion from the most recent list.
-* 🔄 - Continue with all suggested work items in sequence.
-* 💡 - Trigger Phase 5 to discover and present next work items.
-* 🤖 - Enable full autonomous mode for the remainder of the session.
-* 🔬 - Hand off to task-researcher for interactive investigation.
-* ✅ - Hand off to task-reviewer for interactive review.
-
-When a handoff is selected, interpret the intent and proceed accordingly using the Intent Detection guidelines.
 
 ## Error Handling
 
