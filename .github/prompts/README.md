@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 08/22/2025
+ms.date: 2025-08-22
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -69,7 +69,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **Prompts** (this directory): Coaching and educational guidance for learning
 - **[Instructions](../instructions/README.md)**: Systematic implementation and automation
-- **[Agents](../README.md)**: Specialized AI assistance with enhanced capabilities
+- **[Custom Agents](../CUSTOM-AGENTS.md)**: Specialized AI assistance with enhanced capabilities
 
 ## Quick Start
 
@@ -89,7 +89,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
 - **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
-- **[Agents](../README.md)** - Specialized AI assistance with enhanced capabilities
+- **[Custom Agents](../CUSTOM-AGENTS.md)** - Specialized AI assistance with enhanced capabilities
 
 ---
 
