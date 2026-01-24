@@ -57,6 +57,7 @@ Analysis:
 * Identify remaining actions with priority order (Next Steps)
 * Note user preferences, commitments, and open questions (Context to Preserve)
 * Collect external sources used (Context7, Microsoft docs, GitHub repos)
+* Identify custom agents invoked during the session (exclude memory.agent.md)
 
 File creation:
 
@@ -102,6 +103,7 @@ Context restoration:
 * Extract task overview, current state, and next steps
 * Review important discoveries including failed approaches to avoid
 * Identify user preferences and commitments from context to preserve
+* Note custom agents used previously to maintain workflow continuity
 * Load companion files when additional context is needed
 * Rebuild mental model of the work in progress
 
@@ -161,6 +163,10 @@ Memory files use flexible markdown structure. Include sections relevant to the s
 ### External Sources Used
 
 * {{tool_name}}: {{query}} - {{key finding}}
+
+### Custom Agents Used
+
+* {{agent-file}}: {{purpose in this session}}
 
 ### Open Questions
 
