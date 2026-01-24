@@ -1,6 +1,6 @@
 ---
 description: "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
-maturity: experimental
+maturity: stable
 handoffs:
   - label: "🗑️ Clear"
     agent: rpi-agent
