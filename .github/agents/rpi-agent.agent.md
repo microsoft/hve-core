@@ -19,7 +19,7 @@ handoffs:
     agent: rpi-agent
     prompt: "/rpi continue=all"
     send: true
-  - label: "💡 Suggest Next"
+  - label: "💡 Next Work"
     agent: rpi-agent
     prompt: "/rpi suggest"
     send: true
@@ -30,6 +30,10 @@ handoffs:
   - label: "🔬 More Research"
     agent: task-researcher
     prompt: /task-research
+    send: true
+  - label: "💾 Checkpoint"
+    agent: memory
+    prompt: /checkpoint
     send: true
 ---
 
