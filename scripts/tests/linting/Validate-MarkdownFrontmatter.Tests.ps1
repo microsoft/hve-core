@@ -445,6 +445,180 @@ Describe 'Initialize-JsonSchemaValidation' -Tag 'Unit' {
 
 #endregion
 
+#region Validation Helper Tests
+
+Describe 'Validation helpers' -Tag 'Unit' {
+    Describe 'Sanitize-InputList' {
+        It 'Trims entries and removes blanks' {
+            $result = Sanitize-InputList -InputList @(' file.md ', '', $null, 'path/to.md ')
+            $result | Should -Be @('file.md', 'path/to.md')
+        }
+    }
+
+    Describe 'New-ValidationState and adders' {
+        It 'Tracks errors and warnings per file' {
+            $state = New-ValidationState
+            Add-ValidationError -State $state -Message 'err1' -FilePath 'a.md'
+            Add-ValidationWarning -State $state -Message 'warn1' -FilePath 'b.md'
+            $state.Errors.Count | Should -Be 1
+            $state.Warnings.Count | Should -Be 1
+            $state.FilesWithErrors.Contains('a.md') | Should -BeTrue
+            $state.FilesWithWarnings.Contains('b.md') | Should -BeTrue
+        }
+    }
+
+    Describe 'Get-RepoRoot' {
+        BeforeAll {
+            $script:TempRepo = Join-Path ([System.IO.Path]::GetTempPath()) "RepoRoot_$([guid]::NewGuid().ToString('N'))"
+            New-Item -ItemType Directory -Path $script:TempRepo -Force | Out-Null
+            Push-Location $script:TempRepo
+            New-Item -ItemType Directory -Path '.git' -Force | Out-Null
+        }
+
+        AfterAll {
+            Pop-Location
+            if (Test-Path $script:TempRepo) {
+                Remove-Item -Path $script:TempRepo -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It 'Returns current path when .git exists locally' {
+            $result = Get-RepoRoot
+            $result | Should -Be $script:TempRepo
+        }
+    }
+
+    Describe 'Get-FooterRequirement' {
+        It 'Requires footer for root community files' {
+            $info = [FileTypeInfo]::new()
+            $info.IsRootCommunityFile = $true
+            $filePath = Join-Path $TestDrive 'root-community.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item -Path $filePath
+            $result = Get-FooterRequirement -FileTypeInfo $info -File $file
+            $result.ShouldHaveFooter | Should -BeTrue
+            $result.Severity | Should -Be 'Error'
+        }
+
+        It 'Requires footer for GitHub README' {
+            $info = [FileTypeInfo]::new()
+            $info.IsGitHub = $true
+            $filePath = Join-Path $TestDrive 'README.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item $filePath
+            $result = Get-FooterRequirement -FileTypeInfo $info -File $file
+            $result.ShouldHaveFooter | Should -BeTrue
+        }
+
+        It 'Skips footer for other files' {
+            $info = [FileTypeInfo]::new()
+            $filePath = Join-Path $TestDrive 'note.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item $filePath
+            $result = Get-FooterRequirement -FileTypeInfo $info -File $file
+            $result.ShouldHaveFooter | Should -BeFalse
+        }
+    }
+
+    Describe 'Resolve-ExplicitMarkdownFiles' {
+        It 'Filters non-markdown and excluded files' {
+            $repo = Join-Path $TestDrive 'explicit-repo'
+            New-Item -ItemType Directory -Path $repo -Force | Out-Null
+            $keep = Join-Path $repo 'keep.md'
+            $skip = Join-Path $repo 'skip.txt'
+            $exclude = Join-Path $repo 'ignore.md'
+            @($keep, $skip, $exclude) | ForEach-Object { Set-Content -Path $_ -Value 'x' }
+
+            $result = Resolve-ExplicitMarkdownFiles -Files @($keep, $skip, $exclude) -ExcludePaths @('ignore.md') -RepoRoot $repo
+            ($result.FullName -contains $keep) | Should -BeTrue
+            ($result.FullName -contains $exclude) | Should -BeFalse
+            ($result.FullName -contains $skip) | Should -BeFalse
+        }
+    }
+
+    Describe 'Discover-MarkdownFilesFromPaths' {
+        It 'Honors gitignore and exclude patterns' {
+            $repo = Join-Path $TestDrive 'discover-repo'
+            New-Item -ItemType Directory -Path (Join-Path $repo 'docs') -Force | Out-Null
+            $keep = Join-Path $repo 'docs/keep.md'
+            $ignore = Join-Path $repo 'docs/ignoreme.md'
+            $exclude = Join-Path $repo 'docs/exclude.md'
+            @($keep, $ignore, $exclude) | ForEach-Object { Set-Content -Path $_ -Value 'x' }
+
+            $result = Discover-MarkdownFilesFromPaths -Paths @($repo) -GitIgnorePatterns @('*ignoreme*') -ExcludePaths @('docs/exclude.md') -RepoRoot $repo
+            $result.FullName | Should -Contain $keep
+            $result.FullName | Should -Not -Contain $ignore
+            $result.FullName | Should -Not -Contain $exclude
+        }
+    }
+
+    Describe 'Validate-FooterPresence' {
+        It 'Adds error when required footer is missing' {
+            $state = New-ValidationState
+            $requirement = [pscustomobject]@{ ShouldHaveFooter = $true; Severity = 'Error' }
+            $filePath = Join-Path $TestDrive 'no-footer.md'
+            Set-Content -Path $filePath -Value 'Content'
+            $file = Get-Item $filePath
+            Validate-FooterPresence -File $file -State $state -Requirement $requirement -Content 'content without footer' -SkipFooterValidation:$false
+            $state.Errors.Count | Should -Be 1
+        }
+
+        It 'Skips when validation disabled' {
+            $state = New-ValidationState
+            $requirement = [pscustomobject]@{ ShouldHaveFooter = $true; Severity = 'Error' }
+            $filePath = Join-Path $TestDrive 'skip-footer.md'
+            Set-Content -Path $filePath -Value 'Content'
+            $file = Get-Item $filePath
+            Validate-FooterPresence -File $file -State $state -Requirement $requirement -Content 'content without footer' -SkipFooterValidation:$true
+            $state.Errors.Count | Should -Be 0
+        }
+    }
+
+    Describe 'Export-ValidationResults' {
+        It 'Writes results file and returns summary data' {
+            $state = New-ValidationState
+            Add-ValidationError -State $state -Message 'err' -FilePath 'a.md'
+            Add-ValidationWarning -State $state -Message 'warn' -FilePath 'b.md'
+            $repo = Join-Path $TestDrive 'export-repo'
+            New-Item -ItemType Directory -Path $repo -Force | Out-Null
+            $filePath = Join-Path $repo 'file.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item $filePath
+            $result = Export-ValidationResults -State $state -MarkdownFiles @($file) -RepoRoot $repo
+            Test-Path $result.Path | Should -BeTrue
+            $result.Results.summary.total_files | Should -Be 1
+            $result.Results.summary.files_with_errors | Should -Be 1
+            $result.Results.summary.files_with_warnings | Should -Be 1
+        }
+    }
+
+    Describe 'Write-ValidationSummary' {
+        It 'Returns hasIssues when errors exist' {
+            $state = New-ValidationState
+            Add-ValidationError -State $state -Message 'err1'
+            $results = @{ summary = @{ files_with_errors = 1; files_with_warnings = 0 } }
+            $filePath = Join-Path $TestDrive 'f.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item $filePath
+            $hasIssues = Write-ValidationSummary -State $state -MarkdownFiles @($file) -ResultsJson $results -WarningsAsErrors:$false
+            $hasIssues | Should -BeTrue
+        }
+
+        It 'Respects WarningsAsErrors when only warnings exist' {
+            $state = New-ValidationState
+            Add-ValidationWarning -State $state -Message 'warn1'
+            $results = @{ summary = @{ files_with_errors = 0; files_with_warnings = 1 } }
+            $filePath = Join-Path $TestDrive 'f2.md'
+            Set-Content -Path $filePath -Value 'x'
+            $file = Get-Item $filePath
+            $hasIssues = Write-ValidationSummary -State $state -MarkdownFiles @($file) -ResultsJson $results -WarningsAsErrors:$true
+            $hasIssues | Should -BeTrue
+        }
+    }
+}
+
+#endregion
+
 #region Get-SchemaForFile Tests
 
 Describe 'Get-SchemaForFile' -Tag 'Unit' {
