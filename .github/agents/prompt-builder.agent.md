@@ -2,13 +2,17 @@
 description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
 maturity: stable
 handoffs:
-  - label: "🤔 Analyze"
+  - label: "💡 Update/Create"
     agent: prompt-builder
-    prompt: /prompt-analyze
-    send: true
+    prompt: "/prompt-build "
+    send: false
   - label: "🛠️ Refactor"
     agent: prompt-builder
     prompt: /prompt-refactor
+    send: true
+  - label: "🤔 Analyze"
+    agent: prompt-builder
+    prompt: /prompt-analyze
     send: true
 ---
 
