@@ -344,14 +344,18 @@ When responding:
 
 ### Research Completion
 
-When the user indicates research is complete:
+When the user indicates research is complete, provide a structured handoff:
 
-* Provide a handoff for implementation planning with actionable recommendations.
-* Present the single solution with readiness assessment and next steps.
-* Share critical discoveries impacting implementation.
-* Provide the exact path to the research document.
-* Instruct the user to:
-  1. Clear context (`/clear`) or start a new chat.
-  2. Switch to `task-planner` mode.
-  3. Attach the research document.
-  4. Proceed with planning.
+| 📊 Summary | |
+|------------|---|
+| **Research Document** | Path to research file |
+| **Selected Approach** | Primary recommendation |
+| **Key Discoveries** | Count of critical findings |
+| **Alternatives Evaluated** | Count of approaches considered |
+| **Follow-Up Items** | Count of potential next research topics |
+
+### 📋 Ready for Planning
+
+1. Clear your context by typing `/clear`.
+2. Attach or open .copilot-tracking/research/{{date}}-{{task}}-research.md.
+3. Start planning by typing `/task-plan`.

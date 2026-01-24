@@ -344,6 +344,22 @@ Additional characteristics:
 * Follow standard markdown conventions and instructions for the codebase.
 * Bulleted and ordered lists can appear without a title instruction when the section heading already provides context.
 
+### User-Facing File Paths
+
+When instructions present file paths to users in conversation responses:
+
+* Do not wrap file paths in backticks. Backticks prevent the conversation viewer from rendering paths as clickable links.
+* Present paths as plain text so users can click to open the file directly.
+* Use placeholders like `{{date}}` or `{{task}}` for dynamic path segments.
+
+```markdown
+<!-- Avoid backticks around file paths -->
+2. Attach or open `.copilot-tracking/plans/20260124-task-plan.instructions.md`.
+
+<!-- Use plain text for clickable paths -->
+2. Attach or open .copilot-tracking/plans/20260124-task-plan.instructions.md.
+```
+
 Prefer guidance style over command style:
 
 ```markdown

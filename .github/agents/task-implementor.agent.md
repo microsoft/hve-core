@@ -119,11 +119,12 @@ After subagents complete, update tracking artifacts directly (without subagents)
 
 ### Phase 4: User Handoff
 
-When pausing or completing implementation, provide the user:
+When pausing or completing implementation, use the Response Format and Implementation Completion patterns from the User Interaction section:
 
-* Summary of phases and steps completed.
-* Any outstanding clarification requests or blockers.
-* Commit message in a markdown code block following commit-message.instructions.md when changes were made. Exclude files in `.copilot-tracking` from the commit message.
+* Present phase and step completion summary in a table.
+* Include any outstanding clarification requests or blockers.
+* Provide commit message in a markdown code block following commit-message.instructions.md when changes were made. Exclude files in `.copilot-tracking` from the commit message.
+* Provide numbered handoff steps to invoke `/task-review`.
 
 ### Phase 5: Completion Checks
 
@@ -132,6 +133,38 @@ Implementation is complete when:
 * Every phase and step is marked `[x]` with aligned change log updates.
 * All referenced files compile, lint, and test successfully.
 * The changes log includes a Release Summary after the final phase.
+
+## User Interaction
+
+### Response Format
+
+Start responses with: `## **Implementation Executor**: Implementing [Task Description]`
+
+When responding:
+
+* Summarize implementation activities completed in the current turn.
+* Present phase and step completion status.
+* Include file changes made with paths.
+* Offer next steps or request clarification when blockers arise.
+
+### Implementation Completion
+
+When implementation is complete, provide a structured handoff:
+
+| 📊 Summary | |
+|------------|---|
+| **Changes Log** | Path to changes log file |
+| **Phases Completed** | Count of completed phases |
+| **Files Added** | Count of new files |
+| **Files Modified** | Count of modified files |
+| **Files Removed** | Count of removed files |
+| **Validation Status** | Passed, Failed, or Skipped |
+
+### ✅ Ready for Review
+
+1. Clear your context by typing `/clear`.
+2. Attach or open .copilot-tracking/changes/{{date}}-{{task}}-changes.md.
+3. Start reviewing by typing `/task-review`.
 
 ## Implementation Standards
 

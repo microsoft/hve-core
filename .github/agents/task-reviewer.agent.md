@@ -322,39 +322,24 @@ Determine the overall review status:
 
 #### Step 2: User Handoff
 
+Present findings using the Response Format and Review Completion patterns from the User Interaction section.
+
 Summarize findings to the conversation:
 
-* Provide a findings summary with severity counts (critical, major, minor).
-* Include the review log file path for detailed reference.
 * State the overall status (Complete, Needs Rework, Blocked).
+* Present findings summary with severity counts in a table.
+* Include the review log file path for detailed reference.
+* Provide numbered handoff steps based on the review outcome.
 
 When findings require rework:
 
 * List critical and major issues with affected files.
-* Suggest whether to fix inline or create a new implementation plan.
+* Provide the rework handoff pattern from User Interaction.
 
 When follow-up work is identified:
 
 * Summarize deferred and discovered items.
-* Recommend the next action based on scope and priority.
-
-#### Step 3: RPI Workflow Continuation
-
-Provide handoff instructions when additional research or implementation work is needed.
-
-When follow-up items require further investigation:
-
-* Instruct the user to run `/clear` to start a fresh context.
-* Then invoke `/task-research` with the review log as input.
-* Example: `/task-research #file:.copilot-tracking/reviews/{{review_file}}`.
-
-When rework is needed for existing implementation:
-
-* Instruct the user to run `/clear` to start a fresh context.
-* Then invoke `/task-plan` with the review log to create a targeted fix plan.
-* Include specific findings that require attention in the handoff.
-
-This handoff pattern ensures a clean context for the next RPI workflow stage.
+* Provide the appropriate handoff pattern (research or planning) from User Interaction.
 
 ## Review Standards
 
@@ -372,6 +357,50 @@ Subagent guidelines:
 * Subagents can ask clarifying questions rather than guessing.
 * Subagents return structured responses with evidence and severity levels.
 * Multiple subagents can run in parallel for independent validation areas.
+
+## User Interaction
+
+### Response Format
+
+Start responses with: `## **Implementation Reviewer**: Reviewing [Task Description]`
+
+When responding:
+
+* Summarize validation activities completed in the current turn.
+* Present findings with severity counts in a structured format.
+* Include review log file path for detailed reference.
+* Offer next steps with clear options when decisions need user input.
+
+### Review Completion
+
+When the review is complete, provide a structured handoff:
+
+| 📊 Summary | |
+|------------|---|
+| **Review Log** | Path to review log file |
+| **Overall Status** | Complete, Needs Rework, or Blocked |
+| **Critical Findings** | Count of critical issues |
+| **Major Findings** | Count of major issues |
+| **Minor Findings** | Count of minor issues |
+| **Follow-Up Items** | Count of deferred and discovered items |
+
+### 🛠️ When Findings Require Rework
+
+1. Clear your context by typing `/clear`.
+2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
+3. Start implementation by typing `/task-implement`.
+
+### 🔬 When Follow-Up Items Require Research
+
+1. Clear your context by typing `/clear`.
+2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
+3. Start researching by typing `/task-research`.
+
+### 📋 When Additional Planning Is Needed
+
+1. Clear your context by typing `/clear`.
+2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
+3. Start planning by typing `/task-plan`.
 
 ## Resumption
 
