@@ -102,12 +102,12 @@ Get started with RPI:
 
 HVE Core provides a structured approach to prompt engineering with four artifact types, each serving a distinct purpose:
 
-| Artifact | Purpose | Activation |
-|----------|---------|------------|
-| **Instructions** | Passive reference guidance applied by file pattern | Automatic via `applyTo` glob |
-| **Prompts** | Task-specific procedures with input variables | Manual via `/` command |
-| **Agents** | Specialized personas with tool access and constraints | Manual via agent picker |
-| **Skills** | Executable utilities with cross-platform scripts | Read by Copilot on demand |
+| Artifact         | Purpose                                               | Activation                   |
+|------------------|-------------------------------------------------------|------------------------------|
+| **Instructions** | Passive reference guidance applied by file pattern    | Automatic via `applyTo` glob |
+| **Prompts**      | Task-specific procedures with input variables         | Manual via `/` command       |
+| **Agents**       | Specialized personas with tool access and constraints | Manual via agent picker      |
+| **Skills**       | Executable utilities with cross-platform scripts      | Read by Copilot on demand    |
 
 **Key capabilities:**
 

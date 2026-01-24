@@ -27,19 +27,19 @@ graph TD
 
 ## Component Summary
 
-| Component          | Location                      | Purpose                                                                 |
-| ------------------ | ----------------------------- | ----------------------------------------------------------------------- |
-| Extension          | `extension/`                  | VS Code extension providing contribution points for AI artifacts        |
-| Scripts            | `scripts/`                    | PowerShell automation for linting, security validation, and dev tools   |
-| Documentation      | `docs/`                       | User guides, architecture docs, and contribution guidelines             |
-| GitHub Assets      | `.github/`                    | Workflows, instructions, prompts, agents, and issue templates           |
-| Skills             | `.github/skills/`             | Self-contained packages combining scripts with domain-specific guidance |
-| Dev Container      | `.devcontainer/`              | Codespaces and local container development environment                  |
-| Frontmatter Schema | `scripts/linting/schemas/`    | JSON schemas for AI artifact validation                                 |
-| GitHub Workflows   | `.github/workflows/`          | CI/CD pipelines for validation, security, and release automation        |
-| Access Control     | `.github/CODEOWNERS`          | Path-based review requirements and ownership                            |
-| MCP Configuration  | `.vscode/mcp.json`            | Model Context Protocol server definitions                               |
-| Test Infrastructure| `scripts/tests/`              | Pester test suites with fixtures and mocks                              |
+| Component           | Location                   | Purpose                                                                 |
+|---------------------|----------------------------|-------------------------------------------------------------------------|
+| Extension           | `extension/`               | VS Code extension providing contribution points for AI artifacts        |
+| Scripts             | `scripts/`                 | PowerShell automation for linting, security validation, and dev tools   |
+| Documentation       | `docs/`                    | User guides, architecture docs, and contribution guidelines             |
+| GitHub Assets       | `.github/`                 | Workflows, instructions, prompts, agents, and issue templates           |
+| Skills              | `.github/skills/`          | Self-contained packages combining scripts with domain-specific guidance |
+| Dev Container       | `.devcontainer/`           | Codespaces and local container development environment                  |
+| Frontmatter Schema  | `scripts/linting/schemas/` | JSON schemas for AI artifact validation                                 |
+| GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation        |
+| Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                            |
+| MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                               |
+| Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                              |
 
 ## Core Subsystems
 

@@ -118,22 +118,22 @@ maturity: stable
 
 **Required frontmatter fields:**
 
-| Field | Description |
-| ----- | ----------- |
-| `name` | Lowercase kebab-case identifier matching directory name |
-| `description` | Brief capability description |
-| `maturity` | `stable`, `preview`, `experimental`, or `deprecated` |
+| Field         | Description                                             |
+|---------------|---------------------------------------------------------|
+| `name`        | Lowercase kebab-case identifier matching directory name |
+| `description` | Brief capability description                            |
+| `maturity`    | `stable`, `preview`, `experimental`, or `deprecated`    |
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
 **Key distinction from instructions:**
 
-| Aspect | Instructions | Skills |
-| ------ | ------------ | ------ |
-| Nature | Passive reference | Active execution |
-| Content | Standards and conventions | Scripts and utilities |
-| Activation | Automatic via glob patterns | Explicit invocation |
-| Output | Guidance for Copilot | Executed operations |
+| Aspect     | Instructions                | Skills                |
+|------------|-----------------------------|-----------------------|
+| Nature     | Passive reference           | Active execution      |
+| Content    | Standards and conventions   | Scripts and utilities |
+| Activation | Automatic via glob patterns | Explicit invocation   |
+| Output     | Guidance for Copilot        | Executed operations   |
 
 ## Delegation Flow
 
@@ -177,11 +177,11 @@ The referenced agent file (`pr-creator.agent.md`) must exist in `.github/agents/
 
 Instructions use `applyTo:` patterns for automatic activation:
 
-| Pattern | Matches |
-| ------- | ------- |
-| `**/*.py` | All Python files recursively |
-| `**/tests/**/*.ts` | TypeScript files in test directories |
-| `**/.copilot-tracking/pr/**` | PR tracking files |
+| Pattern                      | Matches                              |
+|------------------------------|--------------------------------------|
+| `**/*.py`                    | All Python files recursively         |
+| `**/tests/**/*.ts`           | TypeScript files in test directories |
+| `**/.copilot-tracking/pr/**` | PR tracking files                    |
 
 Multiple instructions can apply to the same file. When patterns overlap, all matching instructions contribute guidance. Pattern specificity determines precedence for conflicting directives.
 
@@ -215,12 +215,12 @@ The extension scans these directories at startup:
 
 Each artifact's `maturity:` field controls channel inclusion:
 
-| Maturity | Stable Channel | Pre-release Channel |
-| -------- | -------------- | ------------------- |
-| `stable` | Included | Included |
-| `preview` | Excluded | Included |
-| `experimental` | Excluded | Included |
-| `deprecated` | Excluded | Excluded |
+| Maturity       | Stable Channel | Pre-release Channel |
+|----------------|----------------|---------------------|
+| `stable`       | Included       | Included            |
+| `preview`      | Excluded       | Included            |
+| `experimental` | Excluded       | Included            |
+| `deprecated`   | Excluded       | Excluded            |
 
 ### Activation Context
 
