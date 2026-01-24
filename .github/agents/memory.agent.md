@@ -16,6 +16,17 @@ Memory files reside in `.copilot-tracking/memory/` organized by date.
 
 Companion artifact directories store diagrams, code snippets, research notes, or other materials that accompany the memory file.
 
+## Memory Protocol
+
+Assume interruption at any moment. Context may reset unexpectedly, losing any progress not recorded in memory files.
+
+Protocol:
+
+* Check for existing memory files before starting work
+* Record progress incrementally during long tasks
+* Save before operations that may consume significant context
+* Treat every session as potentially interrupted
+
 ## Required Phases
 
 ### Phase 1: Detection
@@ -40,11 +51,12 @@ Proceed to Phase 2 (save) or Phase 3 (continue) based on the operation mode.
 
 Analysis:
 
-* Review conversation for key accomplishments, decisions, and pending work
-* Identify files modified or created during the session
-* Collect tools and external sources used (Context7, Microsoft docs, web pages, GitHub repos)
-* Note open questions and unresolved items
-* Capture technical details with specificity
+* Identify the core task, success criteria, and constraints (Task Overview)
+* Review conversation for completed work and files modified (Current State)
+* Collect decisions made with rationale and failed approaches (Important Discoveries)
+* Identify remaining actions with priority order (Next Steps)
+* Note user preferences, commitments, and open questions (Context to Preserve)
+* Collect external sources used (Context7, Microsoft docs, GitHub repos)
 
 File creation:
 
@@ -58,9 +70,9 @@ Content guidance:
 * Condense without over-summarizing; retain technical details
 * Include specific file paths, line numbers, and tool queries
 * Capture decisions with their rationale
+* Record failed approaches to prevent repeating unsuccessful attempts
 * Remove only truly irrelevant information
 * Preserve enough context for full session restoration
-* Prioritize accuracy and completeness over format adherence
 
 Garbage collection:
 
@@ -87,16 +99,17 @@ File location:
 Context restoration:
 
 * Read the memory file content
-* Extract completed work, pending tasks, and open questions
-* Identify tools and sources used previously
+* Extract task overview, current state, and next steps
+* Review important discoveries including failed approaches to avoid
+* Identify user preferences and commitments from context to preserve
 * Load companion files when additional context is needed
 * Rebuild mental model of the work in progress
 
 State summary:
 
 * Display the memory file path being restored
-* Summarize completed work and pending tasks
-* List open questions requiring attention
+* Summarize current state and next steps
+* List open questions and failed approaches to avoid
 * Report ready to proceed with the user's next request
 
 Proceed with the user's continuation request using restored context.
@@ -111,49 +124,47 @@ Memory files use flexible markdown structure. Include sections relevant to the s
 
 **Created:** {{date-time}}
 **Last Updated:** {{date-time}}
-**Session Topic:** {{topic-summary}}
 
-## Context Summary
+## Task Overview
 
-{{Brief overview of what the session accomplished and where it stands}}
+{{Core request, success criteria, and constraints}}
 
-## Completed Work
+## Current State
 
-* {{Specific completed item with relevant details}}
+{{What has been completed, files modified, artifacts produced}}
 
-## Pending Tasks
+* {{Specific completed item with file path or details}}
 
-* {{Task not yet started or in progress}}
+## Important Discoveries
 
-## Key Decisions
+{{Technical constraints, decisions made, errors resolved}}
 
-* {{Decision made with brief rationale}}
+### Decisions
 
-## Tools and Sources Used
+* {{Decision made}} - {{rationale}}
 
-### Files Modified
+### Failed Approaches
 
-* {{file_path}} - {{what was done}}
+* {{Attempt that did not work}} - {{why it failed}}
 
-### External Sources
+## Next Steps
 
-* {{tool_name}}: {{query or resource}} - {{key finding}}
+{{Specific actions needed, blockers, priority order}}
 
-### Repositories
+1. {{Highest priority action}}
+2. {{Secondary action}}
 
-* {{repo_reference}} - {{why referenced}}
+## Context to Preserve
 
-## Technical Details
+{{User preferences, domain details, commitments made}}
 
-{{technical-context}}
+### External Sources Used
 
-## Open Questions
+* {{tool_name}}: {{query}} - {{key finding}}
+
+### Open Questions
 
 * {{Unresolved item needing attention}}
-
-## Notes for Resumption
-
-{{resumption-notes}}
 ```
 
 Template usage:
@@ -161,7 +172,7 @@ Template usage:
 * Replace `{{placeholder}}` markers with actual content
 * Omit sections without relevant content
 * Add custom sections when session requires them
-* Prioritize accuracy and completeness over format adherence
+* Always include Task Overview, Current State, and Next Steps
 * Include enough detail that a fresh session can fully resume
 
 ## User Interaction
