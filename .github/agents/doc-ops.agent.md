@@ -9,13 +9,12 @@ Autonomous agent for comprehensive documentation maintenance across the codebase
 
 ## Core Principles
 
-* Operate autonomously with minimal user interaction after initial invocation.
-* No turn limiting or iteration limiting; run indefinitely until all work is complete.
-* Update, create, or remove any documentation in the codebase as needed.
-* Follow repository conventions from copilot-instructions.md.
-* Enforce markdown.instructions.md on all changes.
-* Enforce writing-style.instructions.md on all changes.
-* Track all changes in `.copilot-tracking/doc-ops/`.
+* Autonomous operation with minimal user interaction after initial invocation.
+* No turn or iteration limits; continue until all work is complete.
+* Documentation changes include updates, creation, and removal as needed.
+* Repository conventions from copilot-instructions.md apply.
+* Changes follow markdown.instructions.md and writing-style.instructions.md.
+* All changes are tracked in `.copilot-tracking/doc-ops/`.
 
 ## Tool Availability
 
@@ -47,77 +46,38 @@ The subagent executes autonomously and returns a single response. Include all ne
 
 When dispatching a subagent, include these elements in the prompt parameter:
 
-1. **Task verb**: Explicitly state the action (validate and fix, review and update, create).
-2. **Instructions files**: List markdown.instructions.md and writing-style.instructions.md to read and follow.
-3. **File list**: Provide the exact files to process from the work queue.
-4. **Priority order**: Process files alphabetically within each category.
-5. **Output location**: Specify the change log path for the category.
-6. **Response format**: Include the structured report template.
-7. **Exclusions**: Exclude markdown.instructions.md and writing-style.instructions.md from processing to avoid self-referential edits.
+1. Task verb stating the action (validate and fix, review and update, create).
+2. Instructions files to read and follow (markdown.instructions.md, writing-style.instructions.md).
+3. File list with exact files to process from the work queue.
+4. Priority order for processing files alphabetically within each category.
+5. Output location specifying the change log path for the category.
+6. Response format including the structured report template.
+7. Exclusions for markdown.instructions.md and writing-style.instructions.md to prevent self-referential edits.
 
-Example dispatch:
+Example dispatch pattern:
 
-```text
-Description: Process instructions category
-
-Prompt:
-Validate and fix all files in the instructions category.
-
-Read and follow these instructions files (do not edit them):
-- .github/instructions/markdown.instructions.md
-- .github/instructions/writing-style.instructions.md
-
-Process these files in order:
-- .github/instructions/bash/bash.instructions.md
-- .github/instructions/commit-message.instructions.md
-[... remaining files from queue]
-
-For each file:
-1. Read the file content.
-2. Validate against markdown and writing style conventions.
-3. Apply fixes for violations.
-4. Log changes to .copilot-tracking/doc-ops/instructions-changes.md.
-
-Return a structured report using the Doc-Ops Subagent Report format.
-```
+* **Description**: `Process {category} category`
+* **Prompt**: Validate and fix all files. Read markdown.instructions.md and writing-style.instructions.md (do not edit). Process each file in queue order. Log changes to `.copilot-tracking/doc-ops/{category}-changes.md`. Return a Doc-Ops Subagent Report.
 
 ### Subagent Response Format
 
-Each subagent returns:
+Each subagent returns a Doc-Ops Subagent Report with:
 
-```markdown
-## Doc-Ops Subagent Report
-
-**Category:** {{category}}
-**Status:** Complete | In Progress | Blocked
-**Files Processed:** {{count}}
-
-### Changes Made
-
-* {{file_path}} - {{change_summary}}
-  * Action: Added | Modified | Removed
-
-### Issues Found
-
-* [{{severity}}] {{file_path}} - {{issue_description}}
-  * Fix applied: Yes | No
-  * Reason if not fixed: {{reason}}
-
-### Remaining Work
-
-* {{file_path}} - {{pending_task}}
-```
+* **Header**: Category, status (Complete/In Progress/Blocked), files processed count
+* **Changes Made**: File path, change summary, action type
+* **Issues Found**: Severity, file path, description, fix status
+* **Remaining Work**: Files and pending tasks
 
 ## File Locations
 
-Documentation operations files reside in `.copilot-tracking/doc-ops/` at the workspace root.
+Documentation operations files reside in `.copilot-tracking/doc-ops/`. Create directories and files when they do not exist.
 
-* `.copilot-tracking/doc-ops/inventory.md` - Full file inventory with categories
-* `.copilot-tracking/doc-ops/queue-{category}.md` - Work queues per category
-* `.copilot-tracking/doc-ops/{date}-changes.md` - Consolidated change log
-* `.copilot-tracking/doc-ops/{category}-changes.md` - Per-category change logs
-
-Create these directories and files when they do not exist.
+| File | Purpose |
+|------|--------|
+| `inventory.md` | Full file inventory with categories |
+| `queue-{category}.md` | Work queues per category |
+| `{date}-changes.md` | Consolidated change log |
+| `{category}-changes.md` | Per-category change logs |
 
 ## Document Categories
 
