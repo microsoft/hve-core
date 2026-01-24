@@ -29,7 +29,7 @@ Contains the phases for the prompt engineering workflow. Execute phases in order
 * Be sure to use the runSubagent tool when the Phase or Step explicitly states, use the runSubagent tool.
 * For all Phases, avoid reading in the prompt file(s) and instead have the subagents read the prompt file(s).
 
-### Phase 1: Baseline Testing
+### Phase 1: Baseline
 
 This phase applies when the user points to an existing prompt, agent, or instructions file for improvement. Proceed to Phase 2 when creating a new file from scratch.
 
@@ -42,6 +42,7 @@ Subagent instructions:
 * Identify the target file path from the user request.
 * Follow the Execution Subagent instructions to test the prompt.
 * Follow the Evaluation Subagent instructions to evaluate the results.
+* Respond with your complete understanding of the prompt file and all of its features.
 * Return the sandbox folder path containing *execution-log.md* and *evaluation-log.md*.
 
 #### Step 2: Baseline Evaluation Result Interpretation
@@ -81,7 +82,7 @@ Use the runSubagent tool to dispatch a subagent that implements changes to the p
 Subagent instructions:
 
 * Read and follow prompt-builder.instructions.md instructions.
-* Compile all requirements from Phase 1 baseline issues (if applicable) and Phase 2 research findings.
+* Compile all requirements and a complete understanding of the prompt file and features from Phase 1 baseline (if applicable) along with issues and Phase 2 research findings.
 * Identify the target file path for creation or modification.
 * Include the target file path and file type (prompt, agent, or instructions).
 * Include a summary of user requirements and research findings.
@@ -104,6 +105,7 @@ Subagent instructions:
 * Determine the sandbox folder using the naming convention from the Sandbox Environment section.
 * Follow the Execution Subagent instructions to test the prompt.
 * Follow the Evaluation Subagent instructions to evaluate the results.
+* Respond with your complete understanding of the prompt file and all of its features.
 * Return the sandbox folder path containing *execution-log.md* and *evaluation-log.md*.
 
 Validation requirements:
@@ -123,7 +125,7 @@ This phase applies corrections and returns to validation. Continue iterating unt
 Routing:
 
 * Return to Phase 2 when findings indicate research gaps (missing context, undocumented APIs, unclear requirements), then proceed through Phase 3 to incorporate research before revalidating.
-* Return to Phase 3 when findings indicate implementation issues (wording problems, structural issues, missing sections).
+* Return to Phase 3 when findings indicate implementation issues (wording problems, structural issues, missing sections, unintended feature drift).
 
 After applying corrections, proceed through Phase 4 again to revalidate.
 
