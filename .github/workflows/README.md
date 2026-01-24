@@ -52,6 +52,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
 | `main.yml`                        | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
 
 **pr-validation.yml jobs**: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
@@ -209,6 +210,21 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 * Medium: 91-180 days
 * High: 181-365 days
 * Critical: >365 days
+
+#### `scorecard.yml`
+
+**Purpose**: Performs OpenSSF Scorecard analysis for security posture assessment
+
+**Triggers**: `schedule` (Sundays at 3 AM UTC), `push` to main
+
+**Features**:
+
+* **Analysis**: Supply chain security, CI/CD best practices, code review practices
+* **Integration**: Results published to OpenSSF Scorecard API and GitHub Security tab
+* **Badge**: Live Scorecard badge available for README display
+* **Artifacts**: SARIF results retained for 90 days
+
+**Outputs**: SARIF results uploaded to GitHub Security tab, job summary with badge link
 
 ## Architecture Decisions
 
