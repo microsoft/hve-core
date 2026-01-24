@@ -700,7 +700,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 | SC-3 | Dependency Review          | dependency-review.yml          | S-2, AI-5         |
 | SC-4 | npm Security Audit         | npm audit in pr-validation.yml | S-2               |
 | SC-5 | Dependabot Updates         | dependabot.yml                 | S-1, S-2          |
-| SC-6 | Tool Checksum Verification | tool-checksums.json            | S-1               |
+| SC-6 | Tool Checksum Verification | scripts/security/tool-checksums.json | S-1         |
 
 ### Code Quality Controls
 
