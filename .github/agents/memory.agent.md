@@ -1,6 +1,11 @@
 ---
 description: "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
 maturity: experimental
+handoffs:
+  - label: "🚀 Continue with RPI"
+    agent: rpi-agent
+    prompt: "/rpi suggest"
+    send: true
 ---
 
 # Memory Agent
@@ -115,6 +120,27 @@ State summary:
 * Report ready to proceed with the user's next request
 
 Proceed with the user's continuation request using restored context.
+
+### Continuation with Custom Agents
+
+When the memory file lists custom agents in the Custom Agents Used section:
+
+* Inform the user which agents were active during the previous session.
+* Instruct the user to switch to the original agent before continuing.
+
+To switch agents in VS Code:
+
+1. Open the chat agent picker (click the agent name in the chat header or use the dropdown).
+2. Select the custom agent from the list.
+3. Continue work with a prompt referencing the memory file.
+
+Suggested prompt after switching agents:
+
+```text
+Continue with {{task description}}
+```
+
+Or use 🚀 Continue with RPI.
 
 ## Memory File Structure
 
