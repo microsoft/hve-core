@@ -827,7 +827,7 @@ function Get-RepoRoot {
     return $repoRoot
 }
 
-function Sanitize-InputList {
+function ConvertTo-InputList {
     <#
     .SYNOPSIS
     Trims and filters out empty entries from string arrays.
@@ -944,7 +944,7 @@ function Get-FooterRequirement {
     }
 }
 
-function Validate-RootCommunityFrontmatter {
+function Test-RootCommunityFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -983,7 +983,7 @@ function Validate-RootCommunityFrontmatter {
     }
 }
 
-function Validate-DevContainerFrontmatter {
+function Test-DevContainerFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1006,7 +1006,7 @@ function Validate-DevContainerFrontmatter {
     }
 }
 
-function Validate-VSCodeReadmeFrontmatter {
+function Test-VSCodeReadmeFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1029,7 +1029,7 @@ function Validate-VSCodeReadmeFrontmatter {
     }
 }
 
-function Validate-GitHubFrontmatter {
+function Test-GitHubFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1082,7 +1082,7 @@ function Validate-GitHubFrontmatter {
     }
 }
 
-function Validate-DocsFrontmatter {
+function Test-DocsFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1121,7 +1121,7 @@ function Validate-DocsFrontmatter {
     }
 }
 
-function Validate-SharedFields {
+function Test-SharedFrontmatterFields {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1149,7 +1149,7 @@ function Validate-SharedFields {
     }
 }
 
-function Validate-FooterPresence {
+function Test-FooterPresence {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1189,7 +1189,7 @@ function Validate-FooterPresence {
     }
 }
 
-function Handle-MissingFrontmatter {
+function Resolve-MissingFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1260,7 +1260,7 @@ function Resolve-ExplicitMarkdownFiles {
     return $resolved
 }
 
-function Discover-MarkdownFilesFromPaths {
+function Find-MarkdownFilesFromPaths {
     [CmdletBinding()]
     [OutputType([System.IO.FileInfo[]])]
     param(
@@ -1356,10 +1356,10 @@ function Get-MarkdownFilesFromInputs {
     }
 
     Write-Host "Searching for markdown files in specified paths..." -ForegroundColor Cyan
-    return Discover-MarkdownFilesFromPaths -Paths $Paths -GitIgnorePatterns $GitIgnorePatterns -ExcludePaths $ExcludePaths -RepoRoot $RepoRoot
+    return Find-MarkdownFilesFromPaths -Paths $Paths -GitIgnorePatterns $GitIgnorePatterns -ExcludePaths $ExcludePaths -RepoRoot $RepoRoot
 }
 
-function Validate-MarkdownFile {
+function Test-MarkdownFile {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -1382,7 +1382,7 @@ function Validate-MarkdownFile {
 
     $frontmatter = Get-MarkdownFrontmatter -FilePath $File.FullName
     if (-not $frontmatter) {
-        Handle-MissingFrontmatter -File $File -State $State
+        Resolve-MissingFrontmatter -File $File -State $State
         return
     }
 
@@ -1408,26 +1408,26 @@ function Validate-MarkdownFile {
     $isInstruction = $fileTypeInfo.IsInstruction
 
     if ($fileTypeInfo.IsRootCommunityFile) {
-        Validate-RootCommunityFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
+        Test-RootCommunityFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
     }
     elseif ($fileTypeInfo.IsDevContainer) {
-        Validate-DevContainerFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
+        Test-DevContainerFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
     }
     elseif ($fileTypeInfo.IsVSCodeReadme) {
-        Validate-VSCodeReadmeFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
+        Test-VSCodeReadmeFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
     }
     elseif ($fileTypeInfo.IsGitHub) {
-        Validate-GitHubFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter -IsAgent $isAgent -IsChatMode $isChatMode -IsInstruction $isInstruction -IsPrompt $isPrompt
+        Test-GitHubFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter -IsAgent $isAgent -IsChatMode $isChatMode -IsInstruction $isInstruction -IsPrompt $isPrompt
     }
 
     if ($fileTypeInfo.IsDocsFile) {
-        Validate-DocsFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
+        Test-DocsFrontmatter -File $File -State $State -Frontmatter $frontmatter.Frontmatter
     }
 
-    Validate-SharedFields -File $File -State $State -Frontmatter $frontmatter.Frontmatter
+    Test-SharedFrontmatterFields -File $File -State $State -Frontmatter $frontmatter.Frontmatter
 
     $footerRequirement = Get-FooterRequirement -FileTypeInfo $fileTypeInfo -File $File
-    Validate-FooterPresence -File $File -State $State -Requirement $footerRequirement -Content $frontmatter.Content -SkipFooterValidation $SkipFooterValidation
+    Test-FooterPresence -File $File -State $State -Requirement $footerRequirement -Content $frontmatter.Content -SkipFooterValidation $SkipFooterValidation
 }
 
 function Export-ValidationResults {
@@ -1681,8 +1681,8 @@ function Test-FrontmatterValidation {
         }
     }
 
-    $Files = Sanitize-InputList -InputList $Files
-    $Paths = Sanitize-InputList -InputList $Paths
+    $Files = ConvertTo-InputList -InputList $Files
+    $Paths = ConvertTo-InputList -InputList $Paths
 
     if ($null -eq $Files) {
         $Files = @()
@@ -1718,7 +1718,7 @@ function Test-FrontmatterValidation {
         }
 
         try {
-            Validate-MarkdownFile -File $file -State $state -RepoRoot $repoRoot -SkipFooterValidation:$SkipFooterValidation -SchemaValidationEnabled:$schemaValidationEnabled
+            Test-MarkdownFile -File $file -State $state -RepoRoot $repoRoot -SkipFooterValidation:$SkipFooterValidation -SchemaValidationEnabled:$schemaValidationEnabled
         }
         catch {
             Add-ValidationError -State $state -Message "Error processing file '$($file.FullName)': $($_.Exception.Message)" -FilePath $file.FullName
