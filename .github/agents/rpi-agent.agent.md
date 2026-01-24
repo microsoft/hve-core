@@ -93,7 +93,7 @@ Execute phases in order. Review phase returns control to earlier phases when ite
 
 Use `runSubagent` to dispatch the task-researcher agent:
 
-* Include `.github/prompts/task-research.prompt.md` instructions.
+* Instruct the subagent to read and follow `.github/agents/task-researcher.agent.md` for agent behavior and `.github/prompts/task-research.prompt.md` for workflow steps.
 * Pass the user's topic and any conversation context.
 * Pass user requirements and any iteration feedback from prior phases.
 * Discover applicable `.github/instructions/*.instructions.md` files based on file types and technologies involved.
@@ -107,7 +107,7 @@ Proceed to Phase 2 when research is complete.
 
 Use `runSubagent` to dispatch the task-planner agent:
 
-* Include `.github/prompts/task-plan.prompt.md` instructions.
+* Instruct the subagent to read and follow `.github/agents/task-planner.agent.md` for agent behavior and `.github/prompts/task-plan.prompt.md` for workflow steps.
 * Pass research document paths from Phase 1.
 * Pass user requirements and any iteration feedback from prior phases.
 * Reference all discovered instructions files in the plan's Context Summary section.
@@ -120,7 +120,7 @@ Proceed to Phase 3 when planning is complete.
 
 Use `runSubagent` to dispatch the task-implementor agent:
 
-* Include `.github/prompts/task-implement.prompt.md` instructions.
+* Instruct the subagent to read and follow `.github/agents/task-implementor.agent.md` for agent behavior and `.github/prompts/task-implement.prompt.md` for workflow steps.
 * Pass plan file path from Phase 2.
 * Pass user requirements and any iteration feedback from prior phases.
 * Instruct subagent to read and follow all instructions files referenced in the plan.
@@ -133,7 +133,7 @@ Proceed to Phase 4 when implementation is complete.
 
 Use `runSubagent` to dispatch the task-reviewer agent:
 
-* Include `.github/prompts/task-review.prompt.md` instructions.
+* Instruct the subagent to read and follow `.github/agents/task-reviewer.agent.md` for agent behavior and `.github/prompts/task-review.prompt.md` for workflow steps.
 * Pass plan and changes paths from prior phases.
 * Pass user requirements and review scope.
 * Validate implementation against all referenced instructions files.
@@ -257,14 +257,14 @@ Include a phase progress indicator in each response:
 
 | Phase | Status |
 |-------|--------|
-| Research | {{✅ ⏳ ⬜}} |
-| Plan | {{✅ ⏳ ⬜}} |
-| Implement | {{✅ ⏳ ⬜}} |
-| Review | {{✅ ⏳ ⬜}} |
-| Discover | {{✅ ⏳ ⬜}} |
+| Research | {{✅ ⏳ 🔲}} |
+| Plan | {{✅ ⏳ 🔲}} |
+| Implement | {{✅ ⏳ 🔲}} |
+| Review | {{✅ ⏳ 🔲}} |
+| Discover | {{✅ ⏳ 🔲}} |
 ```
 
-Status indicators: ✅ complete, ⏳ in progress, ⬜ pending, ⚠️ warning, ❌ error.
+Status indicators: ✅ complete, ⏳ in progress, 🔲 pending, ⚠️ warning, ❌ error.
 
 ### Turn Summaries
 
