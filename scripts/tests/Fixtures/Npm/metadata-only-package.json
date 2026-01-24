@@ -1,0 +1,35 @@
+{
+  "name": "test-package",
+  "version": "1.0.0",
+  "description": "Test package with only metadata fields",
+  "author": "Test Author",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/test/test-package.git"
+  },
+  "bugs": {
+    "url": "https://github.com/test/test-package/issues"
+  },
+  "homepage": "https://github.com/test/test-package#readme",
+  "keywords": [
+    "test",
+    "fixture"
+  ],
+  "scripts": {
+    "build": "echo 'build'",
+    "test": "echo 'test'"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "test.command",
+        "title": "Test Command"
+      }
+    ]
+  }
+}
