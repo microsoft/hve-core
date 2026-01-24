@@ -20,6 +20,14 @@ This workflow dispatches subagents for all research activities using the runSuba
 
 ## Required Steps
 
+**Important requirements**:
+
+* **Important**, always be thorough and accurate.
+* Avoid making the research document overly verbose when not required.
+* Make sure the research document is complete and provides evidence.
+* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
+* Repeat steps and phases as needed to be thorough and accurate.
+
 ### Step 1: Define Research Scope
 
 Identify what the user wants to accomplish:
