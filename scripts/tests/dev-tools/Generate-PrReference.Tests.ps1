@@ -323,14 +323,12 @@ Describe 'Invoke-PrReferenceGeneration' {
             return
         }
 
-        # Capture Write-Host output
-        $output = @()
-        Mock Write-Host { $output += $args[0] } -Verifiable
+        Mock Write-Host {}
 
         $result = Invoke-PrReferenceGeneration -BaseBranch $baseBranch -ExcludeMarkdownDiff
         $result | Should -BeOfType [System.IO.FileInfo]
 
         # Verify the markdown exclusion note was output
-        Should -InvokeVerifiable
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq 'Note: Markdown files were excluded from diff output' }
     }
 }
