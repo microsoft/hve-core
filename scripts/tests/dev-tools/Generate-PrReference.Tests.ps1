@@ -245,19 +245,18 @@ Describe 'Get-CurrentBranchOrRef' {
     }
 
     It 'Should return detached@sha when in detached HEAD state' {
-        # Mock branch --show-current returning empty (detached state)
-        # Mock rev-parse returning a short SHA
+        # Use call sequence to distinguish git commands (cross-platform safe)
+        $script:gitCallCount = 0
         Mock git {
-            param($Arguments)
-            if ($Arguments -contains '--show-current') {
+            $script:gitCallCount++
+            if ($script:gitCallCount -eq 1) {
+                # First call: git branch --show-current returns empty (detached)
                 $global:LASTEXITCODE = 0
                 return ''
             }
-            if ($Arguments -contains '--short') {
-                $global:LASTEXITCODE = 0
-                return 'abc1234'
-            }
-            return $null
+            # Second call: git rev-parse --short HEAD returns SHA
+            $global:LASTEXITCODE = 0
+            return 'abc1234'
         }
         $result = Get-CurrentBranchOrRef
         $result | Should -Be 'detached@abc1234'
