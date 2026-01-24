@@ -313,11 +313,11 @@ Determine the overall review status:
 
 #### Step 2: User Handoff
 
-Provide the user with:
+Summarize findings to the conversation:
 
-* Summary of review findings with severity counts.
-* Link to the review log file.
-* Recommended next steps based on findings.
+* Provide a findings summary with severity counts (critical, major, minor).
+* Include the review log file path for detailed reference.
+* State the overall status (Complete, Needs Rework, Blocked).
 
 When findings require rework:
 
@@ -327,7 +327,25 @@ When findings require rework:
 When follow-up work is identified:
 
 * Summarize deferred and discovered items.
-* Recommend creating a new research document or plan for significant items.
+* Recommend the next action based on scope and priority.
+
+#### Step 3: RPI Workflow Continuation
+
+Provide handoff instructions when additional research or implementation work is needed.
+
+When follow-up items require further investigation:
+
+* Instruct the user to run `/clear` to start a fresh context.
+* Then invoke `/task-research` with the review log as input.
+* Example: `/task-research #file:.copilot-tracking/reviews/{{review_file}}`.
+
+When rework is needed for existing implementation:
+
+* Instruct the user to run `/clear` to start a fresh context.
+* Then invoke `/task-plan` with the review log to create a targeted fix plan.
+* Include specific findings that require attention in the handoff.
+
+This handoff pattern ensures a clean context for the next RPI workflow stage.
 
 ## Review Standards
 

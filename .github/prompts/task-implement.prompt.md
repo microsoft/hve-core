@@ -14,6 +14,15 @@ maturity: stable
 
 ## Required Steps
 
+**Important requirements**, repeat to yourself these important requirements:
+
+* **Important**, always be thorough and accurate.
+* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
+* If ever still unclear, then avoid guessing and ask the user.
+* Update the changes document whenever discovering or identifying new details.
+* Make sure the changes document is complete and accurate.
+* Repeat steps and phases as needed to be thorough and accurate.
+
 ### Step 1: Locate Implementation Plan
 
 Find the implementation plan using this priority:

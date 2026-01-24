@@ -20,7 +20,7 @@ This workflow dispatches subagents for all research activities using the runSuba
 
 ## Required Steps
 
-**Important requirements**:
+**Important requirements**, repeat to yourself these important requirements:
 
 * **Important**, always be thorough and accurate.
 * Avoid making the research document overly verbose when not required.

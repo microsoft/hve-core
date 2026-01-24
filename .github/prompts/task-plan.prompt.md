@@ -13,7 +13,7 @@ maturity: stable
 
 ## Required Steps
 
-**Important requirements**:
+**Important requirements**, repeat to yourself these important requirements:
 
 * **Important**, always be thorough and accurate.
 * Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.

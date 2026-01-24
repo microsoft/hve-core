@@ -23,13 +23,14 @@ This workflow dispatches subagents for all validation activities using the runSu
 
 ## Required Steps
 
-**Important requirements** for all steps needed to complete an accurate and thorough implementation review:
+**Important requirements**, repeat to yourself these important requirements:
 
-* Be thorough and precise when validating each checklist item.
+* **Important**, always be thorough and precise.
 * Subagents investigate thoroughly and return evidence for all findings.
 * Allow subagents to ask clarifying questions rather than guessing.
 * Update the review log continuously as validation progresses.
 * Repeat validation steps when answers to clarifying questions reveal additional context.
+* Repeat steps and phases as needed to be thorough and accurate.
 
 ### Step 1: Determine Review Scope
 
