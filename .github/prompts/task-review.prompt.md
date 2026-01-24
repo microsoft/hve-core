@@ -61,7 +61,7 @@ Dispatch a subagent via `runSubagent` for artifact discovery when file locations
 
 Create a new review log in `.copilot-tracking/reviews/` or update an existing one:
 
-* Use `YYYYMMDD-task-description-review.md` naming.
+* Use `{{YYYY-MM-DD}}-task-description-review.md` naming.
 * Initialize the review structure with artifact references.
 * Begin populating the implementation checklist.
 

@@ -53,7 +53,7 @@ Provide each subagent with:
 * Instructions files: Reference `.github/instructions/` files relevant to the research topic.
 * Task specification: Assign a specific research question or investigation target.
 * Tools: Indicate which tools to use (searches, file reads, external docs).
-* Output location: Specify the file path in `.copilot-tracking/subagent/YYYYMMDD/`.
+* Output location: Specify the file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
 * Return format: Use the structured response format below.
 
 ### Subagent Response Format
@@ -83,8 +83,8 @@ Subagents may respond with clarifying questions when instructions are ambiguous 
 
 Research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
 
-* `.copilot-tracking/research/` - Primary research documents (`YYYYMMDD-task-description-research.md`)
-* `.copilot-tracking/subagent/YYYYMMDD/` - Subagent research outputs (`topic-research.md`)
+* `.copilot-tracking/research/` - Primary research documents (`{{YYYY-MM-DD}}-task-description-research.md`)
+* `.copilot-tracking/subagent/{{YYYY-MM-DD}}/` - Subagent research outputs (`topic-research.md`)
 
 Create these directories when they do not exist.
 
@@ -98,7 +98,7 @@ Maintain research documents that are:
 
 ## Success Criteria
 
-Research is complete when a dated file exists at `.copilot-tracking/research/YYYYMMDD-<topic>-research.md` containing:
+Research is complete when a dated file exists at `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md` containing:
 
 * Clear scope, assumptions, and success criteria.
 * Evidence log with sources, links, and context.
@@ -132,7 +132,7 @@ Subagent instructions:
 
 * Read and follow `.github/instructions/` files relevant to the research topic.
 * Use semantic_search, grep_search, and file reads to locate patterns.
-* Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-codebase-research.md`.
+* Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-codebase-research.md`.
 * Include file paths with line numbers, code excerpts, and pattern analysis.
 * Return a structured response with key findings.
 
@@ -146,7 +146,7 @@ Subagent instructions:
 * Use microsoft-docs tools (`microsoft_docs_search`, `microsoft_code_sample_search`, `microsoft_docs_fetch`) for Azure and Microsoft documentation.
 * Use `fetch_webpage` for referenced URLs.
 * Use `github_repo` for implementation patterns from official repositories.
-* Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-external-research.md`.
+* Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-external-research.md`.
 * Include source URLs, documentation excerpts, and code samples.
 * Return a structured response with key findings.
 
@@ -300,8 +300,8 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ## Naming Conventions
 
-* Research documents: `YYYYMMDD-task-description-research.md`
-* Specialized research: `YYYYMMDD-topic-specific-research.md`
+* Research documents: `{{YYYY-MM-DD}}-task-description-research.md`
+* Specialized research: `{{YYYY-MM-DD}}-topic-specific-research.md`
 * Use current date; retain existing date when extending a file.
 
 ## User Interaction
@@ -335,5 +335,5 @@ When the user indicates research is complete, provide a structured handoff:
 ### Ready for Planning
 
 1. Clear your context by typing `/clear`.
-2. Attach or open [{{date}}-{{task}}-research.md](.copilot-tracking/research/{{date}}-{{task}}-research.md).
+2. Attach or open [{{YYYY-MM-DD}}-{{task}}-research.md](.copilot-tracking/research/{{YYYY-MM-DD}}-{{task}}-research.md).
 3. Start planning by typing `/task-plan`.

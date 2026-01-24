@@ -38,10 +38,10 @@ Identify what the user wants to accomplish:
 
 ### Step 2: Locate or Create Research Document
 
-Check `.copilot-tracking/research/` for existing files matching `YYYYMMDD-*-research.md`:
+Check `.copilot-tracking/research/` for existing files matching `{{YYYY-MM-DD}}-*-research.md`:
 
 * Extend an existing document when relevant to the topic.
-* Create a new document at `.copilot-tracking/research/YYYYMMDD-<topic>-research.md` otherwise.
+* Create a new document at `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md` otherwise.
 
 ### Step 3: Dispatch Research Subagents
 
@@ -55,7 +55,7 @@ Provide each subagent with the following:
 * Reference the task-researcher agent for research patterns and tool usage.
 * Assign a specific research question or investigation target.
 * Use semantic_search, grep_search, file reads, and external documentation tools.
-* Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+* Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 * Include source references, file paths with line numbers, and evidence.
 
 #### Subagent Response Format

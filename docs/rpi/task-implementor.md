@@ -42,7 +42,7 @@ Task Implementor creates working code and a changes log:
 ```text
 .copilot-tracking/
 └── changes/
-    └── YYYYMMDD-<topic>-changes.md    # Log of all changes made
+    └── {{YYYY-MM-DD}}-<topic>-changes.md    # Log of all changes made
 ```
 
 Plus all the actual code files created or modified during implementation.

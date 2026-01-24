@@ -40,9 +40,9 @@ Task Planner creates two files:
 ```text
 .copilot-tracking/
 ├── plans/
-│   └── YYYYMMDD-<topic>-plan.instructions.md   # Checklist with phases
+│   └── {{YYYY-MM-DD}}-<topic>-plan.instructions.md   # Checklist with phases
 └── details/
-    └── YYYYMMDD-<topic>-details.md             # Specifications for each task
+    └── {{YYYY-MM-DD}}-<topic>-details.md             # Specifications for each task
 ```
 
 ### Plan File
@@ -91,7 +91,7 @@ Task Planner will create all three files. Review:
 
 ## Example Prompt
 
-With `.copilot-tracking/research/20250128-blob-storage-research.md` opened in the editor
+With `.copilot-tracking/research/2025-01-28-blob-storage-research.md` opened in the editor
 
 ```text
 /task-plan
@@ -134,7 +134,7 @@ Specific work items within phases:
 
 ```markdown
 * [ ] Task 1.1: Create BlobStorageClient class
-  * Details: .copilot-tracking/details/20250128-blob-storage-details.md (Lines 10-25)
+  * Details: .copilot-tracking/details/2025-01-28-blob-storage-details.md (Lines 10-25)
 ```
 
 ### Line References

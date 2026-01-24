@@ -40,7 +40,7 @@ Escalate to Task Researcher when your task involves:
 Task Researcher creates a research document at:
 
 ```text
-.copilot-tracking/research/YYYYMMDD-<topic>-research.md
+.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md
 ```
 
 This document includes:

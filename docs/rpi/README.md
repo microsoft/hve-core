@@ -44,7 +44,7 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 * Investigates codebase, external APIs, and documentation
 * Documents findings with evidence and sources
 * Creates ONE recommended approach per scenario
-* **Output:** `YYYYMMDD-<topic>-research.md`
+* **Output:** `{{YYYY-MM-DD}}-<topic>-research.md`
 
 ### 📋 Plan Phase (Task Planner)
 
@@ -62,7 +62,7 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 * Executes plan task by task with verification
 * Tracks all changes in a changes log
 * Supports stop controls for review
-* **Output:** Working code + `YYYYMMDD-<topic>-changes.md`
+* **Output:** Working code + `{{YYYY-MM-DD}}-<topic>-changes.md`
 
 ### ✅ Review Phase (Task Reviewer)
 
@@ -72,7 +72,7 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 * Checks convention compliance using instruction files
 * Runs validation commands (lint, build, test)
 * Identifies follow-up work and iteration needs
-* **Output:** `YYYYMMDD-<topic>-review.md`
+* **Output:** `{{YYYY-MM-DD}}-<topic>-review.md`
 
 ## The Critical Rule: Clear Context Between Phases
 
