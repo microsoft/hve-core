@@ -1,8 +1,8 @@
 ---
-description: "Autonomous Research-Plan-Implement-Review workflow for completing tasks - Brought to you by microsoft/hve-core"
+description: "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core"
 agent: 'rpi-agent'
 maturity: stable
-argument-hint: "task=... [continue={1|2|3|all}]"
+argument-hint: "task=... [continue={1|2|3|all}] [suggest={true|false}]"
 ---
 
 # RPI
@@ -11,17 +11,19 @@ argument-hint: "task=... [continue={1|2|3|all}]"
 
 * ${input:task}: (Required) Task description from user prompt or conversation context.
 * ${input:continue}: (Optional) Continue with suggested work items. Accepts a number (1, 2, 3), multiple numbers (1,2), or "all" to continue with all next work items.
+* ${input:suggest}: (Optional) When true, reviews conversation context and dispatches parallel subagents to identify next work items based on completed work, prior suggestions, and related artifacts.
 
 ## Required Steps
 
 ### Step 1: Execute RPI Workflow
 
-Invoke rpi-agent mode to complete the task autonomously through the 4-phase workflow:
+Invoke rpi-agent mode to complete the task autonomously through the 5-phase workflow:
 
 * Research - Gather context, discover applicable instructions and skills, identify patterns
 * Plan - Create implementation plan referencing discovered instructions and skills
 * Implement - Execute plan following all referenced instructions and skills
 * Review - Validate against instructions compliance and iterate until complete
+* Discover - Identify next work items through parallel subagent research and continue or present options
 
 The agent discovers and applies:
 
