@@ -126,29 +126,29 @@ The `main.yml` workflow runs after merges to main, performing validation and rel
 
 ```mermaid
 flowchart LR
-    V1[spell-check] --> PKG[extension-package]
-    V2[markdown-lint] --> PKG
-    V3[table-format] --> PKG
-    V4[dependency-pinning-scan] --> PKG
-    V1 --> RP[release-please]
-    V2 --> RP
-    V3 --> RP
-    V4 --> RP
-    PKG --> RP
+    V1[spell-check] --> RP[release-please]
+    V2[markdown-lint] --> RP
+    V3[table-format] --> RP
+    V4[dependency-pinning-scan] --> RP
+    V5[pester-tests] --> RP
+    RP -->|release_created| PKG[extension-package-release]
+    PKG --> ATT[attest-and-upload]
 ```
 
 ### Main Branch Jobs
 
-| Job                     | Purpose                        | Dependencies        |
-|-------------------------|--------------------------------|---------------------|
-| spell-check             | Post-merge spelling validation | None                |
-| markdown-lint           | Post-merge markdown validation | None                |
-| table-format            | Post-merge table validation    | None                |
-| dependency-pinning-scan | Security pinning check         | None                |
-| extension-package       | Build VS Code extension VSIX   | All validation jobs |
-| release-please          | Automated release management   | All jobs            |
+| Job                       | Purpose                        | Dependencies                 |
+|---------------------------|--------------------------------|------------------------------|
+| spell-check               | Post-merge spelling validation | None                         |
+| markdown-lint             | Post-merge markdown validation | None                         |
+| table-format              | Post-merge table validation    | None                         |
+| dependency-pinning-scan   | Security pinning check         | None                         |
+| pester-tests              | PowerShell unit tests          | None                         |
+| release-please            | Automated release management   | All validation jobs          |
+| extension-package-release | Build release VSIX             | release-please (conditional) |
+| attest-and-upload         | Sign and upload VSIX           | extension-package-release    |
 
-The release-please job creates release PRs and tags based on conventional commits.
+When release-please creates a release, the `extension-package-release` job builds the VSIX with the correct version, and `attest-and-upload` signs it with Sigstore attestation before uploading to the GitHub Release.
 
 ## Security Workflows
 

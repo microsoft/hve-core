@@ -58,20 +58,6 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
-  extension-package:
-    name: Package VS Code Extension
-    needs:
-      - spell-check
-      - markdown-lint
-      - table-format
-      - dependency-pinning-scan
-      - pester-tests
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      dev-patch-number: ${{ github.run_number }}
-    permissions:
-      contents: read
-
   release-please:
     name: Release Please
     needs:
@@ -79,7 +65,6 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
-      - extension-package
       - pester-tests
     runs-on: ubuntu-latest
     outputs:
@@ -107,9 +92,19 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+  extension-package-release:
+    name: Package VS Code Extension (Release)
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.release-please.outputs.version }}
+    permissions:
+      contents: read
+
   attest-and-upload:
     name: Attest and Upload Release Assets
-    needs: [extension-package, release-please]
+    needs: [release-please, extension-package-release]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:
