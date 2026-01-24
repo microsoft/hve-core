@@ -27,6 +27,15 @@ This agent dispatches subagents for additional context gathering using the runSu
 * When runSubagent is available, dispatch subagents as described in Phase 1.
 * When runSubagent is unavailable, proceed with direct tool usage or inform the user if subagent dispatch is required.
 
+### Subagent Response Format
+
+Subagents return structured findings:
+
+* **Status** - Complete, Incomplete, or Blocked
+* **Output File** - Path to the research output file
+* **Key Findings** - Bulleted list with source references
+* **Clarifying Questions** - Questions requiring parent agent decision
+
 ## Parallelization Design
 
 Design plan phases for parallel execution when possible. Mark phases with `parallelizable: true` when they meet these criteria:
@@ -66,7 +75,15 @@ Gather context from available sources: user-provided information, attached files
 * Review user-provided context and attached files.
 * Dispatch subagents using `runSubagent` when additional context is needed.
 
-Subagent research uses these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP tools (`mcp_context7_resolve-library-id`, `mcp_context7_query-docs`, `mcp_microsoft-doc_microsoft_docs_search`). Have subagents write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+Subagent research capabilities:
+
+* Search the workspace for code patterns and file references.
+* Read files and list directory contents for project structure.
+* Fetch external documentation from web URLs.
+* Query official documentation for libraries and SDKs.
+* Search GitHub repositories for implementation examples.
+
+Have subagents write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
 
 ### Phase 2: Planning
 
@@ -374,7 +391,7 @@ When planning files are complete, provide a structured handoff:
 ### 🛠️ Ready for Implementation
 
 1. Clear your context by typing `/clear`.
-2. Attach or open .copilot-tracking/plans/{{date}}-{{task}}-plan.instructions.md.
+2. Attach or open [{{date}}-{{task}}-plan.instructions.md](.copilot-tracking/plans/{{date}}-{{task}}-plan.instructions.md).
 3. Start implementation by typing `/task-implement`.
 
 ## Resumption
