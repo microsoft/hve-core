@@ -1,6 +1,5 @@
 ---
 description: "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
-agent: rpi-agent
 maturity: stable
 ---
 

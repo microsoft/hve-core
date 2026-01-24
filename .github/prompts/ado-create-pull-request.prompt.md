@@ -1,6 +1,5 @@
 ---
 description: "Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages."
-agent: rpi-agent
 maturity: stable
 ---
 
