@@ -17,7 +17,7 @@ maturity: stable
 
 * **Important**, always be thorough and accurate.
 * Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
-* If ever still unclear, then avoid guessing and ask the user.
+* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
 * Refactor the plan documents as needed whenever discovering or identifying new details.
 * Make sure the plan documents are complete and accurate.
 * Repeat steps and phases as needed to be thorough and accurate.

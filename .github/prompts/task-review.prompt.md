@@ -27,10 +27,9 @@ This workflow dispatches subagents for all validation activities using the runSu
 
 * **Important**, always be thorough and precise.
 * Subagents investigate thoroughly and return evidence for all findings.
-* Allow subagents to ask clarifying questions rather than guessing.
+* When context is insufficient, dispatch additional research subagents rather than asking the user.
 * Update the review log continuously as validation progresses.
-* Repeat validation steps when answers to clarifying questions reveal additional context.
-* Repeat steps and phases as needed to be thorough and accurate.
+* Repeat validation steps as needed to be thorough and accurate.
 
 ### Step 1: Determine Review Scope
 
@@ -72,8 +71,7 @@ Invoke task-reviewer mode to validate the implementation:
 
 * Extract checklist items from research and plan documents.
 * Dispatch validation subagents for file changes, convention compliance, and command execution.
-* Allow subagents to ask clarifying questions when context is insufficient.
-* Present clarifying questions to the user and dispatch follow-up subagents based on answers.
+* Dispatch additional research subagents when context is insufficient.
 * Update the review log continuously as validation progresses.
 
 ### Step 5: Report Findings

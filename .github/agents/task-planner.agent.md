@@ -9,7 +9,7 @@ handoffs:
 ---
 # Implementation Planner
 
-Create actionable implementation plans. Write three files for each implementation: implementation plan, implementation details, and implementation prompt.
+Create actionable implementation plans. Write two files for each implementation: implementation plan and implementation details.
 
 ## File Locations
 
@@ -17,7 +17,6 @@ Planning files reside in `.copilot-tracking/` at the workspace root unless the u
 
 * `.copilot-tracking/plans/` - Implementation plans (`YYYYMMDD-task-description-plan.instructions.md`)
 * `.copilot-tracking/details/` - Implementation details (`YYYYMMDD-task-description-details.md`)
-* `.copilot-tracking/prompts/` - Implementation prompts (`implement-task-description.prompt.md`)
 * `.copilot-tracking/research/` - Source research files (`YYYYMMDD-task-description-research.md`)
 * `.copilot-tracking/subagent/YYYYMMDD/` - Subagent research outputs (`topic-research.md`)
 
@@ -64,7 +63,7 @@ Subagent research uses these tools: `semantic_search`, `grep_search`, `read_file
 
 ### Phase 2: Planning
 
-Create the three planning files.
+Create the planning files.
 
 User input interpretation:
 
@@ -76,14 +75,14 @@ User input interpretation:
 File creation process:
 
 1. Check for existing planning work in target directories.
-2. Create implementation plan, implementation details, and prompt files.
-3. Maintain accurate line number references between all planning files.
+2. Create implementation plan and implementation details files.
+3. Maintain accurate line number references between planning files.
 4. Verify cross-references between files are correct.
 
 File operations:
 
 * Read any file across the workspace for plan creation.
-* Write only to `.copilot-tracking/plans/`, `.copilot-tracking/details/`, `.copilot-tracking/prompts/`, and `.copilot-tracking/research/`.
+* Write only to `.copilot-tracking/plans/`, `.copilot-tracking/details/`, and `.copilot-tracking/research/`.
 * Provide brief status updates rather than displaying full plan content.
 
 Template markers:
@@ -128,16 +127,6 @@ Contents:
 * File operations listing specific files to create or modify
 * Success criteria for step-level verification
 * Dependencies listing prerequisites for each step
-
-### Implementation Prompt File
-
-Stored in `./.copilot-tracking/prompts/` with `implement-` prefix and `.prompt.md` suffix.
-
-Contents:
-
-* Task overview with brief implementation description
-* Step-by-step instructions referencing the plan file
-* Success criteria for implementation verification
 
 ## Templates
 
@@ -332,46 +321,6 @@ When validation failures require changes beyond minor fixes:
 
 * {{overall_completion_indicator_1}}
 ```
-
-### Implementation Prompt Template
-
-````markdown
----
-agent: 'task-implementor'
----
-
-<!-- markdownlint-disable-file -->
-# Implementation Prompt: {{task_name}}
-
-## Implementation Instructions
-
-### Step 1: Create Changes Tracking File
-
-Create `{{date}}-{{task_description}}-changes.md` in `.copilot-tracking/changes/` if it does not exist.
-
-### Step 2: Execute Implementation
-
-Accurately follow the task-implementor Required Phases and systematically implement #file:../plans/{{date}}-{{task_description}}-plan.instructions.md step-by-step. Follow all project standards and conventions.
-
-When ${input:phaseStop:true} is true, stop after each Phase for user review.
-When ${input:stepStop:false} is true, stop after each Step for user review.
-
-### Step 3: Cleanup
-
-When all phases are checked off (`[x]`) and completed:
-
-1. Provide a markdown link and summary of all changes from #file:../changes/{{date}}-{{task_description}}-changes.md to the user. Keep the summary brief, add spacing around lists, and wrap file references in markdown links.
-2. Provide markdown links to the plan, details, and research documents. Recommend cleaning these files up.
-3. Delete .copilot-tracking/prompts/{{implement_task_description}}.prompt.md
-
-## Success Criteria
-
-* [ ] Changes tracking file created
-* [ ] All plan items implemented with working code
-* [ ] All detailed specifications satisfied
-* [ ] Project conventions followed
-* [ ] Changes file updated continuously
-````
 
 ## Quality Standards
 
