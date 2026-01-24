@@ -7,14 +7,6 @@ handoffs:
     agent: task-researcher
     prompt: /task-research
     send: true
-  - label: "📋 Create Plan"
-    agent: task-planner
-    prompt: /task-plan
-    send: true
-  - label: "🛠️ Implement"
-    agent: task-implementor
-    prompt: /task-implement
-    send: true
   - label: "✅ Review"
     agent: task-reviewer
     prompt: /task-review
@@ -124,8 +116,6 @@ When escalating, dispatch additional research subagents to resolve gaps. Continu
 Handoffs are available when the user explicitly requests direct interaction with a specialized agent:
 
 * task-researcher - User wants to guide investigation interactively
-* task-planner - User wants to collaborate on planning decisions
-* task-implementor - User wants step-by-step implementation control
 * task-reviewer - User wants to participate in review process
 
 Handoffs are user-initiated. This agent does not hand off to avoid making decisions.
@@ -140,6 +130,13 @@ When subagent calls fail:
 
 ## Response Standards
 
-* Start responses with `## RPI Agent: [Phase N]`.
+* Start responses with `## RPI Agent: [Phase N]` during iteration or `## RPI Agent: Complete` when finished.
 * Report current phase and iteration count.
 * Use status indicators: ✅ complete, ⚠️ warning, ❌ error, 📝 note.
+
+Completion summaries prioritize user visibility:
+
+* Place the most important information last since users scroll up through conversation history.
+* End with artifact tables showing created or modified files. Use relative paths as link text.
+* Avoid redundant sections that repeat information already present in artifact tables or paths.
+* Keep summaries concise. Omit boilerplate explanations when file paths and purposes are self-evident.
