@@ -413,4 +413,68 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             $violations.Count | Should -Be 0
         }
     }
+
+    Context 'When package.json contains invalid JSON' {
+        BeforeAll {
+            $script:invalidJsonPath = Join-Path $script:FixturesPath 'invalid-json-package.json'
+        }
+
+        It 'Returns empty violations array on parse failure' {
+            $fileInfo = @{
+                Path         = $script:invalidJsonPath
+                Type         = 'npm'
+                RelativePath = 'invalid-json-package.json'
+            }
+
+            $violations = @(Get-NpmDependencyViolations -FileInfo $fileInfo)
+
+            $violations | Should -HaveCount 0
+        }
+
+        It 'Emits a warning about parse failure' {
+            $fileInfo = @{
+                Path         = $script:invalidJsonPath
+                Type         = 'npm'
+                RelativePath = 'invalid-json-package.json'
+            }
+
+            $warnings = Get-NpmDependencyViolations -FileInfo $fileInfo 3>&1
+
+            $warnings | Should -Not -BeNullOrEmpty
+            $warnings | Should -Match 'Failed to parse.*as JSON'
+        }
+    }
+
+    Context 'When package.json contains empty or whitespace versions' {
+        BeforeAll {
+            $script:emptyVersionPath = Join-Path $script:FixturesPath 'empty-version-package.json'
+        }
+
+        It 'Skips dependencies with empty versions' {
+            $fileInfo = @{
+                Path         = $script:emptyVersionPath
+                Type         = 'npm'
+                RelativePath = 'empty-version-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $violations | ForEach-Object { $_.Dependency }
+
+            $packageNames | Should -Not -Contain 'empty-version'
+            $packageNames | Should -Not -Contain 'whitespace-version'
+        }
+
+        It 'Reports violations for valid non-pinned versions in same file' {
+            $fileInfo = @{
+                Path         = $script:emptyVersionPath
+                Type         = 'npm'
+                RelativePath = 'empty-version-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations.Count | Should -BeGreaterThan 0
+            $violations | Where-Object { $_.Dependency -eq 'valid-package' } | Should -Not -BeNullOrEmpty
+        }
+    }
 }
