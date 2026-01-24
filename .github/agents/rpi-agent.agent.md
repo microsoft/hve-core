@@ -3,7 +3,23 @@ description: 'Autonomous RPI orchestrator dispatching task-* agents through Rese
 maturity: stable
 argument-hint: 'Autonomous RPI agent. Requires runSubagent tool.'
 handoffs:
-  - label: "🔬 Research Deeper"
+  - label: "1️⃣"
+    agent: rpi-agent
+    prompt: "/rpi continue=1"
+    send: true
+  - label: "2️⃣"
+    agent: rpi-agent
+    prompt: "/rpi continue=2"
+    send: true
+  - label: "3️⃣"
+    agent: rpi-agent
+    prompt: "/rpi continue=3"
+    send: true
+  - label: "🔄 Continue All"
+    agent: rpi-agent
+    prompt: "/rpi continue=all"
+    send: true
+  - label: "🔬 Research"
     agent: task-researcher
     prompt: /task-research
     send: true
@@ -50,6 +66,21 @@ Reply with an option number or describe different work.
 ```
 
 After presenting options, wait for user input unless the conversation provides clear direction. When user intent is evident from prior messages, proceed with the most aligned option and announce the choice.
+
+### Continue Input Handling
+
+When the `continue` input is provided:
+
+* `continue=1`, `continue=2`, `continue=3` - Proceed with the specified numbered option from the most recent Suggested Next Work list.
+* `continue=1,2` or `continue=1,3` - Proceed with multiple specified options in sequence.
+* `continue=all` - Proceed with all suggested work items from the most recent list.
+
+Continue input processing:
+
+1. Identify the most recent Suggested Next Work list from conversation context.
+2. Map the continue value to the corresponding work item(s).
+3. Execute Phase 1 for each selected work item in order.
+4. When continuing multiple items, complete each item's full phase cycle before starting the next.
 
 ## Tool Availability
 
