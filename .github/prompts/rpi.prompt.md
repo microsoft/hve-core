@@ -2,16 +2,22 @@
 description: "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core"
 agent: 'rpi-agent'
 maturity: stable
-argument-hint: "task=... [continue={1|2|3|all}] [suggest={true|false}]"
+argument-hint: "task=... [auto={true|partial|false}] [continue={1|2|3|all}] [suggest]"
 ---
 
 # RPI
 
 ## Inputs
 
+These inputs provide explicit signals to the agent. When not provided, the agent infers intent from conversation context.
+
 * ${input:task}: (Required) Task description from user prompt or conversation context.
-* ${input:continue}: (Optional) Continue with suggested work items. Accepts a number (1, 2, 3), multiple numbers (1,2), or "all" to continue with all next work items.
-* ${input:suggest}: (Optional) When true, reviews conversation context and dispatches parallel subagents to identify next work items based on completed work, prior suggestions, and related artifacts.
+* ${input:auto:partial}: (Optional) Controls autonomous continuation.
+  * `true` - Full autonomy. Continue with all next work items automatically.
+  * `partial` - (Default) Continue with obvious items. Present options when unclear.
+  * `false` - Always present options for user selection.
+* ${input:continue}: (Optional) Continue with suggested work items. Accepts a number (1, 2, 3), multiple numbers (1,2), or "all".
+* ${input:suggest}: (Optional) Trigger Phase 5 to discover and suggest next work items.
 
 ## Required Steps
 
