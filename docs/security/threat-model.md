@@ -778,7 +778,7 @@ HVE Core achieves acceptable security through:
 HVE Core documents integrations with Model Context Protocol servers. This section analyzes the trust posture of each server.
 
 > [!NOTE]
-> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE-Core development experience. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
+> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE Core development experience. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
 
 ### Server Summary
 
