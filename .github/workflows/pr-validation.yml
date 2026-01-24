@@ -8,6 +8,10 @@ on:
       - develop
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 # Minimal permissions for security
 permissions:
   contents: read
