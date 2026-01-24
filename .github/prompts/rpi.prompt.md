@@ -16,12 +16,18 @@ maturity: stable
 
 Invoke rpi-agent mode to complete the task autonomously through the 4-phase workflow:
 
-* Research - Gather context and identify patterns
-* Plan - Create implementation plan with success criteria
-* Implement - Execute plan and update tracking artifacts
-* Review - Validate and iterate until complete
+* Research - Gather context, discover applicable instructions and skills, identify patterns
+* Plan - Create implementation plan referencing discovered instructions and skills
+* Implement - Execute plan following all referenced instructions and skills
+* Review - Validate against instructions compliance and iterate until complete
 
-The agent dispatches specialized subagents for each phase and iterates until all success criteria are satisfied.
+The agent discovers and applies:
+
+* `.github/instructions/*.instructions.md` - Technology and workflow conventions
+* `.github/agents/*.agent.md` - Specialized agent patterns
+* `.github/skills/*/SKILL.md` - Executable skill packages
+
+Subagents reference discovered artifacts throughout all phases.
 
 ### Step 2: Return Results
 

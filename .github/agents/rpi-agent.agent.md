@@ -54,7 +54,10 @@ Use `runSubagent` to dispatch the task-researcher agent:
 * Include `.github/prompts/task-research.prompt.md` instructions.
 * Pass the user's topic and any conversation context.
 * Pass user requirements and any iteration feedback from prior phases.
-* The subagent creates research artifacts and returns findings.
+* Discover applicable `.github/instructions/*.instructions.md` files based on file types and technologies involved.
+* Discover applicable `.github/skills/*/SKILL.md` files based on task requirements.
+* Discover applicable `.github/agents/*.agent.md` patterns for specialized workflows.
+* The subagent creates research artifacts including discovered instructions and skills.
 
 Proceed to Phase 2 when research is complete.
 
@@ -68,7 +71,9 @@ Use `runSubagent` to dispatch the task-planner agent:
 * Include `.github/prompts/task-plan.prompt.md` instructions.
 * Pass research document paths from Phase 1.
 * Pass user requirements and any iteration feedback from prior phases.
-* The subagent creates plan artifacts and returns the plan location.
+* Reference all discovered instructions files in the plan's Context Summary section.
+* Reference all discovered skills in the plan's Dependencies section.
+* The subagent creates plan artifacts with explicit instruction and skill references.
 
 Proceed to Phase 3 when planning is complete.
 
@@ -82,7 +87,9 @@ Use `runSubagent` to dispatch the task-implementor agent:
 * Include `.github/prompts/task-implement.prompt.md` instructions.
 * Pass plan file path from Phase 2.
 * Pass user requirements and any iteration feedback from prior phases.
-* The subagent executes the plan and updates tracking artifacts.
+* Instruct subagent to read and follow all instructions files referenced in the plan.
+* Instruct subagent to execute skills referenced in the plan's Dependencies section.
+* The subagent executes the plan following all referenced conventions and patterns.
 
 Proceed to Phase 4 when implementation is complete.
 
@@ -96,6 +103,8 @@ Use `runSubagent` to dispatch the task-reviewer agent:
 * Include `.github/prompts/task-review.prompt.md` instructions.
 * Pass plan and changes paths from prior phases.
 * Pass user requirements and review scope.
+* Validate implementation against all referenced instructions files.
+* Verify skills were executed correctly.
 * The subagent validates and returns review findings with status.
 
 Determine next action based on review status.
