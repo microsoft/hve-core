@@ -1,27 +1,29 @@
 ---
 title: HVE Core
-description: Open-source library of Hypervelocity Engineering components that accelerates Azure solution development
+description: Hypervelocity Engineering prompt library for GitHub Copilot with constraint-based AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2025-11-05
+ms.date: 2026-01-22
 ms.topic: overview
 keywords:
   - hypervelocity engineering
-  - azure
+  - prompt engineering
   - github copilot
-  - m365 copilot
-  - conversational workflows
+  - ai workflows
   - custom agents
   - copilot instructions
-estimated_reading_time: 2
+  - rpi methodology
+estimated_reading_time: 3
 ---
 
-An open-source library of Hypervelocity Engineering components that accelerates Azure solution development by enabling advanced conversational workflows.
+Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
 **Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
 
 ## Overview
 
-HVE Core provides a unified set of optimized GitHub Copilot and Microsoft 365 Copilot custom agents, along with curated instructions and prompt templates, to deliver intelligent, context-aware interactions for building solutions on Azure. Whether you're tackling greenfield projects or modernizing existing systems, HVE Core reduces time-to-value and simplifies complex engineering tasks.
+HVE Core provides 18 specialized agents, 18 reusable prompts, and 17+ instruction sets with JSON schema validation. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
+
+The RPI (Research → Plan → Implement) methodology structures complex engineering tasks into phases where AI knows what it cannot do, changing optimization targets from "plausible code" to "verified truth."
 
 ## Quick Start
 
@@ -88,12 +90,53 @@ Get started with RPI:
 
 ## What's Included
 
-| Component    | Description                                                          | Documentation                                  |
-|--------------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
-| Instructions | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
-| Prompts      | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Scripts      | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
+| Component    | Count | Description                                                          | Documentation                                  |
+|--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
+| Agents       | 18    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
+| Instructions | 17+   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
+| Prompts      | 18    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
+| Skills       | 1     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
+| Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
+
+## Prompt Engineering Framework
+
+HVE Core provides a structured approach to prompt engineering with four artifact types, each serving a distinct purpose:
+
+| Artifact | Purpose | Activation |
+|----------|---------|------------|
+| **Instructions** | Passive reference guidance applied by file pattern | Automatic via `applyTo` glob |
+| **Prompts** | Task-specific procedures with input variables | Manual via `/` command |
+| **Agents** | Specialized personas with tool access and constraints | Manual via agent picker |
+| **Skills** | Executable utilities with cross-platform scripts | Read by Copilot on demand |
+
+**Key capabilities:**
+
+* Protocol patterns support step-based (sequential) and phase-based (conversational) workflow formats
+* Input variables use `${input:variableName}` syntax with defaults and VS Code integration
+* Subagent delegation provides a first-class pattern for tool-heavy work via `runSubagent`
+* Maturity lifecycle follows a four-stage model (`experimental` → `preview` → `stable` → `deprecated`)
+
+Use the `prompt-builder` agent to create new artifacts following these patterns.
+
+## Enterprise Validation Pipeline
+
+All AI artifacts are validated through a CI/CD pipeline with JSON schema enforcement:
+
+```text
+*.instructions.md → instruction-frontmatter.schema.json
+*.prompt.md       → prompt-frontmatter.schema.json
+*.agent.md        → agent-frontmatter.schema.json
+SKILL.md          → skill-frontmatter.schema.json
+```
+
+The validation system provides:
+
+* Typed frontmatter validation provides structured error reporting.
+* Pattern-based schema mapping enables automatic file type detection.
+* Maturity enforcement ensures artifacts declare stability level.
+* Link and language checks validate cross-references.
+
+Run `npm run lint:frontmatter` locally before committing changes.
 
 ## Project Structure
 
@@ -101,9 +144,18 @@ Get started with RPI:
 .github/
 ├── agents/          # Specialized Copilot chat assistants
 ├── instructions/    # Repository-specific coding guidelines
-└── prompts/         # Reusable prompt templates
-docs/                # Learning guides and tutorials
-scripts/             # Validation and development tools
+├── prompts/         # Reusable prompt templates
+├── skills/          # Self-contained executable packages
+└── workflows/       # CI/CD pipeline definitions
+docs/
+├── getting-started/ # Installation and first workflow guides
+├── rpi/             # Research, Plan, Implement methodology
+├── contributing/    # Artifact authoring guidelines
+└── architecture/    # System design documentation
+extension/           # VS Code extension source
+scripts/
+├── linting/         # Markdown, frontmatter, YAML validation
+└── security/        # Dependency pinning and SHA checks
 ```
 
 ## Contributing
