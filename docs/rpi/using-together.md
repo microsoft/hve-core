@@ -13,20 +13,22 @@ keywords:
 estimated_reading_time: 5
 ---
 
-This guide walks through a complete RPI workflow, showing how the three custom agents work together to transform a complex task into working code.
+This guide walks through a complete RPI workflow, showing how the four custom agents work together to transform a complex task into working code.
 
 ## The Complete Workflow
 
 ```text
-┌─────────────────┐    /clear    ┌─────────────────┐    /clear    ┌─────────────────┐
-│ Task Researcher │ ──────────→ │  Task Planner   │ ──────────→ │ Task Implementor│
-│                 │              │                 │              │                 │
-│ Uncertainty     │              │ Knowledge       │              │ Strategy        │
-│     ↓           │              │     ↓           │              │     ↓           │
-│ Knowledge       │              │ Strategy        │              │ Working Code    │
-└─────────────────┘              └─────────────────┘              └─────────────────┘
-        ↓                                ↓                                ↓
-   research.md                   plan.md + details.md           code + changes.md
+┌─────────────────┐   Handoff    ┌─────────────────┐   Handoff    ┌─────────────────┐   Handoff    ┌─────────────────┐
+│ Task Researcher │ ──────────→ │  Task Planner   │ ──────────→ │ Task Implementor│ ──────────→ │  Task Reviewer  │
+│                 │  📋 Create   │                 │  🛠️ Implement │                 │  ✅ Review   │                 │
+│ Uncertainty     │    Plan      │ Knowledge       │              │ Strategy        │              │ Working Code    │
+│     ↓           │              │     ↓           │              │     ↓           │              │     ↓           │
+│ Knowledge       │              │ Strategy        │              │ Working Code    │              │ Validated Code  │
+└─────────────────┘              └─────────────────┘              └─────────────────┘              └─────────────────┘
+        ↓                                ↓                                ↓                                ↓
+   research.md                   plan.md + details.md           code + changes.md              review.md + findings
+        ↑                                ↑
+        └────────────────────────────────┴──────────────── 🔬 Research More / 📋 Revise Plan ────────────────────────┘
 ```
 
 ## Critical Rule: Clear Context
@@ -234,6 +236,35 @@ RPI artifacts support handoffs:
 > `/task-research`, `/task-plan`, and `/task-implement` all automatically switch to the appropriate custom agent.
 
 Remember: **Always `/clear` between phases!**
+
+## Handoff Buttons
+
+RPI agents include handoff buttons that streamline transitions between workflow phases. When an agent completes its work, handoff buttons appear in the chat interface.
+
+### Available Handoffs
+
+| From Agent       | Handoff Button      | Target Agent     | Action                          |
+|------------------|---------------------|------------------|---------------------------------|
+| Task Researcher  | 📋 Create Plan      | Task Planner     | Starts planning with research   |
+| Task Planner     | 🛠️ Implement        | Task Implementor | Executes the plan               |
+| Task Implementor | ✅ Review           | Task Reviewer    | Reviews implementation          |
+| Task Reviewer    | 🔬 Research More    | Task Researcher  | Researches identified gaps      |
+| Task Reviewer    | 📋 Revise Plan      | Task Planner     | Updates plan based on findings  |
+
+### Using Handoff Buttons
+
+1. Complete work in current agent
+2. Click the handoff button in the chat interface
+3. The target agent activates with the appropriate prompt pre-filled
+4. Conversation context carries over automatically
+
+### When to Use Manual Transitions
+
+Use `/clear` and manual `/task-*` commands instead of handoffs when:
+
+* You need to reset conversation context completely
+* You want to provide custom parameters to the next agent
+* The handoff button doesn't match your intended workflow
 
 ## RPI Agent: When Simplicity Fits
 

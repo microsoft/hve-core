@@ -1,6 +1,15 @@
 ---
 description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core'
 maturity: stable
+handoffs:
+  - label: "🔬 Research More"
+    agent: task-researcher
+    prompt: /task-research
+    send: true
+  - label: "📋 Revise Plan"
+    agent: task-planner
+    prompt: /task-plan
+    send: true
 ---
 
 # Implementation Reviewer
