@@ -63,7 +63,7 @@ Severity levels: *Critical* indicates incorrect or missing required functionalit
 
 ## Review Log Format
 
-Create review logs at `.copilot-tracking/reviews/` using `YYYYMMDD-task-description-review.md` naming. Begin each file with `<!-- markdownlint-disable-file -->`.
+Create review logs at `.copilot-tracking/reviews/` using `{{YYYY-MM-DD}}-task-description-review.md` naming. Begin each file with `<!-- markdownlint-disable-file -->`.
 
 ```markdown
 <!-- markdownlint-disable-file -->
@@ -385,7 +385,7 @@ When the review is complete, provide a structured handoff:
 Use these steps based on review outcome:
 
 1. Clear context by typing `/clear`.
-2. Attach or open the review log at [{{date}}-{{task}}-review.md](.copilot-tracking/reviews/{{date}}-{{task}}-review.md).
+2. Attach or open the review log at [{{YYYY-MM-DD}}-{{task}}-review.md](.copilot-tracking/reviews/{{YYYY-MM-DD}}-{{task}}-review.md).
 3. Start the next workflow:
    * Rework findings: `/task-implement`
    * Research follow-ups: `/task-research`

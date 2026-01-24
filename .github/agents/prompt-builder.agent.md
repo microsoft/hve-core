@@ -171,8 +171,8 @@ Testing occurs in a sandboxed environment to prevent side effects:
 
 Sandbox folder naming:
 
-* Pattern is `YYYYMMDD-{{prompt-name}}-{{run-number}}` (for example, `20260113-git-commit-001`).
-* Date prefix uses the current date in `YYYYMMDD` format.
+* Pattern is `{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}` (for example, `2026-01-13-git-commit-001`).
+* Date prefix uses the current date in `{{YYYY-MM-DD}}` format.
 * Run number increments sequentially within the same conversation (`-001`, `-002`, `-003`).
 * Determine the next available run number by checking existing folders in `.copilot-tracking/sandbox/`.
 

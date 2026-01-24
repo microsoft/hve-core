@@ -352,14 +352,14 @@ When instructions describe how to respond to users in conversation:
 * Format URLs as markdown links: `[display text](https://example.com)`.
 * Use workspace-relative paths for file links.
 * Do not wrap file paths or links in backticks. Backticks prevent the conversation viewer from rendering clickable links.
-* Use placeholders like `{{date}}` or `{{task}}` for dynamic path segments.
+* Use placeholders like `{{YYYY-MM-DD}}` or `{{task}}` for dynamic path segments.
 
 ```markdown
 <!-- Avoid backticks around file paths -->
-2. Attach or open `.copilot-tracking/plans/20260124-task-plan.instructions.md`.
+2. Attach or open `.copilot-tracking/plans/2026-01-24-task-plan.instructions.md`.
 
 <!-- Use markdown links for file references -->
-2. Attach or open [20260124-task-plan.instructions.md](.copilot-tracking/plans/20260124-task-plan.instructions.md).
+2. Attach or open [2026-01-24-task-plan.instructions.md](.copilot-tracking/plans/2026-01-24-task-plan.instructions.md).
 
 <!-- Use markdown links for URLs -->
 See the [official documentation](https://docs.example.com/guide) for details.

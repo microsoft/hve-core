@@ -47,7 +47,7 @@ Inspect the implementation plan for completion status:
 Invoke task-implementor mode with the located plan:
 
 * Follow stop controls: pause after each phase when ${input:phaseStop} is true; pause after each step when ${input:stepStop} is true.
-* Dispatch subagents for inline research when context is missing. Subagents return findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+* Dispatch subagents for inline research when context is missing. Subagents return findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 * Update the changes log as steps complete.
 
 ### Step 4: Report Progress

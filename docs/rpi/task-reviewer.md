@@ -40,7 +40,7 @@ Use Task Reviewer after completing implementation when you need:
 Task Reviewer creates a review log at:
 
 ```text
-.copilot-tracking/reviews/YYYYMMDD-<topic>-review.md
+.copilot-tracking/reviews/{{YYYY-MM-DD}}-<topic>-review.md
 ```
 
 This document includes:
@@ -115,9 +115,9 @@ Review with specific artifact reference:
 ```text
 /task-review
 Validate against:
-- Research: .copilot-tracking/research/20250128-blob-storage-research.md
-- Plan: .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md
-- Changes: .copilot-tracking/changes/20250128-blob-storage-changes.md
+- Research: .copilot-tracking/research/2025-01-28-blob-storage-research.md
+- Plan: .copilot-tracking/plans/2025-01-28-blob-storage-plan.instructions.md
+- Changes: .copilot-tracking/changes/2025-01-28-blob-storage-changes.md
 ```
 
 ## Understanding Severity Levels

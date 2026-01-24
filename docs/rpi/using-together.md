@@ -83,7 +83,7 @@ Focus on approaches that match our existing patterns in the codebase.
 ## 🔬 Task Researcher: Azure Blob Storage Integration
 
 ✅ Research document created at:
-.copilot-tracking/research/20250128-blob-storage-research.md
+.copilot-tracking/research/2025-01-28-blob-storage-research.md
 
 Key findings:
 - Recommended: azure-storage-blob SDK with async streaming
@@ -113,8 +113,8 @@ Key findings:
 1. Review the output. Task Planner creates two files:
 
    ```text
-   .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md
-   .copilot-tracking/details/20250128-blob-storage-details.md
+   .copilot-tracking/plans/2025-01-28-blob-storage-plan.instructions.md
+   .copilot-tracking/details/2025-01-28-blob-storage-details.md
    ```
 
 1. Verify the plan structure:
@@ -167,7 +167,7 @@ When all phases complete:
 ```text
 Implementation complete!
 
-Changes log: .copilot-tracking/changes/20250128-blob-storage-changes.md
+Changes log: .copilot-tracking/changes/2025-01-28-blob-storage-changes.md
 
 Files created (3):
 - src/storage/blob_client.py
@@ -204,7 +204,7 @@ Ready for review.
 
 | 📊 Summary | |
 |-------------|-|
-| **Review Log** | .copilot-tracking/reviews/20250128-blob-storage-review.md |
+| **Review Log** | .copilot-tracking/reviews/2025-01-28-blob-storage-review.md |
 | **Overall Status** | Complete |
 | **Critical Findings** | 0 |
 | **Major Findings** | 0 |

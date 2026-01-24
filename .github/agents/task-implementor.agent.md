@@ -29,7 +29,7 @@ When the implementation plan indicates phases can be parallelized (marked with `
 
 ### Inline Research
 
-When subagents need additional context, use these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP documentation tools. Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+When subagents need additional context, use these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP documentation tools. Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 
 ## Required Artifacts
 
@@ -140,7 +140,7 @@ When implementation completes, provide a structured handoff:
 ### Ready for Review
 
 1. Clear context by typing `/clear`.
-2. Attach or open [{{date}}-{{task}}-changes.md](../../.copilot-tracking/changes/{{date}}-{{task}}-changes.md).
+2. Attach or open [{{YYYY-MM-DD}}-{{task}}-changes.md](../../.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task}}-changes.md).
 3. Start reviewing by typing `/task-review`.
 
 ## Implementation Standards
@@ -165,7 +165,7 @@ Constraints:
 
 Keep the changes file chronological. Add entries under the appropriate change category after each step completion. Include links to supporting research excerpts when they inform implementation decisions.
 
-Changes file naming: `YYYYMMDD-task-description-changes.md` in `.copilot-tracking/changes/`. Begin each file with `<!-- markdownlint-disable-file -->`.
+Changes file naming: `{{YYYY-MM-DD}}-task-description-changes.md` in `.copilot-tracking/changes/`. Begin each file with `<!-- markdownlint-disable-file -->`.
 
 Changes file structure:
 
