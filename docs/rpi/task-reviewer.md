@@ -124,11 +124,11 @@ Validate against:
 
 Task Reviewer categorizes findings by impact:
 
-| Severity | Description | Example |
-|----------|-------------|---------|
-| **Critical** | Implementation incorrect or missing required functionality | Missing authentication on public endpoint |
-| **Major** | Implementation deviates from specifications or conventions | Used deprecated API instead of recommended one |
-| **Minor** | Style issues, documentation gaps, or optimization opportunities | Missing inline comment on complex logic |
+| Severity     | Description                                                     | Example                                        |
+|--------------|-----------------------------------------------------------------|------------------------------------------------|
+| **Critical** | Implementation incorrect or missing required functionality      | Missing authentication on public endpoint      |
+| **Major**    | Implementation deviates from specifications or conventions      | Used deprecated API instead of recommended one |
+| **Minor**    | Style issues, documentation gaps, or optimization opportunities | Missing inline comment on complex logic        |
 
 ## Tips for Better Reviews
 
@@ -147,11 +147,11 @@ Task Reviewer categorizes findings by impact:
 
 ## Common Pitfalls
 
-| Pitfall | Solution |
-|---------|----------|
-| No artifacts found | Complete implementation first; verify changes log exists |
-| Research not linked | Ensure plan references research document |
-| Too many findings | Break implementation into smaller phases |
+| Pitfall             | Solution                                                 |
+|---------------------|----------------------------------------------------------|
+| No artifacts found  | Complete implementation first; verify changes log exists |
+| Research not linked | Ensure plan references research document                 |
+| Too many findings   | Break implementation into smaller phases                 |
 
 ## Next Steps
 

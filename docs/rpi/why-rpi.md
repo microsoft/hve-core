@@ -106,13 +106,13 @@ The review phase surfaces discrepancies between intent and implementation. When 
 
 RPI produces measurably different outcomes than traditional AI coding:
 
-| Aspect                 | Traditional Approach                               | RPI Approach                                      |
-|------------------------|----------------------------------------------------|-------------------------------------------------|
-| **Pattern matching**   | Invents plausible patterns                         | Uses verified existing patterns                  |
-| **Traceability**       | "The AI wrote it this way"                         | "Research document cites lines 47-52"            |
-| **Knowledge transfer** | Tribal knowledge in your head                      | Research documents anyone can follow             |
-| **Rework**             | Frequent, after discovering assumptions were wrong | Rare, because assumptions are verified first     |
-| **Validation**         | Hope it works or manual testing                    | Validated against specifications with evidence   |
+| Aspect                 | Traditional Approach                               | RPI Approach                                   |
+|------------------------|----------------------------------------------------|------------------------------------------------|
+| **Pattern matching**   | Invents plausible patterns                         | Uses verified existing patterns                |
+| **Traceability**       | "The AI wrote it this way"                         | "Research document cites lines 47-52"          |
+| **Knowledge transfer** | Tribal knowledge in your head                      | Research documents anyone can follow           |
+| **Rework**             | Frequent, after discovering assumptions were wrong | Rare, because assumptions are verified first   |
+| **Validation**         | Hope it works or manual testing                    | Validated against specifications with evidence |
 
 ### The Paradigm Shift
 

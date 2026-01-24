@@ -202,14 +202,14 @@ Ready for review.
 ```text
 ## ✅ Task Reviewer: Blob Storage Integration
 
-| 📊 Summary | |
-|-------------|-|
-| **Review Log** | .copilot-tracking/reviews/2025-01-28-blob-storage-review.md |
-| **Overall Status** | Complete |
-| **Critical Findings** | 0 |
-| **Major Findings** | 0 |
-| **Minor Findings** | 2 |
-| **Follow-Up Items** | 1 |
+| 📊 Summary            |                                                             |
+|-----------------------|-------------------------------------------------------------|
+| **Review Log**        | .copilot-tracking/reviews/2025-01-28-blob-storage-review.md |
+| **Overall Status**    | Complete                                                    |
+| **Critical Findings** | 0                                                           |
+| **Major Findings**    | 0                                                           |
+| **Minor Findings**    | 2                                                           |
+| **Follow-Up Items**   | 1                                                           |
 
 Minor findings:
 - Missing docstring on BlobStorageClient.upload_stream()
@@ -231,14 +231,14 @@ Ready for commit.
 
 After completing RPI, you have:
 
-| Artifact | Location                       | Purpose                      |
-|----------|--------------------------------|------------------------------|
-| Research | `.copilot-tracking/research/`  | Evidence and recommendations |
-| Plan     | `.copilot-tracking/plans/`     | Checkboxes and phases        |
-| Details  | `.copilot-tracking/details/`   | Task specifications          |
-| Changes  | `.copilot-tracking/changes/`   | Change log                   |
-| Review   | `.copilot-tracking/reviews/`   | Validation findings          |
-| Code     | Your source directories        | Working implementation       |
+| Artifact | Location                      | Purpose                      |
+|----------|-------------------------------|------------------------------|
+| Research | `.copilot-tracking/research/` | Evidence and recommendations |
+| Plan     | `.copilot-tracking/plans/`    | Checkboxes and phases        |
+| Details  | `.copilot-tracking/details/`  | Task specifications          |
+| Changes  | `.copilot-tracking/changes/`  | Change log                   |
+| Review   | `.copilot-tracking/reviews/`  | Validation findings          |
+| Code     | Your source directories       | Working implementation       |
 
 ## Common Patterns
 
@@ -277,12 +277,12 @@ The Review phase can trigger iteration back to earlier phases when findings reve
 
 ### Iteration Paths
 
-| Review Status | Action | Target Phase |
-|---------------|--------|-------------|
-| Complete | Commit changes | Done |
-| Needs Rework | Fix implementation issues | Implement |
-| Research Gap | Investigate missing context | Research |
-| Plan Gap | Add missing scope | Plan |
+| Review Status | Action                      | Target Phase |
+|---------------|-----------------------------|--------------|
+| Complete      | Commit changes              | Done         |
+| Needs Rework  | Fix implementation issues   | Implement    |
+| Research Gap  | Investigate missing context | Research     |
+| Plan Gap      | Add missing scope           | Plan         |
 
 ### Rework Flow
 
@@ -307,12 +307,12 @@ When Task Reviewer identifies research or planning gaps:
 
 ## Quick Reference
 
-| Phase     | Invoke With                  | Agent            | Output                         |
-|-----------|------------------------------|------------------|--------------------------------|
-| Research  | `/task-research <topic>`     | Task Researcher  | research.md                    |
-| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md            |
-| Implement | `/task-implement`            | Task Implementor | code + changes.md              |
-| Review    | `/task-review [scope]`       | Task Reviewer    | review.md                      |
+| Phase     | Invoke With                  | Agent            | Output              |
+|-----------|------------------------------|------------------|---------------------|
+| Research  | `/task-research <topic>`     | Task Researcher  | research.md         |
+| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md |
+| Implement | `/task-implement`            | Task Implementor | code + changes.md   |
+| Review    | `/task-review [scope]`       | Task Reviewer    | review.md           |
 
 > [!TIP]
 > `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` all automatically switch to the appropriate custom agent.
@@ -325,13 +325,13 @@ RPI agents include handoff buttons that streamline transitions between workflow 
 
 ### Available Handoffs
 
-| From Agent       | Handoff Button      | Target Agent     | Action                          |
-|------------------|---------------------|------------------|---------------------------------|
-| Task Researcher  | 📋 Create Plan      | Task Planner     | Starts planning with research   |
-| Task Planner     | ⚡ Implement         | Task Implementor | Executes the plan               |
-| Task Implementor | ✅ Review           | Task Reviewer    | Reviews implementation          |
-| Task Reviewer    | 🔬 Research More    | Task Researcher  | Researches identified gaps      |
-| Task Reviewer    | 📋 Revise Plan      | Task Planner     | Updates plan based on findings  |
+| From Agent       | Handoff Button   | Target Agent     | Action                         |
+|------------------|------------------|------------------|--------------------------------|
+| Task Researcher  | 📋 Create Plan   | Task Planner     | Starts planning with research  |
+| Task Planner     | ⚡ Implement      | Task Implementor | Executes the plan              |
+| Task Implementor | ✅ Review         | Task Reviewer    | Reviews implementation         |
+| Task Reviewer    | 🔬 Research More | Task Researcher  | Researches identified gaps     |
+| Task Reviewer    | 📋 Revise Plan   | Task Planner     | Updates plan based on findings |
 
 ### Using Handoff Buttons
 
