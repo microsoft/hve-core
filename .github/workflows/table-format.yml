@@ -37,8 +37,13 @@ jobs:
       - name: Check table formatting
         id: table-format
         run: |
-          npm run format:tables > table-format-output.txt 2>&1 || echo "TABLE_FORMAT_FAILED=true" >> $GITHUB_ENV
+          npm run format:tables > table-format-output.txt 2>&1
           cat table-format-output.txt
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "TABLE_FORMAT_FAILED=true" >> $GITHUB_ENV
+            echo "Files with formatting issues:"
+            git diff --name-only
+          fi
         continue-on-error: true
 
       - name: Create annotations
