@@ -14,6 +14,10 @@ handoffs:
     agent: prompt-builder
     prompt: /prompt-analyze
     send: true
+  - label: "♻️ Cleanup Sandbox"
+    agent: prompt-builder
+    prompt: "Clear the sandbox for this conversation"
+    send: true
 ---
 
 # Prompt Builder
