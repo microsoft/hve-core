@@ -15,6 +15,8 @@ keywords:
 estimated_reading_time: 3
 ---
 
+[![CI Status](https://github.com/microsoft/hve-core/actions/workflows/main.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/main.yml) [![CodeQL](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795) [![License](https://img.shields.io/github/license/microsoft/hve-core)](./LICENSE)
+
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
 **Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
@@ -187,8 +189,6 @@ This project is licensed under the [MIT License](./LICENSE).
 **Security:** See [SECURITY.md](./SECURITY.md) for security policy and reporting vulnerabilities.
 
 **Governance:** See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.
-
-**OpenSSF Best Practices:** [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
 
 ## Trademark Notice
 
