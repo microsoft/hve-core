@@ -83,7 +83,7 @@ Execute phases in order. Review phase returns control to earlier phases when ite
 | 2: Plan | Research complete | Implementation plan created |
 | 3: Implement | Plan complete | Changes applied to codebase |
 | 4: Review | Implementation complete | Iteration decision made |
-| 5: Discover | Review completes or discovery requested | Next work identified |
+| 5: Discover | Review completes or discovery requested | Suggestions presented or auto-continuation announced |
 
 ### Phase 1: Research
 
@@ -144,9 +144,9 @@ Determine next action based on review status:
 
 ### Phase 5: Discover
 
-Identify next work items through parallel subagent research. Continue autonomously or present options based on detected autonomy mode.
+Use `runSubagent` to dispatch discovery subagents that identify next work items. This phase is not complete until either suggestions are presented to the user or auto-continuation begins.
 
-#### Context Gathering
+#### Step 1: Gather Context
 
 Before dispatching subagents, gather context from the conversation and workspace:
 
@@ -160,45 +160,37 @@ Before dispatching subagents, gather context from the conversation and workspace
    * Memory documents in `.copilot-tracking/memory/`
 4. Compile a context summary with paths to relevant artifacts.
 
-#### Parallel Subagent Dispatch
+#### Step 2: Dispatch Discovery Subagents
 
-Dispatch multiple subagents in parallel using `runSubagent` to identify work items from different perspectives.
+Use `runSubagent` to dispatch multiple subagents in parallel. Each subagent investigates a different source of potential work items:
 
-##### Conversation Analyst
+**Conversation Analyst Subagent:**
 
 * Review conversation history for user intent, deferred requests, and implied follow-up work.
 * Identify patterns in what the user has asked for versus what was delivered.
 * Return a list of potential work items with priority and rationale.
 
-##### Artifact Reviewer
+**Artifact Reviewer Subagent:**
 
 * Read research, plan, and changes documents from the context summary.
 * Identify incomplete items, deferred decisions, and noted technical debt.
 * Extract TODO markers, FIXME comments, and documented follow-up items.
 * Return a list of work items discovered in artifacts.
 
-##### Codebase Scanner
+**Codebase Scanner Subagent:**
 
 * Search for patterns indicating incomplete work: TODO, FIXME, HACK, XXX.
 * Identify recently modified files and assess completion state.
 * Check for orphaned or partially implemented features.
 * Return a list of codebase-derived work items.
 
-Subagent prompt template:
+Provide each subagent with:
 
-```markdown
-Analyze the provided context and identify potential next work items.
+* The context summary with artifact paths.
+* Relevant conversation excerpts.
+* Instructions to return findings as a prioritized list with source and rationale for each item.
 
-Context:
-{{context summary with artifact paths}}
-
-Conversation excerpts:
-{{relevant conversation history}}
-
-Return findings as a prioritized list with source and rationale for each item.
-```
-
-#### Suggestion Consolidation
+#### Step 3: Consolidate Findings
 
 After subagents return, consolidate findings:
 
@@ -207,19 +199,19 @@ After subagents return, consolidate findings:
 3. Group related items that could be addressed together.
 4. Select the top 3-5 actionable items for presentation.
 
-#### Continuation Decision
+When no work items are identified, report this finding to the user and ask for direction.
 
-After consolidation, determine how to proceed based on the detected autonomy level:
+#### Step 4: Present or Continue
+
+Determine how to proceed based on the detected autonomy level:
 
 | Mode | Behavior |
 |------|----------|
-| Full autonomy | Continue with the top-priority work item automatically. When multiple items exist with equal priority, continue with all in sequence. Announce the decision and return to Phase 1. |
-| Partial (default) | Continue automatically when high-priority items have clear user intent, items are direct continuations of completed work, or items form a natural sequence. Present options when intent is unclear or scope changes significantly. |
-| Manual | Always present the Suggested Next Work list and wait for user selection. |
+| Full autonomy | Announce the decision, present the consolidated list, and return to Phase 1 with the top-priority item. |
+| Partial (default) | Continue automatically when items have clear user intent or are direct continuations. Present the Suggested Next Work list when intent is unclear. |
+| Manual | Present the Suggested Next Work list and wait for user selection. |
 
-#### Suggestion Presentation
-
-When presenting options:
+Present suggestions using this format:
 
 ```markdown
 ## Suggested Next Work
@@ -228,11 +220,12 @@ Based on conversation history, artifacts, and codebase analysis:
 
 1. {{Title}} - {{description}} ({{priority}})
 2. {{Title}} - {{description}} ({{priority}})
+3. {{Title}} - {{description}} ({{priority}})
 
 Reply with option numbers to continue, or describe different work.
 ```
 
-Wait for user input after presenting suggestions. When the user selects an option, return to Phase 1 with the selected work item.
+Phase 5 is complete only after presenting suggestions or announcing auto-continuation. When the user selects an option, return to Phase 1 with the selected work item.
 
 ## Error Handling
 
@@ -250,8 +243,8 @@ Response patterns for user-facing communication across all phases.
 
 Start responses with phase headers indicating current progress:
 
-* During iteration: `## RPI Agent: Phase N - {{Phase Name}}`
-* At completion: `## RPI Agent: Complete`
+* During iteration: `## 🤖 RPI Agent: Phase N - {{Phase Name}}`
+* At completion: `## 🤖 RPI Agent: Complete`
 
 Include a phase progress indicator in each response:
 
