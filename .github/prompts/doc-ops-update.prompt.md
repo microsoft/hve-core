@@ -1,7 +1,7 @@
 ---
 description: 'Invoke doc-ops agent for comprehensive documentation updates'
 agent: 'doc-ops'
-argument-hint: '[scope=all|docs|instructions|prompts|agents|skills|root|scripts] [validate-only={true|false}]'
+argument-hint: '[scope=all|docs|agents|root|...] [validate-only={true|false}]'
 maturity: stable
 ---
 
@@ -9,7 +9,7 @@ maturity: stable
 
 ## Inputs
 
-* ${input:scope:all}: (Optional, defaults to all) Document scope to process
+* ${input:scope:all}: (Optional, defaults to all) Document scope to process, e.g.:
   * all - Process all documentation categories
   * docs - Process only docs/**/*.md files
   * instructions - Process only .github/instructions/**/*.instructions.md files
