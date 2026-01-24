@@ -13,10 +13,14 @@ maturity: stable
 
 ## Required Steps
 
-**Important requirements** for all steps needed to build a complete implementation plan:
+**Important requirements**:
 
-* Be thorough and precise for each step.
-* Repeat steps as needed when building the plan when more context may be needed or additional scope is identified.
+* **Important**, always be thorough and accurate.
+* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
+* If ever still unclear, then avoid guessing and ask the user.
+* Refactor the plan documents as needed whenever discovering or identifying new details.
+* Make sure the plan documents are complete and accurate.
+* Repeat steps and phases as needed to be thorough and accurate.
 
 ### Step 1: Gather Context
 
