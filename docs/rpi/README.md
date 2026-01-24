@@ -1,21 +1,22 @@
 ---
 title: Understanding the RPI Workflow
-description: Learn the Research, Plan, Implement workflow for transforming complex tasks into working code
+description: Learn the Research, Plan, Implement, Review workflow for transforming complex tasks into validated code
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: concept
 keywords:
   - rpi workflow
   - task researcher
   - task planner
   - task implementor
+  - task reviewer
   - github copilot
 estimated_reading_time: 4
 ---
 
-The RPI (Research, Plan, Implement) workflow transforms complex coding tasks into working solutions through three structured phases. Think of it as a type transformation pipeline:
+The RPI (Research, Plan, Implement, Review) workflow transforms complex coding tasks into validated solutions through four structured phases. Think of it as a type transformation pipeline:
 
-> Uncertainty → Knowledge → Strategy → Working Code
+> Uncertainty → Knowledge → Strategy → Working Code → Validated Code
 
 ## Why Use RPI?
 
@@ -34,7 +35,7 @@ RPI solves this through a counterintuitive insight: when AI knows it cannot impl
 
 RPI separates concerns into distinct phases, each with its own specialized custom agent.
 
-## The Three Phases
+## The Four Phases
 
 ### 🔍 Research Phase (Task Researcher)
 
@@ -52,7 +53,7 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 * Creates coordinated planning files with checkboxes and details
 * Includes line number references for precision
 * Validates research exists before proceeding
-* **Output:** Plan, details, and implementation prompt files
+* **Output:** Plan and details files
 
 ### ⚡ Implement Phase (Task Implementor)
 
@@ -63,6 +64,16 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 * Supports stop controls for review
 * **Output:** Working code + `YYYYMMDD-<topic>-changes.md`
 
+### ✅ Review Phase (Task Reviewer)
+
+**Purpose:** Transform working code into validated code
+
+* Validates implementation against research and plan specifications
+* Checks convention compliance using instruction files
+* Runs validation commands (lint, build, test)
+* Identifies follow-up work and iteration needs
+* **Output:** `YYYYMMDD-<topic>-review.md`
+
 ## The Critical Rule: Clear Context Between Phases
 
 🔴 **Always use `/clear` or start a new chat between phases.**
@@ -70,10 +81,10 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 Each custom agent has different instructions. Accumulated context causes confusion:
 
 ```text
-Task Researcher → /clear → Task Planner → /clear → Task Implementor
+Task Researcher → /clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
 ```
 
-Research findings are preserved in files, not chat history. Clean context lets each mode work optimally.
+Research findings are preserved in files, not chat history. Clean context lets each agent work optimally.
 
 ## When to Use RPI
 
@@ -94,17 +105,20 @@ Research findings are preserved in files, not chat history. Clean context lets e
 4. **Plan** using `/task-plan` (automatically switches to Task Planner)
 5. **Clear context** with `/clear`
 6. **Implement** using `/task-implement` (automatically switches to Task Implementor)
+7. **Clear context** with `/clear`
+8. **Review** using `/task-review` (automatically switches to Task Reviewer)
 
 > [!TIP]
-> The `/task-research`, `/task-plan`, and `/task-implement` prompts automatically switch to their respective custom agents, so you don't need to manually select them.
+> The `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` prompts automatically switch to their respective custom agents, so you don't need to manually select them.
 
 ## Next Steps
 
 * [Task Researcher Guide](task-researcher.md) - Deep dive into research phase
 * [Task Planner Guide](task-planner.md) - Create actionable plans
 * [Task Implementor Guide](task-implementor.md) - Execute with precision
+* [Task Reviewer Guide](task-reviewer.md) - Validate implementations
 * [Using Them Together](using-together.md) - Complete workflow example
-* [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available modes
+* [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available agents
 
 ---
 

@@ -15,7 +15,7 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 ## Core Principles
 
 * Create and edit files only within `.copilot-tracking/research/` and `.copilot-tracking/subagent/`.
-* Document verified findings from actual tool usage; do not speculate.
+* Document verified findings from actual tool usage rather than speculation.
 * Treat existing findings as verified; update when new research conflicts.
 * Author code snippets and configuration examples derived from findings.
 * Uncover underlying principles and rationale, not surface patterns.
@@ -24,16 +24,14 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 * Author with implementation in mind: examples, file references with line numbers, and pitfalls.
 * Refine the research document continuously without waiting for user input.
 
-## Tool Availability
+## Subagent Delegation
 
 This agent dispatches subagents for all research activities using the runSubagent tool.
 
 * When runSubagent is available, dispatch subagents as described in each phase.
 * When runSubagent is unavailable, inform the user that subagent dispatch is required for this workflow and stop.
 
-## Subagent Delegation
-
-Use the runSubagent tool for all research activities. Direct execution applies only to:
+Direct execution applies only to:
 
 * Creating and updating files in `.copilot-tracking/research/` and `.copilot-tracking/subagent/`.
 * Synthesizing and consolidating subagent outputs.
@@ -179,26 +177,6 @@ For each scenario:
 * Include runnable examples and exact references (paths with line ranges).
 * Conclude with one recommended approach and rationale.
 
-## Research Tools
-
-Dispatch subagents to use these tools following the Subagent Delegation section.
-
-Internal research:
-
-* Directory listing to inventory folders and files.
-* Semantic and regex searches to find patterns and configurations.
-* File reads to capture details with line-referenced evidence.
-* Reference `.github/instructions/` for guidelines.
-
-External research:
-
-* `fetch_webpage` for referenced URLs.
-* MCP Context7 for SDK/library documentation:
-  * `mcp_context7_resolve-library-id` to identify the library.
-  * `mcp_context7_query-docs` to fetch documentation and examples.
-* microsoft-docs tools for Azure and Microsoft documentation.
-* `github_repo` for implementation patterns from official repositories.
-
 ## Research Document Template
 
 Use the following template for research documents. Replace all `{{}}` placeholders. Sections wrapped in `<!-- <per_...> -->` comments can repeat; omit the comments in the actual document.
@@ -317,8 +295,8 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 ## Operational Constraints
 
 * Dispatch subagents for all tool usage (read, search, list, external docs) as described in Subagent Delegation.
-* Do not edit files outside `.copilot-tracking/research/` and `.copilot-tracking/subagent/`.
-* Do not implement code or infrastructure.
+* Limit file edits to `.copilot-tracking/research/` and `.copilot-tracking/subagent/`.
+* Defer code and infrastructure implementation to downstream agents.
 
 ## Naming Conventions
 
@@ -354,8 +332,8 @@ When the user indicates research is complete, provide a structured handoff:
 | **Alternatives Evaluated** | Count of approaches considered |
 | **Follow-Up Items** | Count of potential next research topics |
 
-### 📋 Ready for Planning
+### Ready for Planning
 
 1. Clear your context by typing `/clear`.
-2. Attach or open .copilot-tracking/research/{{date}}-{{task}}-research.md.
+2. Attach or open [{{date}}-{{task}}-research.md](.copilot-tracking/research/{{date}}-{{task}}-research.md).
 3. Start planning by typing `/task-plan`.

@@ -2,7 +2,7 @@
 title: Task Researcher Guide
 description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - task researcher
@@ -61,7 +61,7 @@ Type `/task-research <topic>` in GitHub Copilot Chat where `<topic>` describes w
 /task-research Azure Blob Storage integration for Python pipelines
 ```
 
-This automatically switches to Task Researcher mode and begins the research protocol.
+This automatically switches to Task Researcher and begins the research protocol.
 
 ### Option 2: Select the Custom Agent Manually
 
@@ -141,6 +141,9 @@ After Task Researcher completes:
 3. **Proceed to planning** with [Task Planner](task-planner.md)
 
 Pass the research document path to Task Planner so it can create an actionable implementation plan.
+
+> [!TIP]
+> Use the **📋 Create Plan** handoff button when available to transition directly to Task Planner with context.
 
 ---
 

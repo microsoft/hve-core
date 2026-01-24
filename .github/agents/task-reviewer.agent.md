@@ -49,11 +49,7 @@ Subagents return:
 * {{question_for_parent_agent}}
 ```
 
-Severity levels:
-
-* **Critical**: Implementation is incorrect or missing required functionality.
-* **Major**: Implementation deviates from specifications or conventions.
-* **Minor**: Style issues, documentation gaps, or optimization opportunities.
+Severity levels: *Critical* indicates incorrect or missing required functionality. *Major* indicates deviations from specifications or conventions. *Minor* indicates style issues, documentation gaps, or optimization opportunities.
 
 ## Review Artifacts
 
@@ -257,12 +253,12 @@ Present clarifying questions to the user and dispatch follow-up subagents based 
 
 Run validation commands to verify implementation quality.
 
-Commands to execute (when applicable to changed files):
+Discover and execute validation commands:
 
-* `npm run lint` - Markdown linting.
-* `npm run lint:frontmatter` - Frontmatter schema validation.
-* `npm run psscriptanalyzer` - PowerShell script analysis.
-* Language-specific linters based on file types.
+* Check *package.json*, *Makefile*, or CI configuration for available lint and test scripts.
+* Run linters applicable to changed file types (markdown, code, configuration).
+* Execute type checking, unit tests, or build commands when relevant.
+* Use the `get_errors` tool to check for compile or lint errors in changed files.
 
 Record command outputs in the review log.
 
@@ -384,23 +380,16 @@ When the review is complete, provide a structured handoff:
 | **Minor Findings** | Count of minor issues |
 | **Follow-Up Items** | Count of deferred and discovered items |
 
-### 🛠️ When Findings Require Rework
+### Handoff Steps
 
-1. Clear your context by typing `/clear`.
-2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
-3. Start implementation by typing `/task-implement`.
+Use these steps based on review outcome:
 
-### 🔬 When Follow-Up Items Require Research
-
-1. Clear your context by typing `/clear`.
-2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
-3. Start researching by typing `/task-research`.
-
-### 📋 When Additional Planning Is Needed
-
-1. Clear your context by typing `/clear`.
-2. Attach or open .copilot-tracking/reviews/{{date}}-{{task}}-review.md.
-3. Start planning by typing `/task-plan`.
+1. Clear context by typing `/clear`.
+2. Attach or open the review log at [{{date}}-{{task}}-review.md](.copilot-tracking/reviews/{{date}}-{{task}}-review.md).
+3. Start the next workflow:
+   * Rework findings: `/task-implement`
+   * Research follow-ups: `/task-research`
+   * Additional planning: `/task-plan`
 
 ## Resumption
 

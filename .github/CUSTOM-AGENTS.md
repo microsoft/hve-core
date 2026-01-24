@@ -109,11 +109,10 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### task-planner
 
-**Creates:** Three interconnected files per task:
+**Creates:** Two interconnected files per task:
 
 * `.copilot-tracking/plans/YYYYMMDD-task-plan.instructions.md`
 * `.copilot-tracking/details/YYYYMMDD-task-details.md`
-* `.copilot-tracking/prompts/implement-task.prompt.md`
 
 **Workflow:** Validates research → Creates plan files → User implements separately
 
@@ -134,7 +133,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Creates:** Instruction files and prompt files:
 
 * `.github/instructions/*.instructions.md`
-* `.copilot-tracking/prompts/*.prompt.md`
+* `.github/prompts/*.prompt.md`
 
 **Workflow:** Research sources → Draft → Auto-validate with Prompt Tester → Iterate (up to 3 cycles)
 

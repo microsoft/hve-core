@@ -40,7 +40,7 @@ Extract objectives, requirements, and scope from gathered context:
 
 ### Step 3: Build Plan
 
-Create implementation plan, implementation details, and implementation prompt files:
+Create implementation plan and implementation details files:
 
 * Add details and file targets as they are identified.
 * Revise steps when new information changes the approach.

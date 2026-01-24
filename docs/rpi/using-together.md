@@ -1,19 +1,20 @@
 ---
-title: Using RPI Modes Together
-description: Complete walkthrough of the RPI workflow from research through implementation
+title: Using RPI Agents Together
+description: Complete walkthrough of the RPI workflow from research through review
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - rpi workflow
   - task researcher
   - task planner
   - task implementor
+  - task reviewer
   - complete workflow
 estimated_reading_time: 5
 ---
 
-This guide walks through a complete RPI workflow, showing how the four custom agents work together to transform a complex task into working code.
+This guide walks through a complete RPI workflow, showing how the four custom agents work together to transform a complex task into validated code.
 
 ## The Complete Workflow
 
@@ -37,10 +38,10 @@ This guide walks through a complete RPI workflow, showing how the four custom ag
 
 Why this matters:
 
-* Each mode has different instructions and behaviors
+* Each agent has different instructions and behaviors
 * Accumulated context causes confusion and errors
 * Research findings are in files, not chat history
-* Clean context lets each mode work optimally
+* Clean context lets each agent work optimally
 
 ## Walkthrough: Adding Azure Blob Storage
 
@@ -48,7 +49,7 @@ Let's walk through adding Azure Blob Storage to a Python data pipeline.
 
 ### Phase 1: Research
 
-1. Use `/task-research` with your topic to start research (this automatically selects Task Researcher mode):
+1. Use `/task-research` with your topic to start research (this automatically selects Task Researcher):
 
 ```text
 /task-research Azure Blob Storage integration for Python data pipeline
@@ -93,7 +94,7 @@ Key findings:
 ### Phase 2: Plan
 
 1. Clear context: `/clear`
-1. Use `/task-plan` with the research file **open** (this automatically selects Task Planner mode):
+1. Use `/task-plan` with the research file **open** (this automatically selects Task Planner):
 
    ```text
    /task-plan
@@ -109,12 +110,11 @@ Key findings:
    - Include error handling and retry logic
    ```
 
-1. Review the output. Task Planner creates three files:
+1. Review the output. Task Planner creates two files:
 
    ```text
    .copilot-tracking/plans/20250128-blob-storage-plan.instructions.md
    .copilot-tracking/details/20250128-blob-storage-details.md
-   .copilot-tracking/prompts/implement-blob-storage.prompt.md
    ```
 
 1. Verify the plan structure:
@@ -136,7 +136,7 @@ Key findings:
 ### Phase 3: Implement
 
 1. Clear context: `/clear`
-1. Use `/task-implement` to start implementation (automatically switches to Task Implementor mode):
+1. Use `/task-implement` to start implementation (automatically switches to Task Implementor):
 
    ```text
    /task-implement
@@ -178,21 +178,67 @@ Files modified (2):
 - src/config/schema.py
 - src/pipeline/factory.py
 
-Ready for commit. Planning files can be cleaned up.
+Ready for review.
 ```
+
+### Phase 4: Review
+
+1. Clear context: `/clear`
+2. Use `/task-review` to validate the implementation (automatically switches to Task Reviewer):
+
+   ```text
+   /task-review
+   ```
+
+3. Task Reviewer validates against specifications:
+
+   * Locates research, plan, and changes artifacts
+   * Extracts implementation checklist from source documents
+   * Validates each item with evidence from the codebase
+   * Runs validation commands (lint, build, test)
+
+4. Review the findings:
+
+```text
+## **Implementation Reviewer**: Reviewing Blob Storage Integration
+
+| 📊 Summary | |
+|-------------|-|
+| **Review Log** | .copilot-tracking/reviews/20250128-blob-storage-review.md |
+| **Overall Status** | Complete |
+| **Critical Findings** | 0 |
+| **Major Findings** | 0 |
+| **Minor Findings** | 2 |
+| **Follow-Up Items** | 1 |
+
+Minor findings:
+- Missing docstring on BlobStorageClient.upload_stream()
+- Consider adding retry count to configuration schema
+
+Follow-up item:
+- Add performance benchmarks for large file uploads (deferred from research)
+
+Ready for commit.
+```
+
+1. Address findings and commit:
+
+   * Fix Minor findings if desired (optional for commit)
+   * Address Critical and Major findings before committing
+   * Note Follow-Up items for future RPI cycles
 
 ## Artifact Summary
 
 After completing RPI, you have:
 
-| Artifact | Location                      | Purpose                      |
-|----------|-------------------------------|------------------------------|
-| Research | `.copilot-tracking/research/` | Evidence and recommendations |
-| Plan     | `.copilot-tracking/plans/`    | Checkboxes and phases        |
-| Details  | `.copilot-tracking/details/`  | Task specifications          |
-| Prompt   | `.copilot-tracking/prompts/`  | Execution instructions       |
-| Changes  | `.copilot-tracking/changes/`  | Change log                   |
-| Code     | Your source directories       | Working implementation       |
+| Artifact | Location                       | Purpose                      |
+|----------|--------------------------------|------------------------------|
+| Research | `.copilot-tracking/research/`  | Evidence and recommendations |
+| Plan     | `.copilot-tracking/plans/`     | Checkboxes and phases        |
+| Details  | `.copilot-tracking/details/`   | Task specifications          |
+| Changes  | `.copilot-tracking/changes/`   | Change log                   |
+| Review   | `.copilot-tracking/reviews/`   | Validation findings          |
+| Code     | Your source directories        | Working implementation       |
 
 ## Common Patterns
 
@@ -223,17 +269,53 @@ RPI artifacts support handoffs:
 * Research doc explains decisions
 * Plan shows remaining work
 * Changes log shows what's done
+* Review log shows validation status
+
+## Iteration Loops
+
+The Review phase can trigger iteration back to earlier phases when findings reveal gaps.
+
+### Iteration Paths
+
+| Review Status | Action | Target Phase |
+|---------------|--------|-------------|
+| Complete | Commit changes | Done |
+| Needs Rework | Fix implementation issues | Implement |
+| Research Gap | Investigate missing context | Research |
+| Plan Gap | Add missing scope | Plan |
+
+### Rework Flow
+
+When Task Reviewer identifies Critical or Major findings:
+
+1. Clear context: `/clear`
+2. Open the review log in your editor
+3. Use `/task-implement` to address findings
+4. Task Implementor uses the review log to guide fixes
+5. Return to review: `/task-review`
+
+### Escalation Flow
+
+When Task Reviewer identifies research or planning gaps:
+
+1. Clear context: `/clear`
+2. Open the review log in your editor
+3. Choose the appropriate phase:
+   * `/task-research` for missing technical context
+   * `/task-plan` for scope additions
+4. Complete the phase and continue through the workflow
 
 ## Quick Reference
 
-| Phase     | Invoke With                  | Mode             | Output                         |
+| Phase     | Invoke With                  | Agent            | Output                         |
 |-----------|------------------------------|------------------|--------------------------------|
 | Research  | `/task-research <topic>`     | Task Researcher  | research.md                    |
-| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md, prompt.md |
+| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md            |
 | Implement | `/task-implement`            | Task Implementor | code + changes.md              |
+| Review    | `/task-review [scope]`       | Task Reviewer    | review.md                      |
 
 > [!TIP]
-> `/task-research`, `/task-plan`, and `/task-implement` all automatically switch to the appropriate custom agent.
+> `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` all automatically switch to the appropriate custom agent.
 
 Remember: **Always `/clear` between phases!**
 
@@ -294,6 +376,7 @@ See [Agents Reference](../../.github/CUSTOM-AGENTS.md) for rpi-agent implementat
 * [Task Researcher](task-researcher.md) - Deep research phase
 * [Task Planner](task-planner.md) - Create actionable plans
 * [Task Implementor](task-implementor.md) - Execute with precision
+* [Task Reviewer](task-reviewer.md) - Validate implementations
 
 ---
 
