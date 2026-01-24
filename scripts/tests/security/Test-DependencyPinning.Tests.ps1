@@ -340,8 +340,8 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
 
 Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
     BeforeAll {
-        . $PSScriptRoot\..\..\security\Test-DependencyPinning.ps1
-        $script:FixturesPath = Join-Path $PSScriptRoot '..\Fixtures\Npm'
+        . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Npm'
     }
 
     Context 'Metadata-only package.json' {
@@ -379,7 +379,7 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             }
 
             $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $sections = $violations | ForEach-Object { $_.Section } | Sort-Object -Unique
+            $sections = $violations | ForEach-Object { $_.Metadata.Section } | Sort-Object -Unique
 
             $sections | Should -Contain 'dependencies'
             $sections | Should -Contain 'devDependencies'
@@ -393,9 +393,10 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             }
 
             $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $lodashViolation = $violations | Where-Object { $_.Dependency -eq 'lodash' }
+            $lodashViolation = $violations | Where-Object { $_.Name -eq 'lodash' }
 
             $lodashViolation | Should -Not -BeNullOrEmpty
+            $lodashViolation.Name | Should -Be 'lodash'
             $lodashViolation.Version | Should -Be '^4.17.21'
         }
     }
@@ -458,7 +459,7 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             }
 
             $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $packageNames = $violations | ForEach-Object { $_.Dependency }
+            $packageNames = $violations | ForEach-Object { $_.Name }
 
             $packageNames | Should -Not -Contain 'empty-version'
             $packageNames | Should -Not -Contain 'whitespace-version'
@@ -474,7 +475,7 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
 
             $violations.Count | Should -BeGreaterThan 0
-            $violations | Where-Object { $_.Dependency -eq 'valid-package' } | Should -Not -BeNullOrEmpty
+            $violations | Where-Object { $_.Name -eq 'valid-package' } | Should -Not -BeNullOrEmpty
         }
     }
 }

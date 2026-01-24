@@ -242,14 +242,15 @@ function Test-ShellDownloadSecurity {
             }
 
             if (-not $hasChecksum) {
-                $violations += [PSCustomObject]@{
-                    File      = $FilePath
-                    Line      = $i + 1
-                    Pattern   = $line.Trim()
-                    Issue     = 'Download without checksum verification'
-                    Severity  = 'warning'
-                    Ecosystem = 'shell-downloads'
-                }
+                $violation = [DependencyViolation]::new()
+                $violation.File = $FileInfo.RelativePath
+                $violation.Line = $i + 1
+                $violation.Type = $FileInfo.Type
+                $violation.Name = $line.Trim()
+                $violation.Severity = 'warning'
+                $violation.Description = 'Download without checksum verification'
+                $violation.Metadata = @{ Pattern = $line.Trim() }
+                $violations += $violation
             }
         }
     }
@@ -314,15 +315,16 @@ function Get-NpmDependencyViolations {
             $isPinned = Test-SHAPinning -Version $version -Type $type
 
             if (-not $isPinned) {
-                $violations += [PSCustomObject]@{
-                    File        = $relativePath
-                    Type        = $type
-                    Dependency  = $packageName
-                    Version     = $version
-                    IsPinned    = $false
-                    LineNumber  = 0
-                    Section     = $section
-                }
+                $violation = [DependencyViolation]::new()
+                $violation.File = $relativePath
+                $violation.Line = 0
+                $violation.Type = $type
+                $violation.Name = $packageName
+                $violation.Version = $version
+                $violation.Severity = 'warning'
+                $violation.Description = "Unpinned npm dependency in $section"
+                $violation.Metadata = @{ Section = $section }
+                $violations += $violation
             }
         }
     }
@@ -437,8 +439,36 @@ function Get-DependencyViolation {
     # Check if this type uses a validation function instead of regex patterns
     if ($null -ne $DependencyPatterns[$fileType].ValidationFunc) {
         $funcName = $DependencyPatterns[$fileType].ValidationFunc
-        $violations = & $funcName -FileInfo $FileInfo
-        return $violations
+        $rawViolations = & $funcName -FileInfo $FileInfo
+
+        if ($null -eq $rawViolations) {
+            return @()
+        }
+
+        foreach ($v in $rawViolations) {
+            if ($null -eq $v) {
+                continue
+            }
+
+            if (-not ($v -is [DependencyViolation])) {
+                $actualType = $v.GetType().FullName
+                throw "Validation function '$funcName' must return [DependencyViolation] objects, got '$actualType'."
+            }
+
+            if (-not $v.File) {
+                $v.File = $FileInfo.RelativePath
+            }
+
+            if ($v.Line -lt 1) {
+                $v.Line = 0
+            }
+
+            if (-not $v.Type) {
+                $v.Type = $fileType
+            }
+        }
+
+        return $rawViolations
     }
 
     try {
