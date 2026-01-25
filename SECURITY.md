@@ -90,7 +90,7 @@ A successful verification confirms:
 ### What Gets Signed
 
 | Artifact               | Channel         | Signed                |
-| ---------------------- | --------------- | --------------------- |
+|------------------------|-----------------|-----------------------|
 | VSIX extension package | GitHub Releases | Yes                   |
 | VS Code Marketplace    | Stable          | Marketplace signature |
 | VS Code Marketplace    | Pre-Release     | Marketplace signature |
