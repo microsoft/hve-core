@@ -740,15 +740,15 @@ Content here.
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/test.md" -Encoding UTF8
         }
 
-        It 'Returns ValidationResult type' {
+        It 'Returns ValidationSummary type' {
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/test.md")
-            $result.GetType().Name | Should -Be 'ValidationResult'
+            $result.GetType().Name | Should -Be 'ValidationSummary'
         }
 
         It 'Reports no errors for valid frontmatter' {
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/test.md")
-            $result.HasIssues | Should -BeFalse
-            $result.Errors.Count | Should -Be 0
+            $result.GetExitCode($false) | Should -Be 0
+            $result.TotalErrors | Should -Be 0
         }
     }
 
@@ -764,8 +764,9 @@ Just content without any YAML.
         It 'Reports warning for missing frontmatter' {
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/no-frontmatter.md")
             # Missing frontmatter in docs is a warning, not an error
-            $result.Warnings.Count | Should -BeGreaterThan 0
-            $result.Warnings | Should -Match 'No frontmatter found'
+            $result.TotalWarnings | Should -BeGreaterThan 0
+            $warningMessages = $result.Results | ForEach-Object { $_.Issues | Where-Object Type -eq 'Warning' } | ForEach-Object { $_.Message }
+            $warningMessages | Should -Match 'No frontmatter found'
         }
     }
 
@@ -781,11 +782,11 @@ Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/empty-desc.md" -Encoding UTF8
         }
 
-        It 'Reports schema validation warning for empty description' {
-            # Schema validation is soft (advisory) - errors are Write-Warning, not HasIssues
+        It 'Reports error for empty description' {
+            # Missing required description field is a validation error
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/empty-desc.md")
-            # HasIssues is false because schema errors are advisory warnings
-            $result.HasIssues | Should -BeFalse
+            # Empty required field causes validation error
+            $result.TotalErrors | Should -BeGreaterThan 0
         }
     }
 
@@ -806,8 +807,9 @@ Content
         It 'Reports warning for invalid date format' {
             # Invalid date format is a warning, not an error
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/bad-date.md")
-            $result.HasIssues | Should -BeFalse
-            ($result.Warnings -join "`n") | Should -Match 'Invalid date format'
+            $result.GetExitCode($false) | Should -Be 0
+            $warningMessages = $result.Results | ForEach-Object { $_.Issues | Where-Object Type -eq 'Warning' } | ForEach-Object { $_.Message }
+            ($warningMessages -join "`n") | Should -Match 'Invalid date format'
         }
     }
 
@@ -833,12 +835,12 @@ Content
 
         It 'Validates multiple files in directory' {
             $result = Test-FrontmatterValidation -Paths @("$script:TestRepoRoot/docs")
-            $result.TotalFilesChecked | Should -BeGreaterOrEqual 2
+            $result.TotalFiles | Should -BeGreaterOrEqual 2
         }
     }
 
     Context 'Result aggregation' {
-        It 'Aggregates errors and warnings in result' {
+        It 'Aggregates results in ValidationSummary' {
             # docs-frontmatter.schema.json requires BOTH title AND description
             @"
 ---
@@ -849,10 +851,10 @@ Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/test.md" -Encoding UTF8
 
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/test.md")
-            $result.PSObject.Properties.Name | Should -Contain 'Errors'
-            $result.PSObject.Properties.Name | Should -Contain 'Warnings'
-            $result.PSObject.Properties.Name | Should -Contain 'HasIssues'
-            $result.PSObject.Properties.Name | Should -Contain 'TotalFilesChecked'
+            $result.PSObject.Properties.Name | Should -Contain 'Results'
+            $result.PSObject.Properties.Name | Should -Contain 'TotalFiles'
+            $result.PSObject.Properties.Name | Should -Contain 'FilesWithErrors'
+            $result.PSObject.Properties.Name | Should -Contain 'FilesWithWarnings'
         }
     }
 }
@@ -893,7 +895,7 @@ Content
             # For files outside repo, the full path is used, so we match with *tests*
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*')
             # Should only check docs/include.md, not tests/fixtures/exclude.md
-            $result.TotalFilesChecked | Should -Be 1
+            $result.TotalFiles | Should -Be 1
         }
     }
 
@@ -913,7 +915,7 @@ Content
         It 'Excludes files matching multiple patterns' {
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*', '*vendor*')
             # Should only check docs/include.md
-            $result.TotalFilesChecked | Should -Be 1
+            $result.TotalFiles | Should -Be 1
         }
     }
 
@@ -921,7 +923,7 @@ Content
         It 'Validates all markdown files without exclusions' {
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @()
             # Should check all markdown files (docs + tests + vendor)
-            $result.TotalFilesChecked | Should -BeGreaterOrEqual 2
+            $result.TotalFiles | Should -BeGreaterOrEqual 2
         }
     }
 

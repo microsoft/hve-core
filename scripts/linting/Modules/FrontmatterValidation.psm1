@@ -13,11 +13,16 @@
 
 class ValidationIssue {
     [ValidateSet('Error', 'Warning', 'Notice')]
-    [string]$Type
+    [string]$Type = 'Warning'
     [string]$Field
     [string]$Message
     [string]$FilePath
     [int]$Line
+
+    ValidationIssue() {
+        $this.Type = 'Warning'
+        $this.Line = 0
+    }
 
     ValidationIssue([string]$type, [string]$field, [string]$message, [string]$filePath) {
         $this.Type = $type
@@ -55,6 +60,155 @@ class FileTypeInfo {
         $this.IsDevContainer = $false
         $this.IsVSCodeReadme = $false
         $this.IsDocsFile = $false
+    }
+}
+
+class FileValidationResult {
+    [ValidateNotNullOrEmpty()]
+    [string]$FilePath
+
+    [string]$RelativePath
+    [bool]$HasFrontmatter
+    [hashtable]$Frontmatter
+    [FileTypeInfo]$FileType
+    [System.Collections.Generic.List[ValidationIssue]]$Issues
+    [datetime]$ValidatedAt
+
+    FileValidationResult([string]$filePath) {
+        $this.FilePath = $filePath
+        $this.RelativePath = $filePath
+        $this.Issues = [System.Collections.Generic.List[ValidationIssue]]::new()
+        $this.ValidatedAt = [datetime]::UtcNow
+    }
+
+    [bool] HasErrors() {
+        return ($this.Issues | Where-Object Type -eq 'Error').Count -gt 0
+    }
+
+    [bool] HasWarnings() {
+        return ($this.Issues | Where-Object Type -eq 'Warning').Count -gt 0
+    }
+
+    [bool] IsValid() {
+        return -not $this.HasErrors()
+    }
+
+    [int] ErrorCount() {
+        return ($this.Issues | Where-Object Type -eq 'Error').Count
+    }
+
+    [int] WarningCount() {
+        return ($this.Issues | Where-Object Type -eq 'Warning').Count
+    }
+
+    [void] AddIssue([ValidationIssue]$issue) {
+        $this.Issues.Add($issue)
+    }
+
+    [void] AddError([string]$message, [string]$field) {
+        $this.AddError($message, $field, 0)
+    }
+
+    [void] AddError([string]$message, [string]$field, [int]$line) {
+        $issue = [ValidationIssue]::new()
+        $issue.Type = 'Error'
+        $issue.Message = $message
+        $issue.Field = $field
+        $issue.FilePath = $this.FilePath
+        $issue.Line = $line
+        $this.Issues.Add($issue)
+    }
+
+    [void] AddWarning([string]$message, [string]$field) {
+        $this.AddWarning($message, $field, 0)
+    }
+
+    [void] AddWarning([string]$message, [string]$field, [int]$line) {
+        $issue = [ValidationIssue]::new()
+        $issue.Type = 'Warning'
+        $issue.Message = $message
+        $issue.Field = $field
+        $issue.FilePath = $this.FilePath
+        $issue.Line = $line
+        $this.Issues.Add($issue)
+    }
+}
+
+class ValidationSummary {
+    [int]$TotalFiles
+    [int]$FilesWithErrors
+    [int]$FilesWithWarnings
+    [int]$FilesValid
+    [int]$TotalErrors
+    [int]$TotalWarnings
+    [System.Collections.Generic.List[FileValidationResult]]$Results
+    [datetime]$StartedAt
+    [datetime]$CompletedAt
+    [timespan]$Duration
+
+    ValidationSummary() {
+        $this.Results = [System.Collections.Generic.List[FileValidationResult]]::new()
+        $this.StartedAt = [datetime]::UtcNow
+    }
+
+    [void] AddResult([FileValidationResult]$result) {
+        $this.Results.Add($result)
+        $this.TotalFiles++
+
+        if ($result.HasErrors()) {
+            $this.FilesWithErrors++
+            $this.TotalErrors += $result.ErrorCount()
+        }
+        if ($result.HasWarnings()) {
+            $this.FilesWithWarnings++
+            $this.TotalWarnings += $result.WarningCount()
+        }
+        if ($result.IsValid() -and -not $result.HasWarnings()) {
+            $this.FilesValid++
+        }
+    }
+
+    [void] Complete() {
+        $this.CompletedAt = [datetime]::UtcNow
+        $this.Duration = $this.CompletedAt - $this.StartedAt
+    }
+
+    [bool] Passed([bool]$warningsAsErrors) {
+        if ($this.TotalErrors -gt 0) { return $false }
+        if ($warningsAsErrors -and $this.TotalWarnings -gt 0) { return $false }
+        return $true
+    }
+
+    [int] GetExitCode([bool]$warningsAsErrors) {
+        return $this.Passed($warningsAsErrors) ? 0 : 1
+    }
+
+    [hashtable] ToHashtable() {
+        return @{
+            totalFiles        = $this.TotalFiles
+            filesWithErrors   = $this.FilesWithErrors
+            filesWithWarnings = $this.FilesWithWarnings
+            filesValid        = $this.FilesValid
+            totalErrors       = $this.TotalErrors
+            totalWarnings     = $this.TotalWarnings
+            duration          = $this.Duration.TotalSeconds
+            results           = [object[]]($this.Results | ForEach-Object {
+                @{
+                    filePath     = $_.RelativePath
+                    isValid      = $_.IsValid()
+                    errorCount   = $_.ErrorCount()
+                    warningCount = $_.WarningCount()
+                    issues       = [object[]]($_.Issues | ForEach-Object {
+                        @{
+                            type    = $_.Type
+                            message = $_.Message
+                            field   = $_.Field
+                            line    = $_.Line
+                        }
+                    })
+                }
+            })
+        }
     }
 }
 
@@ -349,7 +503,8 @@ function Test-GitHubResourceFileFields {
     .PARAMETER RelativePath
         Relative path to the file being validated.
     .PARAMETER FileTypeInfo
-        FileTypeInfo object with classification details.
+        FileTypeInfo object with classification details. Type constraint removed
+        to avoid PowerShell class identity conflicts in tests.
     .OUTPUTS
         ValidationIssue[] Array of validation issues found.
     #>
@@ -363,7 +518,7 @@ function Test-GitHubResourceFileFields {
         [string]$RelativePath,
 
         [Parameter(Mandatory)]
-        [FileTypeInfo]$FileTypeInfo
+        $FileTypeInfo
     )
 
     $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
@@ -512,6 +667,47 @@ function Test-FooterPresence {
     return $null
 }
 
+function Test-MarkdownFooter {
+    <#
+    .SYNOPSIS
+        Checks if markdown content contains the standard Copilot attribution footer.
+    .DESCRIPTION
+        Pure function that validates markdown content ends with the standard Copilot
+        attribution footer. Normalizes content by removing HTML comments and markdown
+        formatting before pattern matching.
+    .PARAMETER Content
+        The markdown content string to validate.
+    .OUTPUTS
+        [bool] $true if valid footer present; $false otherwise.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [AllowEmptyString()]
+        [string]$Content
+    )
+
+    process {
+        if ([string]::IsNullOrEmpty($Content)) {
+            return $false
+        }
+
+        $normalized = $Content -replace '(?s)<!--.*?-->', ''
+        $normalized = $normalized -replace '\*\*([^*]+)\*\*', '$1'
+        $normalized = $normalized -replace '__([^_]+)__', '$1'
+        $normalized = $normalized -replace '\*([^*]+)\*', '$1'
+        $normalized = $normalized -replace '_([^_]+)_', '$1'
+        $normalized = $normalized -replace '~~([^~]+)~~', '$1'
+        $normalized = $normalized -replace '`([^`]+)`', '$1'
+        $normalized = $normalized.TrimEnd()
+
+        $pattern = '🤖\s*Crafted\s+with\s+precision\s+by\s+✨Copilot\s+following\s+brilliant\s+human\s+instruction[,\s]+(then\s+)?carefully\s+refined\s+by\s+our\s+team\s+of\s+discerning\s+human\s+reviewers\.?'
+
+        return $normalized -match $pattern
+    }
+}
+
 #endregion Content-Type Validators
 
 #region File Classification
@@ -558,6 +754,260 @@ function Get-FileTypeInfo {
 
 #endregion File Classification
 
+#region Orchestration
+
+function Test-SingleFileFrontmatter {
+    <#
+    .SYNOPSIS
+        Validates frontmatter for a single markdown file.
+    .DESCRIPTION
+        Performs complete frontmatter validation including presence check,
+        YAML parsing, file type detection, field validation, and footer check.
+    .PARAMETER FilePath
+        Absolute path to the markdown file.
+    .PARAMETER RepoRoot
+        Repository root path for relative path computation and file classification.
+    .PARAMETER FileReader
+        Optional scriptblock for reading file content. Enables testing.
+    .OUTPUTS
+        FileValidationResult
+    #>
+    [CmdletBinding()]
+    [OutputType([FileValidationResult])]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$FilePath,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [scriptblock]$FileReader = { param($p) Get-Content -Path $p -Raw -ErrorAction Stop }
+    )
+
+    $relativePath = $FilePath
+    if ($FilePath.StartsWith($RepoRoot)) {
+        $relativePath = $FilePath.Substring($RepoRoot.Length).TrimStart('\', '/')
+    }
+
+    $result = [FileValidationResult]::new($FilePath)
+    $result.RelativePath = $relativePath
+
+    # Read file content
+    try {
+        $content = & $FileReader $FilePath
+    }
+    catch {
+        $result.AddError("Failed to read file: $($_.Exception.Message)", 'file')
+        return $result
+    }
+
+    # Parse frontmatter
+    $frontmatter = $null
+    if ($content -match '(?s)^---\r?\n(.+?)\r?\n---') {
+        $yamlBlock = $Matches[1]
+        try {
+            $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
+        }
+        catch {
+            $result.AddError("Invalid YAML syntax: $($_.Exception.Message)", 'yaml')
+            return $result
+        }
+    }
+
+    $result.HasFrontmatter = $null -ne $frontmatter
+    $result.Frontmatter = $frontmatter
+
+    if (-not $result.HasFrontmatter) {
+        $result.AddWarning('No frontmatter found', 'frontmatter')
+        return $result
+    }
+
+    # Detect file type
+    $fileInfo = [System.IO.FileInfo]::new($FilePath)
+    $result.FileType = Get-FileTypeInfo -File $fileInfo -RepoRoot $RepoRoot
+
+    # Validate fields based on file type
+    $fileTypeInfo = $result.FileType
+    $issues = @()
+
+    if ($fileTypeInfo.IsDocsFile) {
+        $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+    }
+    elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode) {
+        $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath
+    }
+    elseif ($fileTypeInfo.IsDevContainer) {
+        $issues = Test-DevContainerFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+    }
+    elseif ($fileTypeInfo.IsVSCodeReadme) {
+        $issues = Test-VSCodeReadmeFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+    }
+    elseif ($fileTypeInfo.IsRootCommunityFile) {
+        $issues = Test-RootCommunityFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+    }
+
+    foreach ($issue in $issues) {
+        $result.AddIssue($issue)
+    }
+
+    # Footer validation for docs files
+    if ($fileTypeInfo.IsDocsFile) {
+        $hasFooter = Test-MarkdownFooter -Content $content
+        $footerIssue = Test-FooterPresence -HasFooter $hasFooter -RelativePath $relativePath -Severity 'Warning'
+        if ($footerIssue) {
+            $result.AddIssue($footerIssue)
+        }
+    }
+
+    return $result
+}
+
+function Invoke-FrontmatterValidation {
+    <#
+    .SYNOPSIS
+        Validates frontmatter across multiple markdown files.
+
+    .DESCRIPTION
+        Orchestrates validation of multiple files and aggregates results
+        into a ValidationSummary object.
+
+    .PARAMETER Files
+        Array of file paths to validate.
+
+    .PARAMETER RepoRoot
+        Repository root path for relative path computation and file classification.
+
+    .OUTPUTS
+        ValidationSummary
+    #>
+    [CmdletBinding()]
+    [OutputType([ValidationSummary])]
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Files,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $summary = [ValidationSummary]::new()
+
+    foreach ($file in $Files) {
+        $result = Test-SingleFileFrontmatter -FilePath $file -RepoRoot $RepoRoot
+        $summary.AddResult($result)
+    }
+
+    $summary.Complete()
+    return $summary
+}
+
+#endregion Orchestration
+
+#region Output
+
+function Write-ValidationConsoleOutput {
+    <#
+    .SYNOPSIS
+        Writes validation results to console.
+
+    .PARAMETER Summary
+        ValidationSummary object to display.
+
+    .PARAMETER ShowDetails
+        When true, shows per-file details.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidationSummary]$Summary,
+
+        [switch]$ShowDetails
+    )
+
+    Write-Host "`n🔍 Frontmatter Validation Results" -ForegroundColor Cyan
+    Write-Host "─────────────────────────────────" -ForegroundColor DarkGray
+
+    if ($ShowDetails) {
+        foreach ($result in $Summary.Results) {
+            $icon = $result.IsValid() ? '✅' : '❌'
+            Write-Host "$icon $($result.RelativePath)"
+
+            foreach ($issue in $result.Issues) {
+                $color = $issue.Type -eq 'Error' ? 'Red' : 'Yellow'
+                $prefix = $issue.Type -eq 'Error' ? '  ❌' : '  ⚠️'
+                Write-Host "$prefix $($issue.Message)" -ForegroundColor $color
+            }
+        }
+        Write-Host ""
+    }
+
+    # Summary
+    Write-Host "📊 Summary:" -ForegroundColor Cyan
+    $errorColor = $Summary.FilesWithErrors -gt 0 ? 'Red' : 'Green'
+    $warnColor = $Summary.FilesWithWarnings -gt 0 ? 'Yellow' : 'Green'
+
+    Write-Host "   Files validated: $($Summary.TotalFiles)"
+    Write-Host "   Files with errors: $($Summary.FilesWithErrors)" -ForegroundColor $errorColor
+    Write-Host "   Files with warnings: $($Summary.FilesWithWarnings)" -ForegroundColor $warnColor
+    Write-Host "   Duration: $($Summary.Duration.TotalSeconds.ToString('F2'))s"
+}
+
+function Write-GitHubAnnotations {
+    <#
+    .SYNOPSIS
+        Outputs GitHub Actions annotations for validation issues.
+
+    .PARAMETER Summary
+        ValidationSummary object containing results.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidationSummary]$Summary
+    )
+
+    foreach ($result in $Summary.Results) {
+        foreach ($issue in $result.Issues) {
+            $type = $issue.Type -eq 'Error' ? 'error' : 'warning'
+            $line = $issue.Line ? $issue.Line : 1
+            Write-Output "::$type file=$($result.FilePath),line=$line::$($issue.Message)"
+        }
+    }
+}
+
+function Export-ValidationResults {
+    <#
+    .SYNOPSIS
+        Exports validation results to JSON file.
+
+    .PARAMETER Summary
+        ValidationSummary object to export.
+
+    .PARAMETER OutputPath
+        Path to output JSON file.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidationSummary]$Summary,
+
+        [Parameter(Mandatory)]
+        [string]$OutputPath
+    )
+
+    $outputDir = Split-Path -Path $OutputPath -Parent
+    if ($outputDir -and -not (Test-Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+
+    $Summary.ToHashtable() | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding utf8
+}
+
+#endregion Output
+
 #region Exports
 
 Export-ModuleMember -Function @(
@@ -574,8 +1024,16 @@ Export-ModuleMember -Function @(
     'Test-DocsFileFields'
     'Test-CommonFields'
     'Test-FooterPresence'
+    'Test-MarkdownFooter'
     # Classification
     'Get-FileTypeInfo'
+    # Orchestration
+    'Test-SingleFileFrontmatter'
+    'Invoke-FrontmatterValidation'
+    # Output
+    'Write-ValidationConsoleOutput'
+    'Write-GitHubAnnotations'
+    'Export-ValidationResults'
 )
 
 #endregion Exports
