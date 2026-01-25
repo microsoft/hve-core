@@ -40,8 +40,9 @@ param(
     [switch]$EnableSchemaValidation
 )
 
-# Import LintingHelpers module
+# Import helper modules
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/FrontmatterValidation.psm1') -Force
 
 #region Type Definitions
 
@@ -106,6 +107,32 @@ class FileTypeInfo {
         $this.IsDevContainer = $false
         $this.IsVSCodeReadme = $false
         $this.IsDocsFile = $false
+    }
+}
+
+# Represents a single validation issue with severity, field, message, and location
+class ValidationIssue {
+    [ValidateSet('Error', 'Warning', 'Notice')]
+    [string]$Type
+    [string]$Field
+    [string]$Message
+    [string]$FilePath
+    [int]$Line
+
+    ValidationIssue([string]$type, [string]$field, [string]$message, [string]$filePath) {
+        $this.Type = $type
+        $this.Field = $field
+        $this.Message = $message
+        $this.FilePath = $filePath
+        $this.Line = 0
+    }
+
+    ValidationIssue([string]$type, [string]$field, [string]$message, [string]$filePath, [int]$line) {
+        $this.Type = $type
+        $this.Field = $field
+        $this.Message = $message
+        $this.FilePath = $filePath
+        $this.Line = $line
     }
 }
 
@@ -806,6 +833,8 @@ function Get-FileTypeInfo {
 
     return $info
 }
+
+# Content-type validators and orchestrator are in Modules/FrontmatterValidation.psm1
 
 function Test-FrontmatterValidation {
     <#
