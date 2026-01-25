@@ -1155,6 +1155,13 @@ zonemap
 zref
 zscaler
 
+# Codecov Configuration
+carryforward
+
+# Mermaid Diagram Labels
+SCHED
+SECCHECK
+
 # Academic & Technical Terms
 anonymization
 anonymize
