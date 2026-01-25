@@ -16,7 +16,13 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ## Required Steps
 
-Follow the prompt-build protocol phases while applying these refactoring-specific requirements.
+**Important requirements**:
+
+* **Important**, always be thorough and accurate.
+* Follow the prompt-build protocol phases while applying these refactoring-specific requirements.
+* Avoid overly verbose instructions and examples.
+* Refactor instructions and examples continually.
+* Repeat steps and phases as needed to be thorough and accurate.
 
 ### Step 1: Baseline Assessment
 

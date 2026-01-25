@@ -1,6 +1,5 @@
 ---
 description: "Retrieve Azure DevOps build information for a Pull Request or specific Build Number."
-agent: rpi-agent
 maturity: stable
 ---
 

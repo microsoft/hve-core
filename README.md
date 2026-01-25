@@ -15,6 +15,14 @@ keywords:
 estimated_reading_time: 3
 ---
 
+<!-- markdownlint-disable MD013 -->
+[![CI Status](https://github.com/microsoft/hve-core/actions/workflows/main.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/main.yml)
+[![CodeQL](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/codeql-analysis.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/hve-core/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/hve-core)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
+[![License](https://img.shields.io/github/license/microsoft/hve-core)](./LICENSE)
+<!-- markdownlint-enable MD013 -->
+
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
 **Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
@@ -102,12 +110,12 @@ Get started with RPI:
 
 HVE Core provides a structured approach to prompt engineering with four artifact types, each serving a distinct purpose:
 
-| Artifact | Purpose | Activation |
-|----------|---------|------------|
-| **Instructions** | Passive reference guidance applied by file pattern | Automatic via `applyTo` glob |
-| **Prompts** | Task-specific procedures with input variables | Manual via `/` command |
-| **Agents** | Specialized personas with tool access and constraints | Manual via agent picker |
-| **Skills** | Executable utilities with cross-platform scripts | Read by Copilot on demand |
+| Artifact         | Purpose                                               | Activation                   |
+|------------------|-------------------------------------------------------|------------------------------|
+| **Instructions** | Passive reference guidance applied by file pattern    | Automatic via `applyTo` glob |
+| **Prompts**      | Task-specific procedures with input variables         | Manual via `/` command       |
+| **Agents**       | Specialized personas with tool access and constraints | Manual via agent picker      |
+| **Skills**       | Executable utilities with cross-platform scripts      | Read by Copilot on demand    |
 
 **Key capabilities:**
 
@@ -187,8 +195,6 @@ This project is licensed under the [MIT License](./LICENSE).
 **Security:** See [SECURITY.md](./SECURITY.md) for security policy and reporting vulnerabilities.
 
 **Governance:** See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.
-
-**OpenSSF Best Practices:** [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
 
 ## Trademark Notice
 

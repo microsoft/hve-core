@@ -28,25 +28,25 @@ This project operates under a **corporate-sponsored maintainer model**:
 
 The following matrix summarizes capabilities by role:
 
-| Capability | Maintainer | Triage | Contributor |
-|:-----------|:----------:|:------:|:-----------:|
-| Code review | ✅ | ✅ | ✅ |
-| Merge pull requests | ✅ | ❌ | ❌ |
-| Release management | ✅ | ❌ | ❌ |
-| Architecture decisions | ✅ | Advise | Propose |
-| Issue triage | ✅ | ✅ | ❌ |
-| Label management | ✅ | ✅ | ❌ |
+| Capability             | Maintainer | Triage | Contributor |
+|:-----------------------|:----------:|:------:|:-----------:|
+| Code review            |     ✅      |   ✅    |      ✅      |
+| Merge pull requests    |     ✅      |   ❌    |      ❌      |
+| Release management     |     ✅      |   ❌    |      ❌      |
+| Architecture decisions |     ✅      | Advise |   Propose   |
+| Issue triage           |     ✅      |   ✅    |      ❌      |
+| Label management       |     ✅      |   ✅    |      ❌      |
 
 ### Maintainers
 
 Maintainers guide project direction, manage releases, and resolve conflicts.
 
-| Responsibility | Description |
-|:---------------|:------------|
+| Responsibility      | Description                                                 |
+|:--------------------|:------------------------------------------------------------|
 | Technical direction | Set architectural standards and approve significant changes |
-| Release management | Coordinate versioning, changelogs, and publication |
-| Community health | Enforce code of conduct and foster inclusive participation |
-| Access management | Grant and revoke repository permissions |
+| Release management  | Coordinate versioning, changelogs, and publication          |
+| Community health    | Enforce code of conduct and foster inclusive participation  |
+| Access management   | Grant and revoke repository permissions                     |
 
 Current maintainers are members of the [@microsoft/edge-ai-core-dev](https://github.com/orgs/microsoft/teams/edge-ai-core-dev) team.
 
@@ -54,22 +54,22 @@ Current maintainers are members of the [@microsoft/edge-ai-core-dev](https://git
 
 Triage contributors assist maintainers by managing issue flow and initial assessments.
 
-| Responsibility | Description |
-|:---------------|:------------|
-| Issue labeling | Apply appropriate labels to new issues |
+| Responsibility     | Description                                                           |
+|:-------------------|:----------------------------------------------------------------------|
+| Issue labeling     | Apply appropriate labels to new issues                                |
 | Initial assessment | Identify duplicates, request clarification, verify reproduction steps |
-| Community support | Answer questions and direct contributors to resources |
+| Community support  | Answer questions and direct contributors to resources                 |
 
 ### Contributors
 
 Contributors improve the project through code, documentation, and community engagement.
 
-| Responsibility | Description |
-|:---------------|:------------|
-| Code contributions | Submit pull requests following contribution guidelines |
-| Documentation | Improve guides, fix errors, add examples |
-| Issue reporting | Report bugs with reproduction steps and suggest enhancements |
-| Community participation | Engage in discussions and help other users |
+| Responsibility          | Description                                                  |
+|:------------------------|:-------------------------------------------------------------|
+| Code contributions      | Submit pull requests following contribution guidelines       |
+| Documentation           | Improve guides, fix errors, add examples                     |
+| Issue reporting         | Report bugs with reproduction steps and suggest enhancements |
+| Community participation | Engage in discussions and help other users                   |
 
 ## Decision-Making Process
 

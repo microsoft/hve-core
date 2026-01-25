@@ -179,6 +179,26 @@ Agent files **MUST**:
 * **Purpose**: Attribution for agent creator
 * **Example**: `microsoft/hve-core`, `your-team-name`
 
+**`handoffs`** (array of objects)
+
+* **Purpose**: Declares agent-to-agent handoff buttons that appear in the chat UI
+* **Format**: Array of handoff declarations
+* **Fields per handoff**:
+  * `label` (string, required): Button text displayed in UI, supports emoji
+  * `agent` (string, required): Target agent filename without `.agent.md` extension
+  * `prompt` (string, optional): Pre-filled prompt text, can include slash commands
+  * `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
+* **Requirements**: VS Code 1.106+ required for handoff support
+* **Example**:
+
+  ```yaml
+  handoffs:
+    - label: "📋 Create Plan"
+      agent: task-planner
+      prompt: /task-plan
+      send: true
+  ```
+
 ### Frontmatter Example
 
 ```yaml
@@ -444,4 +464,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 ---
 
-Brought to you by microsoft/hve-core
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

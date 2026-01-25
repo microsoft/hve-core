@@ -100,8 +100,8 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Single authoritative research document:
 
-* `.copilot-tracking/research/YYYYMMDD-topic-research.md`
-* `.copilot-tracking/subagent/YYYYMMDD/task-research.md`
+* `.copilot-tracking/research/{{YYYY-MM-DD}}-topic-research.md`
+* `.copilot-tracking/subagent/{{YYYY-MM-DD}}/task-research.md`
 
 **Workflow:** Deep tool-based research → Document findings → Consolidate to one approach → Hand off to planner
 
@@ -109,11 +109,10 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### task-planner
 
-**Creates:** Three interconnected files per task:
+**Creates:** Two interconnected files per task:
 
-* `.copilot-tracking/plans/YYYYMMDD-task-plan.instructions.md`
-* `.copilot-tracking/details/YYYYMMDD-task-details.md`
-* `.copilot-tracking/prompts/implement-task.prompt.md`
+* `.copilot-tracking/plans/{{YYYY-MM-DD}}-task-plan.instructions.md`
+* `.copilot-tracking/details/{{YYYY-MM-DD}}-task-details.md`
 
 **Workflow:** Validates research → Creates plan files → User implements separately
 
@@ -123,7 +122,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Change tracking logs:
 
-* `.copilot-tracking/changes/YYYYMMDD-task-changes.md`
+* `.copilot-tracking/changes/{{YYYY-MM-DD}}-task-changes.md`
 
 **Workflow:** Analyze plan → Dispatch subagents per phase → Track progress → Validate
 
@@ -134,7 +133,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Creates:** Instruction files and prompt files:
 
 * `.github/instructions/*.instructions.md`
-* `.copilot-tracking/prompts/*.prompt.md`
+* `.github/prompts/*.prompt.md`
 
 **Workflow:** Research sources → Draft → Auto-validate with Prompt Tester → Iterate (up to 3 cycles)
 
@@ -220,10 +219,10 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Data documentation artifacts:
 
-* `outputs/data-dictionary-[dataset]-[YYYY-MM-DD].md`
-* `outputs/data-profile-[dataset]-[YYYY-MM-DD].json`
-* `outputs/data-objectives-[dataset]-[YYYY-MM-DD].json`
-* `outputs/data-summary-[dataset]-[YYYY-MM-DD].md`
+* `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md`
+* `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json`
+* `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json`
+* `outputs/data-summary-{{dataset}}-{{YYYY-MM-DD}}.md`
 
 **Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
 

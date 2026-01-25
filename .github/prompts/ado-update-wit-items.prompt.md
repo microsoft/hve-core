@@ -1,6 +1,5 @@
 ---
 description: "Prompt to update work items based on planning files"
-agent: rpi-agent
 maturity: stable
 ---
 

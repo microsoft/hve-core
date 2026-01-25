@@ -1,8 +1,8 @@
 ---
 title: Why the RPI Workflow Works
-description: The psychology, research, and principles behind the Research-Plan-Implement framework, plus guidance on when to use RPI vs rpi-agent
+description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
 author: Microsoft
-ms.date: 2026-01-05
+ms.date: 2026-01-24
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -10,6 +10,7 @@ keywords:
   - research first
   - hallucination prevention
   - ai coding
+  - task reviewer
 estimated_reading_time: 8
 ---
 
@@ -38,11 +39,12 @@ AI writes first and thinks never. Not because it's broken, but because that's th
 
 The solution isn't teaching AI to be smarter. It's preventing AI from doing certain things at certain times.
 
-RPI (Research → Plan → Implement) works by separating AI work into three distinct phases, each handled by a specialized mode:
+RPI (Research → Plan → Implement → Review) works by separating AI work into four distinct phases, each handled by a specialized agent:
 
 * [Task Researcher](task-researcher.md): investigates your codebase and external sources, producing verified findings with citations
 * [Task Planner](task-planner.md): transforms research into actionable implementation plans with clear success criteria
 * [Task Implementor](task-implementor.md): executes plans methodically, following established patterns discovered during research
+* [Task Reviewer](task-reviewer.md): validates implementation against specifications, checks compliance, and identifies follow-up work
 
 The magic happens because each phase starts fresh. When you clear context between phases, the implementation session doesn't carry forward the assumptions from research. It only has the documented artifacts: verified findings, explicit decisions, and cited evidence.
 
@@ -89,16 +91,28 @@ Task Implementor has one job: execute the plan using the patterns documented in 
 * No assumptions about how things work, only verified facts.
 * Clear accountability when something goes wrong.
 
+### Review Phase: Validating, Not Assuming
+
+Task Reviewer closes the feedback loop by validating implementation against documented specifications:
+
+* Checks each item from research and plan against actual implementation.
+* Verifies convention compliance using instruction files.
+* Runs validation commands to catch issues early.
+* Identifies gaps that require iteration back to earlier phases.
+
+The review phase surfaces discrepancies between intent and implementation. When findings require rework, the workflow iterates: back to research for deeper investigation, back to planning for scope adjustments, or back to implementation for fixes.
+
 ## The Quality Difference
 
 RPI produces measurably different outcomes than traditional AI coding:
 
-| Aspect                 | Traditional Approach                               | RPI Approach                                 |
-|------------------------|----------------------------------------------------|----------------------------------------------|
-| **Pattern matching**   | Invents plausible patterns                         | Uses verified existing patterns              |
-| **Traceability**       | "The AI wrote it this way"                         | "Research document cites lines 47-52"        |
-| **Knowledge transfer** | Tribal knowledge in your head                      | Research documents anyone can follow         |
-| **Rework**             | Frequent, after discovering assumptions were wrong | Rare, because assumptions are verified first |
+| Aspect                 | Traditional Approach                               | RPI Approach                                   |
+|------------------------|----------------------------------------------------|------------------------------------------------|
+| **Pattern matching**   | Invents plausible patterns                         | Uses verified existing patterns                |
+| **Traceability**       | "The AI wrote it this way"                         | "Research document cites lines 47-52"          |
+| **Knowledge transfer** | Tribal knowledge in your head                      | Research documents anyone can follow           |
+| **Rework**             | Frequent, after discovering assumptions were wrong | Rare, because assumptions are verified first   |
+| **Validation**         | Hope it works or manual testing                    | Validated against specifications with evidence |
 
 ### The Paradigm Shift
 
@@ -122,18 +136,19 @@ HVE Core provides two workflow options. The right choice depends on the task, no
 
 ### Strict RPI: When Quality Matters Most
 
-Use the three-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md)) when:
+Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md) → [Task Reviewer](task-reviewer.md)) when:
 
 * 🔍 **Deep research needed**: new frameworks, external APIs, compliance requirements
 * 📁 **Multi-file changes**: pattern discovery across the codebase
 * 👥 **Team handoff**: artifacts document decisions for others
-* 🔧 **Long-term maintenance**: work you'll maintain and evolve over time
+* 🛠️ **Long-term maintenance**: work you'll maintain and evolve over time
 
 **The workflow:**
 
 1. Invoke Task Researcher → produces research document with citations
 2. Clear context, invoke Task Planner → produces implementation plan
 3. Clear context, invoke Task Implementor → implements following the plan
+4. Clear context, invoke Task Reviewer → validates against specifications
 
 ### rpi-agent: When Simplicity Fits
 
@@ -143,29 +158,37 @@ Use the [autonomous agent](../../.github/agents/rpi-agent.agent.md) when:
 * ✅ **Minimal research**: codebase-only investigation
 * ✅ **Quick iteration**: active development with fast feedback loops
 
-**The workflow:** Single rpi-agent session that handles research and implementation together.
+**The workflow:** Single rpi-agent session that orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
+
+> [!NOTE]
+> rpi-agent requires the `runSubagent` tool to be available. When unavailable, use strict RPI with manual phase transitions instead.
 
 ### Matching Tool to Task
 
-| Factor                | Strict RPI                     | rpi-agent                   |
-|-----------------------|--------------------------------|-----------------------------|
-| Research depth        | Deep, verified, cited          | Moderate, inline            |
-| Context contamination | Eliminated via `/clear`        | Possible                    |
-| Audit trail           | Complete artifacts             | Summary only                |
-| Best for              | Complex, unfamiliar, team work | Simple, familiar, solo work |
+| Factor                | Strict RPI                     | rpi-agent                    |
+|-----------------------|--------------------------------|------------------------------|
+| Research depth        | Deep, verified, cited          | Moderate, inline             |
+| Context contamination | Eliminated via `/clear`        | Possible                     |
+| Audit trail           | Complete artifacts             | Summary only                 |
+| Review phase          | Explicit with findings log     | Integrated in iteration loop |
+| Best for              | Complex, unfamiliar, team work | Simple, familiar, solo work  |
 
 ### Escalation Path
 
-rpi-agent can hand off to Task Researcher when it encounters complexity beyond its scope. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with rpi-agent and escalate if the task reveals hidden complexity.
+rpi-agent can hand off to Task Researcher when it encounters complexity beyond its scope. The Review phase can also trigger iteration: when findings reveal gaps, the workflow escalates back to research or planning. This hybrid approach gives you speed for simple tasks and depth when needed. You don't have to decide upfront; start with rpi-agent and escalate if the task reveals hidden complexity.
 
 ## Next Steps
 
 Ready to try it yourself?
 
 * [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
-* [Using the Modes Together](using-together.md): context management and handoffs
-* [RPI Overview](README.md): the three modes explained
+* [Using the Agents Together](using-together.md): context management and handoffs
+* [RPI Overview](README.md): the four phases explained
+* [Task Reviewer Guide](task-reviewer.md): validation and iteration
 
 ---
 
-🤖 *Crafted with precision by ✨Copilot using the RPI workflow*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

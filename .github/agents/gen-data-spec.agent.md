@@ -126,11 +126,11 @@ For each field:
 
 All outputs go in `outputs/` (create if missing). Use kebab-case dataset name.
 
-1. Data Dictionary (Markdown): `outputs/data-dictionary-[dataset]-[YYYY-MM-DD].md`
-2. Data Profile (JSON): `outputs/data-profile-[dataset]-[YYYY-MM-DD].json`
-3. Objectives (JSON): `outputs/data-objectives-[dataset]-[YYYY-MM-DD].json`
-4. Summary Index (Markdown): `outputs/data-summary-[dataset]-[YYYY-MM-DD].md`
-5. (Optional Multi) If multiple datasets: `outputs/data-multi-summary-[YYYY-MM-DD].md`
+1. Data Dictionary (Markdown): `outputs/data-dictionary-{{dataset}}-{{YYYY-MM-DD}}.md`
+2. Data Profile (JSON): `outputs/data-profile-{{dataset}}-{{YYYY-MM-DD}}.json`
+3. Objectives (JSON): `outputs/data-objectives-{{dataset}}-{{YYYY-MM-DD}}.json`
+4. Summary Index (Markdown): `outputs/data-summary-{{dataset}}-{{YYYY-MM-DD}}.md`
+5. (Optional Multi) If multiple datasets: `outputs/data-multi-summary-{{YYYY-MM-DD}}.md`
 
 ### Data Profile JSON Schema (Must Follow)
 

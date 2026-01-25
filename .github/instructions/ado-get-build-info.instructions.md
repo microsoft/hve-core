@@ -104,7 +104,7 @@ This protocol applies when:
 
 **Conversational response**: Summarize build status, errors, and actionable information directly in conversation.
 
-**Tracking file** (when requested): Create or update `.copilot-tracking/pr/{{YYYYMMDD}}-build-{{buildId}}.md` with structured build information.
+**Tracking file** (when requested): Create or update `.copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md` with structured build information.
 
 ## Conversation Guidelines
 
@@ -137,7 +137,7 @@ Identify whether the user requests persistent tracking or conversational output.
 
 **Tracking file requested** (save, output, persist keywords):
 
-* Create file at `.copilot-tracking/pr/{{YYYYMMDD}}-build-{{buildId}}.md`.
+* Create file at `.copilot-tracking/pr/{{YYYY-MM-DD}}-build-{{buildId}}.md`.
 * If a tracking file is already attached or referenced, read and continue updating it.
 
 **Conversational output** (get, tell, check, what keywords):

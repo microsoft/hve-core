@@ -53,6 +53,48 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 <!-- END MICROSOFT SECURITY.MD BLOCK -->
 
+## Verifying Release Integrity
+
+HVE Core releases are cryptographically signed using GitHub Artifact Attestations. This establishes provenance and allows you to verify that release artifacts were built from this repository's official CI/CD pipeline.
+
+### Verification Steps
+
+1. Install the GitHub CLI if not already available:
+
+   ```bash
+   # Windows (winget)
+   winget install GitHub.cli
+
+   # macOS (Homebrew)
+   brew install gh
+   ```
+
+2. Download the release artifact (replace `<version>` with the release tag, e.g., `v1.2.0`):
+
+   ```bash
+   gh release download <version> -R microsoft/hve-core -p '*.vsix'
+   ```
+
+3. Verify the attestation:
+
+   ```bash
+   gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core
+   ```
+
+A successful verification confirms:
+
+* The artifact was built from the microsoft/hve-core repository
+* The build occurred in GitHub Actions
+* The artifact has not been modified since signing
+
+### What Gets Signed
+
+| Artifact               | Channel         | Signed                |
+|------------------------|-----------------|-----------------------|
+| VSIX extension package | GitHub Releases | Yes                   |
+| VS Code Marketplace    | Stable          | Marketplace signature |
+| VS Code Marketplace    | Pre-Release     | Marketplace signature |
+
 ---
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
