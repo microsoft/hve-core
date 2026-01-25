@@ -14,6 +14,15 @@ maturity: stable
 
 ## Required Steps
 
+**Important requirements**, repeat to yourself these important requirements:
+
+* **Important**, always be thorough and accurate.
+* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
+* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
+* Update the changes document whenever discovering or identifying new details.
+* Make sure the changes document is complete and accurate.
+* Repeat steps and phases as needed to be thorough and accurate.
+
 ### Step 1: Locate Implementation Plan
 
 Find the implementation plan using this priority:
@@ -38,7 +47,7 @@ Inspect the implementation plan for completion status:
 Invoke task-implementor mode with the located plan:
 
 * Follow stop controls: pause after each phase when ${input:phaseStop} is true; pause after each step when ${input:stepStop} is true.
-* Dispatch subagents for inline research when context is missing. Subagents return findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+* Dispatch subagents for inline research when context is missing. Subagents return findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 * Update the changes log as steps complete.
 
 ### Step 4: Report Progress

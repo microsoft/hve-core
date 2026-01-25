@@ -2,7 +2,7 @@
 title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - task planner
@@ -26,26 +26,23 @@ Use Task Planner after completing research when you need:
 ## What Task Planner Does
 
 1. **Validates** that research exists (MANDATORY first step)
-2. **Creates** three coordinated planning files
+2. **Creates** two coordinated planning files
 3. **Links** specifications to research with line numbers
 4. **Organizes** tasks into logical phases with dependencies
-5. **Generates** an implementation prompt for Task Implementor
 
 > [!NOTE]
 > **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria—the plan becomes a contract that prevents improvisation during implementation.
 
 ## Output Artifacts
 
-Task Planner creates three files:
+Task Planner creates two files:
 
 ```text
 .copilot-tracking/
 ├── plans/
-│   └── YYYYMMDD-<topic>-plan.instructions.md   # Checklist with phases
-├── details/
-│   └── YYYYMMDD-<topic>-details.md             # Specifications for each task
-└── prompts/
-    └── implement-<topic>.prompt.md              # Execution instructions
+│   └── {{YYYY-MM-DD}}-<topic>-plan.instructions.md   # Checklist with phases
+└── details/
+    └── {{YYYY-MM-DD}}-<topic>-details.md             # Specifications for each task
 ```
 
 ### Plan File
@@ -55,10 +52,6 @@ Contains checkboxes for phases and tasks, references to details with line number
 ### Details File
 
 Contains specifications for each task: files to modify, success criteria, research references.
-
-### Implementation Prompt
-
-Contains step-by-step instructions for Task Implementor, including stop controls.
 
 ## How to Use Task Planner
 
@@ -70,7 +63,7 @@ Contains step-by-step instructions for Task Implementor, including stop controls
 
 #### Option 1: Use the Prompt Shortcut (Recommended)
 
-Type `/task-plan` in GitHub Copilot Chat with the research document opened in the editor. This automatically switches to Task Planner mode and begins the planning protocol. You can optionally provide the research file path:
+Type `/task-plan` in GitHub Copilot Chat with the research document opened in the editor. This automatically switches to Task Planner and begins the planning protocol. You can optionally provide the research file path:
 
 ```text
 /task-plan
@@ -98,7 +91,7 @@ Task Planner will create all three files. Review:
 
 ## Example Prompt
 
-With `.copilot-tracking/research/20250128-blob-storage-research.md` opened in the editor
+With `.copilot-tracking/research/2025-01-28-blob-storage-research.md` opened in the editor
 
 ```text
 /task-plan
@@ -141,7 +134,7 @@ Specific work items within phases:
 
 ```markdown
 * [ ] Task 1.1: Create BlobStorageClient class
-  * Details: .copilot-tracking/details/20250128-blob-storage-details.md (Lines 10-25)
+  * Details: .copilot-tracking/details/2025-01-28-blob-storage-details.md (Lines 10-25)
 ```
 
 ### Line References
@@ -168,8 +161,16 @@ After Task Planner completes:
 2. **Clear context** using `/clear` or starting a new chat
 3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor.md)
 
-The `/task-implement` prompt automatically locates the plan and switches to Task Implementor mode. You can also use the generated implementation prompt (`.copilot-tracking/prompts/implement-*.prompt.md`) directly.
+The `/task-implement` prompt automatically locates the plan and switches to Task Implementor.
+
+> [!TIP]
+> Use the **⚡ Implement** handoff button when available to transition directly to Task Implementor with context.
+
+After implementation, continue to [Task Reviewer](task-reviewer.md) to validate against specifications.
 
 ---
 
-🤖 *Crafted with precision by ✨Copilot using the RPI workflow*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

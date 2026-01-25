@@ -37,8 +37,18 @@ jobs:
       - name: Check table formatting
         id: table-format
         run: |
-          npm run format:tables > table-format-output.txt 2>&1 || echo "TABLE_FORMAT_FAILED=true" >> $GITHUB_ENV
+          set +e
+          npm run format:tables > table-format-output.txt 2>&1
+          FORMAT_EXIT_CODE=$?
+          set -e
           cat table-format-output.txt
+          if [ "$FORMAT_EXIT_CODE" -ne 0 ] || [ -n "$(git diff --name-only)" ]; then
+            echo "TABLE_FORMAT_FAILED=true" >> "$GITHUB_ENV"
+            if [ -n "$(git diff --name-only)" ]; then
+              echo "Files with formatting issues:"
+              git diff --name-only
+            fi
+          fi
         continue-on-error: true
 
       - name: Create annotations
@@ -57,21 +67,23 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          echo "## Table Format Check Results" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ env.TABLE_FORMAT_FAILED }}" == "true" ]; then
-            echo "❌ **Status**: Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Note**: This check does NOT auto-fix tables." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**To fix manually:**" >> $GITHUB_STEP_SUMMARY
-            echo "1. Run \`npm run format:tables\` locally" >> $GITHUB_STEP_SUMMARY
-            echo "2. Review and commit the changes" >> $GITHUB_STEP_SUMMARY
-            echo "3. Push to update this PR" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ **Status**: Passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All tables are properly formatted." >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "## Table Format Check Results"
+            if [ "${{ env.TABLE_FORMAT_FAILED }}" == "true" ]; then
+              echo "❌ **Status**: Failed"
+              echo ""
+              echo "⚠️ **Note**: This check does NOT auto-fix tables."
+              echo ""
+              echo "**To fix manually:**"
+              echo "1. Run \`npm run format:tables\` locally"
+              echo "2. Review and commit the changes"
+              echo "3. Push to update this PR"
+            else
+              echo "✅ **Status**: Passed"
+              echo ""
+              echo "All tables are properly formatted."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail job if issues found
         if: env.TABLE_FORMAT_FAILED == 'true' && !inputs.soft-fail

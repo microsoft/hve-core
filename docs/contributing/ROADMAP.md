@@ -143,15 +143,15 @@ The following areas are explicitly out of scope for HVE Core:
 
 Progress is measured by:
 
-| Metric | Target | Rationale |
-| ------ | ------ | --------- |
-| Agent coverage | 25+ agents | Cover common Azure development scenarios |
-| Instruction coverage | 35+ instructions | Address major Azure technologies and patterns |
-| VS Code extension installs | 10,000+ | Validate community adoption |
-| GitHub stars | 500+ | Measure community interest |
-| Active contributors | 10+ | Ensure project sustainability |
-| Issue response time | < 7 days | Maintain community engagement |
-| Documentation completeness | 100% of agents/instructions documented | Enable self-service adoption |
+| Metric                     | Target                                 | Rationale                                     |
+|----------------------------|----------------------------------------|-----------------------------------------------|
+| Agent coverage             | 25+ agents                             | Cover common Azure development scenarios      |
+| Instruction coverage       | 35+ instructions                       | Address major Azure technologies and patterns |
+| VS Code extension installs | 10,000+                                | Validate community adoption                   |
+| GitHub stars               | 500+                                   | Measure community interest                    |
+| Active contributors        | 10+                                    | Ensure project sustainability                 |
+| Issue response time        | < 7 days                               | Maintain community engagement                 |
+| Documentation completeness | 100% of agents/instructions documented | Enable self-service adoption                  |
 
 ## Timeline Overview
 
@@ -193,9 +193,9 @@ The roadmap evolves based on community input:
 
 ## Version History
 
-| Version | Date | Changes |
-| ------- | ---- | ------- |
-| 1.0 | 2026-01-21 | Initial roadmap publication |
+| Version | Date       | Changes                     |
+|---------|------------|-----------------------------|
+| 1.0     | 2026-01-21 | Initial roadmap publication |
 
 ---
 

@@ -57,21 +57,21 @@ $configuration.CodeCoverage.CoveragePercentTarget = 70
 
 Code coverage analyzes scripts in production directories while excluding test files:
 
-| Setting | Value |
-| ------- | ----- |
-| Coverage target | 70% minimum |
-| Output format | JaCoCo XML |
-| Output path | `logs/coverage.xml` |
-| Excluded patterns | `*.Tests.ps1` |
+| Setting           | Value               |
+|-------------------|---------------------|
+| Coverage target   | 70% minimum         |
+| Output format     | JaCoCo XML          |
+| Output path       | `logs/coverage.xml` |
+| Excluded patterns | `*.Tests.ps1`       |
 
 Coverage directories include `linting/`, `security/`, `dev-tools/`, `lib/`, and `extension/`.
 
 ### Test Output
 
-| Output Type | Format | Path |
-| ----------- | ------ | ---- |
-| Test results | NUnitXml | `logs/pester-results.xml` |
-| Coverage report | JaCoCo | `logs/coverage.xml` |
+| Output Type     | Format   | Path                      |
+|-----------------|----------|---------------------------|
+| Test results    | NUnitXml | `logs/pester-results.xml` |
+| Coverage report | JaCoCo   | `logs/coverage.xml`       |
 
 ## Test Utilities
 
@@ -79,14 +79,14 @@ Coverage directories include `linting/`, `security/`, `dev-tools/`, `lib/`, and 
 
 The [LintingHelpers.psm1](../../scripts/linting/Modules/LintingHelpers.psm1) module provides shared functions for linting scripts and tests:
 
-| Function | Purpose |
-| -------- | ------- |
+| Function                  | Purpose                                                         |
+|---------------------------|-----------------------------------------------------------------|
 | `Get-ChangedFilesFromGit` | Detects changed files using merge-base with fallback strategies |
-| `Get-FilesRecursive` | Recursively finds files while respecting gitignore patterns |
-| `Get-GitIgnorePatterns` | Parses `.gitignore` into PowerShell wildcard patterns |
-| `Write-GitHubAnnotation` | Writes GitHub Actions annotations for errors and warnings |
-| `Set-GitHubOutput` | Sets GitHub Actions output variables |
-| `Set-GitHubEnv` | Sets GitHub Actions environment variables |
+| `Get-FilesRecursive`      | Recursively finds files while respecting gitignore patterns     |
+| `Get-GitIgnorePatterns`   | Parses `.gitignore` into PowerShell wildcard patterns           |
+| `Write-GitHubAnnotation`  | Writes GitHub Actions annotations for errors and warnings       |
+| `Set-GitHubOutput`        | Sets GitHub Actions output variables                            |
+| `Set-GitHubEnv`           | Sets GitHub Actions environment variables                       |
 
 ### GitMocks Module
 
@@ -94,27 +94,27 @@ The [GitMocks.psm1](../../scripts/tests/Mocks/GitMocks.psm1) module provides reu
 
 #### Environment Management
 
-| Function | Purpose |
-| -------- | ------- |
-| `Save-GitHubEnvironment` | Saves current GitHub Actions environment variables |
-| `Restore-GitHubEnvironment` | Restores saved environment state |
+| Function                           | Purpose                                                 |
+|------------------------------------|---------------------------------------------------------|
+| `Save-GitHubEnvironment`           | Saves current GitHub Actions environment variables      |
+| `Restore-GitHubEnvironment`        | Restores saved environment state                        |
 | `Initialize-MockGitHubEnvironment` | Creates mock GitHub Actions environment with temp files |
-| `Clear-MockGitHubEnvironment` | Removes GitHub Actions environment variables |
-| `Remove-MockGitHubFiles` | Cleans up temp files from mock initialization |
+| `Clear-MockGitHubEnvironment`      | Removes GitHub Actions environment variables            |
+| `Remove-MockGitHubFiles`           | Cleans up temp files from mock initialization           |
 
 #### Git Mocks
 
-| Function | Purpose |
-| -------- | ------- |
-| `Initialize-GitMocks` | Sets up standard git command mocks for a module |
-| `Set-GitMockChangedFiles` | Updates files returned by git diff mock |
+| Function                      | Purpose                                           |
+|-------------------------------|---------------------------------------------------|
+| `Initialize-GitMocks`         | Sets up standard git command mocks for a module   |
+| `Set-GitMockChangedFiles`     | Updates files returned by git diff mock           |
 | `Set-GitMockMergeBaseFailure` | Simulates merge-base failure for fallback testing |
 
 #### Test Data
 
-| Function | Purpose |
-| -------- | ------- |
-| `New-MockFileList` | Generates mock file paths for testing |
+| Function                  | Purpose                                           |
+|---------------------------|---------------------------------------------------|
+| `New-MockFileList`        | Generates mock file paths for testing             |
 | `Get-MockGitDiffScenario` | Returns predefined scenarios for git diff testing |
 
 ### Environment Save/Restore Pattern
@@ -141,8 +141,8 @@ AfterEach {
 
 ### npm Scripts
 
-| Command | Description |
-| ------- | ----------- |
+| Command           | Description          |
+|-------------------|----------------------|
 | `npm run test:ps` | Run all Pester tests |
 
 ### Direct Pester Invocation

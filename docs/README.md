@@ -10,12 +10,12 @@ HVE Core is an enterprise-ready prompt engineering framework for GitHub Copilot.
 
 ## Audience
 
-| Role | Goal | Start Here | Key Resources |
-| ---- | ---- | ---------- | ------------- |
-| **Developers** | Use agents to ship features | [First Workflow](getting-started/first-workflow.md) | RPI agents, prompt patterns |
-| **TPMs & Leads** | Coordinate AI-assisted work | [Why RPI?](rpi/why-rpi.md) | Methodology, team adoption |
-| **Platform Engineers** | Maintain prompt libraries | [Build Workflows](architecture/workflows.md) | Validation pipeline, schemas |
-| **Contributors** | Create new artifacts | [AI Artifacts](contributing/ai-artifacts-common.md) | Authoring patterns, conventions |
+| Role                   | Goal                        | Start Here                                          | Key Resources                   |
+|------------------------|-----------------------------|-----------------------------------------------------|---------------------------------|
+| **Developers**         | Use agents to ship features | [First Workflow](getting-started/first-workflow.md) | RPI agents, prompt patterns     |
+| **TPMs & Leads**       | Coordinate AI-assisted work | [Why RPI?](rpi/why-rpi.md)                          | Methodology, team adoption      |
+| **Platform Engineers** | Maintain prompt libraries   | [Build Workflows](architecture/workflows.md)        | Validation pipeline, schemas    |
+| **Contributors**       | Create new artifacts        | [AI Artifacts](contributing/ai-artifacts-common.md) | Authoring patterns, conventions |
 
 ## Getting Started
 
@@ -55,12 +55,12 @@ HVE Core provides a structured approach to building AI artifacts with protocol p
 
 Key differentiators:
 
-| Capability | Description |
-| ---------- | ----------- |
+| Capability              | Description                                               |
+|-------------------------|-----------------------------------------------------------|
 | Constraint-based design | Agents know their boundaries, preventing runaway behavior |
-| Subagent delegation | First-class pattern for decomposing complex tasks |
-| Maturity lifecycle | Four-stage model from experimental to deprecated |
-| Schema validation | JSON schema enforcement for all artifact types |
+| Subagent delegation     | First-class pattern for decomposing complex tasks         |
+| Maturity lifecycle      | Four-stage model from experimental to deprecated          |
+| Schema validation       | JSON schema enforcement for all artifact types            |
 
 ## Contributing
 
@@ -98,9 +98,9 @@ Pre-built templates for common engineering documents:
 
 ## Quick Links
 
-| Resource | Description |
-| -------- | ----------- |
-| [CHANGELOG](../CHANGELOG.md) | Release history and version notes |
-| [CONTRIBUTING](../CONTRIBUTING.md) | Repository contribution guidelines |
-| [Scripts README](../scripts/README.md) | Automation script reference |
-| [Extension README](../extension/README.md) | VS Code extension documentation |
+| Resource                                   | Description                        |
+|--------------------------------------------|------------------------------------|
+| [CHANGELOG](../CHANGELOG.md)               | Release history and version notes  |
+| [CONTRIBUTING](../CONTRIBUTING.md)         | Repository contribution guidelines |
+| [Scripts README](../scripts/README.md)     | Automation script reference        |
+| [Extension README](../extension/README.md) | VS Code extension documentation    |

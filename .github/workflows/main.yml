@@ -58,20 +58,6 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
-  extension-package:
-    name: Package VS Code Extension
-    needs:
-      - spell-check
-      - markdown-lint
-      - table-format
-      - dependency-pinning-scan
-      - pester-tests
-    uses: ./.github/workflows/extension-package.yml
-    with:
-      dev-patch-number: ${{ github.run_number }}
-    permissions:
-      contents: read
-
   release-please:
     name: Release Please
     needs:
@@ -79,7 +65,6 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
-      - extension-package
       - pester-tests
     runs-on: ubuntu-latest
     outputs:
@@ -106,3 +91,45 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  extension-package-release:
+    name: Package VS Code Extension (Release)
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.release-please.outputs.version }}
+    permissions:
+      contents: read
+
+  attest-and-upload:
+    name: Attest and Upload Release Assets
+    needs: [release-please, extension-package-release]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: extension-vsix
+          path: ./dist
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-path: 'dist/*.vsix'
+
+      - name: Upload VSIX to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX file found in dist/"
+            exit 1
+          fi
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$VSIX_FILE" --clobber -R "${{ github.repository }}"

@@ -308,7 +308,7 @@ What artifacts are produced:
 ## Output Artifacts
 
 1. **Pull Request**: Created in ADO with metadata
-2. **Handoff Document**: `.copilot-tracking/pr/YYYYMMDD-pr-{{id}}-handoff.md`
+2. **Handoff Document**: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
 3. **Validation Report**: Summary of PR creation status
 ```
 
@@ -387,7 +387,7 @@ Specifications for generated files:
 ```markdown
 ## Handoff Document Format
 
-File: `.copilot-tracking/pr/YYYYMMDD-pr-{{id}}-handoff.md`
+File: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
 
 Content:
 
@@ -514,4 +514,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 ---
 
-Brought to you by microsoft/hve-core
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

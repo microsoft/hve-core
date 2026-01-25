@@ -16,11 +16,16 @@ This prompt delegates to the *prompt-builder* agent, which provides the phase-ba
 
 ## Required Steps
 
+**Important requirements**:
+
+* **Important**, always be thorough and accurate.
 * Analyze the user request and conversation context to determine the operation and requirements.
 * Avoid reading prompt instructions files, relying on subagents to read and modify them unless validation or required instructions call for direct access.
 * Leverage subagents for all research including reading and discovering related files and folders.
 * Use the runSubagent tool when dispatching subagents. When the tool is unavailable, follow the subagent instructions directly or stop if the task requires runSubagent.
 * Follow all of the below steps and follow all instructions from the Required Phases section.
+* Avoid overly verbose instructions and examples.
+* Refactor instructions and examples continually.
 
 ### Step 1: Interpret User Request
 
