@@ -131,16 +131,10 @@ $DependencyPatterns = @{
     }
 
     'npm'            = @{
-        FilePatterns    = @('**/package.json', '**/package-lock.json')
-        VersionPatterns = @(
-            @{
-                Pattern     = '"([^"]+)":\s*"([^@][^"]*)"'
-                Groups      = @{ Package = 1; Version = 2 }
-                Description = 'NPM dependencies in package.json'
-            }
-        )
-        SHAPattern      = '^[a-fA-F0-9]{40}$'
-        RemediationUrl  = 'https://registry.npmjs.org/{0}/{1}'
+        FilePatterns   = @('**/package.json')
+        ValidationFunc = 'Get-NpmDependencyViolations'
+        SHAPattern     = '^[a-fA-F0-9]{40}$'
+        RemediationUrl = 'https://registry.npmjs.org/{0}/{1}'
     }
 
     'pip'              = @{
@@ -211,14 +205,16 @@ function Test-ShellDownloadSecurity {
         have corresponding checksum verification (sha256sum/shasum) within the
         following lines.
 
-    .PARAMETER FilePath
-        Path to the shell script file to scan.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$FilePath
+        [hashtable]$FileInfo
     )
+
+    $FilePath = $FileInfo.Path
 
     if (-not (Test-Path $FilePath)) {
         return @()
@@ -246,14 +242,89 @@ function Test-ShellDownloadSecurity {
             }
 
             if (-not $hasChecksum) {
-                $violations += [PSCustomObject]@{
-                    File      = $FilePath
-                    Line      = $i + 1
-                    Pattern   = $line.Trim()
-                    Issue     = 'Download without checksum verification'
-                    Severity  = 'warning'
-                    Ecosystem = 'shell-downloads'
-                }
+                $violation = [DependencyViolation]::new()
+                $violation.File = $FileInfo.RelativePath
+                $violation.Line = $i + 1
+                $violation.Type = $FileInfo.Type
+                $violation.Name = $line.Trim()
+                $violation.Severity = 'warning'
+                $violation.Description = 'Download without checksum verification'
+                $violation.Metadata = @{ Pattern = $line.Trim() }
+                $violations += $violation
+            }
+        }
+    }
+
+    return $violations
+}
+
+function Get-NpmDependencyViolations {
+    <#
+    .SYNOPSIS
+        Analyzes package.json files for unpinned npm dependencies.
+    .DESCRIPTION
+        Parses package.json as JSON and checks only actual dependency sections
+        (dependencies, devDependencies, peerDependencies, optionalDependencies)
+        for SHA-pinned versions. Ignores metadata fields like name, version,
+        description, contributes, scripts, repository, etc.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
+    .OUTPUTS
+        Array of PSCustomObjects representing dependency violations.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $filePath = $FileInfo.Path
+    $relativePath = $FileInfo.RelativePath
+    $type = $FileInfo.Type
+    $violations = @()
+
+    if (-not (Test-Path -Path $filePath -PathType Leaf)) {
+        return $violations
+    }
+
+    try {
+        $content = Get-Content -Path $filePath -Raw -ErrorAction Stop
+        $packageJson = $content | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        Write-Warning "Failed to parse $relativePath as JSON: $_"
+        return $violations
+    }
+
+    $dependencySections = @('dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies')
+
+    foreach ($section in $dependencySections) {
+        $deps = $packageJson.$section
+        if ($null -eq $deps) {
+            continue
+        }
+
+        foreach ($prop in $deps.PSObject.Properties) {
+            $packageName = $prop.Name
+            $version = $prop.Value
+
+            if ([string]::IsNullOrWhiteSpace($version)) {
+                continue
+            }
+
+            $isPinned = Test-SHAPinning -Version $version -Type $type
+
+            if (-not $isPinned) {
+                $violation = [DependencyViolation]::new()
+                $violation.File = $relativePath
+                $violation.Line = 0
+                $violation.Type = $type
+                $violation.Name = $packageName
+                $violation.Version = $version
+                $violation.Severity = 'warning'
+                $violation.Description = "Unpinned npm dependency in $section"
+                $violation.Metadata = @{ Section = $section }
+                $violations += $violation
             }
         }
     }
@@ -363,6 +434,41 @@ function Get-DependencyViolation {
 
     if (!(Test-Path $filePath)) {
         return $violations
+    }
+
+    # Check if this type uses a validation function instead of regex patterns
+    if ($null -ne $DependencyPatterns[$fileType].ValidationFunc) {
+        $funcName = $DependencyPatterns[$fileType].ValidationFunc
+        $rawViolations = & $funcName -FileInfo $FileInfo
+
+        if ($null -eq $rawViolations) {
+            return @()
+        }
+
+        foreach ($v in $rawViolations) {
+            if ($null -eq $v) {
+                continue
+            }
+
+            if (-not ($v -is [DependencyViolation])) {
+                $actualType = $v.GetType().FullName
+                throw "Validation function '$funcName' must return [DependencyViolation] objects, got '$actualType'."
+            }
+
+            if (-not $v.File) {
+                $v.File = $FileInfo.RelativePath
+            }
+
+            if ($v.Line -lt 1) {
+                $v.Line = 0
+            }
+
+            if (-not $v.Type) {
+                $v.Type = $fileType
+            }
+        }
+
+        return $rawViolations
     }
 
     try {

@@ -1,0 +1,9 @@
+{
+  "name": "empty-version-test",
+  "version": "1.0.0",
+  "dependencies": {
+    "valid-package": "^1.0.0",
+    "empty-version": "",
+    "whitespace-version": "   "
+  }
+}
