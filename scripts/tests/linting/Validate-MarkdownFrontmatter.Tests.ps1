@@ -938,11 +938,10 @@ Content
 
         It 'Passes BaseBranch parameter to Get-ChangedMarkdownFileGroup' {
             Mock Get-ChangedMarkdownFileGroup {
-                param($BaseBranch)
                 return @()
             } -ParameterFilter { $BaseBranch -eq 'develop' }
 
-            $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch 'develop'
+            $null = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch 'develop'
 
             Should -Invoke Get-ChangedMarkdownFileGroup -ParameterFilter { $BaseBranch -eq 'develop' }
         }
@@ -1166,7 +1165,7 @@ Describe 'Git Fallback Strategies' -Tag 'Unit' {
                 return @()
             }
 
-            $result = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto'
+            $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto'
             # merge-base (1) + diff (2) + HEAD~1 fallback (3) + HEAD fallback (4) = 4 calls
             Should -Invoke git -Times 4 -Exactly
         }

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Unit tests for FrontmatterValidation.psm1 module.
 .DESCRIPTION
@@ -913,133 +913,9 @@ Describe 'Main Script Functions' -Tag 'Unit' {
         . $script:MainScriptPath -Paths @() -ErrorAction SilentlyContinue 2>$null
     }
 
-    Context 'ConvertFrom-YamlFrontmatter' {
-        It 'Parses simple YAML frontmatter' {
-            $content = @"
----
-title: Test Title
-description: Test Description
----
-"@
-            $result = ConvertFrom-YamlFrontmatter -Content $content
-
-            $result | Should -Not -BeNullOrEmpty
-            $result.Frontmatter.title | Should -Be 'Test Title'
-            $result.Frontmatter.description | Should -Be 'Test Description'
-        }
-
-        It 'Parses YAML with dotted keys' {
-            $content = @"
----
-title: Test
-ms.date: 2025-01-16
-ms.topic: overview
----
-"@
-            $result = ConvertFrom-YamlFrontmatter -Content $content
-
-            $result.Frontmatter.'ms.date' | Should -Be '2025-01-16'
-            $result.Frontmatter.'ms.topic' | Should -Be 'overview'
-        }
-
-        It 'Parses YAML with list values' {
-            $content = @"
----
-title: Test
-keywords:
-  - keyword1
-  - keyword2
----
-"@
-            $result = ConvertFrom-YamlFrontmatter -Content $content
-
-            $result.Frontmatter.keywords | Should -HaveCount 2
-        }
-
-        It 'Returns null for content without frontmatter' {
-            $content = "# Just a heading"
-
-            $result = ConvertFrom-YamlFrontmatter -Content $content
-
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Returns null for empty content' {
-            $result = ConvertFrom-YamlFrontmatter -Content ""
-
-            $result | Should -BeNullOrEmpty
-        }
-    }
-
-    Context 'Get-MarkdownFrontmatter' {
-        It 'Extracts frontmatter from valid markdown content' {
-            $content = @"
----
-title: Test
-description: Test Description
----
-
-# Heading
-
-Content here.
-"@
-            $result = Get-MarkdownFrontmatter -Content $content
-
-            $result | Should -Not -BeNullOrEmpty
-            $result.Frontmatter.title | Should -Be 'Test'
-            $result.Frontmatter.description | Should -Be 'Test Description'
-        }
-
-        It 'Returns null when no frontmatter' {
-            $content = @"
-# Heading
-
-No frontmatter here.
-"@
-            $result = Get-MarkdownFrontmatter -Content $content
-
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Returns null when frontmatter not at start' {
-            $content = @"
-Some text first
-
----
-title: Test
----
-"@
-            $result = Get-MarkdownFrontmatter -Content $content
-
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Returns null for unclosed frontmatter delimiter' {
-            $content = @"
----
-title: Test
-No closing delimiter
-"@
-            $result = Get-MarkdownFrontmatter -Content $content
-
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Can read from file path' {
-            $testFile = Join-Path $TestDrive 'test.md'
-            @"
----
-title: File Test
----
-Content
-"@ | Set-Content -Path $testFile -Encoding utf8
-
-            $result = Get-MarkdownFrontmatter -FilePath $testFile
-
-            $result | Should -Not -BeNullOrEmpty
-            $result.Frontmatter.title | Should -Be 'File Test'
-        }
-    }
+    # Note: ConvertFrom-YamlFrontmatter and Get-MarkdownFrontmatter tests removed
+    # Those functions were deleted as part of issue #266 refactoring - functionality
+    # now provided by FrontmatterValidation.psm1
 
     Context 'Test-MarkdownFooter' {
         It 'Returns $true when standard Copilot footer present' {
@@ -1318,7 +1194,7 @@ ms.topic: concept
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\test.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) $mockContent }
+                -FileReader { $mockContent }
 
             $result | Should -Not -BeNull
             $result.HasFrontmatter | Should -BeTrue
@@ -1332,7 +1208,7 @@ ms.topic: concept
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\test.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) '# Just a heading' }
+                -FileReader { '# Just a heading' }
 
             $result.HasFrontmatter | Should -BeFalse
             $result.HasWarnings() | Should -BeTrue
@@ -1352,7 +1228,7 @@ bad yaml: [unclosed
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\test.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) $mockContent }
+                -FileReader { $mockContent }
 
             $result.HasErrors() | Should -BeTrue
             $result.Issues[0].Message | Should -BeLike '*YAML*'
@@ -1364,7 +1240,7 @@ bad yaml: [unclosed
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\missing.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) throw 'File not found' }
+                -FileReader { throw 'File not found' }
 
             $result.HasErrors() | Should -BeTrue
             $result.Issues[0].Message | Should -BeLike '*Failed to read*'
@@ -1383,7 +1259,7 @@ description: Test desc
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\guide.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) $mockContent }
+                -FileReader { $mockContent }
 
             $result.FileType | Should -Not -BeNull
             $result.FileType.IsDocsFile | Should -BeTrue
@@ -1399,7 +1275,7 @@ description: Test instruction
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\.github\instructions\test.instructions.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) $mockContent }
+                -FileReader { $mockContent }
 
             $result.FileType | Should -Not -BeNull
             $result.FileType.IsInstruction | Should -BeTrue
@@ -1417,7 +1293,7 @@ description: Test
             $result = Test-SingleFileFrontmatter `
                 -FilePath "$script:TestRepoRoot\docs\subdir\file.md" `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { param($p) $mockContent }
+                -FileReader { $mockContent }
 
             $result.RelativePath | Should -Be 'docs\subdir\file.md'
         }
