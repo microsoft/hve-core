@@ -81,7 +81,6 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search and tracking logs.
-* Prompts (`.copilot-tracking/prompts/`) - Generated implementation prompts.
 
 All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado-*.instructions.md`.
 <!-- </project-structure> -->

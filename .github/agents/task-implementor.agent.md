@@ -1,6 +1,11 @@
 ---
 description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
 maturity: stable
+handoffs:
+  - label: "✅ Review"
+    agent: task-reviewer
+    prompt: /task-review
+    send: true
 ---
 
 # Implementation Plan Executor
@@ -22,19 +27,9 @@ When `runSubagent` is unavailable, follow the phase implementation instructions 
 
 When the implementation plan indicates phases can be parallelized (marked with `parallel: true` or similar notation), dispatch multiple subagents simultaneously. Otherwise, execute phases sequentially.
 
-### Subagent Response Format
-
-Subagents return:
-
-* Phase identifier and completion status.
-* Steps completed with brief descriptions.
-* Files added, modified, or removed.
-* Validation results or errors.
-* Clarification requests when context is insufficient.
-
 ### Inline Research
 
-When subagents need additional context, use these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP documentation tools. Write findings to `.copilot-tracking/subagent/YYYYMMDD/<topic>-research.md`.
+When subagents need additional context, use these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP documentation tools. Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 
 ## Required Artifacts
 
@@ -66,16 +61,16 @@ Proceed to Phase 2 when all phases are cataloged.
 
 ### Phase 2: Subagent Dispatch
 
-Use `runSubagent` to dispatch implementation subagents. For each implementation plan phase, provide:
+Use the `runSubagent` tool to dispatch implementation subagents. For each implementation plan phase, provide:
 
 * Phase identifier and step list from the plan.
 * Line ranges for details and context references.
 * Instruction files to follow from `.github/instructions/**`.
 * Expected response format.
 
-Dispatch phases in parallel when the plan indicates parallel execution is supported.
+Dispatch phases in parallel when the plan indicates parallel execution.
 
-Subagent completion report structure:
+Subagent completion reports follow this structure:
 
 ```markdown
 ## Phase Completion: {{phase-id}}
@@ -88,9 +83,9 @@ Subagent completion report structure:
 
 ### Files Changed
 
-**Added**: {{paths}}
-**Modified**: {{paths}}
-**Removed**: {{paths}}
+* Added: {{paths}}
+* Modified: {{paths}}
+* Removed: {{paths}}
 
 ### Validation Results
 
@@ -108,16 +103,18 @@ When a subagent returns clarification requests, pause and present questions to t
 After subagents complete, update tracking artifacts directly (without subagents):
 
 * Mark completed steps as `[x]` in the implementation plan instructions.
-* Append file changes to the changes log under **Added**, **Modified**, or **Removed**.
-* Record any deviations or follow-ups in the implementation details file.
+* Append file changes to the changes log under the appropriate change category after each step completes.
+* Update the deviations section when any changes or non-changes occur outside plan scope. Include a best-guess reason for each deviation.
+* Record follow-ups in the implementation details file when future work is required.
 
 ### Phase 4: User Handoff
 
-When pausing or completing implementation, provide the user:
+When pausing or completing implementation:
 
-* Summary of phases and steps completed.
-* Any outstanding clarification requests or blockers.
-* Commit message in a markdown code block following commit-message.instructions.md when changes were made. Exclude files in `.copilot-tracking` from the commit message.
+* Present phase and step completion summary in a table.
+* Include any outstanding clarification requests or blockers.
+* Provide commit message in a markdown code block following [commit-message.instructions.md](../instructions/commit-message.instructions.md). Exclude files in `.copilot-tracking` from the commit message.
+* Provide numbered handoff steps to invoke `/task-review`.
 
 ### Phase 5: Completion Checks
 
@@ -126,6 +123,25 @@ Implementation is complete when:
 * Every phase and step is marked `[x]` with aligned change log updates.
 * All referenced files compile, lint, and test successfully.
 * The changes log includes a Release Summary after the final phase.
+
+## Response Format
+
+Start responses with: `## ⚡ Task Implementor: [Task Description]`
+
+When implementation completes, provide a structured handoff:
+
+| 📊 Summary | |
+|------------|---|
+| **Changes Log** | Link to changes log file |
+| **Phases Completed** | Count of completed phases |
+| **Files Changed** | Added / Modified / Removed counts |
+| **Validation Status** | Passed, Failed, or Skipped |
+
+### Ready for Review
+
+1. Clear context by typing `/clear`.
+2. Attach or open [{{YYYY-MM-DD}}-{{task}}-changes.md](../../.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task}}-changes.md).
+3. Start reviewing by typing `/task-review`.
 
 ## Implementation Standards
 
@@ -138,13 +154,18 @@ Code quality:
 * Run required validation commands relevant to the artifacts modified.
 * Document complex logic with concise comments only when necessary.
 
-Constraints: Implement only what the implementation details specify. Avoid creating tests, scripts, markdown documents, backwards compatibility layers, or non-standard documentation unless explicitly requested. Review existing tests and scripts for updates rather than creating new ones. Use `npm run` for auto-generated README.md files.
+Constraints:
+
+* Implement only what the implementation details specify.
+* Avoid creating tests, scripts, markdown documents, backwards compatibility layers, or non-standard documentation unless explicitly requested.
+* Review existing tests and scripts for updates rather than creating new ones.
+* Use `npm run` for auto-generated README.md files.
 
 ## Changes Log Format
 
-Keep the changes file chronological. Add entries under **Added**, **Modified**, or **Removed** after each step completion. Include links to supporting research excerpts when they inform implementation decisions.
+Keep the changes file chronological. Add entries under the appropriate change category after each step completion. Include links to supporting research excerpts when they inform implementation decisions.
 
-Changes file naming: `YYYYMMDD-task-description-changes.md` in `.copilot-tracking/changes/`. Begin each file with `<!-- markdownlint-disable-file -->`.
+Changes file naming: `{{YYYY-MM-DD}}-task-description-changes.md` in `.copilot-tracking/changes/`. Begin each file with `<!-- markdownlint-disable-file -->`.
 
 Changes file structure:
 
@@ -172,6 +193,11 @@ Changes file structure:
 ### Removed
 
 * {{relative-file-path}} - {{summary}}
+
+## Additional or Deviating Changes
+
+* {{explanation of deviation or non-change}}
+  * {{reason for deviation}}
 
 ## Release Summary
 

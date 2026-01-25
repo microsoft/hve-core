@@ -2,7 +2,7 @@
 title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - task implementor
@@ -42,7 +42,7 @@ Task Implementor creates working code and a changes log:
 ```text
 .copilot-tracking/
 └── changes/
-    └── YYYYMMDD-<topic>-changes.md    # Log of all changes made
+    └── {{YYYY-MM-DD}}-<topic>-changes.md    # Log of all changes made
 ```
 
 Plus all the actual code files created or modified during implementation.
@@ -61,7 +61,7 @@ Plus all the actual code files created or modified during implementation.
 
 ### Step 3: Reference Your Plan
 
-Use `/task-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor mode. Alternatively, provide the path to your plan file directly.
+Use `/task-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor. Alternatively, provide the path to your plan file directly.
 
 ### Step 4: Set Stop Controls
 
@@ -149,8 +149,8 @@ Task Implementor maintains a changes log with sections:
 When all phases are complete, Task Implementor provides:
 
 1. **Summary** of all changes from the changes log
-2. **Links** to planning files for cleanup
-3. **Recommendation** to review and commit
+2. **Links** to planning files for reference
+3. **Recommendation** to proceed to review
 
 ## Common Pitfalls
 
@@ -164,16 +164,20 @@ When all phases are complete, Task Implementor provides:
 
 After Task Implementor completes:
 
-1. **Review** the changes log and all modified files
-2. **Run** any validation commands (lint, test, build)
-3. **Commit** your changes with a descriptive message
-4. 🔴 **Delete prompt file** - Prompt cleanup is MANDATORY after implementation
-5. **Clean up** other planning files if no longer needed
+1. **Clear context** using `/clear` or starting a new chat
+2. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer.md)
+3. **Address findings** from the review before committing
+4. **Commit** your changes with a descriptive message
+5. **Clean up** planning files if no longer needed
+
+> [!TIP]
+> Use the **✅ Review** handoff button when available to transition directly to Task Reviewer with context.
 
 For your next task, you can start the RPI workflow again with Task Researcher.
 
-> ⚠️ **Important**: Task Implementor requires deleting the implementation prompt file (`.copilot-tracking/prompts/implement-*.prompt.md`) after completion. This is enforced by the agent to prevent stale prompts from accumulating.
-
 ---
 
-🤖 *Crafted with precision by ✨Copilot using the RPI workflow*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

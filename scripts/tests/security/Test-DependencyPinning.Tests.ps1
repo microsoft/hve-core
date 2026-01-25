@@ -55,7 +55,12 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
     Context 'Insecure downloads' {
         It 'Detects curl without checksum verification' {
             $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
-            $result = Test-ShellDownloadSecurity -FilePath $testFile
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
             $result | Should -Not -BeNullOrEmpty
             $result[0].Severity | Should -Be 'warning'
         }
@@ -63,7 +68,12 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
 
     Context 'File not found' {
         It 'Returns empty array for non-existent file' {
-            $result = Test-ShellDownloadSecurity -FilePath 'TestDrive:/nonexistent/file.sh'
+            $fileInfo = @{
+                Path         = 'TestDrive:/nonexistent/file.sh'
+                Type         = 'shell-downloads'
+                RelativePath = 'nonexistent/file.sh'
+            }
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
             $result | Should -BeNullOrEmpty
         }
     }
@@ -324,6 +334,148 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
             $pattern = 'vendor'
 
             $filePath -notlike "*$pattern*" | Should -BeTrue
+        }
+    }
+}
+
+Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
+    BeforeAll {
+        . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Npm'
+    }
+
+    Context 'Metadata-only package.json' {
+        It 'Returns zero violations for package with no dependencies' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'metadata-only-package.json'
+                Type         = 'npm'
+                RelativePath = 'metadata-only-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations.Count | Should -Be 0
+        }
+    }
+
+    Context 'Package.json with dependencies' {
+        It 'Detects unpinned dependencies in all sections' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations.Count | Should -BeGreaterThan 0
+        }
+
+        It 'Identifies correct dependency sections' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $sections = $violations | ForEach-Object { $_.Metadata.Section } | Sort-Object -Unique
+
+            $sections | Should -Contain 'dependencies'
+            $sections | Should -Contain 'devDependencies'
+        }
+
+        It 'Captures package name and version in violations' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $lodashViolation = $violations | Where-Object { $_.Name -eq 'lodash' }
+
+            $lodashViolation | Should -Not -BeNullOrEmpty
+            $lodashViolation.Name | Should -Be 'lodash'
+            $lodashViolation.Version | Should -Be '^4.17.21'
+        }
+    }
+
+    Context 'Non-existent file' {
+        It 'Returns empty array for missing file' {
+            $fileInfo = @{
+                Path         = 'C:\nonexistent\package.json'
+                Type         = 'npm'
+                RelativePath = 'nonexistent/package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations.Count | Should -Be 0
+        }
+    }
+
+    Context 'When package.json contains invalid JSON' {
+        BeforeAll {
+            $script:invalidJsonPath = Join-Path $script:FixturesPath 'invalid-json-package.json'
+        }
+
+        It 'Returns empty violations array on parse failure' {
+            $fileInfo = @{
+                Path         = $script:invalidJsonPath
+                Type         = 'npm'
+                RelativePath = 'invalid-json-package.json'
+            }
+
+            $violations = @(Get-NpmDependencyViolations -FileInfo $fileInfo)
+
+            $violations | Should -HaveCount 0
+        }
+
+        It 'Emits a warning about parse failure' {
+            $fileInfo = @{
+                Path         = $script:invalidJsonPath
+                Type         = 'npm'
+                RelativePath = 'invalid-json-package.json'
+            }
+
+            $warnings = Get-NpmDependencyViolations -FileInfo $fileInfo 3>&1
+
+            $warnings | Should -Not -BeNullOrEmpty
+            $warnings | Should -Match 'Failed to parse.*as JSON'
+        }
+    }
+
+    Context 'When package.json contains empty or whitespace versions' {
+        BeforeAll {
+            $script:emptyVersionPath = Join-Path $script:FixturesPath 'empty-version-package.json'
+        }
+
+        It 'Skips dependencies with empty versions' {
+            $fileInfo = @{
+                Path         = $script:emptyVersionPath
+                Type         = 'npm'
+                RelativePath = 'empty-version-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $violations | ForEach-Object { $_.Name }
+
+            $packageNames | Should -Not -Contain 'empty-version'
+            $packageNames | Should -Not -Contain 'whitespace-version'
+        }
+
+        It 'Reports violations for valid non-pinned versions in same file' {
+            $fileInfo = @{
+                Path         = $script:emptyVersionPath
+                Type         = 'npm'
+                RelativePath = 'empty-version-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations.Count | Should -BeGreaterThan 0
+            $violations | Where-Object { $_.Name -eq 'valid-package' } | Should -Not -BeNullOrEmpty
         }
     }
 }

@@ -37,6 +37,11 @@
         "description": "Business Requirements Document builder with guided Q&A and reference integration"
       },
       {
+        "name": "doc-ops",
+        "path": "./.github/agents/doc-ops.agent.md",
+        "description": "Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "gen-data-spec",
         "path": "./.github/agents/gen-data-spec.agent.md",
         "description": "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
@@ -57,6 +62,11 @@
         "description": "Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues"
       },
       {
+        "name": "memory",
+        "path": "./.github/agents/memory.agent.md",
+        "description": "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "pr-review",
         "path": "./.github/agents/pr-review.agent.md",
         "description": "Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core"
@@ -74,7 +84,7 @@
       {
         "name": "rpi-agent",
         "path": "./.github/agents/rpi-agent.agent.md",
-        "description": "Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks. - Brought to you by microsoft/hve-core"
+        "description": "Autonomous RPI orchestrator dispatching task-* agents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core"
       },
       {
         "name": "security-plan-creator",
@@ -95,6 +105,11 @@
         "name": "task-researcher",
         "path": "./.github/agents/task-researcher.agent.md",
         "description": "Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "task-reviewer",
+        "path": "./.github/agents/task-reviewer.agent.md",
+        "description": "Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core"
       },
       {
         "name": "test-streamlit-dashboard",
@@ -127,6 +142,16 @@
         "name": "ado-update-wit-items",
         "path": "./.github/prompts/ado-update-wit-items.prompt.md",
         "description": "Prompt to update work items based on planning files"
+      },
+      {
+        "name": "checkpoint",
+        "path": "./.github/prompts/checkpoint.prompt.md",
+        "description": "Save or restore conversation context using memory files - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "doc-ops-update",
+        "path": "./.github/prompts/doc-ops-update.prompt.md",
+        "description": "Invoke doc-ops agent for documentation quality assurance and updates"
       },
       {
         "name": "git-commit-message",
@@ -179,6 +204,11 @@
         "description": "Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix."
       },
       {
+        "name": "rpi",
+        "path": "./.github/prompts/rpi.prompt.md",
+        "description": "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "task-implement",
         "path": "./.github/prompts/task-implement.prompt.md",
         "description": "Locates and executes implementation plans using task-implementor mode - Brought to you by microsoft/hve-core"
@@ -192,6 +222,11 @@
         "name": "task-research",
         "path": "./.github/prompts/task-research.prompt.md",
         "description": "Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "task-review",
+        "path": "./.github/prompts/task-review.prompt.md",
+        "description": "Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core"
       }
     ],
     "chatInstructions": [
@@ -266,11 +301,6 @@
         "description": "Instructions for Python scripting implementation - Brought to you by microsoft/hve-core"
       },
       {
-        "name": "task-implementation-instructions",
-        "path": "./.github/instructions/task-implementation.instructions.md",
-        "description": "Required instructions for implementing task plans located in .copilot-tracking/plans and .copilot-tracking/details folders, with progressive tracking and change records - Brought to you by microsoft/edge-ai"
-      },
-      {
         "name": "terraform-instructions",
         "path": "./.github/instructions/terraform/terraform.instructions.md",
         "description": "Instructions for Terraform infrastructure as code implementation - Brought to you by microsoft/hve-core"
@@ -278,7 +308,7 @@
       {
         "name": "uv-projects-instructions",
         "path": "./.github/instructions/uv-projects.instructions.md",
-        "description": "Instructions for Uv Projects"
+        "description": "Create and manage Python virtual environments using uv commands"
       },
       {
         "name": "writing-style-instructions",

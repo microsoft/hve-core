@@ -13,6 +13,15 @@ maturity: stable
 
 ## Required Steps
 
+**Important requirements**, repeat to yourself these important requirements:
+
+* **Important**, always be thorough and accurate.
+* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
+* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
+* Refactor the plan documents as needed whenever discovering or identifying new details.
+* Make sure the plan documents are complete and accurate.
+* Repeat steps and phases as needed to be thorough and accurate.
+
 ### Step 1: Gather Context
 
 Collect context from available sources:
@@ -31,7 +40,7 @@ Extract objectives, requirements, and scope from gathered context:
 
 ### Step 3: Build Plan
 
-Create implementation plan, implementation details, and implementation prompt files:
+Create implementation plan and implementation details files:
 
 * Add details and file targets as they are identified.
 * Revise steps when new information changes the approach.
@@ -46,4 +55,4 @@ Summarize planning outcomes:
 
 ---
 
-Invoke task-planner mode and proceed with the Required Steps.
+Build the task implementation plan following the Required Steps.
