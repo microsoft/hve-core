@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Frontmatter validation module with pure validation functions.
 .DESCRIPTION
@@ -180,7 +180,7 @@ class ValidationSummary {
     }
 
     [int] GetExitCode([bool]$warningsAsErrors) {
-        return $this.Passed($warningsAsErrors) ? 0 : 1
+        if ($this.Passed($warningsAsErrors)) { return 0 } else { return 1 }
     }
 
     [hashtable] ToHashtable() {
@@ -932,12 +932,12 @@ function Write-ValidationConsoleOutput {
 
     if ($ShowDetails) {
         foreach ($result in $Summary.Results) {
-            $icon = $result.IsValid() ? '✅' : '❌'
+            $icon = if ($result.IsValid()) { '✅' } else { '❌' }
             Write-Host "$icon $($result.RelativePath)"
 
             foreach ($issue in $result.Issues) {
-                $color = $issue.Type -eq 'Error' ? 'Red' : 'Yellow'
-                $prefix = $issue.Type -eq 'Error' ? '  ❌' : '  ⚠️'
+                $color = if ($issue.Type -eq 'Error') { 'Red' } else { 'Yellow' }
+                $prefix = if ($issue.Type -eq 'Error') { '  ❌' } else { '  ⚠️' }
                 Write-Host "$prefix $($issue.Message)" -ForegroundColor $color
             }
         }
@@ -946,8 +946,8 @@ function Write-ValidationConsoleOutput {
 
     # Summary
     Write-Host "📊 Summary:" -ForegroundColor Cyan
-    $errorColor = $Summary.FilesWithErrors -gt 0 ? 'Red' : 'Green'
-    $warnColor = $Summary.FilesWithWarnings -gt 0 ? 'Yellow' : 'Green'
+    $errorColor = if ($Summary.FilesWithErrors -gt 0) { 'Red' } else { 'Green' }
+    $warnColor = if ($Summary.FilesWithWarnings -gt 0) { 'Yellow' } else { 'Green' }
 
     Write-Host "   Files validated: $($Summary.TotalFiles)"
     Write-Host "   Files with errors: $($Summary.FilesWithErrors)" -ForegroundColor $errorColor
@@ -971,8 +971,8 @@ function Write-GitHubAnnotations {
 
     foreach ($result in $Summary.Results) {
         foreach ($issue in $result.Issues) {
-            $type = $issue.Type -eq 'Error' ? 'error' : 'warning'
-            $line = $issue.Line ? $issue.Line : 1
+            $type = if ($issue.Type -eq 'Error') { 'error' } else { 'warning' }
+            $line = if ($issue.Line) { $issue.Line } else { 1 }
             Write-Output "::$type file=$($result.FilePath),line=$line::$($issue.Message)"
         }
     }

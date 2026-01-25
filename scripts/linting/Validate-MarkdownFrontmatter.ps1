@@ -34,9 +34,6 @@ param(
     [string]$BaseBranch = "origin/main",
 
     [Parameter(Mandatory = $false)]
-    [switch]$SkipFooterValidation,
-
-    [Parameter(Mandatory = $false)]
     [switch]$EnableSchemaValidation
 )
 
@@ -676,9 +673,6 @@ function Test-FrontmatterValidation {
     .PARAMETER ExcludePaths
     Glob patterns for paths to exclude from validation.
 
-    .PARAMETER SkipFooterValidation
-    Skip validation of Copilot attribution footer.
-
     .PARAMETER WarningsAsErrors
     Treat warnings as errors.
 
@@ -697,7 +691,6 @@ function Test-FrontmatterValidation {
     [CmdletBinding()]
     param(
         [string[]]$Paths = @(),
-        [switch]$SkipFooterValidation,
         [string[]]$Files = @(),
         [string[]]$ExcludePaths = @(),
         [switch]$WarningsAsErrors,
@@ -948,13 +941,13 @@ function Get-ChangedMarkdownFileGroup {
 # Main execution
 if ($MyInvocation.InvocationName -ne '.') {
     if ($ChangedFilesOnly) {
-        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
     }
     elseif ($Files.Count -gt 0) {
-        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
     }
     else {
-        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
     }
 
     $exitCode = $result.GetExitCode($WarningsAsErrors)
