@@ -43,18 +43,6 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/FrontmatterVali
 
 #region Type Definitions
 
-class FrontmatterResult {
-    [hashtable]$Frontmatter
-    [int]$FrontmatterEndIndex
-    [string]$Content
-
-    FrontmatterResult([hashtable]$frontmatter, [int]$endIndex, [string]$content) {
-        $this.Frontmatter = $frontmatter
-        $this.FrontmatterEndIndex = $endIndex
-        $this.Content = $content
-    }
-}
-
 class SchemaValidationResult {
     [bool]$IsValid
     [string[]]$Errors
@@ -76,222 +64,6 @@ class SchemaValidationResult {
 # FileTypeInfo and ValidationIssue classes are defined in FrontmatterValidation.psm1
 
 #endregion Type Definitions
-
-function ConvertFrom-YamlFrontmatter {
-    <#
-    .SYNOPSIS
-    Parses YAML frontmatter content string into a hashtable.
-
-    .DESCRIPTION
-    Pure function that converts raw YAML frontmatter text into a structured hashtable.
-    Handles scalar values, JSON-style arrays, and YAML block arrays.
-    Does not perform file I/O - accepts content string directly.
-
-    .PARAMETER Content
-    The raw markdown content string containing YAML frontmatter.
-
-    .INPUTS
-    [string] Raw markdown content with YAML frontmatter delimited by '---'.
-
-    .OUTPUTS
-    [FrontmatterResult] Object containing:
-      - Frontmatter: Parsed key-value hashtable
-      - FrontmatterEndIndex: Line index where frontmatter ends
-      - Content: Remaining markdown content after frontmatter
-
-    Returns $null if content lacks valid frontmatter delimiters.
-
-    .EXAMPLE
-    $content = Get-Content -Path 'README.md' -Raw
-    $result = ConvertFrom-YamlFrontmatter -Content $content
-    $result.Frontmatter['title']
-
-    .EXAMPLE
-    $yaml = @"
----
-title: My Document
-tags: [a, b, c]
----
-# Content here
-"@
-    $parsed = ConvertFrom-YamlFrontmatter -Content $yaml
-    # $parsed.Frontmatter = @{ title = 'My Document'; tags = @('a','b','c') }
-
-    .NOTES
-    This is a pure function with no side effects. Error handling returns $null
-    rather than throwing exceptions to support pipeline operations.
-    #>
-    [CmdletBinding()]
-    [OutputType([FrontmatterResult])]
-    param(
-        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [AllowEmptyString()]
-        [string]$Content
-    )
-
-    process {
-        if ([string]::IsNullOrEmpty($Content) -or -not $Content.StartsWith('---')) {
-            return $null
-        }
-
-        $lines = $Content -split "`n"
-        $endIndex = -1
-
-        for ($i = 1; $i -lt $lines.Count; $i++) {
-            if ($lines[$i].Trim() -eq '---') {
-                $endIndex = $i
-                break
-            }
-        }
-
-        if ($endIndex -eq -1) {
-            return $null
-        }
-
-        $frontmatterLines = $lines[1..($endIndex - 1)]
-        $frontmatter = @{}
-
-        foreach ($line in $frontmatterLines) {
-            $trimmedLine = $line.Trim()
-            if ($trimmedLine -eq '' -or $trimmedLine.StartsWith('#')) {
-                continue
-            }
-
-            if ($line -match '^([^:]+):\s*(.*)$') {
-                $key = $matches[1].Trim()
-                $value = $matches[2].Trim()
-
-                if ($value.StartsWith('[') -and $value.EndsWith(']')) {
-                    try {
-                        $frontmatter[$key] = $value | ConvertFrom-Json
-                    }
-                    catch {
-                        $frontmatter[$key] = $value
-                    }
-                }
-                elseif ($value.StartsWith('-') -or $value -eq '') {
-                    $arrayValues = @()
-                    if ($value.StartsWith('-')) {
-                        $arrayValues += $value.Substring(1).Trim()
-                    }
-
-                    $j = $frontmatterLines.IndexOf($line) + 1
-                    while ($j -lt $frontmatterLines.Count -and $frontmatterLines[$j].StartsWith('  -')) {
-                        $arrayValues += $frontmatterLines[$j].Substring(3).Trim()
-                        $j++
-                    }
-
-                    $frontmatter[$key] = if ($arrayValues.Count -gt 0) { $arrayValues } else { $value }
-                }
-                else {
-                    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or
-                        ($value.StartsWith("'") -and $value.EndsWith("'"))) {
-                        $value = $value.Substring(1, $value.Length - 2)
-                    }
-                    $frontmatter[$key] = $value
-                }
-            }
-        }
-
-        $remainingContent = ($lines[($endIndex + 1)..($lines.Count - 1)] -join "`n")
-        return [FrontmatterResult]::new($frontmatter, ($endIndex + 1), $remainingContent)
-    }
-}
-
-function Get-MarkdownFrontmatter {
-    <#
-    .SYNOPSIS
-    Extracts YAML frontmatter from a markdown file or content string.
-
-    .DESCRIPTION
-    Parses YAML frontmatter and returns a structured object containing the
-    frontmatter data and remaining content. Supports both file path and
-    direct content input via parameter sets.
-
-    .PARAMETER FilePath
-    Path to the markdown file to parse. Mutually exclusive with -Content.
-
-    .PARAMETER Content
-    Raw markdown content string to parse. Mutually exclusive with -FilePath.
-
-    .INPUTS
-    [string] File path or content string depending on parameter set.
-
-    .OUTPUTS
-    [FrontmatterResult] Object containing:
-      - Frontmatter: Parsed key-value hashtable
-      - FrontmatterEndIndex: Line index where frontmatter ends
-      - Content: Remaining markdown content after frontmatter
-
-    Returns $null if:
-      - File not found (FilePath parameter set)
-      - Content lacks valid frontmatter delimiters
-      - Malformed YAML frontmatter (unclosed delimiter)
-
-    .EXAMPLE
-    # Read from file
-    $result = Get-MarkdownFrontmatter -FilePath 'docs/README.md'
-    if ($result) {
-        Write-Host "Title: $($result.Frontmatter['title'])"
-    }
-
-    .EXAMPLE
-    # Parse content directly (for testing)
-    $markdown = @"
----
-title: Test Doc
-description: A test document
----
-# Heading
-Body content
-"@
-    $result = Get-MarkdownFrontmatter -Content $markdown
-    $result.Frontmatter['description']  # Returns 'A test document'
-
-    .NOTES
-    File operations emit warnings on error but do not throw exceptions.
-    #>
-    [CmdletBinding(DefaultParameterSetName = 'FilePath')]
-    [OutputType([FrontmatterResult])]
-    param(
-        [Parameter(Mandatory = $true, ParameterSetName = 'FilePath', Position = 0)]
-        [ValidateNotNullOrEmpty()]
-        [string]$FilePath,
-
-        [Parameter(Mandatory = $true, ParameterSetName = 'Content', ValueFromPipeline = $true)]
-        [AllowEmptyString()]
-        [string]$Content
-    )
-
-    process {
-        if ($PSCmdlet.ParameterSetName -eq 'FilePath') {
-            if (-not (Test-Path $FilePath)) {
-                Write-Warning "File not found: $FilePath"
-                return $null
-            }
-
-            try {
-                $Content = Get-Content -Path $FilePath -Raw -Encoding UTF8
-            }
-            catch {
-                Write-Warning "Error reading file ${FilePath}: [$($_.Exception.GetType().Name)] $($_.Exception.Message)"
-                return $null
-            }
-        }
-
-        $result = ConvertFrom-YamlFrontmatter -Content $Content
-
-        if ($null -eq $result -and $PSCmdlet.ParameterSetName -eq 'FilePath') {
-            if ($Content.StartsWith('---')) {
-                Write-Warning "Malformed YAML frontmatter in: $FilePath"
-            }
-        }
-
-        return $result
-    }
-}
-
-# Test-MarkdownFooter moved to FrontmatterValidation.psm1
 
 function Initialize-JsonSchemaValidation {
     <#
@@ -769,15 +541,15 @@ function Test-FrontmatterValidation {
     $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot
 
     # Optional schema validation overlay (advisory only)
+    # Uses frontmatter already parsed by Invoke-FrontmatterValidation
     if ($EnableSchemaValidation -and (Initialize-JsonSchemaValidation)) {
-        foreach ($filePath in $resolvedFiles) {
-            $frontmatter = Get-MarkdownFrontmatter -FilePath $filePath
-            if ($frontmatter) {
-                $schemaPath = Get-SchemaForFile -FilePath $filePath
+        foreach ($fileResult in $summary.Results) {
+            if ($fileResult.HasFrontmatter -and $fileResult.Frontmatter) {
+                $schemaPath = Get-SchemaForFile -FilePath $fileResult.FilePath
                 if ($schemaPath) {
-                    $schemaResult = Test-JsonSchemaValidation -Frontmatter $frontmatter.Frontmatter -SchemaPath $schemaPath
+                    $schemaResult = Test-JsonSchemaValidation -Frontmatter $fileResult.Frontmatter -SchemaPath $schemaPath
                     if ($schemaResult.Errors.Count -gt 0) {
-                        Write-Warning "JSON Schema validation errors in $filePath"
+                        Write-Warning "JSON Schema validation errors in $($fileResult.FilePath)"
                         $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
                     }
                 }
