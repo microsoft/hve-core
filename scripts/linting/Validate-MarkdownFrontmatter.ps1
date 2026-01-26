@@ -734,8 +734,14 @@ if ($MyInvocation.InvocationName -ne '.') {
         $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
     }
 
+    # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
+    # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
+    if ($result -is [System.Array]) {
+        $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
+    }
+
     # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
-    if ($ChangedFilesOnly -and $result.TotalFiles -eq 0) {
+    if ($ChangedFilesOnly -and $null -ne $result -and $result.TotalFiles -eq 0) {
         Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
         exit 0
     }
