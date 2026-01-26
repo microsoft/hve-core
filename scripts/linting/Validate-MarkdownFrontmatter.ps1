@@ -367,7 +367,8 @@ function Test-JsonSchemaValidation {
                                 }
                             }
                             'array' {
-                                if ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable]) {
+                                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays
+                                if ($value -is [string] -or ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable])) {
                                     $errors.Add("Field '$fieldName' must be an array")
                                 }
                             }
@@ -495,6 +496,7 @@ function Test-FrontmatterValidation {
             $emptySummary = & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
             $emptySummary.TotalFiles = 1
             $emptySummary.FilesValid = 1
+            $null = $emptySummary.Complete()
             return $emptySummary
         }
         Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan

@@ -801,6 +801,14 @@ function Test-SingleFileFrontmatter {
     $result = [FileValidationResult]::new($FilePath)
     $result.RelativePath = $relativePath
 
+    # Detect file type early - needed for frontmatter requirement decisions
+    $fileInfo = [System.IO.FileInfo]::new($FilePath)
+    $result.FileType = Get-FileTypeInfo -File $fileInfo -RepoRoot $RepoRoot
+    $fileTypeInfo = $result.FileType
+
+    # AI artifacts (prompts, instructions, agents, chatmodes) don't require frontmatter
+    $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent -or $fileTypeInfo.IsChatMode
+
     # Read file content
     try {
         $content = & $FileReader $FilePath
@@ -812,38 +820,37 @@ function Test-SingleFileFrontmatter {
 
     # Parse frontmatter
     $frontmatter = $null
-    if ($content -match '(?s)^---\r?\n(.*?)\r?\n---') {
+    $hasFrontmatterBlock = $content -match '(?s)^---\r?\n(.*?)\r?\n---'
+    if ($hasFrontmatterBlock) {
         $yamlBlock = $Matches[1]
 
         # Verify ConvertFrom-Yaml is available (requires powershell-yaml module)
         if (-not (Get-Command -Name 'ConvertFrom-Yaml' -ErrorAction SilentlyContinue)) {
-            $result.AddError("ConvertFrom-Yaml cmdlet not found. Install powershell-yaml module: Install-Module -Name powershell-yaml -Scope CurrentUser", 'dependency')
-            return $result
+            # Graceful degradation: warn but continue with footer validation
+            $result.AddWarning("ConvertFrom-Yaml cmdlet not found - YAML validation skipped. Install powershell-yaml module for full validation.", 'dependency')
         }
-
-        try {
-            $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
-        }
-        catch {
-            $result.AddError("Invalid YAML syntax: $($_.Exception.Message)", 'yaml')
-            return $result
+        else {
+            try {
+                $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
+            }
+            catch {
+                $result.AddError("Invalid YAML syntax: $($_.Exception.Message)", 'yaml')
+                return $result
+            }
         }
     }
 
     $result.HasFrontmatter = $null -ne $frontmatter
     $result.Frontmatter = $frontmatter
 
-    if (-not $result.HasFrontmatter) {
+    # Only warn about missing frontmatter for content types that require it
+    # AI artifacts (.github prompts, instructions, agents, chatmodes) are exempt
+    if (-not $result.HasFrontmatter -and -not $isAiArtifact) {
         $result.AddWarning('No frontmatter found', 'frontmatter')
-        return $result
+        # Continue to footer validation even without frontmatter
     }
 
-    # Detect file type
-    $fileInfo = [System.IO.FileInfo]::new($FilePath)
-    $result.FileType = Get-FileTypeInfo -File $fileInfo -RepoRoot $RepoRoot
-
-    # Validate fields based on file type
-    $fileTypeInfo = $result.FileType
+    # Validate fields based on file type (only if frontmatter was successfully parsed)
     $issues = @()
 
     if ($fileTypeInfo.IsDocsFile) {
@@ -875,7 +882,6 @@ function Test-SingleFileFrontmatter {
     }
 
     # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents, chatmodes)
-    $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent -or $fileTypeInfo.IsChatMode
     if (-not $isAiArtifact -and -not $SkipFooterValidation) {
         # Determine severity based on file type
         $footerSeverity = 'Warning'
@@ -964,7 +970,9 @@ function Write-ValidationConsoleOutput {
 
     if ($ShowDetails) {
         foreach ($result in $Summary.Results) {
-            $icon = if ($result.IsValid()) { '✅' } else { '❌' }
+            $hasError = $result.Issues | Where-Object { $_.Type -eq 'Error' } | Select-Object -First 1
+            $hasWarning = $result.Issues | Where-Object { $_.Type -eq 'Warning' } | Select-Object -First 1
+            $icon = if ($hasError) { '❌' } elseif ($hasWarning) { '⚠️' } else { '✅' }
             Write-Host "$icon $($result.RelativePath)"
 
             foreach ($issue in $result.Issues) {

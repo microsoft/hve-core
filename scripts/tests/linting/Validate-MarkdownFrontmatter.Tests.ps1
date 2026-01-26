@@ -256,6 +256,18 @@ Describe 'Initialize-JsonSchemaValidation' -Tag 'Unit' {
             $result | Should -BeFalse
         }
 
+        It 'Warning message contains error details on exception' {
+            # Arrange - Mock ConvertFrom-Json to throw specific error
+            Mock ConvertFrom-Json { throw "Detailed parse failure" }
+
+            # Act
+            $null = Initialize-JsonSchemaValidation -WarningVariable warnings 3>$null
+
+            # Assert - Warning should contain the error context
+            $warnings | Should -Not -BeNullOrEmpty
+            $warnings[0] | Should -Match 'Error initializing schema validation'
+        }
+
         It 'Handles null result from ConvertFrom-Json' {
             # Arrange - Mock ConvertFrom-Json to return null
             Mock ConvertFrom-Json { return $null }
@@ -475,15 +487,15 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result.Errors | Where-Object { $_ -like '*applyTo*' } | Should -BeNullOrEmpty
         }
 
-        It 'Allows string value for array field due to IEnumerable check' {
-            # Note: Strings are IEnumerable in .NET, so they pass the array type check
+        It 'Reports error when string value used for array field' {
+            # Strings implement IEnumerable but should not pass array validation
             $frontmatter = @{
                 description = 'test'
                 applyTo     = 'single-value'
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:ArrayTestSchema
-            # This passes because strings implement IEnumerable
-            $result.Errors | Where-Object { $_ -like '*applyTo*must be*array*' } | Should -BeNullOrEmpty
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "Field 'applyTo' must be an array"
         }
 
         It 'Reports error when array field has numeric value' {
@@ -1134,6 +1146,57 @@ Describe 'Error handling paths' -Tag 'Unit' {
     }
 }
 
+Describe 'GitHub Actions Environment Integration' -Tag 'Unit' {
+    BeforeAll {
+        . $PSScriptRoot/../../linting/Validate-MarkdownFrontmatter.ps1
+        Import-Module $PSScriptRoot/../../linting/Modules/FrontmatterValidation.psm1 -Force
+
+        # Save original environment
+        $script:OriginalGHA = $env:GITHUB_ACTIONS
+        $script:OriginalStepSummary = $env:GITHUB_STEP_SUMMARY
+    }
+
+    AfterAll {
+        # Restore original environment
+        $env:GITHUB_ACTIONS = $script:OriginalGHA
+        $env:GITHUB_STEP_SUMMARY = $script:OriginalStepSummary
+    }
+
+    Context 'Write-GitHubAnnotations execution path' {
+        It 'Calls Write-GitHubAnnotations when GITHUB_ACTIONS is set' {
+            $env:GITHUB_ACTIONS = 'true'
+
+            # Create test file with error
+            $testFile = Join-Path $TestDrive 'ci-test.md'
+            Set-Content $testFile "---`ndescription: x`n---`n# Test"
+
+            Mock Write-GitHubAnnotations { return '::error file=ci-test.md::' }
+
+            $null = Test-FrontmatterValidation -Files @($testFile) -SkipFooterValidation
+
+            # Annotation function should be called in CI environment
+            Should -Invoke Write-GitHubAnnotations -Times 1 -Exactly
+        }
+    }
+
+    Context 'Step summary generation' {
+        It 'Writes to step summary file when GITHUB_STEP_SUMMARY is set' {
+            $env:GITHUB_ACTIONS = 'true'
+            $stepSummaryPath = Join-Path $TestDrive 'step-summary.md'
+            $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
+
+            # Create valid test file
+            $testFile = Join-Path $TestDrive 'valid-ci.md'
+            Set-Content $testFile "---`ndescription: Valid test file`n---`n# Test"
+
+            $null = Test-FrontmatterValidation -Files @($testFile) -SkipFooterValidation
+
+            # Step summary should be written
+            Test-Path $stepSummaryPath | Should -BeTrue
+        }
+    }
+}
+
 #endregion
 
 #region Git Fallback Strategy Tests
@@ -1199,6 +1262,48 @@ Describe 'Git Fallback Strategies' -Tag 'Unit' {
             $warnings | Should -Not -BeNullOrEmpty
             $warnings[0] | Should -Match 'Unable to determine changed files'
         }
+
+        It 'Emits verbose message when merge-base comparison fails' {
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            }
+
+            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly' -Verbose 4>&1
+            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $messages = @($verbose | ForEach-Object { $_.Message })
+            ($messages -match 'Merge base comparison.*failed').Count | Should -BeGreaterThan 0
+        }
+
+        It 'Emits verbose message when attempting HEAD~1 fallback' {
+            $callCount = 0
+            Mock git {
+                $callCount++
+                if ($callCount -le 2) {
+                    $global:LASTEXITCODE = 128
+                    return $null
+                }
+                $global:LASTEXITCODE = 0
+                return @('test.md')
+            }
+
+            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly' -Verbose 4>&1
+            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $messages = @($verbose | ForEach-Object { $_.Message })
+            ($messages -match 'Attempting fallback.*HEAD~1').Count | Should -BeGreaterThan 0
+        }
+
+        It 'Emits verbose count message when files found' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('docs/test.md', 'src/readme.md')
+            }
+
+            $output = Get-ChangedMarkdownFileGroup -Verbose 4>&1
+            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $messages = @($verbose | ForEach-Object { $_.Message })
+            ($messages -match 'Found.*changed markdown files').Count | Should -BeGreaterThan 0
+        }
     }
 
     Context 'FallbackStrategy Auto cascading behavior' {
@@ -1228,6 +1333,26 @@ Describe 'Git Fallback Strategies' -Tag 'Unit' {
 
             $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto' -WarningVariable warnings 3>$null
             $warnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits verbose message when HEAD~1 fails and falls back to staged' {
+            $callCount = 0
+            Mock git {
+                $callCount++
+                # merge-base (1) + diff (2) + HEAD~1 (3) all fail
+                if ($callCount -le 3) {
+                    $global:LASTEXITCODE = 128
+                    return $null
+                }
+                # HEAD (staged/unstaged) succeeds
+                $global:LASTEXITCODE = 0
+                return @('staged.md')
+            }
+
+            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto' -Verbose 4>&1
+            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $verboseMessages = $verbose.Message -join "`n"
+            $verboseMessages | Should -Match 'staged|unstaged'
         }
 
         It 'Succeeds when second fallback works' {
