@@ -945,15 +945,16 @@ Content
 "@ | Set-Content -Path "$script:TestRepoRoot/docs/changed.md" -Encoding UTF8
         }
 
-        It 'Returns empty ValidationSummary when no changed files found' {
+        It 'Returns success ValidationSummary when no changed files found' {
             # Mock Get-ChangedMarkdownFileGroup to return empty
             Mock Get-ChangedMarkdownFileGroup { return @() }
 
             $result = Test-FrontmatterValidation -ChangedFilesOnly
 
-            $result.TotalFiles | Should -Be 0
-            # Exit code 2 = no files validated (distinct from validation errors)
-            $result.GetExitCode($false) | Should -Be 2
+            $result.TotalFiles | Should -Be 1
+            $result.FilesValid | Should -Be 1
+            # Exit code 0 = success (no changed files treated as pass)
+            $result.GetExitCode($false) | Should -Be 0
         }
 
         It 'Validates only files returned by Get-ChangedMarkdownFileGroup' {

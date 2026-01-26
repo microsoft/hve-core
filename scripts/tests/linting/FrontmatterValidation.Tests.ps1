@@ -1520,6 +1520,94 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $output = Write-GitHubAnnotations -Summary $summary
         $output | Should -BeNullOrEmpty
     }
+
+    It 'Escapes percent character in message' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'test.md'
+        $result.AddError('50% complete', 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match '50%25 complete'
+    }
+
+    It 'Escapes carriage return in message' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'test.md'
+        $result.AddError("line1`rline2", 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'line1%0Dline2'
+    }
+
+    It 'Escapes newline in message' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'test.md'
+        $result.AddError("line1`nline2", 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'line1%0Aline2'
+    }
+
+    It 'Escapes double colon in message' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'test.md'
+        $result.AddError('scope::value', 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'scope%3A%3Avalue'
+    }
+
+    It 'Escapes colon in file path' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'path:file.md'
+        $result.AddError('Test error', 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'file=path%3Afile\.md'
+    }
+
+    It 'Escapes comma in file path' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'file,backup.md'
+        $result.AddError('Test error', 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'file=file%2Cbackup\.md'
+    }
+
+    It 'Escapes percent in file path' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'file%20name.md'
+        $result.AddError('Test error', 'field')
+        $summary.AddResult($result)
+
+        $output = Write-GitHubAnnotations -Summary $summary
+        $output | Should -Match 'file=file%2520name\.md'
+    }
+
+    It 'Handles null message gracefully' {
+        $summary = script:New-ValidationSummary
+        $result = script:New-FileValidationResult -FilePath 'test.md'
+        # Create issue with null message via direct class instantiation
+        $issue = & (Get-Module FrontmatterValidation) {
+            param($fp)
+            $i = [ValidationIssue]::new()
+            $i.Type = 'Error'
+            $i.Message = $null
+            $i.FilePath = $fp
+            $i
+        } 'test.md'
+        $result.Issues.Add($issue)
+        $summary.AddResult($result)
+
+        { Write-GitHubAnnotations -Summary $summary } | Should -Not -Throw
+    }
 }
 
 Describe 'Export-ValidationResults' -Tag 'Unit' {
