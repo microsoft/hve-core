@@ -521,14 +521,14 @@ try {
 
     Write-Host "   Using version: $version" -ForegroundColor Green
 
-    # Discover chat agents (excluding hve-core-installer which is for manual installation only)
+    # Discover chat agents
     Write-Host ""
     Write-Host "🔍 Discovering chat agents..." -ForegroundColor Yellow
     $agentsDir = Join-Path $GitHubDir "agents"
     $chatAgents = @()
 
     # Agents to exclude from extension packaging
-    $excludedAgents = @('hve-core-installer')
+    $excludedAgents = @()
 
     if (Test-Path $agentsDir) {
         $agentFiles = Get-ChildItem -Path $agentsDir -Filter "*.agent.md" | Sort-Object Name

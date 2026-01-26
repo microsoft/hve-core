@@ -62,6 +62,11 @@
         "description": "Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues"
       },
       {
+        "name": "hve-core-installer",
+        "path": "./.github/agents/hve-core-installer.agent.md",
+        "description": "Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "memory",
         "path": "./.github/agents/memory.agent.md",
         "description": "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
