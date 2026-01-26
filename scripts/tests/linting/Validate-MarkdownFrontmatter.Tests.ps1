@@ -8,6 +8,8 @@ BeforeAll {
     $script:SchemaDir = Join-Path $PSScriptRoot '../../linting/schemas'
     $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Frontmatter'
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+    # Check for ConvertFrom-Yaml availability (PowerShell-Yaml module)
+    $script:hasYamlSupport = $null -ne (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)
 }
 
 #region Get-FileTypeInfo Tests
@@ -786,11 +788,19 @@ Content here.
         }
 
         It 'Returns ValidationSummary type' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/test.md")
             $result.GetType().Name | Should -Be 'ValidationSummary'
         }
 
         It 'Reports no errors for valid frontmatter' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/test.md")
             $result.GetExitCode($false) | Should -Be 0
             $result.TotalErrors | Should -Be 0
@@ -807,6 +817,10 @@ Just content without any YAML.
         }
 
         It 'Reports warning for missing frontmatter' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/no-frontmatter.md")
             # Missing frontmatter in docs is a warning, not an error
             $result.TotalWarnings | Should -BeGreaterThan 0
@@ -828,6 +842,10 @@ Content
         }
 
         It 'Reports error for empty description' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Missing required description field is a validation error
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/empty-desc.md")
             # Empty required field causes validation error
@@ -850,6 +868,10 @@ Content
         }
 
         It 'Reports warning for invalid date format' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Invalid date format is a warning, not an error
             $result = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/bad-date.md")
             $result.GetExitCode($false) | Should -Be 0
@@ -879,6 +901,10 @@ Content
         }
 
         It 'Validates multiple files in directory' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Paths @("$script:TestRepoRoot/docs")
             $result.TotalFiles | Should -BeGreaterOrEqual 2
         }
@@ -886,6 +912,10 @@ Content
 
     Context 'Result aggregation' {
         It 'Aggregates results in ValidationSummary' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # docs-frontmatter.schema.json requires BOTH title AND description
             @"
 ---
@@ -927,6 +957,10 @@ Content
         }
 
         It 'Validates only files returned by Get-ChangedMarkdownFileGroup' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Mock Get-ChangedMarkdownFileGroup to return specific file
             Mock Get-ChangedMarkdownFileGroup {
                 return @("$script:TestRepoRoot/docs/changed.md")
@@ -981,6 +1015,10 @@ Content
 
     Context 'Excludes files matching single pattern' {
         It 'Excludes files matching pattern with wildcard prefix' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Use wildcard prefix since ExcludePaths computes relative path from repo root
             # For files outside repo, the full path is used, so we match with *tests*
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*')
@@ -1003,6 +1041,10 @@ Content
         }
 
         It 'Excludes files matching multiple patterns' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @('*tests*', '*vendor*')
             # Should only check docs/include.md
             $result.TotalFiles | Should -Be 1
@@ -1011,6 +1053,10 @@ Content
 
     Context 'Processes all files when ExcludePaths is empty' {
         It 'Validates all markdown files without exclusions' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             $result = Test-FrontmatterValidation -Paths @($script:ExcludeTestDir) -ExcludePaths @()
             # Should check all markdown files (docs + tests + vendor)
             $result.TotalFiles | Should -BeGreaterOrEqual 2
@@ -1414,6 +1460,10 @@ Describe 'Schema Pattern Matching' -Tag 'Unit' {
 
     Context 'Pipe-separated and Array patterns' {
         It 'Validates pipe-separated patterns in applyTo' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'pipe-patterns.md'
             Set-Content -Path $testFile -Value @"
@@ -1431,6 +1481,10 @@ applyTo: "**/*.ts | **/*.tsx | **/*.js"
         }
 
         It 'Validates comma-separated patterns in applyTo array' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'array-patterns.md'
             Set-Content -Path $testFile -Value @"
@@ -1453,6 +1507,10 @@ applyTo:
 
     Context 'Glob pattern validation' {
         It 'Validates double-star glob patterns' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'glob-doublestar.md'
             Set-Content -Path $testFile -Value @"
@@ -1470,6 +1528,10 @@ applyTo: "**/src/**/*.ts"
         }
 
         It 'Validates single-star glob patterns' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'glob-singlestar.md'
             Set-Content -Path $testFile -Value @"
@@ -1487,6 +1549,10 @@ applyTo: "src/*.ts"
         }
 
         It 'Validates question mark wildcard patterns' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'glob-question.md'
             Set-Content -Path $testFile -Value @"
@@ -1504,6 +1570,10 @@ applyTo: "src/file?.ts"
         }
 
         It 'Validates brace expansion patterns' {
+            if (-not $script:hasYamlSupport) {
+                Set-ItResult -Skipped -Because 'ConvertFrom-Yaml (PowerShell-Yaml module) not available'
+                return
+            }
             # Arrange
             $testFile = Join-Path $TestDrive 'glob-braces.md'
             Set-Content -Path $testFile -Value @"

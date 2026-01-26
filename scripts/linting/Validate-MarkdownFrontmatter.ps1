@@ -471,7 +471,8 @@ function Test-FrontmatterValidation {
         [switch]$WarningsAsErrors,
         [switch]$ChangedFilesOnly,
         [string]$BaseBranch = "origin/main",
-        [switch]$EnableSchemaValidation
+        [switch]$EnableSchemaValidation,
+        [switch]$SkipFooterValidation
     )
 
     # Resolve repository root
@@ -716,13 +717,13 @@ function Get-ChangedMarkdownFileGroup {
 # Main execution
 if ($MyInvocation.InvocationName -ne '.') {
     if ($ChangedFilesOnly) {
-        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
     }
     elseif ($Files.Count -gt 0) {
-        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
     }
     else {
-        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation
+        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
     }
 
     $exitCode = $result.GetExitCode($WarningsAsErrors)
