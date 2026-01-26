@@ -1068,7 +1068,9 @@ Describe 'Error handling paths' -Tag 'Unit' {
         }
 
         It 'Get-SchemaForFile returns null when mapping file is missing' {
-            $result = Get-SchemaForFile -FilePath 'test.md' -SchemaDirectory 'C:\nonexistent\schemas'
+            # Use platform-agnostic path for cross-platform compatibility
+            $nonexistentPath = Join-Path $TestDrive 'nonexistent-schemas-dir'
+            $result = Get-SchemaForFile -FilePath 'test.md' -SchemaDirectory $nonexistentPath
             $result | Should -BeNullOrEmpty
         }
 
@@ -1348,13 +1350,20 @@ Describe 'ChangedFilesOnly Integration' -Tag 'Unit' {
                 return @('readme.md', 'script.ps1', 'config.json')
             }
 
-            # Act
-            $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main'
+            # Change to TestRoot so Test-Path resolves relative paths correctly
+            Push-Location $script:TestRoot
+            try {
+                # Act
+                $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main'
 
-            # Assert - Should filter to only .md files
-            $result | Should -Contain 'readme.md'
-            $result | Should -Not -Contain 'script.ps1'
-            $result | Should -Not -Contain 'config.json'
+                # Assert - Should filter to only .md files
+                $result | Should -Contain 'readme.md'
+                $result | Should -Not -Contain 'script.ps1'
+                $result | Should -Not -Contain 'config.json'
+            }
+            finally {
+                Pop-Location
+            }
         }
 
         It 'Returns empty array when git diff returns no files' {

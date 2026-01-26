@@ -1173,7 +1173,9 @@ Just some regular content here.
 
 Describe 'Test-SingleFileFrontmatter' -Tag 'Unit' {
     BeforeAll {
-        $script:TestRepoRoot = 'C:\test\repo'
+        # Use TestDrive for cross-platform compatibility (Linux CI runners)
+        $script:TestRepoRoot = Join-Path $TestDrive 'test-repo'
+        New-Item -ItemType Directory -Path $script:TestRepoRoot -Force | Out-Null
     }
 
     Context 'Valid docs file' {
@@ -1191,8 +1193,9 @@ ms.topic: concept
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.
 "@
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'test.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\test.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { $mockContent }
 
@@ -1205,8 +1208,9 @@ ms.topic: concept
 
     Context 'Missing frontmatter' {
         It 'Returns warning for file without frontmatter' {
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'test.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\test.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { '# Just a heading' }
 
@@ -1225,8 +1229,9 @@ bad yaml: [unclosed
 ---
 # Content
 "@
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'test.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\test.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { $mockContent }
 
@@ -1237,8 +1242,9 @@ bad yaml: [unclosed
 
     Context 'File read error' {
         It 'Returns error when file cannot be read' {
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'missing.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\missing.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { throw 'File not found' }
 
@@ -1256,8 +1262,9 @@ description: Test desc
 ---
 # Content
 "@
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'guide.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\guide.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { $mockContent }
 
@@ -1272,8 +1279,9 @@ description: Test instruction
 ---
 # Content
 "@
+            $testFile = Join-Path $script:TestRepoRoot '.github' 'instructions' 'test.instructions.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\.github\instructions\test.instructions.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { $mockContent }
 
@@ -1290,19 +1298,24 @@ title: Test
 description: Test
 ---
 "@
+            $testFile = Join-Path $script:TestRepoRoot 'docs' 'subdir' 'file.md'
             $result = Test-SingleFileFrontmatter `
-                -FilePath "$script:TestRepoRoot\docs\subdir\file.md" `
+                -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
                 -FileReader { $mockContent }
 
-            $result.RelativePath | Should -Be 'docs\subdir\file.md'
+            # Use platform-specific path separator for assertion
+            $expectedPath = 'docs' + [IO.Path]::DirectorySeparatorChar + 'subdir' + [IO.Path]::DirectorySeparatorChar + 'file.md'
+            $result.RelativePath | Should -Be $expectedPath
         }
     }
 }
 
 Describe 'Invoke-FrontmatterValidation' -Tag 'Unit' {
     BeforeAll {
-        $script:TestRepoRoot = 'C:\TestRepo'
+        # Use TestDrive for cross-platform compatibility (Linux CI runners)
+        $script:TestRepoRoot = Join-Path $TestDrive 'TestRepo'
+        New-Item -ItemType Directory -Path $script:TestRepoRoot -Force | Out-Null
         # Get module reference for mock object creation
         $script:MockModule = Get-Module FrontmatterValidation
     }
