@@ -37,7 +37,7 @@ jobs:
       - name: Run markdown lint
         id: markdown-lint
         run: |
-          npm run lint:md > markdown-lint-output.txt 2>&1 || echo "MARKDOWN_LINT_FAILED=true" >> $GITHUB_ENV
+          npm run lint:md > markdown-lint-output.txt 2>&1 || echo "MARKDOWN_LINT_FAILED=true" >> "$GITHUB_ENV"
           cat markdown-lint-output.txt
         continue-on-error: true
 
@@ -57,15 +57,20 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          echo "## Markdown Lint Results" >> $GITHUB_STEP_SUMMARY
           if [ "${{ env.MARKDOWN_LINT_FAILED }}" == "true" ]; then
-            echo "❌ **Status**: Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Markdown linting violations detected. Please review the artifact for details." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Markdown Lint Results"
+              echo "❌ **Status**: Failed"
+              echo ""
+              echo "Markdown linting violations detected. Please review the artifact for details."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "✅ **Status**: Passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "No markdown linting violations detected." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Markdown Lint Results"
+              echo "✅ **Status**: Passed"
+              echo ""
+              echo "No markdown linting violations detected."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Fail job if violations found

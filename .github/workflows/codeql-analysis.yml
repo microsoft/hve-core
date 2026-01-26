@@ -48,8 +48,10 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          echo "## CodeQL Security Analysis Complete" >> $GITHUB_STEP_SUMMARY
-          echo "**Language:** ${{ matrix.language }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Queries:** security-extended, security-and-quality" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 View results in the Security tab under Code Scanning" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## CodeQL Security Analysis Complete"
+            echo "**Language:** ${{ matrix.language }}"
+            echo "**Queries:** security-extended, security-and-quality"
+            echo ""
+            echo "📊 View results in the Security tab under Code Scanning"
+          } >> "$GITHUB_STEP_SUMMARY"
