@@ -823,8 +823,7 @@ Just content without any YAML.
             # Missing frontmatter in docs is a warning, not an error
             $result.TotalWarnings | Should -BeGreaterThan 0
             $warningMessages = $result.Results | ForEach-Object { $_.Issues | Where-Object Type -eq 'Warning' } | ForEach-Object { $_.Message }
-            # Check that at least one warning contains 'No frontmatter found'
-            ($warningMessages -match 'No frontmatter found').Count | Should -BeGreaterThan 0
+            $warningMessages | Where-Object { $_ -match 'No frontmatter found' } | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -934,10 +933,12 @@ Content
 
             $result = Test-FrontmatterValidation -ChangedFilesOnly
 
-            $result.TotalFiles | Should -Be 1
-            $result.FilesValid | Should -Be 1
-            # Exit code 0 = success (no changed files treated as pass)
-            $result.GetExitCode($false) | Should -Be 0
+            # TotalFiles=0 accurately represents no files were validated
+            # This is a successful no-op, not a validation failure
+            $result.TotalFiles | Should -Be 0
+            $result.FilesValid | Should -Be 0
+            # Verify the summary was completed
+            $result.Duration | Should -Not -BeNullOrEmpty
         }
 
         It 'Validates only files returned by Get-ChangedMarkdownFileGroup' {
@@ -1060,16 +1061,18 @@ Describe 'Error handling paths' -Tag 'Unit' {
     Context 'Schema file error handling' {
         It 'Test-JsonSchemaValidation returns error for missing schema file' {
             $frontmatter = @{ title = 'Test'; description = 'Valid' }
-            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath 'C:\does\not\exist.json'
+            $missingSchemaPath = Join-Path $TestDrive 'does-not-exist.json'
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath $missingSchemaPath
             $result.IsValid | Should -BeFalse
-            $result.Errors | Should -Contain 'Schema file not found: C:\does\not\exist.json'
+            $result.Errors | Should -Contain "Schema file not found: $missingSchemaPath"
         }
 
         It 'Returns proper SchemaValidationResult on schema not found' {
             $frontmatter = @{ title = 'Test' }
-            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath 'C:\missing\schema.json'
+            $missingSchemaPath = Join-Path $TestDrive 'missing-schema.json'
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath $missingSchemaPath
             $result.GetType().Name | Should -Be 'SchemaValidationResult'
-            $result.SchemaUsed | Should -Be 'C:\missing\schema.json'
+            $result.SchemaUsed | Should -Be $missingSchemaPath
         }
 
         It 'Returns error for malformed JSON schema' {

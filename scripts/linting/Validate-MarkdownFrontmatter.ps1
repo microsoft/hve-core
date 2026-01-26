@@ -491,11 +491,9 @@ function Test-FrontmatterValidation {
         $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
         if ($Files.Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
-            # Return summary with TotalFiles=1 to signal success (exit code 0)
-            # This avoids exit code 2 which indicates "no files validated" failure
+            # Return empty summary with TotalFiles=0 to accurately represent no files validated
+            # The caller handles this as success when ChangedFilesOnly mode is used
             $emptySummary = & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
-            $emptySummary.TotalFiles = 1
-            $emptySummary.FilesValid = 1
             $null = $emptySummary.Complete()
             return $emptySummary
         }
@@ -731,6 +729,12 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
     else {
         $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
+    }
+
+    # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
+    if ($ChangedFilesOnly -and $result.TotalFiles -eq 0) {
+        Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
+        exit 0
     }
 
     $exitCode = $result.GetExitCode($WarningsAsErrors)
