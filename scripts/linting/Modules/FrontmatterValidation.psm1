@@ -826,17 +826,16 @@ function Test-SingleFileFrontmatter {
 
         # Verify ConvertFrom-Yaml is available (requires powershell-yaml module)
         if (-not (Get-Command -Name 'ConvertFrom-Yaml' -ErrorAction SilentlyContinue)) {
-            # Graceful degradation: warn but continue with footer validation
-            $result.AddWarning("ConvertFrom-Yaml cmdlet not found - YAML validation skipped. Install powershell-yaml module for full validation.", 'dependency')
+            $result.AddError("ConvertFrom-Yaml cmdlet not found. Install powershell-yaml module: Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser", 'dependency')
+            return $result
         }
-        else {
-            try {
-                $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
-            }
-            catch {
-                $result.AddError("Invalid YAML syntax: $($_.Exception.Message)", 'yaml')
-                return $result
-            }
+
+        try {
+            $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
+        }
+        catch {
+            $result.AddError("Invalid YAML syntax: $($_.Exception.Message)", 'yaml')
+            return $result
         }
     }
 
@@ -853,24 +852,26 @@ function Test-SingleFileFrontmatter {
     # Validate fields based on file type (only if frontmatter was successfully parsed)
     $issues = @()
 
-    if ($fileTypeInfo.IsDocsFile) {
-        $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath $relativePath
-    }
-    elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode -or $fileTypeInfo.IsAgent) {
-        $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath
-    }
-    elseif ($fileTypeInfo.IsDevContainer) {
-        $issues = Test-DevContainerFileFields -Frontmatter $frontmatter -RelativePath $relativePath
-    }
-    elseif ($fileTypeInfo.IsVSCodeReadme) {
-        $issues = Test-VSCodeReadmeFileFields -Frontmatter $frontmatter -RelativePath $relativePath
-    }
-    elseif ($fileTypeInfo.IsRootCommunityFile) {
-        $issues = Test-RootCommunityFileFields -Frontmatter $frontmatter -RelativePath $relativePath
-    }
+    if ($null -ne $frontmatter) {
+        if ($fileTypeInfo.IsDocsFile) {
+            $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+        }
+        elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode -or $fileTypeInfo.IsAgent) {
+            $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath
+        }
+        elseif ($fileTypeInfo.IsDevContainer) {
+            $issues = Test-DevContainerFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+        }
+        elseif ($fileTypeInfo.IsVSCodeReadme) {
+            $issues = Test-VSCodeReadmeFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+        }
+        elseif ($fileTypeInfo.IsRootCommunityFile) {
+            $issues = Test-RootCommunityFileFields -Frontmatter $frontmatter -RelativePath $relativePath
+        }
 
-    foreach ($issue in $issues) {
-        $result.AddIssue($issue)
+        foreach ($issue in $issues) {
+            $result.AddIssue($issue)
+        }
     }
 
     # Common field validation for all content types with frontmatter

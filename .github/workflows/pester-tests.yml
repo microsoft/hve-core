@@ -44,6 +44,11 @@ jobs:
           Install-Module -Name Pester -RequiredVersion 5.6.1 -Force -Scope CurrentUser
           Import-Module Pester -RequiredVersion 5.6.1
 
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
       - name: Get changed PowerShell files
         id: changed-files
         if: inputs.changed-files-only
