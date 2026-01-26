@@ -432,64 +432,7 @@ function Test-JsonSchemaValidation {
     }
 }
 
-function Get-FileTypeInfo {
-    <#
-    .SYNOPSIS
-    Classifies a markdown file by its type and location within the repository.
-
-    .DESCRIPTION
-    Pure function that analyzes a file's path and name to determine its type
-    category for frontmatter validation rules. Returns a typed object with
-    boolean flags for each recognized file type.
-
-    .PARAMETER File
-    FileInfo object representing the markdown file to classify.
-
-    .PARAMETER RepoRoot
-    Repository root path for determining relative location.
-
-    .INPUTS
-    [System.IO.FileInfo] File object to classify.
-
-    .OUTPUTS
-    [FileTypeInfo] Object with boolean flags for file classification.
-
-    .EXAMPLE
-    $fileInfo = Get-Item 'docs/getting-started/README.md'
-    $type = Get-FileTypeInfo -File $fileInfo -RepoRoot '/repo'
-    if ($type.IsDocsFile) { # Apply docs validation rules }
-    #>
-    [CmdletBinding()]
-    [OutputType([FileTypeInfo])]
-    param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [System.IO.FileInfo]$File,
-
-        [Parameter(Mandatory = $true, Position = 1)]
-        [string]$RepoRoot
-    )
-
-    $info = [FileTypeInfo]::new()
-    $info.IsGitHub = $File.DirectoryName -like "*.github*"
-    $info.IsChatMode = $File.Name -like "*.chatmode.md"
-    $info.IsPrompt = $File.Name -like "*.prompt.md"
-    $info.IsAgent = $File.Name -like "*.agent.md"
-    $info.IsInstruction = $File.Name -like "*.instructions.md"
-    $info.IsRootCommunityFile = ($File.DirectoryName -eq $RepoRoot) -and
-        ($File.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'README.md'))
-    $info.IsDevContainer = $File.DirectoryName -like "*.devcontainer*" -and $File.Name -eq 'README.md'
-    $info.IsVSCodeReadme = $File.DirectoryName -like "*.vscode*" -and $File.Name -eq 'README.md'
-    # Exclude .copilot-tracking (gitignored workflow artifacts) and markdown templates (e.g., GitHub and docs templates) from docs validation
-    $isCopilotTracking = $File.DirectoryName -like "*.copilot-tracking*"
-    $isTemplate = $File.Name -like "*TEMPLATE*"
-    # Use repo-relative path to avoid misclassifying files when repo is under a parent containing "docs"
-    # Note: IsDocsFile is returned in the info object for callers (e.g., Test-FrontmatterValidation selects schema based on file classification)
-    $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $File.FullName)
-    $relativePathNormalized = $relativePath -replace '\\', '/'
-    $info.IsDocsFile = ($relativePathNormalized -match '(^|/)docs(/|$)') -and -not $info.IsGitHub -and -not $isCopilotTracking -and -not $isTemplate
-
-    return $info
-}
+# Get-FileTypeInfo is provided by FrontmatterValidation.psm1 via 'using module' directive
 
 function Test-FrontmatterValidation {
     <#

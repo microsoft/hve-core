@@ -43,3 +43,7 @@ The [threat model](threat-model.md) documents:
 - [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
 - [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup and trust guidance
 - [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and maintainer roles
+
+---
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
