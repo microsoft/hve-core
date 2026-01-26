@@ -1202,7 +1202,7 @@ ms.topic: concept
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { $mockContent }
+                -FileReader { $mockContent }.GetNewClosure()
 
             $result | Should -Not -BeNull
             $result.HasFrontmatter | Should -BeTrue
@@ -1238,7 +1238,7 @@ bad yaml: [unclosed
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { $mockContent }
+                -FileReader { $mockContent }.GetNewClosure()
 
             $result.HasErrors() | Should -BeTrue
             $result.Issues[0].Message | Should -BeLike '*YAML*'
@@ -1271,7 +1271,7 @@ description: Test desc
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { $mockContent }
+                -FileReader { $mockContent }.GetNewClosure()
 
             $result.FileType | Should -Not -BeNull
             $result.FileType.IsDocsFile | Should -BeTrue
@@ -1288,7 +1288,7 @@ description: Test instruction
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { $mockContent }
+                -FileReader { $mockContent }.GetNewClosure()
 
             $result.FileType | Should -Not -BeNull
             $result.FileType.IsInstruction | Should -BeTrue
@@ -1307,7 +1307,7 @@ description: Test
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
                 -RepoRoot $script:TestRepoRoot `
-                -FileReader { $mockContent }
+                -FileReader { $mockContent }.GetNewClosure()
 
             # Use platform-specific path separator for assertion
             $expectedPath = 'docs' + [IO.Path]::DirectorySeparatorChar + 'subdir' + [IO.Path]::DirectorySeparatorChar + 'file.md'
