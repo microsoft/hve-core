@@ -9,6 +9,11 @@ Describe 'Test-GitAvailability' {
         # This test assumes git is installed in the test environment
         { Test-GitAvailability } | Should -Not -Throw
     }
+
+    It 'Should throw when git is not available' {
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq 'git' }
+        { Test-GitAvailability } | Should -Throw '*Git is required*'
+    }
 }
 
 Describe 'Get-RepositoryRoot' {
@@ -21,6 +26,11 @@ Describe 'Get-RepositoryRoot' {
     It 'Returns path containing .git directory' {
         $result = Get-RepositoryRoot
         Test-Path -Path (Join-Path $result '.git') | Should -BeTrue
+    }
+
+    It 'Should throw when repository root cannot be determined' {
+        Mock git { $global:LASTEXITCODE = 0; return '' }
+        { Get-RepositoryRoot } | Should -Throw '*Unable to determine repository root*'
     }
 }
 
@@ -61,6 +71,11 @@ Describe 'Resolve-ComparisonReference' {
         $result = Resolve-ComparisonReference -BaseBranch 'main'
         $result.Ref | Should -Not -BeNullOrEmpty
     }
+
+    It 'Should throw when base branch does not exist' {
+        Mock git { $global:LASTEXITCODE = 1; return $null }
+        { Resolve-ComparisonReference -BaseBranch 'nonexistent-branch-xyz' } | Should -Throw '*does not exist*'
+    }
 }
 
 Describe 'Get-ShortCommitHash' {
@@ -74,6 +89,11 @@ Describe 'Get-ShortCommitHash' {
         $second = Get-ShortCommitHash -Ref 'HEAD'
         $first | Should -Be $second
     }
+
+    It 'Should throw when ref resolution fails' {
+        Mock git { $global:LASTEXITCODE = 128; return '' }
+        { Get-ShortCommitHash -Ref 'invalid-ref-xyz' } | Should -Throw "*Failed to resolve ref*"
+    }
 }
 
 Describe 'Get-CommitEntry' {
@@ -85,6 +105,11 @@ Describe 'Get-CommitEntry' {
     It 'Returns empty array when no commits in range' {
         $result = Get-CommitEntry -ComparisonRef 'HEAD'
         $result | Should -BeNullOrEmpty
+    }
+
+    It 'Should throw when commit history retrieval fails' {
+        Mock git { $global:LASTEXITCODE = 128; return $null }
+        { Get-CommitEntry -ComparisonRef 'main' } | Should -Throw '*Failed to retrieve commit history*'
     }
 }
 
@@ -100,6 +125,17 @@ Describe 'Get-CommitCount' {
         $result = Get-CommitCount -ComparisonRef 'HEAD'
         $result | Should -Be 0
     }
+
+    It 'Should throw when commit count fails' {
+        Mock git { $global:LASTEXITCODE = 128; return '' }
+        { Get-CommitCount -ComparisonRef 'main' } | Should -Throw '*Failed to count commits*'
+    }
+
+    It 'Should return 0 when commit count text is empty' {
+        Mock git { $global:LASTEXITCODE = 0; return '' }
+        $result = Get-CommitCount -ComparisonRef 'main'
+        $result | Should -Be 0
+    }
 }
 
 Describe 'Get-DiffOutput' {
@@ -113,12 +149,28 @@ Describe 'Get-DiffOutput' {
         # The result may be empty if only markdown files were changed
         { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeMarkdownDiff } | Should -Not -Throw
     }
+
+    It 'Should throw when diff output fails' {
+        Mock git { $global:LASTEXITCODE = 128; return $null }
+        { Get-DiffOutput -ComparisonRef 'main' } | Should -Throw '*Failed to retrieve diff output*'
+    }
 }
 
 Describe 'Get-DiffSummary' {
     It 'Returns shortstat summary string' {
         $result = Get-DiffSummary -ComparisonRef 'HEAD~1'
         $result | Should -BeOfType [string]
+    }
+
+    It 'Should throw when diff summary fails' {
+        Mock git { $global:LASTEXITCODE = 128; return $null }
+        { Get-DiffSummary -ComparisonRef 'main' } | Should -Throw '*Failed to summarize diff output*'
+    }
+
+    It 'Should return "0 files changed" when diff summary is empty' {
+        Mock git { $global:LASTEXITCODE = 0; return '' }
+        $result = Get-DiffSummary -ComparisonRef 'main'
+        $result | Should -Be '0 files changed'
     }
 }
 
@@ -191,6 +243,33 @@ Describe 'Get-CurrentBranchOrRef' {
         # Either a branch name or detached@<sha>
         ($result -match '^detached@' -or $result -notmatch '^detached@') | Should -BeTrue
     }
+
+    It 'Should return detached@sha when in detached HEAD state' {
+        # Use call sequence to distinguish git commands (cross-platform safe)
+        $script:gitCallCount = 0
+        Mock git {
+            $script:gitCallCount++
+            if ($script:gitCallCount -eq 1) {
+                # First call: git branch --show-current returns empty (detached)
+                $global:LASTEXITCODE = 0
+                return ''
+            }
+            # Second call: git rev-parse --short HEAD returns SHA
+            $global:LASTEXITCODE = 0
+            return 'abc1234'
+        }
+        $result = Get-CurrentBranchOrRef
+        $result | Should -Be 'detached@abc1234'
+    }
+
+    It 'Should return unknown when both branch and rev-parse fail' {
+        Mock git {
+            $global:LASTEXITCODE = 128
+            return $null
+        }
+        $result = Get-CurrentBranchOrRef
+        $result | Should -Be 'unknown'
+    }
 }
 
 Describe 'Invoke-PrReferenceGeneration' {
@@ -220,5 +299,36 @@ Describe 'Invoke-PrReferenceGeneration' {
         $result = Invoke-PrReferenceGeneration -BaseBranch $baseBranch
         $result | Should -BeOfType [System.IO.FileInfo]
         $result.Extension | Should -Be '.xml'
+    }
+
+    It 'Should include markdown exclusion note when ExcludeMarkdownDiff is specified' {
+        # Skip if not in a git repo or no commits
+        $commitCount = Get-CommitCount -ComparisonRef 'HEAD~1'
+        if ($commitCount -eq 0) {
+            Set-ItResult -Skipped -Because 'No commits available for comparison'
+            return
+        }
+
+        $baseBranch = $null
+        foreach ($candidate in @('origin/main', 'main', 'HEAD~1')) {
+            & git rev-parse --verify $candidate 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                $baseBranch = $candidate
+                break
+            }
+        }
+
+        if (-not $baseBranch) {
+            Set-ItResult -Skipped -Because 'No suitable base branch available for comparison'
+            return
+        }
+
+        Mock Write-Host {}
+
+        $result = Invoke-PrReferenceGeneration -BaseBranch $baseBranch -ExcludeMarkdownDiff
+        $result | Should -BeOfType [System.IO.FileInfo]
+
+        # Verify the markdown exclusion note was output
+        Should -Invoke Write-Host -ParameterFilter { $Object -eq 'Note: Markdown files were excluded from diff output' }
     }
 }

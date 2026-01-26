@@ -51,11 +51,11 @@ We prefer all communications to be in English.
 
 Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/security.md/cvd).
 
+<!-- END MICROSOFT SECURITY.MD BLOCK -->
+
 ## Security Documentation
 
 For comprehensive security documentation including threat models and security controls, see [Security Documentation](docs/security/README.md).
-
-<!-- END MICROSOFT SECURITY.MD BLOCK -->
 
 ## Verifying Release Integrity
 
