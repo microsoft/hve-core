@@ -182,6 +182,8 @@ class ValidationSummary {
     }
 
     [int] GetExitCode([bool]$warningsAsErrors) {
+        # Exit code 2 indicates no files were validated (distinct from validation errors)
+        if ($this.TotalFiles -eq 0) { return 2 }
         if ($this.Passed($warningsAsErrors)) { return 0 } else { return 1 }
     }
 
@@ -812,6 +814,12 @@ function Test-SingleFileFrontmatter {
     $frontmatter = $null
     if ($content -match '(?s)^---\r?\n(.*?)\r?\n---') {
         $yamlBlock = $Matches[1]
+
+        # Verify ConvertFrom-Yaml is available (requires powershell-yaml module)
+        if (-not (Get-Command -Name 'ConvertFrom-Yaml' -ErrorAction SilentlyContinue)) {
+            throw "ConvertFrom-Yaml cmdlet not found. Install powershell-yaml module: Install-Module -Name powershell-yaml -Scope CurrentUser"
+        }
+
         try {
             $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
         }
@@ -857,8 +865,9 @@ function Test-SingleFileFrontmatter {
         $result.AddIssue($issue)
     }
 
-    # Footer validation for docs files
-    if ($fileTypeInfo.IsDocsFile -and -not $SkipFooterValidation) {
+    # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents)
+    $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent
+    if (-not $isAiArtifact -and -not $SkipFooterValidation) {
         $hasFooter = Test-MarkdownFooter -Content $content
         $footerIssue = Test-FooterPresence -HasFooter $hasFooter -RelativePath $relativePath -Severity 'Warning'
         if ($footerIssue) {

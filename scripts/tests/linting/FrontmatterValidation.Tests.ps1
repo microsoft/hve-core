@@ -283,10 +283,11 @@ Describe 'ValidationSummary Class' -Tag 'Unit' {
             $summary.GetExitCode($true) | Should -Be 1
         }
 
-        It 'Returns 0 for empty summary' {
+        It 'Returns 2 for empty summary (no files validated)' {
             $summary = New-ValidationSummary
 
-            $summary.GetExitCode($false) | Should -Be 0
+            # Exit code 2 = no files validated (distinct from validation errors)
+            $summary.GetExitCode($false) | Should -Be 2
         }
     }
 

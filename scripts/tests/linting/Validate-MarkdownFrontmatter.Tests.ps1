@@ -922,7 +922,8 @@ Content
             $result = Test-FrontmatterValidation -ChangedFilesOnly
 
             $result.TotalFiles | Should -Be 0
-            $result.GetExitCode($false) | Should -Be 0
+            # Exit code 2 = no files validated (distinct from validation errors)
+            $result.GetExitCode($false) | Should -Be 2
         }
 
         It 'Validates only files returned by Get-ChangedMarkdownFileGroup' {
