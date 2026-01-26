@@ -21,7 +21,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
 
@@ -42,11 +42,11 @@ jobs:
         run: |
           npm run spell-check > logs/spell-check-results.txt 2>&1
           EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "SPELL_CHECK_FAILED=true" >> $GITHUB_ENV
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "SPELL_CHECK_FAILED=true" >> "$GITHUB_ENV"
           fi
           cat logs/spell-check-results.txt
-          exit $EXIT_CODE
+          exit "$EXIT_CODE"
         continue-on-error: true
 
       - name: Create annotations
@@ -65,15 +65,20 @@ jobs:
       - name: Add job summary
         if: always()
         run: |
-          echo "## Spell Check Results" >> $GITHUB_STEP_SUMMARY
           if [ "${{ env.SPELL_CHECK_FAILED }}" == "true" ]; then
-            echo "❌ **Status**: Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Spelling errors were detected. Please review the artifact for details." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Spell Check Results"
+              echo "❌ **Status**: Failed"
+              echo ""
+              echo "Spelling errors were detected. Please review the artifact for details."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "✅ **Status**: Passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "No spelling errors detected." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "## Spell Check Results"
+              echo "✅ **Status**: Passed"
+              echo ""
+              echo "No spelling errors detected."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Fail job if errors found
