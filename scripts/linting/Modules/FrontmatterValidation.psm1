@@ -1,12 +1,11 @@
 ﻿<#
 .SYNOPSIS
-    Frontmatter validation module with pure validation functions.
+    Frontmatter validation module with validation functions and I/O helpers.
 .DESCRIPTION
-    Contains content-type validators and shared helpers for frontmatter validation.
-    All functions are pure (no I/O) and return ValidationIssue arrays for testability.
+    Contains content-type validators, shared helpers, and output functions
+    for frontmatter validation. Returns ValidationIssue arrays for testability.
 .NOTES
     Author: HVE Core Team
-    Created: 2026-01-24
 #>
 
 #region Classes
@@ -46,6 +45,7 @@ class FileTypeInfo {
     [bool]$IsChatMode
     [bool]$IsPrompt
     [bool]$IsInstruction
+    [bool]$IsAgent
     [bool]$IsRootCommunityFile
     [bool]$IsDevContainer
     [bool]$IsVSCodeReadme
@@ -56,6 +56,7 @@ class FileTypeInfo {
         $this.IsChatMode = $false
         $this.IsPrompt = $false
         $this.IsInstruction = $false
+        $this.IsAgent = $false
         $this.IsRootCommunityFile = $false
         $this.IsDevContainer = $false
         $this.IsVSCodeReadme = $false
@@ -141,17 +142,18 @@ class ValidationSummary {
     [int]$FilesValid
     [int]$TotalErrors
     [int]$TotalWarnings
-    [System.Collections.Generic.List[FileValidationResult]]$Results
+    [System.Collections.ArrayList]$Results
     [datetime]$StartedAt
     [datetime]$CompletedAt
     [timespan]$Duration
 
     ValidationSummary() {
-        $this.Results = [System.Collections.Generic.List[FileValidationResult]]::new()
+        $this.Results = [System.Collections.ArrayList]::new()
         $this.StartedAt = [datetime]::UtcNow
     }
 
-    [void] AddResult([FileValidationResult]$result) {
+    # Type constraint removed for testability (PowerShell class identity conflicts)
+    [void] AddResult($result) {
         $this.Results.Add($result)
         $this.TotalFiles++
 
@@ -740,6 +742,7 @@ function Get-FileTypeInfo {
     $info.IsChatMode = $File.Name -like "*.chatmode.md"
     $info.IsPrompt = $File.Name -like "*.prompt.md"
     $info.IsInstruction = $File.Name -like "*.instructions.md"
+    $info.IsAgent = $File.Name -like "*.agent.md"
     $info.IsRootCommunityFile = ($File.DirectoryName -eq $RepoRoot) -and
         ($File.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'README.md'))
     $info.IsDevContainer = $File.DirectoryName -like "*.devcontainer*" -and $File.Name -eq 'README.md'
@@ -783,7 +786,9 @@ function Test-SingleFileFrontmatter {
         [ValidateNotNullOrEmpty()]
         [string]$RepoRoot,
 
-        [scriptblock]$FileReader = { param($p) Get-Content -Path $p -Raw -ErrorAction Stop }
+        [scriptblock]$FileReader = { param($p) Get-Content -Path $p -Raw -ErrorAction Stop },
+
+        [switch]$SkipFooterValidation
     )
 
     $relativePath = $FilePath
@@ -805,7 +810,7 @@ function Test-SingleFileFrontmatter {
 
     # Parse frontmatter
     $frontmatter = $null
-    if ($content -match '(?s)^---\r?\n(.+?)\r?\n---') {
+    if ($content -match '(?s)^---\r?\n(.*?)\r?\n---') {
         $yamlBlock = $Matches[1]
         try {
             $frontmatter = $yamlBlock | ConvertFrom-Yaml -ErrorAction Stop
@@ -835,7 +840,7 @@ function Test-SingleFileFrontmatter {
     if ($fileTypeInfo.IsDocsFile) {
         $issues = Test-DocsFileFields -Frontmatter $frontmatter -RelativePath $relativePath
     }
-    elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode) {
+    elseif ($fileTypeInfo.IsInstruction -or $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsChatMode -or $fileTypeInfo.IsAgent) {
         $issues = Test-GitHubResourceFileFields -Frontmatter $frontmatter -FileTypeInfo $fileTypeInfo -RelativePath $relativePath
     }
     elseif ($fileTypeInfo.IsDevContainer) {
@@ -853,7 +858,7 @@ function Test-SingleFileFrontmatter {
     }
 
     # Footer validation for docs files
-    if ($fileTypeInfo.IsDocsFile) {
+    if ($fileTypeInfo.IsDocsFile -and -not $SkipFooterValidation) {
         $hasFooter = Test-MarkdownFooter -Content $content
         $footerIssue = Test-FooterPresence -HasFooter $hasFooter -RelativePath $relativePath -Severity 'Warning'
         if ($footerIssue) {
@@ -890,13 +895,15 @@ function Invoke-FrontmatterValidation {
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [switch]$SkipFooterValidation
     )
 
     $summary = [ValidationSummary]::new()
 
     foreach ($file in $Files) {
-        $result = Test-SingleFileFrontmatter -FilePath $file -RepoRoot $RepoRoot
+        $result = Test-SingleFileFrontmatter -FilePath $file -RepoRoot $RepoRoot -SkipFooterValidation:$SkipFooterValidation
         $summary.AddResult($result)
     }
 
@@ -921,8 +928,9 @@ function Write-ValidationConsoleOutput {
     #>
     [CmdletBinding()]
     param(
+        # Type constraint removed for testability (PowerShell class identity conflicts)
         [Parameter(Mandatory)]
-        [ValidationSummary]$Summary,
+        $Summary,
 
         [switch]$ShowDetails
     )
@@ -965,15 +973,18 @@ function Write-GitHubAnnotations {
     #>
     [CmdletBinding()]
     param(
+        # Type constraint removed for testability (PowerShell class identity conflicts)
         [Parameter(Mandatory)]
-        [ValidationSummary]$Summary
+        $Summary
     )
 
     foreach ($result in $Summary.Results) {
         foreach ($issue in $result.Issues) {
             $type = if ($issue.Type -eq 'Error') { 'error' } else { 'warning' }
             $line = if ($issue.Line) { $issue.Line } else { 1 }
-            Write-Output "::$type file=$($result.FilePath),line=$line::$($issue.Message)"
+            # Escape workflow command sequences in message to prevent injection
+            $escapedMessage = $issue.Message -replace '::', '%3A%3A'
+            Write-Output "::$type file=$($result.RelativePath),line=$line::$escapedMessage"
         }
     }
 }
@@ -991,8 +1002,9 @@ function Export-ValidationResults {
     #>
     [CmdletBinding()]
     param(
+        # Type constraint removed for testability (PowerShell class identity conflicts)
         [Parameter(Mandatory)]
-        [ValidationSummary]$Summary,
+        $Summary,
 
         [Parameter(Mandatory)]
         [string]$OutputPath

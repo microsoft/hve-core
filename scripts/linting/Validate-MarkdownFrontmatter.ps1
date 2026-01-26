@@ -34,7 +34,10 @@ param(
     [string]$BaseBranch = "origin/main",
 
     [Parameter(Mandatory = $false)]
-    [switch]$EnableSchemaValidation
+    [switch]$EnableSchemaValidation,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipFooterValidation
 )
 
 # Import helper modules
@@ -538,7 +541,7 @@ function Test-FrontmatterValidation {
     Write-Host "Found $($resolvedFiles.Count) total markdown files to validate" -ForegroundColor Cyan
 
     # Use module's orchestration function for core validation
-    $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot
+    $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot -SkipFooterValidation:$SkipFooterValidation
 
     # Optional schema validation overlay (advisory only)
     # Uses frontmatter already parsed by Invoke-FrontmatterValidation
