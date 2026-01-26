@@ -485,6 +485,7 @@ try {
     # Execute only when run directly, not when dot-sourced for testing
     if ($MyInvocation.InvocationName -ne '.') {
         Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+        exit 0
     }
     else {
         Write-Error "Generate PR Reference failed: will not execute if dot-sourced"

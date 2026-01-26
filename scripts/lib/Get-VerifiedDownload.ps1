@@ -386,7 +386,7 @@ try {
     }
 }
 catch {
-    Write-PinningLog "Get Verified Download failed: $($_.Exception.Message)" -Level Error
+    Write-Error "Get Verified Download failed: $($_.Exception.Message)" -Level Error
     if ($env:GITHUB_ACTIONS -eq 'true') {
         Write-Output "::error::$($_.Exception.Message)"
     }
