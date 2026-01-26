@@ -527,9 +527,9 @@ function Test-GitHubResourceFileFields {
 
     $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
 
-    if ($FileTypeInfo.IsChatMode) {
+    if ($FileTypeInfo.IsAgent -or $FileTypeInfo.IsChatMode) {
         if (-not $Frontmatter.ContainsKey('description')) {
-            $issues.Add([ValidationIssue]::new('Warning', 'description', "Agent file missing 'description' field", $RelativePath))
+            $issues.Add([ValidationIssue]::new('Warning', 'description', "Chat or agent file missing 'description' field", $RelativePath))
         }
     }
     elseif ($FileTypeInfo.IsInstruction) {
@@ -866,11 +866,25 @@ function Test-SingleFileFrontmatter {
         $result.AddIssue($issue)
     }
 
-    # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents)
-    $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent
+    # Common field validation for all content types with frontmatter
+    if ($null -ne $frontmatter) {
+        $commonIssues = Test-CommonFields -Frontmatter $frontmatter -RelativePath $relativePath
+        foreach ($commonIssue in $commonIssues) {
+            $result.AddIssue($commonIssue)
+        }
+    }
+
+    # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents, chatmodes)
+    $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent -or $fileTypeInfo.IsChatMode
     if (-not $isAiArtifact -and -not $SkipFooterValidation) {
+        # Determine severity based on file type
+        $footerSeverity = 'Warning'
+        if ($fileTypeInfo.IsRootCommunityFile -or $fileTypeInfo.IsDevContainer -or $fileTypeInfo.IsVSCodeReadme) {
+            $footerSeverity = 'Error'
+        }
+
         $hasFooter = Test-MarkdownFooter -Content $content
-        $footerIssue = Test-FooterPresence -HasFooter $hasFooter -RelativePath $relativePath -Severity 'Warning'
+        $footerIssue = Test-FooterPresence -HasFooter $hasFooter -RelativePath $relativePath -Severity $footerSeverity
         if ($footerIssue) {
             $result.AddIssue($footerIssue)
         }
@@ -988,13 +1002,39 @@ function Write-GitHubAnnotations {
         $Summary
     )
 
+    # Convert message text to GitHub workflow command safe format (%, CR, LF, ::)
+    function ConvertTo-GitHubCommandMessage {
+        param([string]$Text)
+        if ($null -eq $Text) { return '' }
+        $escaped = $Text -replace '%', '%25'
+        $escaped = $escaped -replace "`r", '%0D'
+        $escaped = $escaped -replace "`n", '%0A'
+        $escaped = $escaped -replace '::', '%3A%3A'
+        return $escaped
+    }
+
+    # Convert property text to GitHub workflow command safe format (%, CR, LF, :, ,)
+    function ConvertTo-GitHubCommandProperty {
+        param([string]$Text)
+        if ($null -eq $Text) { return '' }
+        $escaped = $Text -replace '%', '%25'
+        $escaped = $escaped -replace "`r", '%0D'
+        $escaped = $escaped -replace "`n", '%0A'
+        $escaped = $escaped -replace ':', '%3A'
+        $escaped = $escaped -replace ',', '%2C'
+        return $escaped
+    }
+
     foreach ($result in $Summary.Results) {
         foreach ($issue in $result.Issues) {
             $type = if ($issue.Type -eq 'Error') { 'error' } else { 'warning' }
             $line = if ($issue.Line) { $issue.Line } else { 1 }
-            # Escape workflow command sequences in message to prevent injection
-            $escapedMessage = $issue.Message -replace '::', '%3A%3A'
-            Write-Output "::$type file=$($result.RelativePath),line=$line::$escapedMessage"
+
+            $escapedFile = ConvertTo-GitHubCommandProperty -Text ([string]$result.RelativePath)
+            $escapedLine = ConvertTo-GitHubCommandProperty -Text ([string]$line)
+            $escapedMessage = ConvertTo-GitHubCommandMessage -Text ([string]$issue.Message)
+
+            Write-Output "::$type file=$escapedFile,line=$escapedLine::$escapedMessage"
         }
     }
 }

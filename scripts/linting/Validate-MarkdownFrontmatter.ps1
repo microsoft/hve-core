@@ -490,7 +490,12 @@ function Test-FrontmatterValidation {
         $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
         if ($Files.Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
-            return & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
+            # Return summary with TotalFiles=1 to signal success (exit code 0)
+            # This avoids exit code 2 which indicates "no files validated" failure
+            $emptySummary = & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
+            $emptySummary.TotalFiles = 1
+            $emptySummary.FilesValid = 1
+            return $emptySummary
         }
         Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
     }

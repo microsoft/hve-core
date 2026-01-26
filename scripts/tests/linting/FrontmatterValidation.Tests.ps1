@@ -17,6 +17,10 @@ BeforeAll {
     # Get module reference for class instantiation in module scope
     # This avoids parse-time caching issues with 'using module'
     $script:FVModule = Get-Module FrontmatterValidation
+
+    # Check YAML module availability for tests requiring ConvertFrom-Yaml
+    # CI environments may not have powershell-yaml installed
+    $script:hasYamlSupport = $null -ne (Get-Command -Name 'ConvertFrom-Yaml' -ErrorAction SilentlyContinue)
     
     # Helper functions for new classes (instantiate in module scope)
     function script:New-FileValidationResult {
@@ -1180,7 +1184,7 @@ Describe 'Test-SingleFileFrontmatter' -Tag 'Unit' {
     }
 
     Context 'Valid docs file' {
-        It 'Returns result with no errors for valid frontmatter' {
+        It 'Returns result with no errors for valid frontmatter' -Skip:(-not $script:hasYamlSupport) {
             $mockContent = @"
 ---
 title: Test Document
@@ -1208,7 +1212,7 @@ ms.topic: concept
     }
 
     Context 'Missing frontmatter' {
-        It 'Returns warning for file without frontmatter' {
+        It 'Returns warning for file without frontmatter' -Skip:(-not $script:hasYamlSupport) {
             $testFile = Join-Path $script:TestRepoRoot 'docs' 'test.md'
             $result = Test-SingleFileFrontmatter `
                 -FilePath $testFile `
@@ -1222,7 +1226,7 @@ ms.topic: concept
     }
 
     Context 'Invalid YAML' {
-        It 'Returns error for malformed YAML' {
+        It 'Returns error for malformed YAML' -Skip:(-not $script:hasYamlSupport) {
             $mockContent = @"
 ---
 title: Test
@@ -1255,7 +1259,7 @@ bad yaml: [unclosed
     }
 
     Context 'File type detection' {
-        It 'Detects docs file correctly' {
+        It 'Detects docs file correctly' -Skip:(-not $script:hasYamlSupport) {
             $mockContent = @"
 ---
 title: Test
@@ -1273,7 +1277,7 @@ description: Test desc
             $result.FileType.IsDocsFile | Should -BeTrue
         }
 
-        It 'Detects instructions file correctly' {
+        It 'Detects instructions file correctly' -Skip:(-not $script:hasYamlSupport) {
             $mockContent = @"
 ---
 description: Test instruction
