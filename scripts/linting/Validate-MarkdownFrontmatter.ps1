@@ -44,8 +44,8 @@ param(
 )
 
 # Import helper modules
+# Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/FrontmatterValidation.psm1') -Force
 
 #region Type Definitions
 
@@ -473,6 +473,7 @@ function Get-FileTypeInfo {
     $info.IsGitHub = $File.DirectoryName -like "*.github*"
     $info.IsChatMode = $File.Name -like "*.chatmode.md"
     $info.IsPrompt = $File.Name -like "*.prompt.md"
+    $info.IsAgent = $File.Name -like "*.agent.md"
     $info.IsInstruction = $File.Name -like "*.instructions.md"
     $info.IsRootCommunityFile = ($File.DirectoryName -eq $RepoRoot) -and
         ($File.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'README.md'))
