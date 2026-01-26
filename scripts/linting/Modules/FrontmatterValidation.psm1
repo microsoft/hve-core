@@ -749,10 +749,13 @@ function Get-FileTypeInfo {
         ($File.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md', 'README.md'))
     $info.IsDevContainer = $File.DirectoryName -like "*.devcontainer*" -and $File.Name -eq 'README.md'
     $info.IsVSCodeReadme = $File.DirectoryName -like "*.vscode*" -and $File.Name -eq 'README.md'
-    # Exclude .copilot-tracking and templates from docs validation
+    # Exclude .copilot-tracking (gitignored workflow artifacts) and markdown templates from docs validation
     $isCopilotTracking = $File.DirectoryName -like "*.copilot-tracking*"
     $isTemplate = $File.Name -like "*TEMPLATE*"
-    $info.IsDocsFile = $File.DirectoryName -like "*docs*" -and -not $info.IsGitHub -and -not $isCopilotTracking -and -not $isTemplate
+    # Use repo-relative path to avoid misclassifying files when repo is under a parent containing "docs"
+    $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $File.FullName)
+    $relativePathNormalized = $relativePath -replace '\\', '/'
+    $info.IsDocsFile = ($relativePathNormalized -match '(^|/)docs(/|$)') -and -not $info.IsGitHub -and -not $isCopilotTracking -and -not $isTemplate
 
     return $info
 }

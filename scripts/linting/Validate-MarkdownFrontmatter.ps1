@@ -13,6 +13,9 @@
 #requires -Version 7.0
 
 using namespace System.Collections.Generic
+# Import FrontmatterValidation module with 'using' to make PowerShell class types
+# (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
+using module .\Modules\FrontmatterValidation.psm1
 
 param(
     [Parameter(Mandatory = $false)]
@@ -791,6 +794,12 @@ if ($MyInvocation.InvocationName -ne '.') {
     if ($ChangedFilesOnly -and $result.TotalFiles -eq 0) {
         Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
         exit 0
+    }
+
+    # Validate result object before calling GetExitCode to prevent method invocation errors
+    if ($null -eq $result -or -not ($result.PSObject.Methods.Name -contains 'GetExitCode')) {
+        Write-Host "Validation did not produce a usable result object. Exiting with code 1."
+        exit 1
     }
 
     $exitCode = $result.GetExitCode($WarningsAsErrors)
