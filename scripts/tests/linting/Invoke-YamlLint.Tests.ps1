@@ -158,7 +158,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 
             & $script:ScriptPath
             # Should only count 2 files (yml and yaml, not json)
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq 2 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
     }
 
@@ -199,7 +199,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 
             & $script:ScriptPath -ChangedFilesOnly
             # Should only count 2 workflow files
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq 2 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
     }
 
@@ -249,21 +249,21 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             Mock actionlint { $null }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 0 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles "null" string output' {
             Mock actionlint { 'null' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 0 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles empty array output' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 0 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
     }
 
@@ -275,7 +275,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
 
             & $script:ScriptPath
             Should -Invoke Write-GitHubAnnotation -Times 1
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 1 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '1' }
         }
     }
 
@@ -287,7 +287,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
 
             & $script:ScriptPath
             Should -Invoke Write-GitHubAnnotation -Times 2
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 2 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '2' }
         }
     }
 
@@ -298,7 +298,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
 
             & $script:ScriptPath
             Should -Invoke Write-Warning -Times 1
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq 0 }
+            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
     }
 }
