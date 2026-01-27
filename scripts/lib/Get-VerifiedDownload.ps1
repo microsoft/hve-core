@@ -380,10 +380,6 @@ try {
         $result
         exit 0
     }
-    else {
-        Write-Error "Get Verified Download failed: will not execute if dot-sourced"
-        exit 1
-    }
 }
 catch {
     Write-Error "Get Verified Download failed: $($_.Exception.Message)"
