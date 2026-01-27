@@ -749,7 +749,8 @@ if ($MyInvocation.InvocationName -ne '.') {
     # Validate result object before calling GetExitCode to prevent method invocation errors
     # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
     if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
-        Write-Host "Validation did not produce a usable result object (type: $($result.GetType().FullName)). Exiting with code 1."
+        $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
+        Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
         exit 1
     }
 

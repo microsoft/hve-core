@@ -617,9 +617,15 @@ function Test-CommonFields {
     $issues = [System.Collections.Generic.List[ValidationIssue]]::new()
 
     # Validate keywords array
+    # ConvertFrom-Yaml returns sequences as List[object], not native PowerShell arrays
     if ($Frontmatter.ContainsKey('keywords')) {
         $keywords = $Frontmatter['keywords']
-        if ($keywords -isnot [array] -and $keywords -notmatch ',') {
+        $isCollection = $keywords -is [array] -or
+                        $keywords -is [System.Collections.IList] -or
+                        ($keywords -is [System.Collections.IEnumerable] -and
+                         $keywords -isnot [string] -and
+                         $keywords -isnot [hashtable])
+        if (-not $isCollection -and $keywords -notmatch ',') {
             $issues.Add([ValidationIssue]::new('Warning', 'keywords', 'Keywords should be an array', $RelativePath))
         }
     }
