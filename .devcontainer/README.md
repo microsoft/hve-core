@@ -95,7 +95,8 @@ gitleaks detect --source . --verbose
 
 2. **Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
 
-3. **HTTP/TLS errors during build**: Machines with corporate firewalls performing TLS inspection will need to drop their corporate root trust certificate (PEM-formatted with `.crt` extension) file into the `.devcontainer` and rebuild the devcontainer. Also run `docker buildx use desktop-linux` to ensure you are using the default builder, which honors OS root certificate trust stores.
+3. **HTTP/TLS errors during build**: Machines with corporate firewalls performing TLS inspection should ensure they are using the default `desktop-linux` builder, which honors OS root certificate trust stores.
+   You can change the active builder back to `desktop-linux` by running `docker buildx use desktop-linux`.
 
 For more help, see [SUPPORT.md](../SUPPORT.md).
 

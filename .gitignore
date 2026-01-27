@@ -446,4 +446,3 @@ pr-reference.xml
 # devcontainer
 /.gitconfig.global
 /.gitconfig.local
-/.devcontainer/*.crt

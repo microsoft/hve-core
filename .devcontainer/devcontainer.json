@@ -19,11 +19,6 @@
       "target": "/workspace/node_modules"
     }
   ],
-  "containerEnv": {
-    "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt", // for pip
-    "NODE_EXTRA_CA_CERTS": "/etc/ssl/certs/ca-certificates.crt", // for nodejs
-    "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt" // for uv (else use --native-tls flag)
-  },
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
