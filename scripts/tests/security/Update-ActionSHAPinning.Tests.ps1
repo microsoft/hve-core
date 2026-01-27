@@ -44,28 +44,6 @@ BeforeAll {
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
 
     # Mock response helpers
-    function script:New-MockGitHubCommitResponse {
-        param([string]$SHA = 'abc123def456789012345678901234567890abcdef')
-        return @{ sha = $SHA }
-    }
-
-    function script:New-MockGitHubRateLimitResponse {
-        param(
-            [int]$Remaining = 5000,
-            [int]$Limit = 5000,
-            [datetime]$ResetAt = (Get-Date).AddHours(1)
-        )
-        return @{
-            resources = @{
-                core = @{
-                    limit = $Limit
-                    remaining = $Remaining
-                    reset = [int][double]::Parse((Get-Date $ResetAt -UFormat %s))
-                }
-            }
-        }
-    }
-
     function script:New-MockGitHubGraphQLResponse {
         param(
             [string]$Login = 'testuser',
@@ -85,13 +63,11 @@ BeforeAll {
     }
 
     function script:New-MockRateLimitException {
-        param([int]$StatusCode = 403)
-        $response = [System.Net.HttpWebResponse]::new()
         $exception = [System.Net.WebException]::new(
             "API rate limit exceeded",
             $null,
             [System.Net.WebExceptionStatus]::ProtocolError,
-            $response
+            $null
         )
         return $exception
     }
@@ -377,6 +353,7 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
         It 'Includes body in request' {
             Mock Invoke-RestMethod {
                 param($Uri, $Method, $Headers, $Body, $ContentType)
+                $null = $Uri, $Method, $Headers  # Suppress PSScriptAnalyzer unused parameter warnings
                 return @{ received = $Body; contentType = $ContentType }
             }
 
@@ -535,9 +512,9 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
                 return @{ sha = 'sha456' }
             }
 
-            $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
+            $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'refs/heads/main'
 
-            $result | Should -Not -BeNullOrEmpty
+            $result | Should -Be 'sha123'
         }
     }
 
@@ -557,8 +534,9 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
                 throw [System.Exception]::new('Network error')
             }
 
-            { $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main' } |
-                Should -Not -Throw
+            # Function should handle error gracefully and return null
+            $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
+            $result | Should -BeNullOrEmpty
         }
     }
 
@@ -701,9 +679,8 @@ Describe 'Export-SecurityReport' -Tag 'Unit' {
     }
 
     Context 'Empty results handling' {
-        It 'Throws on empty results array due to mandatory parameter' {
-            # The Results parameter is mandatory and does not allow empty arrays
-            { Export-SecurityReport -Results @() } | Should -Throw '*empty*'
+        It 'Rejects empty results array via parameter validation' {
+            { Export-SecurityReport -Results @() } | Should -Throw '*empty collection*'
         }
     }
 }
