@@ -814,7 +814,7 @@ function Set-ContentPreservePermission {
     }
 }
 
-# Main execution
+#region Main Execution
 try {
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'
@@ -904,8 +904,12 @@ try {
         Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
         Write-SecurityLog "WhatIf mode: No files were modified. Run without -WhatIf to apply changes." -Level 'Info'
     }
+    exit 0
 }
 catch {
     Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
     exit 1
 }

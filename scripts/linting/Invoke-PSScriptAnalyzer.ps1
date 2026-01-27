@@ -57,78 +57,80 @@ if ($filesToAnalyze.Count -eq 0) {
 Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
 Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
 
-# Run PSScriptAnalyzer
-$allResults = @()
-$hasErrors = $false
+#region Main Execution
+try {
+    # Run PSScriptAnalyzer
+    $allResults = @()
+    $hasErrors = $false
 
-foreach ($file in $filesToAnalyze) {
-    $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
-    Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
-    
-    $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
-    
-    if ($results) {
-        $allResults += $results
+    foreach ($file in $filesToAnalyze) {
+        $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
+        Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
         
-        foreach ($result in $results) {
-            # Create GitHub annotation
-            Write-GitHubAnnotation `
-                -Type $result.Severity.ToString().ToLower() `
-                -Message "$($result.RuleName): $($result.Message)" `
-                -File $filePath `
-                -Line $result.Line `
-                -Column $result.Column
+        $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
+        
+        if ($results) {
+            $allResults += $results
             
-            $icon = switch ($result.Severity) {
-                'Error' { '❌'; $hasErrors = $true }
-                'Warning' { '⚠️' }
-                default { 'ℹ️' }
+            foreach ($result in $results) {
+                # Create GitHub annotation
+                Write-GitHubAnnotation `
+                    -Type $result.Severity.ToString().ToLower() `
+                    -Message "$($result.RuleName): $($result.Message)" `
+                    -File $filePath `
+                    -Line $result.Line `
+                    -Column $result.Column
+                
+                $icon = switch ($result.Severity) {
+                    'Error' { '❌'; $hasErrors = $true }
+                    'Warning' { '⚠️' }
+                    default { 'ℹ️' }
+                }
+                
+                Write-Host "  $icon [$($result.Severity)] $($result.RuleName): $($result.Message) (Line $($result.Line))" -ForegroundColor $(
+                    if ($result.Severity -eq 'Error') { 'Red' }
+                    elseif ($result.Severity -eq 'Warning') { 'Yellow' }
+                    else { 'Cyan' }
+                )
             }
-            
-            Write-Host "  $icon [$($result.Severity)] $($result.RuleName): $($result.Message) (Line $($result.Line))" -ForegroundColor $(
-                if ($result.Severity -eq 'Error') { 'Red' }
-                elseif ($result.Severity -eq 'Warning') { 'Yellow' }
-                else { 'Cyan' }
-            )
+        }
+        else {
+            Write-Host "  ✅ No issues found" -ForegroundColor Green
         }
     }
-    else {
-        Write-Host "  ✅ No issues found" -ForegroundColor Green
+
+    # Export results
+    $summary = @{
+        TotalFiles     = $filesToAnalyze.Count
+        TotalIssues    = $allResults.Count
+        Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
+        Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
+        Information    = ($allResults | Where-Object Severity -eq 'Information').Count
+        HasErrors      = $hasErrors
     }
-}
 
-# Export results
-$summary = @{
-    TotalFiles     = $filesToAnalyze.Count
-    TotalIssues    = $allResults.Count
-    Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
-    Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
-    Information    = ($allResults | Where-Object Severity -eq 'Information').Count
-    HasErrors      = $hasErrors
-}
+    $allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
+    $summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
 
-$allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
-$summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
+    # Set outputs
+    Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
+    Set-GitHubOutput -Name "errors" -Value $summary.Errors
+    Set-GitHubOutput -Name "warnings" -Value $summary.Warnings
 
-# Set outputs
-Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
-Set-GitHubOutput -Name "errors" -Value $summary.Errors
-Set-GitHubOutput -Name "warnings" -Value $summary.Warnings
+    if ($hasErrors) {
+        Set-GitHubEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
+    }
 
-if ($hasErrors) {
-    Set-GitHubEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
-}
+    # Write summary
+    Write-GitHubStepSummary -Content "## PSScriptAnalyzer Results`n"
 
-# Write summary
-Write-GitHubStepSummary -Content "## PSScriptAnalyzer Results`n"
-
-if ($summary.TotalIssues -eq 0) {
-    Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
-    Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
-    exit 0
-}
-else {
-    Write-GitHubStepSummary -Content @"
+    if ($summary.TotalIssues -eq 0) {
+        Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
+        Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
+        exit 0
+    }
+    else {
+        Write-GitHubStepSummary -Content @"
 ❌ **Status**: Failed
 
 | Metric | Count |
@@ -140,6 +142,15 @@ else {
 | Information | $($summary.Information) |
 "@
     
-    Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        exit 1
+    }
+}
+catch {
+    Write-Error "PSScriptAnalyzer failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
     exit 1
 }
+#endregion

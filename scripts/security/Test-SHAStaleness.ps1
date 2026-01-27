@@ -867,65 +867,75 @@ function Get-ToolStaleness {
     return $results
 }
 
-# Main execution
-Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
-Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
-Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
-Write-SecurityLog "Output format: $OutputFormat" -Level Info
+#region Main Execution
+try {
+    Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
+    Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
+    Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
+    Write-SecurityLog "Output format: $OutputFormat" -Level Info
 
-# Run staleness check for GitHub Actions
-Test-GitHubActionsForStaleness
+    # Run staleness check for GitHub Actions
+    Test-GitHubActionsForStaleness
 
-# Run staleness check for tools from tool-checksums.json
-Write-SecurityLog "Checking tool staleness from tool-checksums.json" -Level Info
+    # Run staleness check for tools from tool-checksums.json
+    Write-SecurityLog "Checking tool staleness from tool-checksums.json" -Level Info
 
-$toolResults = Get-ToolStaleness
-if ($toolResults) {
-    $staleTools = $toolResults | Where-Object { $_.IsStale -eq $true }
-    if ($staleTools.Count -gt 0) {
-        Write-SecurityLog "Found $($staleTools.Count) stale tool(s):" -Level Warning
-        foreach ($tool in $staleTools) {
-            Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
-            
-            # Add to global stale dependencies for output
-            $script:StaleDependencies += [PSCustomObject]@{
-                Type           = "Tool"
-                File           = "scripts/security/tool-checksums.json"
-                Name           = $tool.Tool
-                CurrentVersion = $tool.CurrentVersion
-                LatestVersion  = $tool.LatestVersion
-                DaysOld        = $null  # Not tracked for tools
-                Severity       = "Medium"
-                Message        = "Tool has newer version available: $($tool.CurrentVersion) -> $($tool.LatestVersion)"
+    $toolResults = Get-ToolStaleness
+    if ($toolResults) {
+        $staleTools = $toolResults | Where-Object { $_.IsStale -eq $true }
+        if ($staleTools.Count -gt 0) {
+            Write-SecurityLog "Found $($staleTools.Count) stale tool(s):" -Level Warning
+            foreach ($tool in $staleTools) {
+                Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
+                
+                # Add to global stale dependencies for output
+                $script:StaleDependencies += [PSCustomObject]@{
+                    Type           = "Tool"
+                    File           = "scripts/security/tool-checksums.json"
+                    Name           = $tool.Tool
+                    CurrentVersion = $tool.CurrentVersion
+                    LatestVersion  = $tool.LatestVersion
+                    DaysOld        = $null  # Not tracked for tools
+                    Severity       = "Medium"
+                    Message        = "Tool has newer version available: $($tool.CurrentVersion) -> $($tool.LatestVersion)"
+                }
             }
         }
-    }
-    else {
-        Write-SecurityLog "All tools are up to date" -Level Info
+        else {
+            Write-SecurityLog "All tools are up to date" -Level Info
+        }
+
+        # Check for errors
+        $errorTools = $toolResults | Where-Object { $null -ne $_.Error }
+        if ($errorTools.Count -gt 0) {
+            Write-SecurityLog "Failed to check $($errorTools.Count) tool(s)" -Level Warning
+        }
     }
 
-    # Check for errors
-    $errorTools = $toolResults | Where-Object { $null -ne $_.Error }
-    if ($errorTools.Count -gt 0) {
-        Write-SecurityLog "Failed to check $($errorTools.Count) tool(s)" -Level Warning
+    # Output results
+    Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
+
+    Write-SecurityLog "SHA staleness monitoring completed" -Level Success
+    Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
+
+    # Exit with appropriate code based on findings and -FailOnStale parameter
+    if ($StaleDependencies.Count -gt 0) {
+        if ($FailOnStale) {
+            Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
+            exit 1
+        }
+        else {
+            Write-SecurityLog "Stale dependencies found but exiting with status 0 (use -FailOnStale to fail build)" -Level Warning
+            exit 0
+        }
     }
+    exit 0  # All good
 }
-
-# Output results
-Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
-
-Write-SecurityLog "SHA staleness monitoring completed" -Level Success
-Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
-
-# Exit with appropriate code based on findings and -FailOnStale parameter
-if ($StaleDependencies.Count -gt 0) {
-    if ($FailOnStale) {
-        Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
-        exit 1
+catch {
+    Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
     }
-    else {
-        Write-SecurityLog "Stale dependencies found but exiting with status 0 (use -FailOnStale to fail build)" -Level Warning
-        exit 0
-    }
+    exit 1
 }
-exit 0  # All good
+#endregion

@@ -831,11 +831,11 @@ $(if ($Report.UnpinnedDependencies -gt 0) { "⚠️ **Action Required:** $($Repo
     Write-PinningLog "Compliance artifacts prepared for CI/CD consumption" -Level Success
 }
 
-#region Script Entry Point
+#region Main Execution
 
 # Only execute when invoked directly (not dot-sourced)
-if ($MyInvocation.InvocationName -ne '.') {
-    try {
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
         Write-PinningLog "Starting dependency pinning compliance analysis..." -Level Info
         Write-PinningLog "PowerShell Version: $($PSVersionTable.PSVersion)" -Level Info
         Write-PinningLog "Platform: $($PSVersionTable.Platform)" -Level Info
@@ -904,13 +904,20 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
         else {
             Write-PinningLog "All dependencies are properly pinned! ✅ (100% compliance, exceeds $Threshold% threshold)" -Level Success
+            exit 0
         }
     }
-    catch {
-        Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
-        Write-PinningLog "Stack trace: $($_.ScriptStackTrace)" -Level Error
+    else {
+        Write-Error "Test Dependency Pinning failed: will not execute if dot-sourced"
         exit 1
     }
+}
+catch {
+    Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
+    exit 1
 }
 
 #endregion

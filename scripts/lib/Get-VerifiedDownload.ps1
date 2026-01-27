@@ -13,7 +13,7 @@
 .PARAMETER ExpectedSHA256
     Expected SHA256 checksum of the file.
 
-.PARAMETER OutputPath
+.PARAMETER OutputPath   
     Path where the downloaded file will be saved.
 
 .PARAMETER Extract
@@ -342,42 +342,50 @@ function Invoke-VerifiedDownload {
 
 #endregion
 
-#region Script Entry Point
+#region Main Execution
+try {
+    # Only execute when invoked directly (not dot-sourced)
+    if ($MyInvocation.InvocationName -ne '.') {
+        # Require parameters for direct invocation
+        if (-not $Url -or -not $ExpectedSHA256 -or -not $OutputPath) {
+            Write-Error "When invoking directly, -Url, -ExpectedSHA256, and -OutputPath are required."
+            exit 1
+        }
 
-# Only execute when invoked directly (not dot-sourced)
-if ($MyInvocation.InvocationName -ne '.') {
-    # Require parameters for direct invocation
-    if (-not $Url -or -not $ExpectedSHA256 -or -not $OutputPath) {
-        Write-Error "When invoking directly, -Url, -ExpectedSHA256, and -OutputPath are required."
-        exit 1
+        $ErrorActionPreference = 'Stop'
+
+        # Resolve destination directory and file name from OutputPath
+        $destinationDir = Split-Path -Parent $OutputPath
+        if (-not $destinationDir) {
+            $destinationDir = $PWD.Path
+        }
+        $fileName = Split-Path -Leaf $OutputPath
+
+        # Determine extract path
+        $extractDir = $null
+        if ($Extract) {
+            $extractDir = if ($ExtractPath) { $ExtractPath } else { $destinationDir }
+        }
+
+        # Call the I/O wrapper function with script parameters
+        $result = Invoke-VerifiedDownload `
+            -Url $Url `
+            -DestinationDirectory $destinationDir `
+            -ExpectedHash $ExpectedSHA256 `
+            -FileName $fileName `
+            -Extract:$Extract `
+            -ExtractPath $extractDir
+
+        # Output the result for callers
+        $result
+        exit 0
     }
-
-    $ErrorActionPreference = 'Stop'
-
-    # Resolve destination directory and file name from OutputPath
-    $destinationDir = Split-Path -Parent $OutputPath
-    if (-not $destinationDir) {
-        $destinationDir = $PWD.Path
-    }
-    $fileName = Split-Path -Leaf $OutputPath
-
-    # Determine extract path
-    $extractDir = $null
-    if ($Extract) {
-        $extractDir = if ($ExtractPath) { $ExtractPath } else { $destinationDir }
-    }
-
-    # Call the I/O wrapper function with script parameters
-    $result = Invoke-VerifiedDownload `
-        -Url $Url `
-        -DestinationDirectory $destinationDir `
-        -ExpectedHash $ExpectedSHA256 `
-        -FileName $fileName `
-        -Extract:$Extract `
-        -ExtractPath $extractDir
-
-    # Output the result for callers
-    $result
 }
-
+catch {
+    Write-Error "Get Verified Download failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
+    exit 1
+}
 #endregion

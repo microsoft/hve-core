@@ -271,7 +271,7 @@ function ConvertTo-JsonOutput {
     return $jsonData
 }
 
-# Main script execution
+#region Main Execution
 try {
     if ($Verbose) {
         Write-Information "Getting list of git-tracked text files..." -InformationAction Continue
@@ -362,9 +362,13 @@ try {
             Write-Output "No URLs containing 'en-us' were found."
         }
     }
+    exit 0
 }
 catch {
-    Write-Error "An error occurred: $_"
+    Write-Error "Link Lang Check failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
     exit 1
 }
-
+#endregion
