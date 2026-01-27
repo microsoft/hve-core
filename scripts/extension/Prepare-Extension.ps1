@@ -525,25 +525,47 @@ try {
     Write-Host ""
     Write-Host "🔍 Discovering chat agents..." -ForegroundColor Yellow
     $agentsDir = Join-Path $GitHubDir "agents"
+    $chatAgents = @()
 
     # Agents to exclude from extension packaging
     $excludedAgents = @('hve-core-installer')
 
-    $agentDiscovery = Get-DiscoveredAgents -AgentsDir $agentsDir -AllowedMaturities $allowedMaturities -ExcludedAgents $excludedAgents
+    if (Test-Path $agentsDir) {
+        $agentFiles = Get-ChildItem -Path $agentsDir -Filter "*.agent.md" | Sort-Object Name
 
-    if (-not $agentDiscovery.DirectoryExists) {
+        foreach ($agentFile in $agentFiles) {
+            # Extract agent name from filename (e.g., hve-core-installer.agent.md -> hve-core-installer)
+            $agentName = $agentFile.BaseName -replace '\.agent$', ''
+
+            # Skip excluded agents
+            if ($excludedAgents -contains $agentName) {
+                Write-Host "   ⏭️  $agentName (excluded)" -ForegroundColor DarkGray
+                continue
+            }
+
+            # Extract frontmatter data
+            $frontmatter = Get-FrontmatterData -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
+            $description = $frontmatter.description
+            $maturity = $frontmatter.maturity
+
+            # Filter by maturity based on channel
+            if ($allowedMaturities -notcontains $maturity) {
+                Write-Host "   ⏭️  $agentName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
+                continue
+            }
+
+            $agent = [PSCustomObject]@{
+                name        = $agentName
+                path        = "./.github/agents/$($agentFile.Name)"
+                description = $description
+            }
+
+            $chatAgents += $agent
+            Write-Host "   ✅ $agentName" -ForegroundColor Green
+        }
+    } else {
         Write-Warning "Agents directory not found: $agentsDir"
     }
-
-    foreach ($skipped in $agentDiscovery.Skipped) {
-        Write-Host "   ⏭️  $($skipped.Name) ($($skipped.Reason))" -ForegroundColor DarkGray
-    }
-
-    foreach ($agent in $agentDiscovery.Agents) {
-        Write-Host "   ✅ $($agent.name)" -ForegroundColor Green
-    }
-
-    $chatAgents = $agentDiscovery.Agents
 
     # Discover prompts
     Write-Host ""
