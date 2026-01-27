@@ -387,7 +387,6 @@ Describe 'Output Generation' -Tag 'Unit' {
             Mock Write-GitHubAnnotation {}
 
             $script:OutputFile = Join-Path $script:TempDir 'yaml-lint-results.json'
-            $script:SummaryFile = Join-Path $script:TempDir 'yaml-lint-summary.json'
         }
 
         It 'Creates JSON output file at specified path' {
