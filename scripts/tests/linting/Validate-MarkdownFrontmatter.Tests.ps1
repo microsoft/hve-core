@@ -1,8 +1,12 @@
 ﻿#Requires -Modules Pester
+# Import module with 'using' to make PowerShell class types (FileTypeInfo, ValidationSummary, etc.) available at parse time
+using module ..\..\linting\Modules\FrontmatterValidation.psm1
 
 BeforeAll {
+    # Dot-source the main script
     $scriptPath = Join-Path $PSScriptRoot '../../linting/Validate-MarkdownFrontmatter.ps1'
     . $scriptPath
+
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
     $script:SchemaDir = Join-Path $PSScriptRoot '../../linting/schemas'

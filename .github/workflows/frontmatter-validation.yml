@@ -45,6 +45,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
 
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
       - name: Run Frontmatter Validation
         shell: pwsh
         run: |

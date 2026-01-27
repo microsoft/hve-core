@@ -13,6 +13,9 @@
 #requires -Version 7.0
 
 using namespace System.Collections.Generic
+# Import FrontmatterValidation module with 'using' to make PowerShell class types
+# (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
+using module .\Modules\FrontmatterValidation.psm1
 
 param(
     [Parameter(Mandatory = $false)]
@@ -41,8 +44,8 @@ param(
 )
 
 # Import helper modules
+# Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/FrontmatterValidation.psm1') -Force
 
 #region Type Definitions
 
@@ -429,7 +432,7 @@ function Test-JsonSchemaValidation {
     }
 }
 
-# Get-FileTypeInfo moved to FrontmatterValidation.psm1
+# Get-FileTypeInfo is provided by FrontmatterValidation.psm1 via 'using module' directive
 
 function Test-FrontmatterValidation {
     <#
@@ -732,10 +735,24 @@ try {
             $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
         }
 
+        # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
+        # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
+        if ($result -is [System.Array]) {
+            $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
+        }
+
         # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
-        if ($ChangedFilesOnly -and $result.TotalFiles -eq 0) {
+        if ($ChangedFilesOnly -and $null -ne $result -and $result.TotalFiles -eq 0) {
             Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
             exit 0
+        }
+
+        # Validate result object before calling GetExitCode to prevent method invocation errors
+        # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
+        if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
+            $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
+            Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
+            exit 1
         }
 
         $exitCode = $result.GetExitCode($WarningsAsErrors)

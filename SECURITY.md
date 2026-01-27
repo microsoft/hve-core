@@ -53,6 +53,10 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 <!-- END MICROSOFT SECURITY.MD BLOCK -->
 
+## Security Documentation
+
+For comprehensive security documentation including threat models and security controls, see [Security Documentation](docs/security/README.md).
+
 ## Verifying Release Integrity
 
 HVE Core releases are cryptographically signed using GitHub Artifact Attestations. This establishes provenance and allows you to verify that release artifacts were built from this repository's official CI/CD pipeline.
