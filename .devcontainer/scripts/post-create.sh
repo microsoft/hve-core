@@ -13,7 +13,6 @@ main() {
 
 	fix_volume_ownerships
   npm_install
-  update_ca_certs
 }
 
 # Volume ownership is not set automatically due to a bug:
@@ -42,17 +41,6 @@ npm_install() {
   echo "Installing NPM dependencies..."
   npm install
   echo "NPM dependencies installed successfully"
-}
-
-update_ca_certs() {
-  # Adds a root CA to the system certificate store. Useful if developer machines
-  # have MITM TLS inspection happening, e.g. with ZScaler.
-  echo "Updating container system CA certificates..."
-  if compgen -G ".devcontainer/*.crt" > /dev/null; then
-    sudo cp .devcontainer/*.crt /usr/local/share/ca-certificates/
-    sudo update-ca-certificates
-  fi
-  echo "Container's system CA certificates updated successfully"
 }
 
 main "$@"

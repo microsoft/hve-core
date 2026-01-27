@@ -100,7 +100,10 @@ gitleaks detect --source . --verbose
 
 Container won't build: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
 
-Extensions not loading: Reload the window (`F1` → **Developer: Reload Window**).
+1. **Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
+
+2. **HTTP/TLS errors during build**: Machines with corporate firewalls performing TLS inspection should ensure they are using the default `desktop-linux` builder, which honors OS root certificate trust stores.
+   You can change the active builder back to `desktop-linux` by running `docker buildx use desktop-linux`.
 
 For more help, see [SUPPORT.md](../SUPPORT.md).
 
