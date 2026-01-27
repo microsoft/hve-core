@@ -564,10 +564,6 @@ try {
 
         exit 0
     }
-    else {
-        Write-Error "Package Extension failed: will not execute if dot-sourced"
-        exit 1
-    }
 }
 catch {
     Write-Error "Package Extension failed: $($_.Exception.Message)"

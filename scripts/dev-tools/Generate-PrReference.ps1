@@ -487,10 +487,6 @@ try {
         Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
         exit 0
     }
-    else {
-        Write-Error "Generate PR Reference failed: will not execute if dot-sourced"
-        exit 1
-    }
 }
 catch {
     Write-Error "Generate PR Reference failed: $($_.Exception.Message)"

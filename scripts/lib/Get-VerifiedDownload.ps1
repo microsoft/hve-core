@@ -386,7 +386,7 @@ try {
     }
 }
 catch {
-    Write-Error "Get Verified Download failed: $($_.Exception.Message)" -Level Error
+    Write-Error "Get Verified Download failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
         Write-Output "::error::$($_.Exception.Message)"
     }

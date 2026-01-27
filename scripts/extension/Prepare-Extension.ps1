@@ -712,10 +712,6 @@ try {
 
     exit 0
     }
-    else {
-        Write-Error "Prepare Extension failed: will not execute if dot-sourced"
-        exit 1
-    }
 }
 catch {
     Write-Error "Prepare Extension failed: $($_.Exception.Message)"
