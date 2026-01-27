@@ -61,7 +61,7 @@ if ($CodeCoverage.IsPresent) {
     }
 
     $configuration.CodeCoverage.ExcludeTests = $true
-    $configuration.CodeCoverage.CoveragePercentTarget = 70
+    $configuration.CodeCoverage.CoveragePercentTarget = 80
 }
 
 # Should configuration
