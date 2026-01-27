@@ -185,145 +185,146 @@ function Get-RelativePrefix {
     return $normalized
 }
 
-
-$scriptRootParent = Split-Path -Path $PSScriptRoot -Parent
-$repoRootPath = Split-Path -Path $scriptRootParent -Parent
-$repoRoot = Resolve-Path -LiteralPath $repoRootPath
-$config = Resolve-Path -LiteralPath $ConfigPath -ErrorAction Stop
-$filesToCheck = Get-MarkdownTarget -InputPath $Path
-
-if (-not $filesToCheck -or $filesToCheck.Count -eq 0) {
-    Write-Error 'No markdown files were found to validate.'
-    exit 1
-}
-
-$cli = Join-Path -Path $repoRoot.Path -ChildPath 'node_modules/.bin/markdown-link-check'
-if ($IsWindows) {
-    $cli += '.cmd'
-}
-
-if (-not (Test-Path -LiteralPath $cli)) {
-    Write-Error 'markdown-link-check is not installed. Run "npm install --save-dev markdown-link-check" first.'
-    exit 1
-}
-
-$baseArguments = @('-c', $config.Path)
-if ($Quiet) {
-    $baseArguments += '-q'
-}
-
-$failedFiles = @()
-$brokenLinks = @()
-$totalLinks = 0
-$totalFiles = $filesToCheck.Count
-
-Push-Location $repoRoot.Path
+#region Main Execution
 try {
-    foreach ($file in $filesToCheck) {
-        $absolute = Resolve-Path -LiteralPath $file
-        $relative = [System.IO.Path]::GetRelativePath($repoRoot.Path, $absolute)
-        Write-Output "Checking $relative"
+    $scriptRootParent = Split-Path -Path $PSScriptRoot -Parent
+    $repoRootPath = Split-Path -Path $scriptRootParent -Parent
+    $repoRoot = Resolve-Path -LiteralPath $repoRootPath
+    $config = Resolve-Path -LiteralPath $ConfigPath -ErrorAction Stop
+    $filesToCheck = Get-MarkdownTarget -InputPath $Path
 
-        # Create temp file for XML output
-        $xmlFile = [System.IO.Path]::GetTempFileName() + '.xml'
-        try {
-            $commandArgs = $baseArguments + @($relative, '--reporters', 'default,junit', '--junit-output', $xmlFile)
+    if (-not $filesToCheck -or $filesToCheck.Count -eq 0) {
+        Write-Error 'No markdown files were found to validate.'
+        exit 1
+    }
 
-            # Run markdown-link-check with XML output and capture output
-            $output = & $cli @commandArgs 2>&1
-            $exitCode = $LASTEXITCODE
-            
-            # Display output if verbose mode or if there were errors
-            if ($VerbosePreference -eq 'Continue' -or $exitCode -ne 0) {
-                Write-Host $output
-            }
+    $cli = Join-Path -Path $repoRoot.Path -ChildPath 'node_modules/.bin/markdown-link-check'
+    if ($IsWindows) {
+        $cli += '.cmd'
+    }
 
-            # Parse XML output
-            if (Test-Path $xmlFile) {
-                [xml]$xml = Get-Content $xmlFile -Raw -Encoding utf8
+    if (-not (Test-Path -LiteralPath $cli)) {
+        Write-Error 'markdown-link-check is not installed. Run "npm install --save-dev markdown-link-check" first.'
+        exit 1
+    }
 
-                foreach ($testsuite in $xml.testsuites.testsuite) {
-                    foreach ($testcase in $testsuite.testcase) {
-                        $totalLinks++
+    $baseArguments = @('-c', $config.Path)
+    if ($Quiet) {
+        $baseArguments += '-q'
+    }
 
-                        # Extract properties
-                        $url = ($testcase.properties.property | Where-Object { $_.name -eq 'url' }).value
-                        $status = ($testcase.properties.property | Where-Object { $_.name -eq 'status' }).value
-                        $statusCode = ($testcase.properties.property | Where-Object { $_.name -eq 'statusCode' }).value
+    $failedFiles = @()
+    $brokenLinks = @()
+    $totalLinks = 0
+    $totalFiles = $filesToCheck.Count
 
-                        # Display human-readable output if not quiet
-                        if (-not $Quiet) {
-                            if ($status -eq 'alive') {
-                                Write-Host "  ✓ $url" -ForegroundColor Green
+    Push-Location $repoRoot.Path
+    try {
+        foreach ($file in $filesToCheck) {
+            $absolute = Resolve-Path -LiteralPath $file
+            $relative = [System.IO.Path]::GetRelativePath($repoRoot.Path, $absolute)
+            Write-Output "Checking $relative"
+
+            # Create temp file for XML output
+            $xmlFile = [System.IO.Path]::GetTempFileName() + '.xml'
+            try {
+                $commandArgs = $baseArguments + @($relative, '--reporters', 'default,junit', '--junit-output', $xmlFile)
+
+                # Run markdown-link-check with XML output and capture output
+                $output = & $cli @commandArgs 2>&1
+                $exitCode = $LASTEXITCODE
+                
+                # Display output if verbose mode or if there were errors
+                if ($VerbosePreference -eq 'Continue' -or $exitCode -ne 0) {
+                    Write-Host $output
+                }
+
+                # Parse XML output
+                if (Test-Path $xmlFile) {
+                    [xml]$xml = Get-Content $xmlFile -Raw -Encoding utf8
+
+                    foreach ($testsuite in $xml.testsuites.testsuite) {
+                        foreach ($testcase in $testsuite.testcase) {
+                            $totalLinks++
+
+                            # Extract properties
+                            $url = ($testcase.properties.property | Where-Object { $_.name -eq 'url' }).value
+                            $status = ($testcase.properties.property | Where-Object { $_.name -eq 'status' }).value
+                            $statusCode = ($testcase.properties.property | Where-Object { $_.name -eq 'statusCode' }).value
+
+                            # Display human-readable output if not quiet
+                            if (-not $Quiet) {
+                                if ($status -eq 'alive') {
+                                    Write-Host "  ✓ $url" -ForegroundColor Green
+                                }
+                                elseif ($status -eq 'ignored') {
+                                    Write-Host "  / $url (ignored)" -ForegroundColor Yellow
+                                }
+                                elseif ($status -eq 'dead') {
+                                    Write-Host "  ✖ $url → Status: $statusCode" -ForegroundColor Red
+                                }
                             }
-                            elseif ($status -eq 'ignored') {
-                                Write-Host "  / $url (ignored)" -ForegroundColor Yellow
-                            }
-                            elseif ($status -eq 'dead') {
-                                Write-Host "  ✖ $url → Status: $statusCode" -ForegroundColor Red
-                            }
-                        }
 
-                        # Process broken links
-                        if ($status -eq 'dead') {
-                            $brokenLinks += @{
-                                File = $relative
-                                Link = $url
-                                Status = "$statusCode"
-                            }
+                            # Process broken links
+                            if ($status -eq 'dead') {
+                                $brokenLinks += @{
+                                    File = $relative
+                                    Link = $url
+                                    Status = "$statusCode"
+                                }
 
-                            # Create GitHub annotation
-                            Write-GitHubAnnotation -Type 'error' -Message "Broken link: $url (Status: $statusCode)" -File $relative
+                                # Create GitHub annotation
+                                Write-GitHubAnnotation -Type 'error' -Message "Broken link: $url (Status: $statusCode)" -File $relative
+                            }
                         }
                     }
                 }
-            }
 
-            if ($exitCode -ne 0) {
-                $failedFiles += $relative
+                if ($exitCode -ne 0) {
+                    $failedFiles += $relative
+                }
             }
-        }
-        catch {
-            Write-Warning "Failed to parse XML output for $relative : $_"
-            if ($exitCode -ne 0) {
-                $failedFiles += $relative
+            catch {
+                Write-Warning "Failed to parse XML output for $relative : $_"
+                if ($exitCode -ne 0) {
+                    $failedFiles += $relative
+                }
             }
-        }
-        finally {
-            if (Test-Path $xmlFile) {
-                Remove-Item $xmlFile -Force
+            finally {
+                if (Test-Path $xmlFile) {
+                    Remove-Item $xmlFile -Force
+                }
             }
         }
     }
-}
-finally {
-    Pop-Location
-}
-
-# Create logs directory and export results
-$logsDir = Join-Path -Path $repoRoot.Path -ChildPath 'logs'
-if (-not (Test-Path $logsDir)) {
-    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-}
-
-$results = @{
-    timestamp = (Get-Date).ToUniversalTime().ToString('o')
-    script = 'markdown-link-check'
-    summary = @{
-        total_files = $totalFiles
-        files_with_broken_links = $failedFiles.Count
-        total_links_checked = $totalLinks
-        total_broken_links = $brokenLinks.Count
+    finally {
+        Pop-Location
     }
-    broken_links = $brokenLinks
-}
 
-$resultsPath = Join-Path -Path $logsDir -ChildPath 'markdown-link-check-results.json'
-$results | ConvertTo-Json -Depth 10 | Set-Content -Path $resultsPath -Encoding UTF8
+    # Create logs directory and export results
+    $logsDir = Join-Path -Path $repoRoot.Path -ChildPath 'logs'
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
 
-# Generate GitHub step summary
-if ($failedFiles.Count -gt 0) {
-    $summaryContent = @"
+    $results = @{
+        timestamp = (Get-Date).ToUniversalTime().ToString('o')
+        script = 'markdown-link-check'
+        summary = @{
+            total_files = $totalFiles
+            files_with_broken_links = $failedFiles.Count
+            total_links_checked = $totalLinks
+            total_broken_links = $brokenLinks.Count
+        }
+        broken_links = $brokenLinks
+    }
+
+    $resultsPath = Join-Path -Path $logsDir -ChildPath 'markdown-link-check-results.json'
+    $results | ConvertTo-Json -Depth 10 | Set-Content -Path $resultsPath -Encoding UTF8
+
+    # Generate GitHub step summary
+    if ($failedFiles.Count -gt 0) {
+        $summaryContent = @"
 ## ❌ Markdown Link Check Failed
 
 **Files with broken links:** $($failedFiles.Count) / $totalFiles
@@ -335,11 +336,11 @@ if ($failedFiles.Count -gt 0) {
 |------|-------------|
 "@
 
-    foreach ($link in $brokenLinks) {
-        $summaryContent += "`n| ``$($link.File)`` | ``$($link.Link)`` |"
-    }
+        foreach ($link in $brokenLinks) {
+            $summaryContent += "`n| ``$($link.File)`` | ``$($link.Link)`` |"
+        }
 
-    $summaryContent += @"
+        $summaryContent += @"
 
 
 ### How to Fix
@@ -351,14 +352,14 @@ if ($failedFiles.Count -gt 0) {
 For more information, see the [markdown-link-check documentation](https://github.com/tcort/markdown-link-check).
 "@
 
-    Write-GitHubStepSummary -Content $summaryContent
-    Set-GitHubEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
+        Write-GitHubStepSummary -Content $summaryContent
+        Set-GitHubEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
 
-    Write-Error ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
-    exit 1
-}
-else {
-    $summaryContent = @"
+        Write-Error ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
+        exit 1
+    }
+    else {
+        $summaryContent = @"
 ## ✅ Markdown Link Check Passed
 
 **Files checked:** $totalFiles
@@ -368,6 +369,16 @@ else {
 Great job! All markdown links are valid. 🎉
 "@
 
-    Write-GitHubStepSummary -Content $summaryContent
-    Write-Output 'markdown-link-check completed successfully.'
+        Write-GitHubStepSummary -Content $summaryContent
+        Write-Output 'markdown-link-check completed successfully.'
+        exit 0
+    }
 }
+catch {
+    Write-Error "Markdown Link Check failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
+    exit 1
+}
+#endregion

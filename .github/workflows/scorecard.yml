@@ -44,14 +44,3 @@ jobs:
           name: scorecard-results
           path: results.sarif
           retention-days: 90
-
-      - name: Add job summary
-        if: always()
-        run: |
-          {
-            echo "## OpenSSF Scorecard Analysis Complete"
-            echo ""
-            echo "📊 View results in the Security tab under Code Scanning"
-            echo ""
-            echo "🏆 [View Scorecard Badge](https://scorecard.dev/viewer/?uri=github.com/microsoft/hve-core)"
-          } >> "$GITHUB_STEP_SUMMARY"

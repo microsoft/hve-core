@@ -29,14 +29,16 @@ if (-not (Test-Path $logsDir)) {
 
 Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
 
-# Run the language check script
-$scriptArgs = @{}
-if ($ExcludePaths.Count -gt 0) {
-    $scriptArgs['ExcludePaths'] = $ExcludePaths
-}
-$jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") @scriptArgs 2>&1
+#region Main Execution
 
 try {
+    # Run the language check script
+    $scriptArgs = @{}
+    if ($ExcludePaths.Count -gt 0) {
+        $scriptArgs['ExcludePaths'] = $ExcludePaths
+    }
+    $jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") @scriptArgs 2>&1
+
     $results = $jsonOutput | ConvertFrom-Json
     
     if ($results -and $results.Count -gt 0) {
@@ -87,7 +89,7 @@ scripts/linting/Link-Lang-Check.ps1 -Fix
 **Files affected:**
 $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_).Count; "- $_ ($count occurrence(s))" }) -join "`n")
 "@
-        
+    
         exit 1
     }
     else {
@@ -114,12 +116,16 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
 
 No URLs with language-specific paths detected.
 "@
-        
+    
         exit 0
     }
 }
 catch {
-    Write-Error "Error parsing results: $_"
-    Write-Host "Raw output: $jsonOutput"
+    Write-Error "Link-language check failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
     exit 1
 }
+
+#endregion

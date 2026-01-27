@@ -82,83 +82,85 @@ if ($filesToAnalyze.Count -eq 0) {
 Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
 Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
 
-# Run actionlint with JSON output
-$actionlintArgs = @('-format', '{{json .}}')
-if ($ChangedFilesOnly -and $filesToAnalyze.Count -gt 0) {
-    $actionlintArgs += $filesToAnalyze
-}
-
-$rawOutput = & actionlint @actionlintArgs 2>&1
-# actionlint exit code is not used; errors are parsed from JSON output
-
-# Parse JSON output
-$issues = @()
-if ($rawOutput -and $rawOutput -ne "null") {
-    try {
-        $issues = $rawOutput | ConvertFrom-Json -ErrorAction Stop
-        if ($null -eq $issues) { $issues = @() }
-        if ($issues -isnot [array]) { $issues = @($issues) }
+#region Main Execution
+try {
+    # Run actionlint with JSON output
+    $actionlintArgs = @('-format', '{{json .}}')
+    if ($ChangedFilesOnly -and $filesToAnalyze.Count -gt 0) {
+        $actionlintArgs += $filesToAnalyze
     }
-    catch {
-        Write-Warning "Failed to parse actionlint output: $($_.Exception.Message)"
-        Write-Verbose "Raw output: $rawOutput"
+
+    $rawOutput = & actionlint @actionlintArgs 2>&1
+    # actionlint exit code is not used; errors are parsed from JSON output
+
+    # Parse JSON output
+    $issues = @()
+    if ($rawOutput -and $rawOutput -ne "null") {
+        try {
+            $issues = $rawOutput | ConvertFrom-Json -ErrorAction Stop
+            if ($null -eq $issues) { $issues = @() }
+            if ($issues -isnot [array]) { $issues = @($issues) }
+        }
+        catch {
+            Write-Warning "Failed to parse actionlint output: $($_.Exception.Message)"
+            Write-Verbose "Raw output: $rawOutput"
+        }
     }
-}
 
-# Process issues and create annotations
-$hasErrors = $false
-foreach ($issue in $issues) {
-    $hasErrors = $true
-    
-    # Create GitHub annotation
-    Write-GitHubAnnotation `
-        -Type 'error' `
-        -Message $issue.message `
-        -File $issue.filepath `
-        -Line $issue.line `
-        -Column $issue.column
-    
-    Write-Host "  ❌ $($issue.filepath):$($issue.line):$($issue.column): $($issue.message)" -ForegroundColor Red
-}
+    # Process issues and create annotations
+    $hasErrors = $false
+    foreach ($issue in $issues) {
+        $hasErrors = $true
+        
+        # Create GitHub annotation
+        Write-GitHubAnnotation `
+            -Type 'error' `
+            -Message $issue.message `
+            -File $issue.filepath `
+            -Line $issue.line `
+            -Column $issue.column
+        
+        Write-Host "  ❌ $($issue.filepath):$($issue.line):$($issue.column): $($issue.message)" -ForegroundColor Red
+    }
 
-# Export results
-$summary = @{
-    TotalFiles  = $filesToAnalyze.Count
-    TotalIssues = $issues.Count
-    Errors      = $issues.Count
-    Warnings    = 0
-    HasErrors   = $hasErrors
-    Timestamp   = (Get-Date -Format "o")
-    Tool        = "actionlint"
-}
+    # Export results
+    $summary = @{
+        TotalFiles  = $filesToAnalyze.Count
+        TotalIssues = $issues.Count
+        Errors      = $issues.Count
+        Warnings    = 0
+        HasErrors   = $hasErrors
+        Timestamp   = (Get-Date -Format "o")
+        Tool        = "actionlint"
+    }
 
-# Ensure logs directory exists
-$logsDir = Split-Path $OutputPath -Parent
-if (-not (Test-Path $logsDir)) {
-    New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
-}
+    # Ensure logs directory exists
+    $logsDir = Split-Path $OutputPath -Parent
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
+    }
 
-$issues | ConvertTo-Json -Depth 5 | Out-File $OutputPath
-$summary | ConvertTo-Json | Out-File "logs/yaml-lint-summary.json"
+    $issues | ConvertTo-Json -Depth 5 | Out-File $OutputPath
+    $summary | ConvertTo-Json | Out-File "logs/yaml-lint-summary.json"
 
-# Set outputs
-Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
-Set-GitHubOutput -Name "errors" -Value $summary.Errors
+    # Set outputs
+    Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
+    Set-GitHubOutput -Name "errors" -Value $summary.Errors
 
-if ($hasErrors) {
-    Set-GitHubEnv -Name "YAML_LINT_FAILED" -Value "true"
-}
+    if ($hasErrors) {
+        Set-GitHubEnv -Name "YAML_LINT_FAILED" -Value "true"
+    }
 
-# Write summary
-Write-GitHubStepSummary -Content "## YAML Lint Results`n"
+    # Write summary
+    Write-GitHubStepSummary -Content "## YAML Lint Results`n"
 
-if ($summary.TotalIssues -eq 0) {
-    Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
-    Write-Host "`n✅ All workflow files passed YAML linting!" -ForegroundColor Green
-    exit 0
-}
-else {
-    Write-GitHubStepSummary -Content @"
+    if ($summary.TotalIssues -eq 0) {
+        Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
+        Write-Host "`n✅ All workflow files passed YAML linting!" -ForegroundColor Green
+        exit 0
+    }
+    else {
+        Write-GitHubStepSummary -Content @"
 ❌ **Status**: Failed
 
 | Metric | Count |
@@ -167,7 +169,16 @@ else {
 | Total Issues | $($summary.TotalIssues) |
 | Errors | $($summary.Errors) |
 "@
-    
-    Write-Host "`n❌ YAML Lint found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        
+        Write-Host "`n❌ YAML Lint found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        exit 1
+    }
+}
+catch {
+    Write-Host "YAML Lint failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
     exit 1
 }
+#endregion

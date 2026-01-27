@@ -722,44 +722,54 @@ function Get-ChangedMarkdownFileGroup {
     }
 }
 
-# Main execution
-if ($MyInvocation.InvocationName -ne '.') {
-    if ($ChangedFilesOnly) {
-        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
-    }
-    elseif ($Files.Count -gt 0) {
-        $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
-    }
-    else {
-        $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
-    }
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        if ($ChangedFilesOnly) {
+            $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
+        }
+        elseif ($Files.Count -gt 0) {
+            $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
+        }
+        else {
+            $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -SkipFooterValidation:$SkipFooterValidation
+        }
 
-    # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
-    # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
-    if ($result -is [System.Array]) {
-        $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
-    }
+        # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
+        # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
+        if ($result -is [System.Array]) {
+            $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
+        }
 
-    # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
-    if ($ChangedFilesOnly -and $null -ne $result -and $result.TotalFiles -eq 0) {
-        Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
-        exit 0
-    }
+        # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
+        if ($ChangedFilesOnly -and $null -ne $result -and $result.TotalFiles -eq 0) {
+            Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
+            exit 0
+        }
 
-    # Validate result object before calling GetExitCode to prevent method invocation errors
-    # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
-    if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
-        $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
-        Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
-        exit 1
-    }
+        # Validate result object before calling GetExitCode to prevent method invocation errors
+        # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
+        if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
+            $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
+            Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
+            exit 1
+        }
 
-    $exitCode = $result.GetExitCode($WarningsAsErrors)
-    if ($exitCode -ne 0) {
-        exit $exitCode
-    }
-    else {
-        Write-Host "✅ All frontmatter validation checks passed!" -ForegroundColor Green
-        exit 0
+        $exitCode = $result.GetExitCode($WarningsAsErrors)
+        if ($exitCode -ne 0) {
+            exit $exitCode
+        }
+        else {
+            Write-Host "✅ All frontmatter validation checks passed!" -ForegroundColor Green
+            exit 0
+        }
     }
 }
+catch {
+    Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
+    exit 1
+}
+#endregion

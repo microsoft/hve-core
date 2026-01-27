@@ -480,9 +480,19 @@ System.IO.FileInfo
     return Get-Item -LiteralPath $prReferencePath
 }
 
-#region Entry Point
-# Execute only when run directly, not when dot-sourced for testing
-if ($MyInvocation.InvocationName -ne '.') {
-    Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+#region Main Execution
+try {
+    # Execute only when run directly, not when dot-sourced for testing
+    if ($MyInvocation.InvocationName -ne '.') {
+        Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+        exit 0
+    }
 }
-#endregion Entry Point
+catch {
+    Write-Error "Generate PR Reference failed: $($_.Exception.Message)"
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        Write-Output "::error::$($_.Exception.Message)"
+    }
+    exit 1
+}
+#endregion

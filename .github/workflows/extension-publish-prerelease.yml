@@ -68,7 +68,7 @@ jobs:
           node-version: '20'
 
       - name: Install VSCE
-        run: npm install -g @vscode/vsce
+        run: npm install -g @vscode/vsce@3.7.1
 
       - name: Setup PowerShell
         shell: pwsh
@@ -126,7 +126,7 @@ jobs:
           node-version: '20'
 
       - name: Install VSCE
-        run: npm install -g @vscode/vsce
+        run: npm install -g @vscode/vsce@3.7.1
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
