@@ -783,6 +783,10 @@ function Test-SingleFileFrontmatter {
         Repository root path for relative path computation and file classification.
     .PARAMETER FileReader
         Optional scriptblock for reading file content. Enables testing.
+    .PARAMETER FooterExcludePaths
+        Array of wildcard patterns for files to exclude from footer validation.
+        Uses PowerShell -like operator for matching against relative paths.
+        Path separators are normalized to forward slashes for cross-platform support.
     .OUTPUTS
         FileValidationResult
     #>
@@ -937,6 +941,11 @@ function Invoke-FrontmatterValidation {
 
     .PARAMETER RepoRoot
         Repository root path for relative path computation and file classification.
+
+    .PARAMETER FooterExcludePaths
+        Array of wildcard patterns for files to exclude from footer validation.
+        Uses PowerShell -like operator for matching against relative paths.
+        Path separators are normalized to forward slashes for cross-platform support.
 
     .OUTPUTS
         ValidationSummary

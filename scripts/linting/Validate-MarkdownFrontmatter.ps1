@@ -467,6 +467,11 @@ function Test-FrontmatterValidation {
     .PARAMETER EnableSchemaValidation
     Enable JSON Schema validation (advisory only).
 
+    .PARAMETER FooterExcludePaths
+    Array of wildcard patterns for files to exclude from footer validation only.
+    Uses PowerShell -like operator for matching against relative paths.
+    Path separators are normalized to forward slashes for cross-platform support.
+
     .OUTPUTS
     ValidationSummary from FrontmatterValidation module.
     #>
