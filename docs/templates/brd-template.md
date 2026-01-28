@@ -1,8 +1,8 @@
 ---
-title: {{initiativeName}} - Business Requirements Document
-description: Business requirements for {{briefDescription}}
-author: {{authorName}}
-ms.date: 2025-12-05
+title: "{{initiativeName}} - Business Requirements Document"
+description: "Business requirements for {{briefDescription}}"
+author: "{{authorName}}"
+ms.date: 2026-01-28
 ms.topic: reference
 ---
 
@@ -286,3 +286,8 @@ Unresolved Critical Questions: {{unresolvedCriticalQuestionsCount}} | TBDs: {{tb
 ---
 
 Generated {{generationTimestamp}} by {{generatorName}} (mode: {{generationMode}})
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
