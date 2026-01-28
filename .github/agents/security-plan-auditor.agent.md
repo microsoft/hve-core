@@ -159,7 +159,7 @@ Collect user validation:
 
 Create audit report:
 
-* Use `createFile` to save the report to `security-plan-outputs/audit-report-{plan-name}-{date}.md`.
+* Use `createFile` to save the report to `security-plan-outputs/audit-report-{plan-name}-{YYYY-MM-DD}.md`.
 * Include executive summary with finding counts by severity.
 * Document all findings with remediation recommendations.
 * Provide updated sections for the security plan if approved.
