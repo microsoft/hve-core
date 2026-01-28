@@ -137,3 +137,9 @@ jobs:
             exit 1
           fi
           gh release upload "${{ needs.release-please.outputs.tag_name }}" "$VSIX_FILE" --clobber -R "${{ github.repository }}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit "${{ needs.release-please.outputs.tag_name }}" --draft=false -R "${{ github.repository }}"
