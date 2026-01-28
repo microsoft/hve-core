@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.0.1](https://github.com/microsoft/hve-core/compare/hve-core-v2.0.0...hve-core-v2.0.1) (2026-01-28)
+
+
+### 🐛 Bug Fixes
+
+* **build:** use draft releases for VSIX upload ([#338](https://github.com/microsoft/hve-core/issues/338)) ([f1d3ac6](https://github.com/microsoft/hve-core/commit/f1d3ac657e386c9d62b01cbab9322a5e331ab864))
+* **docs:** quote YAML frontmatter values in BRD template ([#339](https://github.com/microsoft/hve-core/issues/339)) ([ca988f2](https://github.com/microsoft/hve-core/commit/ca988f2221eff8312b6188e73cca807742d08742))
+
 ## [2.0.0](https://github.com/microsoft/hve-core/compare/hve-core-v1.1.0...hve-core-v2.0.0) (2026-01-28)
 
 
