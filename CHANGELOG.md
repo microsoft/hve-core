@@ -12,6 +12,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.0.0](https://github.com/microsoft/hve-core/compare/hve-core-v1.1.0...hve-core-v2.0.0) (2026-01-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **agents:** add Task Reviewer and expand RPI to 4-phase workflow ([#277](https://github.com/microsoft/hve-core/issues/277))
+
+### ✨ Features
+
+* **agents:** add hve-core-installer agent to extension package ([#297](https://github.com/microsoft/hve-core/issues/297)) ([c0e48c6](https://github.com/microsoft/hve-core/commit/c0e48c60dabb2f43a34c1f14660aded66440b982))
+* **agents:** add Task Reviewer and expand RPI to 4-phase workflow ([#277](https://github.com/microsoft/hve-core/issues/277)) ([ae76cab](https://github.com/microsoft/hve-core/commit/ae76cabe11935094b33c4c87a51e8e8bd5c72488))
+* **build:** add code coverage reporting to Pester workflow ([#230](https://github.com/microsoft/hve-core/issues/230)) ([a34822a](https://github.com/microsoft/hve-core/commit/a34822a04208f40d9dc15baf92702e4636bf81de))
+* **docs:** add GOVERNANCE.md for OSSF Silver Badge compliance ([#235](https://github.com/microsoft/hve-core/issues/235)) ([b0e752c](https://github.com/microsoft/hve-core/commit/b0e752c1811bd3dc5ac9ddf5fea9c48c92a6d550))
+* **docs:** add ROADMAP.md for OSSF Silver badge compliance ([#238](https://github.com/microsoft/hve-core/issues/238)) ([4a41c16](https://github.com/microsoft/hve-core/commit/4a41c16480d70f3687c116c380f03e7eac2fb347))
+* **mcp:** add MCP server configuration guidance and installer enhancements ([#225](https://github.com/microsoft/hve-core/issues/225)) ([0bce418](https://github.com/microsoft/hve-core/commit/0bce418ef9a17e5e311d7cc01dc4e8ac699aa51f))
+* **scripts:** add YAML linting with actionlint ([#234](https://github.com/microsoft/hve-core/issues/234)) ([d9301f9](https://github.com/microsoft/hve-core/commit/d9301f932669f9e0ffb13fef412ab9563701a3ae))
+* **security:** add OpenSSF Scorecard workflow and badge ([#271](https://github.com/microsoft/hve-core/issues/271)) ([7c6d788](https://github.com/microsoft/hve-core/commit/7c6d7888986c9c77398648add958221a3ef63216))
+* **skills:** add video-to-gif conversion skill with FFmpeg two-pass optimization ([#247](https://github.com/microsoft/hve-core/issues/247)) ([8d65c42](https://github.com/microsoft/hve-core/commit/8d65c427efb6a90a4b4a483ad7756f6157667bca))
+* **tests:** add Pester tests for LintingHelpers and Validate-MarkdownFrontmatter ([#197](https://github.com/microsoft/hve-core/issues/197), [#198](https://github.com/microsoft/hve-core/issues/198)) ([#205](https://github.com/microsoft/hve-core/issues/205)) ([51ae563](https://github.com/microsoft/hve-core/commit/51ae563a213909937f96eacd722a38a9644367aa))
+
+
+### 🐛 Bug Fixes
+
+* **build:** detect table formatting changes via git diff ([#261](https://github.com/microsoft/hve-core/issues/261)) ([985eee0](https://github.com/microsoft/hve-core/commit/985eee0cc4215b6b69803fdb83c63182c03287bb))
+* **build:** disable MD024 lint rule in CHANGELOG for release-please ([#220](https://github.com/microsoft/hve-core/issues/220)) ([971df94](https://github.com/microsoft/hve-core/commit/971df94b11b0333843189fc457720c0913a4a5c1))
+* **build:** quote shell variables and group redirects in workflow files ([#299](https://github.com/microsoft/hve-core/issues/299)) ([3372509](https://github.com/microsoft/hve-core/commit/337250909ffa2c4788fd9312bb858b51b446917b))
+* **build:** resolve scorecard badge and workflow security issues ([#301](https://github.com/microsoft/hve-core/issues/301)) ([aeaed13](https://github.com/microsoft/hve-core/commit/aeaed13699523fba9ac03bc4b9d223969e2b34e6))
+* **extension:** remove frontmatter from README and exclude from markdown linting ([#223](https://github.com/microsoft/hve-core/issues/223)) ([4272529](https://github.com/microsoft/hve-core/commit/427252962228e190054815d472bcc6aa5adc3b96))
+* **instructions:** quote applyTo glob pattern for YAML compatibility ([#216](https://github.com/microsoft/hve-core/issues/216)) ([085199c](https://github.com/microsoft/hve-core/commit/085199c8820ac0910742ddf6c8a2dda0cce61f46))
+* **scripts:** add FooterExcludePaths parameter to frontmatter validation ([#334](https://github.com/microsoft/hve-core/issues/334)) ([64db98d](https://github.com/microsoft/hve-core/commit/64db98d26189017208391388daf3c2b24e50d549))
+* **scripts:** add GHSA word and logs/ exclusion to cspell config ([#214](https://github.com/microsoft/hve-core/issues/214)) ([5c99b3f](https://github.com/microsoft/hve-core/commit/5c99b3f81b316a76d0313a1c85ac08bfa651ef8c))
+* **scripts:** correct type assertions in Invoke-YamlLint.Tests.ps1 ([#332](https://github.com/microsoft/hve-core/issues/332)) ([af7050d](https://github.com/microsoft/hve-core/commit/af7050df973aaeb44be5a298d39a7544c27ed4bc))
+* **scripts:** eliminate false positives in dependency pinning npm pattern ([#273](https://github.com/microsoft/hve-core/issues/273)) ([ccbdfa3](https://github.com/microsoft/hve-core/commit/ccbdfa3d84d057bc633e17edbd7a7dd1b7e16d84))
+* **security:** add artifact attestation for signed releases ([#257](https://github.com/microsoft/hve-core/issues/257)) ([c52d6e2](https://github.com/microsoft/hve-core/commit/c52d6e268f8e9130579003f14d53c0a47638bb79))
+* standardize markdown footers and complete frontmatter ([#217](https://github.com/microsoft/hve-core/issues/217)) ([b4e7556](https://github.com/microsoft/hve-core/commit/b4e75565b1476bdb4e2d2846f432373a616e8bfa))
+
+
+### 📚 Documentation
+
+* add OpenSSF Best Practices Passing badge to README ([#239](https://github.com/microsoft/hve-core/issues/239)) ([91bc529](https://github.com/microsoft/hve-core/commit/91bc5296db759087346f08879f15aeda1d1d4c4f))
+* **architecture:** add architecture documentation and value proposition ([#252](https://github.com/microsoft/hve-core/issues/252)) ([0e4b02f](https://github.com/microsoft/hve-core/commit/0e4b02f92bfe8ff18332714fb19a08aa217b01ac))
+* **contributing:** add testing requirements for OSSF compliance ([#254](https://github.com/microsoft/hve-core/issues/254)) ([4db1a18](https://github.com/microsoft/hve-core/commit/4db1a1861e935170ded1f7c0c3f6ef278eedd186))
+* **docs:** add enterprise status badges to README header ([#270](https://github.com/microsoft/hve-core/issues/270)) ([ccb68a4](https://github.com/microsoft/hve-core/commit/ccb68a481e755d669057f9f70a5d82f89fc47191))
+* **security:** add security assurance case and threat model for OSSF Silver ([#259](https://github.com/microsoft/hve-core/issues/259)) ([a390e26](https://github.com/microsoft/hve-core/commit/a390e26bc00f746794c51d2e1a3281afdebe4250))
+
+
+### ♻️ Refactoring
+
+* **application:** wrap execution with try blocks, ensure proper … ([#296](https://github.com/microsoft/hve-core/issues/296)) ([35c4417](https://github.com/microsoft/hve-core/commit/35c44178ff7bca70f390a987ebb51767cda375a4))
+* **scripts:** extract frontmatter validation to testable module ([#293](https://github.com/microsoft/hve-core/issues/293)) ([4e8707e](https://github.com/microsoft/hve-core/commit/4e8707eb77ae3bf201e93c403106865ed534514b))
+* **scripts:** extract pure functions for Pester testability ([#221](https://github.com/microsoft/hve-core/issues/221)) ([d40e742](https://github.com/microsoft/hve-core/commit/d40e742b4e4673bb9323da3aecd0c255f1897aa6))
+
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump cspell from 9.4.0 to 9.6.0 in the npm-dependencies group ([#208](https://github.com/microsoft/hve-core/issues/208)) ([855914b](https://github.com/microsoft/hve-core/commit/855914b95a43d90e7331bfc93b8ffbb4ffd7263b))
+* **deps-dev:** bump cspell from 9.6.0 to 9.6.1 in the npm-dependencies group ([#294](https://github.com/microsoft/hve-core/issues/294)) ([1e45ad6](https://github.com/microsoft/hve-core/commit/1e45ad6f1cd3e713db35e394c2a2dd2b270f14dc))
+* **deps:** bump actions/setup-node from 6.1.0 to 6.2.0 in the github-actions group ([#209](https://github.com/microsoft/hve-core/issues/209)) ([c4c69e2](https://github.com/microsoft/hve-core/commit/c4c69e283888fa8e4dd58fab89659a89555428c9))
+* **deps:** bump the github-actions group with 4 updates ([#295](https://github.com/microsoft/hve-core/issues/295)) ([d8337b8](https://github.com/microsoft/hve-core/commit/d8337b8b280f516f0425abedd1b574d9e84f33f3))
+* remove step-security/harden-runner from workflows ([#246](https://github.com/microsoft/hve-core/issues/246)) ([c5708d8](https://github.com/microsoft/hve-core/commit/c5708d8169d62425c8749b4d88aa50f05e07df5f))
+
 ## [1.1.0](https://github.com/microsoft/hve-core/compare/hve-core-v1.0.0...hve-core-v1.1.0) (2026-01-19)
 
 
