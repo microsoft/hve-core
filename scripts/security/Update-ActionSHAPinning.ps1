@@ -814,8 +814,40 @@ function Set-ContentPreservePermission {
     }
 }
 
-#region Main Execution
-try {
+function Invoke-ActionSHAUpdate {
+<#
+.SYNOPSIS
+    Main orchestration function for GitHub Actions SHA pinning updates.
+.DESCRIPTION
+    Coordinates the scanning and updating of GitHub Actions workflows with SHA pins.
+.PARAMETER WorkflowPath
+    Path to the .github/workflows directory.
+.PARAMETER OutputReport
+    Generate detailed report of changes and pinning status.
+.PARAMETER OutputFormat
+    Output format for results.
+.PARAMETER UpdateStale
+    Update already-pinned-but-stale GitHub Actions to their latest commit SHAs.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure)
+#>
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([int])]
+    param(
+        [Parameter()]
+        [string]$WorkflowPath = ".github/workflows",
+
+        [Parameter()]
+        [switch]$OutputReport,
+
+        [Parameter()]
+        [ValidateSet("json", "azdo", "github", "console", "BuildWarning", "Summary")]
+        [string]$OutputFormat = "console",
+
+        [Parameter()]
+        [switch]$UpdateStale
+    )
+
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'
     }
@@ -831,7 +863,7 @@ try {
 
     if (@($workflowFiles).Count -eq 0) {
         Write-SecurityLog "No YAML workflow files found in $WorkflowPath" -Level 'Warning'
-        return
+        return 0
     }
 
     Write-SecurityLog "Found $(@($workflowFiles).Count) workflow files" -Level 'Info'
@@ -904,7 +936,19 @@ try {
         Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
         Write-SecurityLog "WhatIf mode: No files were modified. Run without -WhatIf to apply changes." -Level 'Info'
     }
-    exit 0
+    return 0
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-ActionSHAUpdate `
+            -WorkflowPath $WorkflowPath `
+            -OutputReport:$OutputReport `
+            -OutputFormat $OutputFormat `
+            -UpdateStale:$UpdateStale
+        exit $exitCode
+    }
 }
 catch {
     Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'

@@ -29,9 +29,23 @@ if (-not (Test-Path $logsDir)) {
 
 Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
 
-#region Main Execution
+function Invoke-LinkLanguageCheckWrapper {
+<#
+.SYNOPSIS
+    Main orchestration function for link language check wrapper.
+.DESCRIPTION
+    Coordinates the link language check with GitHub Actions integration.
+.PARAMETER ExcludePaths
+    Paths to exclude from checking.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for issues found)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [string[]]$ExcludePaths = @()
+    )
 
-try {
     # Run the language check script
     $scriptArgs = @{}
     if ($ExcludePaths.Count -gt 0) {
@@ -40,6 +54,19 @@ try {
     $jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") @scriptArgs 2>&1
 
     $results = $jsonOutput | ConvertFrom-Json
+    
+    # Get repository root
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Not in a git repository"
+        return 1
+    }
+
+    # Create logs directory if it doesn't exist
+    $logsDir = Join-Path $repoRoot "logs"
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
     
     if ($results -and $results.Count -gt 0) {
         Write-Host "Found $($results.Count) URLs with 'en-us' language paths`n" -ForegroundColor Yellow
@@ -90,7 +117,7 @@ scripts/linting/Link-Lang-Check.ps1 -Fix
 $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_).Count; "- $_ ($count occurrence(s))" }) -join "`n")
 "@
     
-        exit 1
+        return 1
     }
     else {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
@@ -117,7 +144,16 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
 No URLs with language-specific paths detected.
 "@
     
-        exit 0
+        return 0
+    }
+}
+
+#region Main Execution
+
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-LinkLanguageCheckWrapper -ExcludePaths $ExcludePaths
+        exit $exitCode
     }
 }
 catch {

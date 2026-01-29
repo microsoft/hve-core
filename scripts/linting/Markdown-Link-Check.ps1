@@ -185,8 +185,29 @@ function Get-RelativePrefix {
     return $normalized
 }
 
-#region Main Execution
-try {
+function Invoke-MarkdownLinkCheck {
+<#
+.SYNOPSIS
+    Main orchestration function for markdown link validation.
+.DESCRIPTION
+    Coordinates markdown file discovery and link validation using markdown-link-check.
+.PARAMETER Path
+    One or more files or directories to scan.
+.PARAMETER ConfigPath
+    Path to the markdown-link-check configuration file.
+.PARAMETER Quiet
+    Suppress non-error output from markdown-link-check.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [string[]]$Path = @(".", ".github", ".devcontainer"),
+        [string]$ConfigPath,
+        [switch]$Quiet
+    )
+
     $scriptRootParent = Split-Path -Path $PSScriptRoot -Parent
     $repoRootPath = Split-Path -Path $scriptRootParent -Parent
     $repoRoot = Resolve-Path -LiteralPath $repoRootPath
@@ -195,7 +216,7 @@ try {
 
     if (-not $filesToCheck -or $filesToCheck.Count -eq 0) {
         Write-Error 'No markdown files were found to validate.'
-        exit 1
+        return 1
     }
 
     $cli = Join-Path -Path $repoRoot.Path -ChildPath 'node_modules/.bin/markdown-link-check'
@@ -205,7 +226,7 @@ try {
 
     if (-not (Test-Path -LiteralPath $cli)) {
         Write-Error 'markdown-link-check is not installed. Run "npm install --save-dev markdown-link-check" first.'
-        exit 1
+        return 1
     }
 
     $baseArguments = @('-c', $config.Path)
@@ -356,7 +377,7 @@ For more information, see the [markdown-link-check documentation](https://github
         Set-GitHubEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
 
         Write-Error ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
-        exit 1
+        return 1
     }
     else {
         $summaryContent = @"
@@ -371,7 +392,15 @@ Great job! All markdown links are valid. 🎉
 
         Write-GitHubStepSummary -Content $summaryContent
         Write-Output 'markdown-link-check completed successfully.'
-        exit 0
+        return 0
+    }
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-MarkdownLinkCheck -Path $Path -ConfigPath $ConfigPath -Quiet:$Quiet
+        exit $exitCode
     }
 }
 catch {

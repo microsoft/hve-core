@@ -75,6 +75,61 @@ When adding new scripts:
 5. Document in relevant README files
 6. Test locally before creating PR
 
+## Script Entry Point Pattern
+
+All PowerShell scripts designed for both direct invocation and dot-sourcing (for testing) follow this pattern:
+
+### Pattern Structure
+
+1. **Script Parameters**: CmdletBinding and param block at top
+2. **Helper Functions**: Pure functions for individual operations
+3. **Invoke-* Function**: Main orchestration function
+4. **Guard Pattern**: Entry point that only executes on direct invocation
+
+### Example
+
+```powershell
+[CmdletBinding()]
+param([string]$InputPath)
+
+function Get-Data { ... }
+
+function Invoke-MyOperation {
+    param([string]$InputPath)
+    # Main orchestration logic
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        Invoke-MyOperation -InputPath $InputPath
+        exit 0
+    }
+}
+catch {
+    Write-Error "Operation failed: $($_.Exception.Message)"
+    exit 1
+}
+#endregion
+```
+
+### Benefits
+
+* **Testability**: Dot-source to access functions without executing main logic
+* **Reusability**: Import functions into other scripts
+* **Consistency**: Predictable behavior across all scripts
+
+### Naming Convention
+
+| Script Name | Invoke Function |
+|-------------|-----------------|
+| `Generate-*.ps1` | `Invoke-*Generation` |
+| `Test-*.ps1` | `Invoke-*Test` |
+| `Package-*.ps1` | `Invoke-*Packaging` |
+| `Prepare-*.ps1` | `Invoke-*Preparation` |
+| `Update-*.ps1` | `Invoke-*Update` |
+| `Validate-*.ps1` | `Test-*Validation` |
+
 ## Related Documentation
 
 * [Linting Scripts Documentation](linting/README.md)

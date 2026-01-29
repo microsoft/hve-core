@@ -867,8 +867,51 @@ function Get-ToolStaleness {
     return $results
 }
 
-#region Main Execution
-try {
+function Invoke-SHAStalenessTest {
+<#
+.SYNOPSIS
+    Main orchestration function for SHA staleness monitoring.
+.DESCRIPTION
+    Coordinates staleness checking for GitHub Actions and tools, then outputs results.
+.PARAMETER OutputFormat
+    Output format: 'json', 'azdo', 'github', or 'console'.
+.PARAMETER MaxAge
+    Maximum age in days before considering a dependency stale.
+.PARAMETER LogPath
+    Path for security logging.
+.PARAMETER OutputPath
+    Path to write structured output file.
+.PARAMETER FailOnStale
+    Exit with code 1 if stale dependencies are found.
+.PARAMETER GraphQLBatchSize
+    Batch size for GraphQL queries.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure/stale dependencies with FailOnStale)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("json", "azdo", "github", "console", "BuildWarning", "Summary")]
+        [string]$OutputFormat = "console",
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxAge = 30,
+
+        [Parameter(Mandatory = $false)]
+        [string]$LogPath = "./logs/sha-staleness-monitoring.log",
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "./logs/sha-staleness-results.json",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnStale,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 50)]
+        [int]$GraphQLBatchSize = 20
+    )
+
     Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
     Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
     Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
@@ -918,18 +961,32 @@ try {
     Write-SecurityLog "SHA staleness monitoring completed" -Level Success
     Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
 
-    # Exit with appropriate code based on findings and -FailOnStale parameter
+    # Return appropriate code based on findings and -FailOnStale parameter
     if ($StaleDependencies.Count -gt 0) {
         if ($FailOnStale) {
             Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
-            exit 1
+            return 1
         }
         else {
             Write-SecurityLog "Stale dependencies found but exiting with status 0 (use -FailOnStale to fail build)" -Level Warning
-            exit 0
+            return 0
         }
     }
-    exit 0  # All good
+    return 0  # All good
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-SHAStalenessTest `
+            -OutputFormat $OutputFormat `
+            -MaxAge $MaxAge `
+            -LogPath $LogPath `
+            -OutputPath $OutputPath `
+            -FailOnStale:$FailOnStale `
+            -GraphQLBatchSize $GraphQLBatchSize
+        exit $exitCode
+    }
 }
 catch {
     Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"

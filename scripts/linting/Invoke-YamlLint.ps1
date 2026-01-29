@@ -56,34 +56,55 @@ if (-not $actionlintPath) {
 
 Write-Verbose "Using actionlint: $($actionlintPath.Source)"
 
-# Get files to analyze
-$workflowPath = ".github/workflows"
-$filesToAnalyze = @()
+function Invoke-YamlLintValidation {
+<#
+.SYNOPSIS
+    Main orchestration function for YAML lint validation.
+.DESCRIPTION
+    Coordinates the validation of GitHub Actions workflow files using actionlint.
+.PARAMETER ChangedFilesOnly
+    Validate only changed YAML files.
+.PARAMETER BaseBranch
+    Base branch for detecting changed files.
+.PARAMETER OutputPath
+    Path for JSON results output.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [switch]$ChangedFilesOnly,
+        [string]$BaseBranch = "origin/main",
+        [string]$OutputPath = "logs/yaml-lint-results.json"
+    )
 
-if ($ChangedFilesOnly) {
-    Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
-    $changedFiles = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml')
-    $filesToAnalyze = $changedFiles | Where-Object { $_ -like "$workflowPath/*" }
-}
-else {
-    Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
-    if (Test-Path $workflowPath) {
-        $filesToAnalyze = Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName }
+    # Get files to analyze
+    $workflowPath = ".github/workflows"
+    $filesToAnalyze = @()
+
+    if ($ChangedFilesOnly) {
+        Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
+        $changedFiles = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml')
+        $filesToAnalyze = $changedFiles | Where-Object { $_ -like "$workflowPath/*" }
     }
-}
+    else {
+        Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
+        if (Test-Path $workflowPath) {
+            $filesToAnalyze = Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName }
+        }
+    }
 
-if ($filesToAnalyze.Count -eq 0) {
-    Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
-    Set-GitHubOutput -Name "count" -Value "0"
-    Set-GitHubOutput -Name "issues" -Value "0"
-    exit 0
-}
+    if ($filesToAnalyze.Count -eq 0) {
+        Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
+        Set-GitHubOutput -Name "count" -Value "0"
+        Set-GitHubOutput -Name "issues" -Value "0"
+        return 0
+    }
 
-Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+    Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
+    Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
 
-#region Main Execution
-try {
     # Run actionlint with JSON output
     $actionlintArgs = @('-format', '{{json .}}')
     if ($ChangedFilesOnly -and $filesToAnalyze.Count -gt 0) {
@@ -91,7 +112,6 @@ try {
     }
 
     $rawOutput = & actionlint @actionlintArgs 2>&1
-    # actionlint exit code is not used; errors are parsed from JSON output
 
     # Parse JSON output
     $issues = @()
@@ -157,7 +177,7 @@ try {
     if ($summary.TotalIssues -eq 0) {
         Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
         Write-Host "`n✅ All workflow files passed YAML linting!" -ForegroundColor Green
-        exit 0
+        return 0
     }
     else {
         Write-GitHubStepSummary -Content @"
@@ -171,7 +191,18 @@ try {
 "@
         
         Write-Host "`n❌ YAML Lint found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
-        exit 1
+        return 1
+    }
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-YamlLintValidation `
+            -ChangedFilesOnly:$ChangedFilesOnly `
+            -BaseBranch $BaseBranch `
+            -OutputPath $OutputPath
+        exit $exitCode
     }
 }
 catch {

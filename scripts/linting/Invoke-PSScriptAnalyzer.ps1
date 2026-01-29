@@ -57,13 +57,39 @@ if ($filesToAnalyze.Count -eq 0) {
 Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
 Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
 
-#region Main Execution
-try {
+function Invoke-PSScriptAnalysis {
+<#
+.SYNOPSIS
+    Main orchestration function for PSScriptAnalyzer validation.
+.DESCRIPTION
+    Coordinates the analysis of PowerShell files using PSScriptAnalyzer.
+.PARAMETER FilesToAnalyze
+    Array of files to analyze.
+.PARAMETER ConfigPath
+    Path to PSScriptAnalyzer settings file.
+.PARAMETER OutputPath
+    Path for JSON results output.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$FilesToAnalyze,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$ConfigPath,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath
+    )
+
     # Run PSScriptAnalyzer
     $allResults = @()
     $hasErrors = $false
 
-    foreach ($file in $filesToAnalyze) {
+    foreach ($file in $FilesToAnalyze) {
         $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
         Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
         
@@ -101,7 +127,7 @@ try {
 
     # Export results
     $summary = @{
-        TotalFiles     = $filesToAnalyze.Count
+        TotalFiles     = $FilesToAnalyze.Count
         TotalIssues    = $allResults.Count
         Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
         Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
@@ -127,7 +153,7 @@ try {
     if ($summary.TotalIssues -eq 0) {
         Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
         Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
-        exit 0
+        return 0
     }
     else {
         Write-GitHubStepSummary -Content @"
@@ -143,7 +169,18 @@ try {
 "@
     
         Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
-        exit 1
+        return 1
+    }
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-PSScriptAnalysis `
+            -FilesToAnalyze $filesToAnalyze `
+            -ConfigPath $ConfigPath `
+            -OutputPath $OutputPath
+        exit $exitCode
     }
 }
 catch {

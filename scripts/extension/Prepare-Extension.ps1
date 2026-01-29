@@ -452,23 +452,47 @@ function Update-PackageJsonContributes {
     return $updated
 }
 
-#endregion Pure Functions
+function Invoke-ExtensionPreparation {
+<#
+.SYNOPSIS
+    Main orchestration function for VS Code extension preparation.
+.DESCRIPTION
+    Coordinates the preparation of the VS Code extension by discovering and configuring agents, prompts, and instructions.
+.PARAMETER ChangelogPath
+    Optional path to a changelog file.
+.PARAMETER Channel
+    Release channel controlling which maturity levels are included.
+.PARAMETER DryRun
+    If specified, shows what would be done without making changes.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success, 1 for failure)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$ChangelogPath = "",
 
-#region Main Execution
-try {
-    if ($MyInvocation.InvocationName -ne '.') {
-        # Verify PowerShell-Yaml module is available (runtime check instead of #Requires)
-        if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-            Write-Error "Required module 'PowerShell-Yaml' is not installed. Install with: Install-Module -Name PowerShell-Yaml -Scope CurrentUser"
-            exit 1
-        }
-        Import-Module PowerShell-Yaml -ErrorAction Stop
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'Stable',
 
-        # Define allowed maturity levels based on channel
-        $allowedMaturities = Get-AllowedMaturities -Channel $Channel
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
 
-        # Determine script and repo paths
-    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    # Verify PowerShell-Yaml module is available (runtime check instead of #Requires)
+    if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+        Write-Error "Required module 'PowerShell-Yaml' is not installed. Install with: Install-Module -Name PowerShell-Yaml -Scope CurrentUser"
+        return 1
+    }
+    Import-Module PowerShell-Yaml -ErrorAction Stop
+
+    # Define allowed maturity levels based on channel
+    $allowedMaturities = Get-AllowedMaturities -Channel $Channel
+
+    # Determine script and repo paths
+    $ScriptDir = $PSScriptRoot
     $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
     $ExtensionDir = Join-Path $RepoRoot "extension"
     $GitHubDir = Join-Path $RepoRoot ".github"
@@ -482,17 +506,17 @@ try {
     # Verify paths exist
     if (-not (Test-Path $ExtensionDir)) {
         Write-Error "Extension directory not found: $ExtensionDir"
-        exit 1
+        return 1
     }
 
     if (-not (Test-Path $PackageJsonPath)) {
         Write-Error "package.json not found: $PackageJsonPath"
-        exit 1
+        return 1
     }
 
     if (-not (Test-Path $GitHubDir)) {
         Write-Error ".github directory not found: $GitHubDir"
-        exit 1
+        return 1
     }
 
     # Read current package.json
@@ -501,13 +525,13 @@ try {
         $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
     } catch {
         Write-Error "Failed to parse package.json: $_`nPlease check $PackageJsonPath for JSON syntax errors."
-        exit 1
+        return 1
     }
 
     # Validate package.json has required version field
     if (-not $packageJson.PSObject.Properties['version']) {
         Write-Error "package.json is missing required 'version' field"
-        exit 1
+        return 1
     }
 
     # Use existing version from package.json
@@ -516,7 +540,7 @@ try {
     # Validate version format
     if ($version -notmatch '^\d+\.\d+\.\d+$') {
         Write-Error "Invalid version format in package.json: '$version'. Expected semantic version format (e.g., 1.0.0)"
-        exit 1
+        return 1
     }
 
     Write-Host "   Using version: $version" -ForegroundColor Green
@@ -678,7 +702,7 @@ try {
         Write-Host ($packageJson | ConvertTo-Json -Depth 10)
         Write-Host ""
         Write-Host "🔍 DRY RUN - No changes made" -ForegroundColor Magenta
-        exit 0
+        return 0
     }
 
     # Write updated package.json
@@ -710,7 +734,19 @@ try {
     Write-Host "   Instructions: $($chatInstructions.Count)" -ForegroundColor White
     Write-Host ""
 
-    exit 0
+    return 0
+}
+
+#endregion Pure Functions
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-ExtensionPreparation `
+            -ChangelogPath $ChangelogPath `
+            -Channel $Channel `
+            -DryRun:$DryRun
+        exit $exitCode
     }
 }
 catch {

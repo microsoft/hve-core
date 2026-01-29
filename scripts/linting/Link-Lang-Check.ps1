@@ -271,8 +271,26 @@ function ConvertTo-JsonOutput {
     return $jsonData
 }
 
-#region Main Execution
-try {
+function Invoke-LinkLanguageCheck {
+<#
+.SYNOPSIS
+    Main orchestration function for link language path checking.
+.DESCRIPTION
+    Coordinates scanning git-tracked files for URLs containing 'en-us' and optionally fixes them.
+.PARAMETER Fix
+    Fix URLs by removing "en-us/" instead of just reporting them.
+.PARAMETER ExcludePaths
+    Glob patterns for paths to exclude from checking.
+.OUTPUTS
+    System.Int32 - Exit code (0 for success)
+#>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [switch]$Fix,
+        [string[]]$ExcludePaths = @()
+    )
+
     if ($Verbose) {
         Write-Information "Getting list of git-tracked text files..." -InformationAction Continue
     }
@@ -362,7 +380,15 @@ try {
             Write-Output "No URLs containing 'en-us' were found."
         }
     }
-    exit 0
+    return 0
+}
+
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        $exitCode = Invoke-LinkLanguageCheck -Fix:$Fix -ExcludePaths $ExcludePaths
+        exit $exitCode
+    }
 }
 catch {
     Write-Error "Link Lang Check failed: $($_.Exception.Message)"

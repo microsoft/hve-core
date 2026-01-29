@@ -5,29 +5,12 @@
     Pester tests for Test-SHAStaleness.ps1 functions.
 
 .DESCRIPTION
-    Tests the staleness checking functions without executing the main script.
-    Uses AST function extraction to avoid running main execution block.
+    Tests the staleness checking functions by dot-sourcing the script.
+    The guard pattern prevents main execution when dot-sourced.
 #>
 
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot '../../security/Test-SHAStaleness.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract function definitions from the script without executing main block
-    # Parse the AST to get function definitions
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract all function definitions
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    # Define each function in the current scope using ScriptBlock
-    foreach ($func in $functionDefs) {
-        $funcCode = $func.Extent.Text
-        $scriptBlock = [scriptblock]::Create($funcCode)
-        . $scriptBlock
-    }
+    . $PSScriptRoot/../../security/Test-SHAStaleness.ps1
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
