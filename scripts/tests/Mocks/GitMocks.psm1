@@ -118,12 +118,17 @@ function Initialize-MockGitHubEnvironment {
 function Clear-MockGitHubEnvironment {
     <#
     .SYNOPSIS
-    Removes GitHub Actions environment variables (simulates local/non-CI environment).
+    Removes CI platform environment variables (simulates local/non-CI environment).
+
+    .DESCRIPTION
+    Clears both GitHub Actions and Azure DevOps environment variables to
+    simulate a local development environment for testing.
     #>
     [CmdletBinding()]
     param()
 
     @(
+        # GitHub Actions
         'GITHUB_ACTIONS',
         'GITHUB_OUTPUT',
         'GITHUB_ENV',
@@ -131,12 +136,17 @@ function Clear-MockGitHubEnvironment {
         'GITHUB_BASE_REF',
         'GITHUB_HEAD_REF',
         'GITHUB_WORKSPACE',
-        'GITHUB_REPOSITORY'
+        'GITHUB_REPOSITORY',
+        # Azure DevOps
+        'TF_BUILD',
+        'AZURE_PIPELINES',
+        'BUILD_ARTIFACTSTAGINGDIRECTORY',
+        'SYSTEM_TEAMFOUNDATIONCOLLECTIONURI'
     ) | ForEach-Object {
         Remove-Item -Path "env:$_" -ErrorAction SilentlyContinue
     }
 
-    Write-Verbose "Cleared GitHub environment variables"
+    Write-Verbose "Cleared CI environment variables"
 }
 
 function Remove-MockGitHubFiles {
