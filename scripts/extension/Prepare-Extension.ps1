@@ -570,7 +570,7 @@ function Invoke-PrepareExtension {
         $packageJson = $packageJsonContent | ConvertFrom-Json
     }
     catch {
-        return New-PrepareResult -Success $false -ErrorMessage "Failed to parse package.json: $($_.Exception.Message)"
+        return New-PrepareResult -Success $false -ErrorMessage "Failed to parse package.json at '$PackageJsonPath'. Check the file for JSON syntax errors. Underlying error: $($_.Exception.Message)"
     }
 
     # Validate version field
@@ -578,7 +578,7 @@ function Invoke-PrepareExtension {
         return New-PrepareResult -Success $false -ErrorMessage "package.json does not contain a 'version' field"
     }
     $version = $packageJson.version
-    if ($version -notmatch '^\d+\.\d+\.\d+') {
+    if ($version -notmatch '^\d+\.\d+\.\d+$') {
         return New-PrepareResult -Success $false -ErrorMessage "Invalid version format in package.json: $version"
     }
 
@@ -639,7 +639,7 @@ function Invoke-PrepareExtension {
 
     # Write updated package.json
     if (-not $DryRun) {
-        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath
+        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
         Write-Host "`nUpdated package.json with discovered artifacts" -ForegroundColor Green
     }
     else {
@@ -658,7 +658,7 @@ function Invoke-PrepareExtension {
         }
     }
     elseif ($ChangelogPath) {
-        Write-Host "Warning: Changelog path specified but file not found: $ChangelogPath" -ForegroundColor Yellow
+        Write-Warning "Changelog path specified but file not found: $ChangelogPath"
     }
 
     Write-Host "`n=== Preparation Complete ===" -ForegroundColor Cyan
@@ -674,58 +674,65 @@ function Invoke-PrepareExtension {
 
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
-    $ErrorActionPreference = "Stop"
+    try {
+        $ErrorActionPreference = "Stop"
 
-    # Verify PowerShell-Yaml module is available
-    if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-        Write-Error "Required module 'PowerShell-Yaml' is not installed."
+        # Verify PowerShell-Yaml module is available
+        if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+            throw "Required module 'PowerShell-Yaml' is not installed."
+        }
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        # Resolve paths using $MyInvocation (must stay in entry point)
+        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
+        $ExtensionDir = Join-Path $RepoRoot "extension"
+
+        # Resolve changelog path if provided
+        $resolvedChangelogPath = ""
+        if ($ChangelogPath) {
+            $resolvedChangelogPath = if ([System.IO.Path]::IsPathRooted($ChangelogPath)) {
+                $ChangelogPath
+            }
+            else {
+                Join-Path $RepoRoot $ChangelogPath
+            }
+        }
+
+        Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
+        Write-Host "==============================" -ForegroundColor Cyan
+        Write-Host "   Channel: $Channel" -ForegroundColor Cyan
+        Write-Host ""
+
+        # Call orchestration function
+        $result = Invoke-PrepareExtension `
+            -ExtensionDirectory $ExtensionDir `
+            -RepoRoot $RepoRoot `
+            -Channel $Channel `
+            -ChangelogPath $resolvedChangelogPath `
+            -DryRun:$DryRun
+
+        if (-not $result.Success) {
+            throw $result.ErrorMessage
+        }
+
+        Write-Host ""
+        Write-Host "🎉 Done!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "📊 Summary:" -ForegroundColor Cyan
+        Write-Host "  Agents: $($result.AgentCount)"
+        Write-Host "  Prompts: $($result.PromptCount)"
+        Write-Host "  Instructions: $($result.InstructionCount)"
+        Write-Host "  Version: $($result.Version)"
+
+        exit 0
+    }
+    catch {
+        Write-Error "Prepare Extension failed: $($_.Exception.Message)"
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            Write-Output "::error::$($_.Exception.Message)"
+        }
         exit 1
     }
-    Import-Module PowerShell-Yaml -ErrorAction Stop
-
-    # Resolve paths using $MyInvocation (must stay in entry point)
-    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
-    $ExtensionDir = Join-Path $RepoRoot "extension"
-
-    # Resolve changelog path if provided
-    $resolvedChangelogPath = ""
-    if ($ChangelogPath) {
-        $resolvedChangelogPath = if ([System.IO.Path]::IsPathRooted($ChangelogPath)) {
-            $ChangelogPath
-        }
-        else {
-            Join-Path $RepoRoot $ChangelogPath
-        }
-    }
-
-    Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
-    Write-Host "==============================" -ForegroundColor Cyan
-    Write-Host "   Channel: $Channel" -ForegroundColor Cyan
-    Write-Host ""
-
-    # Call orchestration function
-    $result = Invoke-PrepareExtension `
-        -ExtensionDirectory $ExtensionDir `
-        -RepoRoot $RepoRoot `
-        -Channel $Channel `
-        -ChangelogPath $resolvedChangelogPath `
-        -DryRun:$DryRun
-
-    if (-not $result.Success) {
-        Write-Error $result.ErrorMessage
-        exit 1
-    }
-
-    Write-Host ""
-    Write-Host "🎉 Done!" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "📊 Summary:" -ForegroundColor Cyan
-    Write-Host "  Agents: $($result.AgentCount)"
-    Write-Host "  Prompts: $($result.PromptCount)"
-    Write-Host "  Instructions: $($result.InstructionCount)"
-    Write-Host "  Version: $($result.Version)"
-
-    exit 0
 }
 #endregion
