@@ -128,7 +128,10 @@ function Get-MarkdownTarget {
             $searchPath = if ($relativePath -eq '.') { '*.md' } else { "$relativePath/**/*.md" }
 
             Write-Verbose "Searching in: $searchPath"
-            $trackedFiles = git ls-files $searchPath 2>$null
+            $trackedFiles = git ls-files $searchPath 2>$null |
+    Where-Object { $_ -notlike 'scripts/tests/Fixtures/*' }
+
+
 
             if ($trackedFiles) {
                 foreach ($file in $trackedFiles) {
