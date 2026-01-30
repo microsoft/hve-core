@@ -220,10 +220,17 @@ function Write-GitHubAnnotation {
         [int]$Column
     )
 
+    # Escape workflow command patterns to prevent injection
+    $escapedMessage = $Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+    
     $annotation = "::${Type}"
     
     $properties = @()
-    if ($File) { $properties += "file=$File" }
+    if ($File) {
+        # Escape property values (colons and commas have special meaning in properties)
+        $escapedFile = $File -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace ':', '%3A' -replace ',', '%2C'
+        $properties += "file=$escapedFile"
+    }
     if ($Line -gt 0) { $properties += "line=$Line" }
     if ($Column -gt 0) { $properties += "col=$Column" }
     
@@ -231,7 +238,7 @@ function Write-GitHubAnnotation {
         $annotation += " $($properties -join ',')"
     }
     
-    $annotation += "::$Message"
+    $annotation += "::$escapedMessage"
     
     Write-Host $annotation
 }

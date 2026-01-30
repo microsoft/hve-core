@@ -380,7 +380,9 @@ Great job! All markdown links are valid. 🎉
 catch {
     Write-Error "Markdown Link Check failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        # Escape workflow command patterns to prevent injection
+        $escapedMsg = $_.Exception.Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }
