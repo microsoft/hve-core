@@ -1,8 +1,11 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+#Requires -Modules Pester
 # CIHelpers.Tests.ps1
 #
 # Purpose: Unit tests for CIHelpers.psm1 module
 # Author: HVE Core Team
-# Created: 2026-01-29
 
 BeforeAll {
     $modulePath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'

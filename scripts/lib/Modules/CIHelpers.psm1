@@ -1,8 +1,10 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 # CIHelpers.psm1
 #
 # Purpose: Shared CI platform detection and output utilities for hve-core scripts.
 # Author: HVE Core Team
-# Created: 2026-01-29
 
 function Get-CIPlatform {
     <#
@@ -82,7 +84,7 @@ function Set-CIOutput {
     switch ($platform) {
         'github' {
             if ($env:GITHUB_OUTPUT) {
-                "$Name=$Value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding UTF8
+                "$Name=$Value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             }
             else {
                 Write-Verbose "GITHUB_OUTPUT not set, would set: $Name=$Value"
@@ -133,7 +135,7 @@ function Write-CIStepSummary {
     switch ($platform) {
         'github' {
             if ($env:GITHUB_STEP_SUMMARY) {
-                $markdown | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding UTF8
+                $markdown | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
             }
             else {
                 Write-Verbose "GITHUB_STEP_SUMMARY not set"
