@@ -43,7 +43,7 @@ function ConvertTo-GitHubActionsEscaped {
     $escaped = $escaped -replace "`r", '%0D'
     $escaped = $escaped -replace "`n", '%0A'
     # Escape :: patterns to neutralize command sequences (defense in depth)
-    # This prevents ::command:: patterns while preserving single colons like C:\
+    # This prevents ::command:: patterns. When ForProperty is false, single colons like C:\ are preserved.
     $escaped = $escaped -replace '::', '%3A%3A'
 
     if ($ForProperty) {
