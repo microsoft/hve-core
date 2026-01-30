@@ -452,272 +452,287 @@ function Update-PackageJsonContributes {
     return $updated
 }
 
-#endregion Pure Functions
+function New-PrepareResult {
+    <#
+    .SYNOPSIS
+        Creates a standardized result object for extension preparation operations.
+    .DESCRIPTION
+        Factory function that creates a hashtable with consistent properties
+        for reporting preparation operation outcomes.
+    .PARAMETER Success
+        Indicates whether the operation completed successfully.
+    .PARAMETER Version
+        The version string from package.json.
+    .PARAMETER AgentCount
+        Number of agents discovered and included.
+    .PARAMETER PromptCount
+        Number of prompts discovered and included.
+    .PARAMETER InstructionCount
+        Number of instructions discovered and included.
+    .PARAMETER ErrorMessage
+        Error description when Success is false.
+    .OUTPUTS
+        Hashtable with Success, Version, AgentCount, PromptCount,
+        InstructionCount, and ErrorMessage properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Success,
 
-#region Main Execution
-try {
-    if ($MyInvocation.InvocationName -ne '.') {
-        # Verify PowerShell-Yaml module is available (runtime check instead of #Requires)
-        if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-            Write-Error "Required module 'PowerShell-Yaml' is not installed. Install with: Install-Module -Name PowerShell-Yaml -Scope CurrentUser"
-            exit 1
-        }
-        Import-Module PowerShell-Yaml -ErrorAction Stop
+        [Parameter(Mandatory = $false)]
+        [string]$Version = "",
 
-        # Define allowed maturity levels based on channel
-        $allowedMaturities = Get-AllowedMaturities -Channel $Channel
+        [Parameter(Mandatory = $false)]
+        [int]$AgentCount = 0,
 
-        # Determine script and repo paths
-    $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
-    $ExtensionDir = Join-Path $RepoRoot "extension"
+        [Parameter(Mandatory = $false)]
+        [int]$PromptCount = 0,
+
+        [Parameter(Mandatory = $false)]
+        [int]$InstructionCount = 0,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ErrorMessage = ""
+    )
+
+    return @{
+        Success          = $Success
+        Version          = $Version
+        AgentCount       = $AgentCount
+        PromptCount      = $PromptCount
+        InstructionCount = $InstructionCount
+        ErrorMessage     = $ErrorMessage
+    }
+}
+
+function Invoke-PrepareExtension {
+    <#
+    .SYNOPSIS
+        Orchestrates VS Code extension preparation with full error handling.
+    .DESCRIPTION
+        Executes the complete preparation workflow: validates paths, discovers
+        agents/prompts/instructions, updates package.json, and handles changelog.
+        Returns a result object instead of using exit codes.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory containing package.json.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root directory.
+    .PARAMETER Channel
+        Release channel controlling maturity filter ('Stable' or 'PreRelease').
+    .PARAMETER ChangelogPath
+        Optional path to changelog file to include.
+    .PARAMETER DryRun
+        When specified, shows what would be done without making changes.
+    .OUTPUTS
+        Hashtable with Success, Version, AgentCount, PromptCount,
+        InstructionCount, and ErrorMessage properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'Stable',
+
+        [Parameter(Mandatory = $false)]
+        [string]$ChangelogPath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    # Derive paths
     $GitHubDir = Join-Path $RepoRoot ".github"
-    $PackageJsonPath = Join-Path $ExtensionDir "package.json"
+    $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
 
-    Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
-    Write-Host "==============================" -ForegroundColor Cyan
-    Write-Host "   Channel: $Channel" -ForegroundColor Cyan
-    Write-Host ""
-
-    # Verify paths exist
-    if (-not (Test-Path $ExtensionDir)) {
-        Write-Error "Extension directory not found: $ExtensionDir"
-        exit 1
+    # Validate required paths exist
+    $pathValidation = Test-PathsExist -ExtensionDir $ExtensionDirectory `
+        -PackageJsonPath $PackageJsonPath `
+        -GitHubDir $GitHubDir
+    if (-not $pathValidation.IsValid) {
+        $missingPaths = $pathValidation.MissingPaths -join ', '
+        return New-PrepareResult -Success $false -ErrorMessage "Required paths not found: $missingPaths"
     }
 
-    if (-not (Test-Path $PackageJsonPath)) {
-        Write-Error "package.json not found: $PackageJsonPath"
-        exit 1
-    }
-
-    if (-not (Test-Path $GitHubDir)) {
-        Write-Error ".github directory not found: $GitHubDir"
-        exit 1
-    }
-
-    # Read current package.json
-    Write-Host "📖 Reading package.json..." -ForegroundColor Yellow
+    # Read and parse package.json
     try {
-        $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
-    } catch {
-        Write-Error "Failed to parse package.json: $_`nPlease check $PackageJsonPath for JSON syntax errors."
-        exit 1
+        $packageJsonContent = Get-Content -Path $PackageJsonPath -Raw
+        $packageJson = $packageJsonContent | ConvertFrom-Json
+    }
+    catch {
+        return New-PrepareResult -Success $false -ErrorMessage "Failed to parse package.json at '$PackageJsonPath'. Check the file for JSON syntax errors. Underlying error: $($_.Exception.Message)"
     }
 
-    # Validate package.json has required version field
+    # Validate version field
     if (-not $packageJson.PSObject.Properties['version']) {
-        Write-Error "package.json is missing required 'version' field"
-        exit 1
+        return New-PrepareResult -Success $false -ErrorMessage "package.json does not contain a 'version' field"
     }
-
-    # Use existing version from package.json
     $version = $packageJson.version
-
-    # Validate version format
     if ($version -notmatch '^\d+\.\d+\.\d+$') {
-        Write-Error "Invalid version format in package.json: '$version'. Expected semantic version format (e.g., 1.0.0)"
-        exit 1
+        return New-PrepareResult -Success $false -ErrorMessage "Invalid version format in package.json: $version"
     }
 
-    Write-Host "   Using version: $version" -ForegroundColor Green
+    # Get allowed maturities for channel
+    $allowedMaturities = Get-AllowedMaturities -Channel $Channel
 
-    # Discover chat agents
-    Write-Host ""
-    Write-Host "🔍 Discovering chat agents..." -ForegroundColor Yellow
+    Write-Host "`n=== Prepare Extension ===" -ForegroundColor Cyan
+    Write-Host "Extension Directory: $ExtensionDirectory"
+    Write-Host "Repository Root: $RepoRoot"
+    Write-Host "Channel: $Channel"
+    Write-Host "Allowed Maturities: $($allowedMaturities -join ', ')"
+    Write-Host "Version: $version"
+    if ($DryRun) {
+        Write-Host "[DRY RUN] No changes will be made" -ForegroundColor Yellow
+    }
+
+    # Discover agents
     $agentsDir = Join-Path $GitHubDir "agents"
-    $chatAgents = @()
+    $agentResult = Get-DiscoveredAgents -AgentsDir $agentsDir -AllowedMaturities $allowedMaturities -ExcludedAgents @()
+    $chatAgents = $agentResult.Agents
+    $excludedAgents = $agentResult.Skipped
 
-    # Agents to exclude from extension packaging
-    $excludedAgents = @()
-
-    if (Test-Path $agentsDir) {
-        $agentFiles = Get-ChildItem -Path $agentsDir -Filter "*.agent.md" | Sort-Object Name
-
-        foreach ($agentFile in $agentFiles) {
-            # Extract agent name from filename (e.g., hve-core-installer.agent.md -> hve-core-installer)
-            $agentName = $agentFile.BaseName -replace '\.agent$', ''
-
-            # Skip excluded agents
-            if ($excludedAgents -contains $agentName) {
-                Write-Host "   ⏭️  $agentName (excluded)" -ForegroundColor DarkGray
-                continue
-            }
-
-            # Extract frontmatter data
-            $frontmatter = Get-FrontmatterData -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
-            $description = $frontmatter.description
-            $maturity = $frontmatter.maturity
-
-            # Filter by maturity based on channel
-            if ($allowedMaturities -notcontains $maturity) {
-                Write-Host "   ⏭️  $agentName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
-                continue
-            }
-
-            $agent = [PSCustomObject]@{
-                name        = $agentName
-                path        = "./.github/agents/$($agentFile.Name)"
-                description = $description
-            }
-
-            $chatAgents += $agent
-            Write-Host "   ✅ $agentName" -ForegroundColor Green
-        }
-    } else {
-        Write-Warning "Agents directory not found: $agentsDir"
+    Write-Host "`n--- Chat Agents ---" -ForegroundColor Green
+    Write-Host "Found $($chatAgents.Count) agent(s) matching criteria"
+    if ($excludedAgents.Count -gt 0) {
+        Write-Host "Excluded $($excludedAgents.Count) agent(s) due to maturity filter" -ForegroundColor Yellow
     }
 
     # Discover prompts
-    Write-Host ""
-    Write-Host "🔍 Discovering prompts..." -ForegroundColor Yellow
     $promptsDir = Join-Path $GitHubDir "prompts"
-    $chatPromptFiles = @()
+    $promptResult = Get-DiscoveredPrompts -PromptsDir $promptsDir -GitHubDir $GitHubDir -AllowedMaturities $allowedMaturities
+    $chatPrompts = $promptResult.Prompts
+    $excludedPrompts = $promptResult.Skipped
 
-    if (Test-Path $promptsDir) {
-        $promptFiles = Get-ChildItem -Path $promptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
-
-        foreach ($promptFile in $promptFiles) {
-            # Extract prompt name from filename (e.g., git-commit.prompt.md -> git-commit)
-            $promptName = $promptFile.BaseName -replace '\.prompt$', ''
-
-            # Extract frontmatter data
-            $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-            $frontmatter = Get-FrontmatterData -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
-            $description = $frontmatter.description
-            $maturity = $frontmatter.maturity
-
-            # Filter by maturity based on channel
-            if ($allowedMaturities -notcontains $maturity) {
-                Write-Host "   ⏭️  $promptName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
-                continue
-            }
-
-            # Calculate relative path from .github
-            $relativePath = [System.IO.Path]::GetRelativePath($GitHubDir, $promptFile.FullName) -replace '\\', '/'
-
-            $prompt = [PSCustomObject]@{
-                name        = $promptName
-                path        = "./.github/$relativePath"
-                description = $description
-            }
-
-            $chatPromptFiles += $prompt
-            Write-Host "   ✅ $promptName" -ForegroundColor Green
-        }
-    } else {
-        Write-Warning "Prompts directory not found: $promptsDir"
+    Write-Host "`n--- Chat Prompts ---" -ForegroundColor Green
+    Write-Host "Found $($chatPrompts.Count) prompt(s) matching criteria"
+    if ($excludedPrompts.Count -gt 0) {
+        Write-Host "Excluded $($excludedPrompts.Count) prompt(s) due to maturity filter" -ForegroundColor Yellow
     }
 
-    # Discover instruction files
-    Write-Host ""
-    Write-Host "🔍 Discovering instruction files..." -ForegroundColor Yellow
+    # Discover instructions
     $instructionsDir = Join-Path $GitHubDir "instructions"
-    $chatInstructions = @()
+    $instructionResult = Get-DiscoveredInstructions -InstructionsDir $instructionsDir -GitHubDir $GitHubDir -AllowedMaturities $allowedMaturities
+    $chatInstructions = $instructionResult.Instructions
+    $excludedInstructions = $instructionResult.Skipped
 
-    if (Test-Path $instructionsDir) {
-        $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
-
-        foreach ($instrFile in $instructionFiles) {
-            # Extract instruction name from filename (e.g., commit-message.instructions.md -> commit-message-instructions)
-            $baseName = $instrFile.BaseName -replace '\.instructions$', ''
-            $instrName = "$baseName-instructions"
-
-            # Extract frontmatter data
-            $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-            $frontmatter = Get-FrontmatterData -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
-            $description = $frontmatter.description
-            $maturity = $frontmatter.maturity
-
-            # Filter by maturity based on channel
-            if ($allowedMaturities -notcontains $maturity) {
-                Write-Host "   ⏭️  $instrName (maturity: $maturity, skipped for $Channel)" -ForegroundColor DarkGray
-                continue
-            }
-
-            # Calculate relative path from .github using cross-platform APIs
-            $relativePathFromGitHub = [System.IO.Path]::GetRelativePath($GitHubDir, $instrFile.FullName)
-            $normalizedRelativePath = (Join-Path ".github" $relativePathFromGitHub) -replace '\\', '/'
-
-            $instruction = [PSCustomObject]@{
-                name        = $instrName
-                path        = "./$normalizedRelativePath"
-                description = $description
-            }
-
-            $chatInstructions += $instruction
-            Write-Host "   ✅ $instrName" -ForegroundColor Green
-        }
-    } else {
-        Write-Warning "Instructions directory not found: $instructionsDir"
+    Write-Host "`n--- Chat Instructions ---" -ForegroundColor Green
+    Write-Host "Found $($chatInstructions.Count) instruction(s) matching criteria"
+    if ($excludedInstructions.Count -gt 0) {
+        Write-Host "Excluded $($excludedInstructions.Count) instruction(s) due to maturity filter" -ForegroundColor Yellow
     }
 
     # Update package.json
-    Write-Host ""
-    Write-Host "📝 Updating package.json..." -ForegroundColor Yellow
-
-    # Ensure contributes section exists
-    if (-not $packageJson.contributes) {
-        $packageJson | Add-Member -NotePropertyName "contributes" -NotePropertyValue ([PSCustomObject]@{})
-    }
-
-    # Update chatAgents
-    $packageJson.contributes.chatAgents = $chatAgents
-    Write-Host "   Updated chatAgents: $($chatAgents.Count) agents" -ForegroundColor Green
-
-    # Update chatPromptFiles
-    $packageJson.contributes.chatPromptFiles = $chatPromptFiles
-    Write-Host "   Updated chatPromptFiles: $($chatPromptFiles.Count) prompts" -ForegroundColor Green
-
-    # Update chatInstructions
-    $packageJson.contributes.chatInstructions = $chatInstructions
-    Write-Host "   Updated chatInstructions: $($chatInstructions.Count) files" -ForegroundColor Green
-
-    if ($DryRun) {
-        Write-Host ""
-        Write-Host "🔍 DRY RUN - Would write the following package.json:" -ForegroundColor Magenta
-        Write-Host ($packageJson | ConvertTo-Json -Depth 10)
-        Write-Host ""
-        Write-Host "🔍 DRY RUN - No changes made" -ForegroundColor Magenta
-        exit 0
-    }
+    $packageJson = Update-PackageJsonContributes -PackageJson $packageJson `
+        -ChatAgents $chatAgents `
+        -ChatPromptFiles $chatPrompts `
+        -ChatInstructions $chatInstructions
 
     # Write updated package.json
-    $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-    Write-Host "   Saved package.json" -ForegroundColor Green
+    if (-not $DryRun) {
+        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
+        Write-Host "`nUpdated package.json with discovered artifacts" -ForegroundColor Green
+    }
+    else {
+        Write-Host "`n[DRY RUN] Would update package.json with discovered artifacts" -ForegroundColor Yellow
+    }
 
-    # Handle changelog if provided
-    if ($ChangelogPath) {
-        Write-Host ""
-        Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
-
-        if (Test-Path $ChangelogPath) {
-            $changelogDest = Join-Path $ExtensionDir "CHANGELOG.md"
-            Copy-Item -Path $ChangelogPath -Destination $changelogDest -Force
-            Write-Host "   Copied changelog to extension directory" -ForegroundColor Green
-        } else {
-            Write-Warning "Changelog file not found: $ChangelogPath"
+    # Handle changelog
+    if ($ChangelogPath -and (Test-Path $ChangelogPath)) {
+        $destChangelog = Join-Path $ExtensionDirectory "CHANGELOG.md"
+        if (-not $DryRun) {
+            Copy-Item -Path $ChangelogPath -Destination $destChangelog -Force
+            Write-Host "Copied changelog to extension directory" -ForegroundColor Green
+        }
+        else {
+            Write-Host "[DRY RUN] Would copy changelog to extension directory" -ForegroundColor Yellow
         }
     }
-
-    Write-Host ""
-    Write-Host "🎉 Done!" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "📊 Summary:" -ForegroundColor Cyan
-    Write-Host "   Version: $version" -ForegroundColor White
-    Write-Host "   Channel: $Channel" -ForegroundColor White
-    Write-Host "   Agents: $($chatAgents.Count)" -ForegroundColor White
-    Write-Host "   Prompts: $($chatPromptFiles.Count)" -ForegroundColor White
-    Write-Host "   Instructions: $($chatInstructions.Count)" -ForegroundColor White
-    Write-Host ""
-
-    exit 0
+    elseif ($ChangelogPath) {
+        Write-Warning "Changelog path specified but file not found: $ChangelogPath"
     }
+
+    Write-Host "`n=== Preparation Complete ===" -ForegroundColor Cyan
+
+    return New-PrepareResult -Success $true `
+        -Version $version `
+        -AgentCount $chatAgents.Count `
+        -PromptCount $chatPrompts.Count `
+        -InstructionCount $chatInstructions.Count
 }
-catch {
-    Write-Error "Prepare Extension failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+
+#endregion Pure Functions
+
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        $ErrorActionPreference = "Stop"
+
+        # Verify PowerShell-Yaml module is available
+        if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+            throw "Required module 'PowerShell-Yaml' is not installed."
+        }
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        # Resolve paths using $MyInvocation (must stay in entry point)
+        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
+        $ExtensionDir = Join-Path $RepoRoot "extension"
+
+        # Resolve changelog path if provided
+        $resolvedChangelogPath = ""
+        if ($ChangelogPath) {
+            $resolvedChangelogPath = if ([System.IO.Path]::IsPathRooted($ChangelogPath)) {
+                $ChangelogPath
+            }
+            else {
+                Join-Path $RepoRoot $ChangelogPath
+            }
+        }
+
+        Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
+        Write-Host "==============================" -ForegroundColor Cyan
+        Write-Host "   Channel: $Channel" -ForegroundColor Cyan
+        Write-Host ""
+
+        # Call orchestration function
+        $result = Invoke-PrepareExtension `
+            -ExtensionDirectory $ExtensionDir `
+            -RepoRoot $RepoRoot `
+            -Channel $Channel `
+            -ChangelogPath $resolvedChangelogPath `
+            -DryRun:$DryRun
+
+        if (-not $result.Success) {
+            throw $result.ErrorMessage
+        }
+
+        Write-Host ""
+        Write-Host "🎉 Done!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "📊 Summary:" -ForegroundColor Cyan
+        Write-Host "  Agents: $($result.AgentCount)"
+        Write-Host "  Prompts: $($result.PromptCount)"
+        Write-Host "  Instructions: $($result.InstructionCount)"
+        Write-Host "  Version: $($result.Version)"
+
+        exit 0
     }
-    exit 1
+    catch {
+        Write-Error "Prepare Extension failed: $($_.Exception.Message)"
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            Write-Output "::error::$($_.Exception.Message)"
+        }
+        exit 1
+    }
 }
 #endregion

@@ -331,87 +331,105 @@ function Get-ResolvedPackageVersion {
 
 #endregion Pure Functions
 
-#region Main Execution
-try {
-    # Only execute main logic when run directly, not when dot-sourced
-    if ($MyInvocation.InvocationName -ne '.') {
-        $ErrorActionPreference = "Stop"
+#region Orchestration Functions
 
-        # Determine script and repo paths
-        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-        $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
-        $ExtensionDir = Join-Path $RepoRoot "extension"
+function Invoke-PackageExtension {
+    <#
+    .SYNOPSIS
+        Orchestrates VS Code extension packaging with full error handling.
+    .DESCRIPTION
+        Executes the complete packaging workflow: validates paths, resolves version,
+        prepares directories, invokes vsce, and handles cleanup.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory containing package.json.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root directory.
+    .PARAMETER Version
+        Optional explicit version string (e.g., "1.2.3").
+    .PARAMETER DevPatchNumber
+        Optional dev build patch number for pre-release versions.
+    .PARAMETER ChangelogPath
+        Optional path to changelog file to include in package.
+    .PARAMETER PreRelease
+        Switch to mark the package as a pre-release version.
+    .OUTPUTS
+        Hashtable with Success, OutputPath, Version, and ErrorMessage properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Version = "",
+
+        [Parameter(Mandatory = $false)]
+        [string]$DevPatchNumber = "",
+
+        [Parameter(Mandatory = $false)]
+        [string]$ChangelogPath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$PreRelease
+    )
+
+    $dirsToClean = @(".github", "docs", "scripts")
+    $originalVersion = $null
+    $packageJson = $null
+    $PackageJsonPath = $null
+    $packageVersion = $null
+
+    try {
+        # Validate extension directory
+        if (-not (Test-Path $ExtensionDirectory)) {
+            return New-PackagingResult -Success $false -ErrorMessage "Extension directory not found: $ExtensionDirectory"
+        }
+
+        $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
+        if (-not (Test-Path $PackageJsonPath)) {
+            return New-PackagingResult -Success $false -ErrorMessage "package.json not found: $PackageJsonPath"
+        }
+
         $GitHubDir = Join-Path $RepoRoot ".github"
-        $PackageJsonPath = Join-Path $ExtensionDir "package.json"
+        if (-not (Test-Path $GitHubDir)) {
+            return New-PackagingResult -Success $false -ErrorMessage ".github directory not found: $GitHubDir"
+        }
 
         Write-Host "📦 HVE Core Extension Packager" -ForegroundColor Cyan
         Write-Host "==============================" -ForegroundColor Cyan
         Write-Host ""
 
-        # Verify paths exist
-        if (-not (Test-Path $ExtensionDir)) {
-            Write-Error "Extension directory not found: $ExtensionDir"
-            exit 1
-        }
-
-        if (-not (Test-Path $PackageJsonPath)) {
-            Write-Error "package.json not found: $PackageJsonPath"
-            exit 1
-        }
-
-        if (-not (Test-Path $GitHubDir)) {
-            Write-Error ".github directory not found: $GitHubDir"
-            exit 1
-        }
-
-        # Read current package.json
+        # Read and validate package.json
         Write-Host "📖 Reading package.json..." -ForegroundColor Yellow
         try {
             $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
-        } catch {
-            Write-Error "Failed to parse package.json: $_`nPlease check $PackageJsonPath for JSON syntax errors."
-            exit 1
+        }
+        catch {
+            return New-PackagingResult -Success $false -ErrorMessage "Failed to parse package.json: $($_.Exception.Message)"
         }
 
-        # Validate package.json has required version field
-        if (-not $packageJson.PSObject.Properties['version']) {
-            Write-Error "package.json is missing required 'version' field"
-            exit 1
+        $manifestValidation = Test-ExtensionManifestValid -ManifestContent $packageJson
+        if (-not $manifestValidation.IsValid) {
+            return New-PackagingResult -Success $false -ErrorMessage "Invalid package.json: $($manifestValidation.Errors -join '; ')"
         }
 
-        # Determine version
-        $baseVersion = if ($Version -and $Version -ne "") {
-            # Validate specified version format
-            if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-                Write-Error "Invalid version format specified: '$Version'. Expected semantic version format (e.g., 1.0.0).`nPre-release suffixes like '-dev.123' should be added via -DevPatchNumber parameter, not in the version itself."
-                exit 1
-            }
-            $Version
-        } else {
-            # Use version from package.json
-            $currentVersion = $packageJson.version
-            if ($currentVersion -notmatch '^\d+\.\d+\.\d+') {
-                $errorMessage = @(
-                    "Invalid version format in package.json: '$currentVersion'.",
-                    "Expected semantic version format (e.g., 1.0.0).",
-                    "Pre-release suffixes should not be committed to package.json.",
-                    "Use -DevPatchNumber parameter to add '-dev.N' suffix during packaging."
-                ) -join "`n"
-                Write-Error $errorMessage
-                exit 1
-            }
-            # Extract base version (validation above ensures this will match)
-            $currentVersion -match '^(\d+\.\d+\.\d+)' | Out-Null
-            $Matches[1]
+        # Resolve version using pure function
+        $versionResult = Get-ResolvedPackageVersion `
+            -SpecifiedVersion $Version `
+            -ManifestVersion $packageJson.version `
+            -DevPatchNumber $DevPatchNumber
+
+        if (-not $versionResult.IsValid) {
+            return New-PackagingResult -Success $false -ErrorMessage $versionResult.ErrorMessage
         }
 
-        # Apply dev patch number if provided
-        $packageVersion = if ($DevPatchNumber -and $DevPatchNumber -ne "") {
-            "$baseVersion-dev.$DevPatchNumber"
-        } else {
-            $baseVersion
-        }
-
+        $packageVersion = $versionResult.PackageVersion
         Write-Host "   Using version: $packageVersion" -ForegroundColor Green
 
         # Handle temporary version update for dev builds
@@ -431,10 +449,11 @@ try {
             Write-Host "📋 Processing changelog..." -ForegroundColor Yellow
 
             if (Test-Path $ChangelogPath) {
-                $changelogDest = Join-Path $ExtensionDir "CHANGELOG.md"
+                $changelogDest = Join-Path $ExtensionDirectory "CHANGELOG.md"
                 Copy-Item -Path $ChangelogPath -Destination $changelogDest -Force
                 Write-Host "   Copied changelog to extension directory" -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Warning "Changelog file not found: $ChangelogPath"
             }
         }
@@ -444,9 +463,8 @@ try {
         Write-Host "🗂️  Preparing extension directory..." -ForegroundColor Yellow
 
         # Clean any existing copied directories
-        $dirsToClean = @(".github", "docs", "scripts")
         foreach ($dir in $dirsToClean) {
-            $dirPath = Join-Path $ExtensionDir $dir
+            $dirPath = Join-Path $ExtensionDirectory $dir
             if (Test-Path $dirPath) {
                 Remove-Item -Path $dirPath -Recurse -Force
                 Write-Host "   Cleaned existing $dir directory" -ForegroundColor Gray
@@ -455,17 +473,26 @@ try {
 
         # Copy required directories
         Write-Host "   Copying .github..." -ForegroundColor Gray
-        Copy-Item -Path "$RepoRoot/.github" -Destination "$ExtensionDir/.github" -Recurse
+        Copy-Item -Path "$RepoRoot/.github" -Destination "$ExtensionDirectory/.github" -Recurse
 
         Write-Host "   Copying scripts/dev-tools..." -ForegroundColor Gray
-        New-Item -Path "$ExtensionDir/scripts" -ItemType Directory -Force | Out-Null
-        Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDir/scripts/dev-tools" -Recurse
+        New-Item -Path "$ExtensionDirectory/scripts" -ItemType Directory -Force | Out-Null
+        Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDirectory/scripts/dev-tools" -Recurse
 
         Write-Host "   Copying docs/templates..." -ForegroundColor Gray
-        New-Item -Path "$ExtensionDir/docs" -ItemType Directory -Force | Out-Null
-        Copy-Item -Path "$RepoRoot/docs/templates" -Destination "$ExtensionDir/docs/templates" -Recurse
+        New-Item -Path "$ExtensionDirectory/docs" -ItemType Directory -Force | Out-Null
+        Copy-Item -Path "$RepoRoot/docs/templates" -Destination "$ExtensionDirectory/docs/templates" -Recurse
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
+
+        # Check vsce availability using pure function
+        $vsceAvailability = Test-VsceAvailable
+        if (-not $vsceAvailability.IsAvailable) {
+            return New-PackagingResult -Success $false -ErrorMessage "Neither vsce nor npx found. Please install @vscode/vsce globally or ensure npm is available."
+        }
+
+        # Build vsce command using pure function
+        $vsceCommand = Get-VscePackageCommand -CommandType $vsceAvailability.CommandType -PreRelease:$PreRelease
 
         # Package extension
         Write-Host ""
@@ -475,93 +502,103 @@ try {
             Write-Host "   Mode: Pre-release channel" -ForegroundColor Magenta
         }
 
-        # Initialize vsixFile variable to avoid scope issues
-        $vsixFile = $null
+        Write-Host "   Using $($vsceAvailability.CommandType)..." -ForegroundColor Gray
 
-        # Build vsce arguments
-        $vsceArgs = @('package', '--no-dependencies')
-        if ($PreRelease) {
-            $vsceArgs += '--pre-release'
-        }
-
-        Push-Location $ExtensionDir
-
+        Push-Location $ExtensionDirectory
         try {
-            # Check if vsce is available
-            $vsceCmd = Get-Command vsce -ErrorAction SilentlyContinue
-            if (-not $vsceCmd) {
-                $vsceCmd = Get-Command npx -ErrorAction SilentlyContinue
-                if ($vsceCmd) {
-                    Write-Host "   Using npx @vscode/vsce..." -ForegroundColor Gray
-                    & npx @vscode/vsce @vsceArgs
-                } else {
-                    Write-Error "Neither vsce nor npx found. Please install @vscode/vsce globally or ensure npm is available."
-                    exit 1
-                }
-            } else {
-                Write-Host "   Using vsce..." -ForegroundColor Gray
-                & vsce @vsceArgs
-            }
+            $global:LASTEXITCODE = 0  # Reset before native call for test reliability
+            & $vsceCommand.Executable @($vsceCommand.Arguments)
 
             if ($LASTEXITCODE -ne 0) {
-                Write-Error "Failed to package extension"
-                exit 1
+                return New-PackagingResult -Success $false -ErrorMessage "vsce package command failed with exit code $LASTEXITCODE"
             }
-
-            # Find the generated vsix file
-            $vsixFile = Get-ChildItem -Path $ExtensionDir -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
-            if ($vsixFile) {
-                Write-Host ""
-                Write-Host "✅ Extension packaged successfully!" -ForegroundColor Green
-                Write-Host "   File: $($vsixFile.Name)" -ForegroundColor Cyan
-                Write-Host "   Size: $([math]::Round($vsixFile.Length / 1KB, 2)) KB" -ForegroundColor Cyan
-                Write-Host "   Version: $packageVersion" -ForegroundColor Cyan
-            } else {
-                Write-Error "No .vsix file found after packaging"
-                exit 1
-            }
-
-        } finally {
+        }
+        finally {
             Pop-Location
+        }
 
-            # Cleanup copied directories
-            Write-Host ""
-            Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
+        # Find the generated vsix file
+        $vsixFile = Get-ChildItem -Path $ExtensionDirectory -Filter "*.vsix" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-            foreach ($dir in $dirsToClean) {
-                $dirPath = Join-Path $ExtensionDir $dir
-                if (Test-Path $dirPath) {
-                    Remove-Item -Path $dirPath -Recurse -Force
-                    Write-Host "   Removed $dir" -ForegroundColor Gray
-                }
-            }
+        if (-not $vsixFile) {
+            return New-PackagingResult -Success $false -ErrorMessage "No .vsix file found after packaging"
+        }
 
-            # Restore original version if it was changed
-            if ($packageVersion -ne $originalVersion) {
-                Write-Host ""
-                Write-Host "🔄 Restoring original package.json version..." -ForegroundColor Yellow
-                $packageJson.version = $originalVersion
-                $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-                Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
-            }
+        Write-Host ""
+        Write-Host "✅ Extension packaged successfully!" -ForegroundColor Green
+        Write-Host "   File: $($vsixFile.Name)" -ForegroundColor Cyan
+        Write-Host "   Size: $([math]::Round($vsixFile.Length / 1KB, 2)) KB" -ForegroundColor Cyan
+        Write-Host "   Version: $packageVersion" -ForegroundColor Cyan
+
+        # Output for CI/CD consumption
+        if ($env:GITHUB_OUTPUT) {
+            "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
         }
 
         Write-Host ""
         Write-Host "🎉 Done!" -ForegroundColor Green
         Write-Host ""
 
-        # Output for CI/CD consumption
-        if ($env:GITHUB_OUTPUT) {
-            if ($vsixFile) {
-                "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-                "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-                "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            } else {
-                Write-Warning "Cannot write GITHUB_OUTPUT: vsix file not available"
+        return New-PackagingResult -Success $true -OutputPath $vsixFile.FullName -Version $packageVersion
+    }
+    catch {
+        return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
+    }
+    finally {
+        # Cleanup copied directories
+        Write-Host ""
+        Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
+
+        foreach ($dir in $dirsToClean) {
+            $dirPath = Join-Path $ExtensionDirectory $dir
+            if (Test-Path $dirPath) {
+                Remove-Item -Path $dirPath -Recurse -Force
+                Write-Host "   Removed $dir" -ForegroundColor Gray
             }
         }
 
+        # Restore original version if it was changed
+        if ($null -ne $originalVersion -and $null -ne $packageVersion -and $packageVersion -ne $originalVersion -and $null -ne $PackageJsonPath) {
+            Write-Host ""
+            Write-Host "🔄 Restoring original package.json version..." -ForegroundColor Yellow
+            try {
+                $packageJson.version = $originalVersion
+                $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
+                Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
+            }
+            catch {
+                Write-Warning "Failed to restore original package.json version to '$originalVersion': $($_.Exception.Message)"
+            }
+        }
+    }
+}
+
+#endregion Orchestration Functions
+
+#region Main Execution
+try {
+    # Only execute main logic when run directly, not when dot-sourced
+    if ($MyInvocation.InvocationName -ne '.') {
+        $ErrorActionPreference = "Stop"
+
+        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
+        $ExtensionDir = Join-Path $RepoRoot "extension"
+
+        $result = Invoke-PackageExtension `
+            -ExtensionDirectory $ExtensionDir `
+            -RepoRoot $RepoRoot `
+            -Version $Version `
+            -DevPatchNumber $DevPatchNumber `
+            -ChangelogPath $ChangelogPath `
+            -PreRelease:$PreRelease
+
+        if (-not $result.Success) {
+            Write-Error $result.ErrorMessage
+            exit 1
+        }
         exit 0
     }
 }
