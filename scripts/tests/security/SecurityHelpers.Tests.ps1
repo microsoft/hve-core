@@ -528,4 +528,180 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
             { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 61 } | Should -Throw
         }
     }
+
+    Context 'Message-based status code extraction (cross-platform fallback)' {
+        # These tests verify that status codes can be extracted from exception message text
+        # when Response.StatusCode is unavailable (common on Linux)
+
+        It 'Maps "Not found" message to 404 and does not retry' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                throw [System.InvalidOperationException]::new('Not found')
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 2>$null
+            $result | Should -BeNullOrEmpty
+            $script:callCount | Should -Be 1  # 404 is not retryable
+        }
+
+        It 'Maps "Unauthorized" message to 401 and does not retry' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                throw [System.InvalidOperationException]::new('Unauthorized')
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 2>$null
+            $result | Should -BeNullOrEmpty
+            $script:callCount | Should -Be 1  # 401 is not retryable
+        }
+
+        It 'Maps "Forbidden" message to 403 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Forbidden')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2  # 403 is retryable (rate limit)
+        }
+
+        It 'Maps "Rate limited" message to 429 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Rate limited')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2  # 429 is retryable
+        }
+
+        It 'Maps "Too many requests" message to 429 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Too many requests')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Maps "Server error" message to 500 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Server error')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Maps "Internal server error" message to 500 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Internal server error occurred')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Maps "Bad gateway" message to 502 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Bad gateway')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Maps "Service unavailable" message to 503 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Service unavailable')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Maps "Gateway timeout" message to 504 and retries' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('Gateway timeout')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Handles case-insensitive message matching' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                if ($script:callCount -lt 2) {
+                    throw [System.InvalidOperationException]::new('RATE LIMITED')
+                }
+                return @{ success = $true }
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 3>$null
+            $result.success | Should -BeTrue
+            $script:callCount | Should -Be 2
+        }
+
+        It 'Does not retry unknown errors when no status code is extractable' {
+            $script:callCount = 0
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                $script:callCount++
+                throw [System.InvalidOperationException]::new('Some unknown network error')
+            }
+            $headers = @{ Authorization = 'Bearer test' }
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Headers $headers -InitialDelaySeconds 1 2>$null
+            $result | Should -BeNullOrEmpty
+            $script:callCount | Should -Be 1  # Unknown errors are not retried
+        }
+    }
 }
