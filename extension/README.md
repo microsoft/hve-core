@@ -12,18 +12,20 @@ Specialized AI assistants for specific development tasks:
 
 #### Development Workflow
 
-- **rpi-agent** - Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks
-- **task-researcher** - Research technical solutions and approaches
-- **task-planner** - Plan and break down complex tasks
-- **task-implementor** - Implement tasks from detailed plans
-- **pr-review** - Comprehensive pull request review assistant
 - **github-issue-manager** - Manage GitHub issues efficiently
+- **pr-review** - Comprehensive pull request review assistant
+- **rpi-agent** - Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks
+- **task-implementor** - Implement tasks from detailed plans
+- **task-planner** - Plan and break down complex tasks
+- **task-researcher** - Research technical solutions and approaches
+- **task-reviewer** - Validate implementation against research and plan specifications
 
 #### Architecture & Documentation
 
 - **adr-creation** - Create Architecture Decision Records
 - **arch-diagram-builder** - Build high-quality ASCII-art architecture diagrams
 - **brd-builder** - Build Business Requirements Documents with guided Q&A
+- **doc-ops** - Documentation operations and maintenance
 - **prd-builder** - Build Product Requirements Documents with guided Q&A
 - **prompt-builder** - Build and optimize AI prompts
 - **security-plan-creator** - Expert security architect for creating comprehensive cloud security plans
@@ -38,6 +40,11 @@ Specialized AI assistants for specific development tasks:
 - **gen-jupyter-notebook** - Generate Jupyter notebooks for data analysis
 - **gen-streamlit-dashboard** - Generate Streamlit dashboards
 - **test-streamlit-dashboard** - Comprehensive testing of Streamlit dashboards
+
+#### Utility
+
+- **hve-core-installer** - Decision-driven HVE-Core installation with multiple methods
+- **memory** - Persist repository facts for future task assistance
 
 ### 📝 Prompts
 
