@@ -53,6 +53,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **brd-builder** | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus |
 | **adr-creation** | Interactive ADR coaching with guided discovery | Socratic coaching approach |
 | **security-plan-creator** | Creates comprehensive cloud security plans from blueprints | Blueprint-driven threat modeling |
+| **doc-ops** | Documentation operations and maintenance | Does not modify source code |
 
 ### Code and Review Agents
 
@@ -183,6 +184,19 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Discovery → Research → Analysis → Documentation
 
 **Critical:** Uses Socratic coaching methods. Guides users through decision-making process. Adapts coaching style to experience level.
+
+
+### doc-ops
+
+**Creates:** Documentation updates and maintenance artifacts
+
+**Workflow:**
+- Review existing documentation for accuracy and completeness
+- Identify gaps, inconsistencies, or outdated content
+- Apply structured documentation updates aligned with repository standards
+
+**Critical:** Operates strictly on documentation files and does not modify application or source code
+
 
 ### security-plan-creator
 
