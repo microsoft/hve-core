@@ -193,6 +193,26 @@ Describe 'Set-CIOutput' -Tag 'Unit' {
             { Set-CIOutput -Name 'test-key' -Value 'test-value' } | Should -Not -Throw
         }
     }
+
+    Context 'Workflow command injection prevention (Azure DevOps)' {
+        BeforeEach {
+            Clear-MockGitHubEnvironment
+            $env:TF_BUILD = 'True'
+        }
+
+        It 'Escapes newlines in value to prevent command injection' {
+            $maliciousValue = "value`n##vso[task.setvariable variable=pwned]true"
+            $output = Set-CIOutput -Name 'test-key' -Value $maliciousValue
+            $output | Should -Not -Match '##vso\[task\.setvariable variable=pwned\]'
+            $output | Should -Match '%AZP0A'
+        }
+
+        It 'Escapes semicolons in variable name to prevent property injection' {
+            $maliciousName = 'test;isOutput=true'
+            $output = Set-CIOutput -Name $maliciousName -Value 'value'
+            $output | Should -Match '%AZP3B'
+        }
+    }
 }
 
 Describe 'Write-CIStepSummary' -Tag 'Unit' {
@@ -369,6 +389,81 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
         It 'Includes file location in local output' {
             $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 3>&1
             $output | Should -Match '\[test\.ps1:42\]'
+        }
+    }
+
+    Context 'Workflow command injection prevention (GitHub Actions)' {
+        BeforeEach {
+            $script:mockFiles = Initialize-MockGitHubEnvironment
+        }
+
+        AfterEach {
+            Remove-MockGitHubFiles -MockFiles $script:mockFiles
+        }
+
+        It 'Escapes newlines in message to prevent command injection' {
+            $maliciousMessage = "Test`n::set-output name=pwned::true"
+            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output | Should -Not -Match '::set-output'
+            $output | Should -Match '%0A'
+        }
+
+        It 'Escapes carriage returns in message' {
+            $maliciousMessage = "Test`r::error::Injected"
+            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output | Should -Not -Match '::error::Injected'
+            $output | Should -Match '%0D'
+        }
+
+        It 'Escapes percent signs in message' {
+            $maliciousMessage = 'Test %0A injection attempt'
+            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output | Should -Match '%250A'
+        }
+
+        It 'Escapes colons and commas in file path' {
+            $maliciousFile = 'file:injection,col=1'
+            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output | Should -Match '%3A'
+            $output | Should -Match '%2C'
+        }
+
+        It 'Prevents full command injection via file parameter' {
+            $maliciousFile = "path`n::error::Pwned"
+            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output | Should -Not -Match '::error::Pwned'
+        }
+    }
+
+    Context 'Workflow command injection prevention (Azure DevOps)' {
+        BeforeEach {
+            Clear-MockGitHubEnvironment
+            $env:TF_BUILD = 'True'
+        }
+
+        It 'Escapes newlines in message to prevent command injection' {
+            $maliciousMessage = "Test`n##vso[task.setvariable variable=pwned]true"
+            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output | Should -Not -Match '##vso\[task\.setvariable'
+            $output | Should -Match '%AZP0A'
+        }
+
+        It 'Escapes closing brackets in file path' {
+            $maliciousFile = 'path]##vso[task.setvariable variable=pwned]true'
+            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output | Should -Match '%AZP5D'
+        }
+
+        It 'Escapes semicolons in file path' {
+            $maliciousFile = 'path;linenumber=999'
+            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output | Should -Match '%AZP3B'
+        }
+
+        It 'Prevents full command injection via message' {
+            $maliciousMessage = "Test`n##vso[task.complete result=Failed]"
+            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output | Should -Not -Match '##vso\[task\.complete'
         }
     }
 }
