@@ -11,17 +11,17 @@
 function ConvertTo-GitHubActionsEscaped {
     <#
     .SYNOPSIS
-        Escapes a string for safe use in GitHub Actions workflow commands.
+    Escapes a string for safe use in GitHub Actions workflow commands.
 
     .DESCRIPTION
-        Percent-encodes characters that have special meaning in GitHub Actions
-        logging commands to prevent workflow command injection attacks.
+    Percent-encodes characters that have special meaning in GitHub Actions
+    logging commands to prevent workflow command injection attacks.
 
     .PARAMETER Value
-        The string to escape.
+    The string to escape.
 
     .PARAMETER ForProperty
-        If set, also escapes colon and comma characters used in property values.
+    If set, also escapes colon and comma characters used in property values.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -57,17 +57,17 @@ function ConvertTo-GitHubActionsEscaped {
 function ConvertTo-AzureDevOpsEscaped {
     <#
     .SYNOPSIS
-        Escapes a string for safe use in Azure DevOps logging commands.
+    Escapes a string for safe use in Azure DevOps logging commands.
 
     .DESCRIPTION
-        Percent-encodes characters that have special meaning in Azure DevOps
-        logging commands to prevent workflow command injection attacks.
+    Percent-encodes characters that have special meaning in Azure DevOps
+    logging commands to prevent workflow command injection attacks.
 
     .PARAMETER Value
-        The string to escape.
+    The string to escape.
 
     .PARAMETER ForProperty
-        If set, also escapes semicolon and bracket characters used in property values.
+    If set, also escapes semicolon and bracket characters used in property values.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -102,14 +102,14 @@ function ConvertTo-AzureDevOpsEscaped {
 function Get-CIPlatform {
     <#
     .SYNOPSIS
-        Detects the current CI platform.
+    Detects the current CI platform.
 
     .DESCRIPTION
-        Returns the CI platform identifier based on environment variables.
-        Supports GitHub Actions, Azure DevOps, and local development.
+    Returns the CI platform identifier based on environment variables.
+    Supports GitHub Actions, Azure DevOps, and local development.
 
     .OUTPUTS
-        System.String - 'github', 'azdo', or 'local'
+    System.String - 'github', 'azdo', or 'local'
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -127,13 +127,13 @@ function Get-CIPlatform {
 function Test-CIEnvironment {
     <#
     .SYNOPSIS
-        Tests whether running in a CI environment.
+    Tests whether running in a CI environment.
 
     .DESCRIPTION
-        Returns true if running in GitHub Actions or Azure DevOps.
+    Returns true if running in GitHub Actions or Azure DevOps.
 
     .OUTPUTS
-        System.Boolean - $true if in CI, $false otherwise
+    System.Boolean - $true if in CI, $false otherwise
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -145,20 +145,20 @@ function Test-CIEnvironment {
 function Set-CIOutput {
     <#
     .SYNOPSIS
-        Sets a CI output variable.
+    Sets a CI output variable.
 
     .DESCRIPTION
-        Sets an output variable that can be consumed by subsequent workflow steps.
-        Uses GITHUB_OUTPUT for GitHub Actions and task.setvariable for Azure DevOps.
+    Sets an output variable that can be consumed by subsequent workflow steps.
+    Uses GITHUB_OUTPUT for GitHub Actions and task.setvariable for Azure DevOps.
 
     .PARAMETER Name
-        The variable name.
+    The variable name.
 
     .PARAMETER Value
-        The variable value.
+    The variable value.
 
     .PARAMETER IsOutput
-        For Azure DevOps, marks the variable as an output variable.
+    For Azure DevOps, marks the variable as an output variable.
     #>
     [CmdletBinding()]
     param(
@@ -201,17 +201,17 @@ function Set-CIOutput {
 function Write-CIStepSummary {
     <#
     .SYNOPSIS
-        Writes content to the CI step summary.
+    Writes content to the CI step summary.
 
     .DESCRIPTION
-        Appends markdown content to the step summary for GitHub Actions.
-        For Azure DevOps, outputs as a section header and content.
+    Appends markdown content to the step summary for GitHub Actions.
+    For Azure DevOps, outputs as a section header and content.
 
     .PARAMETER Content
-        The markdown content to append.
+    The markdown content to append.
 
     .PARAMETER Path
-        Path to a file containing markdown content.
+    Path to a file containing markdown content.
     #>
     [CmdletBinding()]
     param(
@@ -254,25 +254,25 @@ function Write-CIStepSummary {
 function Write-CIAnnotation {
     <#
     .SYNOPSIS
-        Writes a CI annotation (warning, error, notice).
+    Writes a CI annotation (warning, error, notice).
 
     .DESCRIPTION
-        Creates a workflow annotation that appears in the GitHub Actions or Azure DevOps UI.
+    Creates a workflow annotation that appears in the GitHub Actions or Azure DevOps UI.
 
     .PARAMETER Message
-        The annotation message.
+    The annotation message.
 
     .PARAMETER Level
-        The severity level: Warning, Error, or Notice.
+    The severity level: Warning, Error, or Notice.
 
     .PARAMETER File
-        Optional file path for file-level annotations.
+    Optional file path for file-level annotations.
 
     .PARAMETER Line
-        Optional line number for the annotation.
+    Optional line number for the annotation.
 
     .PARAMETER Column
-        Optional column number for the annotation.
+    Optional column number for the annotation.
     #>
     [CmdletBinding()]
     param(
@@ -345,13 +345,13 @@ function Write-CIAnnotation {
 function Set-CITaskResult {
     <#
     .SYNOPSIS
-        Sets the CI task/step result status.
+    Sets the CI task/step result status.
 
     .DESCRIPTION
-        Sets the overall result of the current task or step.
+    Sets the overall result of the current task or step.
 
     .PARAMETER Result
-        The result status: Succeeded, SucceededWithIssues, or Failed.
+    The result status: Succeeded, SucceededWithIssues, or Failed.
     #>
     [CmdletBinding()]
     param(
@@ -381,21 +381,21 @@ function Set-CITaskResult {
 function Publish-CIArtifact {
     <#
     .SYNOPSIS
-        Publishes a CI artifact.
+    Publishes a CI artifact.
 
     .DESCRIPTION
-        Publishes a file or folder as a CI artifact.
-        For GitHub Actions, outputs the path for use with actions/upload-artifact.
-        For Azure DevOps, uses the artifact.upload command.
+    Publishes a file or folder as a CI artifact.
+    For GitHub Actions, outputs the path for use with actions/upload-artifact.
+    For Azure DevOps, uses the artifact.upload command.
 
     .PARAMETER Path
-        The path to the file or folder to publish.
+    The path to the file or folder to publish.
 
     .PARAMETER Name
-        The artifact name.
+    The artifact name.
 
     .PARAMETER ContainerFolder
-        For Azure DevOps, the container folder path within the artifact.
+    For Azure DevOps, the container folder path within the artifact.
     #>
     [CmdletBinding()]
     param(
@@ -436,6 +436,8 @@ function Publish-CIArtifact {
 }
 
 Export-ModuleMember -Function @(
+    'ConvertTo-GitHubActionsEscaped',
+    'ConvertTo-AzureDevOpsEscaped',
     'Get-CIPlatform',
     'Test-CIEnvironment',
     'Set-CIOutput',
