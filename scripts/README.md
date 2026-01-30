@@ -31,26 +31,26 @@ scripts/
 
 Development utilities for working with hve-core.
 
-| Script | Purpose |
-|--------|---------|
-| `Generate-PrReference.ps1` | Generate PR reference XML for reviews |
-| `pr-ref-gen.sh` | Shell wrapper for PR reference generation |
+| Script                     | Purpose                                   |
+|----------------------------|-------------------------------------------|
+| `Generate-PrReference.ps1` | Generate PR reference XML for reviews     |
+| `pr-ref-gen.sh`            | Shell wrapper for PR reference generation |
 
 ## Extension
 
 VS Code extension packaging utilities.
 
-| Script | Purpose |
-|--------|---------|
-| `Package-Extension.ps1` | Package the VS Code extension |
+| Script                  | Purpose                                  |
+|-------------------------|------------------------------------------|
+| `Package-Extension.ps1` | Package the VS Code extension            |
 | `Prepare-Extension.ps1` | Prepare extension contents for packaging |
 
 ## Library
 
 Shared utility modules used across scripts.
 
-| Script | Purpose |
-|--------|---------|
+| Script                     | Purpose                              |
+|----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
 
 ## Linting Scripts
@@ -77,13 +77,13 @@ The `security/` directory contains scripts for security scanning and dependency 
 
 Pester test organization matching the scripts structure.
 
-| Directory | Tests For |
-|-----------|-----------|
+| Directory    | Tests For                     |
+|--------------|-------------------------------|
 | `dev-tools/` | PR reference generation tests |
-| `extension/` | Extension packaging tests |
-| `lib/` | Library utility tests |
-| `linting/` | Linting script tests |
-| `security/` | Security validation tests |
+| `extension/` | Extension packaging tests     |
+| `lib/`       | Library utility tests         |
+| `linting/`   | Linting script tests          |
+| `security/`  | Security validation tests     |
 
 Run all tests:
 
