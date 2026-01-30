@@ -563,9 +563,14 @@ function Invoke-PackageExtension {
         if ($null -ne $originalVersion -and $null -ne $packageVersion -and $packageVersion -ne $originalVersion -and $null -ne $PackageJsonPath) {
             Write-Host ""
             Write-Host "🔄 Restoring original package.json version..." -ForegroundColor Yellow
-            $packageJson.version = $originalVersion
-            $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-            Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
+            try {
+                $packageJson.version = $originalVersion
+                $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
+                Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
+            }
+            catch {
+                Write-Warning "Failed to restore original package.json version to '$originalVersion': $($_.Exception.Message)"
+            }
         }
     }
 }

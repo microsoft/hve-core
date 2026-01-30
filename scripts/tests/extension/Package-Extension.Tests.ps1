@@ -442,7 +442,7 @@ Describe 'Invoke-PackageExtension' {
 
     It 'Returns failure when vsce command fails with non-zero exit code' {
         Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
-        Mock Get-VscePackageCommand { return @{ Executable = 'sh'; Arguments = @('-c', 'exit 1') } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'pwsh'; Arguments = @('-Command', 'exit 1') } }
 
         $manifest = @{
             name = 'test-ext'
