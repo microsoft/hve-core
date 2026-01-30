@@ -8,6 +8,97 @@
 
 #Requires -Version 7.0
 
+function ConvertTo-GitHubActionsEscaped {
+    <#
+    .SYNOPSIS
+        Escapes a string for safe use in GitHub Actions workflow commands.
+
+    .DESCRIPTION
+        Percent-encodes characters that have special meaning in GitHub Actions
+        logging commands to prevent workflow command injection attacks.
+
+    .PARAMETER Value
+        The string to escape.
+
+    .PARAMETER ForProperty
+        If set, also escapes colon and comma characters used in property values.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Value,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ForProperty
+    )
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return $Value
+    }
+
+    # Order matters: escape % first to avoid double-encoding
+    $escaped = $Value -replace '%', '%25'
+    $escaped = $escaped -replace "`r", '%0D'
+    $escaped = $escaped -replace "`n", '%0A'
+    # Escape :: patterns to neutralize command sequences (defense in depth)
+    # This prevents ::command:: patterns while preserving single colons like C:\
+    $escaped = $escaped -replace '::', '%3A%3A'
+
+    if ($ForProperty) {
+        $escaped = $escaped -replace ':', '%3A'
+        $escaped = $escaped -replace ',', '%2C'
+    }
+
+    return $escaped
+}
+
+function ConvertTo-AzureDevOpsEscaped {
+    <#
+    .SYNOPSIS
+        Escapes a string for safe use in Azure DevOps logging commands.
+
+    .DESCRIPTION
+        Percent-encodes characters that have special meaning in Azure DevOps
+        logging commands to prevent workflow command injection attacks.
+
+    .PARAMETER Value
+        The string to escape.
+
+    .PARAMETER ForProperty
+        If set, also escapes semicolon and bracket characters used in property values.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Value,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ForProperty
+    )
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return $Value
+    }
+
+    # Order matters: escape % first to avoid double-encoding
+    $escaped = $Value -replace '%', '%AZP25'
+    $escaped = $escaped -replace "`r", '%AZP0D'
+    $escaped = $escaped -replace "`n", '%AZP0A'
+    # Escape brackets to prevent ##vso[ command patterns (defense in depth)
+    $escaped = $escaped -replace '\[', '%AZP5B'
+    $escaped = $escaped -replace '\]', '%AZP5D'
+
+    if ($ForProperty) {
+        $escaped = $escaped -replace ';', '%AZP3B'
+    }
+
+    return $escaped
+}
+
 function Get-CIPlatform {
     <#
     .SYNOPSIS
@@ -86,7 +177,10 @@ function Set-CIOutput {
     switch ($platform) {
         'github' {
             if ($env:GITHUB_OUTPUT) {
-                "$Name=$Value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+                # GITHUB_OUTPUT uses file-based output, less vulnerable but still escape newlines
+                $escapedName = ConvertTo-GitHubActionsEscaped -Value $Name
+                $escapedValue = ConvertTo-GitHubActionsEscaped -Value $Value
+                "$escapedName=$escapedValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             }
             else {
                 Write-Verbose "GITHUB_OUTPUT not set, would set: $Name=$Value"
@@ -94,7 +188,9 @@ function Set-CIOutput {
         }
         'azdo' {
             $outputFlag = if ($IsOutput) { ';isOutput=true' } else { '' }
-            Write-Output "##vso[task.setvariable variable=$Name$outputFlag]$Value"
+            $escapedName = ConvertTo-AzureDevOpsEscaped -Value $Name -ForProperty
+            $escapedValue = ConvertTo-AzureDevOpsEscaped -Value $Value
+            Write-Output "##vso[task.setvariable variable=$escapedName$outputFlag]$escapedValue"
         }
         'local' {
             Write-Verbose "CI Output: $Name=$Value"
@@ -206,14 +302,16 @@ function Write-CIAnnotation {
             $params = @()
             if ($File) {
                 $normalizedFile = $File -replace '\\', '/'
-                $params += "file=$normalizedFile"
+                $escapedFile = ConvertTo-GitHubActionsEscaped -Value $normalizedFile -ForProperty
+                $params += "file=$escapedFile"
             }
             if ($Line -gt 0) { $params += "line=$Line" }
             if ($Column -gt 0) { $params += "col=$Column" }
             if ($params.Count -gt 0) {
                 $annotation += " $($params -join ',')"
             }
-            Write-Output "$annotation::$Message"
+            $escapedMessage = ConvertTo-GitHubActionsEscaped -Value $Message
+            Write-Output "$annotation::$escapedMessage"
         }
         'azdo' {
             $typeMap = @{
@@ -224,11 +322,13 @@ function Write-CIAnnotation {
             $adoType = $typeMap[$Level]
             $annotation = "##vso[task.logissue type=$adoType"
             if ($File) {
-                $annotation += ";sourcepath=$File"
+                $escapedFile = ConvertTo-AzureDevOpsEscaped -Value $File -ForProperty
+                $annotation += ";sourcepath=$escapedFile"
             }
             if ($Line -gt 0) { $annotation += ";linenumber=$Line" }
             if ($Column -gt 0) { $annotation += ";columnnumber=$Column" }
-            Write-Output "$annotation]$Message"
+            $escapedMessage = ConvertTo-AzureDevOpsEscaped -Value $Message
+            Write-Output "$annotation]$escapedMessage"
         }
         'local' {
             $prefix = switch ($Level) {
@@ -324,7 +424,10 @@ function Publish-CIArtifact {
         }
         'azdo' {
             $container = if ($ContainerFolder) { $ContainerFolder } else { $Name }
-            Write-Output "##vso[artifact.upload containerfolder=$container;artifactname=$Name]$Path"
+            $escapedContainer = ConvertTo-AzureDevOpsEscaped -Value $container -ForProperty
+            $escapedName = ConvertTo-AzureDevOpsEscaped -Value $Name -ForProperty
+            $escapedPath = ConvertTo-AzureDevOpsEscaped -Value $Path
+            Write-Output "##vso[artifact.upload containerfolder=$escapedContainer;artifactname=$escapedName]$escapedPath"
         }
         'local' {
             Write-Verbose "Artifact: $Name at $Path"
