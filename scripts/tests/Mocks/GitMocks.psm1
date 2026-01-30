@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
 # GitMocks.psm1
 #
 # Purpose: Reusable mock helpers for Git CLI and GitHub Actions testing in Pester
@@ -9,12 +12,13 @@
 function Save-GitHubEnvironment {
     <#
     .SYNOPSIS
-    Saves current GitHub Actions environment variables for later restoration.
+    Saves current CI environment variables for later restoration.
     #>
     [CmdletBinding()]
     param()
 
     $script:SavedEnvironment = @{
+        # GitHub Actions
         GITHUB_ACTIONS      = $env:GITHUB_ACTIONS
         GITHUB_OUTPUT       = $env:GITHUB_OUTPUT
         GITHUB_ENV          = $env:GITHUB_ENV
@@ -23,15 +27,20 @@ function Save-GitHubEnvironment {
         GITHUB_HEAD_REF     = $env:GITHUB_HEAD_REF
         GITHUB_WORKSPACE    = $env:GITHUB_WORKSPACE
         GITHUB_REPOSITORY   = $env:GITHUB_REPOSITORY
+        # Azure DevOps
+        TF_BUILD                         = $env:TF_BUILD
+        AZURE_PIPELINES                  = $env:AZURE_PIPELINES
+        BUILD_ARTIFACTSTAGINGDIRECTORY   = $env:BUILD_ARTIFACTSTAGINGDIRECTORY
+        SYSTEM_TEAMFOUNDATIONCOLLECTIONURI = $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI
     }
 
-    Write-Verbose "Saved GitHub environment state"
+    Write-Verbose "Saved CI environment state"
 }
 
 function Restore-GitHubEnvironment {
     <#
     .SYNOPSIS
-    Restores GitHub Actions environment variables to saved state.
+    Restores CI environment variables to saved state.
     #>
     [CmdletBinding()]
     param()
@@ -50,7 +59,7 @@ function Restore-GitHubEnvironment {
         }
     }
 
-    Write-Verbose "Restored GitHub environment state"
+    Write-Verbose "Restored CI environment state"
 }
 
 function Initialize-MockGitHubEnvironment {
@@ -118,12 +127,17 @@ function Initialize-MockGitHubEnvironment {
 function Clear-MockGitHubEnvironment {
     <#
     .SYNOPSIS
-    Removes GitHub Actions environment variables (simulates local/non-CI environment).
+    Removes CI platform environment variables (simulates local/non-CI environment).
+
+    .DESCRIPTION
+    Clears both GitHub Actions and Azure DevOps environment variables to
+    simulate a local development environment for testing.
     #>
     [CmdletBinding()]
     param()
 
     @(
+        # GitHub Actions
         'GITHUB_ACTIONS',
         'GITHUB_OUTPUT',
         'GITHUB_ENV',
@@ -131,12 +145,17 @@ function Clear-MockGitHubEnvironment {
         'GITHUB_BASE_REF',
         'GITHUB_HEAD_REF',
         'GITHUB_WORKSPACE',
-        'GITHUB_REPOSITORY'
+        'GITHUB_REPOSITORY',
+        # Azure DevOps
+        'TF_BUILD',
+        'AZURE_PIPELINES',
+        'BUILD_ARTIFACTSTAGINGDIRECTORY',
+        'SYSTEM_TEAMFOUNDATIONCOLLECTIONURI'
     ) | ForEach-Object {
         Remove-Item -Path "env:$_" -ErrorAction SilentlyContinue
     }
 
-    Write-Verbose "Cleared GitHub environment variables"
+    Write-Verbose "Cleared CI environment variables"
 }
 
 function Remove-MockGitHubFiles {
