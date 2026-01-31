@@ -44,6 +44,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **task-researcher** | Produces research documents with evidence-based recommendations | Research-only; never plans or implements |
 | **task-planner** | Creates 3-file plan sets (plan, details, prompt) | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation | Requires completed plan files |
+| **task-reviewer** | Validates implementation against research and plan specifications | Requires research/plan artifacts |
 
 ### Documentation and Planning Agents
 
@@ -127,6 +128,18 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Analyze plan → Dispatch subagents per phase → Track progress → Validate
 
 **Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
+
+### task-reviewer
+
+**Creates:** Review validation logs:
+
+* `.copilot-tracking/reviews/{{YYYY-MM-DD}}-<topic>-review.md`
+
+**Workflow:** Locate artifacts → Extract checklist → Validate items → Run commands → Document findings
+
+**Critical:** Review-only specialist. Validates against documentation, not assumptions. Produces findings with severity levels (Critical, Major, Minor).
+
+**Documentation:** See [Task Reviewer Guide](../docs/rpi/task-reviewer.md) for detailed usage.
 
 ### prompt-builder
 
