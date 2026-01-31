@@ -58,6 +58,8 @@ param(
 
 #endregion
 
+Import-Module (Join-Path $PSScriptRoot "Modules/CIHelpers.psm1") -Force
+
 #region Pure Functions
 
 function Get-FileHashValue {
@@ -386,9 +388,7 @@ try {
 }
 catch {
     Write-Error "Get Verified Download failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
-    }
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
 }
 #endregion

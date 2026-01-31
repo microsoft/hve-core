@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 
 # Script to generate a PR reference file with commit history and full diff
 # This file will be used by GitHub Copilot to generate accurate PR descriptions
