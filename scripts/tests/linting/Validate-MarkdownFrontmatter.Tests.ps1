@@ -1,4 +1,6 @@
 ﻿#Requires -Modules Pester
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Import module with 'using' to make PowerShell class types (FileTypeInfo, ValidationSummary, etc.) available at parse time
 using module ..\..\linting\Modules\FrontmatterValidation.psm1
 

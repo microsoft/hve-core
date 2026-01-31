@@ -1,4 +1,7 @@
-﻿# Validate-MarkdownFrontmatter.ps1
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+# Validate-MarkdownFrontmatter.ps1
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
@@ -49,6 +52,7 @@ param(
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Type Definitions
 
@@ -777,7 +781,8 @@ try {
 catch {
     Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }
