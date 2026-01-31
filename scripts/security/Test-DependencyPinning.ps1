@@ -80,6 +80,9 @@
     https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
 #>
 
+# Import security classes from shared module
+using module ./Modules/SecurityClasses.psm1
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -157,43 +160,7 @@ $DependencyPatterns = @{
     }
 }
 
-class DependencyViolation {
-    [string]$File
-    [int]$Line
-    [string]$Type
-    [string]$Name
-    [string]$Version
-    [string]$CurrentRef
-    [string]$Severity
-    [string]$Description
-    [string]$Remediation
-    [hashtable]$Metadata
-
-    DependencyViolation() {
-        $this.Metadata = @{}
-    }
-}
-
-class ComplianceReport {
-    [string]$ScanPath
-    [datetime]$Timestamp
-    [int]$TotalFiles
-    [int]$ScannedFiles
-    [int]$TotalDependencies
-    [int]$PinnedDependencies
-    [int]$UnpinnedDependencies
-    [decimal]$ComplianceScore
-    [DependencyViolation[]]$Violations
-    [hashtable]$Summary
-    [hashtable]$Metadata
-
-    ComplianceReport() {
-        $this.Timestamp = Get-Date
-        $this.Violations = @()
-        $this.Summary = @{}
-        $this.Metadata = @{}
-    }
-}
+# DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1
 
 function Test-ShellDownloadSecurity {
     <#
