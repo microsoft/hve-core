@@ -86,6 +86,7 @@ $MaxLinesToCheck = 15
 
 function Test-FileHeaders {
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$FilePath
@@ -131,6 +132,7 @@ function Test-FileHeaders {
 
 function Get-FilesToCheck {
     [CmdletBinding()]
+    [OutputType([System.IO.FileInfo[]])]
     param(
         [string]$RootPath,
         [string[]]$Extensions,
