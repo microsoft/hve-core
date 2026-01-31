@@ -1,4 +1,6 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 
 <#
 .SYNOPSIS
@@ -54,6 +56,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -729,9 +732,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
     catch {
         Write-Error "Prepare Extension failed: $($_.Exception.Message)"
-        if ($env:GITHUB_ACTIONS -eq 'true') {
-            Write-Output "::error::$($_.Exception.Message)"
-        }
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }

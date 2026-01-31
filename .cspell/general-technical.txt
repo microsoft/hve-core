@@ -1476,3 +1476,6 @@ isort
 mymodule
 mypy
 sandboxed
+Sigstore
+Overreliance
+Contestability

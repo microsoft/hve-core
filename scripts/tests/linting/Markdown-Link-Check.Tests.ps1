@@ -1,4 +1,6 @@
 #Requires -Modules Pester
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Pester tests for Markdown-Link-Check.ps1 script
