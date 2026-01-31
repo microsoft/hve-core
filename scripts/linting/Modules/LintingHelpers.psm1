@@ -4,6 +4,8 @@
 # Author: HVE Core Team
 # Created: 2025-11-05
 
+Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
+
 function Get-ChangedFilesFromGit {
     <#
     .SYNOPSIS
@@ -220,10 +222,15 @@ function Write-GitHubAnnotation {
         [int]$Column
     )
 
+    $escapedMessage = ConvertTo-GitHubActionsEscaped -Value $Message
+    
     $annotation = "::${Type}"
     
     $properties = @()
-    if ($File) { $properties += "file=$File" }
+    if ($File) {
+        $escapedFile = ConvertTo-GitHubActionsEscaped -Value $File -ForProperty
+        $properties += "file=$escapedFile"
+    }
     if ($Line -gt 0) { $properties += "line=$Line" }
     if ($Column -gt 0) { $properties += "col=$Column" }
     
@@ -231,7 +238,7 @@ function Write-GitHubAnnotation {
         $annotation += " $($properties -join ',')"
     }
     
-    $annotation += "::$Message"
+    $annotation += "::$escapedMessage"
     
     Write-Host $annotation
 }

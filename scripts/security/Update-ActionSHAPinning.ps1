@@ -45,6 +45,9 @@ param(
     [switch]$UpdateStale
 )
 
+# Import CIHelpers for workflow command escaping
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -408,13 +411,14 @@ function Write-OutputResult {
             }
 
             foreach ($issue in $Results) {
-                $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
+                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
                 if ($issue.File) {
                     $normalizedPath = $issue.File -replace '\\', '/'
-                    Write-Output "::warning file=$normalizedPath::$message"
+                    $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath -ForProperty
+                    Write-Output "::warning file=$escapedPath::$escapedMessage"
                 }
                 else {
-                    Write-Output "::warning::$message"
+                    Write-Output "::warning::$escapedMessage"
                 }
             }
             return
@@ -909,7 +913,8 @@ try {
 catch {
     Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }
