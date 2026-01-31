@@ -49,6 +49,7 @@ param(
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Type Definitions
 
@@ -777,8 +778,7 @@ try {
 catch {
     Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        # Escape workflow command patterns to prevent injection
-        $escapedMsg = $_.Exception.Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
         Write-Output "::error::$escapedMsg"
     }
     exit 1

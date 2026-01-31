@@ -45,6 +45,7 @@ param(
 
 # Import LintingHelpers module
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 function Get-MarkdownTarget {
     <#
@@ -380,8 +381,7 @@ Great job! All markdown links are valid. 🎉
 catch {
     Write-Error "Markdown Link Check failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        # Escape workflow command patterns to prevent injection
-        $escapedMsg = $_.Exception.Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
         Write-Output "::error::$escapedMsg"
     }
     exit 1

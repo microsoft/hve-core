@@ -4,6 +4,8 @@
 # Author: HVE Core Team
 # Created: 2025-11-05
 
+Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
+
 function Get-ChangedFilesFromGit {
     <#
     .SYNOPSIS
@@ -220,15 +222,13 @@ function Write-GitHubAnnotation {
         [int]$Column
     )
 
-    # Escape workflow command patterns to prevent injection
-    $escapedMessage = $Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+    $escapedMessage = ConvertTo-GitHubActionsEscaped -Value $Message
     
     $annotation = "::${Type}"
     
     $properties = @()
     if ($File) {
-        # Escape property values (colons and commas have special meaning in properties)
-        $escapedFile = $File -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace ':', '%3A' -replace ',', '%2C'
+        $escapedFile = ConvertTo-GitHubActionsEscaped -Value $File -ForProperty
         $properties += "file=$escapedFile"
     }
     if ($Line -gt 0) { $properties += "line=$Line" }

@@ -13,6 +13,7 @@ param(
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 # Get repository root
 $repoRoot = git rev-parse --show-toplevel 2>$null
@@ -123,8 +124,7 @@ No URLs with language-specific paths detected.
 catch {
     Write-Error "Link-language check failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        # Escape workflow command patterns to prevent injection
-        $escapedMsg = $_.Exception.Message -replace '%', '%25' -replace '\r', '%0D' -replace '\n', '%0A' -replace '::', '%3A%3A'
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
         Write-Output "::error::$escapedMsg"
     }
     exit 1
