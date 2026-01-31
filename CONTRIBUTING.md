@@ -197,6 +197,10 @@ Refer to the [DevContainer README](./.devcontainer/README.md) for detailed infor
 - Run spell checking before committing changes
 - Format tables using the markdown-table-formatter tool
 
+### Copyright and License Headers
+
+All source files must include copyright and license headers to meet OpenSSF Best Practices badge criteria. See [Copyright Header Guidelines](./docs/contributing/copyright-headers.md) for format requirements and placement rules by file type.
+
 ## Testing Requirements
 
 New functionality MUST include tests. This policy ensures code quality and prevents regressions.
