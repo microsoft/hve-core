@@ -31,6 +31,8 @@
     Update already-pinned-but-stale GitHub Actions to their latest commit SHAs.
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter()]
@@ -47,11 +49,11 @@ param(
     [switch]$UpdateStale
 )
 
-# Import CIHelpers for workflow command escaping
-Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
-
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Import CIHelpers for workflow command escaping
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"

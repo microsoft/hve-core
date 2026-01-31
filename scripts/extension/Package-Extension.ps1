@@ -55,6 +55,8 @@
     # Dot-source to import functions for testing without executing packaging.
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -69,6 +71,9 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$PreRelease
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
@@ -585,8 +590,6 @@ function Invoke-PackageExtension {
 try {
     # Only execute main logic when run directly, not when dot-sourced
     if ($MyInvocation.InvocationName -ne '.') {
-        $ErrorActionPreference = "Stop"
-
         $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
         $ExtensionDir = Join-Path $RepoRoot "extension"

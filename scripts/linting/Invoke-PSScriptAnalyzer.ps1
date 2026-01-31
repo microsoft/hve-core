@@ -8,6 +8,8 @@
 # Author: HVE Core Team
 # Created: 2025-11-05
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -22,6 +24,9 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/psscriptanalyzer-results.json"
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force

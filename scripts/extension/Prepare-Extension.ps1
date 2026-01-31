@@ -42,6 +42,8 @@
     Dependencies: PowerShell-Yaml module
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -55,7 +57,9 @@ param(
     [switch]$DryRun
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Pure Functions
@@ -678,8 +682,6 @@ function Invoke-PrepareExtension {
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        $ErrorActionPreference = "Stop"
-
         # Verify PowerShell-Yaml module is available
         if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
             throw "Required module 'PowerShell-Yaml' is not installed."

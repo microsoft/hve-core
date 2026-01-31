@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
-
 <#
 .SYNOPSIS
     Repository-aware wrapper for markdown-link-check.
@@ -44,6 +43,9 @@ param(
 
     [switch]$Quiet
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Import LintingHelpers module
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force

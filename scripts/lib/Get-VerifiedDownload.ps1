@@ -36,6 +36,8 @@
     Invoke-VerifiedDownload -Url "https://example.com/file.zip" -DestinationDirectory "C:\downloads" -ExpectedHash "abc123..."
 #>
 
+#Requires -Version 7.0
+
 #region Script Parameters
 
 [CmdletBinding()]
@@ -57,6 +59,9 @@ param(
 )
 
 #endregion
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "Modules/CIHelpers.psm1") -Force
 
@@ -356,8 +361,6 @@ try {
             Write-Error "When invoking directly, -Url, -ExpectedSHA256, and -OutputPath are required."
             exit 1
         }
-
-        $ErrorActionPreference = 'Stop'
 
         # Resolve destination directory and file name from OutputPath
         $destinationDir = Split-Path -Parent $OutputPath

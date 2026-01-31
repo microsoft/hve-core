@@ -13,7 +13,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#requires -Version 7.0
+#Requires -Version 7.0
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
@@ -48,6 +48,9 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability

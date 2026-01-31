@@ -16,6 +16,9 @@ Git branch used as the comparison base. Defaults to "main".
 .PARAMETER ExcludeMarkdownDiff
 When supplied, excludes markdown (*.md) files from the diff output.
 #>
+
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter()]
@@ -25,7 +28,9 @@ param(
     [switch]$ExcludeMarkdownDiff
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 function Test-GitAvailability {

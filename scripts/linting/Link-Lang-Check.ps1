@@ -46,11 +46,16 @@
     - Microsoft documentation guidance on language neutrality: https://learn.microsoft.com/style-guide/urls-web-addresses
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [switch]$Fix,
     [string[]]$ExcludePaths = @()
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 

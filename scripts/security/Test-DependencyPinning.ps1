@@ -82,6 +82,8 @@
     https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -114,11 +116,11 @@ param(
     [switch]$Remediate
 )
 
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
-
-# Set error action preference for consistent error handling
-$ErrorActionPreference = 'Stop'
 
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{

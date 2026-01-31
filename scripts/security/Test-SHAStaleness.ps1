@@ -48,6 +48,8 @@
     Use smaller GraphQL batch size for rate-limited environments
 #>
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -70,6 +72,9 @@ param(
     [ValidateRange(1, 50)]
     [int]$GraphQLBatchSize = 20
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
