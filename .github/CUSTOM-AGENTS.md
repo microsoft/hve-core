@@ -38,58 +38,58 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
-| **rpi-agent** | Autonomous agent with subagent delegation for complex tasks | Requires `runSubagent` tool enabled |
-| **task-researcher** | Produces research documents with evidence-based recommendations | Research-only; never plans or implements |
-| **task-planner** | Creates 3-file plan sets (plan, details, prompt) | Requires research first; never implements code |
-| **task-implementor** | Executes implementation plans with subagent delegation | Requires completed plan files |
-| **task-reviewer** | Validates implementation against research and plan specifications | Requires research/plan artifacts |
+| Agent                | Purpose                                                           | Key Constraint                                 |
+|----------------------|-------------------------------------------------------------------|------------------------------------------------|
+| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks       | Requires `runSubagent` tool enabled            |
+| **task-researcher**  | Produces research documents with evidence-based recommendations   | Research-only; never plans or implements       |
+| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
+| **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
+| **task-reviewer**    | Validates implementation against research and plan specifications | Requires research/plan artifacts               |
 
 ### Documentation and Planning Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
-| **prd-builder** | Creates Product Requirements Documents through guided Q&A | Iterative questioning; state-tracked sessions |
-| **brd-builder** | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus |
-| **adr-creation** | Interactive ADR coaching with guided discovery | Socratic coaching approach |
-| **security-plan-creator** | Creates comprehensive cloud security plans from blueprints | Blueprint-driven threat modeling |
-| **doc-ops** | Documentation operations and maintenance | Does not modify source code |
+| Agent                     | Purpose                                                            | Key Constraint                                |
+|---------------------------|--------------------------------------------------------------------|-----------------------------------------------|
+| **prd-builder**           | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions |
+| **brd-builder**           | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus          |
+| **adr-creation**          | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                    |
+| **security-plan-creator** | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling              |
+| **doc-ops**               | Documentation operations and maintenance                           | Does not modify source code                   |
 
 ### Utility Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
+| Agent      | Purpose                                    | Key Constraint                        |
+|------------|--------------------------------------------|---------------------------------------|
 | **memory** | Persists repository facts for future tasks | Stores only durable, actionable facts |
 
 ### Code and Review Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
-| **pr-review** | 4-phase PR review with tracking artifacts | Review-only; never modifies code |
+| Agent              | Purpose                                          | Key Constraint                        |
+|--------------------|--------------------------------------------------|---------------------------------------|
+| **pr-review**      | 4-phase PR review with tracking artifacts        | Review-only; never modifies code      |
 | **prompt-builder** | Engineers and validates instruction/prompt files | Dual-persona system with auto-testing |
 
 ### Generator Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
-| **gen-jupyter-notebook** | Creates structured EDA notebooks from data sources | Requires data dictionaries |
-| **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards | Uses Context7 for documentation |
-| **gen-data-spec** | Generates data dictionaries and profiles | Produces JSON and markdown artifacts |
-| **arch-diagram-builder** | Builds ASCII block diagrams from Azure IaC | Parses Terraform, Bicep, ARM scripts |
+| Agent                       | Purpose                                            | Key Constraint                       |
+|-----------------------------|----------------------------------------------------|--------------------------------------|
+| **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
+| **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
+| **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
+| **arch-diagram-builder**    | Builds ASCII block diagrams from Azure IaC         | Parses Terraform, Bicep, ARM scripts |
 
 ### Platform Integration Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
-| **github-issue-manager** | Interactive GitHub issue filing and navigation | Uses MCP GitHub tools |
-| **ado-prd-to-wit** | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items |
-| **hve-core-installer** | Decision-driven HVE-Core installation with 6 methods | Environment detection and validation |
+| Agent                    | Purpose                                                    | Key Constraint                            |
+|--------------------------|------------------------------------------------------------|-------------------------------------------|
+| **github-issue-manager** | Interactive GitHub issue filing and navigation             | Uses MCP GitHub tools                     |
+| **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items |
+| **hve-core-installer**   | Decision-driven HVE-Core installation with 6 methods       | Environment detection and validation      |
 
 ### Testing Agents
 
-| Agent | Purpose | Key Constraint |
-| ----- | ------- | -------------- |
+| Agent                        | Purpose                                     | Key Constraint                         |
+|------------------------------|---------------------------------------------|----------------------------------------|
 | **test-streamlit-dashboard** | Automated Streamlit testing with Playwright | Requires running Streamlit application |
 
 ## Agent Details
@@ -216,6 +216,16 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Operates strictly on documentation files and does not modify application or source code
 
+### memory
+
+**Creates:** Repository memory records:
+
+* `/memories/repo/<descriptive-name>.jsonl`
+
+**Workflow:** Identify actionable repository fact → Validate durability → Store with context → Available for future tasks
+
+**Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
+
 ### security-plan-creator
 
 **Creates:** Security plans and implementation artifacts:
@@ -262,7 +272,9 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### arch-diagram-builder
 
-**Creates:** ASCII architecture diagrams in markdown
+**Creates:** ASCII architecture diagrams in markdown:
+
+* Inline diagrams with legend and key relationships
 
 **Workflow:** Discovery → Parsing → Relationship Mapping → Generation
 
@@ -304,25 +316,72 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### test-streamlit-dashboard
 
-**Creates:** Test reports and issue documentation
+**Creates:** Test reports and issue documentation:
+
+* Test results summary
+* Issue registry with reproduction steps
 
 **Workflow:** Environment Setup → Functional Testing → Data Validation → Performance Assessment → Issue Reporting
 
 **Critical:** Uses Playwright for browser automation. Requires running Streamlit application. Categorizes issues by severity.
 
----
+## Common Workflows
 
-### memory
+### Autonomous Task Completion
 
-**Creates:** Repository memory records:
+1. Select **rpi-agent** from agent picker
+2. Provide your request
+3. Agent autonomously researches, implements, and verifies
+4. Review results; agent continues if more work remains
+5. Requires `runSubagent` tool enabled in settings
 
-* `/memories/repo/<descriptive-name>.jsonl`
+### Planning a Feature
 
-**Workflow:**  
-Identify actionable repository fact → Validate durability → Store with context → Available for future tasks
+1. Select **task-researcher** from agent picker and create research document
+2. Review research and provide decisions on approach
+3. Clear context or start new chat
+4. Select **task-planner** from agent picker and attach research doc
+5. Generate 3-file plan set
+6. Use `/task-implement` to execute the plan (automatically switches to **task-implementor**)
 
-**Critical:**  
-Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
+### Code Review
+
+1. Select **pr-review** from agent picker
+2. Automatically runs 4-phase protocol
+3. Collaborate during Phase 3 (review items)
+4. Receive `handoff.md` with final PR comments
+
+### Creating Instructions
+
+1. Select **prompt-builder** from agent picker
+2. Draft instruction file with conventions
+3. Auto-validates with Prompt Tester persona
+4. Iterates up to 3 times for quality
+5. Delivered to `.github/instructions/`
+
+### Creating Documentation
+
+1. Select **prd-builder** or **brd-builder** from agent picker
+2. Answer guided questions about the product or business initiative
+3. Provide references and supporting materials
+4. Review and refine iteratively
+5. Finalize when quality gates pass
+
+## Important Notes
+
+* **Linting Exemption:** Files in `.copilot-tracking/**` are exempt from repository linting rules
+* **Agent Switching:** Clear context or start a new chat when switching between specialized agents
+* **Research First:** Task planner requires completed research; will automatically invoke researcher if missing
+* **No Implementation:** Task planner and researcher never implement actual project code—they create planning artifacts only
+* **Subagent Requirements:** Several agents require the `runSubagent` tool enabled in Copilot settings
+
+## Tips
+
+* Be specific in your requests for better results
+* Provide context about what you're working on
+* Review generated outputs before using
+* Chain agents together for complex tasks
+* Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
 
 ---
 
