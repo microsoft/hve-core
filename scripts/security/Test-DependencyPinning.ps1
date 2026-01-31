@@ -115,6 +115,9 @@ param(
 # Set error action preference for consistent error handling
 $ErrorActionPreference = 'Stop'
 
+# Import shared logging module
+Import-Module (Join-Path $PSScriptRoot "../linting/Modules/LintingHelpers.psm1") -Force
+
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
     'github-actions' = @{
@@ -332,6 +335,8 @@ function Get-NpmDependencyViolations {
     return $violations
 }
 
+# Write-PinningLog wrapper - forwards to shared Write-ScriptLog from LintingHelpers.psm1
+# Original function used simple Write-Output, shared function adds console colors
 function Write-PinningLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -342,8 +347,16 @@ function Write-PinningLog {
         [string]$Level = 'Info'
     )
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Output "[$timestamp] [$Level] $Message"
+    # Detect CI/CD environment for output format
+    $logFormat = 'console'
+    if ($env:GITHUB_ACTIONS -eq 'true') {
+        $logFormat = 'github'
+    }
+    elseif ($env:TF_BUILD -eq 'True' -or $env:AZURE_PIPELINES -eq 'True') {
+        $logFormat = 'azdo'
+    }
+
+    Write-ScriptLog -Message $Message -Level $Level -OutputFormat $logFormat
 }
 
 function Get-FilesToScan {

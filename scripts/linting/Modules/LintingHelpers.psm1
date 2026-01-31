@@ -321,6 +321,121 @@ function Write-GitHubStepSummary {
     }
 }
 
+function Write-ScriptLog {
+    <#
+    .SYNOPSIS
+    Writes formatted log messages with CI/CD platform support.
+
+    .DESCRIPTION
+    Consolidated logging function that supports GitHub Actions, Azure DevOps,
+    and console output formats. Provides consistent logging across all security
+    and linting scripts.
+
+    .PARAMETER Message
+    The log message to write.
+
+    .PARAMETER Level
+    Log level: Info, Warning, Error, Debug, or Success.
+
+    .PARAMETER OutputFormat
+    Output format: github, azdo, or console.
+
+    .PARAMETER LogPath
+    Optional file path for persistent logging.
+
+    .EXAMPLE
+    Write-ScriptLog -Message "Starting scan..." -Level Info
+
+    .EXAMPLE
+    Write-ScriptLog -Message "Found issue" -Level Warning -OutputFormat github
+
+    .EXAMPLE
+    Write-ScriptLog -Message "Check complete" -Level Success -LogPath "./logs/scan.log"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Message,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Info', 'Warning', 'Error', 'Debug', 'Success')]
+        [string]$Level = 'Info',
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('github', 'azdo', 'console')]
+        [string]$OutputFormat = 'console',
+
+        [Parameter(Mandatory = $false)]
+        [string]$LogPath
+    )
+
+    # Handle empty or whitespace messages
+    if ([string]::IsNullOrWhiteSpace($Message)) {
+        $Message = "(empty message)"
+    }
+
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logEntry = "[$timestamp] [$Level] $Message"
+
+    switch ($OutputFormat) {
+        'github' {
+            # GitHub Actions annotation format
+            switch ($Level) {
+                'Error'   { Write-Output "::error::$Message" }
+                'Warning' { Write-Output "::warning::$Message" }
+                'Debug'   { Write-Output "::debug::$Message" }
+                'Success' { Write-Output "::notice::$Message" }
+                default   { Write-Output $logEntry }
+            }
+        }
+
+        'azdo' {
+            # Azure DevOps logging commands
+            switch ($Level) {
+                'Error'   { Write-Output "##vso[task.logissue type=error]$Message" }
+                'Warning' { Write-Output "##vso[task.logissue type=warning]$Message" }
+                'Debug'   { Write-Output "##[debug]$Message" }
+                'Success' { Write-Output "##[section]$Message" }
+                default   { Write-Output $logEntry }
+            }
+        }
+
+        'console' {
+            # Colored console output
+            switch ($Level) {
+                'Info'    { Write-Host $logEntry -ForegroundColor Cyan }
+                'Warning' { Write-Host $logEntry -ForegroundColor Yellow }
+                'Error'   { Write-Host $logEntry -ForegroundColor Red }
+                'Debug'   { Write-Host $logEntry -ForegroundColor Gray }
+                'Success' { Write-Host $logEntry -ForegroundColor Green }
+                default   { Write-Host $logEntry }
+            }
+        }
+
+        default {
+            # Fallback to plain output
+            Write-Output $logEntry
+        }
+    }
+
+    # File logging if path provided
+    if ($LogPath) {
+        try {
+            # Ensure parent directory exists
+            $logDir = Split-Path -Parent $LogPath
+            if ($logDir -and -not (Test-Path $logDir)) {
+                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+            }
+            Add-Content -Path $LogPath -Value $logEntry -ErrorAction SilentlyContinue
+        }
+        catch {
+            # Silently fail file logging to avoid disrupting script execution
+            Write-Verbose "Failed to write to log file: $($_.Exception.Message)"
+        }
+    }
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
@@ -329,5 +444,6 @@ Export-ModuleMember -Function @(
     'Write-GitHubAnnotation',
     'Set-GitHubOutput',
     'Set-GitHubEnv',
-    'Write-GitHubStepSummary'
+    'Write-GitHubStepSummary',
+    'Write-ScriptLog'
 )

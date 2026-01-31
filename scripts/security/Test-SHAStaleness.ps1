@@ -69,12 +69,16 @@ param(
     [int]$GraphQLBatchSize = 20
 )
 
+# Import shared logging module
+Import-Module (Join-Path $PSScriptRoot "../linting/Modules/LintingHelpers.psm1") -Force
+
 # Ensure logging directory exists
 $LogDir = Split-Path -Parent $LogPath
 if (!(Test-Path $LogDir)) {
     New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 }
 
+# Write-SecurityLog wrapper - forwards to shared Write-ScriptLog with script-scoped parameters
 function Write-SecurityLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -85,30 +89,14 @@ function Write-SecurityLog {
         [string]$Level = "Info"
     )
 
-    if ([string]::IsNullOrWhiteSpace($Message)) {
-        $Message = "Empty log message"
+    # Map script's OutputFormat to Write-ScriptLog format
+    $logFormat = switch ($script:OutputFormat) {
+        'github' { 'github' }
+        'azdo'   { 'azdo' }
+        default  { 'console' }
     }
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logEntry = "[$timestamp] [$Level] $Message"
-
-    # Console output with colors (only in console mode)
-    if ($OutputFormat -eq "console") {
-        switch ($Level) {
-            "Info" { Write-Host $logEntry -ForegroundColor Cyan }
-            "Warning" { Write-Host $logEntry -ForegroundColor Yellow }
-            "Error" { Write-Host $logEntry -ForegroundColor Red }
-            "Success" { Write-Host $logEntry -ForegroundColor Green }
-        }
-    }
-
-    # File logging
-    try {
-        Add-Content -Path $LogPath -Value $logEntry -ErrorAction SilentlyContinue
-    }
-    catch {
-        Write-Error "Failed to write to log file: $($_.Exception.Message)" -ErrorAction SilentlyContinue
-    }
+    Write-ScriptLog -Message $Message -Level $Level -OutputFormat $logFormat -LogPath $script:LogPath
 }
 
 # Structure to hold stale dependency information
