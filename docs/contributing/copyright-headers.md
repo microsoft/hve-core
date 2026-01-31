@@ -10,7 +10,7 @@ keywords:
   - SPDX
   - headers
   - OpenSSF
-estimated_reading_time: 3
+estimated_reading_time: 2
 ---
 
 This document defines the copyright and license header format required for source files in the hve-core repository. Following these guidelines ensures compliance with [OpenSSF Best Practices](https://www.bestpractices.dev/en/criteria/2) Gold badge criteria for `copyright_per_file` and `license_per_file`.
@@ -19,43 +19,22 @@ This document defines the copyright and license header format required for sourc
 
 All source files in this repository must include a copyright and license header. We use the [SPDX License Identifier](https://spdx.org/licenses/) standard to provide machine-readable license information.
 
-## Header Format by File Type
+## Header Format
 
-### Hash-style Comments (PowerShell, Bash, Python)
+### PowerShell Files
 
 ```text
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 ```
 
-Applies to: `.ps1`, `.sh`, `.py` files
-
-### Slash-style Comments (C#, TypeScript, JavaScript)
-
-```text
-// Copyright (c) Microsoft Corporation.
-// SPDX-License-Identifier: MIT
-```
-
-Applies to: `.cs`, `.ts`, `.js` files
+Applies to: `.ps1` files
 
 ## Placement Rules
 
-The header placement depends on the file type and any required directives:
+The header placement depends on any required directives in the file:
 
-### Shell Scripts (Bash)
-
-Place the header **after** the shebang line:
-
-```bash
-#!/bin/bash
-# Copyright (c) Microsoft Corporation.
-# SPDX-License-Identifier: MIT
-
-# Script content starts here
-```
-
-### PowerShell Scripts
+### With #Requires Statements
 
 Place the header **after** any `#Requires` statements:
 
@@ -68,6 +47,8 @@ Place the header **after** any `#Requires` statements:
 # Script content starts here
 ```
 
+### Without #Requires Statements
+
 If no `#Requires` statements exist, place the header at the first line:
 
 ```powershell
@@ -79,49 +60,9 @@ param(
 )
 ```
 
-### Python Files
-
-Place the header **after** the shebang (if present) and encoding declaration:
-
-```python
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Copyright (c) Microsoft Corporation.
-# SPDX-License-Identifier: MIT
-
-"""Module docstring."""
-```
-
-If no shebang or encoding declaration exists, place at the first line:
-
-```python
-# Copyright (c) Microsoft Corporation.
-# SPDX-License-Identifier: MIT
-
-"""Module docstring."""
-```
-
-### C#, TypeScript, and JavaScript Files
-
-Place the header at the **first lines** of the file:
-
-```csharp
-// Copyright (c) Microsoft Corporation.
-// SPDX-License-Identifier: MIT
-
-namespace HveCore;
-```
-
-```typescript
-// Copyright (c) Microsoft Corporation.
-// SPDX-License-Identifier: MIT
-
-export class Example {
-}
-```
-
 ## References
 
+- [Microsoft Open Source](https://opensource.microsoft.com/) - Microsoft's open source program and governance
 - [SPDX License List](https://spdx.org/licenses/) - Standard license identifiers
 - [SPDX License Identifier Specification](https://spdx.github.io/spdx-spec/v2.3/using-SPDX-short-identifiers-in-source-files/) - How to use SPDX identifiers in source files
 - [OpenSSF Best Practices Badge Criteria](https://www.bestpractices.dev/en/criteria/2) - Gold level requirements
