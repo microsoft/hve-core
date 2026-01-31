@@ -321,6 +321,86 @@ function Write-GitHubStepSummary {
     }
 }
 
+function Test-LintingFilesExist {
+    <#
+    .SYNOPSIS
+    Checks if files exist and handles early exit messaging for linting scripts.
+
+    .DESCRIPTION
+    Common boilerplate for linting scripts: checks if any files were found,
+    writes appropriate console messages, and returns whether to continue.
+    Caller is responsible for setting GitHub outputs if needed.
+
+    .PARAMETER ToolName
+    Display name of the linting tool.
+
+    .PARAMETER Files
+    Array of files to check.
+
+    .OUTPUTS
+    Hashtable with:
+    - Continue: Boolean - whether to continue processing
+    - FileCount: Int - number of files found
+
+    .EXAMPLE
+    $result = Test-LintingFilesExist -ToolName 'PSScriptAnalyzer' -Files $files
+    if (-not $result.Continue) { 
+        Set-GitHubOutput -Name "count" -Value "0"
+        exit 0 
+    }
+    Set-GitHubOutput -Name "count" -Value $result.FileCount
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ToolName,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [array]$Files
+    )
+
+    $fileCount = @($Files).Count
+
+    if ($fileCount -eq 0) {
+        Write-Host "✅ No files to analyze for $ToolName" -ForegroundColor Green
+        return @{ Continue = $false; FileCount = 0 }
+    }
+
+    Write-Host "Analyzing $fileCount file(s) for $ToolName..." -ForegroundColor Cyan
+    return @{ Continue = $true; FileCount = $fileCount }
+}
+
+function Write-LintingHeader {
+    <#
+    .SYNOPSIS
+    Writes standardized header for linting scripts.
+
+    .PARAMETER ToolName
+    Display name of the linting tool.
+
+    .PARAMETER ChangedFilesOnly
+    Whether scanning only changed files.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ToolName,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ChangedFilesOnly
+    )
+
+    Write-Host "🔍 Running $ToolName..." -ForegroundColor Cyan
+
+    if ($ChangedFilesOnly) {
+        Write-Host "Mode: Changed files only" -ForegroundColor Cyan
+    }
+    else {
+        Write-Host "Mode: All files" -ForegroundColor Cyan
+    }
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
@@ -329,5 +409,7 @@ Export-ModuleMember -Function @(
     'Write-GitHubAnnotation',
     'Set-GitHubOutput',
     'Set-GitHubEnv',
-    'Write-GitHubStepSummary'
+    'Write-GitHubStepSummary',
+    'Test-LintingFilesExist',
+    'Write-LintingHeader'
 )

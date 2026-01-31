@@ -48,15 +48,14 @@ else {
     $filesToAnalyze = Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath
 }
 
-if ($filesToAnalyze.Count -eq 0) {
-    Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
+# Use shared helper for file existence check
+$lintCheck = Test-LintingFilesExist -ToolName "PSScriptAnalyzer" -Files $filesToAnalyze
+if (-not $lintCheck.Continue) {
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
-
-Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Set-GitHubOutput -Name "count" -Value $lintCheck.FileCount
 
 #region Main Execution
 try {

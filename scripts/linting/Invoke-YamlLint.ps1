@@ -73,15 +73,14 @@ else {
     }
 }
 
-if ($filesToAnalyze.Count -eq 0) {
-    Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
+# Use shared helper for file existence check
+$lintCheck = Test-LintingFilesExist -ToolName "YAML Lint" -Files $filesToAnalyze
+if (-not $lintCheck.Continue) {
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
-
-Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Set-GitHubOutput -Name "count" -Value $lintCheck.FileCount
 
 #region Main Execution
 try {
