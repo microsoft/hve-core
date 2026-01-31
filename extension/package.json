@@ -97,6 +97,11 @@
         "description": "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core"
       },
       {
+        "name": "security-plan-auditor",
+        "path": "./.github/agents/security-plan-auditor.agent.md",
+        "description": "Security audit expert for validating and updating security plans against changed requirements - Brought to you by microsoft/hve-core"
+      },
+      {
         "name": "task-implementor",
         "path": "./.github/agents/task-implementor.agent.md",
         "description": "Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records"

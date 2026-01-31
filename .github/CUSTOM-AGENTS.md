@@ -53,6 +53,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **brd-builder** | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus |
 | **adr-creation** | Interactive ADR coaching with guided discovery | Socratic coaching approach |
 | **security-plan-creator** | Creates comprehensive cloud security plans from blueprints | Blueprint-driven threat modeling |
+| **security-plan-auditor** | Audits security plans against changed requirements | Requires existing security plan |
 
 ### Code and Review Agents
 
@@ -194,6 +195,17 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+
+### security-plan-auditor
+
+**Creates:** Audit reports and updated security plans:
+
+* `security-plan-outputs/audit-report-{plan-name}-{date}.md`
+* `.copilot-tracking/plans/security-audit-{plan-name}.plan.md`
+
+**Workflow:** Scope Definition → Plan Analysis → Gap Analysis → Findings → Report Generation
+
+**Critical:** Requires existing security plan in `security-plan-outputs/`. Validates against changed features, new requirements, or updated infrastructure. Presents findings by severity before applying updates.
 
 ### gen-jupyter-notebook
 
