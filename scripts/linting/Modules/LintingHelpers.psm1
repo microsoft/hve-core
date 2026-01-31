@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 # LintingHelpers.psm1
 #
 # Purpose: Shared helper functions for linting scripts and workflows

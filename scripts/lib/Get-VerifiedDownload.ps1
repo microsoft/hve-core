@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 <#
 .SYNOPSIS
     Downloads and verifies artifacts using SHA256 checksums.

@@ -1,4 +1,7 @@
-﻿<#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+<#
 .SYNOPSIS
 Generates the Copilot PR reference XML using git history and diff data.
 

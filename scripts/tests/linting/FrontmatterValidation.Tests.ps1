@@ -1,4 +1,7 @@
-﻿<#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+<#
 .SYNOPSIS
     Unit tests for FrontmatterValidation.psm1 module.
 .DESCRIPTION

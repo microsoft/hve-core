@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 # PSScriptAnalyzer Settings for HVE Core
 # Purpose: Enforce PowerShell best practices and coding standards
 

@@ -1,4 +1,7 @@
-﻿<#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+<#
 .SYNOPSIS
     Frontmatter validation module with validation functions and I/O helpers.
 .DESCRIPTION
