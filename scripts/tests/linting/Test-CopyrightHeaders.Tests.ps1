@@ -215,6 +215,44 @@ Write-Host "Hello World"
         $file.hasSpdx | Should -BeFalse
         $file.valid | Should -BeFalse
     }
+
+    It 'Detects headers at incorrect line positions (too late in file)' {
+        # Headers appearing after line 15 should not be detected
+        $content = @"
+#!/usr/bin/env pwsh
+# Line 2
+# Line 3
+# Line 4
+# Line 5
+# Line 6
+# Line 7
+# Line 8
+# Line 9
+# Line 10
+# Line 11
+# Line 12
+# Line 13
+# Line 14
+# Line 15
+# Line 16
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+Write-Host "Headers too late"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'headers-too-late.ps1') -Value $content
+
+        $outputPath = Join-Path $script:FixturesPath 'results-headers-too-late.json'
+        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('headers-too-late.ps1') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $file = $results.results | Where-Object { $_.file -like '*headers-too-late.ps1' }
+
+        # Headers should NOT be found because they're past line 15
+        $file.hasCopyright | Should -BeFalse
+        $file.hasSpdx | Should -BeFalse
+        $file.valid | Should -BeFalse
+    }
 }
 
 #endregion
