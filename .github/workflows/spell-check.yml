@@ -40,8 +40,10 @@ jobs:
       - name: Run spell check
         id: spell-check
         run: |
+          set +e  # Disable errexit to capture exit code
           npm run spell-check > logs/spell-check-results.txt 2>&1
           EXIT_CODE=$?
+          set -e  # Re-enable errexit
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "SPELL_CHECK_FAILED=true" >> "$GITHUB_ENV"
           fi

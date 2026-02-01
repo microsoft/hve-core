@@ -1,4 +1,7 @@
-﻿<#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+<#
 .SYNOPSIS
     Language Path Link Checker and Fixer
 

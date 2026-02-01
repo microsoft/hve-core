@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # convert.sh
 # Convert video files to optimized GIF animations using FFmpeg two-pass palette optimization

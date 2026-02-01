@@ -1,4 +1,6 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # Invoke-PSScriptAnalyzer.ps1
 #

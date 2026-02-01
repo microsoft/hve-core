@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 <#
 .SYNOPSIS
     Convert video files to optimized GIF animations using FFmpeg.

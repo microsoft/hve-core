@@ -44,6 +44,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **task-researcher** | Produces research documents with evidence-based recommendations | Research-only; never plans or implements |
 | **task-planner** | Creates 3-file plan sets (plan, details, prompt) | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation | Requires completed plan files |
+| **task-reviewer** | Validates implementation against research and plan specifications | Requires research/plan artifacts |
 
 ### Documentation and Planning Agents
 
@@ -53,6 +54,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **brd-builder** | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus |
 | **adr-creation** | Interactive ADR coaching with guided discovery | Socratic coaching approach |
 | **security-plan-creator** | Creates comprehensive cloud security plans from blueprints | Blueprint-driven threat modeling |
+| **doc-ops** | Documentation operations and maintenance | Does not modify source code |
 
 ### Code and Review Agents
 
@@ -128,6 +130,18 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
 
+### task-reviewer
+
+**Creates:** Review validation logs:
+
+* `.copilot-tracking/reviews/{{YYYY-MM-DD}}-<topic>-review.md`
+
+**Workflow:** Locate artifacts → Extract checklist → Validate items → Run commands → Document findings
+
+**Critical:** Review-only specialist. Validates against documentation, not assumptions. Produces findings with severity levels (Critical, Major, Minor).
+
+**Documentation:** See [Task Reviewer Guide](../docs/rpi/task-reviewer.md) for detailed usage.
+
 ### prompt-builder
 
 **Creates:** Instruction files and prompt files:
@@ -183,6 +197,18 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Discovery → Research → Analysis → Documentation
 
 **Critical:** Uses Socratic coaching methods. Guides users through decision-making process. Adapts coaching style to experience level.
+
+### doc-ops
+
+**Creates:** Documentation updates and maintenance artifacts
+
+**Workflow:**
+
+* Review existing documentation for accuracy and completeness
+* Identify gaps, inconsistencies, or outdated content
+* Apply structured documentation updates aligned with repository standards
+
+**Critical:** Operates strictly on documentation files and does not modify application or source code
 
 ### security-plan-creator
 
