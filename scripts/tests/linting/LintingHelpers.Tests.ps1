@@ -5,7 +5,7 @@
 .SYNOPSIS
     Pester tests for LintingHelpers.psm1 module
 .DESCRIPTION
-    Comprehensive tests for all 7 exported functions in the LintingHelpers module:
+    Comprehensive tests for all exported functions in the LintingHelpers module:
     - Get-ChangedFilesFromGit
     - Get-FilesRecursive
     - Get-GitIgnorePatterns
@@ -13,6 +13,9 @@
     - Set-GitHubOutput
     - Set-GitHubEnv
     - Write-GitHubStepSummary
+    - Test-LintingFilesExist
+    - Write-LintingHeader
+    - New-LintingContext
 #>
 
 BeforeAll {
@@ -582,6 +585,160 @@ Describe 'Write-GitHubStepSummary' {
 
         It 'Does not throw when GITHUB_STEP_SUMMARY is not set' {
             { Write-GitHubStepSummary -Content 'Test content' } | Should -Not -Throw
+        }
+    }
+}
+
+#endregion
+
+#region Test-LintingFilesExist Tests
+
+Describe 'Test-LintingFilesExist' {
+    Context 'With files to analyze' {
+        It 'Returns Continue=true when files exist' {
+            $files = @('file1.ps1', 'file2.ps1', 'file3.ps1')
+            $result = Test-LintingFilesExist -ToolName 'TestTool' -Files $files
+            $result.Continue | Should -BeTrue
+            $result.FileCount | Should -Be 3
+        }
+
+        It 'Returns correct count for single file' {
+            $files = @('single.ps1')
+            $result = Test-LintingFilesExist -ToolName 'TestTool' -Files $files
+            $result.Continue | Should -BeTrue
+            $result.FileCount | Should -Be 1
+        }
+    }
+
+    Context 'With no files' {
+        It 'Returns Continue=false when files array is empty' {
+            $files = @()
+            $result = Test-LintingFilesExist -ToolName 'TestTool' -Files $files
+            $result.Continue | Should -BeFalse
+            $result.FileCount | Should -Be 0
+        }
+
+        It 'Returns Continue=false when files is null' {
+            $result = Test-LintingFilesExist -ToolName 'TestTool' -Files $null
+            $result.Continue | Should -BeFalse
+            $result.FileCount | Should -Be 0
+        }
+    }
+}
+
+#endregion
+
+#region Write-LintingHeader Tests
+
+Describe 'Write-LintingHeader' {
+    Context 'Header output' {
+        It 'Writes header with tool name' {
+            $output = Write-LintingHeader -ToolName 'PSScriptAnalyzer' 6>&1
+            $output | Should -Contain '🔍 Running PSScriptAnalyzer...'
+        }
+
+        It 'Indicates all files mode when ChangedFilesOnly not set' {
+            $output = Write-LintingHeader -ToolName 'TestTool' 6>&1
+            $output | Should -Contain 'Mode: All files'
+        }
+
+        It 'Indicates changed files mode when ChangedFilesOnly is set' {
+            $output = Write-LintingHeader -ToolName 'TestTool' -ChangedFilesOnly 6>&1
+            $output | Should -Contain 'Mode: Changed files only'
+        }
+    }
+}
+
+#endregion
+
+#region New-LintingContext Tests
+
+Describe 'New-LintingContext' {
+    Context 'Context creation with files' {
+        BeforeEach {
+            # Mock the dependent functions
+            Mock Write-LintingHeader {} -ModuleName 'LintingHelpers'
+            Mock Get-ChangedFilesFromGit {
+                return @('changed1.ps1', 'changed2.ps1')
+            } -ModuleName 'LintingHelpers'
+            Mock Test-LintingFilesExist {
+                return @{ Continue = $true; FileCount = 2 }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Returns context with files in changed-only mode' {
+            $ctx = New-LintingContext -ToolName 'TestTool' -FileExtensions @('*.ps1') -ChangedFilesOnly
+            $ctx.Continue | Should -BeTrue
+            $ctx.FileCount | Should -Be 2
+            $ctx.ChangedFilesOnly | Should -BeTrue
+        }
+
+        It 'Calls Write-LintingHeader with correct parameters' {
+            New-LintingContext -ToolName 'TestTool' -FileExtensions @('*.ps1') -ChangedFilesOnly
+            Should -Invoke Write-LintingHeader -ModuleName 'LintingHelpers' -Times 1 -ParameterFilter {
+                $ToolName -eq 'TestTool' -and $ChangedFilesOnly -eq $true
+            }
+        }
+    }
+
+    Context 'Context creation with no files' {
+        BeforeEach {
+            Mock Write-LintingHeader {} -ModuleName 'LintingHelpers'
+            Mock Get-ChangedFilesFromGit {
+                return @()
+            } -ModuleName 'LintingHelpers'
+            Mock Test-LintingFilesExist {
+                return @{ Continue = $false; FileCount = 0 }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Returns Continue=false when no files found' {
+            $ctx = New-LintingContext -ToolName 'TestTool' -FileExtensions @('*.ps1') -ChangedFilesOnly
+            $ctx.Continue | Should -BeFalse
+            $ctx.FileCount | Should -Be 0
+        }
+    }
+
+    Context 'All files mode' {
+        BeforeEach {
+            Mock Write-LintingHeader {} -ModuleName 'LintingHelpers'
+            Mock Get-FilesRecursive {
+                return @(
+                    [PSCustomObject]@{ FullName = 'file1.ps1' },
+                    [PSCustomObject]@{ FullName = 'file2.ps1' }
+                )
+            } -ModuleName 'LintingHelpers'
+            Mock Test-LintingFilesExist {
+                return @{ Continue = $true; FileCount = 2 }
+            } -ModuleName 'LintingHelpers'
+            Mock git { return '/repo' } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Uses Get-FilesRecursive when not in changed-only mode' {
+            $ctx = New-LintingContext -ToolName 'TestTool' -FileExtensions @('*.ps1')
+            $ctx.ChangedFilesOnly | Should -BeFalse
+            Should -Invoke Get-FilesRecursive -ModuleName 'LintingHelpers' -Times 1
+        }
+    }
+
+    Context 'Path filtering' {
+        BeforeEach {
+            Mock Write-LintingHeader {} -ModuleName 'LintingHelpers'
+            Mock Get-ChangedFilesFromGit {
+                return @('.github/workflows/ci.yml', 'scripts/test.yml', '.github/workflows/release.yml')
+            } -ModuleName 'LintingHelpers'
+            Mock Test-LintingFilesExist {
+                param($Files)
+                return @{ Continue = ($Files.Count -gt 0); FileCount = $Files.Count }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Applies PathFilter to changed files' {
+            $ctx = New-LintingContext -ToolName 'TestTool' -FileExtensions @('*.yml') -ChangedFilesOnly -PathFilter '.github/workflows/*'
+            # Should filter to only .github/workflows files
+            $ctx.Files | Should -Contain '.github/workflows/ci.yml'
+            $ctx.Files | Should -Contain '.github/workflows/release.yml'
+            $ctx.Files | Should -Not -Contain 'scripts/test.yml'
         }
     }
 }
