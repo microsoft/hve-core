@@ -20,7 +20,7 @@
     "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1"
   },
   "devDependencies": {
-    "cspell": "9.6.1",
+    "cspell": "9.6.2",
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "^1.7.0",
     "markdownlint-cli2": "^0.20.0"

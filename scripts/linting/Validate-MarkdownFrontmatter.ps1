@@ -1,4 +1,7 @@
-﻿# Validate-MarkdownFrontmatter.ps1
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+# Validate-MarkdownFrontmatter.ps1
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team

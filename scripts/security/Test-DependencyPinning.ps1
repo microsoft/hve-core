@@ -1,4 +1,6 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Verifies and reports on SHA pinning compliance for supply chain security.
@@ -114,6 +116,9 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$Remediate
 )
+
+# Import CIHelpers for workflow command escaping
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 # Set error action preference for consistent error handling
 $ErrorActionPreference = 'Stop'
@@ -882,7 +887,8 @@ try {
 catch {
     Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#
 # Test fixture: Shell script with insecure download (no checksum)
 
 echo "Downloading tool without verification..."

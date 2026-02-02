@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # on-create.sh
 # Install system dependencies for HVE Core development container
