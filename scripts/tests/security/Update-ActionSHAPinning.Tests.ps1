@@ -1,38 +1,8 @@
 #Requires -Modules Pester
 
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot '../../security/Update-ActionSHAPinning.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract function definitions and script-level variables using AST to avoid executing main block
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract and execute script-level variable assignments (e.g., $ActionSHAMap)
-    # These are direct children of the script block that are assignments
-    $scriptStatements = $ast.EndBlock.Statements
-    foreach ($stmt in $scriptStatements) {
-        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-            $varCode = $stmt.Extent.Text
-            try {
-                $scriptBlock = [scriptblock]::Create($varCode)
-                . $scriptBlock
-            } catch {
-                # Skip assignments that fail (may depend on other variables)
-                $null = $_
-            }
-        }
-    }
-
-    # Extract and define all function definitions
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    foreach ($func in $functionDefs) {
-        $funcCode = $func.Extent.Text
-        $scriptBlock = [scriptblock]::Create($funcCode)
-        . $scriptBlock
-    }
+    # Direct dot-source for proper code coverage tracking
+    . $PSScriptRoot/../../security/Update-ActionSHAPinning.ps1
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force

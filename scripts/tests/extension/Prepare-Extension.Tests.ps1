@@ -362,3 +362,211 @@ Describe 'Invoke-ExtensionPreparation' -Tag 'Unit' {
         }
     }
 }
+
+#region Extended Tests for Prepare-Extension
+
+Describe 'Get-FrontmatterData Extended' -Tag 'Unit' {
+    BeforeAll {
+        $script:TestDir = Join-Path ([IO.Path]::GetTempPath()) (New-Guid).ToString()
+        New-Item -ItemType Directory -Path $script:TestDir -Force | Out-Null
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:TestDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    Context 'Different maturity values' {
+        It 'Parses experimental maturity' {
+            $testFile = Join-Path $script:TestDir 'exp.md'
+            @'
+---
+description: "Experimental feature"
+maturity: experimental
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
+            $result.maturity | Should -Be 'experimental'
+        }
+
+        It 'Handles maturity with mixed case' {
+            $testFile = Join-Path $script:TestDir 'mixed.md'
+            @'
+---
+description: "Mixed case"
+maturity: Preview
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
+            # Function should handle case
+            $result.maturity | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Description extraction' {
+        It 'Handles description with special characters' {
+            $testFile = Join-Path $script:TestDir 'special.md'
+            @'
+---
+description: "Test with 'quotes' and \"double quotes\""
+maturity: stable
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
+            $result.description | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Handles multiline description' {
+            $testFile = Join-Path $script:TestDir 'multiline.md'
+            @'
+---
+description: >
+  This is a long description
+  that spans multiple lines
+maturity: stable
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
+            $result.description | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'Get-DiscoveredAgents Extended' -Tag 'Unit' {
+    BeforeAll {
+        $script:TestDir = Join-Path ([IO.Path]::GetTempPath()) (New-Guid).ToString()
+        $script:AgentsDir = Join-Path $script:TestDir 'agents'
+        New-Item -ItemType Directory -Path $script:AgentsDir -Force | Out-Null
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:TestDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    Context 'Agent file parsing' {
+        BeforeEach {
+            # Create multiple agent files
+            @'
+---
+description: "Stable agent"
+maturity: stable
+---
+# Stable Agent
+'@ | Set-Content -Path (Join-Path $script:AgentsDir 'stable.agent.md')
+
+            @'
+---
+description: "Experimental agent"
+maturity: experimental
+---
+# Experimental Agent
+'@ | Set-Content -Path (Join-Path $script:AgentsDir 'exp.agent.md')
+        }
+
+        It 'Filters experimental agents when channel is Stable' {
+            $result = Get-DiscoveredAgents -AgentsDir $script:AgentsDir -AllowedMaturities @('stable') -ExcludedAgents @()
+            $result.Skipped.Count | Should -BeGreaterThan 0
+        }
+
+        It 'Includes experimental agents when channel is PreRelease' {
+            $result = Get-DiscoveredAgents -AgentsDir $script:AgentsDir -AllowedMaturities @('stable', 'preview', 'experimental') -ExcludedAgents @()
+            $result.Agents.Count | Should -Be 2
+        }
+    }
+
+    Context 'Exclusion handling' {
+        BeforeEach {
+            @'
+---
+description: "Agent to exclude"
+maturity: stable
+---
+# Excluded
+'@ | Set-Content -Path (Join-Path $script:AgentsDir 'excluded.agent.md')
+        }
+
+        It 'Excludes agents by name' {
+            $result = Get-DiscoveredAgents -AgentsDir $script:AgentsDir -AllowedMaturities @('stable', 'experimental') -ExcludedAgents @('excluded')
+            $excludedNames = $result.Agents | ForEach-Object { $_.name }
+            $excludedNames | Should -Not -Contain 'excluded'
+        }
+    }
+}
+
+Describe 'Update-PackageJsonContributes Extended' -Tag 'Unit' {
+    Context 'Multiple components' {
+        It 'Handles multiple agents' {
+            $packageJson = [PSCustomObject]@{
+                name = 'test-extension'
+                contributes = [PSCustomObject]@{}
+            }
+            $agents = @(
+                @{ name = 'agent1'; description = 'Desc 1'; isDefault = $true }
+                @{ name = 'agent2'; description = 'Desc 2'; isDefault = $false }
+            )
+
+            $result = Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents $agents -ChatPromptFiles @() -ChatInstructions @()
+            $result | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Handles multiple instructions with applyTo' {
+            $packageJson = [PSCustomObject]@{
+                name = 'test-extension'
+                contributes = [PSCustomObject]@{}
+            }
+            $instructions = @(
+                @{ name = 'instr1'; description = 'Desc 1'; applyTo = '**/*.ps1' }
+                @{ name = 'instr2'; description = 'Desc 2'; applyTo = '**/*.md' }
+            )
+
+            $result = Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents @() -ChatPromptFiles @() -ChatInstructions $instructions
+            $result | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Null handling' {
+        It 'Handles null contributes in input' {
+            $packageJson = [PSCustomObject]@{
+                name = 'test-extension'
+            }
+
+            { Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents @() -ChatPromptFiles @() -ChatInstructions @() } | Should -Not -Throw
+        }
+    }
+}
+
+Describe 'Test-PathsExist Extended' -Tag 'Unit' {
+    Context 'Various missing combinations' {
+        It 'Reports all three paths missing' {
+            $missing1 = '/nonexistent/path1'
+            $missing2 = '/nonexistent/path2'
+            $missing3 = '/nonexistent/path3'
+            $result = Test-PathsExist -ExtensionDir $missing1 -PackageJsonPath $missing2 -GitHubDir $missing3
+            $result.IsValid | Should -BeFalse
+            $result.MissingPaths.Count | Should -Be 3
+        }
+
+        It 'Reports only package.json missing' {
+            $tempDir = Join-Path ([IO.Path]::GetTempPath()) (New-Guid).ToString()
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $tempDir '.github') -Force | Out-Null
+            try {
+                $result = Test-PathsExist -ExtensionDir $tempDir -PackageJsonPath '/nonexistent/package.json' -GitHubDir (Join-Path $tempDir '.github')
+                $result.IsValid | Should -BeFalse
+                $result.MissingPaths | Should -Contain '/nonexistent/package.json'
+            }
+            finally {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
+#endregion
