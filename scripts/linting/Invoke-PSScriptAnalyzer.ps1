@@ -27,8 +27,6 @@ param(
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
-
 # Ensure PSScriptAnalyzer is available
 if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
     Write-Host "Installing PSScriptAnalyzer module..." -ForegroundColor Yellow
@@ -37,27 +35,21 @@ if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
 
 Import-Module PSScriptAnalyzer
 
-# Get files to analyze
-$filesToAnalyze = @()
+# Use shared context builder for file discovery
+$ctx = New-LintingContext `
+    -ToolName "PSScriptAnalyzer" `
+    -FileExtensions @('*.ps1', '*.psm1', '*.psd1') `
+    -ChangedFilesOnly:$ChangedFilesOnly `
+    -BaseBranch $BaseBranch
 
-if ($ChangedFilesOnly) {
-    Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
-    $filesToAnalyze = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1')
-}
-else {
-    Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
-    $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-    $filesToAnalyze = Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath
-}
-
-# Use shared helper for file existence check
-$lintCheck = Test-LintingFilesExist -ToolName "PSScriptAnalyzer" -Files $filesToAnalyze
-if (-not $lintCheck.Continue) {
+if (-not $ctx.Continue) {
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
-Set-GitHubOutput -Name "count" -Value $lintCheck.FileCount
+
+$filesToAnalyze = $ctx.Files
+Set-GitHubOutput -Name "count" -Value $ctx.FileCount
 
 #region Main Execution
 try {

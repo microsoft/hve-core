@@ -404,6 +404,110 @@ function Write-LintingHeader {
     }
 }
 
+function New-LintingContext {
+    <#
+    .SYNOPSIS
+    Creates a linting context with file discovery and common setup.
+
+    .DESCRIPTION
+    Handles common boilerplate for linting scripts: file discovery with changes-only
+    filtering, header output, and file existence checks. Returns a context object
+    with the files to analyze and metadata.
+
+    .PARAMETER ToolName
+    Display name of the linting tool.
+
+    .PARAMETER FileExtensions
+    Array of file extensions to include (e.g., @('*.ps1', '*.psm1')).
+
+    .PARAMETER ChangedFilesOnly
+    Whether to scan only changed files.
+
+    .PARAMETER BaseBranch
+    Base branch for detecting changed files (default: origin/main).
+
+    .PARAMETER SearchPath
+    Root path to search for files (default: current directory).
+
+    .PARAMETER PathFilter
+    Optional filter to limit files to a specific path pattern.
+
+    .OUTPUTS
+    Hashtable with:
+    - Files: Array of files to analyze
+    - FileCount: Number of files found
+    - Continue: Boolean - whether to continue processing
+    - ChangedFilesOnly: Boolean - mode indicator
+
+    .EXAMPLE
+    $ctx = New-LintingContext -ToolName 'PSScriptAnalyzer' -FileExtensions @('*.ps1', '*.psm1') -ChangedFilesOnly:$ChangedFilesOnly
+    if (-not $ctx.Continue) { exit 0 }
+    foreach ($file in $ctx.Files) { ... }
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ToolName,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$FileExtensions,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ChangedFilesOnly,
+
+        [Parameter(Mandatory = $false)]
+        [string]$BaseBranch = "origin/main",
+
+        [Parameter(Mandatory = $false)]
+        [string]$SearchPath = ".",
+
+        [Parameter(Mandatory = $false)]
+        [string]$PathFilter
+    )
+
+    # Write standardized header
+    Write-LintingHeader -ToolName $ToolName -ChangedFilesOnly:$ChangedFilesOnly
+
+    # Get files based on mode
+    $filesToAnalyze = @()
+
+    if ($ChangedFilesOnly) {
+        Write-Host "Detecting changed files..." -ForegroundColor Cyan
+        $filesToAnalyze = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions $FileExtensions
+
+        # Apply path filter if specified
+        if ($PathFilter -and $filesToAnalyze.Count -gt 0) {
+            $filesToAnalyze = $filesToAnalyze | Where-Object { $_ -like $PathFilter }
+        }
+    }
+    else {
+        Write-Host "Scanning all files..." -ForegroundColor Cyan
+        $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
+
+        # Convert extensions for Get-FilesRecursive format
+        $includePatterns = $FileExtensions | ForEach-Object { $_.TrimStart('*') }
+        $filesToAnalyze = Get-FilesRecursive -Path $SearchPath -Include $FileExtensions -GitIgnorePath $gitignorePath
+
+        # Apply path filter if specified
+        if ($PathFilter -and $filesToAnalyze.Count -gt 0) {
+            $filesToAnalyze = $filesToAnalyze | Where-Object {
+                $path = if ($_ -is [System.IO.FileInfo]) { $_.FullName } else { $_ }
+                $path -like $PathFilter
+            }
+        }
+    }
+
+    # Check if files exist
+    $lintCheck = Test-LintingFilesExist -ToolName $ToolName -Files $filesToAnalyze
+
+    return @{
+        Files            = $filesToAnalyze
+        FileCount        = $lintCheck.FileCount
+        Continue         = $lintCheck.Continue
+        ChangedFilesOnly = $ChangedFilesOnly.IsPresent
+    }
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
@@ -414,5 +518,6 @@ Export-ModuleMember -Function @(
     'Set-GitHubEnv',
     'Write-GitHubStepSummary',
     'Test-LintingFilesExist',
-    'Write-LintingHeader'
+    'Write-LintingHeader',
+    'New-LintingContext'
 )

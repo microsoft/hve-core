@@ -48,8 +48,6 @@ param(
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-Write-Host "🔍 Running YAML Lint (actionlint)..." -ForegroundColor Cyan
-
 # Check if actionlint is available
 $actionlintPath = Get-Command actionlint -ErrorAction SilentlyContinue
 if (-not $actionlintPath) {
@@ -59,30 +57,24 @@ if (-not $actionlintPath) {
 
 Write-Verbose "Using actionlint: $($actionlintPath.Source)"
 
-# Get files to analyze
+# Use shared context builder for file discovery
 $workflowPath = ".github/workflows"
-$filesToAnalyze = @()
+$ctx = New-LintingContext `
+    -ToolName "YAML Lint (actionlint)" `
+    -FileExtensions @('*.yml', '*.yaml') `
+    -ChangedFilesOnly:$ChangedFilesOnly `
+    -BaseBranch $BaseBranch `
+    -SearchPath $workflowPath `
+    -PathFilter "$workflowPath/*"
 
-if ($ChangedFilesOnly) {
-    Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
-    $changedFiles = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml')
-    $filesToAnalyze = $changedFiles | Where-Object { $_ -like "$workflowPath/*" }
-}
-else {
-    Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
-    if (Test-Path $workflowPath) {
-        $filesToAnalyze = Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName }
-    }
-}
-
-# Use shared helper for file existence check
-$lintCheck = Test-LintingFilesExist -ToolName "YAML Lint" -Files $filesToAnalyze
-if (-not $lintCheck.Continue) {
+if (-not $ctx.Continue) {
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
-Set-GitHubOutput -Name "count" -Value $lintCheck.FileCount
+
+$filesToAnalyze = $ctx.Files
+Set-GitHubOutput -Name "count" -Value $ctx.FileCount
 
 #region Main Execution
 try {
