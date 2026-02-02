@@ -69,6 +69,47 @@ description: "Desc"
         $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
         $result.maturity | Should -Be 'stable'
     }
+
+    Context 'Error handling' {
+        It 'Handles malformed YAML frontmatter gracefully' {
+            $testFile = Join-Path $script:tempDir 'malformed.md'
+            @'
+---
+description: "unclosed quote
+maturity: [invalid yaml
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            # Should not throw - function handles YAML errors with warning
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback' 3>&1
+            $result | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Handles file without frontmatter' {
+            $testFile = Join-Path $script:tempDir 'no-frontmatter.md'
+            @'
+# Just a heading
+No frontmatter here
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'default-desc'
+            $result.description | Should -Be 'default-desc'
+            $result.maturity | Should -Be 'stable'
+        }
+
+        It 'Handles empty frontmatter' {
+            $testFile = Join-Path $script:tempDir 'empty-frontmatter.md'
+            @'
+---
+---
+# Content
+'@ | Set-Content -Path $testFile
+
+            $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
+            $result.description | Should -Be 'fallback'
+        }
+    }
 }
 
 Describe 'Test-PathsExist' {
@@ -256,5 +297,68 @@ Describe 'Update-PackageJsonContributes' {
 
         $result = Update-PackageJsonContributes -PackageJson $packageJson -ChatAgents @() -ChatPromptFiles @() -ChatInstructions @()
         $result | Should -Not -BeNullOrEmpty
+    }
+}
+
+Describe 'Invoke-ExtensionPreparation' -Tag 'Unit' {
+    BeforeEach {
+        $script:originalLocation = Get-Location
+        Set-Location $TestDrive
+
+        # Create minimal valid extension structure
+        New-Item -Path 'extension' -ItemType Directory -Force | Out-Null
+        New-Item -Path '.github' -ItemType Directory -Force | Out-Null
+        New-Item -Path '.github/agents' -ItemType Directory -Force | Out-Null
+        New-Item -Path '.github/prompts' -ItemType Directory -Force | Out-Null
+        New-Item -Path '.github/instructions' -ItemType Directory -Force | Out-Null
+
+        $packageJson = @{
+            name = 'test-extension'
+            version = '1.0.0'
+            publisher = 'test-publisher'
+            engines = @{ vscode = '^1.80.0' }
+            contributes = @{}
+        }
+        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path 'extension/package.json'
+    }
+
+    AfterEach {
+        Set-Location $script:originalLocation
+    }
+
+    Context 'Function availability' {
+        It 'Function is accessible after script load' {
+            Get-Command Invoke-ExtensionPreparation | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Has expected parameter set' {
+            $cmd = Get-Command Invoke-ExtensionPreparation
+            $cmd.Parameters.Keys | Should -Contain 'Channel'
+            $cmd.Parameters.Keys | Should -Contain 'DryRun'
+            $cmd.Parameters.Keys | Should -Contain 'ChangelogPath'
+        }
+
+        It 'Channel parameter validates allowed values' {
+            $cmd = Get-Command Invoke-ExtensionPreparation
+            $channelParam = $cmd.Parameters['Channel']
+            $validateSetAttr = $channelParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $validateSetAttr.ValidValues | Should -Contain 'Stable'
+            $validateSetAttr.ValidValues | Should -Contain 'PreRelease'
+        }
+    }
+
+    Context 'Helper functions integration' {
+        It 'Get-AllowedMaturities returns expected values for Stable' {
+            $result = Get-AllowedMaturities -Channel 'Stable'
+            $result | Should -Contain 'stable'
+            $result | Should -Not -Contain 'preview'
+        }
+
+        It 'Get-AllowedMaturities returns expected values for PreRelease' {
+            $result = Get-AllowedMaturities -Channel 'PreRelease'
+            $result | Should -Contain 'stable'
+            $result | Should -Contain 'preview'
+            $result | Should -Contain 'experimental'
+        }
     }
 }

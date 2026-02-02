@@ -813,3 +813,109 @@ Describe 'Write-SecurityLog' -Tag 'Unit' {
         }
     }
 }
+
+Describe 'Invoke-ActionSHAUpdate' -Tag 'Unit' {
+    BeforeEach {
+        $script:originalLocation = Get-Location
+        Set-Location $TestDrive
+
+        # Create minimal test structure
+        New-Item -Path '.github/workflows' -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        Set-Location $script:originalLocation
+    }
+
+    Context 'Function availability' {
+        It 'Function is accessible after script load' {
+            Get-Command Invoke-ActionSHAUpdate | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Has expected parameter set' {
+            $cmd = Get-Command Invoke-ActionSHAUpdate
+            $cmd.Parameters.Keys | Should -Contain 'WorkflowPath'
+            $cmd.Parameters.Keys | Should -Contain 'OutputReport'
+            $cmd.Parameters.Keys | Should -Contain 'OutputFormat'
+            $cmd.Parameters.Keys | Should -Contain 'UpdateStale'
+        }
+
+        It 'Supports ShouldProcess (WhatIf)' {
+            $cmd = Get-Command Invoke-ActionSHAUpdate
+            $cmd.Parameters.Keys | Should -Contain 'WhatIf'
+        }
+
+        It 'OutputFormat has ValidateSet' {
+            $cmd = Get-Command Invoke-ActionSHAUpdate
+            $outputFormatParam = $cmd.Parameters['OutputFormat']
+            $validateSetAttr = $outputFormatParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
+            $validateSetAttr | Should -Not -BeNullOrEmpty
+            $validateSetAttr.ValidValues | Should -Contain 'json'
+            $validateSetAttr.ValidValues | Should -Contain 'console'
+        }
+    }
+
+    Context 'Path validation' {
+        It 'Throws when workflow path does not exist' {
+            { Invoke-ActionSHAUpdate -WorkflowPath '/nonexistent/path' } | Should -Throw '*not found*'
+        }
+
+        It 'Returns 0 when no workflow files found' {
+            $result = Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows'
+            $result | Should -Be 0
+        }
+    }
+
+    Context 'Workflow processing' {
+        BeforeEach {
+            # Create a workflow with already-pinned action
+            $pinnedWorkflow = @'
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+'@
+            Set-Content -Path '.github/workflows/ci.yml' -Value $pinnedWorkflow
+        }
+
+        It 'Processes workflow files in directory' {
+            # Should not throw when processing pinned workflows
+            { Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows' -WhatIf } | Should -Not -Throw
+        }
+
+        It 'Returns integer exit code' {
+            $result = Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows' -WhatIf
+            $result | Should -BeOfType [int]
+        }
+    }
+
+    Context 'Output format options' {
+        BeforeEach {
+            $pinnedWorkflow = @'
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+'@
+            Set-Content -Path '.github/workflows/ci.yml' -Value $pinnedWorkflow
+        }
+
+        It 'Accepts json output format' {
+            { Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows' -OutputFormat 'json' -WhatIf } | Should -Not -Throw
+        }
+
+        It 'Accepts console output format' {
+            { Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows' -OutputFormat 'console' -WhatIf } | Should -Not -Throw
+        }
+
+        It 'Accepts github output format' {
+            { Invoke-ActionSHAUpdate -WorkflowPath '.github/workflows' -OutputFormat 'github' -WhatIf } | Should -Not -Throw
+        }
+    }
+}

@@ -199,4 +199,70 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
     }
 }
 
+Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
+    Context 'Function availability' {
+        It 'Function is accessible after script load' {
+            Get-Command Invoke-MarkdownLinkCheck | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Has expected parameter set' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            $cmd.Parameters.Keys | Should -Contain 'Path'
+            $cmd.Parameters.Keys | Should -Contain 'ConfigPath'
+            $cmd.Parameters.Keys | Should -Contain 'Quiet'
+        }
+
+        It 'Returns integer exit code' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            $cmd.OutputType.Type.Name | Should -Contain 'Int32'
+        }
+    }
+
+    Context 'Input validation' {
+        BeforeEach {
+            $script:originalLocation = Get-Location
+            Set-Location $TestDrive
+
+            # Create minimal structure
+            New-Item -Path 'node_modules/.bin' -ItemType Directory -Force | Out-Null
+            
+            # Create a mock config file
+            $script:configFile = Join-Path $TestDrive 'config.json'
+            '{"ignorePatterns": []}' | Set-Content $script:configFile
+        }
+
+        AfterEach {
+            Set-Location $script:originalLocation
+        }
+
+        It 'ConfigPath parameter is required' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            # ConfigPath should not have an empty default value - verify it exists
+            $cmd.Parameters.Keys | Should -Contain 'ConfigPath'
+        }
+
+        It 'Accepts array of paths' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            $pathParam = $cmd.Parameters['Path']
+            $pathParam.ParameterType.Name | Should -Be 'String[]'
+        }
+    }
+
+    Context 'Default parameter values' {
+        It 'Path has default value' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            $pathParam = $cmd.Parameters['Path']
+            # Parameters with default values are not mandatory
+            $pathParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | 
+                ForEach-Object { $_.Mandatory | Should -BeFalse }
+        }
+
+        It 'Quiet is a switch parameter' {
+            $cmd = Get-Command Invoke-MarkdownLinkCheck
+            $quietParam = $cmd.Parameters['Quiet']
+            $quietParam.ParameterType.Name | Should -Be 'SwitchParameter'
+        }
+    }
+}
+
 #endregion

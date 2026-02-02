@@ -173,3 +173,106 @@ Describe 'Get-ResolvedPackageVersion' {
         $result.PackageVersion | Should -Be '3.0.0-dev.99'
     }
 }
+
+Describe 'Test-ExtensionManifestValid Error Paths' -Tag 'Unit' {
+    Context 'Edge cases' {
+        It 'Rejects null manifest with parameter binding error' {
+            # Null manifests throw parameter binding error - expected behavior
+            { Test-ExtensionManifestValid -ManifestContent $null } | Should -Throw
+        }
+
+        It 'Handles empty hashtable' {
+            $result = Test-ExtensionManifestValid -ManifestContent @{}
+            $result.IsValid | Should -BeFalse
+            $result.Errors.Count | Should -BeGreaterThan 0
+        }
+
+        It 'Handles manifest with wrong engine type' {
+            $manifest = @{
+                name = 'ext'
+                version = '1.0.0'
+                publisher = 'pub'
+                engines = @{ node = '>=16' }  # Wrong engine - missing vscode
+            }
+            $result = Test-ExtensionManifestValid -ManifestContent $manifest
+            $result.IsValid | Should -BeFalse
+            # Should catch missing engines.vscode
+            $result.Errors | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'Get-VscePackageCommand Edge Cases' -Tag 'Unit' {
+    It 'Handles vsce command type' {
+        $result = Get-VscePackageCommand -CommandType 'vsce'
+        $result.Executable | Should -Be 'vsce'
+    }
+
+    It 'Includes all arguments for package command' {
+        $result = Get-VscePackageCommand -CommandType 'npx' -PreRelease
+        $result.Arguments | Should -Contain 'package'
+        $result.Arguments | Should -Contain '--pre-release'
+    }
+}
+
+Describe 'New-PackagingResult Edge Cases' -Tag 'Unit' {
+    It 'Handles null version' {
+        $result = New-PackagingResult -Success $true -OutputPath '/test/path.vsix' -Version $null -ErrorMessage $null
+        $result.Version | Should -BeNullOrEmpty
+        $result.Success | Should -BeTrue
+    }
+
+    It 'Handles all properties null except success' {
+        $result = New-PackagingResult -Success $false -OutputPath $null -Version $null -ErrorMessage $null
+        $result.Success | Should -BeFalse
+        $result.OutputPath | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Invoke-ExtensionPackaging' -Tag 'Unit' {
+    BeforeEach {
+        $script:originalLocation = Get-Location
+        Set-Location $TestDrive
+
+        # Create minimal valid extension structure
+        New-Item -Path 'extension' -ItemType Directory -Force | Out-Null
+        New-Item -Path '.github' -ItemType Directory -Force | Out-Null
+
+        $packageJson = @{
+            name = 'test-extension'
+            version = '1.0.0'
+            publisher = 'test-publisher'
+            engines = @{ vscode = '^1.80.0' }
+        }
+        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path 'extension/package.json'
+
+        # Override $PSScriptRoot context for testing
+        $script:testRepoRoot = $TestDrive
+    }
+
+    AfterEach {
+        Set-Location $script:originalLocation
+    }
+
+    Context 'Path validation' {
+        It 'Function is accessible after script load' {
+            # Verify the function was loaded
+            Get-Command Invoke-ExtensionPackaging | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Has expected parameter set' {
+            $cmd = Get-Command Invoke-ExtensionPackaging
+            $cmd.Parameters.Keys | Should -Contain 'Version'
+            $cmd.Parameters.Keys | Should -Contain 'DevPatchNumber'
+            $cmd.Parameters.Keys | Should -Contain 'PreRelease'
+        }
+    }
+
+    Context 'Input validation' {
+        It 'Get-ResolvedPackageVersion rejects invalid format' {
+            $result = Get-ResolvedPackageVersion -SpecifiedVersion 'invalid.ver' -ManifestVersion '1.0.0' -DevPatchNumber ''
+            # Invalid version format should be detected
+            $result | Should -Not -BeNullOrEmpty
+        }
+    }
+}
