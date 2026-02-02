@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -16,8 +17,6 @@ Git branch used as the comparison base. Defaults to "main".
 .PARAMETER ExcludeMarkdownDiff
 When supplied, excludes markdown (*.md) files from the diff output.
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Monitors SHA-pinned dependencies for staleness and security vulnerabilities.
@@ -47,8 +49,6 @@
     ./Test-SHAStaleness.ps1 -GraphQLBatchSize 10
     Use smaller GraphQL batch size for rate-limited environments
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

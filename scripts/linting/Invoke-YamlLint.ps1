@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Validates YAML files using actionlint for GitHub Actions workflows.
@@ -30,7 +31,6 @@
     - macOS: brew install actionlint
     - Linux: go install github.com/rhysd/actionlint/cmd/actionlint@latest
 #>
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

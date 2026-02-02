@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -54,8 +55,6 @@
     . ./Package-Extension.ps1
     # Dot-source to import functions for testing without executing packaging.
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

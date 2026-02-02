@@ -1,6 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -30,8 +31,6 @@
     ./Update-ActionSHAPinning.ps1 -UpdateStale
     Update already-pinned-but-stale GitHub Actions to their latest commit SHAs.
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding(SupportsShouldProcess)]
 param(

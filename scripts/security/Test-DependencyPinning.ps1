@@ -1,6 +1,8 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Verifies and reports on SHA pinning compliance for supply chain security.
@@ -81,8 +83,6 @@
 .LINK
     https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

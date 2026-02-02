@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -41,8 +42,6 @@
 .NOTES
     Dependencies: PowerShell-Yaml module
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

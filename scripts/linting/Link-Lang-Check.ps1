@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -45,8 +46,6 @@
     See Also:
     - Microsoft documentation guidance on language neutrality: https://learn.microsoft.com/style-guide/urls-web-addresses
 #>
-
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(

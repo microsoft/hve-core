@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -35,8 +36,6 @@
     . .\Get-VerifiedDownload.ps1
     Invoke-VerifiedDownload -Url "https://example.com/file.zip" -DestinationDirectory "C:\downloads" -ExpectedHash "abc123..."
 #>
-
-#Requires -Version 7.0
 
 #region Script Parameters
 
