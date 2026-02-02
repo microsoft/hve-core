@@ -1,4 +1,6 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # Invoke-PSScriptAnalyzer.ps1
 #
@@ -23,6 +25,7 @@ param(
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
@@ -149,7 +152,8 @@ try {
 catch {
     Write-Error "PSScriptAnalyzer failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }
