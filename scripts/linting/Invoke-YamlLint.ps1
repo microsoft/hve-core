@@ -181,7 +181,7 @@ try {
     }
 }
 catch {
-    Write-Host "YAML Lint failed: $($_.Exception.Message)"
+    Write-Error "YAML Lint failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
         $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
         Write-Output "::error::$escapedMsg"
