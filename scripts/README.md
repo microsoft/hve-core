@@ -121,14 +121,14 @@ catch {
 
 ### Naming Convention
 
-| Script Name | Invoke Function |
-|-------------|-----------------|
-| `Generate-*.ps1` | `Invoke-*Generation` |
-| `Test-*.ps1` | `Invoke-*Test` |
-| `Package-*.ps1` | `Invoke-*Packaging` |
-| `Prepare-*.ps1` | `Invoke-*Preparation` |
-| `Update-*.ps1` | `Invoke-*Update` |
-| `Validate-*.ps1` | `Test-*Validation` |
+| Script Name      | Invoke Function       |
+|------------------|-----------------------|
+| `Generate-*.ps1` | `Invoke-*Generation`  |
+| `Test-*.ps1`     | `Invoke-*Test`        |
+| `Package-*.ps1`  | `Invoke-*Packaging`   |
+| `Prepare-*.ps1`  | `Invoke-*Preparation` |
+| `Update-*.ps1`   | `Invoke-*Update`      |
+| `Validate-*.ps1` | `Test-*Validation`    |
 
 ## Related Documentation
 
