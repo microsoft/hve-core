@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
-
 <#
 .SYNOPSIS
     Repository-aware wrapper for markdown-link-check.
@@ -44,6 +43,8 @@ param(
 
     [switch]$Quiet
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import LintingHelpers module
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
@@ -197,9 +198,9 @@ try {
     $repoRootPath = Split-Path -Path $scriptRootParent -Parent
     $repoRoot = Resolve-Path -LiteralPath $repoRootPath
     $config = Resolve-Path -LiteralPath $ConfigPath -ErrorAction Stop
-    $filesToCheck = Get-MarkdownTarget -InputPath $Path
+    $filesToCheck = @(Get-MarkdownTarget -InputPath $Path)
 
-    if (-not $filesToCheck -or $filesToCheck.Count -eq 0) {
+    if (-not $filesToCheck -or @($filesToCheck).Count -eq 0) {
         Write-Error 'No markdown files were found to validate.'
         exit 1
     }

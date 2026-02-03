@@ -4,6 +4,8 @@
 
 BeforeAll {
     . $PSScriptRoot/../../extension/Package-Extension.ps1
+    Import-Module "$PSScriptRoot/../Mocks/GitMocks.psm1" -Force
+    Import-Module "$PSScriptRoot/../../lib/Modules/CIHelpers.psm1" -Force
 }
 
 Describe 'Test-VsceAvailable' {
@@ -458,5 +460,145 @@ Describe 'Invoke-PackageExtension' {
 
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'vsce package command failed|The term'
+    }
+}
+
+Describe 'CI Integration - Package-Extension' {
+    BeforeAll {
+        $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "ci-int-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testRoot 'extension'
+        $script:repoRoot = Join-Path $script:testRoot 'repo'
+    }
+
+    AfterAll {
+        if (Test-Path $script:testRoot) {
+            Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    Context 'GitHub Actions environment' {
+        BeforeEach {
+            Initialize-MockGitHubEnvironment
+            New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+            New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+        }
+
+        AfterEach {
+            Clear-MockGitHubEnvironment
+            if (Test-Path $script:testRoot) {
+                Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It 'Sets version output variable on successful package' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $outputContent = Get-Content $env:GITHUB_OUTPUT -Raw
+            $outputContent | Should -Match 'version=1\.0\.0'
+        }
+
+        It 'Sets vsix-file output variable on successful package' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $outputContent = Get-Content $env:GITHUB_OUTPUT -Raw
+            $outputContent | Should -Match 'vsix-file=test-ext-1\.0\.0\.vsix'
+        }
+
+        It 'Sets pre-release output variable when PreRelease specified' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -PreRelease
+
+            $outputContent = Get-Content $env:GITHUB_OUTPUT -Raw
+            $outputContent | Should -Match 'pre-release=True'
+        }
+
+        It 'Sets pre-release output variable to false when PreRelease not specified' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $outputContent = Get-Content $env:GITHUB_OUTPUT -Raw
+            $outputContent | Should -Match 'pre-release=False'
+        }
+
+        It 'Returns failure result when vsce command fails' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'pwsh'; Arguments = @('-Command', 'exit 1') } }
+
+            $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $result.Success | Should -BeFalse
+            $result.ErrorMessage | Should -Match 'vsce package command failed'
+        }
+    }
+
+    Context 'Local environment' {
+        BeforeEach {
+            Clear-MockGitHubEnvironment
+
+            New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+            New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+        }
+
+        AfterEach {
+            if (Test-Path $script:testRoot) {
+                Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It 'Completes without error when not in CI environment' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $result.Success | Should -BeTrue
+        }
     }
 }
