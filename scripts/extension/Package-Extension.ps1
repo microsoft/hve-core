@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -69,6 +70,8 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$PreRelease
 )
+
+$ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
@@ -535,11 +538,9 @@ function Invoke-PackageExtension {
         Write-Host "   Version: $packageVersion" -ForegroundColor Cyan
 
         # Output for CI/CD consumption
-        if ($env:GITHUB_OUTPUT) {
-            "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-        }
+        Set-CIOutput -Name 'version' -Value $packageVersion
+        Set-CIOutput -Name 'vsix-file' -Value $vsixFile.Name
+        Set-CIOutput -Name 'pre-release' -Value $PreRelease.IsPresent
 
         Write-Host ""
         Write-Host "🎉 Done!" -ForegroundColor Green
@@ -585,8 +586,6 @@ function Invoke-PackageExtension {
 try {
     # Only execute main logic when run directly, not when dot-sourced
     if ($MyInvocation.InvocationName -ne '.') {
-        $ErrorActionPreference = "Stop"
-
         $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
         $ExtensionDir = Join-Path $RepoRoot "extension"

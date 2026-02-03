@@ -91,5 +91,35 @@ All tracking files use markdown format with frontmatter and follow patterns from
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 
-PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run psscriptanalyzer` with results output to `logs/`.
+PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->
+
+<!-- <coding-agent-environment> -->
+## Coding Agent Environment
+
+Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate from the local devcontainer. The `.github/workflows/copilot-setup-steps.yml` workflow pre-installs tools to match devcontainer capabilities.
+
+### Pre-installed Tools
+
+* Node.js 20 with npm dependencies from `package.json`
+* Python 3.11
+* PowerShell 7 with Pester 5.7.1 and PowerShell-Yaml modules
+* shellcheck for bash script validation (pre-installed on ubuntu-latest)
+
+### Using npm Scripts
+
+Agents should use npm scripts for all validation:
+
+* `npm run lint:md` - Markdown linting
+* `npm run lint:ps` - PowerShell analysis
+* `npm run lint:yaml` - YAML validation
+* `npm run lint:frontmatter` - Frontmatter validation
+* `npm run lint:all` - Run all linters
+* `npm run test:ps` - PowerShell tests
+
+### Environment Synchronization
+
+The `copilot-setup-steps.yml` mirrors tools from `.devcontainer/scripts/on-create.sh` and `.devcontainer/scripts/post-create.sh`. When adding tools to the devcontainer, update the setup workflow to maintain parity.
+<!-- </coding-agent-environment> -->
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

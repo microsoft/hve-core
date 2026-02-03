@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Validates YAML files using actionlint for GitHub Actions workflows.
@@ -30,7 +31,6 @@
     - macOS: brew install actionlint
     - Linux: go install github.com/rhysd/actionlint/cmd/actionlint@latest
 #>
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(
@@ -43,6 +43,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/yaml-lint-results.json"
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
@@ -65,25 +67,25 @@ $filesToAnalyze = @()
 
 if ($ChangedFilesOnly) {
     Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
-    $changedFiles = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml')
-    $filesToAnalyze = $changedFiles | Where-Object { $_ -like "$workflowPath/*" }
+    $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml'))
+    $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
 }
 else {
     Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
     if (Test-Path $workflowPath) {
-        $filesToAnalyze = Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName }
+        $filesToAnalyze = @(Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName })
     }
 }
 
-if ($filesToAnalyze.Count -eq 0) {
+if (@($filesToAnalyze).Count -eq 0) {
     Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
 
-Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Write-Host "Analyzing $(@($filesToAnalyze).Count) workflow files..." -ForegroundColor Cyan
+Set-GitHubOutput -Name "count" -Value @($filesToAnalyze).Count
 
 #region Main Execution
 try {
