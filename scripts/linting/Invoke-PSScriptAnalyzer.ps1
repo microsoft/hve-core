@@ -42,23 +42,23 @@ $filesToAnalyze = @()
 
 if ($ChangedFilesOnly) {
     Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
-    $filesToAnalyze = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1')
+    $filesToAnalyze = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1'))
 }
 else {
     Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
     $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-    $filesToAnalyze = Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath
+    $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
 }
 
-if ($filesToAnalyze.Count -eq 0) {
+if (@($filesToAnalyze).Count -eq 0) {
     Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
     Set-GitHubOutput -Name "count" -Value "0"
     Set-GitHubOutput -Name "issues" -Value "0"
     exit 0
 }
 
-Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Write-Host "Analyzing $(@($filesToAnalyze).Count) PowerShell files..." -ForegroundColor Cyan
+Set-GitHubOutput -Name "count" -Value @($filesToAnalyze).Count
 
 #region Main Execution
 try {
@@ -104,11 +104,11 @@ try {
 
     # Export results
     $summary = @{
-        TotalFiles     = $filesToAnalyze.Count
-        TotalIssues    = $allResults.Count
-        Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
-        Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
-        Information    = ($allResults | Where-Object Severity -eq 'Information').Count
+        TotalFiles     = @($filesToAnalyze).Count
+        TotalIssues    = @($allResults).Count
+        Errors         = @($allResults | Where-Object Severity -eq 'Error').Count
+        Warnings       = @($allResults | Where-Object Severity -eq 'Warning').Count
+        Information    = @($allResults | Where-Object Severity -eq 'Information').Count
         HasErrors      = $hasErrors
     }
 

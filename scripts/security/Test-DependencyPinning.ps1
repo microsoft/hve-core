@@ -596,8 +596,8 @@ function Get-ComplianceReportData {
     $report.Violations = $Violations
 
     # Calculate metrics
-    $totalDeps = ($Violations | Measure-Object).Count
-    $unpinnedDeps = ($Violations | Where-Object { $_.Severity -ne 'Info' } | Measure-Object).Count
+    $totalDeps = @($Violations).Count
+    $unpinnedDeps = @($Violations | Where-Object { $_.Severity -ne 'Info' }).Count
     $pinnedDeps = $totalDeps - $unpinnedDeps
 
     $report.TotalDependencies = $totalDeps
@@ -613,12 +613,12 @@ function Get-ComplianceReportData {
 
     # Generate summary by type
     $report.Summary = @{}
-    foreach ($type in ($Violations | Group-Object Type)) {
+    foreach ($type in @($Violations | Group-Object Type)) {
         $report.Summary[$type.Name] = @{
             Total  = $type.Count
-            High   = ($type.Group | Where-Object { $_.Severity -eq 'High' } | Measure-Object).Count
-            Medium = ($type.Group | Where-Object { $_.Severity -eq 'Medium' } | Measure-Object).Count
-            Low    = ($type.Group | Where-Object { $_.Severity -eq 'Low' } | Measure-Object).Count
+            High   = @($type.Group | Where-Object { $_.Severity -eq 'High' }).Count
+            Medium = @($type.Group | Where-Object { $_.Severity -eq 'Medium' }).Count
+            Low    = @($type.Group | Where-Object { $_.Severity -eq 'Low' }).Count
         }
     }
 
@@ -854,14 +854,14 @@ try {
         if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
 
         # Discover files to scan
-        $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive
-        Write-PinningLog "Found $($filesToScan.Count) files to scan" -Level Info
+        $filesToScan = @(Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive)
+        Write-PinningLog "Found $(@($filesToScan).Count) files to scan" -Level Info
 
         # Scan for violations
         $allViolations = @()
         foreach ($fileInfo in $filesToScan) {
             Write-PinningLog "Scanning: $($fileInfo.RelativePath)" -Level Info
-            $violations = Get-DependencyViolation -FileInfo $fileInfo
+            $violations = @(Get-DependencyViolation -FileInfo $fileInfo)
 
             # Add remediation suggestions
             foreach ($violation in $violations) {
@@ -871,7 +871,7 @@ try {
             $allViolations += $violations
         }
 
-        Write-PinningLog "Found $($allViolations.Count) dependency pinning violations" -Level Info
+        Write-PinningLog "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
 
         # Generate compliance report
         $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
