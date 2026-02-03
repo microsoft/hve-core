@@ -1,4 +1,6 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Monitors SHA-pinned dependencies for staleness and security vulnerabilities.
@@ -68,6 +70,9 @@ param(
     [ValidateRange(1, 50)]
     [int]$GraphQLBatchSize = 20
 )
+
+# Import CIHelpers for workflow command escaping
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 # Ensure logging directory exists
 $LogDir = Split-Path -Parent $LogPath
@@ -692,15 +697,18 @@ function Write-OutputResult {
 
         "github" {
             foreach ($Dep in $Dependencies) {
-                $Message = "::warning file=$($Dep.File.Replace('\', '/'))::[$($Dep.Severity)] $($Dep.Message)"
-                Write-Output $Message
+                $normalizedPath = $Dep.File -replace '\\', '/'
+                $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath
+                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($Dep.Severity)] $($Dep.Message)"
+                Write-Output "::warning file=$escapedPath::$escapedMessage"
             }
 
             if ($Dependencies.Count -eq 0) {
                 Write-Output "::notice::No stale dependencies detected"
             }
             else {
-                Write-Output "::error::Found $($Dependencies.Count) stale dependencies that may pose security risks"
+                $escapedCount = ConvertTo-GitHubActionsEscaped -Value "Found $($Dependencies.Count) stale dependencies that may pose security risks"
+                Write-Output "::error::$escapedCount"
             }
         }
 
@@ -934,7 +942,8 @@ try {
 catch {
     Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
     if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-Output "::error::$($_.Exception.Message)"
+        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
+        Write-Output "::error::$escapedMsg"
     }
     exit 1
 }

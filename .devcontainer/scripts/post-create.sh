@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # post-create.sh
 # Install NPM dependencies for HVE Core development container

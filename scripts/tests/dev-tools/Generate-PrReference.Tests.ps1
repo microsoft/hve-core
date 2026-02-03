@@ -1,4 +1,6 @@
 #Requires -Modules Pester
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 
 BeforeAll {
     . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
