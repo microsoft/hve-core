@@ -50,6 +50,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
 
       - name: Verify tool availability
         run: |
