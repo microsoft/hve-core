@@ -408,40 +408,27 @@ function Write-OutputResult {
         }
         "github" {
             if (@($Results).Count -eq 0) {
-                Write-Output "::notice::No GitHub Actions security issues found"
-                return
-            }
-
-            foreach ($issue in $Results) {
-                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                if ($issue.File) {
-                    $normalizedPath = $issue.File -replace '\\', '/'
-                    $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath -ForProperty
-                    Write-Output "::warning file=$escapedPath::$escapedMessage"
-                }
-                else {
-                    Write-Output "::warning::$escapedMessage"
-                }
-            }
-            return
-        }
-        "azdo" {
-            if (@($Results).Count -eq 0) {
-                Write-Output "##vso[task.logissue type=info]No GitHub Actions security issues found"
+                Write-CIAnnotation -Message "No GitHub Actions security issues found" -Level Notice
                 return
             }
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                $sourcePath = $issue.File
-                if ($sourcePath) {
-                    Write-Output "##vso[task.logissue type=warning;sourcepath=$sourcePath]$message"
-                }
-                else {
-                    Write-Output "##vso[task.logissue type=warning]$message"
-                }
+                Write-CIAnnotation -Message $message -Level Warning -File $issue.File
             }
-            Write-Output "##vso[task.complete result=SucceededWithIssues]"
+            return
+        }
+        "azdo" {
+            if (@($Results).Count -eq 0) {
+                Write-CIAnnotation -Message "No GitHub Actions security issues found" -Level Notice
+                return
+            }
+
+            foreach ($issue in $Results) {
+                $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
+                Write-CIAnnotation -Message $message -Level Warning -File $issue.File
+            }
+            Set-CITaskResult -Result SucceededWithIssues
             return
         }
         default {
@@ -914,9 +901,6 @@ try {
 }
 catch {
     Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
 }

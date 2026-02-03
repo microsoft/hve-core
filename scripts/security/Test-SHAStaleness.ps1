@@ -697,33 +697,28 @@ function Write-OutputResult {
 
         "github" {
             foreach ($Dep in $Dependencies) {
-                $normalizedPath = $Dep.File -replace '\\', '/'
-                $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath
-                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($Dep.Severity)] $($Dep.Message)"
-                Write-Output "::warning file=$escapedPath::$escapedMessage"
+                Write-CIAnnotation -Message "[$($Dep.Severity)] $($Dep.Message)" -Level Warning -File $Dep.File
             }
 
             if ($Dependencies.Count -eq 0) {
-                Write-Output "::notice::No stale dependencies detected"
+                Write-CIAnnotation -Message "No stale dependencies detected" -Level Notice
             }
             else {
-                $escapedCount = ConvertTo-GitHubActionsEscaped -Value "Found $($Dependencies.Count) stale dependencies that may pose security risks"
-                Write-Output "::error::$escapedCount"
+                Write-CIAnnotation -Message "Found $($Dependencies.Count) stale dependencies that may pose security risks" -Level Error
             }
         }
 
         "azdo" {
             foreach ($Dep in $Dependencies) {
-                $Message = "##vso[task.logissue type=warning;sourcepath=$($Dep.File);][$($Dep.Severity)] $($Dep.Message)"
-                Write-Output $Message
+                Write-CIAnnotation -Message "[$($Dep.Severity)] $($Dep.Message)" -Level Warning -File $Dep.File
             }
 
             if ($Dependencies.Count -eq 0) {
-                Write-Output "##vso[task.logissue type=info]No stale dependencies detected"
+                Write-CIAnnotation -Message "No stale dependencies detected" -Level Notice
             }
             else {
-                Write-Output "##vso[task.logissue type=error]Found $($Dependencies.Count) stale dependencies that may pose security risks"
-                Write-Output "##vso[task.complete result=SucceededWithIssues]"
+                Write-CIAnnotation -Message "Found $($Dependencies.Count) stale dependencies that may pose security risks" -Level Error
+                Set-CITaskResult -Result SucceededWithIssues
             }
         }
 
@@ -941,10 +936,7 @@ try {
 }
 catch {
     Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
 }
 #endregion

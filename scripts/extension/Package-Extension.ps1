@@ -535,11 +535,9 @@ function Invoke-PackageExtension {
         Write-Host "   Version: $packageVersion" -ForegroundColor Cyan
 
         # Output for CI/CD consumption
-        if ($env:GITHUB_OUTPUT) {
-            "version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            "vsix-file=$($vsixFile.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            "pre-release=$($PreRelease.IsPresent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-        }
+        Set-CIOutput -Name 'version' -Value $packageVersion
+        Set-CIOutput -Name 'vsix-file' -Value $vsixFile.Name
+        Set-CIOutput -Name 'pre-release' -Value $PreRelease.IsPresent
 
         Write-Host ""
         Write-Host "🎉 Done!" -ForegroundColor Green
