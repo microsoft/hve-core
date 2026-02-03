@@ -1,8 +1,10 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 # SecurityClasses.psm1
 #
-# Purpose: Shared class definitions for security scanning scripts
+# Purpose: Shared class definitions for security scanning scripts.
 # Author: HVE Core Team
-# Created: 2026-01-30
 
 <#
 .SYNOPSIS
@@ -131,6 +133,6 @@ class ComplianceReport {
     }
 }
 
-# Export classes by exporting dummy functions that reference them
-# This ensures the classes are available when the module is imported
+# Classes are exported automatically when imported via 'using module' syntax.
+# No functions to export.
 Export-ModuleMember -Function @()
