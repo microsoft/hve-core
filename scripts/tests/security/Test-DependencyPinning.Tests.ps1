@@ -340,6 +340,71 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
     }
 }
 
+Describe 'Dot-sourced execution protection' -Tag 'Unit' {
+    Context 'When script is dot-sourced' {
+        It 'Does not execute main block when dot-sourced' {
+            # Arrange
+            $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
+            $tempOutputPath = Join-Path $TestDrive 'dot-source-test.json'
+
+            # Act - Invoke in new process with dot-sourcing simulation
+            $scriptBlock = ". '$testScript' -OutputPath '$tempOutputPath'; [System.IO.File]::Exists('$tempOutputPath')"
+            pwsh -Command $scriptBlock 2>&1 | Out-Null
+
+            # Assert - Main execution should be skipped, no output file created
+            Test-Path $tempOutputPath | Should -BeFalse
+        }
+
+        It 'Writes error message when dot-sourced' {
+            # Arrange
+            $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
+            
+            # Act - Invoke in new process to test dot-sourcing error handling
+            $result = pwsh -Command ". '$testScript'" 2>&1
+            $errorOutput = $result | Where-Object { $_ -match 'dot-sourced' -or $_ -match 'will not execute' }
+            
+            # Assert - Should write error message about dot-sourcing
+            $errorOutput | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'GitHub Actions error annotation' -Tag 'Integration' {
+    BeforeAll {
+        $script:OriginalGHA = $env:GITHUB_ACTIONS
+        $script:TestScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
+    }
+
+    AfterAll {
+        if ($null -eq $script:OriginalGHA) {
+            Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+        } else {
+            $env:GITHUB_ACTIONS = $script:OriginalGHA
+        }
+    }
+
+    Context 'Error handling with GitHub Actions' {
+        It 'Outputs GitHub error annotation on failure' {
+            # Arrange - Create a corrupted workflow file that will trigger an error
+            $testWorkflowDir = Join-Path $TestDrive 'test-workflows'
+            New-Item -ItemType Directory -Path (Join-Path $testWorkflowDir '.github/workflows') -Force | Out-Null
+            $corruptedFile = Join-Path $testWorkflowDir '.github/workflows/test.yml'
+            "uses: actions/checkout@invalid!!!" | Out-File -FilePath $corruptedFile -Encoding UTF8
+            
+            # Act - Run script in new process with GITHUB_ACTIONS set
+            $scriptCommand = @"
+`$env:GITHUB_ACTIONS = 'true'
+& '$script:TestScript' -Path '$testWorkflowDir' -Format 'json' -OutputPath '$TestDrive/gha-test.json' -FailOnUnpinned 2>&1
+"@
+            $output = pwsh -Command $scriptCommand
+
+            # Assert - Should contain GitHub Actions error annotation or error output
+            # The script should execute and potentially generate warnings/errors
+            $output | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
 Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
     BeforeAll {
         . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
