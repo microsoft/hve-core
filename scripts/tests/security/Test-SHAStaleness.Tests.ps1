@@ -599,7 +599,32 @@ jobs:
 '@
             Set-Content -Path (Join-Path $script:WorkflowDir 'single.yml') -Value $singleWorkflow
             
-            # Single item return should be coerced to array
+            # Mock to return stale dependency (old SHA)
+            Mock Invoke-RestMethod {
+                if ($Uri -like '*graphql*') {
+                    return @{
+                        data = @{
+                            rateLimit  = @{ remaining = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                            repository = @{
+                                refs = @{
+                                    nodes = @(
+                                        @{
+                                            name   = 'v5'
+                                            target = @{
+                                                oid           = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+                                                committedDate = (Get-Date).AddMonths(-6).ToString('o')
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                return @{}
+            } -ModuleName $null
+            
+            # Single item return should be coerced to array, also tests stale detection
             $jsonPath = Join-Path $script:TestRepo 'logs' 'single-test.json'
             & $scriptPath -OutputFormat 'json' -OutputPath $jsonPath *>&1 | Out-Null
             
