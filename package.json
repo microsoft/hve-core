@@ -17,7 +17,8 @@
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
-    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1"
+    "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
+    "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1"
   },
   "devDependencies": {
     "cspell": "9.6.2",

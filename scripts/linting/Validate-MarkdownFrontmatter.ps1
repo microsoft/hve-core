@@ -13,7 +13,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#requires -Version 7.0
+#Requires -Version 7.0
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
@@ -48,6 +48,8 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
@@ -504,8 +506,8 @@ function Test-FrontmatterValidation {
     # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
-        if ($Files.Count -eq 0) {
+        $Files = @(Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch)
+        if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
             # Return empty summary with TotalFiles=0 to accurately represent no files validated
             # The caller handles this as success when ChangedFilesOnly mode is used
@@ -513,7 +515,7 @@ function Test-FrontmatterValidation {
             $null = $emptySummary.Complete()
             return $emptySummary
         }
-        Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
+        Write-Host "Found $(@($Files).Count) changed markdown files to validate" -ForegroundColor Cyan
     }
 
     # Resolve files from paths if not provided directly

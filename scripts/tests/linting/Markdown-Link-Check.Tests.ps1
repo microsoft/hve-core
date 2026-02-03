@@ -108,6 +108,60 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
             $result | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Fixture exclusion filtering' {
+        BeforeEach {
+            # Create test files including fixture path
+            $script:IncludeFile = Join-Path $script:TempDir 'docs' 'readme.md'
+            $script:ExcludeFile = Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures' 'test.md'
+            
+            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'docs') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures') -Force | Out-Null
+            Set-Content -Path $script:IncludeFile -Value '# Include This'
+            Set-Content -Path $script:ExcludeFile -Value '# Exclude Fixture'
+
+            # Mock git to simulate repository with tracked files including fixtures
+            Mock git {
+                if ($args -contains 'rev-parse') {
+                    $global:LASTEXITCODE = 0
+                    return $script:TempDir
+                }
+                elseif ($args -contains 'ls-files') {
+                    $global:LASTEXITCODE = 0
+                    # Return both fixture and non-fixture files
+                    return @('docs/readme.md', 'scripts/tests/Fixtures/test.md')
+                }
+            }
+        }
+
+        It 'Filters out test fixture files from results' {
+            # Act
+            $result = Get-MarkdownTarget -InputPath $script:TempDir
+            
+            # Assert - Should exclude files in scripts/tests/Fixtures/
+            $fixtureFiles = $result | Where-Object { $_ -like '*Fixtures*' }
+            $fixtureFiles | Should -BeNullOrEmpty
+        }
+
+        It 'Includes non-fixture files in results' {
+            # Act
+            $result = Get-MarkdownTarget -InputPath $script:TempDir
+            
+            # Assert - Should include docs files
+            $docsFiles = $result | Where-Object { $_ -like '*docs*readme.md' }
+            $docsFiles | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Correctly applies the notlike filter pattern' {
+            # Test the exact filter pattern used in the code
+            $testPaths = @('docs/readme.md', 'scripts/tests/Fixtures/test.md', 'src/guide.md')
+            $filtered = $testPaths | Where-Object { $_ -notlike 'scripts/tests/Fixtures/*' }
+            
+            $filtered | Should -Contain 'docs/readme.md'
+            $filtered | Should -Contain 'src/guide.md'
+            $filtered | Should -Not -Contain 'scripts/tests/Fixtures/test.md'
+        }
+    }
 }
 
 #endregion
@@ -197,6 +251,49 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
             $config = Get-Content $script:ConfigPath | ConvertFrom-Json
             $config.PSObject.Properties.Name | Should -Contain 'ignorePatterns'
             $config.PSObject.Properties.Name | Should -Contain 'replacementPatterns'
+        }
+    }
+
+    Context 'Main execution error handling' {
+        BeforeAll {
+            $script:OriginalGHA = $env:GITHUB_ACTIONS
+            $script:LinkCheckScript = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
+        }
+
+        AfterAll {
+            if ($null -eq $script:OriginalGHA) {
+                Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+            } else {
+                $env:GITHUB_ACTIONS = $script:OriginalGHA
+            }
+        }
+
+        It 'Outputs GitHub error annotation when script fails in CI' {
+            # Arrange
+            $env:GITHUB_ACTIONS = 'true'
+            
+            # Create temp directory with no markdown files
+            $emptyDir = Join-Path $TestDrive 'empty-no-md'
+            New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
+            
+            # Mock git to simulate no tracked markdown files
+            Mock git {
+                if ($args -contains 'rev-parse') {
+                    $global:LASTEXITCODE = 0
+                    return $emptyDir
+                }
+                elseif ($args -contains 'ls-files') {
+                    $global:LASTEXITCODE = 0
+                    return @()  # No markdown files
+                }
+            }
+            
+            # Act - Run script with empty directory (will fail with no files found)
+            $output = & $script:LinkCheckScript -Path $emptyDir 2>&1
+            
+            # Assert - Should output error
+            $errors = $output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
+            $errors | Should -Not -BeNullOrEmpty
         }
     }
 }

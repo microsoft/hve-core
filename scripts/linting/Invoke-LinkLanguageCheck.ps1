@@ -8,10 +8,14 @@
 # Author: HVE Core Team
 # Created: 2025-11-05
 
+#Requires -Version 7.0
+
 [CmdletBinding()]
 param(
     [string[]]$ExcludePaths = @()
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
