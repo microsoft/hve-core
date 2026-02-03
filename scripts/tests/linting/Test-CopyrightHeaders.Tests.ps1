@@ -279,7 +279,7 @@ Write-Host "No headers"
 "@
         Set-Content -Path (Join-Path $script:FixturesPath 'no-headers.ps1') -Value $content
 
-        $result = & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('no-headers.ps1') -OutputPath (Join-Path $script:FixturesPath 'fail-test.json') -FailOnMissing 2>&1
+        $null = & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('no-headers.ps1') -OutputPath (Join-Path $script:FixturesPath 'fail-test.json') -FailOnMissing 2>&1
         $LASTEXITCODE | Should -Be 1
     }
 }
