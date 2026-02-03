@@ -504,8 +504,8 @@ function Test-FrontmatterValidation {
     # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
-        if ($Files.Count -eq 0) {
+        $Files = @(Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch)
+        if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
             # Return empty summary with TotalFiles=0 to accurately represent no files validated
             # The caller handles this as success when ChangedFilesOnly mode is used
@@ -513,7 +513,7 @@ function Test-FrontmatterValidation {
             $null = $emptySummary.Complete()
             return $emptySummary
         }
-        Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
+        Write-Host "Found $(@($Files).Count) changed markdown files to validate" -ForegroundColor Cyan
     }
 
     # Resolve files from paths if not provided directly
