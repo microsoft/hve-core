@@ -121,3 +121,5 @@ Agents should use npm scripts for all validation:
 
 The `copilot-setup-steps.yml` mirrors tools from `.devcontainer/scripts/on-create.sh` and `.devcontainer/scripts/post-create.sh`. When adding tools to the devcontainer, update the setup workflow to maintain parity.
 <!-- </coding-agent-environment> -->
+
+<!-- Brought to you by microsoft/hve-core -->
