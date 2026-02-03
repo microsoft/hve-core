@@ -48,7 +48,6 @@ param(
     [switch]$UpdateStale
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import CIHelpers for workflow command escaping

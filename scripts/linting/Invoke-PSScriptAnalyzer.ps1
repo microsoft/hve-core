@@ -25,7 +25,6 @@ param(
     [string]$OutputPath = "logs/psscriptanalyzer-results.json"
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import shared helpers

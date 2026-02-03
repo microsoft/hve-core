@@ -15,7 +15,6 @@ param(
     [string[]]$ExcludePaths = @()
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import shared helpers

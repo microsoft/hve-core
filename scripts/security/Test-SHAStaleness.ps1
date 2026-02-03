@@ -73,7 +73,6 @@ param(
     [int]$GraphQLBatchSize = 20
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import CIHelpers for workflow command escaping

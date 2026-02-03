@@ -44,7 +44,6 @@ param(
     [string]$OutputPath = "logs/yaml-lint-results.json"
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import shared helpers

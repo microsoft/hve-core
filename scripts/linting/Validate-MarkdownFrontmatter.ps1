@@ -49,7 +49,6 @@ param(
     [switch]$SkipFooterValidation
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Import helper modules

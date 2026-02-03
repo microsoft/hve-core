@@ -27,7 +27,6 @@ param(
     [switch]$ExcludeMarkdownDiff
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force

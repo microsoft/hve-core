@@ -59,7 +59,6 @@ param(
 
 #endregion
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "Modules/CIHelpers.psm1") -Force
