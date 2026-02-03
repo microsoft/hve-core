@@ -197,9 +197,9 @@ try {
     $repoRootPath = Split-Path -Path $scriptRootParent -Parent
     $repoRoot = Resolve-Path -LiteralPath $repoRootPath
     $config = Resolve-Path -LiteralPath $ConfigPath -ErrorAction Stop
-    $filesToCheck = Get-MarkdownTarget -InputPath $Path
+    $filesToCheck = @(Get-MarkdownTarget -InputPath $Path)
 
-    if (-not $filesToCheck -or $filesToCheck.Count -eq 0) {
+    if (-not $filesToCheck -or @($filesToCheck).Count -eq 0) {
         Write-Error 'No markdown files were found to validate.'
         exit 1
     }

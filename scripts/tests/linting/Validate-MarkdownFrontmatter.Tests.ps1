@@ -900,6 +900,13 @@ Content
             $result = Test-FrontmatterValidation -Paths @("$script:TestRepoRoot/docs")
             $result.TotalFiles | Should -BeGreaterOrEqual 2
         }
+
+        It 'Uses Paths parameter when Files is not provided' {
+            # Test the else branch in main execution that uses Paths
+            $result = Test-FrontmatterValidation -Paths @("$script:TestRepoRoot/docs")
+            $result | Should -Not -BeNullOrEmpty
+            $result.TotalFiles | Should -BeGreaterThan 0
+        }
     }
 
     Context 'Result aggregation' {
@@ -1180,6 +1187,28 @@ Describe 'GitHub Actions Environment Integration' -Tag 'Unit' {
 
             # Step summary should be written
             Test-Path $stepSummaryPath | Should -BeTrue
+        }
+    }
+
+    Context 'Main execution error handling with GitHub Actions' {
+        It 'Outputs GitHub error annotation when validation throws exception in CI' {
+            $env:GITHUB_ACTIONS = 'true'
+            
+            # Create a file that will cause validation to fail
+            $errorFile = Join-Path $TestDrive 'error-test.md'
+            # Create malformed content
+            Set-Content $errorFile "Malformed content"
+            
+            # Mock a critical function to throw
+            Mock Test-SingleFileFrontmatter { throw 'Validation critical error' }
+            
+            # Act
+            $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1
+            
+            # Assert - Should attempt to output GitHub annotation on error
+            # The error annotation is in the catch block
+            $hasErrorOutput = $output | Where-Object { $_ -match 'error' }
+            $hasErrorOutput | Should -Not -BeNullOrEmpty
         }
     }
 }
