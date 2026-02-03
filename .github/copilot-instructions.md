@@ -91,7 +91,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 
-PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run psscriptanalyzer` with results output to `logs/`.
+PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->
 
 <!-- <coding-agent-environment> -->
