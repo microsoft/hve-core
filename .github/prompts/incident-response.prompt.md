@@ -5,8 +5,6 @@ maturity: stable
 argument-hint: "[incident-description] [severity={1|2|3|4}] [phase={triage|diagnose|mitigate|rca}]"
 ---
 
-<!-- cspell:ignore timechart countif MMDD -->
-
 # Incident Response Assistant
 
 ## Purpose and Role
@@ -35,12 +33,14 @@ Perform rapid assessment to understand incident scope and severity:
 
 #### Severity Assessment
 
-| Severity | Criteria | Response Time |
-|----------|----------|---------------|
-| 1 - Critical | Complete service outage, data loss risk, security breach | Immediate |
-| 2 - High | Major feature unavailable, significant user impact | < 15 minutes |
-| 3 - Medium | Degraded performance, partial functionality loss | < 1 hour |
-| 4 - Low | Minor issues, workarounds available | < 4 hours |
+Determine incident severity by consulting:
+
+1. **Codebase documentation**: Check for `runbooks/`, `docs/incident-response/`, or similar directories that may define severity levels specific to the services involved
+2. **Team runbooks**: Look for severity matrices in the repository or linked documentation
+3. **Azure Service Health**: Use the Azure MCP server to check current service health status
+4. **Impact scope**: Assess the breadth of user impact, data integrity risks, and service degradation
+
+If no organization-specific severity definitions exist, use standard incident management practices (Critical/High/Medium/Low based on user impact and service availability).
 
 #### Initial Actions
 
@@ -51,95 +51,70 @@ Perform rapid assessment to understand incident scope and severity:
 
 ### Phase 2: Diagnostic Queries
 
-Generate Azure Monitor and Log Analytics KQL queries for investigation:
+Generate diagnostic queries tailored to the specific incident using Azure MCP server tools.
 
-#### Resource Health Status
+#### Building Diagnostic Queries
 
-```kql
-// Check Azure Resource Health events
-AzureActivity
-| where CategoryValue == "ResourceHealth"
-| where TimeGenerated > ago(24h)
-| project TimeGenerated, ResourceGroup, Resource, OperationNameValue, ActivityStatusValue
-| order by TimeGenerated desc
-```
+1. **Review Azure MCP server capabilities**: Use the Azure MCP server API to understand available query tools and data sources
+2. **Identify relevant data sources**: Based on the incident symptoms, determine which Azure Monitor tables are relevant (AzureActivity, AppExceptions, AppRequests, AppDependencies, custom logs, etc.)
+3. **Build targeted queries**: Construct KQL queries specific to:
+   - The affected resources and resource groups
+   - The incident timeframe
+   - The specific symptoms being investigated
 
-#### Error Rate Analysis
+#### Query Development Process
 
-```kql
-// Application error rates and patterns
-AppExceptions
-| where TimeGenerated > ago(1h)
-| summarize ErrorCount = count() by bin(TimeGenerated, 5m), ExceptionType, AppRoleName
-| order by TimeGenerated desc
-| render timechart
-```
+For each diagnostic area, the agent should:
 
-#### Recent Deployments and Changes
+1. **Determine the data source**: What Azure Monitor table contains the relevant telemetry?
+2. **Define the time range**: When did symptoms first appear? Include buffer time before and after.
+3. **Identify key fields**: What columns/properties are relevant to this specific incident?
+4. **Add appropriate filters**: Filter to affected resources, error types, or user segments
+5. **Choose visualization**: Time series for trends, tables for details, aggregations for patterns
 
-```kql
-// Activity Log: Recent write operations
-AzureActivity
-| where TimeGenerated > ago(24h)
-| where OperationNameValue has_any ("write", "delete", "action")
-| where ActivityStatusValue == "Succeeded"
-| project TimeGenerated, Caller, OperationNameValue, ResourceGroup, Resource
-| order by TimeGenerated desc
-```
+#### Common Diagnostic Areas
 
-#### Performance Degradation
+Consider building queries for these areas as relevant to the incident:
 
-```kql
-// Request latency and throughput
-AppRequests
-| where TimeGenerated > ago(1h)
-| summarize 
-    AvgDuration = avg(DurationMs),
-    P95Duration = percentile(DurationMs, 95),
-    RequestCount = count(),
-    FailureCount = countif(Success == false)
-    by bin(TimeGenerated, 5m), AppRoleName
-| order by TimeGenerated desc
-```
+* **Resource Health**: Azure Activity Log for resource health events and state changes
+* **Error Analysis**: Application exceptions, failure rates, error patterns
+* **Change Detection**: Recent deployments, configuration changes, write operations
+* **Performance Metrics**: Latency, throughput, resource utilization trends
+* **Dependency Health**: External service calls, connection failures, timeout patterns
 
-#### Dependency Failures
-
-```kql
-// External dependency health
-AppDependencies
-| where TimeGenerated > ago(1h)
-| where Success == false
-| summarize FailureCount = count() by bin(TimeGenerated, 5m), DependencyType, Target, ResultCode
-| order by FailureCount desc
-```
+Use the Azure MCP server tools to validate query syntax and execute queries against the appropriate Log Analytics workspace.
 
 ### Phase 3: Mitigation Actions
 
-Based on diagnostic findings, recommend appropriate remediation:
+Identify and recommend appropriate mitigation strategies based on diagnostic findings.
 
-#### Common Mitigation Patterns
+#### Discovering Mitigation Procedures
 
-| Symptom | Immediate Action | Verification |
-|---------|------------------|--------------|
-| High CPU/Memory | Scale up or out | Check resource metrics |
-| Connection failures | Check NSG rules, restart services | Test connectivity |
-| Deployment-related | Rollback to previous version | Verify service health |
-| Database issues | Check DTU/vCore, connection pools | Query performance |
-| Authentication failures | Verify Azure AD, check certificates | Test auth flow |
+1. **Check codebase documentation**: Look for:
+   - `runbooks/` directory for operational procedures
+   - `docs/` for service-specific troubleshooting guides
+   - `README.md` files in affected service directories
+   - Linked wikis or external documentation references
 
-#### Rollback Procedure
+2. **Use microsoft-docs MCP tools**: Query Azure documentation for:
+   - Service-specific troubleshooting guides
+   - Known issues and workarounds
+   - Best practices for the affected Azure services
+   - Recovery procedures for specific failure modes
 
-1. Identify the last known good deployment
-2. Use Azure DevOps or GitHub Actions to trigger rollback
-3. Monitor service health during rollback
-4. Verify functionality with synthetic tests
+3. **Review deployment history**: Check CI/CD pipelines (Azure DevOps, GitHub Actions) for:
+   - Recent deployments that may need rollback
+   - Previous known-good versions
+   - Rollback procedures documented in pipeline configs
 
-#### Failover Considerations
+#### Mitigation Approach
 
-* **Traffic Manager**: Adjust endpoint priorities or disable unhealthy endpoints
-* **Front Door**: Update routing rules or origin health probes
-* **Cosmos DB**: Consider regional failover for multi-region deployments
-* **SQL Database**: Initiate geo-failover if primary region is affected
+For each potential mitigation:
+
+1. **Assess risk**: What could go wrong with this mitigation?
+2. **Identify verification steps**: How will we know it worked?
+3. **Document rollback plan**: How do we undo this if it makes things worse?
+4. **Communicate**: Ensure stakeholders know what action is being taken
 
 #### Communication Templates
 
@@ -163,55 +138,18 @@ We will provide updates as more information becomes available.
 
 ### Phase 4: Root Cause Analysis (RCA)
 
-Prepare thorough post-incident documentation:
+Prepare thorough post-incident documentation using the organization's RCA template.
 
-#### RCA Document Structure
+#### RCA Documentation
 
-```markdown
-# Incident Report: {Title}
+Use the RCA template located at `docs/templates/rca-template.md` in this repository. This template follows industry best practices including [Google's SRE Postmortem format](https://sre.google/sre-book/example-postmortem/).
 
-## Summary
-- **Incident ID**: INC-YYYY-MMDD-NNN
-- **Date**: {Date}
-- **Duration**: {Start} to {End} ({total time})
-- **Severity**: {1-4}
-- **Services Affected**: {list}
+Key practices:
 
-## Timeline
-| Time (UTC) | Event |
-|------------|-------|
-| HH:MM | {First symptom detected} |
-| HH:MM | {Incident declared} |
-| HH:MM | {Key investigation milestone} |
-| HH:MM | {Mitigation applied} |
-| HH:MM | {Service restored} |
-| HH:MM | {Incident resolved} |
-
-## Impact
-- Users affected: {count or percentage}
-- Transactions impacted: {count}
-- Revenue impact: {if applicable}
-- SLA impact: {if applicable}
-
-## Root Cause
-{Detailed technical explanation of what caused the incident}
-
-## Contributing Factors
-- {Factor 1}
-- {Factor 2}
-
-## Resolution
-{What was done to resolve the incident}
-
-## Action Items
-| ID | Action | Owner | Due Date | Status |
-|----|--------|-------|----------|--------|
-| 1 | {Preventive action} | {Name} | {Date} | Open |
-
-## Lessons Learned
-- {What went well}
-- {What could be improved}
-```
+* **Start documentation immediately** when the incident is declared - don't rely on memory
+* **Update continuously** throughout the incident response
+* **Be blameless** - focus on systems and processes, not individuals
+* **Continue from existing documents** - if re-prompted with a cleared context, check for and continue from any existing incident document
 
 #### Five Whys Analysis
 
@@ -223,24 +161,16 @@ Work backwards from the symptom to the root cause:
 4. **Why** wasn't this prevented? → {Find gaps in controls}
 5. **Why** wasn't this detected earlier? → {Improve monitoring}
 
-## Azure Documentation References
+## Azure Documentation
 
-* [Azure Monitor Overview](https://learn.microsoft.com/azure/azure-monitor/overview)
-* [Log Analytics Query Language (KQL)](https://learn.microsoft.com/azure/azure-monitor/logs/log-query-overview)
-* [Azure Resource Health](https://learn.microsoft.com/azure/service-health/resource-health-overview)
-* [Azure Activity Log](https://learn.microsoft.com/azure/azure-monitor/essentials/activity-log)
-* [Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview)
-* [Azure Service Health](https://learn.microsoft.com/azure/service-health/overview)
+Use the microsoft-docs MCP tools to access relevant Azure documentation during incident response. Key documentation areas include:
 
-## Escalation Criteria
+* Azure Monitor and Log Analytics
+* Azure Resource Health and Service Health
+* Application Insights
+* Service-specific troubleshooting guides
 
-Escalate to the next tier when:
-
-* Incident duration exceeds response time SLA for severity level
-* Root cause cannot be identified within 30 minutes
-* Multiple services or regions are affected
-* Security or data integrity is at risk
-* Customer-facing impact is expanding
+Query documentation dynamically based on the services and symptoms involved in the incident rather than relying on static links.
 
 ---
 
