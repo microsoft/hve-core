@@ -37,12 +37,12 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
-            Mock Get-ChangedFilesFromGit { @() }
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers { @() }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Accepts ChangedFilesOnly switch' {
@@ -59,10 +59,10 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Accepts custom output path' {
@@ -101,10 +101,10 @@ Describe 'actionlint Tool Availability' -Tag 'Unit' {
             Mock Get-Command { [PSCustomObject]@{ Source = 'C:\tools\actionlint.exe' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Proceeds when actionlint available' {
@@ -122,10 +122,10 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Uses Get-ChildItem when workflows directory exists' {
@@ -168,21 +168,21 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Uses Get-ChangedFilesFromGit when ChangedFilesOnly specified' {
-            Mock Get-ChangedFilesFromGit { @('.github/workflows/ci.yml') }
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers { @('.github/workflows/ci.yml') }
 
             & $script:ScriptPath -ChangedFilesOnly
             Should -Invoke Get-ChangedFilesFromGit -Times 1
         }
 
         It 'Passes BaseBranch to Get-ChangedFilesFromGit' {
-            Mock Get-ChangedFilesFromGit { @() }
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers { @() }
 
             & $script:ScriptPath -ChangedFilesOnly -BaseBranch 'develop'
             Should -Invoke Get-ChangedFilesFromGit -Times 1 -ParameterFilter {
@@ -191,7 +191,7 @@ Describe 'File Discovery' -Tag 'Unit' {
         }
 
         It 'Filters changed files to workflows directory only' {
-            Mock Get-ChangedFilesFromGit {
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers {
                 @(
                     '.github/workflows/ci.yml',
                     'scripts/test.yml',
@@ -209,10 +209,10 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Sets count and issues to 0 when no files found' {
@@ -238,10 +238,10 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+        Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+        Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+        Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         Mock New-Item {}
         Mock Out-File {}
     }
@@ -316,10 +316,10 @@ Describe 'Issue Processing' -Tag 'Unit' {
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+        Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+        Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+        Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         Mock New-Item {}
         Mock Out-File {}
     }
@@ -388,10 +388,10 @@ Describe 'Output Generation' -Tag 'Unit' {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
 
             $script:OutputFile = Join-Path $script:TempDir 'yaml-lint-results.json'
         }
@@ -416,10 +416,10 @@ Describe 'Output Generation' -Tag 'Unit' {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Creates logs directory if missing' {
@@ -443,10 +443,10 @@ Describe 'GitHub Actions Integration' -Tag 'Unit' {
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+        Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+        Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+        Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         Mock New-Item {}
         Mock Out-File {}
     }
@@ -523,10 +523,10 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
     Context 'Success scenarios (exit 0)' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
             Mock New-Item {}
             Mock Out-File {}
         }
@@ -550,10 +550,10 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
 
     Context 'Failure scenarios (exit 1)' {
         BeforeEach {
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Exits with error when actionlint not installed' {

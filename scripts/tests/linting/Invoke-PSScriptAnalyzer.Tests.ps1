@@ -31,12 +31,12 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Get-ChangedFilesFromGit { @('script.ps1') }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers { @('script.ps1') }
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Accepts ChangedFilesOnly switch' {
@@ -52,11 +52,11 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Uses default config path when not specified' {
@@ -74,11 +74,11 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Accepts custom output path' {
@@ -110,11 +110,11 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Proceeds when module available' {
@@ -132,14 +132,14 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Uses Get-FilesRecursive for all files' {
-            Mock Get-FilesRecursive {
+            Mock Get-FilesRecursive -ModuleName LintingHelpers {
                 return @('script1.ps1', 'script2.ps1')
             }
 
@@ -152,15 +152,15 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Invoke-ScriptAnalyzer { @() }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Uses Get-ChangedFilesFromGit when ChangedFilesOnly specified' {
-            Mock Get-ChangedFilesFromGit {
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers {
                 return @('changed.ps1')
             }
 
@@ -169,7 +169,7 @@ Describe 'File Discovery' -Tag 'Unit' {
         }
 
         It 'Passes BaseBranch to Get-ChangedFilesFromGit' {
-            Mock Get-ChangedFilesFromGit {
+            Mock Get-ChangedFilesFromGit -ModuleName LintingHelpers {
                 return @('changed.ps1')
             }
 
@@ -189,11 +189,11 @@ Describe 'GitHub Actions Integration' -Tag 'Unit' {
     Context 'Write-GitHubAnnotation calls' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
-            Mock Get-FilesRecursive { @('test.ps1') }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @('test.ps1') }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
         }
 
         It 'Calls Write-GitHubAnnotation for each issue' {
@@ -242,11 +242,11 @@ Describe 'Output Generation' -Tag 'Unit' {
     Context 'JSON output file' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
-            Mock Get-FilesRecursive { @('test.ps1') }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @('test.ps1') }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
 
             Mock Invoke-ScriptAnalyzer {
                 return @(
@@ -284,11 +284,11 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
     Context 'No issues found' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
-            Mock Get-FilesRecursive { @() }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @() }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
             Mock Invoke-ScriptAnalyzer { @() }
         }
 
@@ -300,11 +300,11 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
     Context 'Issues found' {
         BeforeEach {
             Mock Get-Module { $true } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
-            Mock Get-FilesRecursive { @('test.ps1') }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Get-FilesRecursive -ModuleName LintingHelpers { @('test.ps1') }
+            Mock Set-GitHubOutput -ModuleName LintingHelpers {}
+            Mock Set-GitHubEnv -ModuleName LintingHelpers {}
+            Mock Write-GitHubStepSummary -ModuleName LintingHelpers {}
+            Mock Write-GitHubAnnotation -ModuleName LintingHelpers {}
 
             Mock Invoke-ScriptAnalyzer {
                 return @(
