@@ -1,5 +1,5 @@
 # Copyright (c) Microsoft Corporation.
-# Licensed under the MIT license.
+# SPDX-License-Identifier: MIT
 
 # CIHelpers.psm1
 #
@@ -419,6 +419,11 @@ function Write-CIAnnotations {
 
         foreach ($issue in $result.Issues) {
             if (-not $issue) {
+                continue
+            }
+
+            # Skip issues with null or empty messages
+            if ([string]::IsNullOrWhiteSpace($issue.Message)) {
                 continue
             }
 

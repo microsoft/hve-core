@@ -384,7 +384,7 @@ Great job! All markdown links are valid. 🎉
     }
     }
     catch {
-        Write-Error "Markdown Link Check failed: $($_.Exception.Message)"
+        Write-Error "Markdown Link Check failed: $($_.Exception.Message)" -ErrorAction Continue
         Write-CIAnnotation -Message "Markdown Link Check failed: $($_.Exception.Message)" -Level Error
         exit 1
     }

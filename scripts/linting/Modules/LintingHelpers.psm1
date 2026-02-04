@@ -5,7 +5,6 @@
 #
 # Purpose: Shared helper functions for linting scripts and workflows
 # Author: HVE Core Team
-# Created: 2025-11-05
 
 Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
 
@@ -186,14 +185,9 @@ function Get-GitIgnorePatterns {
     return $patterns
 }
 
-# Export functions
+# Export local functions only - CIHelpers functions are used via direct import
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
     'Get-FilesRecursive',
-    'Get-GitIgnorePatterns',
-    'Set-CIOutput',
-    'Set-CIEnv',
-    'Write-CIStepSummary',
-    'Write-CIAnnotation',
-    'Write-CIAnnotations'
+    'Get-GitIgnorePatterns'
 )

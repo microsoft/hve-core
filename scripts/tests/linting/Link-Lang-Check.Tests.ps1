@@ -366,6 +366,9 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
 
     Context 'Script invocation with ExcludePaths' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so the script's main block runs during integration tests
+            $env:HVE_SKIP_MAIN = $null
+
             # Create test directory structure
             $script:TestsDir = Join-Path $script:TempDir 'scripts/tests/linting'
             $script:DocsDir = Join-Path $script:TempDir 'docs'
@@ -379,6 +382,11 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
             # Create docs file with en-us link (should be included)
             $docsFile = Join-Path $script:DocsDir 'readme.md'
             'Link: https://docs.microsoft.com/en-us/azure' | Set-Content -Path $docsFile
+        }
+
+        AfterEach {
+            # Restore HVE_SKIP_MAIN for function-only tests
+            $env:HVE_SKIP_MAIN = '1'
         }
 
         It 'Excludes files matching single pattern' {

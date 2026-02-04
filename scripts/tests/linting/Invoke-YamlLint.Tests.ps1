@@ -16,9 +16,11 @@
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-YamlLint.ps1'
     $script:ModulePath = Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1'
+    $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
-    # Import LintingHelpers for mocking
+    # Import modules for mocking
     Import-Module $script:ModulePath -Force
+    Import-Module $script:CIHelpersPath -Force
 
     # Create stub function for actionlint so it can be mocked even when not installed
     function global:actionlint { '[]' }
@@ -26,6 +28,7 @@ BeforeAll {
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
     # Remove the actionlint stub function
     Remove-Item -Path 'Function:\actionlint' -Force -ErrorAction SilentlyContinue
 }

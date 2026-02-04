@@ -5,7 +5,6 @@
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
-# Created: 2025-11-05
 #
 # This script validates:
 # - Required frontmatter fields (title, description, author, ms.date)

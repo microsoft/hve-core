@@ -326,6 +326,9 @@ Describe 'Main Script Execution' {
 
     Context 'Array coercion in main execution block' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
+            
             # Create workflow with SHA-pinned action
             $workflowContent = @'
 name: Test
@@ -343,6 +346,8 @@ jobs:
         }
         
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             # Return to original location
             Set-Location $script:OriginalLocation
         }
@@ -459,6 +464,9 @@ jobs:
 
     Context 'CI environment integration' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
+            
             # Save original environment
             $script:OriginalGHA = $env:GITHUB_ACTIONS
             $script:OriginalADO = $env:TF_BUILD
@@ -480,6 +488,8 @@ jobs:
         }
 
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             $env:GITHUB_ACTIONS = $script:OriginalGHA
             $env:TF_BUILD = $script:OriginalADO
             Set-Location $script:OriginalLocation
@@ -543,10 +553,14 @@ jobs:
 
     Context 'Empty and edge case scenarios' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
             Set-Location $script:TestRepo
         }
         
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             Set-Location $script:OriginalLocation
         }
         

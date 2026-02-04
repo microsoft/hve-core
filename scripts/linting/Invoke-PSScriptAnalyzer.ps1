@@ -6,7 +6,6 @@
 #
 # Purpose: Wrapper for PSScriptAnalyzer with GitHub Actions integration
 # Author: HVE Core Team
-# Created: 2025-11-05
 
 #Requires -Version 7.0
 

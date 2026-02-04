@@ -15,9 +15,11 @@
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-LinkLanguageCheck.ps1'
     $script:ModulePath = Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1'
+    $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
-    # Import LintingHelpers for mocking
+    # Import modules for mocking
     Import-Module $script:ModulePath -Force
+    Import-Module $script:CIHelpersPath -Force
 
     $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
     $env:HVE_SKIP_MAIN = '1'
@@ -26,6 +28,7 @@ BeforeAll {
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
     $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
@@ -207,17 +210,17 @@ Describe 'JSON Output Parsing' -Tag 'Unit' {
 Describe 'GitHub Actions Integration' -Tag 'Unit' {
     Context 'Module exports verification' {
         It 'Write-CIAnnotation is available in module' {
-            $module = Get-Module LintingHelpers
+            $module = Get-Module CIHelpers
             $module.ExportedFunctions.Keys | Should -Contain 'Write-CIAnnotation'
         }
 
         It 'Set-CIOutput is available in module' {
-            $module = Get-Module LintingHelpers
+            $module = Get-Module CIHelpers
             $module.ExportedFunctions.Keys | Should -Contain 'Set-CIOutput'
         }
 
         It 'Write-CIStepSummary is available in module' {
-            $module = Get-Module LintingHelpers
+            $module = Get-Module CIHelpers
             $module.ExportedFunctions.Keys | Should -Contain 'Write-CIStepSummary'
         }
     }

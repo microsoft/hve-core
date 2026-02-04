@@ -15,13 +15,16 @@
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-PSScriptAnalyzer.ps1'
     $script:ModulePath = Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1'
+    $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
-    # Import LintingHelpers for mocking
+    # Import modules for mocking
     Import-Module $script:ModulePath -Force
+    Import-Module $script:CIHelpersPath -Force
 }
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 #region Parameter Validation Tests

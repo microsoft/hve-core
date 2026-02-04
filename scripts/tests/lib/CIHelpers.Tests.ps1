@@ -1,5 +1,5 @@
 # Copyright (c) Microsoft Corporation.
-# Licensed under the MIT license.
+# SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
 # CIHelpers.Tests.ps1
