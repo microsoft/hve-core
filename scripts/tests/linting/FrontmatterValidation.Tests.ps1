@@ -1569,14 +1569,32 @@ Describe 'Write-ValidationConsoleOutput' -Tag 'Unit' {
     }
 }
 
-Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
+Describe 'Write-CIAnnotations' -Tag 'Unit' {
+    BeforeAll {
+        $script:CIHelpersModulePath = Join-Path $PSScriptRoot '..\..\lib\Modules\CIHelpers.psm1'
+        Import-Module $script:CIHelpersModulePath -Force
+    }
+
+    BeforeEach {
+        $script:OriginalGHActions = $env:GITHUB_ACTIONS
+        $env:GITHUB_ACTIONS = 'true'
+    }
+
+    AfterEach {
+        if ($null -eq $script:OriginalGHActions) {
+            Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:GITHUB_ACTIONS = $script:OriginalGHActions
+        }
+    }
     It 'Outputs correct error annotation format' {
         $summary = script:New-ValidationSummary
         $result = script:New-FileValidationResult -FilePath 'test.md'
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -BeLike '::error file=test.md*::Test error'
     }
 
@@ -1586,7 +1604,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddWarning('Test warning', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -BeLike '::warning file=test.md*::Test warning'
     }
 
@@ -1597,7 +1615,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('Error at line', 'field', 42)
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -BeLike '::error file=test.md,line=42::Error at line'
     }
 
@@ -1607,7 +1625,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.HasFrontmatter = $true
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -BeNullOrEmpty
     }
 
@@ -1617,7 +1635,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('50% complete', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match '50%25 complete'
     }
 
@@ -1627,7 +1645,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError("line1`rline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'line1%0Dline2'
     }
 
@@ -1637,7 +1655,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError("line1`nline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'line1%0Aline2'
     }
 
@@ -1647,7 +1665,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('scope::value', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'scope%3A%3Avalue'
     }
 
@@ -1657,7 +1675,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'file=path%3Afile\.md'
     }
 
@@ -1667,7 +1685,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'file=file%2Cbackup\.md'
     }
 
@@ -1677,7 +1695,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-GitHubAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary
         $output | Should -Match 'file=file%2520name\.md'
     }
 
@@ -1696,7 +1714,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
         $result.Issues.Add($issue)
         $summary.AddResult($result)
 
-        { Write-GitHubAnnotations -Summary $summary } | Should -Not -Throw
+        { Write-CIAnnotations -Summary $summary } | Should -Not -Throw
     }
 }
 

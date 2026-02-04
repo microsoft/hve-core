@@ -7,15 +7,10 @@
 
 name: "Copilot Setup Steps"
 
-# Auto-run on push/PR to validate the setup workflow
+# Copilot coding agent runs these steps internally before starting work.
+# Use workflow_dispatch to manually validate the setup when desired.
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/copilot-setup-steps.yml
-  pull_request:
-    paths:
-      - .github/workflows/copilot-setup-steps.yml
 
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
@@ -38,7 +33,10 @@ jobs:
           node-version: "20"
           cache: "npm"
 
+      # continue-on-error allows Copilot to start work even if dependencies fail,
+      # so it can fix package.json/package-lock.json issues itself
       - name: Install JavaScript dependencies
+        continue-on-error: true
         run: npm ci
 
       - name: Set up Python
