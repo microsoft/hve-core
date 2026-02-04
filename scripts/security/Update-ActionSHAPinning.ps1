@@ -55,9 +55,6 @@ Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 $script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
 
@@ -924,6 +921,9 @@ function Set-ContentPreservePermission {
 
 #region Main Execution
 if (-not $script:SkipMain) {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
     try {
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'

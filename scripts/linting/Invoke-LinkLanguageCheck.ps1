@@ -93,7 +93,13 @@ scripts/linting/Link-Lang-Check.ps1 -Fix
 ``````
 
 **Files affected:**
-$(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_).Count; "- $_ ($count occurrence(s))" }) -join "`n")
+$(($uniqueFiles | ForEach-Object { 
+    $count = ($results | Where-Object file -eq $_).Count
+    $safePath = if ((Get-CIPlatform) -eq 'azdo') {
+        ConvertTo-AzureDevOpsEscaped -Value $_
+    } else { $_ }
+    "- $safePath ($count occurrence(s))"
+}) -join "`n")
 "@
 
             return 1

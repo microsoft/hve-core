@@ -76,6 +76,7 @@ Describe 'Invoke-LinkLanguageCheckCore' -Tag 'Unit' {
                         $script:MockLinkLang = Join-Path $TestDrive 'mock-link-lang.ps1'
 
                         @'
+param([string[]]$ExcludePaths = @())
 $json = @"
 [
     {"file":"docs/a.md","line_number":1,"original_url":"https://docs.microsoft.com/en-us/a"},
@@ -116,6 +117,7 @@ Write-Output $json
             $script:MockLinkLang = Join-Path $TestDrive 'mock-link-lang-empty.ps1'
 
             @'
+param([string[]]$ExcludePaths = @())
 $json = @"
 []
 "@

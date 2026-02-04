@@ -346,7 +346,13 @@ if (-not $script:SkipMain) {
 "@
 
         foreach ($link in $brokenLinks) {
-            $summaryContent += "`n| ``$($link.File)`` | ``$($link.Link)`` |"
+            $safeFile = if ((Get-CIPlatform) -eq 'azdo') {
+                ConvertTo-AzureDevOpsEscaped -Value $link.File
+            } else { $link.File }
+            $safeLink = if ((Get-CIPlatform) -eq 'azdo') {
+                ConvertTo-AzureDevOpsEscaped -Value $link.Link
+            } else { $link.Link }
+            $summaryContent += "`n| ``$safeFile`` | ``$safeLink`` |"
         }
 
         $summaryContent += @"

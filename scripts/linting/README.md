@@ -256,34 +256,40 @@ Detects files changed in current branch compared to main.
 
 **Parameters**:
 
-* `-FileExtension` (string) - Filter by extension (e.g., '.ps1')
+* `-BaseBranch` (string) - Base branch to compare against (default: `origin/main`)
+* `-FileExtensions` (string[]) - Array of file patterns to filter (e.g., `@('*.ps1', '*.md')`)
 
 **Returns**: Array of changed file paths
 
 **Fallbacks**:
 
-1. `git diff` vs `origin/main`
-2. `git diff` vs `main`
-3. `git ls-files` (all tracked files)
+1. `git merge-base` with specified base branch
+2. `git diff HEAD~1` when merge-base fails
+3. `git diff HEAD` for staged/unstaged files
 
 #### `Get-FilesRecursive`
 
-Recursively finds files matching pattern with gitignore support.
+Recursively finds files matching patterns with gitignore support.
 
 **Parameters**:
 
-* `-Path` (string) - Root directory
-* `-Pattern` (string) - File pattern (e.g., '*.ps1')
+* `-Path` (string, required) - Root directory to search from
+* `-Include` (string[], required) - File patterns to include (e.g., `@('*.ps1', '*.psm1')`)
+* `-GitIgnorePath` (string) - Path to `.gitignore` file for exclusion patterns
 
-**Returns**: Array of matching file paths
+**Returns**: Array of FileInfo objects
 
-**Respects**: `.gitignore` patterns
+**Respects**: `.gitignore` patterns when `-GitIgnorePath` is provided
 
 #### `Get-GitIgnorePatterns`
 
-Loads and parses `.gitignore` file.
+Parses `.gitignore` into PowerShell wildcard patterns.
 
-**Returns**: Array of ignore patterns
+**Parameters**:
+
+* `-GitIgnorePath` (string, required) - Path to `.gitignore` file
+
+**Returns**: Array of wildcard patterns using platform-appropriate separators
 
 ### `scripts/lib/Modules/CIHelpers.psm1`
 
