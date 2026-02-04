@@ -58,9 +58,9 @@ Generate diagnostic queries tailored to the specific incident using Azure MCP se
 1. **Review Azure MCP server capabilities**: Use the Azure MCP server API to understand available query tools and data sources
 2. **Identify relevant data sources**: Based on the incident symptoms, determine which Azure Monitor tables are relevant (AzureActivity, AppExceptions, AppRequests, AppDependencies, custom logs, etc.)
 3. **Build targeted queries**: Construct KQL queries specific to:
-   - The affected resources and resource groups
-   - The incident timeframe
-   - The specific symptoms being investigated
+   * The affected resources and resource groups
+   * The incident timeframe
+   * The specific symptoms being investigated
 
 #### Query Development Process
 
@@ -91,21 +91,21 @@ Identify and recommend appropriate mitigation strategies based on diagnostic fin
 #### Discovering Mitigation Procedures
 
 1. **Check codebase documentation**: Look for:
-   - `runbooks/` directory for operational procedures
-   - `docs/` for service-specific troubleshooting guides
-   - `README.md` files in affected service directories
-   - Linked wikis or external documentation references
+   * `runbooks/` directory for operational procedures
+   * `docs/` for service-specific troubleshooting guides
+   * `README.md` files in affected service directories
+   * Linked wikis or external documentation references
 
 2. **Use microsoft-docs MCP tools**: Query Azure documentation for:
-   - Service-specific troubleshooting guides
-   - Known issues and workarounds
-   - Best practices for the affected Azure services
-   - Recovery procedures for specific failure modes
+   * Service-specific troubleshooting guides
+   * Known issues and workarounds
+   * Best practices for the affected Azure services
+   * Recovery procedures for specific failure modes
 
 3. **Review deployment history**: Check CI/CD pipelines (Azure DevOps, GitHub Actions) for:
-   - Recent deployments that may need rollback
-   - Previous known-good versions
-   - Rollback procedures documented in pipeline configs
+   * Recent deployments that may need rollback
+   * Previous known-good versions
+   * Rollback procedures documented in pipeline configs
 
 #### Mitigation Approach
 

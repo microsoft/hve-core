@@ -1,4 +1,9 @@
-# Root Cause Analysis (RCA) Template
+---
+title: Root Cause Analysis (RCA) Template
+description: Structured post-incident documentation template for root cause analysis
+author: Microsoft
+ms.date: 2026-02-04
+---
 
 This template provides a structured format for post-incident documentation, inspired by industry best practices including [Google's SRE Postmortem Culture](https://sre.google/sre-book/postmortem-culture/) and [Example Postmortem](https://sre.google/sre-book/example-postmortem/).
 
@@ -24,14 +29,14 @@ This template provides a structured format for post-incident documentation, insp
 
 All times in UTC.
 
-| Time | Event |
-|------|-------|
-| HH:MM | {First symptom detected} |
-| HH:MM | {Incident declared} |
+| Time  | Event                         |
+|-------|-------------------------------|
+| HH:MM | {First symptom detected}      |
+| HH:MM | {Incident declared}           |
 | HH:MM | {Key investigation milestone} |
-| HH:MM | {Mitigation applied} |
-| HH:MM | {Service restored} |
-| HH:MM | {Incident resolved} |
+| HH:MM | {Mitigation applied}          |
+| HH:MM | {Service restored}            |
+| HH:MM | {Incident resolved}           |
 
 ## Impact
 
@@ -90,12 +95,12 @@ All times in UTC.
 
 ## Action Items
 
-| ID | Priority | Action | Owner | Due Date | Status |
-|----|----------|--------|-------|----------|--------|
-| 1 | P1 | {Immediate fix to prevent recurrence} | {Name} | {Date} | Open |
-| 2 | P2 | {Improve monitoring/alerting} | {Name} | {Date} | Open |
-| 3 | P2 | {Update documentation/runbooks} | {Name} | {Date} | Open |
-| 4 | P3 | {Long-term systemic improvement} | {Name} | {Date} | Open |
+| ID | Priority | Action                                | Owner  | Due Date | Status |
+|----|----------|---------------------------------------|--------|----------|--------|
+| 1  | P1       | {Immediate fix to prevent recurrence} | {Name} | {Date}   | Open   |
+| 2  | P2       | {Improve monitoring/alerting}         | {Name} | {Date}   | Open   |
+| 3  | P2       | {Update documentation/runbooks}       | {Name} | {Date}   | Open   |
+| 4  | P3       | {Long-term systemic improvement}      | {Name} | {Date}   | Open   |
 
 ## Lessons Learned
 
@@ -135,3 +140,7 @@ All times in UTC.
 - [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
 - [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
 - [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
+
+---
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
