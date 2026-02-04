@@ -78,6 +78,8 @@ $ErrorActionPreference = 'Stop'
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
+
 # Ensure logging directory exists
 $LogDir = Split-Path -Parent $LogPath
 if (!(Test-Path $LogDir)) {
@@ -880,7 +882,8 @@ function Get-ToolStaleness {
 }
 
 #region Main Execution
-try {
+if (-not $script:SkipMain) {
+    try {
     Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
     Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
     Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
@@ -944,14 +947,12 @@ try {
             exit 0
         }
     }
-    exit 0  # All good
-}
-catch {
-    Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+        exit 0  # All good
     }
-    exit 1
+    catch {
+        Write-Error -ErrorAction Continue "Test SHA Staleness failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
 #endregion

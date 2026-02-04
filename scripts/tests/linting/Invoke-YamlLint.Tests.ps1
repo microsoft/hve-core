@@ -10,15 +10,17 @@
     - Tool availability checks
     - ChangedFilesOnly filtering
     - JSON parsing edge cases
-    - GitHub Actions integration
+    - CI integration
 #>
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-YamlLint.ps1'
     $script:ModulePath = Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1'
+    $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
-    # Import LintingHelpers for mocking
+    # Import modules for mocking
     Import-Module $script:ModulePath -Force
+    Import-Module $script:CIHelpersPath -Force
 
     # Create stub function for actionlint so it can be mocked even when not installed
     function global:actionlint { '[]' }
@@ -26,6 +28,7 @@ BeforeAll {
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
     # Remove the actionlint stub function
     Remove-Item -Path 'Function:\actionlint' -Force -ErrorAction SilentlyContinue
 }
@@ -39,10 +42,10 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
             Mock actionlint { '[]' }
             Mock Get-ChangedFilesFromGit { @() }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Accepts ChangedFilesOnly switch' {
@@ -59,10 +62,10 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Accepts custom output path' {
@@ -101,10 +104,10 @@ Describe 'actionlint Tool Availability' -Tag 'Unit' {
             Mock Get-Command { [PSCustomObject]@{ Source = 'C:\tools\actionlint.exe' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Proceeds when actionlint available' {
@@ -122,10 +125,10 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Uses Get-ChildItem when workflows directory exists' {
@@ -145,7 +148,7 @@ Describe 'File Discovery' -Tag 'Unit' {
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
         }
 
         It 'Filters to only .yml and .yaml extensions' {
@@ -160,7 +163,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 
             & $script:ScriptPath
             # Should only count 2 files (yml and yaml, not json)
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
     }
 
@@ -168,10 +171,10 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Uses Get-ChangedFilesFromGit when ChangedFilesOnly specified' {
@@ -201,7 +204,7 @@ Describe 'File Discovery' -Tag 'Unit' {
 
             & $script:ScriptPath -ChangedFilesOnly
             # Should only count 2 workflow files
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
     }
 
@@ -209,16 +212,16 @@ Describe 'File Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Sets count and issues to 0 when no files found' {
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Exits with code 0 when no files found' {
@@ -238,10 +241,10 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-CIOutput {}
+        Mock Set-CIEnv {}
+        Mock Write-CIStepSummary {}
+        Mock Write-CIAnnotation {}
         Mock New-Item {}
         Mock Out-File {}
     }
@@ -251,21 +254,21 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             Mock actionlint { $null }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles "null" string output' {
             Mock actionlint { 'null' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles empty array output' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
     }
 
@@ -276,8 +279,8 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             }
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubAnnotation -Times 1
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '1' }
+            Should -Invoke Write-CIAnnotation -Times 1
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '1' }
         }
     }
 
@@ -288,8 +291,8 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             }
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubAnnotation -Times 2
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '2' }
+            Should -Invoke Write-CIAnnotation -Times 2
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '2' }
         }
     }
 
@@ -300,7 +303,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
 
             & $script:ScriptPath
             Should -Invoke Write-Warning -Times 1
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
     }
 }
@@ -316,10 +319,10 @@ Describe 'Issue Processing' -Tag 'Unit' {
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-CIOutput {}
+        Mock Set-CIEnv {}
+        Mock Write-CIStepSummary {}
+        Mock Write-CIAnnotation {}
         Mock New-Item {}
         Mock Out-File {}
     }
@@ -331,8 +334,8 @@ Describe 'Issue Processing' -Tag 'Unit' {
             }
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubAnnotation -Times 1 -ParameterFilter {
-                $Type -eq 'error' -and
+            Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter {
+                $Level -eq 'Error' -and
                 $Message -eq 'property runs-on is required' -and
                 $File -eq '.github/workflows/ci.yml' -and
                 $Line -eq 15 -and
@@ -346,7 +349,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
             }
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubAnnotation -Times 2
+            Should -Invoke Write-CIAnnotation -Times 2
         }
     }
 
@@ -388,10 +391,10 @@ Describe 'Output Generation' -Tag 'Unit' {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
 
             $script:OutputFile = Join-Path $script:TempDir 'yaml-lint-results.json'
         }
@@ -416,10 +419,10 @@ Describe 'Output Generation' -Tag 'Unit' {
                 @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint { '[]' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Creates logs directory if missing' {
@@ -434,54 +437,54 @@ Describe 'Output Generation' -Tag 'Unit' {
 
 #endregion
 
-#region GitHub Actions Integration Tests
+#region CI Integration Tests
 
-Describe 'GitHub Actions Integration' -Tag 'Unit' {
+Describe 'CI Integration' -Tag 'Unit' {
     BeforeEach {
         Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
         Mock Test-Path { $true } -ParameterFilter { $Path -eq '.github/workflows' }
         Mock Get-ChildItem {
             @([PSCustomObject]@{ FullName = '.github/workflows/ci.yml'; Extension = '.yml' })
         } -ParameterFilter { $Path -eq '.github/workflows' }
-        Mock Set-GitHubOutput {}
-        Mock Set-GitHubEnv {}
-        Mock Write-GitHubStepSummary {}
-        Mock Write-GitHubAnnotation {}
+        Mock Set-CIOutput {}
+        Mock Set-CIEnv {}
+        Mock Write-CIStepSummary {}
+        Mock Write-CIAnnotation {}
         Mock New-Item {}
         Mock Out-File {}
     }
 
-    Context 'GitHub outputs' {
+    Context 'CI outputs' {
         It 'Sets count output with file count' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'count' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' }
         }
 
         It 'Sets issues output with issue count' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'issues' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' }
         }
 
         It 'Sets errors output with error count' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubOutput -Times 1 -ParameterFilter { $Name -eq 'errors' }
+            Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'errors' }
         }
     }
 
-    Context 'GitHub environment variables' {
+    Context 'CI environment variables' {
         It 'Sets YAML_LINT_FAILED when issues found' {
             Mock actionlint {
                 '{"message":"error","filepath":"ci.yml","line":1,"column":1}'
             }
 
             try { & $script:ScriptPath } catch { Write-Verbose 'Expected error' }
-            Should -Invoke Set-GitHubEnv -Times 1 -ParameterFilter {
+            Should -Invoke Set-CIEnv -Times 1 -ParameterFilter {
                 $Name -eq 'YAML_LINT_FAILED' -and $Value -eq 'true'
             }
         }
@@ -490,18 +493,18 @@ Describe 'GitHub Actions Integration' -Tag 'Unit' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Set-GitHubEnv -Times 0 -ParameterFilter {
+            Should -Invoke Set-CIEnv -Times 0 -ParameterFilter {
                 $Name -eq 'YAML_LINT_FAILED'
             }
         }
     }
 
-    Context 'GitHub step summary' {
+    Context 'CI step summary' {
         It 'Writes success summary when no issues' {
             Mock actionlint { '[]' }
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubStepSummary -Times 2
+            Should -Invoke Write-CIStepSummary -Times 2
         }
 
         It 'Writes failure summary with table when issues found' {
@@ -510,7 +513,7 @@ Describe 'GitHub Actions Integration' -Tag 'Unit' {
             }
 
             try { & $script:ScriptPath } catch { Write-Verbose 'Expected error' }
-            Should -Invoke Write-GitHubStepSummary -Times 2
+            Should -Invoke Write-CIStepSummary -Times 2
         }
     }
 }
@@ -523,10 +526,10 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
     Context 'Success scenarios (exit 0)' {
         BeforeEach {
             Mock Get-Command { [PSCustomObject]@{ Source = 'actionlint' } } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
             Mock New-Item {}
             Mock Out-File {}
         }
@@ -550,10 +553,10 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
 
     Context 'Failure scenarios (exit 1)' {
         BeforeEach {
-            Mock Set-GitHubOutput {}
-            Mock Set-GitHubEnv {}
-            Mock Write-GitHubStepSummary {}
-            Mock Write-GitHubAnnotation {}
+            Mock Set-CIOutput {}
+            Mock Set-CIEnv {}
+            Mock Write-CIStepSummary {}
+            Mock Write-CIAnnotation {}
         }
 
         It 'Exits with error when actionlint not installed' {
@@ -579,7 +582,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             Mock Out-File {}
 
             & $script:ScriptPath
-            Should -Invoke Write-GitHubAnnotation -Times 1
+            Should -Invoke Write-CIAnnotation -Times 1
         }
     }
 }

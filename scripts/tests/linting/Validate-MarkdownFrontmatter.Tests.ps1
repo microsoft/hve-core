@@ -653,11 +653,11 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
 
 Describe 'Get-ChangedMarkdownFileGroup' -Tag 'Unit' {
     BeforeAll {
-        Save-GitHubEnvironment
+        Save-CIEnvironment
     }
 
     AfterAll {
-        Restore-GitHubEnvironment
+        Restore-CIEnvironment
     }
 
     Context 'Merge-base succeeds' {
@@ -757,7 +757,7 @@ Describe 'Get-ChangedMarkdownFileGroup' -Tag 'Unit' {
 
 Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
     BeforeAll {
-        Save-GitHubEnvironment
+        Save-CIEnvironment
         $script:TestRepoRoot = Join-Path $TestDrive 'test-repo'
     }
 
@@ -784,7 +784,7 @@ Describe 'Test-FrontmatterValidation' -Tag 'Integration' {
     }
 
     AfterAll {
-        Restore-GitHubEnvironment
+        Restore-CIEnvironment
     }
 
     Context 'Valid files pass validation' {
@@ -1140,7 +1140,7 @@ Describe 'Error handling paths' -Tag 'Unit' {
     }
 }
 
-Describe 'GitHub Actions Environment Integration' -Tag 'Unit' {
+Describe 'CI Environment Integration' -Tag 'Unit' {
     BeforeAll {
         . $PSScriptRoot/../../linting/Validate-MarkdownFrontmatter.ps1
         Import-Module $PSScriptRoot/../../linting/Modules/FrontmatterValidation.psm1 -Force
@@ -1156,20 +1156,20 @@ Describe 'GitHub Actions Environment Integration' -Tag 'Unit' {
         $env:GITHUB_STEP_SUMMARY = $script:OriginalStepSummary
     }
 
-    Context 'Write-GitHubAnnotations execution path' {
-        It 'Calls Write-GitHubAnnotations when GITHUB_ACTIONS is set' {
+    Context 'Write-CIAnnotations execution path' {
+        It 'Calls Write-CIAnnotations when CI is set' {
             $env:GITHUB_ACTIONS = 'true'
 
             # Create test file with error
             $testFile = Join-Path $TestDrive 'ci-test.md'
             Set-Content $testFile "---`ndescription: x`n---`n# Test"
 
-            Mock Write-GitHubAnnotations { return '::error file=ci-test.md::' }
+            Mock Write-CIAnnotations { return '::error file=ci-test.md::' }
 
             $null = Test-FrontmatterValidation -Files @($testFile) -SkipFooterValidation
 
             # Annotation function should be called in CI environment
-            Should -Invoke Write-GitHubAnnotations -Times 1 -Exactly
+            Should -Invoke Write-CIAnnotations -Times 1 -Exactly
         }
     }
 
@@ -1420,7 +1420,7 @@ description: Changed file
 
 #region Integration Modes Tests
 
-Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
+Describe 'Write-CIAnnotations' -Tag 'Unit' {
     BeforeAll {
         Import-Module (Join-Path $PSScriptRoot '../../linting/Modules/FrontmatterValidation.psm1') -Force
     }
@@ -1451,7 +1451,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
             $summary.AddResult($fileResult)
 
             # Act - Capture Write-Output
-            $output = Write-GitHubAnnotations -Summary $summary
+            $output = Write-CIAnnotations -Summary $summary
 
             # Assert - Should output ::error:: annotation
             $output | Where-Object { $_ -like '::error*' } | Should -Not -BeNullOrEmpty
@@ -1468,7 +1468,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
             $summary.AddResult($fileResult)
 
             # Act - Capture Write-Output
-            $output = Write-GitHubAnnotations -Summary $summary
+            $output = Write-CIAnnotations -Summary $summary
 
             # Assert - Should output ::warning:: annotation
             $output | Where-Object { $_ -like '::warning*' } | Should -Not -BeNullOrEmpty
@@ -1485,7 +1485,7 @@ Describe 'Write-GitHubAnnotations' -Tag 'Unit' {
             $summary.AddResult($fileResult)
 
             # Act - Capture Write-Output
-            $output = Write-GitHubAnnotations -Summary $summary
+            $output = Write-CIAnnotations -Summary $summary
 
             # Assert - Annotation should include file path
             $output | Where-Object { $_ -like '*file=*specific-file*' } | Should -Not -BeNullOrEmpty
