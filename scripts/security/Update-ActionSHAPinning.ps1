@@ -476,27 +476,29 @@ function Write-OutputResult {
         }
         "github" {
             if (@($Results).Count -eq 0) {
-                Write-CIAnnotation -Message "No GitHub Actions security issues found" -Level Notice
+                Write-Output "::notice::No GitHub Actions security issues found"
                 return
             }
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                Write-CIAnnotation -Message $message -Level Warning -File $issue.File
+                $fileParam = if ($issue.File) { " file=$($issue.File -replace '\\', '/')" } else { "" }
+                Write-Output "::warning$fileParam::$message"
             }
             return
         }
         "azdo" {
             if (@($Results).Count -eq 0) {
-                Write-CIAnnotation -Message "No GitHub Actions security issues found" -Level Notice
+                Write-Output "##vso[task.logissue type=info]No GitHub Actions security issues found"
                 return
             }
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                Write-CIAnnotation -Message $message -Level Warning -File $issue.File
+                $fileParam = if ($issue.File) { ";sourcepath=$($issue.File)" } else { "" }
+                Write-Output "##vso[task.logissue type=warning$fileParam]$message"
             }
-            Set-CITaskResult -Result SucceededWithIssues
+            Write-Output "##vso[task.complete result=SucceededWithIssues]Security issues found"
             return
         }
         default {
