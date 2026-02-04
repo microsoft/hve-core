@@ -160,7 +160,7 @@ After rebuild, update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
+  "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
   "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
 }
@@ -173,7 +173,7 @@ After rebuild, update `.vscode/settings.json`:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
+        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -208,7 +208,7 @@ ls /workspaces/hve-core/.github/agents
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
+        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
