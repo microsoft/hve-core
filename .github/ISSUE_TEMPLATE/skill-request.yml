@@ -26,17 +26,12 @@ body:
     validations:
       required: true
   
-  - type: dropdown
-    id: platform-requirements
+  - type: markdown
     attributes:
-      label: Platform Requirements
-      description: Which platforms should this skill support?
-      options:
-        - Both bash and PowerShell
-        - Bash only
-        - PowerShell only
-    validations:
-      required: true
+      value: |
+        ### Platform Requirements
+        
+        All skills **MUST** support both bash and PowerShell (cross-platform). Single-platform skills will be rejected per [contributing guidelines](../../docs/contributing/skills.md#skills-not-accepted).
   
   - type: textarea
     id: prerequisites
