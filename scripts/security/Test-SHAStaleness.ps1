@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Monitors SHA-pinned dependencies for staleness and security vulnerabilities.
@@ -71,8 +73,12 @@ param(
     [int]$GraphQLBatchSize = 20
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
 # Ensure logging directory exists
 $LogDir = Split-Path -Parent $LogPath
@@ -529,12 +535,12 @@ function Test-GitHubActionsForStaleness {
         }
     }
 
-    if ($allActionRepos.Count -eq 0) {
+    if (@($allActionRepos).Count -eq 0) {
         Write-SecurityLog "No SHA-pinned GitHub Actions found" -Level Info
         return
     }
 
-    Write-SecurityLog "Found $($allActionRepos.Count) unique repositories with $($shaToActionMap.Count) SHA-pinned actions" -Level Info
+    Write-SecurityLog "Found $(@($allActionRepos).Count) unique repositories with $(@($shaToActionMap.Keys).Count) SHA-pinned actions" -Level Info
 
     # Bulk query for all actions using GraphQL optimization
     try {
@@ -673,7 +679,7 @@ function Write-OutputResult {
             $JsonOutput = @{
                 Timestamp       = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
                 MaxAgeThreshold = $MaxAge
-                TotalStaleItems = $Dependencies.Count
+                TotalStaleItems = @($Dependencies).Count
                 Dependencies    = $Dependencies
             } | ConvertTo-Json -Depth 10
 
@@ -703,11 +709,11 @@ function Write-OutputResult {
                 Write-Output "::warning file=$escapedPath::$escapedMessage"
             }
 
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-Output "::notice::No stale dependencies detected"
             }
             else {
-                $escapedCount = ConvertTo-GitHubActionsEscaped -Value "Found $($Dependencies.Count) stale dependencies that may pose security risks"
+                $escapedCount = ConvertTo-GitHubActionsEscaped -Value "Found $(@($Dependencies).Count) stale dependencies that may pose security risks"
                 Write-Output "::error::$escapedCount"
             }
         }
@@ -718,17 +724,17 @@ function Write-OutputResult {
                 Write-Output $Message
             }
 
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-Output "##vso[task.logissue type=info]No stale dependencies detected"
             }
             else {
-                Write-Output "##vso[task.logissue type=error]Found $($Dependencies.Count) stale dependencies that may pose security risks"
+                Write-Output "##vso[task.logissue type=error]Found $(@($Dependencies).Count) stale dependencies that may pose security risks"
                 Write-Output "##vso[task.complete result=SucceededWithIssues]"
             }
         }
 
         "console" {
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-SecurityLog "No stale dependencies detected!" -Level Success
             }
             else {
@@ -739,18 +745,18 @@ function Write-OutputResult {
                     Write-SecurityLog "  Message: $($Dep.Message)" -Level Info
                     Write-Information "" -InformationAction Continue
                 }
-                Write-SecurityLog "Total stale dependencies: $($Dependencies.Count)" -Level Warning
+                Write-SecurityLog "Total stale dependencies: $(@($Dependencies).Count)" -Level Warning
             }
         }
 
         "Summary" {
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-Output "No stale dependencies detected!"
             }
             else {
                 Write-Output "=== SHA Staleness Summary ==="
-                Write-Output "Total stale dependencies: $($Dependencies.Count)"
-                $ByType = $Dependencies | Group-Object Type
+                Write-Output "Total stale dependencies: $(@($Dependencies).Count)"
+                $ByType = @($Dependencies | Group-Object Type)
                 foreach ($Group in $ByType) {
                     Write-Output "$($Group.Name): $($Group.Count)"
                 }
@@ -876,11 +882,15 @@ function Get-ToolStaleness {
 }
 
 #region Main Execution
-try {
+if (-not $script:SkipMain) {
+    try {
     Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
     Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
     Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
     Write-SecurityLog "Output format: $OutputFormat" -Level Info
+
+    # Initialize stale dependencies array
+    $script:StaleDependencies = @()
 
     # Run staleness check for GitHub Actions
     Test-GitHubActionsForStaleness
@@ -888,11 +898,11 @@ try {
     # Run staleness check for tools from tool-checksums.json
     Write-SecurityLog "Checking tool staleness from tool-checksums.json" -Level Info
 
-    $toolResults = Get-ToolStaleness
-    if ($toolResults) {
-        $staleTools = $toolResults | Where-Object { $_.IsStale -eq $true }
-        if ($staleTools.Count -gt 0) {
-            Write-SecurityLog "Found $($staleTools.Count) stale tool(s):" -Level Warning
+    $toolResults = @(Get-ToolStaleness)
+    if (@($toolResults).Count -gt 0) {
+        $staleTools = @($toolResults | Where-Object { $_.IsStale -eq $true })
+        if (@($staleTools).Count -gt 0) {
+            Write-SecurityLog "Found $(@($staleTools).Count) stale tool(s):" -Level Warning
             foreach ($tool in $staleTools) {
                 Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
                 
@@ -914,9 +924,9 @@ try {
         }
 
         # Check for errors
-        $errorTools = $toolResults | Where-Object { $null -ne $_.Error }
-        if ($errorTools.Count -gt 0) {
-            Write-SecurityLog "Failed to check $($errorTools.Count) tool(s)" -Level Warning
+        $errorTools = @($toolResults | Where-Object { $null -ne $_.Error })
+        if (@($errorTools).Count -gt 0) {
+            Write-SecurityLog "Failed to check $(@($errorTools).Count) tool(s)" -Level Warning
         }
     }
 
@@ -924,10 +934,10 @@ try {
     Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
 
     Write-SecurityLog "SHA staleness monitoring completed" -Level Success
-    Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
+    Write-SecurityLog "Stale dependencies found: $(@($StaleDependencies).Count)" -Level Info
 
     # Exit with appropriate code based on findings and -FailOnStale parameter
-    if ($StaleDependencies.Count -gt 0) {
+    if (@($StaleDependencies).Count -gt 0) {
         if ($FailOnStale) {
             Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
             exit 1
@@ -937,14 +947,12 @@ try {
             exit 0
         }
     }
-    exit 0  # All good
-}
-catch {
-    Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+        exit 0  # All good
     }
-    exit 1
+    catch {
+        Write-Error -ErrorAction Continue "Test SHA Staleness failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
 #endregion
