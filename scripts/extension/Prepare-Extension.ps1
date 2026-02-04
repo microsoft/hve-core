@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -55,7 +56,8 @@ param(
     [switch]$DryRun
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
+
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Pure Functions
@@ -678,8 +680,6 @@ function Invoke-PrepareExtension {
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        $ErrorActionPreference = "Stop"
-
         # Verify PowerShell-Yaml module is available
         if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
             throw "Required module 'PowerShell-Yaml' is not installed."

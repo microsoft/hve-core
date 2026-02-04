@@ -1,6 +1,8 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Verifies and reports on SHA pinning compliance for supply chain security.
@@ -82,6 +84,9 @@
     https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
 #>
 
+# Import security classes from shared module
+using module ./Modules/SecurityClasses.psm1
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -114,11 +119,10 @@ param(
     [switch]$Remediate
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
-
-# Set error action preference for consistent error handling
-$ErrorActionPreference = 'Stop'
 
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
@@ -162,43 +166,7 @@ $DependencyPatterns = @{
     }
 }
 
-class DependencyViolation {
-    [string]$File
-    [int]$Line
-    [string]$Type
-    [string]$Name
-    [string]$Version
-    [string]$CurrentRef
-    [string]$Severity
-    [string]$Description
-    [string]$Remediation
-    [hashtable]$Metadata
-
-    DependencyViolation() {
-        $this.Metadata = @{}
-    }
-}
-
-class ComplianceReport {
-    [string]$ScanPath
-    [datetime]$Timestamp
-    [int]$TotalFiles
-    [int]$ScannedFiles
-    [int]$TotalDependencies
-    [int]$PinnedDependencies
-    [int]$UnpinnedDependencies
-    [decimal]$ComplianceScore
-    [DependencyViolation[]]$Violations
-    [hashtable]$Summary
-    [hashtable]$Metadata
-
-    ComplianceReport() {
-        $this.Timestamp = Get-Date
-        $this.Violations = @()
-        $this.Summary = @{}
-        $this.Metadata = @{}
-    }
-}
+# DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1
 
 function Test-ShellDownloadSecurity {
     <#
@@ -596,8 +564,8 @@ function Get-ComplianceReportData {
     $report.Violations = $Violations
 
     # Calculate metrics
-    $totalDeps = ($Violations | Measure-Object).Count
-    $unpinnedDeps = ($Violations | Where-Object { $_.Severity -ne 'Info' } | Measure-Object).Count
+    $totalDeps = @($Violations).Count
+    $unpinnedDeps = @($Violations | Where-Object { $_.Severity -ne 'Info' }).Count
     $pinnedDeps = $totalDeps - $unpinnedDeps
 
     $report.TotalDependencies = $totalDeps
@@ -613,12 +581,12 @@ function Get-ComplianceReportData {
 
     # Generate summary by type
     $report.Summary = @{}
-    foreach ($type in ($Violations | Group-Object Type)) {
+    foreach ($type in @($Violations | Group-Object Type)) {
         $report.Summary[$type.Name] = @{
             Total  = $type.Count
-            High   = ($type.Group | Where-Object { $_.Severity -eq 'High' } | Measure-Object).Count
-            Medium = ($type.Group | Where-Object { $_.Severity -eq 'Medium' } | Measure-Object).Count
-            Low    = ($type.Group | Where-Object { $_.Severity -eq 'Low' } | Measure-Object).Count
+            High   = @($type.Group | Where-Object { $_.Severity -eq 'High' }).Count
+            Medium = @($type.Group | Where-Object { $_.Severity -eq 'Medium' }).Count
+            Low    = @($type.Group | Where-Object { $_.Severity -eq 'Low' }).Count
         }
     }
 
@@ -834,14 +802,14 @@ try {
         if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
 
         # Discover files to scan
-        $filesToScan = Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive
-        Write-PinningLog "Found $($filesToScan.Count) files to scan" -Level Info
+        $filesToScan = @(Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive)
+        Write-PinningLog "Found $(@($filesToScan).Count) files to scan" -Level Info
 
         # Scan for violations
         $allViolations = @()
         foreach ($fileInfo in $filesToScan) {
             Write-PinningLog "Scanning: $($fileInfo.RelativePath)" -Level Info
-            $violations = Get-DependencyViolation -FileInfo $fileInfo
+            $violations = @(Get-DependencyViolation -FileInfo $fileInfo)
 
             # Add remediation suggestions
             foreach ($violation in $violations) {
@@ -851,7 +819,7 @@ try {
             $allViolations += $violations
         }
 
-        Write-PinningLog "Found $($allViolations.Count) dependency pinning violations" -Level Info
+        Write-PinningLog "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
 
         # Generate compliance report
         $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate

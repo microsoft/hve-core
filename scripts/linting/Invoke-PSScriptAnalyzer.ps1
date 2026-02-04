@@ -6,7 +6,8 @@
 #
 # Purpose: Wrapper for PSScriptAnalyzer with GitHub Actions integration
 # Author: HVE Core Team
-# Created: 2025-11-05
+
+#Requires -Version 7.0
 
 [CmdletBinding()]
 param(
@@ -22,6 +23,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/psscriptanalyzer-results.json"
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
@@ -42,23 +45,23 @@ $filesToAnalyze = @()
 
 if ($ChangedFilesOnly) {
     Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
-    $filesToAnalyze = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1')
+    $filesToAnalyze = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1'))
 }
 else {
     Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
     $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-    $filesToAnalyze = Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath
+    $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
 }
 
-if ($filesToAnalyze.Count -eq 0) {
+if (@($filesToAnalyze).Count -eq 0) {
     Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
-    Set-GitHubOutput -Name "count" -Value "0"
-    Set-GitHubOutput -Name "issues" -Value "0"
+    Set-CIOutput -Name "count" -Value "0"
+    Set-CIOutput -Name "issues" -Value "0"
     exit 0
 }
 
 Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
 
 #region Main Execution
 try {
@@ -76,10 +79,16 @@ try {
             $allResults += $results
             
             foreach ($result in $results) {
-                # Create GitHub annotation
-                Write-GitHubAnnotation `
-                    -Type $result.Severity.ToString().ToLower() `
+                $annotationLevel = switch ($result.Severity) {
+                    'Error' { 'Error' }
+                    'Warning' { 'Warning' }
+                    'Information' { 'Notice' }
+                    default { 'Notice' }
+                }
+
+                Write-CIAnnotation `
                     -Message "$($result.RuleName): $($result.Message)" `
+                    -Level $annotationLevel `
                     -File $filePath `
                     -Line $result.Line `
                     -Column $result.Column
@@ -104,11 +113,11 @@ try {
 
     # Export results
     $summary = @{
-        TotalFiles     = $filesToAnalyze.Count
-        TotalIssues    = $allResults.Count
-        Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
-        Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
-        Information    = ($allResults | Where-Object Severity -eq 'Information').Count
+        TotalFiles     = @($filesToAnalyze).Count
+        TotalIssues    = @($allResults).Count
+        Errors         = @($allResults | Where-Object Severity -eq 'Error').Count
+        Warnings       = @($allResults | Where-Object Severity -eq 'Warning').Count
+        Information    = @($allResults | Where-Object Severity -eq 'Information').Count
         HasErrors      = $hasErrors
     }
 
@@ -116,24 +125,24 @@ try {
     $summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
 
     # Set outputs
-    Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
-    Set-GitHubOutput -Name "errors" -Value $summary.Errors
-    Set-GitHubOutput -Name "warnings" -Value $summary.Warnings
+    Set-CIOutput -Name "issues" -Value $summary.TotalIssues
+    Set-CIOutput -Name "errors" -Value $summary.Errors
+    Set-CIOutput -Name "warnings" -Value $summary.Warnings
 
     if ($hasErrors) {
-        Set-GitHubEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
+        Set-CIEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
     }
 
     # Write summary
-    Write-GitHubStepSummary -Content "## PSScriptAnalyzer Results`n"
+    Write-CIStepSummary -Content "## PSScriptAnalyzer Results`n"
 
     if ($summary.TotalIssues -eq 0) {
-        Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
+        Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
         Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
         exit 0
     }
     else {
-        Write-GitHubStepSummary -Content @"
+        Write-CIStepSummary -Content @"
 ❌ **Status**: Failed
 
 | Metric | Count |
@@ -150,11 +159,8 @@ try {
     }
 }
 catch {
-    Write-Error "PSScriptAnalyzer failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-Error -ErrorAction Continue "PSScriptAnalyzer failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "PSScriptAnalyzer failed: $($_.Exception.Message)" -Level Error
     exit 1
 }
 #endregion

@@ -1,5 +1,5 @@
 # Copyright (c) Microsoft Corporation.
-# Licensed under the MIT license.
+# SPDX-License-Identifier: MIT
 
 # CIHelpers.psm1
 #
@@ -198,6 +198,60 @@ function Set-CIOutput {
     }
 }
 
+function Set-CIEnv {
+    <#
+    .SYNOPSIS
+    Sets a CI environment variable.
+
+    .DESCRIPTION
+    Writes environment variables for GitHub Actions or Azure DevOps.
+
+    .PARAMETER Name
+    The environment variable name.
+
+    .PARAMETER Value
+    The environment variable value.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    $platform = Get-CIPlatform
+
+    switch ($platform) {
+        'github' {
+            if ($env:GITHUB_ENV) {
+                if ($Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') {
+                    throw "Invalid GitHub Actions environment variable name: '$Name'. Names must match '^[A-Za-z_][A-Za-z0-9_]*\$'."
+                }
+
+                $delimiter = "EOF_$([guid]::NewGuid().ToString('N'))"
+                @(
+                    "$Name<<$delimiter"
+                    $Value
+                    $delimiter
+                ) | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            }
+            else {
+                Write-Verbose "GITHUB_ENV not set, would set: $Name=$Value"
+            }
+        }
+        'azdo' {
+            $escapedName = ConvertTo-AzureDevOpsEscaped -Value $Name -ForProperty
+            $escapedValue = ConvertTo-AzureDevOpsEscaped -Value $Value
+            Write-Output "##vso[task.setvariable variable=$escapedName]$escapedValue"
+        }
+        'local' {
+            Write-Verbose "CI Env: $Name=$Value"
+        }
+    }
+}
+
 function Write-CIStepSummary {
     <#
     .SYNOPSIS
@@ -277,6 +331,7 @@ function Write-CIAnnotation {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
         [string]$Message,
 
         [Parameter(Mandatory = $false)]
@@ -338,6 +393,66 @@ function Write-CIAnnotation {
             }
             $location = if ($File) { " [$File" + $(if ($Line) { ":$Line" } else { '' }) + ']' } else { '' }
             Write-Warning "$prefix$location $Message"
+        }
+    }
+}
+
+function Write-CIAnnotations {
+    <#
+    .SYNOPSIS
+    Writes CI annotations for summary results.
+
+    .DESCRIPTION
+    Emits annotations for each issue in a summary object, mapping errors and warnings
+    to the platform-specific annotation formats.
+
+    .PARAMETER Summary
+    Summary object containing Results with Issues and file metadata.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        $Summary
+    )
+
+    if (-not $Summary -or -not $Summary.Results) {
+        return
+    }
+
+    foreach ($result in $Summary.Results) {
+        if (-not $result -or -not $result.Issues) {
+            continue
+        }
+
+        foreach ($issue in $result.Issues) {
+            if (-not $issue) {
+                continue
+            }
+
+            # Skip issues with null or empty messages
+            if ([string]::IsNullOrWhiteSpace($issue.Message)) {
+                continue
+            }
+
+            $level = if ($issue.Type -eq 'Error') { 'Error' } else { 'Warning' }
+            $line = if ($issue.Line -gt 0) { $issue.Line } else { 1 }
+            $filePath = if ($result.RelativePath) { $result.RelativePath } elseif ($issue.FilePath) { $issue.FilePath } else { $null }
+
+            $annotationParams = @{
+                Message = [string]$issue.Message
+                Level   = $level
+            }
+
+            if ($filePath) {
+                $annotationParams['File'] = [string]$filePath
+                $annotationParams['Line'] = $line
+            }
+
+            if ($issue.Column -gt 0) {
+                $annotationParams['Column'] = $issue.Column
+            }
+
+            Write-CIAnnotation @annotationParams
         }
     }
 }
@@ -441,8 +556,10 @@ Export-ModuleMember -Function @(
     'Get-CIPlatform',
     'Test-CIEnvironment',
     'Set-CIOutput',
+    'Set-CIEnv',
     'Write-CIStepSummary',
     'Write-CIAnnotation',
+    'Write-CIAnnotations',
     'Set-CITaskResult',
     'Publish-CIArtifact'
 )

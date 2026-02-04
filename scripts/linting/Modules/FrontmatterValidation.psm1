@@ -1033,58 +1033,6 @@ function Write-ValidationConsoleOutput {
     Write-Host "   Duration: $($Summary.Duration.TotalSeconds.ToString('F2'))s"
 }
 
-function Write-GitHubAnnotations {
-    <#
-    .SYNOPSIS
-        Outputs GitHub Actions annotations for validation issues.
-
-    .PARAMETER Summary
-        ValidationSummary object containing results.
-    #>
-    [CmdletBinding()]
-    param(
-        # Type constraint removed for testability (PowerShell class identity conflicts)
-        [Parameter(Mandatory)]
-        $Summary
-    )
-
-    # Convert message text to GitHub workflow command safe format (%, CR, LF, ::)
-    function ConvertTo-GitHubCommandMessage {
-        param([string]$Text)
-        if ($null -eq $Text) { return '' }
-        $escaped = $Text -replace '%', '%25'
-        $escaped = $escaped -replace "`r", '%0D'
-        $escaped = $escaped -replace "`n", '%0A'
-        $escaped = $escaped -replace '::', '%3A%3A'
-        return $escaped
-    }
-
-    # Convert property text to GitHub workflow command safe format (%, CR, LF, :, ,)
-    function ConvertTo-GitHubCommandProperty {
-        param([string]$Text)
-        if ($null -eq $Text) { return '' }
-        $escaped = $Text -replace '%', '%25'
-        $escaped = $escaped -replace "`r", '%0D'
-        $escaped = $escaped -replace "`n", '%0A'
-        $escaped = $escaped -replace ':', '%3A'
-        $escaped = $escaped -replace ',', '%2C'
-        return $escaped
-    }
-
-    foreach ($result in $Summary.Results) {
-        foreach ($issue in $result.Issues) {
-            $type = if ($issue.Type -eq 'Error') { 'error' } else { 'warning' }
-            $line = if ($issue.Line) { $issue.Line } else { 1 }
-
-            $escapedFile = ConvertTo-GitHubCommandProperty -Text ([string]$result.RelativePath)
-            $escapedLine = ConvertTo-GitHubCommandProperty -Text ([string]$line)
-            $escapedMessage = ConvertTo-GitHubCommandMessage -Text ([string]$issue.Message)
-
-            Write-Output "::$type file=$escapedFile,line=$escapedLine::$escapedMessage"
-        }
-    }
-}
-
 function Export-ValidationResults {
     <#
     .SYNOPSIS
@@ -1140,7 +1088,6 @@ Export-ModuleMember -Function @(
     'Invoke-FrontmatterValidation'
     # Output
     'Write-ValidationConsoleOutput'
-    'Write-GitHubAnnotations'
     'Export-ValidationResults'
 )
 

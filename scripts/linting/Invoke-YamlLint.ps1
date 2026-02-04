@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Validates YAML files using actionlint for GitHub Actions workflows.
@@ -30,7 +31,6 @@
     - macOS: brew install actionlint
     - Linux: go install github.com/rhysd/actionlint/cmd/actionlint@latest
 #>
-#Requires -Version 7.0
 
 [CmdletBinding()]
 param(
@@ -43,6 +43,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/yaml-lint-results.json"
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
@@ -65,25 +67,25 @@ $filesToAnalyze = @()
 
 if ($ChangedFilesOnly) {
     Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
-    $changedFiles = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml')
-    $filesToAnalyze = $changedFiles | Where-Object { $_ -like "$workflowPath/*" }
+    $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml'))
+    $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
 }
 else {
     Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
     if (Test-Path $workflowPath) {
-        $filesToAnalyze = Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName }
+        $filesToAnalyze = @(Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName })
     }
 }
 
-if ($filesToAnalyze.Count -eq 0) {
+if (@($filesToAnalyze).Count -eq 0) {
     Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
-    Set-GitHubOutput -Name "count" -Value "0"
-    Set-GitHubOutput -Name "issues" -Value "0"
+    Set-CIOutput -Name "count" -Value "0"
+    Set-CIOutput -Name "issues" -Value "0"
     exit 0
 }
 
 Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
 
 #region Main Execution
 try {
@@ -115,10 +117,9 @@ try {
     foreach ($issue in $issues) {
         $hasErrors = $true
         
-        # Create GitHub annotation
-        Write-GitHubAnnotation `
-            -Type 'error' `
+        Write-CIAnnotation `
             -Message $issue.message `
+            -Level Error `
             -File $issue.filepath `
             -Line $issue.line `
             -Column $issue.column
@@ -147,23 +148,23 @@ try {
     $summary | ConvertTo-Json | Out-File "logs/yaml-lint-summary.json"
 
     # Set outputs
-    Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
-    Set-GitHubOutput -Name "errors" -Value $summary.Errors
+    Set-CIOutput -Name "issues" -Value $summary.TotalIssues
+    Set-CIOutput -Name "errors" -Value $summary.Errors
 
     if ($hasErrors) {
-        Set-GitHubEnv -Name "YAML_LINT_FAILED" -Value "true"
+        Set-CIEnv -Name "YAML_LINT_FAILED" -Value "true"
     }
 
     # Write summary
-    Write-GitHubStepSummary -Content "## YAML Lint Results`n"
+    Write-CIStepSummary -Content "## YAML Lint Results`n"
 
     if ($summary.TotalIssues -eq 0) {
-        Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
+        Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
         Write-Host "`n✅ All workflow files passed YAML linting!" -ForegroundColor Green
         exit 0
     }
     else {
-        Write-GitHubStepSummary -Content @"
+        Write-CIStepSummary -Content @"
 ❌ **Status**: Failed
 
 | Metric | Count |
@@ -178,11 +179,8 @@ try {
     }
 }
 catch {
-    Write-Error "YAML Lint failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-Error -ErrorAction Continue "YAML Lint failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "YAML Lint failed: $($_.Exception.Message)" -Level Error
     exit 1
 }
 #endregion

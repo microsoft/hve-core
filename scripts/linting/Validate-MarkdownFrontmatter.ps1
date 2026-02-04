@@ -5,7 +5,6 @@
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
-# Created: 2025-11-05
 #
 # This script validates:
 # - Required frontmatter fields (title, description, author, ms.date)
@@ -13,7 +12,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#requires -Version 7.0
+#Requires -Version 7.0
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
@@ -48,6 +47,8 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
@@ -504,8 +505,8 @@ function Test-FrontmatterValidation {
     # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
-        if ($Files.Count -eq 0) {
+        $Files = @(Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch)
+        if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
             # Return empty summary with TotalFiles=0 to accurately represent no files validated
             # The caller handles this as success when ChangedFilesOnly mode is used
@@ -513,7 +514,7 @@ function Test-FrontmatterValidation {
             $null = $emptySummary.Complete()
             return $emptySummary
         }
-        Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
+        Write-Host "Found $(@($Files).Count) changed markdown files to validate" -ForegroundColor Cyan
     }
 
     # Resolve files from paths if not provided directly
@@ -585,9 +586,9 @@ function Test-FrontmatterValidation {
     # Output to console
     Write-ValidationConsoleOutput -Summary $summary -ShowDetails
 
-    # GitHub Actions annotations
-    if ($env:GITHUB_ACTIONS) {
-        Write-GitHubAnnotations -Summary $summary
+    # CI annotations
+    if (Test-CIEnvironment) {
+        Write-CIAnnotations -Summary $summary
     }
 
     # Export results
@@ -611,8 +612,8 @@ function Test-FrontmatterValidation {
 
 See the uploaded artifact for complete details.
 "@
-        Write-GitHubStepSummary -Content $summaryContent
-        Set-GitHubEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
+        Write-CIStepSummary -Content $summaryContent
+        Set-CIEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
     }
     else {
         $summaryContent = @"
@@ -624,7 +625,7 @@ See the uploaded artifact for complete details.
 
 All frontmatter fields are valid and properly formatted. Great job! 🎉
 "@
-        Write-GitHubStepSummary -Content $summaryContent
+        Write-CIStepSummary -Content $summaryContent
         Write-Host "✅ Frontmatter validation completed successfully" -ForegroundColor Green
     }
 
@@ -779,11 +780,8 @@ try {
     }
 }
 catch {
-    Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-Error -ErrorAction Continue "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "Validate Markdown Frontmatter failed: $($_.Exception.Message)" -Level Error
     exit 1
 }
 #endregion
