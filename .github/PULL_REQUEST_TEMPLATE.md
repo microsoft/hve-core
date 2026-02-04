@@ -83,7 +83,7 @@ For detailed contribution requirements, see:
 - [ ] Tests added for new functionality (if applicable)
 
 ### AI Artifact Contributions
-<!-- If contributing an agent, prompt, or instruction, complete these checks -->
+<!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
 - [ ] Used `/prompt-analyze` to review contribution
 - [ ] Addressed all feedback from `prompt-builder` review
 - [ ] Verified contribution follows common standards and type-specific requirements
