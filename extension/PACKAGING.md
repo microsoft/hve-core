@@ -23,6 +23,29 @@ extension/
 └── PACKAGING.md          # This file
 ```
 
+## Extension Configuration
+
+### Extension Kind
+
+The extension is configured with `"extensionKind": ["workspace", "ui"]` in `package.json` to support multiple execution contexts:
+
+* **Workspace mode**: Extension runs in the workspace extension host with direct access to workspace files (`.github/`, `scripts/dev-tools/`, etc.)
+* **UI mode**: Extension runs in the UI extension host on the user's local machine
+
+### Why Bundling Solves Path Resolution Issues
+
+According to [VS Code Remote Extensions documentation](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds), **UI Extensions cannot directly access files in the remote workspace**, which causes instruction files and scripts to become unavailable.
+
+This dual-mode configuration with bundled resources solves critical installation issues:
+
+* **Instruction files not found**: In Windows/WSL environments, when Copilot runs as a UI extension, it cannot access workspace files through the remote workspace path. The documented behavior states UI extensions "cannot directly access files in the remote workspace"—bundled instruction files provide the required fallback.
+
+* **Cross-platform path resolution failures**: Windows paths (e.g., `/Users/username/.vscode-insiders/extensions/...`) fail when referenced from WSL Linux environments. VS Code Server runs standard Node.js (not Electron) in remote contexts, requiring platform-independent access patterns.
+
+* **Remote workspace limitations**: In Codespaces, devcontainers, and SSH hosts, workspace file access depends on extension kind. Bundling ensures consistent access regardless of where the extension host executes.
+
+The extension prioritizes local workspace files when running in workspace mode but seamlessly falls back to bundled copies when running in UI mode or when path resolution fails across OS boundaries.
+
 ## Prerequisites
 
 Install the VS Code Extension Manager CLI:
@@ -65,11 +88,11 @@ npm run extension:prepare
 
 The preparation script automatically:
 
-- Discovers and registers all chat agents from `.github/agents/`
-- Discovers and registers all prompts from `.github/prompts/`
-- Discovers and registers all instruction files from `.github/instructions/`
-- Updates `package.json` with discovered components
-- Uses existing version from `package.json` (does not modify it)
+* Discovers and registers all chat agents from `.github/agents/`
+* Discovers and registers all prompts from `.github/prompts/`
+* Discovers and registers all instruction files from `.github/instructions/`
+* Updates `package.json` with discovered components
+* Uses existing version from `package.json` (does not modify it)
 
 #### Step 2: Package the Extension
 
@@ -94,13 +117,13 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber 
 
 The packaging script automatically:
 
-- Uses version from `package.json` (or specified version)
-- Optionally appends dev patch number for pre-release builds
-- Copies required `.github` directory
-- Copies `scripts/dev-tools` directory (developer utilities)
-- Packages the extension using `vsce`
-- Cleans up temporary files
-- Restores original `package.json` version if temporarily modified
+* Uses version from `package.json` (or specified version)
+* Optionally appends dev patch number for pre-release builds
+* Copies required `.github` directory
+* Copies `scripts/dev-tools` directory (developer utilities)
+* Packages the extension using `vsce`
+* Cleans up temporary files
+* Restores original `package.json` version if temporarily modified
 
 ### Manual Packaging (Legacy)
 
@@ -145,15 +168,15 @@ vsce publish --packagePath "$VSIX_FILE"
 
 The `extension/.vscodeignore` file controls what gets packaged. Currently included:
 
-- `.github/agents/**` - All custom agent definitions
-- `.github/prompts/**` - All prompt templates
-- `.github/instructions/**` - All instruction files
-- `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
-- `scripts/dev-tools/**` - Developer utilities (PR reference generation)
-- `package.json` - Extension manifest
-- `README.md` - Extension description
-- `LICENSE` - License file
-- `CHANGELOG.md` - Version history
+* `.github/agents/**` - All custom agent definitions
+* `.github/prompts/**` - All prompt templates
+* `.github/instructions/**` - All instruction files
+* `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
+* `scripts/dev-tools/**` - Developer utilities (PR reference generation)
+* `package.json` - Extension manifest
+* `README.md` - Extension description
+* `LICENSE` - License file
+* `CHANGELOG.md` - Version history
 
 ## Testing Locally
 
@@ -243,11 +266,11 @@ See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity
 
 ## Notes
 
-- The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
-- `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-- Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
-- Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
-- The root `package.json` contains development scripts for the repository
+* The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
+* `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
+* Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
+* Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
+* The root `package.json` contains development scripts for the repository
 
 ---
 
