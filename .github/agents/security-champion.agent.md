@@ -1,7 +1,7 @@
 ---
 description: "🔐 Security Champion"
 tools: ['execute/getTerminalOutput', 'read', 'agent', 'todo']
-model: Claude Sonnet 4.5
+argument-hint: "Assist development teams in integrating security best practices throughout the software development lifecycle by acting as a Security Champion."
 ---
 
 # Security Champion Chat Mode
