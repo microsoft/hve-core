@@ -26,13 +26,6 @@ body:
     validations:
       required: true
   
-  - type: markdown
-    attributes:
-      value: |
-        ### Platform Requirements
-        
-        All skills **MUST** support both bash and PowerShell (cross-platform). Single-platform skills will be rejected per [contributing guidelines](../../docs/contributing/skills.md#skills-not-accepted).
-  
   - type: textarea
     id: prerequisites
     attributes:
