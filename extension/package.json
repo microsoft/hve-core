@@ -1,8 +1,11 @@
 {
   "name": "hve-core",
   "displayName": "HVE Core",
-  "extensionKind": ["workspace", "ui"],
-  "version": "2.0.1",
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
+  "version": "2.1.0",
   "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
   "publisher": "ise-hve-essentials",
   "repository": {
