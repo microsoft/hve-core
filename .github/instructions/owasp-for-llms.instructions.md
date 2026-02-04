@@ -1,29 +1,40 @@
 ---
 description: "Comprehensive secure coding instructions for LLM applications based on OWASP Top 10 for LLM Applications (2025). Ensures AI-powered systems are secure by default, protecting against prompt injection, data leakage, and LLM-specific vulnerabilities. Give clear and concise feedback and points of improvement."
 applyTo: '**/*.py, **/*.tsx, **/*.ts, **/*.jsx, **/*.js, **/*.cs, **/*.java'
+maturity: stable
 ---
 
 # OWASP Top 10 for LLM Applications - Secure Coding Guidelines
 
 ## Instructions
 
-Your primary directive when working with Large Language Model (LLM) applications is to ensure all code you generate, review, or refactor is secure by default with specific attention to LLM-unique vulnerabilities. You must operate with a security-first mindset that recognizes LLMs introduce an entirely new class of risks beyond traditional application security. When in doubt, always choose the more secure option and explain the reasoning.
+When working with Large Language Model (LLM) applications, ensure all code generated, reviewed, or refactored is secure by default with specific attention to LLM-unique vulnerabilities. Operate with a security-first mindset that recognizes LLMs introduce an entirely new class of risks beyond traditional application security. When in doubt, choose the more secure option and explain the reasoning.
 
 Follow the principles outlined below, which are based on the OWASP Top 10 for LLM Applications (2025).
 
-**Critical Context:** LLM applications are non-deterministic systems that require defense-in-depth strategies. Unlike traditional applications, LLMs can be manipulated through natural language, making input validation, output handling, and access control fundamentally more complex. Always implement multiple layers of security controls rather than relying on a single defense mechanism.
+LLM applications are non-deterministic systems that require defense-in-depth strategies. Unlike traditional applications, LLMs can be manipulated through natural language, making input validation, output handling, and access control fundamentally more complex. Implement multiple layers of security controls rather than relying on a single defense mechanism.
 
 ### LLM01:2025 Prompt Injection
 
-**Understand the Core Risk:** Prompt injection is the most critical LLM vulnerability—analogous to SQL injection but targeting the model's prompt context. User inputs can manipulate the LLM's behavior, override system instructions, extract sensitive information, or trigger unauthorized actions.
+#### Core Risk
 
-**Constrain Model Behavior:** Define strict boundaries for LLM responses using explicit system prompts that clearly delineate acceptable outputs. Never rely solely on system prompts for security—they can be bypassed.
+Prompt injection is the most critical LLM vulnerability, analogous to SQL injection but targeting the model's prompt context. User inputs can manipulate the LLM's behavior, override system instructions, extract sensitive information, or trigger unauthorized actions.
 
-**Implement Input Validation:** Apply rigorous validation to all user inputs before they reach the LLM. Use allowlists for expected input patterns, reject suspicious patterns (e.g., instructions like "ignore previous instructions"), and implement semantic analysis to detect manipulation attempts.
+#### Constrain Model Behavior
 
-**Output Validation is Critical:** Validate all LLM outputs against expected formats using deterministic verification. Define strict output schemas and reject responses that deviate from them.
+Define strict boundaries for LLM responses using explicit system prompts that clearly delineate acceptable outputs. Do not rely solely on system prompts for security as they can be bypassed.
 
-**Context Boundaries:** Separate system instructions from user content using clear delimiters. Never concatenate user input directly into prompts without sanitization.
+#### Input Validation
+
+Apply rigorous validation to all user inputs before they reach the LLM. Use allowlists for expected input patterns, reject suspicious patterns (e.g., instructions like "ignore previous instructions"), and implement semantic analysis to detect manipulation attempts.
+
+#### Output Validation
+
+Validate all LLM outputs against expected formats using deterministic verification. Define strict output schemas and reject responses that deviate from them.
+
+#### Context Boundaries
+
+Separate system instructions from user content using clear delimiters. Do not concatenate user input directly into prompts without sanitization.
 
 ```python
 # GOOD: Structured prompt with clear boundaries
@@ -39,19 +50,31 @@ prompt = f"Answer this: {request.user_message}"  # Vulnerable to injection
 response = llm.generate(prompt)  # No output validation
 ```
 
-**Defend Against Indirect Injection:** When processing external content (files, websites, documents), treat all content as potentially malicious. Sanitize or summarize external data before including it in prompts.
+#### Indirect Injection Defense
 
-**Multimodal Risks:** If using vision or audio models, be aware that hidden instructions can be embedded in images or audio files. Implement content integrity checks.
+When processing external content (files, websites, documents), treat all content as potentially malicious. Sanitize or summarize external data before including it in prompts.
+
+#### Multimodal Risks
+
+Vision and audio models can contain hidden instructions embedded in images or audio files. Implement content integrity checks for multimodal inputs.
 
 ### LLM02:2025 Sensitive Information Disclosure
 
-**Never Include Secrets in Prompts:** System prompts, user inputs, and model responses can all leak sensitive information. Never embed API keys, passwords, tokens, PII, or proprietary algorithms in prompts or training data.
+#### Secrets in Prompts
 
-**Implement Data Sanitization:** Apply robust data sanitization for both inputs and outputs. Use PII detection tools to identify and redact sensitive information before it reaches the LLM or gets displayed to users.
+System prompts, user inputs, and model responses can all leak sensitive information. Do not embed API keys, passwords, tokens, PII, or proprietary algorithms in prompts or training data.
 
-**Output Schema Validation:** Define strict output schemas that prevent the model from generating sensitive data formats. Use context-appropriate encoding for all outputs (HTML encoding for web display, etc.).
+#### Data Sanitization
 
-**Sandboxed Execution:** When executing LLM-generated code (which should be avoided when possible), always use sandboxed environments with no access to sensitive resources.
+Apply robust data sanitization for both inputs and outputs. Use PII detection tools to identify and redact sensitive information before it reaches the LLM or gets displayed to users.
+
+#### Output Schema Validation
+
+Define strict output schemas that prevent the model from generating sensitive data formats. Use context-appropriate encoding for all outputs (HTML encoding for web display, etc.).
+
+#### Sandboxed Execution
+
+When executing LLM-generated code (which should be avoided when possible), use sandboxed environments with no access to sensitive resources.
 
 ```typescript
 // GOOD: Sanitized context with PII detection
@@ -67,17 +90,27 @@ const prompt = `Analyze this customer: Name: ${customer.name}, SSN: ${customer.s
 // System prompt leaks: "You have access to database: postgres://admin:password@..."
 ```
 
-**Training Data Extraction Defense:** Be aware that models can potentially reproduce verbatim content from training data. Implement differential privacy techniques and audit mechanisms to detect when models are leaking training data.
+#### Training Data Extraction Defense
 
-**Separation of Concerns:** Store sensitive data in systems that the LLM cannot directly access. Pass only anonymized or minimal data to the model.
+Models can potentially reproduce verbatim content from training data. Implement differential privacy techniques and audit mechanisms to detect when models are leaking training data.
+
+#### Separation of Concerns
+
+Store sensitive data in systems that the LLM cannot directly access. Pass only anonymized or minimal data to the model.
 
 ### LLM03:2025 Supply Chain
 
-**Model Provenance Verification:** Only use pre-trained models from trusted sources with verified provenance. Verify cryptographic signatures and checksums for all downloaded models.
+#### Model Provenance Verification
 
-**Model Source Trust:** Default to established model providers (OpenAI, Azure OpenAI, Anthropic, Google) with strong security postures. Be extremely cautious with community models from Hugging Face or other repositories without security audits.
+Only use pre-trained models from trusted sources with verified provenance. Verify cryptographic signatures and checksums for all downloaded models.
 
-**Dependency Management:** Maintain a comprehensive Software Bill of Materials (SBOM) for all AI/ML dependencies. This includes models, fine-tuning adapters (LoRA), embedding models, and ML libraries.
+#### Model Source Trust
+
+Default to established model providers (OpenAI, Azure OpenAI, Anthropic, Google) with strong security postures. Exercise caution with community models from Hugging Face or other repositories without security audits.
+
+#### Dependency Management
+
+Maintain a comprehensive Software Bill of Materials (SBOM) for all AI/ML dependencies. This includes models, fine-tuning adapters (LoRA), embedding models, and ML libraries.
 
 ```python
 # GOOD: Verified model loading with integrity checks
@@ -92,19 +125,31 @@ model = load_model(model_path)
 model = load_model_from_url(untrusted_url)  # No verification
 ```
 
-**Red Team Testing:** Before deploying any third-party model, conduct rigorous adversarial testing including prompt injection attempts, jailbreaking tests, and bias evaluation.
+#### Red Team Testing
 
-**Model Isolation:** Isolate model development and deployment environments. Use separate credentials and networks. Apply least privilege access controls to model files and APIs.
+Before deploying any third-party model, conduct rigorous adversarial testing including prompt injection attempts, jailbreaking tests, and bias evaluation.
 
-**Monitor Third-Party Components:** Regularly scan all ML frameworks (PyTorch, TensorFlow, Transformers) for vulnerabilities. Update promptly when security patches are released.
+#### Model Isolation
 
-**On-Device Model Security:** If deploying models to edge devices, implement secure boot chains, encrypted model storage, and integrity monitoring to prevent tampering.
+Isolate model development and deployment environments. Use separate credentials and networks. Apply least privilege access controls to model files and APIs.
+
+#### Third-Party Component Monitoring
+
+Regularly scan all ML frameworks (PyTorch, TensorFlow, Transformers) for vulnerabilities. Update promptly when security patches are released.
+
+#### On-Device Model Security
+
+When deploying models to edge devices, implement secure boot chains, encrypted model storage, and integrity monitoring to prevent tampering.
 
 ### LLM04:2025 Data and Model Poisoning
 
-**Data Provenance Tracking:** Implement comprehensive tracking for all training and fine-tuning data. Maintain audit logs showing data source, collection date, validation status, and any transformations applied.
+#### Data Provenance Tracking
 
-**Pre-Training Data Validation:** Before incorporating data into training or fine-tuning sets, apply content validation to detect malicious patterns, hidden instructions, or biased content.
+Implement comprehensive tracking for all training and fine-tuning data. Maintain audit logs showing data source, collection date, validation status, and any transformations applied.
+
+#### Pre-Training Data Validation
+
+Before incorporating data into training or fine-tuning sets, apply content validation to detect malicious patterns, hidden instructions, or biased content.
 
 ```python
 # GOOD: Validated data pipeline with provenance
@@ -121,28 +166,44 @@ training_data = scrape_web_content(urls)  # No validation
 model.fine_tune(training_data)  # Poisoned data risk
 ```
 
-**Adversarial Testing for Backdoors:** After training or fine-tuning, conduct adversarial testing to detect backdoor triggers. Test with known poisoning patterns and unexpected inputs.
+#### Adversarial Testing for Backdoors
 
-**Data Versioning:** Use data versioning systems (DVC, MLflow) to track changes and enable rollback if poisoning is detected. Monitor for anomalous changes in dataset characteristics (distribution shifts, unexpected tokens).
+After training or fine-tuning, conduct adversarial testing to detect backdoor triggers. Test with known poisoning patterns and unexpected inputs.
 
-**RAG Grounding:** Use Retrieval-Augmented Generation (RAG) with trusted, curated knowledge bases to validate model outputs against authoritative sources. This helps detect when poisoned training data influences outputs.
+#### Data Versioning
 
-**Split-View Defense:** Be aware of split-view poisoning attacks where training examples appear legitimate but contain hidden patterns. Implement automated anomaly detection on training data distributions.
+Use data versioning systems (DVC, MLflow) to track changes and enable rollback if poisoning is detected. Monitor for anomalous changes in dataset characteristics (distribution shifts, unexpected tokens).
 
-**Access Control for Training Data:** Restrict who can add or modify training datasets. Implement multi-party approval for training data changes and maintain immutable audit logs.
+#### RAG Grounding
+
+Use Retrieval-Augmented Generation (RAG) with trusted, curated knowledge bases to validate model outputs against authoritative sources. This helps detect when poisoned training data influences outputs.
+
+#### Split-View Defense
+
+Split-view poisoning attacks use training examples that appear legitimate but contain hidden patterns. Implement automated anomaly detection on training data distributions.
+
+#### Access Control for Training Data
+
+Restrict who can add or modify training datasets. Implement multi-party approval for training data changes and maintain immutable audit logs.
 
 ### LLM05:2025 Improper Output Handling
 
-**Critical Understanding:** User prompts can influence LLM outputs, effectively giving users indirect access to any downstream system that processes LLM responses. Treat all LLM outputs as untrusted user input.
+#### Core Understanding
 
-**Context-Aware Output Encoding:** Apply strict context-appropriate encoding based on where LLM output will be used:
+User prompts can influence LLM outputs, effectively giving users indirect access to any downstream system that processes LLM responses. Treat all LLM outputs as untrusted user input.
+
+#### Context-Aware Output Encoding
+
+Apply strict context-appropriate encoding based on where LLM output will be used:
 
 - **HTML Context:** Use HTML entity encoding to prevent XSS
 - **SQL Context:** Use parameterized queries, never concatenate LLM output into SQL
 - **Shell Context:** Use proper escaping or avoid shell execution entirely
 - **JavaScript Context:** JSON encode and validate
 
-**Never Execute LLM Output Directly:** Avoid executing LLM-generated code, commands, or queries without thorough validation and sandboxing.
+#### Direct Execution Risks
+
+Avoid executing LLM-generated code, commands, or queries without thorough validation and sandboxing.
 
 ```javascript
 // GOOD: Validated and encoded output
@@ -161,19 +222,31 @@ const sqlQuery = await llm.generate("Generate SQL for...");
 db.execute(sqlQuery);  // SQL injection via LLM
 ```
 
-**Parameterized Interfaces:** When LLM outputs must interact with databases or APIs, use parameterized queries and structured API calls. Extract parameters from LLM output, validate them, then use them in safe interfaces.
+#### Parameterized Interfaces
 
-**Content Security Policy (CSP):** Implement strict CSP headers to mitigate potential XSS from LLM-generated content. Set `script-src 'self'` and avoid `unsafe-inline`.
+When LLM outputs must interact with databases or APIs, use parameterized queries and structured API calls. Extract parameters from LLM output, validate them, then use them in safe interfaces.
 
-**Path Traversal Protection:** If LLM generates file paths, canonicalize and validate they remain within allowed directories. Reject patterns like `../` or absolute paths outside the sandbox.
+#### Content Security Policy
+
+Implement strict CSP headers to mitigate potential XSS from LLM-generated content. Set `script-src 'self'` and avoid `unsafe-inline`.
+
+#### Path Traversal Protection
+
+When LLM generates file paths, canonicalize and validate they remain within allowed directories. Reject patterns like `../` or absolute paths outside the sandbox.
 
 ### LLM06:2025 Excessive Agency
 
-**Principle of Least Privilege for LLM Agents:** Grant LLM-based agents only the minimum functionality, permissions, and autonomy required for their specific purpose. Every function call the LLM can make increases attack surface.
+#### Least Privilege for LLM Agents
 
-**Functionality Restriction:** Only expose functions/tools to the LLM that are absolutely necessary. Remove or disable any extensions, plugins, or APIs that aren't core to the application's purpose.
+Grant LLM-based agents only the minimum functionality, permissions, and autonomy required for their specific purpose. Every function call the LLM can make increases attack surface.
 
-**Permission Scoping:** Extensions and functions should operate with minimal privileges. Never connect an LLM agent to systems with admin rights or broad data access.
+#### Functionality Restriction
+
+Only expose functions/tools to the LLM that are absolutely necessary. Remove or disable any extensions, plugins, or APIs that are not core to the application's purpose.
+
+#### Permission Scoping
+
+Extensions and functions should operate with minimal privileges. Do not connect an LLM agent to systems with admin rights or broad data access.
 
 ```python
 # GOOD: Minimal permissions with explicit allowlist
@@ -194,19 +267,31 @@ agent = LLMAgent(
 )
 ```
 
-**Human-in-the-Loop for High-Impact Actions:** Any action that modifies data, makes external calls, or affects system state must require explicit human approval. Never allow fully autonomous operation for sensitive functions.
+#### Human-in-the-Loop for High-Impact Actions
 
-**Action Validation:** Before executing any LLM-requested action, validate it against business rules using deterministic code (not LLM-based validation which can be manipulated).
+Any action that modifies data, makes external calls, or affects system state requires explicit human approval. Do not allow fully autonomous operation for sensitive functions.
 
-**Audit All Function Calls:** Log every function call made by the LLM agent including parameters, user context, and results. Monitor for suspicious patterns like repeated failed authorization attempts.
+#### Action Validation
 
-**Separate Agents by Privilege Level:** Use multiple specialized agents with different privilege levels rather than one powerful agent. A customer-facing agent should be completely isolated from backend admin functions.
+Before executing any LLM-requested action, validate it against business rules using deterministic code (not LLM-based validation which can be manipulated).
+
+#### Function Call Auditing
+
+Log every function call made by the LLM agent including parameters, user context, and results. Monitor for suspicious patterns like repeated failed authorization attempts.
+
+#### Agent Privilege Separation
+
+Use multiple specialized agents with different privilege levels rather than one powerful agent. A customer-facing agent should be completely isolated from backend admin functions.
 
 ### LLM07:2025 System Prompt Leakage
 
-**Externalize Sensitive Data:** Never include credentials, API keys, tokens, database connection strings, or other secrets in system prompts. Store these in secure vaults (Azure Key Vault, AWS Secrets Manager) that the LLM cannot access directly.
+#### Externalize Sensitive Data
 
-**Security Through Architecture, Not Prompts:** Never rely on system prompts to enforce security controls. Authorization checks, rate limiting, input validation, and other security mechanisms must be implemented in deterministic code outside the LLM.
+Do not include credentials, API keys, tokens, database connection strings, or other secrets in system prompts. Store these in secure vaults (Azure Key Vault, AWS Secrets Manager) that the LLM cannot access directly.
+
+#### Security Through Architecture
+
+Do not rely on system prompts to enforce security controls. Authorization checks, rate limiting, input validation, and other security mechanisms belong in deterministic code outside the LLM.
 
 ```python
 # GOOD: Security controls outside LLM
@@ -232,19 +317,31 @@ Only users with role='admin' can access account details.  # Auth in prompt - wro
 """
 ```
 
-**Assume Prompt Leakage:** Design your system assuming attackers will obtain your complete system prompt. The prompt should contain only operational instructions, not security controls or sensitive information.
+#### Assume Prompt Leakage
 
-**Multi-Agent Architecture:** For applications requiring different privilege levels, use separate LLM agents with distinct system prompts and permissions rather than encoding role-based logic in a single prompt.
+Design systems assuming attackers will obtain the complete system prompt. The prompt should contain only operational instructions, not security controls or sensitive information.
 
-**Business Logic Externalization:** Critical business rules (transaction limits, approval workflows, access policies) must be enforced in application code with proper authorization, not described in system prompts.
+#### Multi-Agent Architecture
 
-**Prompt Injection Resistance:** Even if system prompts don't contain secrets, their disclosure helps attackers craft effective prompt injection attacks. Use techniques like instruction hierarchy and output validation to maintain control.
+For applications requiring different privilege levels, use separate LLM agents with distinct system prompts and permissions rather than encoding role-based logic in a single prompt.
+
+#### Business Logic Externalization
+
+Critical business rules (transaction limits, approval workflows, access policies) belong in application code with proper authorization, not in system prompts.
+
+#### Prompt Injection Resistance
+
+Even when system prompts contain no secrets, their disclosure helps attackers craft effective prompt injection attacks. Use techniques like instruction hierarchy and output validation to maintain control.
 
 ### LLM08:2025 Vector and Embedding Weaknesses
 
-**Understand RAG Security Risks:** Retrieval-Augmented Generation (RAG) systems using vector databases introduce unique security challenges. Vectors can leak information, enable unauthorized access, and be poisoned with malicious content.
+#### RAG Security Risks
 
-**Permission-Aware Vector Search:** Implement fine-grained access controls at the vector database level. When retrieving embeddings, filter results based on the current user's permissions—never rely on the LLM to enforce access control.
+Retrieval-Augmented Generation (RAG) systems using vector databases introduce unique security challenges. Vectors can leak information, enable unauthorized access, and be poisoned with malicious content.
+
+#### Permission-Aware Vector Search
+
+Implement fine-grained access controls at the vector database level. When retrieving embeddings, filter results based on the current user's permissions. Do not rely on the LLM to enforce access control.
 
 ```python
 # GOOD: Permission-aware retrieval
@@ -268,29 +365,47 @@ def retrieve_context(query):
     return results
 ```
 
-**Multi-Tenant Isolation:** In multi-tenant environments, strictly partition vector databases by tenant. Use separate namespaces, collections, or database instances. Never allow cross-tenant queries.
+#### Multi-Tenant Isolation
 
-**Validate Data Before Embedding:** Before adding documents to vector databases, scan for hidden content, malicious instructions, or sensitive information. Implement automated content validation.
+In multi-tenant environments, strictly partition vector databases by tenant. Use separate namespaces, collections, or database instances. Do not allow cross-tenant queries.
 
-**Data Classification and Tagging:** Tag all vectors with metadata about sensitivity level, required permissions, and data classification. Enforce tag-based access controls during retrieval.
+#### Validate Data Before Embedding
 
-**Embedding Inversion Defense:** Be aware that attackers may attempt to reconstruct original content from embeddings. For highly sensitive data, consider:
+Before adding documents to vector databases, scan for hidden content, malicious instructions, or sensitive information. Implement automated content validation.
+
+#### Data Classification and Tagging
+
+Tag all vectors with metadata about sensitivity level, required permissions, and data classification. Enforce tag-based access controls during retrieval.
+
+#### Embedding Inversion Defense
+
+Attackers may attempt to reconstruct original content from embeddings. For highly sensitive data, consider:
 
 - Not using RAG for sensitive content
 - Applying additional encryption to embeddings
 - Using differential privacy techniques
 
-**Audit and Monitoring:** Maintain comprehensive, immutable logs of all vector database queries including user context, retrieved documents, and timestamps. Monitor for suspicious access patterns (high-volume queries, cross-context leakage attempts).
+#### Audit and Monitoring
 
-**Hidden Text Detection:** Scan documents for invisible text, white-on-white text, or other hidden content before embedding. Attackers may inject hidden instructions into documents that later influence model behavior.
+Maintain comprehensive, immutable logs of all vector database queries including user context, retrieved documents, and timestamps. Monitor for suspicious access patterns (high-volume queries, cross-context leakage attempts).
 
-**Regular Security Audits:** Periodically audit vector databases for unauthorized data, permission misconfigurations, and orphaned embeddings from deleted users.
+#### Hidden Text Detection
+
+Scan documents for invisible text, white-on-white text, or other hidden content before embedding. Attackers may inject hidden instructions into documents that later influence model behavior.
+
+#### Regular Security Audits
+
+Periodically audit vector databases for unauthorized data, permission misconfigurations, and orphaned embeddings from deleted users.
 
 ### LLM09:2025 Misinformation
 
-**Implement RAG for Factual Grounding:** Use Retrieval-Augmented Generation to ground model responses in verified, authoritative information sources. This significantly reduces hallucinations for factual queries.
+#### RAG for Factual Grounding
 
-**Automatic Fact Verification:** For critical applications, implement automated fact-checking that validates key claims in LLM outputs against trusted databases or knowledge bases before displaying to users.
+Use Retrieval-Augmented Generation to ground model responses in verified, authoritative information sources. This significantly reduces hallucinations for factual queries.
+
+#### Automatic Fact Verification
+
+For critical applications, implement automated fact-checking that validates key claims in LLM outputs against trusted databases or knowledge bases before displaying to users.
 
 ```python
 # GOOD: RAG with verification
@@ -320,21 +435,35 @@ def generate_response(query):
     return response  # No fact checking or uncertainty communication
 ```
 
-**Communicate Uncertainty:** Design UIs that clearly label AI-generated content and communicate reliability limitations. Use phrases like "Based on available information..." or "I'm not certain, but...".
+#### Communicate Uncertainty
 
-**Human-in-the-Loop for Critical Decisions:** For high-stakes domains (healthcare, legal, financial), require human review of all LLM outputs before they're used for decision-making.
+Design UIs that clearly label AI-generated content and communicate reliability limitations. Use phrases like "Based on available information..." or "I'm not certain, but...".
 
-**Code Generation Safety:** When generating code, validate that suggested libraries and APIs actually exist. Implement checks against package registries before recommending installations. Warn users about the "hallucinated package" attack vector.
+#### Human-in-the-Loop for Critical Decisions
 
-**Domain-Specific Validation:** For specialized domains, implement validation rules specific to that field (e.g., medical claim validation against clinical guidelines, legal citation verification).
+For high-stakes domains (healthcare, legal, financial), require human review of all LLM outputs before they are used for decision-making.
 
-**Confidence Scoring:** Where possible, implement or use confidence scoring mechanisms. Reject or flag low-confidence outputs for human review.
+#### Code Generation Safety
 
-**Adversarial Testing:** Regularly test for hallucination patterns by asking questions with no correct answer or questions designed to trigger false information generation.
+When generating code, validate that suggested libraries and APIs actually exist. Implement checks against package registries before recommending installations. Warn users about the "hallucinated package" attack vector.
+
+#### Domain-Specific Validation
+
+For specialized domains, implement validation rules specific to that field (e.g., medical claim validation against clinical guidelines, legal citation verification).
+
+#### Confidence Scoring
+
+Where possible, implement or use confidence scoring mechanisms. Reject or flag low-confidence outputs for human review.
+
+#### Adversarial Testing
+
+Regularly test for hallucination patterns by asking questions with no correct answer or questions designed to trigger false information generation.
 
 ### LLM10:2025 Unbounded Consumption
 
-**Implement Rate Limiting:** Apply strict rate limits at multiple levels: per user, per IP address, per API key. Set both request count limits and token consumption limits.
+#### Rate Limiting
+
+Apply strict rate limits at multiple levels: per user, per IP address, per API key. Set both request count limits and token consumption limits.
 
 ```python
 # GOOD: Multi-layered rate limiting
@@ -362,49 +491,83 @@ def llm_endpoint(request):
     return response
 ```
 
-**Input Validation with Size Limits:** Set reasonable maximum sizes for user inputs. Reject requests that exceed context window limits or that contain repetitive content designed to waste resources.
+#### Input Validation with Size Limits
 
-**Output Token Limits:** Always set `max_tokens` parameters when calling LLMs. Use the minimum necessary for your use case.
+Set reasonable maximum sizes for user inputs. Reject requests that exceed context window limits or that contain repetitive content designed to waste resources.
 
-**Request Timeouts:** Implement aggressive timeouts for LLM requests. If a request takes longer than expected, terminate it and return an error rather than consuming resources indefinitely.
+#### Output Token Limits
 
-**Resource Monitoring and Anomaly Detection:** Monitor resource consumption patterns (API call frequency, token usage, request duration). Alert on anomalies that may indicate abuse (sudden spikes, unusual usage patterns).
+Set `max_tokens` parameters when calling LLMs. Use the minimum necessary for the use case.
 
-**Cost Controls:** For cloud-hosted models, implement budget alerts and hard spending caps. Monitor cost per user and flag accounts with abnormal usage.
+#### Request Timeouts
 
-**Complexity Analysis:** For resource-intensive operations (long-context processing, complex reasoning chains), implement additional restrictions or higher authentication requirements.
+Implement aggressive timeouts for LLM requests. When a request takes longer than expected, terminate it and return an error rather than consuming resources indefinitely.
 
-**Queue Management:** Use job queues with priority levels for LLM requests. Prevent individual users from monopolizing resources by implementing fair queuing.
+#### Resource Monitoring and Anomaly Detection
 
-**CAPTCHA for Suspicious Activity:** If automated abuse is detected, introduce CAPTCHA challenges to verify human users.
+Monitor resource consumption patterns (API call frequency, token usage, request duration). Alert on anomalies that may indicate abuse (sudden spikes, unusual usage patterns).
 
-**Model Extraction Defense:** Monitor for systematic querying patterns that may indicate model extraction attempts (many similar queries with slight variations). Implement detection and blocking mechanisms.
+#### Cost Controls
+
+For cloud-hosted models, implement budget alerts and hard spending caps. Monitor cost per user and flag accounts with abnormal usage.
+
+#### Complexity Analysis
+
+For resource-intensive operations (long-context processing, complex reasoning chains), implement additional restrictions or higher authentication requirements.
+
+#### Queue Management
+
+Use job queues with priority levels for LLM requests. Prevent individual users from monopolizing resources by implementing fair queuing.
+
+#### CAPTCHA for Suspicious Activity
+
+When automated abuse is detected, introduce CAPTCHA challenges to verify human users.
+
+#### Model Extraction Defense
+
+Monitor for systematic querying patterns that may indicate model extraction attempts (many similar queries with slight variations). Implement detection and blocking mechanisms.
 
 ## General Guidelines for LLM Security
 
-**Defense in Depth:** Never rely on a single security mechanism. Combine input validation, output validation, access controls, monitoring, and human oversight in multiple layers.
+### Defense in Depth
 
-**Separate Security from LLM Logic:** Security decisions (authentication, authorization, input validation) must happen in deterministic code outside the LLM. Never trust the LLM to enforce security policies.
+Do not rely on a single security mechanism. Combine input validation, output validation, access controls, monitoring, and human oversight in multiple layers.
 
-**Be Explicit About LLM Risks:** When generating LLM application code, explicitly state which OWASP LLM vulnerability you are mitigating (e.g., "Using output validation here to prevent LLM05: Improper Output Handling").
+### Separate Security from LLM Logic
 
-**Educate During Code Reviews:** When identifying LLM security vulnerabilities in code reviews, explain both the traditional security issue and the LLM-specific amplification of that risk.
+Security decisions (authentication, authorization, input validation) happen in deterministic code outside the LLM. Do not trust the LLM to enforce security policies.
 
-**Human Oversight for Critical Systems:** For applications involving sensitive data, high-value transactions, or safety-critical decisions, always maintain human-in-the-loop oversight. LLMs should augment human decision-making, not replace it.
+### Explicit Risk Communication
 
-**Regular Security Testing:** Conduct ongoing red team testing specifically for LLM vulnerabilities. Test for prompt injection, jailbreaking, data extraction, and other LLM-specific attacks.
+When generating LLM application code, explicitly state which OWASP LLM vulnerability is being mitigated (e.g., "Using output validation here to prevent LLM05: Improper Output Handling").
 
-**Stay Updated:** The LLM security landscape evolves rapidly. Monitor OWASP LLM project updates, security research, and vendor security advisories. Update defenses as new attack vectors emerge.
+### Code Review Education
 
-**Assume Adversarial Users:** Design LLM applications assuming some users will actively attempt to bypass controls, extract sensitive information, or abuse functionality. Build robust defenses accordingly.
+When identifying LLM security vulnerabilities in code reviews, explain both the traditional security issue and the LLM-specific amplification of that risk.
+
+### Human Oversight for Critical Systems
+
+For applications involving sensitive data, high-value transactions, or safety-critical decisions, maintain human-in-the-loop oversight. LLMs should augment human decision-making, not replace it.
+
+### Regular Security Testing
+
+Conduct ongoing red team testing specifically for LLM vulnerabilities. Test for prompt injection, jailbreaking, data extraction, and other LLM-specific attacks.
+
+### Stay Updated
+
+The LLM security landscape evolves rapidly. Monitor OWASP LLM project updates, security research, and vendor security advisories. Update defenses as new attack vectors emerge.
+
+### Assume Adversarial Users
+
+Design LLM applications assuming some users will actively attempt to bypass controls, extract sensitive information, or abuse functionality. Build robust defenses accordingly.
 
 ## Integration with Traditional OWASP Top 10
 
 LLM vulnerabilities complement, not replace, traditional security concerns:
 
-- **Still Apply Traditional OWASP Top 10:** All traditional application security practices (secure authentication, encryption, access control, etc.) remain critical for LLM applications
-- **Prompt Injection is the New Injection:** LLM01 (Prompt Injection) is as critical for AI applications as SQL injection (OWASP A03) is for traditional web applications
-- **Defense in Depth:** Combine LLM-specific and traditional security controls for comprehensive protection
-- **Layered Security:** Use application-layer security (authentication, authorization) alongside LLM-layer security (input validation, output handling, RAG controls)
+- All traditional application security practices (secure authentication, encryption, access control, etc.) remain critical for LLM applications
+- LLM01 (Prompt Injection) is as critical for AI applications as SQL injection (OWASP A03) is for traditional web applications
+- Combine LLM-specific and traditional security controls for comprehensive protection
+- Use application-layer security (authentication, authorization) alongside LLM-layer security (input validation, output handling, RAG controls)
 
-**Remember:** Working with LLMs requires accepting their non-deterministic nature while implementing deterministic security controls around them. Security must be enforced by the application, not delegated to the model.
+Working with LLMs requires accepting their non-deterministic nature while implementing deterministic security controls around them. Security is enforced by the application, not delegated to the model.
