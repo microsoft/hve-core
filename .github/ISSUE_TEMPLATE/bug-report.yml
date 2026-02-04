@@ -17,6 +17,8 @@ body:
         - Instruction Files
         - Prompts
         - Custom Agents
+        - Skills
+        - VS Code Extension
         - Scripts
         - Documentation
         - Other
