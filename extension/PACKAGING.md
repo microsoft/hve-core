@@ -32,19 +32,7 @@ The extension is configured with `"extensionKind": ["workspace", "ui"]` in `pack
 * **Workspace mode**: Extension runs in the workspace extension host with direct access to workspace files (`.github/`, `scripts/dev-tools/`, etc.)
 * **UI mode**: Extension runs in the UI extension host on the user's local machine
 
-### Why Bundling Solves Path Resolution Issues
-
-According to [VS Code Remote Extensions documentation](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds), **UI Extensions cannot directly access files in the remote workspace**, which causes instruction files and scripts to become unavailable.
-
-This dual-mode configuration with bundled resources solves critical installation issues:
-
-* **Instruction files not found**: In Windows/WSL environments, when Copilot runs as a UI extension, it cannot access workspace files through the remote workspace path. The documented behavior states UI extensions "cannot directly access files in the remote workspace"—bundled instruction files provide the required fallback.
-
-* **Cross-platform path resolution failures**: Windows paths (e.g., `/Users/username/.vscode-insiders/extensions/...`) fail when referenced from WSL Linux environments. VS Code Server runs standard Node.js (not Electron) in remote contexts, requiring platform-independent access patterns.
-
-* **Remote workspace limitations**: In Codespaces, devcontainers, and SSH hosts, workspace file access depends on extension kind. Bundling ensures consistent access regardless of where the extension host executes.
-
-The extension prioritizes local workspace files when running in workspace mode but seamlessly falls back to bundled copies when running in UI mode or when path resolution fails across OS boundaries.
+The extension prioritizes local workspace files when available but seamlessly falls back to bundled copies when running in UI mode or when path resolution fails across OS boundaries.
 
 ## Prerequisites
 
