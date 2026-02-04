@@ -4,43 +4,15 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Update-ActionSHAPinning.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract function definitions and script-level variables using AST to avoid executing main block
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract and execute script-level variable assignments (e.g., $ActionSHAMap)
-    # These are direct children of the script block that are assignments
-    $scriptStatements = $ast.EndBlock.Statements
-    foreach ($stmt in $scriptStatements) {
-        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-            $varCode = $stmt.Extent.Text
-            try {
-                $scriptBlock = [scriptblock]::Create($varCode)
-                . $scriptBlock
-            } catch {
-                # Skip assignments that fail (may depend on other variables)
-                $null = $_
-            }
-        }
-    }
-
-    # Extract and define all function definitions
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    foreach ($func in $functionDefs) {
-        $funcCode = $func.Extent.Text
-        $scriptBlock = [scriptblock]::Create($funcCode)
-        . $scriptBlock
-    }
+    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
+    $env:HVE_SKIP_MAIN = '1'
+    . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
 
     # Save environment before tests
-    Save-GitHubEnvironment
+    Save-CIEnvironment
 
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
@@ -76,7 +48,8 @@ BeforeAll {
 }
 
 AfterAll {
-    Restore-GitHubEnvironment
+    Restore-CIEnvironment
+    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 Describe 'Get-ActionReference' -Tag 'Unit' {
@@ -120,12 +93,12 @@ Describe 'Get-ActionReference' -Tag 'Unit' {
 
 Describe 'Get-SHAForAction' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'ActionSHAMap lookup' {
@@ -154,7 +127,7 @@ Describe 'Get-SHAForAction' -Tag 'Unit' {
 
 Describe 'Update-WorkflowFile' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
 
         # Copy fixture to TestDrive for modification testing
@@ -172,7 +145,7 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Return value structure' {
@@ -220,7 +193,7 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
 
 Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
 
         $unpinnedSource = Join-Path $script:FixturesPath 'unpinned-workflow.yml'
@@ -237,7 +210,7 @@ Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'WhatIf behavior' {
@@ -254,7 +227,7 @@ Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
 
 Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
         $script:AttemptCount = 0
 
@@ -263,7 +236,7 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Successful requests' {
@@ -486,12 +459,12 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
 
 Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Successful SHA retrieval' {
@@ -561,11 +534,11 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
 
 Describe 'Test-GitHubToken' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Valid authenticated token' {

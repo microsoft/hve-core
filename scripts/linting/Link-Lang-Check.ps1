@@ -57,6 +57,8 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
+
 function Get-GitTextFile {
     <#
     .SYNOPSIS
@@ -280,7 +282,8 @@ function ConvertTo-JsonOutput {
 }
 
 #region Main Execution
-try {
+if (-not $script:SkipMain) {
+    try {
     if ($Verbose) {
         Write-Information "Getting list of git-tracked text files..." -InformationAction Continue
     }
@@ -370,14 +373,12 @@ try {
             Write-Output "No URLs containing 'en-us' were found."
         }
     }
-    exit 0
-}
-catch {
-    Write-Error "Link Lang Check failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+        exit 0
     }
-    exit 1
+    catch {
+        Write-Error -ErrorAction Continue "Link Lang Check failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message "Link Lang Check failed: $($_.Exception.Message)" -Level Error
+        exit 1
+    }
 }
 #endregion

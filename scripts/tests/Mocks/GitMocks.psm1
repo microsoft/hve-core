@@ -1,15 +1,15 @@
 # Copyright (c) Microsoft Corporation.
-# Licensed under the MIT license.
+# SPDX-License-Identifier: MIT
 
 # GitMocks.psm1
 #
-# Purpose: Reusable mock helpers for Git CLI and GitHub Actions testing in Pester
+# Purpose: Reusable mock helpers for Git CLI and CI environment testing in Pester
 # Author: HVE Core Team
 #
 
 #region Environment State Management
 
-function Save-GitHubEnvironment {
+function Save-CIEnvironment {
     <#
     .SYNOPSIS
     Saves current CI environment variables for later restoration.
@@ -37,7 +37,7 @@ function Save-GitHubEnvironment {
     Write-Verbose "Saved CI environment state"
 }
 
-function Restore-GitHubEnvironment {
+function Restore-CIEnvironment {
     <#
     .SYNOPSIS
     Restores CI environment variables to saved state.
@@ -62,16 +62,16 @@ function Restore-GitHubEnvironment {
     Write-Verbose "Restored CI environment state"
 }
 
-function Initialize-MockGitHubEnvironment {
+function Initialize-MockCIEnvironment {
     <#
     .SYNOPSIS
-    Sets up a mock GitHub Actions environment with temp files.
+    Sets up a mock CI environment with temp files.
 
     .DESCRIPTION
     Creates temporary files for GITHUB_OUTPUT, GITHUB_ENV, and GITHUB_STEP_SUMMARY,
     then sets all standard GitHub Actions environment variables to simulate a CI
     environment. Returns a hashtable of temp file paths for verification in tests.
-    Use with Remove-MockGitHubFiles for cleanup in AfterEach blocks.
+    Use with Remove-MockCIFiles for cleanup in AfterEach blocks.
 
     .PARAMETER BaseRef
     The base branch for PR context (default: main).
@@ -100,9 +100,9 @@ function Initialize-MockGitHubEnvironment {
     $guid = [System.Guid]::NewGuid().ToString('N').Substring(0, 8)
 
     $mockFiles = @{
-        Output  = Join-Path $tempDir "github_output_$guid.txt"
-        Env     = Join-Path $tempDir "github_env_$guid.txt"
-        Summary = Join-Path $tempDir "github_summary_$guid.md"
+        Output  = Join-Path $tempDir "ci_output_$guid.txt"
+        Env     = Join-Path $tempDir "ci_env_$guid.txt"
+        Summary = Join-Path $tempDir "ci_summary_$guid.md"
     }
 
     # Create empty files
@@ -120,11 +120,11 @@ function Initialize-MockGitHubEnvironment {
     $env:GITHUB_WORKSPACE = $Workspace
     $env:GITHUB_REPOSITORY = $Repository
 
-    Write-Verbose "Initialized mock GitHub environment"
+    Write-Verbose "Initialized mock CI environment"
     return $mockFiles
 }
 
-function Clear-MockGitHubEnvironment {
+function Clear-MockCIEnvironment {
     <#
     .SYNOPSIS
     Removes CI platform environment variables (simulates local/non-CI environment).
@@ -158,13 +158,13 @@ function Clear-MockGitHubEnvironment {
     Write-Verbose "Cleared CI environment variables"
 }
 
-function Remove-MockGitHubFiles {
+function Remove-MockCIFiles {
     <#
     .SYNOPSIS
-    Cleans up temp files created by Initialize-MockGitHubEnvironment.
+    Cleans up temp files created by Initialize-MockCIEnvironment.
 
     .PARAMETER MockFiles
-    Hashtable returned from Initialize-MockGitHubEnvironment.
+    Hashtable returned from Initialize-MockCIEnvironment.
     #>
     [CmdletBinding()]
     param(
@@ -178,7 +178,7 @@ function Remove-MockGitHubFiles {
         }
     }
 
-    Write-Verbose "Removed mock GitHub files"
+    Write-Verbose "Removed mock CI files"
 }
 
 #endregion
@@ -429,11 +429,11 @@ function Get-MockGitDiffScenario {
 # Export functions
 Export-ModuleMember -Function @(
     # Environment management
-    'Save-GitHubEnvironment',
-    'Restore-GitHubEnvironment',
-    'Initialize-MockGitHubEnvironment',
-    'Clear-MockGitHubEnvironment',
-    'Remove-MockGitHubFiles',
+    'Save-CIEnvironment',
+    'Restore-CIEnvironment',
+    'Initialize-MockCIEnvironment',
+    'Clear-MockCIEnvironment',
+    'Remove-MockCIFiles',
     # Git mocks
     'Initialize-GitMocks',
     'Set-GitMockChangedFiles',
