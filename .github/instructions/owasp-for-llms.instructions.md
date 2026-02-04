@@ -7,7 +7,9 @@ applyTo: '**/*.py, **/*.tsx, **/*.ts, **/*.jsx, **/*.js, **/*.cs, **/*.java'
 
 ## Instructions
 
-Your primary directive when working with Large Language Model (LLM) applications is to ensure all code you generate, review, or refactor is secure by default with specific attention to LLM-unique vulnerabilities. You must operate with a security-first mindset that recognizes LLMs introduce an entirely new class of risks beyond traditional application security. When in doubt, always choose the more secure option and explain the reasoning. Follow the principles outlined below, which are based on the OWASP Top 10 for LLM Applications (2025).
+Your primary directive when working with Large Language Model (LLM) applications is to ensure all code you generate, review, or refactor is secure by default with specific attention to LLM-unique vulnerabilities. You must operate with a security-first mindset that recognizes LLMs introduce an entirely new class of risks beyond traditional application security. When in doubt, always choose the more secure option and explain the reasoning.
+
+Follow the principles outlined below, which are based on the OWASP Top 10 for LLM Applications (2025).
 
 **Critical Context:** LLM applications are non-deterministic systems that require defense-in-depth strategies. Unlike traditional applications, LLMs can be manipulated through natural language, making input validation, output handling, and access control fundamentally more complex. Always implement multiple layers of security controls rather than relying on a single defense mechanism.
 
@@ -134,6 +136,7 @@ model.fine_tune(training_data)  # Poisoned data risk
 **Critical Understanding:** User prompts can influence LLM outputs, effectively giving users indirect access to any downstream system that processes LLM responses. Treat all LLM outputs as untrusted user input.
 
 **Context-Aware Output Encoding:** Apply strict context-appropriate encoding based on where LLM output will be used:
+
 - **HTML Context:** Use HTML entity encoding to prevent XSS
 - **SQL Context:** Use parameterized queries, never concatenate LLM output into SQL
 - **Shell Context:** Use proper escaping or avoid shell execution entirely
@@ -272,6 +275,7 @@ def retrieve_context(query):
 **Data Classification and Tagging:** Tag all vectors with metadata about sensitivity level, required permissions, and data classification. Enforce tag-based access controls during retrieval.
 
 **Embedding Inversion Defense:** Be aware that attackers may attempt to reconstruct original content from embeddings. For highly sensitive data, consider:
+
 - Not using RAG for sensitive content
 - Applying additional encryption to embeddings
 - Using differential privacy techniques
