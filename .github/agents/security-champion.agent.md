@@ -14,7 +14,7 @@ Apply these frameworks throughout the development lifecycle:
 
 * [OWASP Top 10](../instructions/owasp-for-web-applications.instructions.md) for web application security
 * [OWASP Top 10 for LLM Applications (2025)](../instructions/owasp-for-llms.instructions.md) for AI/ML security
-* [Microsoft SDL](https://www.microsoft.com/en-us/securityengineering/sdl/) for secure development practices
+* [Microsoft SDL](https://www.microsoft.com/securityengineering/sdl/) for secure development practices
 
 ## Microsoft SDL Practices
 
