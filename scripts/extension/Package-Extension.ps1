@@ -218,7 +218,7 @@ function Get-VscePackageCommand {
     if ($CommandType -eq 'npx') {
         return @{
             Executable = 'npx'
-            Arguments  = @('@vscode/vsce') + $vsceArgs
+            Arguments  = @('--yes', '@vscode/vsce') + $vsceArgs
         }
     }
 
@@ -486,6 +486,13 @@ function Invoke-PackageExtension {
         New-Item -Path "$ExtensionDirectory/scripts" -ItemType Directory -Force | Out-Null
         Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDirectory/scripts/dev-tools" -Recurse
 
+        $ciHelpersSource = "$RepoRoot/scripts/lib/Modules/CIHelpers.psm1"
+        if (Test-Path $ciHelpersSource) {
+            Write-Host "   Copying scripts/lib/Modules/CIHelpers.psm1..." -ForegroundColor Gray
+            New-Item -Path "$ExtensionDirectory/scripts/lib/Modules" -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $ciHelpersSource -Destination "$ExtensionDirectory/scripts/lib/Modules/CIHelpers.psm1"
+        }
+
         Write-Host "   Copying docs/templates..." -ForegroundColor Gray
         New-Item -Path "$ExtensionDirectory/docs" -ItemType Directory -Force | Out-Null
         Copy-Item -Path "$RepoRoot/docs/templates" -Destination "$ExtensionDirectory/docs/templates" -Recurse
@@ -514,7 +521,16 @@ function Invoke-PackageExtension {
         Push-Location $ExtensionDirectory
         try {
             $global:LASTEXITCODE = 0  # Reset before native call for test reliability
-            & $vsceCommand.Executable @($vsceCommand.Arguments)
+
+            if ($vsceCommand.Executable -eq 'npx') {
+                # Use cmd /c for npx to avoid PowerShell misinterpreting @ in @vscode/vsce as splatting
+                $cmdArgs = @('/c', 'npx') + $vsceCommand.Arguments
+                & cmd @cmdArgs
+            }
+            else {
+                # Direct invocation for vsce or test mocks
+                & $vsceCommand.Executable @($vsceCommand.Arguments)
+            }
 
             if ($LASTEXITCODE -ne 0) {
                 return New-PackagingResult -Success $false -ErrorMessage "vsce package command failed with exit code $LASTEXITCODE"
