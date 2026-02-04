@@ -478,7 +478,7 @@ Describe 'CI Integration - Package-Extension' {
 
     Context 'GitHub Actions environment' {
         BeforeEach {
-            Initialize-MockGitHubEnvironment
+            Initialize-MockCIEnvironment
             New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
@@ -495,7 +495,7 @@ Describe 'CI Integration - Package-Extension' {
         }
 
         AfterEach {
-            Clear-MockGitHubEnvironment
+            Clear-MockCIEnvironment
             if (Test-Path $script:testRoot) {
                 Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
             }
@@ -566,7 +566,7 @@ Describe 'CI Integration - Package-Extension' {
 
     Context 'Local environment' {
         BeforeEach {
-            Clear-MockGitHubEnvironment
+            Clear-MockCIEnvironment
 
             New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null

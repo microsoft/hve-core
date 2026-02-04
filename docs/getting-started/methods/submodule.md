@@ -80,7 +80,7 @@ Create or update `.vscode/settings.json`:
 
 ```jsonc
 {
-  "chat.modeFilesLocations": {
+  "chat.agentFilesLocations": {
     "lib/hve-core/.github/agents": true,
     ".github/agents": true
   },
