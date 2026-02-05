@@ -216,6 +216,7 @@ function Get-VscePackageCommand {
     }
 
     if ($CommandType -eq 'npx') {
+        # --yes auto-confirms npx package installation for non-interactive CI environments
         return @{
             Executable = 'npx'
             Arguments  = @('--yes', '@vscode/vsce') + $vsceArgs
@@ -419,25 +420,21 @@ function Get-PackagingDirectorySpec {
         @{
             Source      = Join-Path $RepoRoot ".github"
             Destination = Join-Path $ExtensionDirectory ".github"
-            Required    = $true
             IsFile      = $false
         },
         @{
             Source      = Join-Path $RepoRoot "scripts/dev-tools"
             Destination = Join-Path $ExtensionDirectory "scripts/dev-tools"
-            Required    = $true
             IsFile      = $false
         },
         @{
             Source      = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
             Destination = Join-Path $ExtensionDirectory "scripts/lib/Modules/CIHelpers.psm1"
-            Required    = $true
             IsFile      = $true
         },
         @{
             Source      = Join-Path $RepoRoot "docs/templates"
             Destination = Join-Path $ExtensionDirectory "docs/templates"
-            Required    = $true
             IsFile      = $false
         }
     )
@@ -549,20 +546,21 @@ function Restore-PackageJsonVersion {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [AllowNull()]
         [string]$PackageJsonPath,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [AllowNull()]
         [PSObject]$PackageJson,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [AllowNull()]
         [string]$OriginalVersion
     )
 
-    if ($null -eq $OriginalVersion -or $null -eq $PackageJson -or $null -eq $PackageJsonPath) {
+    # Handle null coercion: PowerShell converts $null to empty string for [string] params
+    if ([string]::IsNullOrEmpty($OriginalVersion) -or $null -eq $PackageJson -or [string]::IsNullOrEmpty($PackageJsonPath)) {
         return
     }
 
