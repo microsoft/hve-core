@@ -555,42 +555,48 @@ Describe 'Test-PackagingInputsValid' {
 }
 
 Describe 'Get-PackagingDirectorySpec' {
+    BeforeAll {
+        # Use platform-agnostic temp paths for cross-platform CI compatibility
+        $script:repoRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-repo'
+        $script:extDir = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-ext'
+    }
+
     It 'Returns array of 4 directory specifications' {
-        $result = Get-PackagingDirectorySpec -RepoRoot 'C:\repo' -ExtensionDirectory 'C:\ext'
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         $result.Count | Should -Be 4
     }
 
     It 'Includes .github directory specification' {
-        $result = Get-PackagingDirectorySpec -RepoRoot 'C:\repo' -ExtensionDirectory 'C:\ext'
-        $githubSpec = $result | Where-Object { $_.Source -like '*\.github' }
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $githubSpec = $result | Where-Object { $_.Source -like '*.github' }
         $githubSpec | Should -Not -BeNullOrEmpty
-        $githubSpec.Destination | Should -BeLike '*\.github'
+        $githubSpec.Destination | Should -BeLike '*.github'
         $githubSpec.IsFile | Should -BeFalse
     }
 
     It 'Includes dev-tools directory specification' {
-        $result = Get-PackagingDirectorySpec -RepoRoot 'C:\repo' -ExtensionDirectory 'C:\ext'
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         $devToolsSpec = $result | Where-Object { $_.Source -like '*dev-tools' }
         $devToolsSpec | Should -Not -BeNullOrEmpty
         $devToolsSpec.IsFile | Should -BeFalse
     }
 
     It 'Includes CIHelpers.psm1 file specification' {
-        $result = Get-PackagingDirectorySpec -RepoRoot 'C:\repo' -ExtensionDirectory 'C:\ext'
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         $ciHelpersSpec = $result | Where-Object { $_.Source -like '*CIHelpers.psm1' }
         $ciHelpersSpec | Should -Not -BeNullOrEmpty
         $ciHelpersSpec.IsFile | Should -BeTrue
     }
 
     It 'Includes docs/templates directory specification' {
-        $result = Get-PackagingDirectorySpec -RepoRoot 'C:\repo' -ExtensionDirectory 'C:\ext'
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         $templatesSpec = $result | Where-Object { $_.Source -like '*templates' }
         $templatesSpec | Should -Not -BeNullOrEmpty
         $templatesSpec.IsFile | Should -BeFalse
     }
 
     It 'Uses correct path joining for source and destination' {
-        $result = Get-PackagingDirectorySpec -RepoRoot '/repo' -ExtensionDirectory '/ext'
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         foreach ($spec in $result) {
             $spec.Source | Should -Not -BeNullOrEmpty
             $spec.Destination | Should -Not -BeNullOrEmpty
