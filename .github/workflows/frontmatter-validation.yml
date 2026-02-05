@@ -78,7 +78,8 @@ jobs:
           
           # Exclude test fixture files (intentionally invalid frontmatter for testing)
           # and extension/README.md (uses VS Code marketplace format, not repo docs standards)
-          $params['ExcludePaths'] = @('scripts/tests/Fixtures/**', 'extension/README.md')
+          # and .github/PULL_REQUEST_TEMPLATE.md (GitHub template, not a documentation file)
+          $params['ExcludePaths'] = @('scripts/tests/Fixtures/**', 'extension/README.md', '.github/PULL_REQUEST_TEMPLATE.md')
           
           & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
         continue-on-error: true

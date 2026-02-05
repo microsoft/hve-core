@@ -84,7 +84,7 @@ Create or update `.vscode/settings.json` in your project:
 
 ```json
 {
-  "chat.modeFilesLocations": { "../hve-core/.github/agents": true },
+  "chat.agentFilesLocations": { "../hve-core/.github/agents": true },
   "chat.promptFilesLocations": { "../hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { "../hve-core/.github/instructions": true }
 }
