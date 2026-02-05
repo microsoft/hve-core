@@ -489,15 +489,15 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Issue Title Format
 
-| Issue Type | Title Prefix | Example |
-|------------|--------------|---------|
-| Bug reports | `fix:` | `fix: validation script fails on Windows paths` |
-| Agent requests | `feat(agents):` | `feat(agents): add Azure cost analysis agent` |
-| Prompt requests | `feat(prompts):` | `feat(prompts): add PR description generator` |
+| Issue Type           | Title Prefix          | Example                                         |
+|----------------------|-----------------------|-------------------------------------------------|
+| Bug reports          | `fix:`                | `fix: validation script fails on Windows paths` |
+| Agent requests       | `feat(agents):`       | `feat(agents): add Azure cost analysis agent`   |
+| Prompt requests      | `feat(prompts):`      | `feat(prompts): add PR description generator`   |
 | Instruction requests | `feat(instructions):` | `feat(instructions): add Go language standards` |
-| Skill requests | `feat(skills):` | `feat(skills): add diagram generation skill` |
-| General features | `feat:` | `feat: support multi-root workspaces` |
-| Documentation | `docs:` | `docs: clarify installation steps` |
+| Skill requests       | `feat(skills):`       | `feat(skills): add diagram generation skill`    |
+| General features     | `feat:`               | `feat: support multi-root workspaces`           |
+| Documentation        | `docs:`               | `docs: clarify installation steps`              |
 
 ### Benefits
 
