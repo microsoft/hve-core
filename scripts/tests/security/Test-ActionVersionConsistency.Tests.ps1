@@ -193,18 +193,23 @@ Describe 'Get-ActionVersionViolations' -Tag 'Unit' {
     }
 
     Context 'Non-existent path handling' {
+        BeforeAll {
+            # Use platform-agnostic path that guaranteed doesn't exist
+            $script:NonExistentPath = Join-Path ([System.IO.Path]::GetTempPath()) "nonexistent-$(New-Guid)"
+        }
+
         It 'Returns empty violations for non-existent path' {
-            $result = Get-ActionVersionViolations -WorkflowPath 'C:\nonexistent\path\workflows'
+            $result = Get-ActionVersionViolations -WorkflowPath $script:NonExistentPath
             $result.Violations | Should -BeNullOrEmpty
         }
 
         It 'Returns zero TotalActions for non-existent path' {
-            $result = Get-ActionVersionViolations -WorkflowPath 'C:\nonexistent\path\workflows'
+            $result = Get-ActionVersionViolations -WorkflowPath $script:NonExistentPath
             $result.TotalActions | Should -Be 0
         }
 
         It 'Returns empty ShaVersionMap for non-existent path' {
-            $result = Get-ActionVersionViolations -WorkflowPath 'C:\nonexistent\path\workflows'
+            $result = Get-ActionVersionViolations -WorkflowPath $script:NonExistentPath
             $result.ShaVersionMap.Count | Should -Be 0
         }
     }
@@ -487,8 +492,9 @@ Describe 'Main Script Execution' -Tag 'Unit' {
     BeforeAll {
         $script:TestScript = (Resolve-Path (Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1')).Path
         $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
-        # Use system temp directory (accessible from child process, unlike $TestDrive)
-        $script:MainTestRoot = Join-Path $env:TEMP "pester-main-$(Get-Random)"
+        # Use cross-platform temp directory (accessible from child process, unlike $TestDrive)
+        $tempBase = [System.IO.Path]::GetTempPath()
+        $script:MainTestRoot = Join-Path $tempBase "pester-main-$(Get-Random)"
         New-Item -ItemType Directory -Path $script:MainTestRoot -Force | Out-Null
     }
 
