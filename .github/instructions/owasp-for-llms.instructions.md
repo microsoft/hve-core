@@ -1,7 +1,7 @@
 ---
 description: "Comprehensive secure coding instructions for LLM applications based on OWASP Top 10 for LLM Applications (2025). Ensures AI-powered systems are secure by default, protecting against prompt injection, data leakage, and LLM-specific vulnerabilities. Give clear and concise feedback and points of improvement."
 applyTo: '**/*.py, **/*.tsx, **/*.ts, **/*.jsx, **/*.js, **/*.cs, **/*.java'
-maturity: stable
+maturity: experimental
 ---
 
 # OWASP Top 10 for LLM Applications - Secure Coding Guidelines
