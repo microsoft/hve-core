@@ -486,6 +486,7 @@ Describe 'Export-ConsistencyReport' -Tag 'Unit' {
 Describe 'Main Script Execution' -Tag 'Unit' {
     BeforeAll {
         $script:TestScript = (Resolve-Path (Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1')).Path
+        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
         # Use system temp directory (accessible from child process, unlike $TestDrive)
         $script:MainTestRoot = Join-Path $env:TEMP "pester-main-$(Get-Random)"
         New-Item -ItemType Directory -Path $script:MainTestRoot -Force | Out-Null
