@@ -66,7 +66,7 @@ You WILL discover and parse available issue templates from `.github/ISSUE_TEMPLA
 ```yaml
 name: Bug Report
 description: File a bug report
-title: "[Bug]: "
+title: "fix: "
 labels: ["bug", "triage"]
 assignees:
   - octocat
@@ -199,7 +199,7 @@ You WILL create the GitHub issue using MCP tools.
 {
   "tool": "mcp_github_create_issue",
   "parameters": {
-    "title": "[Bug]: Login button doesn't work on mobile devices",
+    "title": "fix: login button doesn't work on mobile devices",
     "body": "**What happened?**\nThe login button doesn't work on mobile devices\n\n**Contact Details**\njohn@example.com",
     "labels": ["bug", "triage"],
     "assignees": ["octocat"]
@@ -214,7 +214,7 @@ You WILL create the GitHub issue using MCP tools.
   "number": 42,
   "html_url": "https://github.com/owner/repo/issues/42",
   "state": "open",
-  "title": "[Bug]: Login button doesn't work on mobile devices"
+  "title": "fix: login button doesn't work on mobile devices"
 }
 ```
 
@@ -253,7 +253,7 @@ You WILL log issue creation to artifact file for tracking and reference.
 
 ### Title
 
-[Bug]: Login button doesn't work on mobile devices
+fix: login button doesn't work on mobile devices
 
 ### Body
 

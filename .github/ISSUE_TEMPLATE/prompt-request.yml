@@ -1,6 +1,6 @@
 name: Prompt Template Request
 description: Request a new prompt template
-title: "[Prompt]: "
+title: "feat(prompts): "
 labels: ["prompt", "needs-triage"]
 body:
   - type: markdown

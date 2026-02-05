@@ -1,6 +1,6 @@
 name: Copilot Instruction File Request
 description: Request a new GitHub Copilot instruction file
-title: "[Instruction File]: "
+title: "feat(instructions): "
 labels: ["instruction-file", "needs-triage"]
 body:
   - type: markdown
