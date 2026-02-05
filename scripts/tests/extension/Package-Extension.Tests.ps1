@@ -521,7 +521,7 @@ Describe 'Test-PackagingInputsValid' {
         $result = Test-PackagingInputsValid -ExtensionDirectory $nonexistent -RepoRoot $script:repoRoot
         $result.IsValid | Should -BeFalse
         # Function accumulates multiple errors; extension dir missing cascades to package.json missing
-        $result.Errors | Should -Contain ($result.Errors | Where-Object { $_ -match 'Extension directory not found|package.json not found' } | Select-Object -First 1)
+        $result.Errors | Should -Match 'Extension directory not found|package.json not found'
     }
 
     It 'Returns error when package.json not found' {
