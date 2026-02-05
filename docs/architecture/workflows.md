@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 author: WilliamBerryiii
 ms.date: 2026-01-22
-ms.topic: architecture
+ms.topic: overview
 ---
 
 HVE Core uses GitHub Actions for continuous integration, quality validation, security scanning, and release automation. The workflow architecture emphasizes reusable components and parallel execution for fast feedback.
@@ -220,6 +220,4 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 * [Testing Architecture](testing.md) - PowerShell Pester test infrastructure
 * [Scripts README](../../scripts/README.md) - Script organization and usage
 
----
-
-Brought to you by microsoft/hve-core
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
