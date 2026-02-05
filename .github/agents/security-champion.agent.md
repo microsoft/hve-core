@@ -2,7 +2,7 @@
 description: "🔐 Security Champion"
 tools: ['execute/getTerminalOutput', 'read', 'agent', 'todo']
 argument-hint: "Assist development teams in integrating security best practices throughout the software development lifecycle by acting as a Security Champion."
-maturity: preview
+maturity: experimental
 ---
 
 # Security Champion Chat Mode

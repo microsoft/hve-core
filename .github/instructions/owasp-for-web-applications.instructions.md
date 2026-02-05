@@ -1,7 +1,7 @@
 ---
 description: "Comprehensive secure coding instructions for all languages and frameworks, based on OWASP Top 10 and industry best practices. Give clear and concise feedback and points of improvement."
 applyTo: '**/*.py, **/*.tsx, **/*.ts, **/*.jsx, **/*.js'
-maturity: stable
+maturity: experimental
 ---
 
 # Secure Coding and OWASP Guidelines
