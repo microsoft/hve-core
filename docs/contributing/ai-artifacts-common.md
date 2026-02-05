@@ -483,6 +483,33 @@ Brought to you by microsoft/hve-core
 * Exact text: "Brought to you by microsoft/hve-core"
 * Or team-specific: "Brought to you by microsoft/edge-ai"
 
+## GitHub Issue Title Conventions
+
+When filing issues against hve-core, use Conventional Commit-style title prefixes that match the repository's commit message format.
+
+### Issue Title Format
+
+| Issue Type           | Title Prefix          | Example                                         |
+|----------------------|-----------------------|-------------------------------------------------|
+| Bug reports          | `fix:`                | `fix: validation script fails on Windows paths` |
+| Agent requests       | `feat(agents):`       | `feat(agents): add Azure cost analysis agent`   |
+| Prompt requests      | `feat(prompts):`      | `feat(prompts): add PR description generator`   |
+| Instruction requests | `feat(instructions):` | `feat(instructions): add Go language standards` |
+| Skill requests       | `feat(skills):`       | `feat(skills): add diagram generation skill`    |
+| General features     | `feat:`               | `feat: support multi-root workspaces`           |
+| Documentation        | `docs:`               | `docs: clarify installation steps`              |
+
+### Benefits
+
+* Issue titles align with commit and PR title conventions
+* Automated changelog generation works correctly
+* Scopes clearly identify affected artifact categories
+* Consistent formatting across all project tracking
+
+### Reference
+
+See [commit-message.instructions.md](../../.github/instructions/commit-message.instructions.md) for the complete list of types and scopes.
+
 ## Getting Help
 
 When contributing AI artifacts:

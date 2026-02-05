@@ -1,6 +1,6 @@
 name: Skill Request
 description: Request a new skill package
-title: "[Skill]: "
+title: "feat(skills): "
 labels: ["skill", "needs-triage"]
 body:
   - type: markdown

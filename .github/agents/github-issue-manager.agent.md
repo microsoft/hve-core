@@ -95,8 +95,8 @@ Navigation session example:
 
 ## Results ({count} issues)
 
-* #42: [Bug]: Login button broken
-* #41: [Bug]: Search not working
+* #42: fix: login button broken
+* #41: fix: search not working
 
 ## Actions Taken
 
