@@ -86,7 +86,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
     }
   ],
   "settings": {
-    "chat.modeFilesLocations": {
+    "chat.agentFilesLocations": {
       "HVE-Core Library/.github/agents": true,
       "My Project/.github/agents": true
     },

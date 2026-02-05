@@ -24,10 +24,10 @@ on:
         type: boolean
         default: true
       footer-exclude-paths:
-        description: 'Comma-separated list of file patterns to exclude from footer validation'
+        description: 'Comma-separated list of file patterns to exclude from footer validation (overrides script defaults)'
         required: false
         type: string
-        default: 'CHANGELOG.md'
+        default: ''
 
 permissions:
   contents: read
@@ -70,15 +70,11 @@ jobs:
             $params['WarningsAsErrors'] = $true
           }
           
-          # Parse footer exclude paths from comma-separated input
+          # Pass footer exclude paths if provided (overrides script defaults)
           $footerExcludeInput = '${{ inputs.footer-exclude-paths }}'
           if ($footerExcludeInput -and $footerExcludeInput -ne '') {
             $params['FooterExcludePaths'] = $footerExcludeInput -split ',' | ForEach-Object { $_.Trim() }
           }
-          
-          # Exclude test fixture files (intentionally invalid frontmatter for testing)
-          # and extension/README.md (uses VS Code marketplace format, not repo docs standards)
-          $params['ExcludePaths'] = @('scripts/tests/Fixtures/**', 'extension/README.md')
           
           & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
         continue-on-error: true

@@ -83,7 +83,7 @@ After installation, verify everything works:
 #### Copilot not discovering customizations
 
 - For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
-- Verify `chat.modeFilesLocations` points to the correct path
+- Verify `chat.agentFilesLocations` points to the correct path
 - Check the window title shows the workspace name
 
 #### Git or clone errors

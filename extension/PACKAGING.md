@@ -23,6 +23,19 @@ extension/
 └── PACKAGING.md          # This file
 ```
 
+## Extension Configuration
+
+### Extension Kind
+
+The extension is configured with `"extensionKind": ["workspace", "ui"]` in `package.json` to support multiple execution contexts:
+
+* **Workspace mode**: Extension runs in the workspace (remote) extension host. In this mode, the extension accesses its bundled files from the extension installation directory in the remote/workspace context (for example, the packaged `.github/` and `scripts/dev-tools/` folders).
+* **UI mode**: Extension runs in the UI extension host on the user's local machine and accesses the same bundled extension files from the local installation directory.
+
+Access to files in the user's project workspace always uses the standard VS Code workspace APIs and is independent of the extension kind. Both modes use the same packaged extension assets and differ only in execution context (local UI versus remote/workspace). This bundling approach ensures GitHub Copilot can reliably access instruction files and scripts regardless of cross-platform path resolution issues (for example, Windows/WSL environments).
+
+This is a declarative extension: it contributes configuration and file paths, and VS Code (together with the GitHub Copilot extension) resolves those paths based on the selected extension host and the extension installation location; it does not implement any custom runtime fallback mechanism between workspace and bundled files.
+
 ## Prerequisites
 
 Install the VS Code Extension Manager CLI:
@@ -65,11 +78,11 @@ npm run extension:prepare
 
 The preparation script automatically:
 
-- Discovers and registers all chat agents from `.github/agents/`
-- Discovers and registers all prompts from `.github/prompts/`
-- Discovers and registers all instruction files from `.github/instructions/`
-- Updates `package.json` with discovered components
-- Uses existing version from `package.json` (does not modify it)
+* Discovers and registers all chat agents from `.github/agents/`
+* Discovers and registers all prompts from `.github/prompts/`
+* Discovers and registers all instruction files from `.github/instructions/`
+* Updates `package.json` with discovered components
+* Uses existing version from `package.json` (does not modify it)
 
 #### Step 2: Package the Extension
 
@@ -94,13 +107,13 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -DevPatchNumber 
 
 The packaging script automatically:
 
-- Uses version from `package.json` (or specified version)
-- Optionally appends dev patch number for pre-release builds
-- Copies required `.github` directory
-- Copies `scripts/dev-tools` directory (developer utilities)
-- Packages the extension using `vsce`
-- Cleans up temporary files
-- Restores original `package.json` version if temporarily modified
+* Uses version from `package.json` (or specified version)
+* Optionally appends dev patch number for pre-release builds
+* Copies required `.github` directory
+* Copies `scripts/dev-tools` directory (developer utilities)
+* Packages the extension using `vsce`
+* Cleans up temporary files
+* Restores original `package.json` version if temporarily modified
 
 ### Manual Packaging (Legacy)
 
@@ -145,15 +158,15 @@ vsce publish --packagePath "$VSIX_FILE"
 
 The `extension/.vscodeignore` file controls what gets packaged. Currently included:
 
-- `.github/agents/**` - All custom agent definitions
-- `.github/prompts/**` - All prompt templates
-- `.github/instructions/**` - All instruction files
-- `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
-- `scripts/dev-tools/**` - Developer utilities (PR reference generation)
-- `package.json` - Extension manifest
-- `README.md` - Extension description
-- `LICENSE` - License file
-- `CHANGELOG.md` - Version history
+* `.github/agents/**` - All custom agent definitions
+* `.github/prompts/**` - All prompt templates
+* `.github/instructions/**` - All instruction files
+* `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
+* `scripts/dev-tools/**` - Developer utilities (PR reference generation)
+* `package.json` - Extension manifest
+* `README.md` - Extension description
+* `LICENSE` - License file
+* `CHANGELOG.md` - Version history
 
 ## Testing Locally
 
@@ -243,11 +256,11 @@ See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity
 
 ## Notes
 
-- The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
-- `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-- Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
-- Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
-- The root `package.json` contains development scripts for the repository
+* The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
+* `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
+* Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
+* Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
+* The root `package.json` contains development scripts for the repository
 
 ---
 

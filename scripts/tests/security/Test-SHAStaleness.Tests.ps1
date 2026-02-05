@@ -13,29 +13,15 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Test-SHAStaleness.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract function definitions from the script without executing main block
-    # Parse the AST to get function definitions
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract all function definitions
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    # Define each function in the current scope using ScriptBlock
-    foreach ($func in $functionDefs) {
-        $funcCode = $func.Extent.Text
-        $scriptBlock = [scriptblock]::Create($funcCode)
-        . $scriptBlock
-    }
+    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
+    $env:HVE_SKIP_MAIN = '1'
+    . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
 
     # Save environment before tests
-    Save-GitHubEnvironment
+    Save-CIEnvironment
 
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
@@ -43,16 +29,17 @@ BeforeAll {
 
 AfterAll {
     # Restore environment after tests
-    Restore-GitHubEnvironment
+    Restore-CIEnvironment
+    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 Describe 'Test-GitHubToken' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'No token provided' {
@@ -118,11 +105,11 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
 
 Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Successful requests' {
@@ -339,6 +326,9 @@ Describe 'Main Script Execution' {
 
     Context 'Array coercion in main execution block' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
+            
             # Create workflow with SHA-pinned action
             $workflowContent = @'
 name: Test
@@ -356,6 +346,8 @@ jobs:
         }
         
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             # Return to original location
             Set-Location $script:OriginalLocation
         }
@@ -472,6 +464,9 @@ jobs:
 
     Context 'CI environment integration' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
+            
             # Save original environment
             $script:OriginalGHA = $env:GITHUB_ACTIONS
             $script:OriginalADO = $env:TF_BUILD
@@ -493,6 +488,8 @@ jobs:
         }
 
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             $env:GITHUB_ACTIONS = $script:OriginalGHA
             $env:TF_BUILD = $script:OriginalADO
             Set-Location $script:OriginalLocation
@@ -556,10 +553,14 @@ jobs:
 
     Context 'Empty and edge case scenarios' {
         BeforeEach {
+            # Clear HVE_SKIP_MAIN so script actually runs main block
+            $env:HVE_SKIP_MAIN = $null
             Set-Location $script:TestRepo
         }
         
         AfterEach {
+            # Restore HVE_SKIP_MAIN
+            $env:HVE_SKIP_MAIN = '1'
             Set-Location $script:OriginalLocation
         }
         

@@ -50,6 +50,8 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
+
 function Get-MarkdownTarget {
     <#
     .SYNOPSIS
@@ -193,7 +195,8 @@ function Get-RelativePrefix {
 }
 
 #region Main Execution
-try {
+if (-not $script:SkipMain) {
+    try {
     $scriptRootParent = Split-Path -Path $PSScriptRoot -Parent
     $repoRootPath = Split-Path -Path $scriptRootParent -Parent
     $repoRoot = Resolve-Path -LiteralPath $repoRootPath
@@ -280,8 +283,7 @@ try {
                                     Status = "$statusCode"
                                 }
 
-                                # Create GitHub annotation
-                                Write-GitHubAnnotation -Type 'error' -Message "Broken link: $url (Status: $statusCode)" -File $relative
+                                Write-CIAnnotation -Message "Broken link: $url (Status: $statusCode)" -Level Error -File $relative
                             }
                         }
                     }
@@ -344,7 +346,13 @@ try {
 "@
 
         foreach ($link in $brokenLinks) {
-            $summaryContent += "`n| ``$($link.File)`` | ``$($link.Link)`` |"
+            $safeFile = if ((Get-CIPlatform) -eq 'azdo') {
+                ConvertTo-AzureDevOpsEscaped -Value $link.File
+            } else { $link.File }
+            $safeLink = if ((Get-CIPlatform) -eq 'azdo') {
+                ConvertTo-AzureDevOpsEscaped -Value $link.Link
+            } else { $link.Link }
+            $summaryContent += "`n| ``$safeFile`` | ``$safeLink`` |"
         }
 
         $summaryContent += @"
@@ -359,8 +367,8 @@ try {
 For more information, see the [markdown-link-check documentation](https://github.com/tcort/markdown-link-check).
 "@
 
-        Write-GitHubStepSummary -Content $summaryContent
-        Set-GitHubEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
+        Write-CIStepSummary -Content $summaryContent
+        Set-CIEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
 
         Write-Error ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
         exit 1
@@ -376,17 +384,15 @@ For more information, see the [markdown-link-check documentation](https://github
 Great job! All markdown links are valid. 🎉
 "@
 
-        Write-GitHubStepSummary -Content $summaryContent
+        Write-CIStepSummary -Content $summaryContent
         Write-Output 'markdown-link-check completed successfully.'
         exit 0
     }
-}
-catch {
-    Write-Error "Markdown Link Check failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
     }
-    exit 1
+    catch {
+        Write-Error "Markdown Link Check failed: $($_.Exception.Message)" -ErrorAction Continue
+        Write-CIAnnotation -Message "Markdown Link Check failed: $($_.Exception.Message)" -Level Error
+        exit 1
+    }
 }
 #endregion

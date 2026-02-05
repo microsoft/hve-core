@@ -749,25 +749,16 @@ function Export-CICDArtifact {
 
     Write-PinningLog "Preparing compliance artifacts for CI/CD systems..." -Level Info
 
-    # GitHub Actions artifact export
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        Write-PinningLog "Detected GitHub Actions environment - setting up artifacts" -Level Info
+    $platform = Get-CIPlatform
+    Write-PinningLog "Detected $platform environment - setting up artifacts" -Level Info
 
-        # Set outputs for GitHub Actions
-        if ($env:GITHUB_OUTPUT) {
-            "dependency-report=$ReportPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding UTF8
-            "compliance-score=$($Report.ComplianceScore)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding UTF8
-            "unpinned-count=$($Report.UnpinnedDependencies)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding UTF8
-        }
+    # Set CI outputs (works for both GitHub Actions and Azure DevOps)
+    Set-CIOutput -Name 'dependency-report' -Value $ReportPath -IsOutput
+    Set-CIOutput -Name 'compliance-score' -Value $Report.ComplianceScore -IsOutput
+    Set-CIOutput -Name 'unpinned-count' -Value $Report.UnpinnedDependencies -IsOutput
 
-        # Set up for actions/upload-artifact@v4
-        $artifactDir = Join-Path $PWD "dependency-pinning-artifacts"
-        New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
-        Copy-Item -Path $ReportPath -Destination $artifactDir -Force
-
-        # Create GitHub summary
-        $summaryPath = Join-Path $artifactDir "github-summary.md"
-        @"
+    # Create summary content
+    $summaryContent = @"
 # 📌 Dependency Pinning Analysis
 
 **Compliance Score:** $($Report.ComplianceScore)%
@@ -775,30 +766,19 @@ function Export-CICDArtifact {
 **Total Dependencies Scanned:** $($Report.TotalDependencies)
 
 $(if ($Report.UnpinnedDependencies -gt 0) { "⚠️ **Action Required:** $($Report.UnpinnedDependencies) dependencies are not properly pinned to immutable references." } else { "✅ **All Clear:** All dependencies are properly pinned!" })
-"@ | Out-File -FilePath $summaryPath -Encoding UTF8
+"@
 
-        if ($env:GITHUB_STEP_SUMMARY) {
-            Copy-Item -Path $summaryPath -Destination $env:GITHUB_STEP_SUMMARY -Force
-        }
-    }
+    # Write step summary
+    Write-CIStepSummary -Content $summaryContent
 
-    # Azure DevOps artifact export
-    if ($env:TF_BUILD -eq 'True' -or $env:AZURE_PIPELINES -eq 'True') {
-        Write-PinningLog "Detected Azure DevOps environment - setting up artifacts" -Level Info
+    # Publish artifact
+    Publish-CIArtifact -Path $ReportPath -Name 'dependency-pinning-report' -ContainerFolder 'dependency-pinning'
 
-        # Set Azure DevOps variables
-        Write-Output "##vso[task.setvariable variable=dependencyReport;isOutput=true]$ReportPath"
-        Write-Output "##vso[task.setvariable variable=complianceScore;isOutput=true]$($Report.ComplianceScore)"
-        Write-Output "##vso[task.setvariable variable=unpinnedCount;isOutput=true]$($Report.UnpinnedDependencies)"
-
-        # Publish as pipeline artifact
-        Write-Output "##vso[artifact.upload containerfolder=dependency-pinning;artifactname=dependency-pinning-report]$ReportPath"
-
-        # Add to build summary
-        Write-Output "##[section]Dependency Pinning Compliance Report"
-        Write-Output "Compliance Score: $($Report.ComplianceScore)%"
-        Write-Output "Unpinned Dependencies: $($Report.UnpinnedDependencies)"
-        Write-Output "Total Dependencies: $($Report.TotalDependencies)"
+    # Set up local artifact directory for GitHub Actions upload-artifact action
+    if ($platform -eq 'github') {
+        $artifactDir = Join-Path $PWD "dependency-pinning-artifacts"
+        New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+        Copy-Item -Path $ReportPath -Destination $artifactDir -Force
     }
 
     Write-PinningLog "Compliance artifacts prepared for CI/CD consumption" -Level Success
@@ -887,10 +867,7 @@ try {
 }
 catch {
     Write-PinningLog "Dependency pinning analysis failed: $($_.Exception.Message)" -Level Error
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
 }
 

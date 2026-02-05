@@ -506,10 +506,6 @@ After cloning, update `.vscode/settings.json` with this structure. Replace `<PRE
 <!-- <settings-template> -->
 ```json
 {
-  "chat.modeFilesLocations": {
-    ".github/agents": true,
-    "<PREFIX>/.github/agents": true
-  },
   "chat.agentFilesLocations": {
     ".github/agents": true,
     "<PREFIX>/.github/agents": true
@@ -581,7 +577,6 @@ Add to devcontainer.json:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }

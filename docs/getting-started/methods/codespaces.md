@@ -80,7 +80,7 @@ Add the clone command and VS Code settings:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
+        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -122,7 +122,7 @@ git push
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
+        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
         "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
       }
@@ -161,7 +161,7 @@ git push
           "/workspaces/hve-core/.github/instructions": true,
           ".github/instructions": true
         },
-        "chat.modeFilesLocations": {
+        "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents": true,
           ".github/agents": true
         }
@@ -200,7 +200,7 @@ For projects needing HVE-Core in both local devcontainers and Codespaces:
           "/workspaces/hve-core/.github/instructions": true,
           "../hve-core/.github/instructions": true
         },
-        "chat.modeFilesLocations": {
+        "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents": true,
           "../hve-core/.github/agents": true
         }

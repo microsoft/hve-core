@@ -170,3 +170,5 @@ Run a specific test file:
 ```powershell
 Invoke-Pester -Path ./scripts/tests/linting/Invoke-PSScriptAnalyzer.Tests.ps1
 ```
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

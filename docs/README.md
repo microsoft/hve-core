@@ -104,3 +104,5 @@ Pre-built templates for common engineering documents:
 | [CONTRIBUTING](../CONTRIBUTING.md)         | Repository contribution guidelines |
 | [Scripts README](../scripts/README.md)     | Automation script reference        |
 | [Extension README](../extension/README.md) | VS Code extension documentation    |
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

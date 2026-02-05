@@ -5,7 +5,6 @@
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
-# Created: 2025-11-05
 #
 # This script validates:
 # - Required frontmatter fields (title, description, author, ms.date)
@@ -28,7 +27,12 @@ param(
     [string[]]$Files = @(),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$ExcludePaths = @(),
+    [string[]]$ExcludePaths = @(
+        'scripts/tests/Fixtures/**',
+        'extension/README.md',
+        'pr.md',
+        '.github/PULL_REQUEST_TEMPLATE.md'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$WarningsAsErrors,
@@ -43,7 +47,10 @@ param(
     [switch]$EnableSchemaValidation,
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FooterExcludePaths = @(),
+    [string[]]$FooterExcludePaths = @(
+        'CHANGELOG.md',
+        'dependency-pinning-artifacts/**'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation
@@ -587,9 +594,9 @@ function Test-FrontmatterValidation {
     # Output to console
     Write-ValidationConsoleOutput -Summary $summary -ShowDetails
 
-    # GitHub Actions annotations
-    if ($env:GITHUB_ACTIONS) {
-        Write-GitHubAnnotations -Summary $summary
+    # CI annotations
+    if (Test-CIEnvironment) {
+        Write-CIAnnotations -Summary $summary
     }
 
     # Export results
@@ -613,8 +620,8 @@ function Test-FrontmatterValidation {
 
 See the uploaded artifact for complete details.
 "@
-        Write-GitHubStepSummary -Content $summaryContent
-        Set-GitHubEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
+        Write-CIStepSummary -Content $summaryContent
+        Set-CIEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
     }
     else {
         $summaryContent = @"
@@ -626,7 +633,7 @@ See the uploaded artifact for complete details.
 
 All frontmatter fields are valid and properly formatted. Great job! 🎉
 "@
-        Write-GitHubStepSummary -Content $summaryContent
+        Write-CIStepSummary -Content $summaryContent
         Write-Host "✅ Frontmatter validation completed successfully" -ForegroundColor Green
     }
 
@@ -781,11 +788,8 @@ try {
     }
 }
 catch {
-    Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
-    }
+    Write-Error -ErrorAction Continue "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "Validate Markdown Frontmatter failed: $($_.Exception.Message)" -Level Error
     exit 1
 }
 #endregion

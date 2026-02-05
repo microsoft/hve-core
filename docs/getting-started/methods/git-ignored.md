@@ -99,7 +99,7 @@ Create or update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
+  "chat.agentFilesLocations": { ".hve-core/.github/agents": true },
   "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
   "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
 }
@@ -136,7 +136,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
+        "chat.agentFilesLocations": { ".hve-core/.github/agents": true },
         "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
         "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
       }

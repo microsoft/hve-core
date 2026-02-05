@@ -1355,6 +1355,7 @@ venv
 mergetool
 gitmessage
 pipefail
+errexit
 esac
 keyid
 openpgp
