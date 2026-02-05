@@ -96,6 +96,12 @@ Pre-built templates for common engineering documents:
 
 **[Browse Templates →](templates/)**
 
+## Ecosystem
+
+Complementary projects that extend HVE Core capabilities:
+
+* [SDLC Agents](ecosystem/sdlc-agents.md) - 22 enterprise SDLC automation agents for design review, tech debt, regression prediction
+
 ## Quick Links
 
 | Resource                                   | Description                        |
