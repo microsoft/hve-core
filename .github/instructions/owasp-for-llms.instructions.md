@@ -1,7 +1,5 @@
 ---
 description: "Comprehensive secure coding instructions for LLM applications based on OWASP Top 10 for LLM Applications (2025). Ensures AI-powered systems are secure by default, protecting against prompt injection, data leakage, and LLM-specific vulnerabilities. Give clear and concise feedback and points of improvement."
-applyTo: '**/*.py, **/*.tsx, **/*.ts, **/*.jsx, **/*.js, **/*.cs, **/*.java'
-maturity: experimental
 ---
 
 # OWASP Top 10 for LLM Applications - Secure Coding Guidelines
@@ -36,19 +34,19 @@ Validate all LLM outputs against expected formats using deterministic verificati
 
 Separate system instructions from user content using clear delimiters. Do not concatenate user input directly into prompts without sanitization.
 
+<!-- <example-prompt-injection-defense> -->
 ```python
-# GOOD: Structured prompt with clear boundaries
+# ✅ GOOD: Structured prompt with clear boundaries
 system_prompt = "You are a customer service assistant. Only answer questions about product features."
 user_input = sanitize_input(request.user_message)  # Remove injection attempts
 response = llm.generate(system=system_prompt, user=user_input)
 validated_response = validate_output_schema(response)  # Ensure format compliance
-```
 
-```python
-# BAD: Direct concatenation with no validation
+# ❌ BAD: Direct concatenation with no validation
 prompt = f"Answer this: {request.user_message}"  # Vulnerable to injection
 response = llm.generate(prompt)  # No output validation
 ```
+<!-- </example-prompt-injection-defense> -->
 
 #### Indirect Injection Defense
 
@@ -76,19 +74,19 @@ Define strict output schemas that prevent the model from generating sensitive da
 
 When executing LLM-generated code (which should be avoided when possible), use sandboxed environments with no access to sensitive resources.
 
+<!-- <example-sensitive-info-disclosure> -->
 ```typescript
-// GOOD: Sanitized context with PII detection
+// ✅ GOOD: Sanitized context with PII detection
 const sanitizedContext = await piiDetector.redact(userDocument);
 const prompt = `Summarize this document: ${sanitizedContext}`;
 const response = await llm.complete(prompt);
 const safeOutput = encodeForContext(response, 'html');
-```
 
-```typescript
-// BAD: Direct exposure of sensitive data
+// ❌ BAD: Direct exposure of sensitive data
 const prompt = `Analyze this customer: Name: ${customer.name}, SSN: ${customer.ssn}, Income: ${customer.income}`;
 // System prompt leaks: "You have access to database: postgres://admin:password@..."
 ```
+<!-- </example-sensitive-info-disclosure> -->
 
 #### Training Data Extraction Defense
 
@@ -112,18 +110,18 @@ Default to established model providers (OpenAI, Azure OpenAI, Anthropic, Google)
 
 Maintain a comprehensive Software Bill of Materials (SBOM) for all AI/ML dependencies. This includes models, fine-tuning adapters (LoRA), embedding models, and ML libraries.
 
+<!-- <example-supply-chain-verification> -->
 ```python
-# GOOD: Verified model loading with integrity checks
+# ✅ GOOD: Verified model loading with integrity checks
 model_hash = verify_model_signature(model_path, expected_signature)
 if model_hash != TRUSTED_MODEL_HASH:
     raise SecurityError("Model integrity verification failed")
 model = load_model(model_path)
-```
 
-```python
-# BAD: Loading unverified models
+# ❌ BAD: Loading unverified models
 model = load_model_from_url(untrusted_url)  # No verification
 ```
+<!-- </example-supply-chain-verification> -->
 
 #### Red Team Testing
 
@@ -151,20 +149,20 @@ Implement comprehensive tracking for all training and fine-tuning data. Maintain
 
 Before incorporating data into training or fine-tuning sets, apply content validation to detect malicious patterns, hidden instructions, or biased content.
 
+<!-- <example-data-poisoning-defense> -->
 ```python
-# GOOD: Validated data pipeline with provenance
+# ✅ GOOD: Validated data pipeline with provenance
 training_data = load_dataset(source="trusted_repository")
 validated_data = data_validator.scan_for_poisoning(training_data)
 provenance_log.record(source, validation_result, timestamp)
 if validated_data.risk_score > THRESHOLD:
     raise SecurityError("Data poisoning detected")
-```
 
-```python
-# BAD: Unvalidated data ingestion
+# ❌ BAD: Unvalidated data ingestion
 training_data = scrape_web_content(urls)  # No validation
 model.fine_tune(training_data)  # Poisoned data risk
 ```
+<!-- </example-data-poisoning-defense> -->
 
 #### Adversarial Testing for Backdoors
 
@@ -205,22 +203,22 @@ Apply strict context-appropriate encoding based on where LLM output will be used
 
 Avoid executing LLM-generated code, commands, or queries without thorough validation and sandboxing.
 
+<!-- <example-output-handling> -->
 ```javascript
-// GOOD: Validated and encoded output
+// ✅ GOOD: Validated and encoded output
 const llmResponse = await llm.generate(userPrompt);
 const validatedResponse = outputValidator.validate(llmResponse, expectedSchema);
 const safeHtml = DOMPurify.sanitize(validatedResponse.html);
 const escapedText = escapeHtml(validatedResponse.text);
-```
 
-```javascript
-// BAD: Direct execution of LLM output
+// ❌ BAD: Direct execution of LLM output
 const llmCode = await llm.generate("Write a function to...");
 eval(llmCode);  // Critical vulnerability: arbitrary code execution
 
 const sqlQuery = await llm.generate("Generate SQL for...");
 db.execute(sqlQuery);  // SQL injection via LLM
 ```
+<!-- </example-output-handling> -->
 
 #### Parameterized Interfaces
 
@@ -248,24 +246,24 @@ Only expose functions/tools to the LLM that are absolutely necessary. Remove or 
 
 Extensions and functions should operate with minimal privileges. Do not connect an LLM agent to systems with admin rights or broad data access.
 
+<!-- <example-excessive-agency> -->
 ```python
-# GOOD: Minimal permissions with explicit allowlist
+# ✅ GOOD: Minimal permissions with explicit allowlist
 allowed_functions = ["search_knowledge_base", "format_response"]  # Limited scope
 agent = LLMAgent(
     functions=allowed_functions,
     permissions=ReadOnlyPermissions(scope="public_docs"),
     require_approval=True  # Human-in-the-loop for actions
 )
-```
 
-```python
-# BAD: Excessive permissions and functionality
+# ❌ BAD: Excessive permissions and functionality
 agent = LLMAgent(
     functions=all_system_functions,  # Everything exposed
     permissions=AdminPermissions(),  # Full access
     autonomous=True  # No oversight
 )
 ```
+<!-- </example-excessive-agency> -->
 
 #### Human-in-the-Loop for High-Impact Actions
 
@@ -293,8 +291,9 @@ Do not include credentials, API keys, tokens, database connection strings, or ot
 
 Do not rely on system prompts to enforce security controls. Authorization checks, rate limiting, input validation, and other security mechanisms belong in deterministic code outside the LLM.
 
+<!-- <example-system-prompt-leakage> -->
 ```python
-# GOOD: Security controls outside LLM
+# ✅ GOOD: Security controls outside LLM
 def process_request(user_id, request):
     # Deterministic authorization check - NOT in prompt
     if not has_permission(user_id, request.resource):
@@ -304,10 +303,8 @@ def process_request(user_id, request):
     system_prompt = "You are a helpful assistant. Answer user questions about public documentation."
     response = llm.generate(system=system_prompt, user=request.message)
     return validate_output(response)
-```
 
-```python
-# BAD: Security in system prompt (bypassable)
+# ❌ BAD: Security in system prompt (bypassable)
 system_prompt = f"""
 You are a banking assistant. 
 Database password: {DB_PASSWORD}  # CRITICAL: Secret exposure
@@ -316,6 +313,7 @@ Only allow transactions under $1000.  # Security rule in prompt - bypassable
 Only users with role='admin' can access account details.  # Auth in prompt - wrong
 """
 ```
+<!-- </example-system-prompt-leakage> -->
 
 #### Assume Prompt Leakage
 
@@ -343,8 +341,9 @@ Retrieval-Augmented Generation (RAG) systems using vector databases introduce un
 
 Implement fine-grained access controls at the vector database level. When retrieving embeddings, filter results based on the current user's permissions. Do not rely on the LLM to enforce access control.
 
+<!-- <example-vector-embedding-security> -->
 ```python
-# GOOD: Permission-aware retrieval
+# ✅ GOOD: Permission-aware retrieval
 def retrieve_context(query, user_id):
     query_embedding = embed(query)
     # Filter by user permissions BEFORE retrieval
@@ -354,16 +353,15 @@ def retrieve_context(query, user_id):
         namespace=get_user_namespace(user_id)  # Logical partitioning
     )
     return results
-```
 
-```python
-# BAD: No access control on retrieval
+# ❌ BAD: No access control on retrieval
 def retrieve_context(query):
     query_embedding = embed(query)
     results = vector_db.search(query_embedding)  # Returns everything
     # Hoping LLM will filter - WRONG
     return results
 ```
+<!-- </example-vector-embedding-security> -->
 
 #### Multi-Tenant Isolation
 
@@ -407,8 +405,9 @@ Use Retrieval-Augmented Generation to ground model responses in verified, author
 
 For critical applications, implement automated fact-checking that validates key claims in LLM outputs against trusted databases or knowledge bases before displaying to users.
 
+<!-- <example-misinformation-defense> -->
 ```python
-# GOOD: RAG with verification
+# ✅ GOOD: RAG with verification
 def generate_response(query):
     # Retrieve from curated knowledge base
     authoritative_docs = retrieve_verified_documents(query)
@@ -426,14 +425,13 @@ def generate_response(query):
         return "I don't have reliable information about this."
     
     return add_uncertainty_indicators(response)
-```
 
-```python
-# BAD: No grounding or verification
+# ❌ BAD: No grounding or verification
 def generate_response(query):
     response = llm.generate(query)  # Pure generation - high hallucination risk
     return response  # No fact checking or uncertainty communication
 ```
+<!-- </example-misinformation-defense> -->
 
 #### Communicate Uncertainty
 
@@ -465,8 +463,9 @@ Regularly test for hallucination patterns by asking questions with no correct an
 
 Apply strict rate limits at multiple levels: per user, per IP address, per API key. Set both request count limits and token consumption limits.
 
+<!-- <example-unbounded-consumption> -->
 ```python
-# GOOD: Multi-layered rate limiting
+# ✅ GOOD: Multi-layered rate limiting
 @rate_limit(requests_per_minute=10, tokens_per_hour=100000)
 @timeout(seconds=30)
 def llm_endpoint(request):
@@ -481,15 +480,14 @@ def llm_endpoint(request):
         timeout=20  # Prevent long-running queries
     )
     return response
-```
 
-```python
-# BAD: No resource controls
+# ❌ BAD: No resource controls
 def llm_endpoint(request):
     # No rate limiting, input validation, or timeouts
     response = llm.generate(request.message)  # Unbounded
     return response
 ```
+<!-- </example-unbounded-consumption> -->
 
 #### Input Validation with Size Limits
 
