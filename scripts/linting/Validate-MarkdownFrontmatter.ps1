@@ -27,7 +27,12 @@ param(
     [string[]]$Files = @(),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$ExcludePaths = @(),
+    [string[]]$ExcludePaths = @(
+        'scripts/tests/Fixtures/**',
+        'extension/README.md',
+        'pr.md',
+        '.github/PULL_REQUEST_TEMPLATE.md'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$WarningsAsErrors,
@@ -42,7 +47,10 @@ param(
     [switch]$EnableSchemaValidation,
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FooterExcludePaths = @(),
+    [string[]]$FooterExcludePaths = @(
+        'CHANGELOG.md',
+        'dependency-pinning-artifacts/**'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation
