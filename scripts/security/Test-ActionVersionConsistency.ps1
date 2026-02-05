@@ -75,6 +75,9 @@ $ErrorActionPreference = 'Stop'
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
+# Support dot-sourcing for Pester tests
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
+
 function Write-ConsistencyLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -124,8 +127,8 @@ function Get-ActionVersionViolations {
         }
     }
 
-    $workflowFiles = Get-ChildItem -Path $resolvedPath -Filter '*.yml' -Recurse -ErrorAction SilentlyContinue
-    $workflowFiles += Get-ChildItem -Path $resolvedPath -Filter '*.yaml' -Recurse -ErrorAction SilentlyContinue
+    $workflowFiles = @(Get-ChildItem -Path $resolvedPath -Filter '*.yml' -Recurse -ErrorAction SilentlyContinue)
+    $workflowFiles += @(Get-ChildItem -Path $resolvedPath -Filter '*.yaml' -Recurse -ErrorAction SilentlyContinue)
 
     foreach ($file in $workflowFiles) {
         $lines = Get-Content -Path $file.FullName
@@ -189,24 +192,27 @@ function Get-ActionVersionViolations {
         $entry = $shaVersionMap[$sha]
 
         if ($entry.Versions.Count -gt 1) {
-            foreach ($source in $entry.Sources) {
-                $violation = [DependencyViolation]::new()
-                $violation.File = $source.File
-                $violation.Line = $source.Line
-                $violation.Type = 'github-actions'
-                $violation.Name = $entry.Action
-                $violation.Version = $sha.Substring(0, 7)
-                $violation.Severity = 'High'
-                $violation.ViolationType = 'VersionMismatch'
-                $violation.Description = "Same SHA has conflicting version comments: $($entry.Versions -join ' vs ')"
-                $violation.Remediation = 'Standardize version comment across all workflows'
-                $violation.Metadata = @{
-                    FullSha           = $sha
-                    ConflictingVersions = $entry.Versions -join ', '
-                    LineContent       = $source.LineContent
-                }
-                [void]$violations.Add($violation)
+            # Report one violation per SHA with all affected locations in Metadata
+            $primarySource = $entry.Sources[0]
+            $allLocations = $entry.Sources | ForEach-Object { "$($_.File):$($_.Line)" }
+
+            $violation = [DependencyViolation]::new()
+            $violation.File = $primarySource.File
+            $violation.Line = $primarySource.Line
+            $violation.Type = 'github-actions'
+            $violation.Name = $entry.Action
+            $violation.Version = $sha.Substring(0, 7)
+            $violation.Severity = 'High'
+            $violation.ViolationType = 'VersionMismatch'
+            $violation.Description = "Same SHA has conflicting version comments across $($entry.Sources.Count) files: $($entry.Versions -join ' vs ')"
+            $violation.Remediation = 'Standardize version comment across all workflows'
+            $violation.Metadata = @{
+                FullSha             = $sha
+                ConflictingVersions = $entry.Versions -join ', '
+                AffectedLocations   = $allLocations
+                LineContent         = $primarySource.LineContent
             }
+            [void]$violations.Add($violation)
         }
     }
 
@@ -352,7 +358,7 @@ function Export-ConsistencyReport {
 #region Main Execution
 
 try {
-    if ($MyInvocation.InvocationName -ne '.') {
+    if (-not $script:SkipMain) {
         Write-ConsistencyLog 'Starting GitHub Actions version consistency analysis...' -Level Info
         Write-ConsistencyLog "Scanning path: $Path" -Level Info
 
@@ -388,10 +394,6 @@ try {
         }
 
         exit $exitCode
-    }
-    else {
-        Write-Error 'Test-ActionVersionConsistency failed: will not execute if dot-sourced'
-        exit 1
     }
 }
 catch {
