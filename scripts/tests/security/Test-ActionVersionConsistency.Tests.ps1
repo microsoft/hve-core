@@ -499,7 +499,7 @@ Describe 'Main Script Execution' -Tag 'Unit' {
     }
 
     AfterAll {
-        if (Test-Path $script:MainTestRoot) {
+        if ($script:MainTestRoot -and (Test-Path $script:MainTestRoot)) {
             Remove-Item -Path $script:MainTestRoot -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
@@ -511,7 +511,7 @@ Describe 'Main Script Execution' -Tag 'Unit' {
         }
 
         AfterEach {
-            if (Test-Path $script:TestWorkspace) {
+            if ($script:TestWorkspace -and (Test-Path $script:TestWorkspace)) {
                 Remove-Item -Path $script:TestWorkspace -Recurse -Force -ErrorAction SilentlyContinue
             }
         }
