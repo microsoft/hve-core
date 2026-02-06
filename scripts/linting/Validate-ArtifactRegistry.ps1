@@ -15,7 +15,6 @@
 .DESCRIPTION
     Validates the `.github/ai-artifacts-registry.json` file by checking:
     - JSON structure and required fields
-    - Maturity enum values
     - Persona ID format and reference validity
     - Artifact file existence on disk
     - Dependency reference validity

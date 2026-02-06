@@ -234,11 +234,16 @@ function Get-CollectionArtifacts {
             $entry = $Registry[$type][$name]
 
             # Persona filter: artifact must belong to at least one collection persona
+            # Empty personas array means universal (all personas)
             $personaMatch = $false
-            foreach ($persona in $entry.personas) {
-                if ($collectionPersonas -contains $persona) {
-                    $personaMatch = $true
-                    break
+            if (@($entry.personas).Count -eq 0) {
+                $personaMatch = $true
+            } else {
+                foreach ($persona in $entry.personas) {
+                    if ($collectionPersonas -contains $persona) {
+                        $personaMatch = $true
+                        break
+                    }
                 }
             }
             if (-not $personaMatch) { continue }
@@ -332,8 +337,15 @@ function Resolve-HandoffDependencies {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
                 if ($data.ContainsKey('handoffs') -and $data.handoffs -is [System.Collections.IEnumerable] -and $data.handoffs -isnot [string]) {
                     foreach ($handoff in $data.handoffs) {
-                        if ($handoff -is [string] -and $visited.Add($handoff)) {
-                            $queue.Enqueue($handoff)
+                        # Handle both string format and object format (with 'agent' field)
+                        $targetAgent = $null
+                        if ($handoff -is [string]) {
+                            $targetAgent = $handoff
+                        } elseif ($handoff -is [hashtable] -and $handoff.ContainsKey('agent')) {
+                            $targetAgent = $handoff.agent
+                        }
+                        if ($targetAgent -and $visited.Add($targetAgent)) {
+                            $queue.Enqueue($targetAgent)
                         }
                     }
                 }

@@ -467,12 +467,14 @@ description: "Solo agent"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'solo.agent.md')
 
-        # Agent with single handoff
+        # Agent with single handoff (object format matching real agents)
         @'
 ---
 description: "Parent agent"
 handoffs:
-  - child
+  - label: "Go to child"
+    agent: child
+    prompt: Continue
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'parent.agent.md')
 
@@ -482,21 +484,23 @@ description: "Child agent"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'child.agent.md')
 
-        # Self-referential agent
+        # Self-referential agent (object format)
         @'
 ---
 description: "Self agent"
 handoffs:
-  - self-ref
+  - label: "Self"
+    agent: self-ref
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'self-ref.agent.md')
 
-        # Circular chain
+        # Circular chain (object format)
         @'
 ---
 description: "Chain A"
 handoffs:
-  - chain-b
+  - label: "To B"
+    agent: chain-b
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'chain-a.agent.md')
 
@@ -504,7 +508,8 @@ handoffs:
 ---
 description: "Chain B"
 handoffs:
-  - chain-a
+  - label: "To A"
+    agent: chain-a
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'chain-b.agent.md')
 

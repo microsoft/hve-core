@@ -440,11 +440,6 @@ function Get-PackagingDirectorySpec {
             IsFile      = $false
         },
         @{
-            Source      = Join-Path $RepoRoot ".github/skills"
-            Destination = Join-Path $ExtensionDirectory ".github/skills"
-            IsFile      = $false
-        },
-        @{
             Source      = Join-Path $RepoRoot "scripts/dev-tools"
             Destination = Join-Path $ExtensionDirectory "scripts/dev-tools"
             IsFile      = $false
