@@ -81,18 +81,12 @@ All skill files **MUST** be placed in:
 * **Format**: Single sentence ending with attribution
 * **Example**: `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this skill
-* **Valid values**: `stable`, `preview`, `experimental`, `deprecated`
-
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 ```
 
@@ -260,7 +254,6 @@ Before submitting your skill, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `name` field present and matches directory name
 * [ ] `description` field present and descriptive
-* [ ] `maturity` field present with valid value
 
 ### Scripts
 

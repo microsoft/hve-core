@@ -204,7 +204,6 @@ Validation guidelines:
 
 * Include `name` frontmatter matching the skill directory name (required).
 * Include `description` frontmatter (required).
-* Include `maturity` frontmatter (required).
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Document prerequisites for each supported platform.
 * Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
@@ -219,9 +218,6 @@ This section defines frontmatter field requirements for prompt engineering artif
 All prompt engineering artifacts include these frontmatter fields:
 
 * `description:` - Brief description of the artifact's purpose.
-* `maturity:` - Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.
-
-Note: VS Code shows a validation warning for the `maturity:` field as it's not in VS Code's schema. This is expected; the field is required by the HVE-Core codebase for artifact lifecycle tracking. Ignore VS Code validation warnings for the `maturity:` attribute.
 
 ### Optional Fields
 

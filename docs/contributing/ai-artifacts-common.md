@@ -87,7 +87,7 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ## Maturity Field Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** include a `maturity` field in frontmatter.
+Maturity is defined in `.github/ai-artifacts-registry.json` and MUST NOT appear in artifact frontmatter.
 
 ### Purpose
 
@@ -107,20 +107,22 @@ The maturity field controls which extension channel includes the artifact:
 
 ### Default for New Contributions
 
-New artifacts **SHOULD** use `maturity: stable` unless:
+New artifact registry entries **SHOULD** use `maturity: stable` unless:
 
 * The artifact is a proof-of-concept or experimental feature
 * The artifact requires additional testing or feedback before wide release
 * The contributor explicitly intends to target early adopters
 
-### Example
+### Setting Maturity
 
-```yaml
----
-description: 'Specialized agent for security analysis'
-maturity: 'stable'
-tools: ['codebase', 'search']
----
+Add or update the maturity value in the artifact's registry entry in `.github/ai-artifacts-registry.json`:
+
+```json
+"my-artifact": {
+    "maturity": "stable",
+    "personas": ["hve-core-all"],
+    "tags": ["category"]
+}
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
