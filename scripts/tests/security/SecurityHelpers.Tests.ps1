@@ -1,4 +1,5 @@
 # Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Licensed under the MIT license.
 
 #Requires -Modules Pester
