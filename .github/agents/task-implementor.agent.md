@@ -1,6 +1,5 @@
 ---
 description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
-maturity: stable
 handoffs:
   - label: "✅ Review"
     agent: task-reviewer

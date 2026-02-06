@@ -1,7 +1,6 @@
 ---
 description: 'Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai'
 agent: agent
-maturity: stable
 ---
 
 # Pull Request (PR) Generation Instructions
@@ -160,12 +159,12 @@ Deduplicate issue numbers and preserve the action prefix from the first occurren
 
 #### GHCP Maturity Detection
 
-After detecting GHCP files from Change Type Detection, analyze frontmatter for maturity levels:
+After detecting GHCP files from Change Type Detection, look up maturity levels from the AI Artifacts Registry:
 
 1. For each file matching `.instructions.md`, `.prompt.md`, or `.agent.md` patterns:
-   * Extract file content from `<full_diff>` section (look for `+++ b/...` paths)
-   * Parse YAML frontmatter between `---` delimiters in the added content
-   * Read `maturity` field value (default: `stable` if not present)
+   * Derive the artifact key from the file path by removing the extension pattern (e.g., `pull-request.prompt.md` → `pull-request`, `bash/bash.instructions.md` → `bash/bash`)
+   * Look up the artifact's `maturity` value in `.github/ai-artifacts-registry.json`
+   * Default to `stable` if the artifact is not found in the registry
 
 2. Categorize files by maturity:
 

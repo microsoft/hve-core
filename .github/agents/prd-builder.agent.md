@@ -1,6 +1,5 @@
 ---
 description: "Product Requirements Document builder with guided Q&A and reference integration"
-maturity: stable
 ---
 
 # PRD Builder Instructions
