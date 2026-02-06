@@ -1,6 +1,5 @@
 ---
 description: "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
-maturity: stable
 ---
 
 # Process My Work Items for Task Planning

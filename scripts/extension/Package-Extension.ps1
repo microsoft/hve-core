@@ -27,6 +27,11 @@
     Optional. When specified, packages the extension for VS Code Marketplace pre-release channel.
     Uses vsce --pre-release flag which marks the extension for the pre-release track.
 
+.PARAMETER Collection
+    Optional. Path to a collection manifest JSON file. When specified, only
+    collection-filtered artifacts are copied and the output filename uses the
+    collection ID.
+
 .EXAMPLE
     ./Package-Extension.ps1
     # Packages using version from package.json
@@ -68,7 +73,10 @@ param(
     [string]$ChangelogPath = "",
 
     [Parameter(Mandatory = $false)]
-    [switch]$PreRelease
+    [switch]$PreRelease,
+
+    [Parameter(Mandatory = $false)]
+    [string]$Collection = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -123,6 +131,8 @@ function Get-ExtensionOutputPath {
         The name of the extension (from package.json).
     .PARAMETER PackageVersion
         The version string to use in the filename.
+    .PARAMETER CollectionId
+        Optional collection identifier to use instead of the extension name in the filename.
     .OUTPUTS
         String path to the expected .vsix file.
     #>
@@ -136,10 +146,17 @@ function Get-ExtensionOutputPath {
         [string]$ExtensionName,
 
         [Parameter(Mandatory = $true)]
-        [string]$PackageVersion
+        [string]$PackageVersion,
+
+        [Parameter(Mandatory = $false)]
+        [string]$CollectionId = ""
     )
 
-    $vsixFileName = "$ExtensionName-$PackageVersion.vsix"
+    $vsixFileName = if ($CollectionId -and $CollectionId -ne "") {
+        "$CollectionId-$PackageVersion.vsix"
+    } else {
+        "$ExtensionName-$PackageVersion.vsix"
+    }
     return Join-Path $ExtensionDirectory $vsixFileName
 }
 
@@ -266,6 +283,47 @@ function New-PackagingResult {
         Version      = $Version
         ErrorMessage = $ErrorMessage
     }
+}
+
+function Get-PersonaReadmePath {
+    <#
+    .SYNOPSIS
+        Resolves the persona-specific README path from a collection manifest.
+    .DESCRIPTION
+        Maps a collection manifest to its persona-specific README file. Returns
+        null when the collection is the full package (hve-core-all) or when no
+        matching persona README exists on disk.
+    .PARAMETER CollectionPath
+        Path to the collection manifest JSON file.
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory containing README files.
+    .OUTPUTS
+        String path to the persona README, or $null if not applicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory
+    )
+
+    $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
+    $collectionId = $manifest.id
+
+    # Full package uses the default README.md
+    if ($collectionId -eq 'hve-core-all') {
+        return $null
+    }
+
+    $personaReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
+    if (Test-Path $personaReadmePath) {
+        return $personaReadmePath
+    }
+
+    return $null
 }
 
 function Get-ResolvedPackageVersion {
@@ -436,6 +494,11 @@ function Get-PackagingDirectorySpec {
             Source      = Join-Path $RepoRoot "docs/templates"
             Destination = Join-Path $ExtensionDirectory "docs/templates"
             IsFile      = $false
+        },
+        @{
+            Source      = Join-Path $RepoRoot ".github/skills"
+            Destination = Join-Path $ExtensionDirectory ".github/skills"
+            IsFile      = $false
         }
     )
 }
@@ -443,6 +506,135 @@ function Get-PackagingDirectorySpec {
 #endregion Pure Functions
 
 #region I/O Functions
+
+function Copy-CollectionArtifacts {
+    <#
+    .SYNOPSIS
+        Copies only collection-filtered artifacts to the extension directory.
+    .DESCRIPTION
+        Reads the prepared package.json to determine which artifacts were selected
+        by collection filtering, then copies only those files instead of the entire
+        .github directory.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory.
+    .PARAMETER PrepareResult
+        Result hashtable from Invoke-PrepareExtension. Reserved for future collection metadata handling.
+    #>
+    [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'PrepareResult', Justification = 'Reserved for future collection metadata handling')]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$PrepareResult
+    )
+
+    $preparedPkgJson = Get-Content -Path (Join-Path $ExtensionDirectory "package.json") -Raw | ConvertFrom-Json
+
+    # Copy filtered agents
+    if ($preparedPkgJson.contributes.chatAgents) {
+        $agentsDestDir = Join-Path $ExtensionDirectory ".github/agents"
+        New-Item -Path $agentsDestDir -ItemType Directory -Force | Out-Null
+        foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
+            $srcPath = Join-Path $RepoRoot ($agent.path.TrimStart('./'))
+            if (Test-Path $srcPath) {
+                Copy-Item -Path $srcPath -Destination $agentsDestDir -Force
+            }
+        }
+    }
+
+    # Copy filtered prompts
+    if ($preparedPkgJson.contributes.chatPromptFiles) {
+        foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
+            $srcPath = Join-Path $RepoRoot ($prompt.path.TrimStart('./'))
+            $destPath = Join-Path $ExtensionDirectory ($prompt.path.TrimStart('./'))
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            if (Test-Path $srcPath) {
+                Copy-Item -Path $srcPath -Destination $destPath -Force
+            }
+        }
+    }
+
+    # Copy filtered instructions
+    if ($preparedPkgJson.contributes.chatInstructions) {
+        foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
+            $srcPath = Join-Path $RepoRoot ($instr.path.TrimStart('./'))
+            $destPath = Join-Path $ExtensionDirectory ($instr.path.TrimStart('./'))
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            if (Test-Path $srcPath) {
+                Copy-Item -Path $srcPath -Destination $destPath -Force
+            }
+        }
+    }
+
+    # Copy filtered skills
+    if ($preparedPkgJson.contributes.chatSkills) {
+        foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
+            $srcPath = Join-Path $RepoRoot ($skill.path.TrimStart('./'))
+            $destPath = Join-Path $ExtensionDirectory ($skill.path.TrimStart('./'))
+            if (Test-Path $srcPath) {
+                Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
+            }
+        }
+    }
+}
+
+function Set-PersonaReadme {
+    <#
+    .SYNOPSIS
+        Swaps or restores the persona-specific README for collection packaging.
+    .DESCRIPTION
+        In swap mode, backs up the original README.md and copies the persona
+        README in its place. In restore mode, copies the backup back and removes it.
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory.
+    .PARAMETER PersonaReadmePath
+        Path to the persona-specific README file. Required for Swap operation.
+    .PARAMETER Operation
+        Either 'Swap' to replace README.md with persona content, or 'Restore'
+        to revert README.md from backup.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PersonaReadmePath = "",
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Swap', 'Restore')]
+        [string]$Operation
+    )
+
+    $readmePath = Join-Path $ExtensionDirectory "README.md"
+    $backupPath = Join-Path $ExtensionDirectory "README.md.bak"
+
+    if ($Operation -eq 'Swap') {
+        if (-not $PersonaReadmePath -or $PersonaReadmePath -eq "") {
+            Write-Warning "No persona README path provided for swap operation"
+            return
+        }
+        Copy-Item -Path $readmePath -Destination $backupPath -Force
+        Copy-Item -Path $PersonaReadmePath -Destination $readmePath -Force
+        Write-Host "   Swapped README.md with $(Split-Path $PersonaReadmePath -Leaf)" -ForegroundColor Green
+    }
+    elseif ($Operation -eq 'Restore') {
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $readmePath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored original README.md" -ForegroundColor Green
+        }
+    }
+}
 
 function Invoke-VsceCommand {
     <#
@@ -597,6 +789,10 @@ function Invoke-PackageExtension {
         Optional path to changelog file to include in package.
     .PARAMETER PreRelease
         Switch to mark the package as a pre-release version.
+    .PARAMETER Collection
+        Optional path to a collection manifest JSON file. When specified, only
+        collection-filtered artifacts are copied and the output filename uses the
+        collection ID.
     .OUTPUTS
         Hashtable with Success, OutputPath, Version, and ErrorMessage properties.
     #>
@@ -621,7 +817,10 @@ function Invoke-PackageExtension {
         [string]$ChangelogPath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch]$PreRelease
+        [switch]$PreRelease,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Collection = ""
     )
 
     $dirsToClean = @(".github", "docs", "scripts")
@@ -713,24 +912,65 @@ function Invoke-PackageExtension {
 
         # Get and execute copy specifications
         $copySpecs = Get-PackagingDirectorySpec -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory
-        foreach ($spec in $copySpecs) {
-            $specName = Split-Path $spec.Source -Leaf
-            Write-Host "   Copying $specName..." -ForegroundColor Gray
 
-            if ($spec.IsFile) {
-                $parentDir = Split-Path $spec.Destination -Parent
-                New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
-            } else {
-                $parentDir = Split-Path $spec.Destination -Parent
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+        if ($Collection -and $Collection -ne "") {
+            # Collection mode: copy only filtered artifacts for .github content
+            Write-Host "   Using collection-filtered artifact copy..." -ForegroundColor Gray
+
+            # Copy non-.github specs normally
+            foreach ($spec in $copySpecs) {
+                if ($spec.Source -like "*/.github*" -or $spec.Source -like "*\.github*") {
+                    continue
                 }
-                Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                $specName = Split-Path $spec.Source -Leaf
+                Write-Host "   Copying $specName..." -ForegroundColor Gray
+
+                if ($spec.IsFile) {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
+                } else {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    if (-not (Test-Path $parentDir)) {
+                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    }
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                }
+            }
+
+            # Copy collection-specific artifacts
+            Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -PrepareResult @{}
+        } else {
+            # Full mode: copy everything as before
+            foreach ($spec in $copySpecs) {
+                $specName = Split-Path $spec.Source -Leaf
+                Write-Host "   Copying $specName..." -ForegroundColor Gray
+
+                if ($spec.IsFile) {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
+                } else {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    if (-not (Test-Path $parentDir)) {
+                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    }
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                }
             }
         }
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
+
+        # Swap persona README if collection specifies one
+        if ($Collection -and $Collection -ne "") {
+            $personaReadmePath = Get-PersonaReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
+            if ($personaReadmePath) {
+                Write-Host ""
+                Write-Host "📄 Applying persona README..." -ForegroundColor Yellow
+                Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -PersonaReadmePath $personaReadmePath -Operation Swap
+            }
+        }
 
         # Check vsce availability using pure function
         $vsceAvailability = Test-VsceAvailable
@@ -791,6 +1031,20 @@ function Invoke-PackageExtension {
         return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
     }
     finally {
+        # Restore canonical package.json from persona template backup
+        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $PackageJsonPath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored canonical package.json from backup" -ForegroundColor Green
+
+            # Re-read restored package.json for downstream restore steps
+            $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+        }
+
+        # Restore persona README if it was swapped
+        Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
+
         # Cleanup copied directories using I/O function
         Write-Host ""
         Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
@@ -821,7 +1075,8 @@ try {
             -Version $Version `
             -DevPatchNumber $DevPatchNumber `
             -ChangelogPath $ChangelogPath `
-            -PreRelease:$PreRelease
+            -PreRelease:$PreRelease `
+            -Collection $Collection
 
         if (-not $result.Success) {
             Write-Error $result.ErrorMessage

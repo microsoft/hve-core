@@ -1,6 +1,5 @@
 ---
 description: 'Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues'
-maturity: stable
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'github/*']
 ---
 

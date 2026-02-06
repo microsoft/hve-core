@@ -1,0 +1,16 @@
+{
+    "$schema": "../schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0.0",
+    "personas": {
+        "definitions": {
+            "developer": {
+                "name": "Developer",
+                "description": "Software engineers"
+            }
+        }
+    },
+    "agents": {},
+    "prompts": {},
+    "instructions": {},
+    "skills": {}
+}

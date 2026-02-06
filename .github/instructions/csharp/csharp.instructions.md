@@ -1,7 +1,6 @@
 ---
 applyTo: '**/*.cs'
 description: 'Required instructions for C# (CSharp) research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 # C# Instructions
 

@@ -1,0 +1,802 @@
+{
+    "$schema": "../scripts/linting/schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0",
+    "personas": {
+        "definitions": {
+            "hve-core-all": {
+                "name": "HVE Core All",
+                "description": "Full HVE-Core release including all artifacts regardless of role-specific filtering"
+            },
+            "developer": {
+                "name": "Developer",
+                "description": "Software engineers writing code"
+            },
+            "tpm": {
+                "name": "Technical PM",
+                "description": "Program/product managers"
+            },
+            "devops": {
+                "name": "DevOps Engineer",
+                "description": "Platform, SRE, infrastructure engineers"
+            },
+            "architect": {
+                "name": "Software Architect",
+                "description": "Solution/system architects"
+            },
+            "technical-writer": {
+                "name": "Technical Writer",
+                "description": "Documentation specialists"
+            }
+        }
+    },
+    "agents": {
+        "ado-prd-to-wit": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado",
+                "planning"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [
+                    "ado-wit-planning"
+                ],
+                "skills": []
+            }
+        },
+        "adr-creation": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "architecture",
+                "documentation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "arch-diagram-builder": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "architecture",
+                "documentation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "brd-builder": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "planning",
+                "documentation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "doc-ops": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "documentation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [
+                    "writing-style",
+                    "markdown",
+                    "commit-message"
+                ],
+                "skills": []
+            }
+        },
+        "gen-data-spec": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "data-science"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "gen-jupyter-notebook": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "data-science"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "gen-streamlit-dashboard": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "data-science"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "github-issue-manager": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [
+                    "github-add-issue"
+                ],
+                "instructions": [
+                    "markdown"
+                ],
+                "skills": []
+            }
+        },
+        "hve-core-installer": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "tooling"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "memory": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "session"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [
+                    "checkpoint",
+                    "rpi"
+                ],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "pr-review": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "review"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "prd-builder": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "planning",
+                "documentation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "prompt-builder": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "prompt-engineering"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [
+                    "prompt-build",
+                    "prompt-refactor",
+                    "prompt-analyze"
+                ],
+                "instructions": [
+                    "prompt-builder"
+                ],
+                "skills": []
+            }
+        },
+        "rpi-agent": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all",
+                "developer",
+                "tpm",
+                "devops",
+                "architect",
+                "technical-writer"
+            ],
+            "tags": [
+                "rpi",
+                "orchestration"
+            ],
+            "requires": {
+                "agents": [
+                    "task-researcher",
+                    "task-planner",
+                    "task-implementor",
+                    "task-reviewer"
+                ],
+                "prompts": [
+                    "task-research",
+                    "task-plan",
+                    "task-implement",
+                    "task-review",
+                    "rpi",
+                    "checkpoint"
+                ],
+                "instructions": [],
+                "skills": [
+                    "video-to-gif"
+                ]
+            }
+        },
+        "security-plan-creator": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "architecture",
+                "security"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "task-implementor": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "implementation"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [
+                    "commit-message"
+                ],
+                "skills": []
+            }
+        },
+        "task-planner": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "planning"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "task-researcher": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "research"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "task-reviewer": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "review"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "test-streamlit-dashboard": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "data-science",
+                "testing"
+            ],
+            "requires": {
+                "agents": [],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        }
+    },
+    "prompts": {
+        "ado-create-pull-request": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado",
+                "git"
+            ]
+        },
+        "ado-get-build-info": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "ado-get-my-work-items": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "ado-process-my-work-items-for-task-planning": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado",
+                "planning"
+            ]
+        },
+        "ado-update-wit-items": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "checkpoint": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "session"
+            ]
+        },
+        "doc-ops-update": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "documentation"
+            ]
+        },
+        "git-commit": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "git-commit-message": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "git-merge": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "git-setup": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "github-add-issue": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github"
+            ]
+        },
+        "prompt-analyze": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "prompt-engineering"
+            ]
+        },
+        "prompt-build": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "prompt-engineering"
+            ]
+        },
+        "prompt-refactor": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "prompt-engineering"
+            ]
+        },
+        "pull-request": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "git"
+            ]
+        },
+        "risk-register": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "planning"
+            ]
+        },
+        "rpi": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all",
+                "developer",
+                "tpm",
+                "devops",
+                "architect",
+                "technical-writer"
+            ],
+            "tags": [
+                "rpi"
+            ]
+        },
+        "task-implement": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "implementation"
+            ]
+        },
+        "task-plan": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "planning"
+            ]
+        },
+        "task-research": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "research"
+            ]
+        },
+        "task-review": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "rpi",
+                "review"
+            ]
+        }
+    },
+    "instructions": {
+        "ado-create-pull-request": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado",
+                "git"
+            ]
+        },
+        "ado-get-build-info": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "ado-update-wit-items": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "ado-wit-discovery": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado"
+            ]
+        },
+        "ado-wit-planning": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "ado",
+                "planning"
+            ]
+        },
+        "commit-message": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "git-merge": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "git"
+            ]
+        },
+        "hve-core-location": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "tooling"
+            ]
+        },
+        "markdown": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all",
+                "developer",
+                "tpm",
+                "devops",
+                "architect",
+                "technical-writer"
+            ],
+            "tags": [
+                "documentation"
+            ]
+        },
+        "prompt-builder": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "prompt-engineering"
+            ]
+        },
+        "python-script": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language"
+            ]
+        },
+        "uv-projects": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language"
+            ]
+        },
+        "writing-style": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "documentation"
+            ]
+        },
+        "bash/bash": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language"
+            ]
+        },
+        "bicep/bicep": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language",
+                "infrastructure"
+            ]
+        },
+        "csharp/csharp": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language"
+            ]
+        },
+        "csharp/csharp-tests": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language",
+                "testing"
+            ]
+        },
+        "terraform/terraform": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "language",
+                "infrastructure"
+            ]
+        }
+    },
+    "skills": {
+        "video-to-gif": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "media",
+                "tooling"
+            ]
+        }
+    }
+}

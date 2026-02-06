@@ -1,7 +1,6 @@
 ---
 description: "Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking."
 applyTo: '**/.copilot-tracking/pr/new/**'
-maturity: stable
 ---
 
 # Azure DevOps Pull Request Creation

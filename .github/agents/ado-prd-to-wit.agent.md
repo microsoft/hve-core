@@ -1,6 +1,5 @@
 ---
 description: 'Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies'
-maturity: stable
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'ado/search_workitem', 'ado/wit_get_work_item', 'ado/wit_get_work_items_for_iteration', 'ado/wit_list_backlog_work_items', 'ado/wit_list_backlogs', 'ado/wit_list_work_item_comments', 'ado/work_list_team_iterations', 'microsoft-docs/*']
 ---
 

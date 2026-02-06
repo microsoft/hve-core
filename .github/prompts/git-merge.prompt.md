@@ -1,7 +1,6 @@
 ---
 agent: 'agent'
 description: 'Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.'
-maturity: stable
 ---
 
 # Git Merge & Rebase Orchestrator

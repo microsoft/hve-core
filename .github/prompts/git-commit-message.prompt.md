@@ -1,7 +1,6 @@
 ---
 agent: 'agent'
 description: 'Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch'
-maturity: stable
 ---
 
 # Generate Commit Message

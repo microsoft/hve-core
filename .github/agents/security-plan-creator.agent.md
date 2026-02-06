@@ -1,6 +1,5 @@
 ---
 description: "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core"
-maturity: stable
 ---
 
 # Security Plan Creation Expert

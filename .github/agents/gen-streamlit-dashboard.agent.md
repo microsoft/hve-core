@@ -1,6 +1,5 @@
 ---
 description: 'Develop a multi-page Streamlit dashboard'
-maturity: stable
 ---
 
 # Streamlit Dashboard Generator

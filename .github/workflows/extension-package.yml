@@ -27,21 +27,56 @@ on:
       version:
         description: 'Version that was packaged'
         value: ${{ jobs.package.outputs.version }}
-      vsix-file:
-        description: 'Path to the packaged VSIX file'
-        value: ${{ jobs.package.outputs.vsix-file }}
 
 permissions:
   contents: read
 
 jobs:
-  package:
+  discover-collections:
+    name: Discover Collection Manifests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Discover collection manifests
+        id: discover
+        shell: bash
+        run: |
+          collections_dir="extension/collections"
+          if [ ! -d "$collections_dir" ]; then
+            echo "::error::Collections directory not found: $collections_dir"
+            exit 1
+          fi
+
+          # Build JSON array of collection manifests
+          matrix_json=$(find "$collections_dir" -name '*.collection.json' -type f | sort | while IFS= read -r file; do
+            id=$(jq -r '.id' "$file")
+            name=$(jq -r '.name' "$file")
+            echo "{\"id\":\"$id\",\"name\":\"$name\",\"manifest\":\"$file\"}"
+          done | jq -s '{include: .}')
+
+          echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
+          echo "Discovered collections:"
+          echo "$matrix_json" | jq .
+
+  package:
+    name: Package ${{ matrix.id }}
+    needs: discover-collections
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
+    outputs:
       version: ${{ steps.package.outputs.version }}
-      vsix-file: ${{ steps.package.outputs.vsix-file }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
@@ -76,9 +111,10 @@ jobs:
         run: |
           $channel = "${{ inputs.channel }}".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          
-          Write-Host "🔧 Preparing extension for $channel channel..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel
+          $collection = "${{ matrix.manifest }}"
+
+          Write-Host "🔧 Preparing extension for $channel channel (collection: ${{ matrix.id }})..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -Collection $collection
 
       - name: Package extension
         id: package
@@ -86,28 +122,31 @@ jobs:
         run: |
           $version = "${{ inputs.version }}".Trim()
           $devPatch = "${{ inputs.dev-patch-number }}".Trim()
-          
-          Write-Host "📦 Packaging extension..."
-          
-          $arguments = @{}
-          
+          $collection = "${{ matrix.manifest }}"
+
+          Write-Host "📦 Packaging extension (collection: ${{ matrix.id }})..."
+
+          $arguments = @{
+            Collection = $collection
+          }
+
           if ($version) {
             $arguments['Version'] = $version
           }
-          
+
           if ($devPatch) {
             $arguments['DevPatchNumber'] = $devPatch
           }
-          
+
           if (Test-Path "./CHANGELOG.md") {
             $arguments['ChangelogPath'] = "./CHANGELOG.md"
           }
-          
+
           ./scripts/extension/Package-Extension.ps1 @arguments
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
-          name: extension-vsix
+          name: extension-vsix-${{ matrix.id }}
           path: extension/*.vsix
           retention-days: 30

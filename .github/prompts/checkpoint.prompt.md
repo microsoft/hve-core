@@ -1,7 +1,6 @@
 ---
 description: "Save or restore conversation context using memory files - Brought to you by microsoft/hve-core"
 agent: 'memory'
-maturity: stable
 argument-hint: "[mode={save|continue|incremental}] [description=...]"
 ---
 

@@ -72,17 +72,6 @@ Prompt files **MUST**:
   * `workflow` - Automated workflow/pipeline context
 * **Example**: `workflow`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this prompt
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New prompts should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
 
 **`category`** (string enum)
@@ -116,13 +105,59 @@ Prompt files **MUST**:
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
 mode: 'workflow'
-maturity: 'stable'
 category: 'ado'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Registry Entry Requirements
+
+All prompts must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+
+### Adding Your Prompt to the Registry
+
+After creating your prompt file, add an entry to the `prompts` section of the registry:
+
+```json
+"my-prompt": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["workflow", "automation"]
+}
+```
+
+### Selecting Personas for Prompts
+
+Choose personas based on who invokes or benefits from the workflow:
+
+| Prompt Type             | Recommended Personas                      |
+|-------------------------|-------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `developer`               |
+| ADO work item workflows | `hve-core-all`, `tpm`, `devops`           |
+| GitHub issue workflows  | `hve-core-all`, `developer`               |
+| RPI workflow prompts    | `hve-core-all` plus all relevant personas |
+| Documentation workflows | `hve-core-all`, `technical-writer`        |
+| Architecture prompts    | `hve-core-all`, `architect`               |
+
+### Tags for Prompts
+
+Common tags for prompts:
+
+| Tag                  | Use For                          |
+|----------------------|----------------------------------|
+| `rpi`                | Research-Plan-Implement workflow |
+| `git`                | Git operations                   |
+| `github`             | GitHub-specific workflows        |
+| `ado`                | Azure DevOps workflows           |
+| `planning`           | Planning and estimation          |
+| `implementation`     | Code implementation              |
+| `review`             | Review processes                 |
+| `documentation`      | Documentation generation         |
+| `prompt-engineering` | Prompt building and analysis     |
+
+For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
 
 ## Prompt Content Structure Standards
 
@@ -429,7 +464,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity field set appropriately (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] Maturity set in registry (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

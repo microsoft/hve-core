@@ -1,0 +1,79 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/microsoft/hve-core/schemas/collection.schema.json",
+    "title": "Collection Manifest Schema",
+    "description": "Schema for persona-targeted extension collection manifests",
+    "type": "object",
+    "required": [
+        "$schema",
+        "id",
+        "name",
+        "displayName",
+        "description",
+        "personas"
+    ],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "minLength": 1
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "displayName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "description": {
+            "type": "string",
+            "minLength": 1
+        },
+        "personas": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "minItems": 1
+        },
+        "include": {
+            "$ref": "#/$defs/artifactGlobFilter"
+        },
+        "exclude": {
+            "$ref": "#/$defs/artifactGlobFilter"
+        }
+    },
+    "additionalProperties": false,
+    "$defs": {
+        "artifactGlobFilter": {
+            "type": "object",
+            "properties": {
+                "agents": {
+                    "$ref": "#/$defs/globPatternArray"
+                },
+                "prompts": {
+                    "$ref": "#/$defs/globPatternArray"
+                },
+                "instructions": {
+                    "$ref": "#/$defs/globPatternArray"
+                },
+                "skills": {
+                    "$ref": "#/$defs/globPatternArray"
+                }
+            },
+            "additionalProperties": false
+        },
+        "globPatternArray": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
+        }
+    }
+}

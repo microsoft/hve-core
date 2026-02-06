@@ -1,6 +1,5 @@
 ---
 description: 'Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries'
-maturity: stable
 ---
 
 # Jupyter Notebook Generator

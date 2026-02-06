@@ -2,7 +2,6 @@
 description: "Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core"
 argument-hint: "file=..."
 agent: 'prompt-builder'
-maturity: stable
 ---
 
 # Prompt Refactor

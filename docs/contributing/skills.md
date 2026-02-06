@@ -81,20 +81,55 @@ All skill files **MUST** be placed in:
 * **Format**: Single sentence ending with attribution
 * **Example**: `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this skill
-* **Valid values**: `stable`, `preview`, `experimental`, `deprecated`
-
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 ```
+
+## Registry Entry Requirements
+
+All skills must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+
+### Adding Your Skill to the Registry
+
+After creating your skill package, add an entry to the `skills` section of the registry:
+
+```json
+"my-skill": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["tooling", "media"]
+}
+```
+
+### Selecting Personas for Skills
+
+Choose personas based on who uses the skill's utilities:
+
+| Skill Type           | Recommended Personas                  |
+|----------------------|---------------------------------------|
+| Media processing     | `hve-core-all`                        |
+| Documentation tools  | `hve-core-all`, `technical-writer`    |
+| Data processing      | `hve-core-all`, `developer`           |
+| Infrastructure tools | `hve-core-all`, `devops`, `architect` |
+| Code generation      | `hve-core-all`, `developer`           |
+
+### Tags for Skills
+
+Common tags for skills:
+
+| Tag       | Use For                        |
+|-----------|--------------------------------|
+| `media`   | Image, video, audio processing |
+| `tooling` | General development utilities  |
+| `data`    | Data transformation            |
+| `testing` | Test automation utilities      |
+
+For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
 
 ## SKILL.md Content Structure
 
@@ -260,7 +295,6 @@ Before submitting your skill, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `name` field present and matches directory name
 * [ ] `description` field present and descriptive
-* [ ] `maturity` field present with valid value
 
 ### Scripts
 

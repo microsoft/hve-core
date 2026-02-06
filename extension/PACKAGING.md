@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2025-12-19
+ms.date: 2026-02-06
 ms.topic: reference
 ---
 
@@ -253,6 +253,176 @@ When packaging, agents are filtered by their `maturity` frontmatter field:
 | PreRelease | `stable`, `preview`, `experimental` |
 
 See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
+
+## Collection-Based Packaging
+
+The extension supports building persona-specific collection packages from a single codebase.
+
+### Available Collections
+
+Collection manifests are defined in `extension/collections/`:
+
+| Collection | Manifest                       | Description                            |
+|------------|--------------------------------|----------------------------------------|
+| Full       | `hve-core-all.collection.json` | All artifacts regardless of persona    |
+| Developer  | `developer.collection.json`    | Software engineering focused artifacts |
+
+### Persona Template Files
+
+Each persona collection has a corresponding `package.{collection-id}.json` template file in `extension/`. These files contain static metadata (name, display name, description, publisher) for the persona edition. The `contributes` section is empty because `Prepare-Extension.ps1` populates it dynamically at build time.
+
+| Template                 | Collection | Purpose                           |
+| ------------------------ | ---------- | --------------------------------- |
+| `package.json`           | Full       | Canonical manifest (hve-core-all) |
+| `package.developer.json` | Developer  | Developer edition metadata        |
+
+The canonical `extension/package.json` serves double duty: it is both the default build target and the `hve-core-all` template. No separate `package.hve-core-all.json` file exists.
+
+When building a persona collection, `Prepare-Extension.ps1`:
+
+1. Backs up `package.json` to `package.json.bak`
+2. Copies the persona template (`package.developer.json`) over `package.json`
+3. Generates `contributes` into the copied file
+4. Serializes the result as `package.json`
+
+After packaging, `Package-Extension.ps1` restores the canonical `package.json` from backup in its `finally` block.
+
+#### Version Synchronization
+
+Template files contain a `version` field managed by `release-please`. The `release-please-config.json` file includes `extra-files` entries for each template, ensuring versions stay synchronized across all persona templates and the canonical `package.json`.
+
+### Building Collection Packages
+
+To build a specific collection package:
+
+```bash
+# Build the full collection (default, no template copy)
+pwsh ./scripts/extension/Prepare-Extension.ps1
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Build a persona-specific collection (copies persona template)
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
+pwsh ./scripts/extension/Package-Extension.ps1 -Collection extension/collections/developer.collection.json
+```
+
+When `-Collection` targets a persona other than `hve-core-all`, the prepare script copies the persona template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
+
+### Inner Dev Loop
+
+For rapid iteration without running the full build pipeline, copy the persona template manually:
+
+```bash
+# 1. Copy the developer template
+cp extension/package.developer.json extension/package.json
+
+# 2. Run prepare to generate contributes
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
+
+# 3. Inspect the result
+cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
+
+# 4. Restore canonical package.json
+git checkout extension/package.json
+```
+
+The template file stays clean. Use `git checkout extension/package.json` to restore the canonical state at any time.
+
+### Collection Resolution
+
+When building a collection, the system:
+
+1. Reads the collection manifest to get the target personas
+2. Reads the artifact registry (`.github/ai-artifacts-registry.json`)
+3. Includes artifacts where `personas` array contains any of the collection's personas
+4. Includes all `hve-core-all` artifacts as the base set
+5. Resolves artifact dependencies to ensure completeness
+
+### Testing Collection Builds Locally
+
+To verify artifact inclusion before publishing:
+
+```bash
+# 1. Prepare with collection filtering
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection developer -Verbose
+
+# 2. Check package.json for included artifacts
+cat extension/package.json | jq '.contributes.chatAgents'
+
+# 3. Validate the registry
+npm run lint:registry
+
+# 4. Build the package (dry run)
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
+```
+
+### Troubleshooting Collection Builds
+
+**Missing artifacts in collection:**
+
+1. Verify the artifact has a registry entry in `.github/ai-artifacts-registry.json`
+2. Check the `personas` array includes the collection's persona or `hve-core-all`
+3. Run `npm run lint:registry` to validate registry consistency
+
+**Dependency not included:**
+
+1. Check the parent artifact's `requires` field in the registry
+2. Ensure dependent artifacts exist and have valid registry entries
+3. Dependencies are included regardless of persona filter
+
+**Validation errors:**
+
+```bash
+# Run full registry validation
+npm run lint:registry
+
+# Check for orphaned artifacts (in registry but no file)
+npm run lint:registry -- --verbose
+```
+
+### Collection Manifest Schema
+
+Collection manifests follow this structure:
+
+```json
+{
+    "$schema": "../../scripts/linting/schemas/collection.schema.json",
+    "id": "developer",
+    "name": "hve-developer",
+    "displayName": "HVE Core - Developer Edition",
+    "description": "AI-powered coding agents curated for software engineers",
+    "personas": ["developer"]
+}
+```
+
+| Field         | Required | Description                             |
+|---------------|----------|-----------------------------------------|
+| `id`          | Yes      | Unique identifier for the collection    |
+| `name`        | Yes      | Extension package name                  |
+| `displayName` | Yes      | Marketplace display name                |
+| `description` | Yes      | Marketplace description text            |
+| `personas`    | Yes      | Array of persona identifiers to include |
+
+### Adding New Collections
+
+To create a new persona collection:
+
+1. Create a new manifest in `extension/collections/`:
+
+    ```json
+    {
+        "$schema": "../../scripts/linting/schemas/collection.schema.json",
+        "id": "my-persona",
+        "name": "hve-my-persona",
+        "displayName": "HVE Core - My Persona Edition",
+        "description": "Description of artifacts included for this persona",
+        "personas": ["my-persona"]
+    }
+    ```
+
+2. Add the persona to the registry's `personas` section
+3. Tag relevant artifacts with the new persona in the registry
+4. Test the build locally with `-Collection my-persona`
+5. Submit PR with the new collection manifest
 
 ## Notes
 

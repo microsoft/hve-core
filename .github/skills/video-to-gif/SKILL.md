@@ -1,7 +1,6 @@
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 
 # Video-to-GIF Conversion Skill

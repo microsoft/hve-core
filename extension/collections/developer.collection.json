@@ -1,0 +1,10 @@
+{
+    "$schema": "../../scripts/linting/schemas/collection.schema.json",
+    "id": "developer",
+    "name": "hve-developer",
+    "displayName": "HVE Core - Developer Edition",
+    "description": "AI-powered coding agents and prompts curated for software engineers",
+    "personas": [
+        "developer"
+    ]
+}
