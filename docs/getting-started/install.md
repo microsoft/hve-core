@@ -85,6 +85,32 @@ Answer these questions to find your recommended installation method:
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
+## Collection Packages
+
+HVE-Core supports persona-based artifact collections tailored to specific roles:
+
+| Collection         | Identifier         | Description                            |
+|--------------------|--------------------|-----------------------------------------|
+| **Full**           | `hve-core`         | All artifacts (recommended for most)   |
+| **Developer**      | `hve-developer`    | Software engineering focus             |
+
+### Extension Installation (Full Collection)
+
+The VS Code Marketplace extension installs the **full collection** containing all stable artifacts. This is the recommended approach for most users.
+
+### Clone Methods (Persona Filtering)
+
+Clone-based installation methods support persona filtering through the installer agent:
+
+1. Clone the repository using your preferred method
+2. Run the `hve-core-installer` agent
+3. In Phase 7 (Agent Customization), select your role-based collection
+
+The installer filters artifacts based on your selected persona, copying only relevant agents, prompts, and instructions to your project.
+
+> [!NOTE]
+> Persona filtering requires the artifact registry (`.github/ai-artifacts-registry.json`). The installer agent uses this registry to determine which artifacts belong to each collection.
+
 ### Quick Decision Tree
 
 ```text

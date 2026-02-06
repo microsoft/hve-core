@@ -85,6 +85,165 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
 
+## Artifact Registry
+
+All AI artifacts are registered in `.github/ai-artifacts-registry.json`, a centralized metadata file that controls distribution, persona filtering, and dependency resolution without polluting individual artifact frontmatter.
+
+### Registry Purpose
+
+The registry serves three primary functions:
+
+1. **Maturity filtering**: Controls which extension channel (stable vs pre-release) includes each artifact
+2. **Persona filtering**: Determines which artifacts appear in role-specific collection packages
+3. **Dependency resolution**: Declares explicit dependencies between artifacts for complete installation
+
+### Registry Structure
+
+The registry contains four top-level sections:
+
+```json
+{
+    "$schema": "../scripts/linting/schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0",
+    "personas": { /* persona definitions */ },
+    "agents": { /* agent entries */ },
+    "prompts": { /* prompt entries */ },
+    "instructions": { /* instruction entries */ },
+    "skills": { /* skill entries */ }
+}
+```
+
+### Artifact Entry Format
+
+Each artifact entry follows this structure:
+
+```json
+"artifact-name": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["rpi", "planning"],
+    "requires": {
+        "agents": [],
+        "prompts": ["task-plan"],
+        "instructions": ["commit-message"],
+        "skills": []
+    }
+}
+```
+
+| Field      | Required | Description                                          |
+|------------|----------|------------------------------------------------------|
+| `maturity` | Yes      | Release readiness level                              |
+| `personas` | Yes      | Array of persona identifiers for collection building |
+| `tags`     | Yes      | Categorization tags for organization and search      |
+| `requires` | No       | Dependency declarations for complete installation    |
+
+### Adding Artifacts to the Registry
+
+When contributing a new artifact:
+
+1. Create the artifact file in the appropriate directory
+2. Add an entry to the registry under the correct section (`agents`, `prompts`, `instructions`, or `skills`)
+3. Set appropriate `maturity`, `personas`, and `tags` values
+4. Declare any dependencies in `requires` if the artifact depends on other artifacts
+5. Run `npm run lint:registry` to validate the registry entry
+
+## Persona Taxonomy
+
+Personas represent user roles that consume HVE-Core artifacts. The persona system enables role-specific artifact collections without fragmenting the codebase.
+
+### Defined Personas
+
+| Persona       | Identifier     | Description                     |
+|---------------|----------------|---------------------------------|
+| **All**       | `hve-core-all` | Full release with all artifacts |
+| **Developer** | `developer`    | Software engineers writing code |
+
+### Persona Assignment Guidelines
+
+When assigning personas to artifacts:
+
+* **Universal artifacts** should include `hve-core-all` plus any role-specific personas that particularly benefit
+* **Role-specific artifacts** should include only the relevant personas (omit `hve-core-all` for highly specialized artifacts)
+* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant personas
+
+**Example persona assignments:**
+
+```json
+// Universal - available in all collections
+"markdown": {
+    "personas": ["hve-core-all", "developer"]
+}
+
+// Developer-focused - targeted distribution
+"csharp/csharp": {
+    "personas": ["hve-core-all", "developer"]
+}
+
+// Core workflow - broadly applicable
+"rpi-agent": {
+    "personas": ["hve-core-all", "developer"]
+}
+```
+
+### Selecting Personas for New Artifacts
+
+Answer these questions when determining persona assignments:
+
+1. **Who is the primary user?** Identify the main role that benefits from this artifact
+2. **Who else benefits?** Consider secondary roles that may find value
+3. **Is it foundational?** Core workflow artifacts should include multiple personas
+4. **Is it specialized?** Domain-specific artifacts may target fewer personas
+
+When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
+
+## Dependency Declarations
+
+Some artifacts require other artifacts to function correctly. The `requires` field in registry entries declares these dependencies explicitly.
+
+### Dependency Types
+
+| Type           | Purpose                                                  |
+|----------------|----------------------------------------------------------|
+| `agents`       | Agents this artifact delegates to or hands off to        |
+| `prompts`      | Prompts this artifact invokes or references              |
+| `instructions` | Instructions this artifact relies on for code generation |
+| `skills`       | Skills this artifact executes for specialized tasks      |
+
+### Declaring Dependencies
+
+Add the `requires` field to artifacts that depend on others:
+
+```json
+"rpi-agent": {
+    "maturity": "stable",
+    "personas": ["hve-core-all"],
+    "tags": ["rpi", "orchestration"],
+    "requires": {
+        "agents": ["task-researcher", "task-planner", "task-implementor", "task-reviewer"],
+        "prompts": ["task-research", "task-plan", "task-implement", "task-review"],
+        "instructions": [],
+        "skills": []
+    }
+}
+```
+
+### Dependency Resolution
+
+When installing artifacts via clone methods, the installer agent resolves dependencies:
+
+1. User selects artifacts to install (by persona or explicit selection)
+2. Installer reads the registry and builds dependency graph
+3. Required artifacts are automatically included regardless of persona filter
+4. Circular dependencies are detected and reported as validation errors
+
+### Dependency Best Practices
+
+* **Declare all runtime dependencies**: List every artifact your artifact references
+* **Prefer explicit over implicit**: Document dependencies even if currently co-located
+* **Keep dependencies minimal**: Avoid unnecessary coupling between artifacts
+* **Test with minimal installs**: Verify your artifact works with only declared dependencies
+
 ## Maturity Field Requirements
 
 Maturity is defined in `.github/ai-artifacts-registry.json` and MUST NOT appear in artifact frontmatter.

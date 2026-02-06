@@ -114,6 +114,60 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
+## Registry Entry Requirements
+
+All instructions must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+
+### Adding Your Instructions to the Registry
+
+After creating your instructions file, add an entry to the `instructions` section of the registry:
+
+```json
+"my-language": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["language"]
+}
+```
+
+For instructions in subdirectories, use the path format:
+
+```json
+"subdirectory/my-instructions": {
+    "maturity": "stable",
+    "personas": ["hve-core-all"],
+    "tags": ["category"]
+}
+```
+
+### Selecting Personas for Instructions
+
+Choose personas based on who uses the technology or pattern:
+
+| Instruction Type          | Recommended Personas                              |
+|---------------------------|---------------------------------------------------|
+| Language standards        | `hve-core-all`, `developer`                       |
+| Infrastructure (IaC)      | `hve-core-all`, `architect`, `devops`             |
+| Documentation standards   | `hve-core-all`, `technical-writer`                |
+| Workflow instructions     | `hve-core-all` plus relevant workflow personas    |
+| Test standards            | `hve-core-all`, `developer`                       |
+| ADO integration           | `hve-core-all`, `tpm`, `devops`                   |
+
+### Tags for Instructions
+
+Common tags for instructions:
+
+| Tag               | Use For                                        |
+|-------------------|------------------------------------------------|
+| `language`        | Programming language standards                 |
+| `infrastructure`  | IaC tools (Terraform, Bicep)                   |
+| `documentation`   | Writing and formatting standards               |
+| `testing`         | Test code conventions                          |
+| `ado`             | Azure DevOps integration                       |
+| `git`             | Git workflow patterns                          |
+
+For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+
 ## Content Structure Standards
 
 ### Required Sections

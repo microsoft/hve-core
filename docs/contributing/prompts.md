@@ -112,6 +112,53 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
+## Registry Entry Requirements
+
+All prompts must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+
+### Adding Your Prompt to the Registry
+
+After creating your prompt file, add an entry to the `prompts` section of the registry:
+
+```json
+"my-prompt": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["workflow", "automation"]
+}
+```
+
+### Selecting Personas for Prompts
+
+Choose personas based on who invokes or benefits from the workflow:
+
+| Prompt Type                | Recommended Personas                         |
+|----------------------------|----------------------------------------------|
+| Git/PR workflows           | `hve-core-all`, `developer`                  |
+| ADO work item workflows    | `hve-core-all`, `tpm`, `devops`              |
+| GitHub issue workflows     | `hve-core-all`, `developer`                  |
+| RPI workflow prompts       | `hve-core-all` plus all relevant personas    |
+| Documentation workflows    | `hve-core-all`, `technical-writer`           |
+| Architecture prompts       | `hve-core-all`, `architect`                  |
+
+### Tags for Prompts
+
+Common tags for prompts:
+
+| Tag                 | Use For                              |
+|---------------------|--------------------------------------|
+| `rpi`               | Research-Plan-Implement workflow     |
+| `git`               | Git operations                       |
+| `github`            | GitHub-specific workflows            |
+| `ado`               | Azure DevOps workflows               |
+| `planning`          | Planning and estimation              |
+| `implementation`    | Code implementation                  |
+| `review`            | Review processes                     |
+| `documentation`     | Documentation generation             |
+| `prompt-engineering`| Prompt building and analysis         |
+
+For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+
 ## Prompt Content Structure Standards
 
 ### Required Sections

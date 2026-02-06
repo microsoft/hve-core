@@ -200,6 +200,56 @@ author: 'microsoft/hve-core'
 ---
 ```
 
+## Registry Entry Requirements
+
+All agents must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution, persona filtering, and dependency resolution.
+
+### Adding Your Agent to the Registry
+
+After creating your agent file, add an entry to the `agents` section of the registry:
+
+```json
+"my-new-agent": {
+    "maturity": "stable",
+    "personas": ["hve-core-all", "developer"],
+    "tags": ["workflow", "automation"],
+    "requires": {
+        "agents": [],
+        "prompts": ["related-prompt"],
+        "instructions": ["relevant-instructions"],
+        "skills": []
+    }
+}
+```
+
+### Selecting Personas for Agents
+
+Choose personas based on who benefits most from your agent:
+
+| Agent Type                | Recommended Personas                        |
+|---------------------------|---------------------------------------------|
+| Task workflow agents      | `hve-core-all`, `developer`, `tpm`          |
+| Architecture agents       | `hve-core-all`, `architect`, `devops`       |
+| Documentation agents      | `hve-core-all`, `technical-writer`          |
+| Data science agents       | `hve-core-all`, `developer`                 |
+| ADO/work item agents      | `hve-core-all`, `tpm`, `devops`             |
+| Code review agents        | `hve-core-all`, `developer`                 |
+
+### Declaring Agent Dependencies
+
+If your agent delegates to other agents, invokes prompts, or generates code that follows specific instructions, declare these in the `requires` field:
+
+```json
+"requires": {
+    "agents": ["task-planner"],        // Agents this agent hands off to
+    "prompts": ["task-plan"],          // Prompts this agent invokes
+    "instructions": ["python-script"], // Instructions for generated code
+    "skills": []                       // Skills this agent executes
+}
+```
+
+For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+
 ### MCP Tool Dependencies
 
 When agents reference MCP tools in their `tools:` frontmatter or body content, document the dependencies clearly.

@@ -200,6 +200,112 @@ Skills provide self-contained utilities through the `SKILL.md` file:
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
+## Artifact Registry
+
+The artifact registry (`.github/ai-artifacts-registry.json`) serves as the central metadata store for all AI artifacts. It enables persona-based distribution, maturity filtering, and dependency resolution without polluting individual artifact frontmatter.
+
+### Registry Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                     AI Artifacts Registry                            │
+│  .github/ai-artifacts-registry.json                                  │
+│  ┌─────────────────┬─────────────────┬─────────────────┐            │
+│  │ Agents          │ Prompts         │ Instructions    │            │
+│  │ - maturity      │ - maturity      │ - maturity      │            │
+│  │ - personas[]    │ - personas[]    │ - personas[]    │            │
+│  │ - tags[]        │ - tags[]        │ - tags[]        │            │
+│  │ - requires{}    │                 │                 │            │
+│  └─────────────────┴─────────────────┴─────────────────┘            │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Build System                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                         │
+│  │ Collection      │    │ Prepare-        │                         │
+│  │ Manifests       │───▶│ Extension.ps1   │                         │
+│  │ *.collection.json    │ -Collection     │                         │
+│  └─────────────────┘    └─────────────────┘                         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Registry Entry Structure
+
+Each artifact entry contains metadata for filtering and dependency resolution:
+
+```json
+{
+    "artifact-name": {
+        "maturity": "stable",
+        "personas": ["hve-core-all", "developer"],
+        "tags": ["rpi", "workflow"],
+        "requires": {
+            "agents": ["dependency-agent"],
+            "prompts": ["dependency-prompt"],
+            "instructions": ["dependency-instructions"],
+            "skills": []
+        }
+    }
+}
+```
+
+| Field      | Purpose                                              |
+|------------|------------------------------------------------------|
+| `maturity` | Controls extension channel inclusion                 |
+| `personas` | Determines collection membership                     |
+| `tags`     | Categorization for organization and discovery        |
+| `requires` | Declares dependencies for complete installation      |
+
+### Persona Model
+
+Personas represent user roles that consume artifacts. The registry defines these personas:
+
+| Persona       | Identifier     | Target Users         |
+|---------------|----------------|----------------------|
+| **All**       | `hve-core-all` | Universal inclusion  |
+| **Developer** | `developer`    | Software engineers   |
+
+Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific personas for targeted distribution.
+
+### Collection Build System
+
+Collections define persona-filtered artifact packages. Each collection manifest specifies which personas to include:
+
+```json
+{
+    "id": "developer",
+    "name": "hve-developer",
+    "displayName": "HVE Core - Developer Edition",
+    "description": "AI-powered coding agents curated for software engineers",
+    "personas": ["developer"]
+}
+```
+
+The build system resolves collections by:
+
+1. Reading the collection manifest to identify target personas
+2. Filtering registry entries by persona membership
+3. Including the `hve-core-all` persona artifacts as the base
+4. Adding persona-specific artifacts
+5. Resolving dependencies for included artifacts
+
+### Dependency Resolution
+
+Agents may declare dependencies on other artifacts through the `requires` field. The dependency resolver ensures complete artifact graphs are installed:
+
+```mermaid
+graph TD
+    A[rpi-agent] --> B[task-researcher]
+    A --> C[task-planner]
+    A --> D[task-implementor]
+    A --> E[task-reviewer]
+    A --> F[checkpoint.prompt]
+    A --> G[rpi.prompt]
+```
+
+When installing `rpi-agent`, all dependent agents and prompts are automatically included regardless of persona filter.
+
 ## Extension Integration
 
 The VS Code extension discovers and activates AI artifacts through contribution points.
@@ -213,7 +319,7 @@ The extension scans these directories at startup:
 * `.github/instructions/` for technology standards
 * `.github/skills/` for utility packages
 
-Each artifact's `maturity:` field controls channel inclusion:
+Artifact inclusion is controlled by the registry:
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|
@@ -221,6 +327,17 @@ Each artifact's `maturity:` field controls channel inclusion:
 | `preview`      | Excluded       | Included            |
 | `experimental` | Excluded       | Included            |
 | `deprecated`   | Excluded       | Excluded            |
+
+### Collection Packages
+
+Multiple extension packages can be built from the same codebase:
+
+| Collection | Extension ID                       | Contents                    |
+|------------|------------------------------------|-----------------------------|
+| Full       | `ise-hve-essentials.hve-core`      | All stable artifacts        |
+| Developer  | `ise-hve-essentials.hve-developer` | Developer-focused artifacts |
+
+Users install the collection matching their role for a curated experience.
 
 ### Activation Context
 
