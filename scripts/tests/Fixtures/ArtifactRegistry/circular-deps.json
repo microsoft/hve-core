@@ -1,0 +1,62 @@
+{
+    "$schema": "../schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0",
+    "personas": {
+        "definitions": {
+            "developer": {
+                "name": "Developer",
+                "description": "Software engineers"
+            }
+        }
+    },
+    "agents": {
+        "agent-a": {
+            "maturity": "stable",
+            "personas": [
+                "developer"
+            ],
+            "tags": [],
+            "requires": {
+                "agents": [
+                    "agent-b"
+                ],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "agent-b": {
+            "maturity": "stable",
+            "personas": [
+                "developer"
+            ],
+            "tags": [],
+            "requires": {
+                "agents": [
+                    "agent-c"
+                ],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        },
+        "agent-c": {
+            "maturity": "stable",
+            "personas": [
+                "developer"
+            ],
+            "tags": [],
+            "requires": {
+                "agents": [
+                    "agent-a"
+                ],
+                "prompts": [],
+                "instructions": [],
+                "skills": []
+            }
+        }
+    },
+    "prompts": {},
+    "instructions": {},
+    "skills": {}
+}
