@@ -1,5 +1,6 @@
 ---
 description: "Comprehensive secure coding instructions for LLM applications based on OWASP Top 10 for LLM Applications (2025). Ensures AI-powered systems are secure by default, protecting against prompt injection, data leakage, and LLM-specific vulnerabilities. Give clear and concise feedback and points of improvement."
+maturity: experimental
 ---
 
 # OWASP Top 10 for LLM Applications - Secure Coding Guidelines
@@ -194,10 +195,10 @@ User prompts can influence LLM outputs, effectively giving users indirect access
 
 Apply strict context-appropriate encoding based on where LLM output will be used:
 
-- **HTML Context:** Use HTML entity encoding to prevent XSS
-- **SQL Context:** Use parameterized queries, never concatenate LLM output into SQL
-- **Shell Context:** Use proper escaping or avoid shell execution entirely
-- **JavaScript Context:** JSON encode and validate
+- HTML context: use HTML entity encoding to prevent XSS
+- SQL context: use parameterized queries, never concatenate LLM output into SQL
+- Shell context: use proper escaping or avoid shell execution entirely
+- JavaScript context: JSON encode and validate
 
 #### Direct Execution Risks
 
@@ -377,11 +378,7 @@ Tag all vectors with metadata about sensitivity level, required permissions, and
 
 #### Embedding Inversion Defense
 
-Attackers may attempt to reconstruct original content from embeddings. For highly sensitive data, consider:
-
-- Not using RAG for sensitive content
-- Applying additional encryption to embeddings
-- Using differential privacy techniques
+Attackers may attempt to reconstruct original content from embeddings. For highly sensitive data, consider not using RAG for sensitive content, applying additional encryption to embeddings, or using differential privacy techniques.
 
 #### Audit and Monitoring
 
