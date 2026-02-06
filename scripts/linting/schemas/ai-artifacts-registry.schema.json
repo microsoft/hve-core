@@ -126,7 +126,7 @@
                             "items": {
                                 "type": "string"
                             },
-                            "description": "Agent names this artifact depends on (e.g., handoff targets)"
+                            "description": "Agent names this artifact dispatches at runtime via runSubagent. Handoff targets (frontmatter handoffs field) are resolved dynamically during packaging and excluded from this array to avoid circular dependencies."
                         },
                         "prompts": {
                             "type": "array",
