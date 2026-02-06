@@ -250,21 +250,21 @@ Each artifact entry contains metadata for filtering and dependency resolution:
 }
 ```
 
-| Field      | Purpose                                              |
-|------------|------------------------------------------------------|
-| `maturity` | Controls extension channel inclusion                 |
-| `personas` | Determines collection membership                     |
-| `tags`     | Categorization for organization and discovery        |
-| `requires` | Declares dependencies for complete installation      |
+| Field      | Purpose                                         |
+|------------|-------------------------------------------------|
+| `maturity` | Controls extension channel inclusion            |
+| `personas` | Determines collection membership                |
+| `tags`     | Categorization for organization and discovery   |
+| `requires` | Declares dependencies for complete installation |
 
 ### Persona Model
 
 Personas represent user roles that consume artifacts. The registry defines these personas:
 
-| Persona       | Identifier     | Target Users         |
-|---------------|----------------|----------------------|
-| **All**       | `hve-core-all` | Universal inclusion  |
-| **Developer** | `developer`    | Software engineers   |
+| Persona       | Identifier     | Target Users        |
+|---------------|----------------|---------------------|
+| **All**       | `hve-core-all` | Universal inclusion |
+| **Developer** | `developer`    | Software engineers  |
 
 Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific personas for targeted distribution.
 

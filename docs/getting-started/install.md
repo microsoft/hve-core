@@ -89,10 +89,10 @@ Answer these questions to find your recommended installation method:
 
 HVE-Core supports persona-based artifact collections tailored to specific roles:
 
-| Collection         | Identifier         | Description                            |
-|--------------------|--------------------|-----------------------------------------|
-| **Full**           | `hve-core`         | All artifacts (recommended for most)   |
-| **Developer**      | `hve-developer`    | Software engineering focus             |
+| Collection    | Identifier      | Description                          |
+|---------------|-----------------|--------------------------------------|
+| **Full**      | `hve-core`      | All artifacts (recommended for most) |
+| **Developer** | `hve-developer` | Software engineering focus           |
 
 ### Extension Installation (Full Collection)
 

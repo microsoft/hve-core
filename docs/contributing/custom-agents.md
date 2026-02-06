@@ -226,14 +226,14 @@ After creating your agent file, add an entry to the `agents` section of the regi
 
 Choose personas based on who benefits most from your agent:
 
-| Agent Type                | Recommended Personas                        |
-|---------------------------|---------------------------------------------|
-| Task workflow agents      | `hve-core-all`, `developer`, `tpm`          |
-| Architecture agents       | `hve-core-all`, `architect`, `devops`       |
-| Documentation agents      | `hve-core-all`, `technical-writer`          |
-| Data science agents       | `hve-core-all`, `developer`                 |
-| ADO/work item agents      | `hve-core-all`, `tpm`, `devops`             |
-| Code review agents        | `hve-core-all`, `developer`                 |
+| Agent Type           | Recommended Personas                  |
+|----------------------|---------------------------------------|
+| Task workflow agents | `hve-core-all`, `developer`, `tpm`    |
+| Architecture agents  | `hve-core-all`, `architect`, `devops` |
+| Documentation agents | `hve-core-all`, `technical-writer`    |
+| Data science agents  | `hve-core-all`, `developer`           |
+| ADO/work item agents | `hve-core-all`, `tpm`, `devops`       |
+| Code review agents   | `hve-core-all`, `developer`           |
 
 ### Declaring Agent Dependencies
 

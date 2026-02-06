@@ -132,30 +132,30 @@ After creating your prompt file, add an entry to the `prompts` section of the re
 
 Choose personas based on who invokes or benefits from the workflow:
 
-| Prompt Type                | Recommended Personas                         |
-|----------------------------|----------------------------------------------|
-| Git/PR workflows           | `hve-core-all`, `developer`                  |
-| ADO work item workflows    | `hve-core-all`, `tpm`, `devops`              |
-| GitHub issue workflows     | `hve-core-all`, `developer`                  |
-| RPI workflow prompts       | `hve-core-all` plus all relevant personas    |
-| Documentation workflows    | `hve-core-all`, `technical-writer`           |
-| Architecture prompts       | `hve-core-all`, `architect`                  |
+| Prompt Type             | Recommended Personas                      |
+|-------------------------|-------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `developer`               |
+| ADO work item workflows | `hve-core-all`, `tpm`, `devops`           |
+| GitHub issue workflows  | `hve-core-all`, `developer`               |
+| RPI workflow prompts    | `hve-core-all` plus all relevant personas |
+| Documentation workflows | `hve-core-all`, `technical-writer`        |
+| Architecture prompts    | `hve-core-all`, `architect`               |
 
 ### Tags for Prompts
 
 Common tags for prompts:
 
-| Tag                 | Use For                              |
-|---------------------|--------------------------------------|
-| `rpi`               | Research-Plan-Implement workflow     |
-| `git`               | Git operations                       |
-| `github`            | GitHub-specific workflows            |
-| `ado`               | Azure DevOps workflows               |
-| `planning`          | Planning and estimation              |
-| `implementation`    | Code implementation                  |
-| `review`            | Review processes                     |
-| `documentation`     | Documentation generation             |
-| `prompt-engineering`| Prompt building and analysis         |
+| Tag                  | Use For                          |
+|----------------------|----------------------------------|
+| `rpi`                | Research-Plan-Implement workflow |
+| `git`                | Git operations                   |
+| `github`             | GitHub-specific workflows        |
+| `ado`                | Azure DevOps workflows           |
+| `planning`           | Planning and estimation          |
+| `implementation`     | Code implementation              |
+| `review`             | Review processes                 |
+| `documentation`      | Documentation generation         |
+| `prompt-engineering` | Prompt building and analysis     |
 
 For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
 

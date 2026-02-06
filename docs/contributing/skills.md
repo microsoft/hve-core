@@ -110,24 +110,24 @@ After creating your skill package, add an entry to the `skills` section of the r
 
 Choose personas based on who uses the skill's utilities:
 
-| Skill Type            | Recommended Personas                         |
-|-----------------------|----------------------------------------------|
-| Media processing      | `hve-core-all`                               |
-| Documentation tools   | `hve-core-all`, `technical-writer`           |
-| Data processing       | `hve-core-all`, `developer`                  |
-| Infrastructure tools  | `hve-core-all`, `devops`, `architect`        |
-| Code generation       | `hve-core-all`, `developer`                  |
+| Skill Type           | Recommended Personas                  |
+|----------------------|---------------------------------------|
+| Media processing     | `hve-core-all`                        |
+| Documentation tools  | `hve-core-all`, `technical-writer`    |
+| Data processing      | `hve-core-all`, `developer`           |
+| Infrastructure tools | `hve-core-all`, `devops`, `architect` |
+| Code generation      | `hve-core-all`, `developer`           |
 
 ### Tags for Skills
 
 Common tags for skills:
 
-| Tag         | Use For                              |
-|-------------|--------------------------------------|
-| `media`     | Image, video, audio processing       |
-| `tooling`   | General development utilities        |
-| `data`      | Data transformation                  |
-| `testing`   | Test automation utilities            |
+| Tag       | Use For                        |
+|-----------|--------------------------------|
+| `media`   | Image, video, audio processing |
+| `tooling` | General development utilities  |
+| `data`    | Data transformation            |
+| `testing` | Test automation utilities      |
 
 For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
 

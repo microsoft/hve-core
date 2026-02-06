@@ -262,10 +262,10 @@ The extension supports building persona-specific collection packages from a sing
 
 Collection manifests are defined in `extension/collections/`:
 
-| Collection  | Manifest                        | Description                              |
-|-------------|---------------------------------|------------------------------------------|
-| Full        | `hve-core-all.collection.json`  | All artifacts regardless of persona      |
-| Developer   | `developer.collection.json`     | Software engineering focused artifacts   |
+| Collection | Manifest                       | Description                            |
+|------------|--------------------------------|----------------------------------------|
+| Full       | `hve-core-all.collection.json` | All artifacts regardless of persona    |
+| Developer  | `developer.collection.json`    | Software engineering focused artifacts |
 
 ### Building Collection Packages
 
@@ -350,13 +350,13 @@ Collection manifests follow this structure:
 }
 ```
 
-| Field         | Required | Description                                |
-|---------------|----------|--------------------------------------------|
-| `id`          | Yes      | Unique identifier for the collection       |
-| `name`        | Yes      | Extension package name                     |
-| `displayName` | Yes      | Marketplace display name                   |
-| `description` | Yes      | Marketplace description text               |
-| `personas`    | Yes      | Array of persona identifiers to include    |
+| Field         | Required | Description                             |
+|---------------|----------|-----------------------------------------|
+| `id`          | Yes      | Unique identifier for the collection    |
+| `name`        | Yes      | Extension package name                  |
+| `displayName` | Yes      | Marketplace display name                |
+| `description` | Yes      | Marketplace description text            |
+| `personas`    | Yes      | Array of persona identifiers to include |
 
 ### Adding New Collections
 
@@ -364,21 +364,21 @@ To create a new persona collection:
 
 1. Create a new manifest in `extension/collections/`:
 
-```json
-{
-    "$schema": "../../scripts/linting/schemas/collection.schema.json",
-    "id": "my-persona",
-    "name": "hve-my-persona",
-    "displayName": "HVE Core - My Persona Edition",
-    "description": "Description of artifacts included for this persona",
-    "personas": ["my-persona"]
-}
-```
+    ```json
+    {
+        "$schema": "../../scripts/linting/schemas/collection.schema.json",
+        "id": "my-persona",
+        "name": "hve-my-persona",
+        "displayName": "HVE Core - My Persona Edition",
+        "description": "Description of artifacts included for this persona",
+        "personas": ["my-persona"]
+    }
+    ```
 
-1. Add the persona to the registry's `personas` section
-2. Tag relevant artifacts with the new persona in the registry
-3. Test the build locally with `-Collection my-persona`
-4. Submit PR with the new collection manifest
+2. Add the persona to the registry's `personas` section
+3. Tag relevant artifacts with the new persona in the registry
+4. Test the build locally with `-Collection my-persona`
+5. Submit PR with the new collection manifest
 
 ## Notes
 
