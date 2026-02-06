@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 # Validate-ArtifactRegistry.ps1

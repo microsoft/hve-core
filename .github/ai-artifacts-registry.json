@@ -204,9 +204,7 @@
                 "session"
             ],
             "requires": {
-                "agents": [
-                    "rpi-agent"
-                ],
+                "agents": [],
                 "prompts": [
                     "checkpoint",
                     "rpi"
@@ -282,8 +280,7 @@
                     "task-researcher",
                     "task-planner",
                     "task-implementor",
-                    "task-reviewer",
-                    "memory"
+                    "task-reviewer"
                 ],
                 "prompts": [
                     "task-research",
@@ -325,9 +322,7 @@
                 "implementation"
             ],
             "requires": {
-                "agents": [
-                    "task-reviewer"
-                ],
+                "agents": [],
                 "prompts": [],
                 "instructions": [
                     "commit-message"
@@ -345,9 +340,7 @@
                 "planning"
             ],
             "requires": {
-                "agents": [
-                    "task-implementor"
-                ],
+                "agents": [],
                 "prompts": [],
                 "instructions": [],
                 "skills": []
@@ -363,9 +356,7 @@
                 "research"
             ],
             "requires": {
-                "agents": [
-                    "task-planner"
-                ],
+                "agents": [],
                 "prompts": [],
                 "instructions": [],
                 "skills": []
@@ -381,10 +372,7 @@
                 "review"
             ],
             "requires": {
-                "agents": [
-                    "task-researcher",
-                    "task-planner"
-                ],
+                "agents": [],
                 "prompts": [],
                 "instructions": [],
                 "skills": []
