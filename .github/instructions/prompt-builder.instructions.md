@@ -213,6 +213,8 @@ Validation guidelines:
 
 This section defines frontmatter field requirements for prompt engineering artifacts.
 
+Maturity is tracked in `.github/ai-artifacts-registry.json`, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set the maturity value in the artifact's registry entry instead.
+
 ### Required Fields
 
 All prompt engineering artifacts include these frontmatter fields:
