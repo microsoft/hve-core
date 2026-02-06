@@ -285,7 +285,7 @@ All PRs run Pester tests automatically via GitHub Actions. Tests must pass befor
 
 ## Release Process
 
-This project uses [release-please](https://github.com/googleapis/release-please) for automated version management and releases. All commits to `main` must follow conventional commit format.
+This project uses [release-please](https://github.com/googleapis/release-please) for automated version management and releases.
 
 ### How Releases Work
 
