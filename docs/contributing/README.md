@@ -2,7 +2,7 @@
 title: Contributing AI Artifacts
 description: Guides for contributing agents, instructions, and prompts to hve-core
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-02-06
 ms.topic: overview
 keywords:
   - contributing
@@ -14,6 +14,24 @@ estimated_reading_time: 2
 ---
 
 Guidelines and standards for contributing AI artifacts to hve-core.
+
+## Finding the Right Guide
+
+Use this table to navigate to the appropriate guide based on what you want to contribute:
+
+| I want to...                            | Start here                                                            |
+|-----------------------------------------|-----------------------------------------------------------------------|
+| Report a bug or suggest an enhancement  | [CONTRIBUTING.md](../../CONTRIBUTING.md#reporting-bugs)               |
+| Submit a code change                    | [CONTRIBUTING.md](../../CONTRIBUTING.md#your-first-code-contribution) |
+| Improve general documentation           | [CONTRIBUTING.md](../../CONTRIBUTING.md#improving-the-documentation)  |
+| Create or modify an agent               | [Custom Agents](custom-agents.md)                                     |
+| Create or modify an instruction file    | [Instructions](instructions.md)                                       |
+| Create or modify a prompt               | [Prompts](prompts.md)                                                 |
+| Create or modify a skill                | [Skills](skills.md)                                                   |
+| Understand shared AI artifact standards | [Common Standards](ai-artifacts-common.md)                            |
+| Learn about the release process         | [Release Process](release-process.md)                                 |
+| Check CI and review requirements        | [Branch Protection](branch-protection.md)                             |
+| See the project roadmap                 | [Roadmap](ROADMAP.md)                                                 |
 
 ## Contribution Guides
 
