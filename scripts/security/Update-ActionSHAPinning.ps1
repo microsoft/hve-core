@@ -481,15 +481,9 @@ function Write-OutputResult {
             }
 
             foreach ($issue in $Results) {
-                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                if ($issue.File) {
-                    $normalizedPath = $issue.File -replace '\\', '/'
-                    $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath -ForProperty
-                    Write-Output "::warning file=$escapedPath::$escapedMessage"
-                }
-                else {
-                    Write-Output "::warning::$escapedMessage"
-                }
+                $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
+                $fileParam = if ($issue.File) { " file=$($issue.File -replace '\\', '/')" } else { "" }
+                Write-Output "::warning$fileParam::$message"
             }
             return
         }
@@ -501,15 +495,10 @@ function Write-OutputResult {
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                $sourcePath = $issue.File
-                if ($sourcePath) {
-                    Write-Output "##vso[task.logissue type=warning;sourcepath=$sourcePath]$message"
-                }
-                else {
-                    Write-Output "##vso[task.logissue type=warning]$message"
-                }
+                $fileParam = if ($issue.File) { ";sourcepath=$($issue.File)" } else { "" }
+                Write-Output "##vso[task.logissue type=warning$fileParam]$message"
             }
-            Write-Output "##vso[task.complete result=SucceededWithIssues]"
+            Write-Output "##vso[task.complete result=SucceededWithIssues]Security issues found"
             return
         }
         default {
@@ -1013,11 +1002,12 @@ if (-not $script:SkipMain) {
         Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
         Write-SecurityLog "WhatIf mode: No files were modified. Run without -WhatIf to apply changes." -Level 'Info'
     }
-        exit 0
-    }
-    catch {
-        Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
-        exit 1
-    }
+
+    exit 0
+}
+catch {
+    Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
+    exit 1
+}
 }

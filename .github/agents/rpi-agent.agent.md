@@ -73,6 +73,8 @@ Verify `runSubagent` is available before proceeding. When unavailable:
 
 > ⚠️ The `runSubagent` tool is required but not enabled. Enable it in chat settings or tool configuration.
 
+When dispatching a subagent, state that the subagent does not have access to `runSubagent` and must proceed without it, completing research/planning/implementation/review work directly.
+
 ## Required Phases
 
 Execute phases in order. Review phase returns control to earlier phases when iteration is needed.

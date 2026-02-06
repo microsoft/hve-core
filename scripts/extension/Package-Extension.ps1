@@ -216,9 +216,10 @@ function Get-VscePackageCommand {
     }
 
     if ($CommandType -eq 'npx') {
+        # --yes auto-confirms npx package installation for non-interactive CI environments
         return @{
             Executable = 'npx'
-            Arguments  = @('@vscode/vsce') + $vsceArgs
+            Arguments  = @('--yes', '@vscode/vsce') + $vsceArgs
         }
     }
 
@@ -336,7 +337,244 @@ function Get-ResolvedPackageVersion {
     }
 }
 
+function Test-PackagingInputsValid {
+    <#
+    .SYNOPSIS
+        Validates all required paths for extension packaging.
+    .DESCRIPTION
+        Pure function that checks existence of ExtensionDirectory, package.json,
+        .github directory, and CIHelpers.psm1 module. Returns resolved paths for use
+        by downstream functions.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root.
+    .OUTPUTS
+        Hashtable with IsValid, Errors array, and resolved paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $errors = @()
+
+    if (-not (Test-Path $ExtensionDirectory)) {
+        $errors += "Extension directory not found: $ExtensionDirectory"
+    }
+
+    $packageJsonPath = Join-Path $ExtensionDirectory "package.json"
+    if (-not (Test-Path $packageJsonPath)) {
+        $errors += "package.json not found: $packageJsonPath"
+    }
+
+    $githubDir = Join-Path $RepoRoot ".github"
+    if (-not (Test-Path $githubDir)) {
+        $errors += ".github directory not found: $githubDir"
+    }
+
+    $ciHelpersPath = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
+    if (-not (Test-Path $ciHelpersPath)) {
+        $errors += "CIHelpers.psm1 not found: $ciHelpersPath"
+    }
+
+    return @{
+        IsValid         = ($errors.Count -eq 0)
+        Errors          = $errors
+        PackageJsonPath = $packageJsonPath
+        GitHubDir       = $githubDir
+        CIHelpersPath   = $ciHelpersPath
+    }
+}
+
+function Get-PackagingDirectorySpec {
+    <#
+    .SYNOPSIS
+        Returns specification for directories to copy during packaging.
+    .DESCRIPTION
+        Pure function that defines source to destination mappings without performing I/O.
+        Each spec includes Source, Destination, Required flag, and optional IsFile flag.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory.
+    .OUTPUTS
+        Array of hashtables with Source, Destination, Required, and IsFile properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory
+    )
+
+    return @(
+        @{
+            Source      = Join-Path $RepoRoot ".github"
+            Destination = Join-Path $ExtensionDirectory ".github"
+            IsFile      = $false
+        },
+        @{
+            Source      = Join-Path $RepoRoot "scripts/dev-tools"
+            Destination = Join-Path $ExtensionDirectory "scripts/dev-tools"
+            IsFile      = $false
+        },
+        @{
+            Source      = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
+            Destination = Join-Path $ExtensionDirectory "scripts/lib/Modules/CIHelpers.psm1"
+            IsFile      = $true
+        },
+        @{
+            Source      = Join-Path $RepoRoot "docs/templates"
+            Destination = Join-Path $ExtensionDirectory "docs/templates"
+            IsFile      = $false
+        }
+    )
+}
+
 #endregion Pure Functions
+
+#region I/O Functions
+
+function Invoke-VsceCommand {
+    <#
+    .SYNOPSIS
+        Executes vsce package command with platform-appropriate wrapper.
+    .DESCRIPTION
+        Abstracts platform-specific execution of vsce/npx commands. On Windows with npx,
+        uses cmd /c to avoid PowerShell misinterpreting @ in @vscode/vsce as splatting.
+        The UseWindowsWrapper parameter enables deterministic platform behavior in tests.
+    .PARAMETER Executable
+        The executable to run ('vsce' or 'npx').
+    .PARAMETER Arguments
+        Array of arguments to pass to the executable.
+    .PARAMETER WorkingDirectory
+        Directory to execute the command in.
+    .PARAMETER UseWindowsWrapper
+        When true and Executable is 'npx', uses cmd /c wrapper for Windows compatibility.
+    .OUTPUTS
+        Hashtable with Success boolean and ExitCode integer.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Executable,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$UseWindowsWrapper
+    )
+
+    Push-Location $WorkingDirectory
+    try {
+        $global:LASTEXITCODE = 0
+
+        if ($UseWindowsWrapper -and $Executable -eq 'npx') {
+            $cmdArgs = @('/c', 'npx') + $Arguments
+            & cmd @cmdArgs
+        } else {
+            & $Executable @Arguments
+        }
+
+        return @{
+            Success  = ($LASTEXITCODE -eq 0)
+            ExitCode = $LASTEXITCODE
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Remove-PackagingArtifacts {
+    <#
+    .SYNOPSIS
+        Removes temporary directories created during packaging.
+    .DESCRIPTION
+        Cleans up directories copied to the extension folder during the packaging process.
+        Silently skips directories that do not exist.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory.
+    .PARAMETER DirectoryNames
+        Array of directory names to remove. Defaults to .github, docs, scripts.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$DirectoryNames = @(".github", "docs", "scripts")
+    )
+
+    foreach ($dir in $DirectoryNames) {
+        $dirPath = Join-Path $ExtensionDirectory $dir
+        if (Test-Path $dirPath) {
+            Remove-Item -Path $dirPath -Recurse -Force
+            Write-Host "   Removed $dir" -ForegroundColor Gray
+        }
+    }
+}
+
+function Restore-PackageJsonVersion {
+    <#
+    .SYNOPSIS
+        Restores original version in package.json after packaging.
+    .DESCRIPTION
+        Writes the original version back to package.json if it was temporarily modified
+        during packaging. Safely handles null inputs by returning early.
+    .PARAMETER PackageJsonPath
+        Absolute path to the package.json file.
+    .PARAMETER PackageJson
+        The parsed package.json object to modify.
+    .PARAMETER OriginalVersion
+        The original version string to restore.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [string]$PackageJsonPath,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [PSObject]$PackageJson,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [string]$OriginalVersion
+    )
+
+    # Handle null coercion: PowerShell converts $null to empty string for [string] params
+    if ([string]::IsNullOrEmpty($OriginalVersion) -or $null -eq $PackageJson -or [string]::IsNullOrEmpty($PackageJsonPath)) {
+        return
+    }
+
+    try {
+        $PackageJson.version = $OriginalVersion
+        $PackageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
+        Write-Host "   Version restored to: $OriginalVersion" -ForegroundColor Green
+    }
+    catch {
+        Write-Warning "Failed to restore original package.json version to '$OriginalVersion': $($_.Exception.Message)"
+    }
+}
+
+#endregion I/O Functions
 
 #region Orchestration Functions
 
@@ -391,22 +629,16 @@ function Invoke-PackageExtension {
     $packageJson = $null
     $PackageJsonPath = $null
     $packageVersion = $null
+    $versionWasModified = $false
 
     try {
-        # Validate extension directory
-        if (-not (Test-Path $ExtensionDirectory)) {
-            return New-PackagingResult -Success $false -ErrorMessage "Extension directory not found: $ExtensionDirectory"
+        # Validate all inputs using pure function
+        $inputValidation = Test-PackagingInputsValid -ExtensionDirectory $ExtensionDirectory -RepoRoot $RepoRoot
+        if (-not $inputValidation.IsValid) {
+            return New-PackagingResult -Success $false -ErrorMessage ($inputValidation.Errors -join '; ')
         }
 
-        $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
-        if (-not (Test-Path $PackageJsonPath)) {
-            return New-PackagingResult -Success $false -ErrorMessage "package.json not found: $PackageJsonPath"
-        }
-
-        $GitHubDir = Join-Path $RepoRoot ".github"
-        if (-not (Test-Path $GitHubDir)) {
-            return New-PackagingResult -Success $false -ErrorMessage ".github directory not found: $GitHubDir"
-        }
+        $PackageJsonPath = $inputValidation.PackageJsonPath
 
         Write-Host "📦 HVE Core Extension Packager" -ForegroundColor Cyan
         Write-Host "==============================" -ForegroundColor Cyan
@@ -448,6 +680,7 @@ function Invoke-PackageExtension {
             $packageJson.version = $packageVersion
             $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
             Write-Host "   Version: $originalVersion -> $packageVersion" -ForegroundColor Green
+            $versionWasModified = $true
         }
 
         # Handle changelog if provided
@@ -478,17 +711,24 @@ function Invoke-PackageExtension {
             }
         }
 
-        # Copy required directories
-        Write-Host "   Copying .github..." -ForegroundColor Gray
-        Copy-Item -Path "$RepoRoot/.github" -Destination "$ExtensionDirectory/.github" -Recurse
+        # Get and execute copy specifications
+        $copySpecs = Get-PackagingDirectorySpec -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory
+        foreach ($spec in $copySpecs) {
+            $specName = Split-Path $spec.Source -Leaf
+            Write-Host "   Copying $specName..." -ForegroundColor Gray
 
-        Write-Host "   Copying scripts/dev-tools..." -ForegroundColor Gray
-        New-Item -Path "$ExtensionDirectory/scripts" -ItemType Directory -Force | Out-Null
-        Copy-Item -Path "$RepoRoot/scripts/dev-tools" -Destination "$ExtensionDirectory/scripts/dev-tools" -Recurse
-
-        Write-Host "   Copying docs/templates..." -ForegroundColor Gray
-        New-Item -Path "$ExtensionDirectory/docs" -ItemType Directory -Force | Out-Null
-        Copy-Item -Path "$RepoRoot/docs/templates" -Destination "$ExtensionDirectory/docs/templates" -Recurse
+            if ($spec.IsFile) {
+                $parentDir = Split-Path $spec.Destination -Parent
+                New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
+            } else {
+                $parentDir = Split-Path $spec.Destination -Parent
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                }
+                Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+            }
+        }
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 
@@ -511,17 +751,16 @@ function Invoke-PackageExtension {
 
         Write-Host "   Using $($vsceAvailability.CommandType)..." -ForegroundColor Gray
 
-        Push-Location $ExtensionDirectory
-        try {
-            $global:LASTEXITCODE = 0  # Reset before native call for test reliability
-            & $vsceCommand.Executable @($vsceCommand.Arguments)
+        # Execute vsce command using I/O function
+        $useWindowsWrapper = ($IsWindows -or $env:OS -eq 'Windows_NT') -and ($vsceCommand.Executable -eq 'npx')
+        $vsceResult = Invoke-VsceCommand `
+            -Executable $vsceCommand.Executable `
+            -Arguments $vsceCommand.Arguments `
+            -WorkingDirectory $ExtensionDirectory `
+            -UseWindowsWrapper:$useWindowsWrapper
 
-            if ($LASTEXITCODE -ne 0) {
-                return New-PackagingResult -Success $false -ErrorMessage "vsce package command failed with exit code $LASTEXITCODE"
-            }
-        }
-        finally {
-            Pop-Location
+        if (-not $vsceResult.Success) {
+            return New-PackagingResult -Success $false -ErrorMessage "vsce package command failed with exit code $($vsceResult.ExitCode)"
         }
 
         # Find the generated vsix file
@@ -552,30 +791,16 @@ function Invoke-PackageExtension {
         return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
     }
     finally {
-        # Cleanup copied directories
+        # Cleanup copied directories using I/O function
         Write-Host ""
         Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
+        Remove-PackagingArtifacts -ExtensionDirectory $ExtensionDirectory -DirectoryNames $dirsToClean
 
-        foreach ($dir in $dirsToClean) {
-            $dirPath = Join-Path $ExtensionDirectory $dir
-            if (Test-Path $dirPath) {
-                Remove-Item -Path $dirPath -Recurse -Force
-                Write-Host "   Removed $dir" -ForegroundColor Gray
-            }
-        }
-
-        # Restore original version if it was changed
-        if ($null -ne $originalVersion -and $null -ne $packageVersion -and $packageVersion -ne $originalVersion -and $null -ne $PackageJsonPath) {
+        # Restore original version if it was changed using I/O function
+        if ($versionWasModified) {
             Write-Host ""
             Write-Host "🔄 Restoring original package.json version..." -ForegroundColor Yellow
-            try {
-                $packageJson.version = $originalVersion
-                $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
-                Write-Host "   Version restored to: $originalVersion" -ForegroundColor Green
-            }
-            catch {
-                Write-Warning "Failed to restore original package.json version to '$originalVersion': $($_.Exception.Message)"
-            }
+            Restore-PackageJsonVersion -PackageJsonPath $PackageJsonPath -PackageJson $packageJson -OriginalVersion $originalVersion
         }
     }
 }

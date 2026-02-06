@@ -294,6 +294,8 @@ Describe 'Invoke-PackageExtension' {
         New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
         New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
     }
 
@@ -461,6 +463,309 @@ Describe 'Invoke-PackageExtension' {
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'vsce package command failed|The term'
     }
+
+    It 'Returns failure when CIHelpers.psm1 missing' {
+        # Create package.json and .github, but remove CIHelpers.psm1
+        $manifest = @{
+            name = 'test-ext'
+            version = '1.0.0'
+            publisher = 'test'
+            engines = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+        Remove-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Force
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -Match 'CIHelpers.psm1 not found'
+    }
+}
+
+Describe 'Test-PackagingInputsValid' {
+    BeforeAll {
+        $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-inputs-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testRoot 'extension'
+        $script:repoRoot = Join-Path $script:testRoot 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock'
+        Set-Content -Path (Join-Path $script:extDir 'package.json') -Value '{}'
+    }
+
+    AfterEach {
+        if (Test-Path $script:testRoot) {
+            Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Returns valid when all paths exist' {
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeTrue
+        $result.Errors | Should -BeNullOrEmpty
+    }
+
+    It 'Returns resolved paths in result' {
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.PackageJsonPath | Should -BeLike '*package.json'
+        $result.GitHubDir | Should -BeLike '*.github'
+        $result.CIHelpersPath | Should -BeLike '*CIHelpers.psm1'
+    }
+
+    It 'Returns error when extension directory not found' {
+        $nonexistent = Join-Path ([System.IO.Path]::GetTempPath()) "nonexistent-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $result = Test-PackagingInputsValid -ExtensionDirectory $nonexistent -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeFalse
+        # Function accumulates multiple errors; extension dir missing cascades to package.json missing
+        $result.Errors | Should -Match 'Extension directory not found|package.json not found'
+    }
+
+    It 'Returns error when package.json not found' {
+        Remove-Item -Path (Join-Path $script:extDir 'package.json') -Force
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeFalse
+        $result.Errors | Should -Match 'package.json not found'
+    }
+
+    It 'Returns error when .github directory not found' {
+        Remove-Item -Path (Join-Path $script:repoRoot '.github') -Recurse -Force
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeFalse
+        $result.Errors | Should -Match '.github directory not found'
+    }
+
+    It 'Returns error when CIHelpers.psm1 not found' {
+        Remove-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Force
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeFalse
+        $result.Errors | Should -Match 'CIHelpers.psm1 not found'
+    }
+
+    It 'Collects multiple errors' {
+        Remove-Item -Path (Join-Path $script:extDir 'package.json') -Force
+        Remove-Item -Path (Join-Path $script:repoRoot '.github') -Recurse -Force
+        $result = Test-PackagingInputsValid -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+        $result.IsValid | Should -BeFalse
+        $result.Errors.Count | Should -BeGreaterOrEqual 2
+    }
+}
+
+Describe 'Get-PackagingDirectorySpec' {
+    BeforeAll {
+        # Use platform-agnostic temp paths for cross-platform CI compatibility
+        $script:repoRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-repo'
+        $script:extDir = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-ext'
+    }
+
+    It 'Returns array of 4 directory specifications' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $result.Count | Should -Be 4
+    }
+
+    It 'Includes .github directory specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $githubSpec = $result | Where-Object { $_.Source -like '*.github' }
+        $githubSpec | Should -Not -BeNullOrEmpty
+        $githubSpec.Destination | Should -BeLike '*.github'
+        $githubSpec.IsFile | Should -BeFalse
+    }
+
+    It 'Includes dev-tools directory specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $devToolsSpec = $result | Where-Object { $_.Source -like '*dev-tools' }
+        $devToolsSpec | Should -Not -BeNullOrEmpty
+        $devToolsSpec.IsFile | Should -BeFalse
+    }
+
+    It 'Includes CIHelpers.psm1 file specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $ciHelpersSpec = $result | Where-Object { $_.Source -like '*CIHelpers.psm1' }
+        $ciHelpersSpec | Should -Not -BeNullOrEmpty
+        $ciHelpersSpec.IsFile | Should -BeTrue
+    }
+
+    It 'Includes docs/templates directory specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $templatesSpec = $result | Where-Object { $_.Source -like '*templates' }
+        $templatesSpec | Should -Not -BeNullOrEmpty
+        $templatesSpec.IsFile | Should -BeFalse
+    }
+
+    It 'Uses correct path joining for source and destination' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        foreach ($spec in $result) {
+            $spec.Source | Should -Not -BeNullOrEmpty
+            $spec.Destination | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'Invoke-VsceCommand' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "vsce-cmd-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    BeforeEach {
+        New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Returns hashtable with Success and ExitCode' {
+        $result = Invoke-VsceCommand -Executable 'pwsh' -Arguments @('-Command', 'exit 0') -WorkingDirectory $script:testDir
+        $result | Should -BeOfType [hashtable]
+        $result.Keys | Should -Contain 'Success'
+        $result.Keys | Should -Contain 'ExitCode'
+    }
+
+    It 'Returns Success true for zero exit code' {
+        $result = Invoke-VsceCommand -Executable 'pwsh' -Arguments @('-Command', 'exit 0') -WorkingDirectory $script:testDir
+        $result.Success | Should -BeTrue
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'Returns Success false for non-zero exit code' {
+        $result = Invoke-VsceCommand -Executable 'pwsh' -Arguments @('-Command', 'exit 42') -WorkingDirectory $script:testDir
+        $result.Success | Should -BeFalse
+        $result.ExitCode | Should -Be 42
+    }
+
+    It 'Restores working directory after execution' {
+        $originalDir = Get-Location
+        $null = Invoke-VsceCommand -Executable 'pwsh' -Arguments @('-Command', 'exit 0') -WorkingDirectory $script:testDir
+        (Get-Location).Path | Should -Be $originalDir.Path
+    }
+
+    It 'Uses cmd wrapper when UseWindowsWrapper specified with npx' -Skip:(-not $IsWindows) {
+        # Test that cmd wrapper path executes without error
+        # npx --help outputs text to the pipeline alongside the hashtable return value
+        $output = Invoke-VsceCommand -Executable 'npx' -Arguments @('--help') -WorkingDirectory $script:testDir -UseWindowsWrapper
+        # Filter for the hashtable return (command output also flows through pipeline)
+        $result = $output | Where-Object { $_ -is [hashtable] }
+        $result | Should -Not -BeNullOrEmpty
+        $result.Keys | Should -Contain 'Success'
+    }
+}
+
+Describe 'Remove-PackagingArtifacts' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "rm-artifacts-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    BeforeEach {
+        New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Removes existing directories' {
+        New-Item -Path (Join-Path $script:testDir '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:testDir 'scripts') -ItemType Directory -Force | Out-Null
+
+        Remove-PackagingArtifacts -ExtensionDirectory $script:testDir
+
+        Test-Path (Join-Path $script:testDir '.github') | Should -BeFalse
+        Test-Path (Join-Path $script:testDir 'scripts') | Should -BeFalse
+    }
+
+    It 'Silently skips non-existent directories' {
+        { Remove-PackagingArtifacts -ExtensionDirectory $script:testDir } | Should -Not -Throw
+    }
+
+    It 'Uses custom directory names when specified' {
+        New-Item -Path (Join-Path $script:testDir 'custom1') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:testDir 'custom2') -ItemType Directory -Force | Out-Null
+
+        Remove-PackagingArtifacts -ExtensionDirectory $script:testDir -DirectoryNames @('custom1', 'custom2')
+
+        Test-Path (Join-Path $script:testDir 'custom1') | Should -BeFalse
+        Test-Path (Join-Path $script:testDir 'custom2') | Should -BeFalse
+    }
+
+    It 'Removes nested contents recursively' {
+        $nestedDir = Join-Path $script:testDir '.github/nested/deep'
+        New-Item -Path $nestedDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $nestedDir 'file.txt') -Value 'content'
+
+        Remove-PackagingArtifacts -ExtensionDirectory $script:testDir -DirectoryNames @('.github')
+
+        Test-Path (Join-Path $script:testDir '.github') | Should -BeFalse
+    }
+}
+
+Describe 'Restore-PackageJsonVersion' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "restore-ver-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    BeforeEach {
+        New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Restores original version to package.json' {
+        $packageJsonPath = Join-Path $script:testDir 'package.json'
+        $packageJson = @{ name = 'test'; version = '2.0.0' }
+        $packageJson | ConvertTo-Json | Set-Content -Path $packageJsonPath
+
+        $obj = Get-Content $packageJsonPath | ConvertFrom-Json
+        Restore-PackageJsonVersion -PackageJsonPath $packageJsonPath -PackageJson $obj -OriginalVersion '1.0.0'
+
+        $updated = Get-Content $packageJsonPath | ConvertFrom-Json
+        $updated.version | Should -Be '1.0.0'
+    }
+
+    It 'Returns early when OriginalVersion is null' {
+        $packageJsonPath = Join-Path $script:testDir 'package.json'
+        $packageJson = @{ name = 'test'; version = '2.0.0' }
+        $packageJson | ConvertTo-Json | Set-Content -Path $packageJsonPath
+
+        $obj = Get-Content $packageJsonPath | ConvertFrom-Json
+        { Restore-PackageJsonVersion -PackageJsonPath $packageJsonPath -PackageJson $obj -OriginalVersion $null } | Should -Not -Throw
+
+        $unchanged = Get-Content $packageJsonPath | ConvertFrom-Json
+        $unchanged.version | Should -Be '2.0.0'
+    }
+
+    It 'Returns early when PackageJson is null' {
+        $packageJsonPath = Join-Path $script:testDir 'package.json'
+        Set-Content -Path $packageJsonPath -Value '{"version": "2.0.0"}'
+
+        { Restore-PackageJsonVersion -PackageJsonPath $packageJsonPath -PackageJson $null -OriginalVersion '1.0.0' } | Should -Not -Throw
+
+        $unchanged = Get-Content $packageJsonPath | ConvertFrom-Json
+        $unchanged.version | Should -Be '2.0.0'
+    }
+
+    It 'Returns early when PackageJsonPath is null' {
+        $packageJson = @{ name = 'test'; version = '2.0.0' }
+        { Restore-PackageJsonVersion -PackageJsonPath $null -PackageJson $packageJson -OriginalVersion '1.0.0' } | Should -Not -Throw
+    }
+
+    It 'Handles write failure gracefully' {
+        Mock Write-Warning {}
+        $invalidPath = Join-Path $script:testDir 'nonexistent/package.json'
+        $packageJson = [PSCustomObject]@{ name = 'test'; version = '2.0.0' }
+
+        { Restore-PackageJsonVersion -PackageJsonPath $invalidPath -PackageJson $packageJson -OriginalVersion '1.0.0' } | Should -Not -Throw
+    }
 }
 
 Describe 'CI Integration - Package-Extension' {
@@ -483,6 +788,8 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+            Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
             New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
 
             $manifest = @{
@@ -572,6 +879,8 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+            Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
             New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
 
             $manifest = @{

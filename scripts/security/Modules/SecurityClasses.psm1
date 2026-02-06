@@ -28,6 +28,13 @@ class DependencyViolation {
     .DESCRIPTION
         Contains information about a dependency that is not properly SHA-pinned,
         including file location, dependency details, and remediation guidance.
+
+        ViolationType values:
+        - Unpinned: Dependency uses tag or branch instead of SHA
+        - Stale: SHA is pinned but newer version available
+        - VersionMismatch: Version comment does not match resolved SHA
+        - MissingVersionComment: SHA pinned but no version comment present
+        - Empty string: Default or unclassified violation
     #>
 
     [string]$File
@@ -37,6 +44,8 @@ class DependencyViolation {
     [string]$Version
     [string]$CurrentRef
     [string]$Severity
+    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', '')]
+    [string]$ViolationType
     [string]$Description
     [string]$Remediation
     [hashtable]$Metadata
