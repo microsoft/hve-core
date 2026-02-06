@@ -949,4 +949,147 @@ applyTo: "**/*.js"
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'Invalid version format'
     }
+
+    Context 'Persona template copy' {
+        BeforeAll {
+            # Developer collection manifest
+            $script:devCollectionPath = Join-Path $script:tempDir 'developer.collection.json'
+            @{
+                id          = 'developer'
+                name        = 'hve-developer'
+                displayName = 'HVE Core - Developer Edition'
+                description = 'Developer edition'
+                personas    = @('developer')
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:devCollectionPath
+
+            # hve-core-all collection manifest (default)
+            $script:allCollectionPath = Join-Path $script:tempDir 'hve-core-all.collection.json'
+            @{
+                id          = 'hve-core-all'
+                name        = 'hve-core-all'
+                displayName = 'HVE Core - All'
+                description = 'All artifacts'
+                personas    = @('hve-core-all')
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:allCollectionPath
+
+            # Collection manifest referencing a missing template
+            $script:missingCollectionPath = Join-Path $script:tempDir 'nonexistent.collection.json'
+            @{
+                id          = 'nonexistent'
+                name        = 'nonexistent'
+                displayName = 'Nonexistent'
+                description = 'Missing template'
+                personas    = @('nonexistent')
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:missingCollectionPath
+
+            # Persona template for developer collection
+            @'
+{
+    "name": "hve-developer",
+    "version": "1.2.3",
+    "contributes": {}
+}
+'@ | Set-Content -Path (Join-Path $script:extDir 'package.developer.json')
+
+            # Update registry with developer and nonexistent persona entries
+            $registryContent = @{
+                version  = '1.0'
+                personas = @{
+                    definitions = @{
+                        'hve-core-all' = @{ name = 'All'; description = 'All artifacts' }
+                        'developer'    = @{ name = 'Developer'; description = 'Developer artifacts' }
+                        'nonexistent'  = @{ name = 'Nonexistent'; description = 'Missing template' }
+                    }
+                }
+                agents       = @{
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                }
+                prompts      = @{
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                }
+                instructions = @{
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                }
+                skills       = @{}
+            }
+            $registryContent | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:ghDir 'ai-artifacts-registry.json')
+        }
+
+        BeforeEach {
+            $script:originalPackageJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw
+        }
+
+        AfterEach {
+            $script:originalPackageJson | Set-Content -Path (Join-Path $script:extDir 'package.json')
+            $bakPath = Join-Path $script:extDir 'package.json.bak'
+            if (Test-Path $bakPath) {
+                Remove-Item -Path $bakPath -Force
+            }
+        }
+
+        It 'Skips template copy when no collection specified' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $currentContent = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw
+            $currentContent | Should -Be $script:originalPackageJson
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Skips template copy for hve-core-all collection' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:allCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Returns error when persona template file missing' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:missingCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeFalse
+            $result.ErrorMessage | Should -Match 'Persona template not found'
+        }
+
+        It 'Copies template to package.json for non-default collection' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:devCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $updatedJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $updatedJson.name | Should -Be 'hve-developer'
+        }
+
+        It 'Creates package.json.bak backup before template copy' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:devCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $bakPath = Join-Path $script:extDir 'package.json.bak'
+            Test-Path $bakPath | Should -BeTrue
+            $bakContent = Get-Content -Path $bakPath -Raw
+            $bakContent | Should -Be $script:originalPackageJson
+        }
+    }
 }

@@ -492,6 +492,128 @@ Describe 'Invoke-PackageExtension' {
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'CIHelpers.psm1 not found'
     }
+
+    Context 'Package.json backup restore' {
+        It 'Does not create backup when no collection specified' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Restores package.json from backup after packaging' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            # Original package.json content (will be overwritten by template)
+            $originalManifest = @{
+                name      = 'hve-core'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+
+            # Simulate post-template state: template content in package.json, original backed up
+            $templateManifest = @{
+                name      = 'hve-developer'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $templateManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+            $originalManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'hve-developer-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            # Verify the original manifest was restored
+            $restored = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $restored.name | Should -Be 'hve-core'
+        }
+
+        It 'Removes backup file after restore' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+            # Create a backup file manually to simulate Invoke-PrepareExtension behavior
+            $backupManifest = @{
+                name      = 'original-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $backupManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Restored package.json contains original metadata' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            # Original manifest backed up before template was applied
+            $originalManifest = @{
+                name        = 'hve-core-original'
+                version     = '2.5.0'
+                publisher   = 'original-pub'
+                description = 'Original description'
+                engines     = @{ vscode = '^1.80.0' }
+            }
+
+            # Template manifest currently in package.json
+            $templateManifest = @{
+                name        = 'hve-persona'
+                version     = '2.5.0'
+                publisher   = 'persona-pub'
+                description = 'Persona description'
+                engines     = @{ vscode = '^1.80.0' }
+            }
+            $templateManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+            $originalManifest | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix matching the template name
+            $vsixPath = Join-Path $script:extDir 'hve-persona-2.5.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $restored = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $restored.name | Should -Be 'hve-core-original'
+            $restored.publisher | Should -Be 'original-pub'
+            $restored.description | Should -Be 'Original description'
+        }
+    }
 }
 
 Describe 'Test-PackagingInputsValid' {
