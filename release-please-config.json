@@ -23,6 +23,11 @@
           "type": "json",
           "path": "extension/package.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "extension/package.developer.json",
+          "jsonpath": "$.version"
         }
       ]
     }

@@ -418,6 +418,7 @@ FodyWeavers.xsd
 # Extension build artifacts
 extension/LICENSE
 extension/CHANGELOG.md
+extension/package.json.bak
 
 # Windows Installer files from build outputs
 *.cab

@@ -13,3 +13,9 @@
 !README.md
 !LICENSE
 !CHANGELOG.md
+
+# Exclude persona-specific READMEs (only the canonical README.md ships)
+README.*.md
+
+# Exclude persona-specific package templates (only the canonical package.json ships)
+package.*.json

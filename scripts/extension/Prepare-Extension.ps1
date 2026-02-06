@@ -1203,19 +1203,32 @@ function Invoke-PrepareExtension {
         Write-Host "Skills after filter: $($chatSkills.Count)"
     }
 
-    # Update package.json
+    # Apply persona template when building a non-default collection
+    if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core-all') {
+        $collectionId = $collectionManifest.id
+        $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
+        if (-not (Test-Path $templatePath)) {
+            return New-PrepareResult -Success $false -ErrorMessage "Persona template not found: $templatePath"
+        }
+
+        # Back up canonical package.json for later restore
+        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
+        Copy-Item -Path $PackageJsonPath -Destination $backupPath -Force
+
+        # Copy persona template over package.json
+        Copy-Item -Path $templatePath -Destination $PackageJsonPath -Force
+
+        # Re-read template as the working package.json
+        $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+        Write-Host "Applied persona template: package.$collectionId.json" -ForegroundColor Green
+    }
+
+    # Update package.json with generated contributes
     $packageJson = Update-PackageJsonContributes -PackageJson $packageJson `
         -ChatAgents $chatAgents `
         -ChatPromptFiles $chatPrompts `
         -ChatInstructions $chatInstructions `
         -ChatSkills $chatSkills
-
-    # Override package.json metadata from collection manifest
-    if ($null -ne $collectionManifest) {
-        if ($collectionManifest.ContainsKey('name')) { $packageJson.name = $collectionManifest.name }
-        if ($collectionManifest.ContainsKey('displayName')) { $packageJson.displayName = $collectionManifest.displayName }
-        if ($collectionManifest.ContainsKey('description')) { $packageJson.description = $collectionManifest.description }
-    }
 
     # Write updated package.json
     if (-not $DryRun) {

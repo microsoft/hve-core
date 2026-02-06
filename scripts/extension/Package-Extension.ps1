@@ -285,6 +285,47 @@ function New-PackagingResult {
     }
 }
 
+function Get-PersonaReadmePath {
+    <#
+    .SYNOPSIS
+        Resolves the persona-specific README path from a collection manifest.
+    .DESCRIPTION
+        Maps a collection manifest to its persona-specific README file. Returns
+        null when the collection is the full package (hve-core-all) or when no
+        matching persona README exists on disk.
+    .PARAMETER CollectionPath
+        Path to the collection manifest JSON file.
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory containing README files.
+    .OUTPUTS
+        String path to the persona README, or $null if not applicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory
+    )
+
+    $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
+    $collectionId = $manifest.id
+
+    # Full package uses the default README.md
+    if ($collectionId -eq 'hve-core-all') {
+        return $null
+    }
+
+    $personaReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
+    if (Test-Path $personaReadmePath) {
+        return $personaReadmePath
+    }
+
+    return $null
+}
+
 function Get-ResolvedPackageVersion {
     <#
     .SYNOPSIS
@@ -537,6 +578,55 @@ function Copy-CollectionArtifacts {
             if (Test-Path $srcPath) {
                 Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
             }
+        }
+    }
+}
+
+function Set-PersonaReadme {
+    <#
+    .SYNOPSIS
+        Swaps or restores the persona-specific README for collection packaging.
+    .DESCRIPTION
+        In swap mode, backs up the original README.md and copies the persona
+        README in its place. In restore mode, copies the backup back and removes it.
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory.
+    .PARAMETER PersonaReadmePath
+        Path to the persona-specific README file. Required for Swap operation.
+    .PARAMETER Operation
+        Either 'Swap' to replace README.md with persona content, or 'Restore'
+        to revert README.md from backup.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [string]$PersonaReadmePath = "",
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Swap', 'Restore')]
+        [string]$Operation
+    )
+
+    $readmePath = Join-Path $ExtensionDirectory "README.md"
+    $backupPath = Join-Path $ExtensionDirectory "README.md.bak"
+
+    if ($Operation -eq 'Swap') {
+        if (-not $PersonaReadmePath -or $PersonaReadmePath -eq "") {
+            Write-Warning "No persona README path provided for swap operation"
+            return
+        }
+        Copy-Item -Path $readmePath -Destination $backupPath -Force
+        Copy-Item -Path $PersonaReadmePath -Destination $readmePath -Force
+        Write-Host "   Swapped README.md with $(Split-Path $PersonaReadmePath -Leaf)" -ForegroundColor Green
+    }
+    elseif ($Operation -eq 'Restore') {
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $readmePath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored original README.md" -ForegroundColor Green
         }
     }
 }
@@ -867,6 +957,16 @@ function Invoke-PackageExtension {
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 
+        # Swap persona README if collection specifies one
+        if ($Collection -and $Collection -ne "") {
+            $personaReadmePath = Get-PersonaReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
+            if ($personaReadmePath) {
+                Write-Host ""
+                Write-Host "📄 Applying persona README..." -ForegroundColor Yellow
+                Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -PersonaReadmePath $personaReadmePath -Operation Swap
+            }
+        }
+
         # Check vsce availability using pure function
         $vsceAvailability = Test-VsceAvailable
         if (-not $vsceAvailability.IsAvailable) {
@@ -926,6 +1026,20 @@ function Invoke-PackageExtension {
         return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
     }
     finally {
+        # Restore canonical package.json from persona template backup
+        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $PackageJsonPath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored canonical package.json from backup" -ForegroundColor Green
+
+            # Re-read restored package.json for downstream restore steps
+            $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+        }
+
+        # Restore persona README if it was swapped
+        Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
+
         # Cleanup copied directories using I/O function
         Write-Host ""
         Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow

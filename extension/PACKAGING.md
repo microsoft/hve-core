@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2025-12-19
+ms.date: 2026-02-06
 ms.topic: reference
 ---
 
@@ -267,21 +267,65 @@ Collection manifests are defined in `extension/collections/`:
 | Full       | `hve-core-all.collection.json` | All artifacts regardless of persona    |
 | Developer  | `developer.collection.json`    | Software engineering focused artifacts |
 
+### Persona Template Files
+
+Each persona collection has a corresponding `package.{collection-id}.json` template file in `extension/`. These files contain static metadata (name, display name, description, publisher) for the persona edition. The `contributes` section is empty because `Prepare-Extension.ps1` populates it dynamically at build time.
+
+| Template                 | Collection | Purpose                           |
+| ------------------------ | ---------- | --------------------------------- |
+| `package.json`           | Full       | Canonical manifest (hve-core-all) |
+| `package.developer.json` | Developer  | Developer edition metadata        |
+
+The canonical `extension/package.json` serves double duty: it is both the default build target and the `hve-core-all` template. No separate `package.hve-core-all.json` file exists.
+
+When building a persona collection, `Prepare-Extension.ps1`:
+
+1. Backs up `package.json` to `package.json.bak`
+2. Copies the persona template (`package.developer.json`) over `package.json`
+3. Generates `contributes` into the copied file
+4. Serializes the result as `package.json`
+
+After packaging, `Package-Extension.ps1` restores the canonical `package.json` from backup in its `finally` block.
+
+#### Version Synchronization
+
+Template files contain a `version` field managed by `release-please`. The `release-please-config.json` file includes `extra-files` entries for each template, ensuring versions stay synchronized across all persona templates and the canonical `package.json`.
+
 ### Building Collection Packages
 
 To build a specific collection package:
 
 ```bash
-# Build the full collection (default)
+# Build the full collection (default, no template copy)
 pwsh ./scripts/extension/Prepare-Extension.ps1
 pwsh ./scripts/extension/Package-Extension.ps1
 
-# Build a persona-specific collection
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection developer
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0"
+# Build a persona-specific collection (copies persona template)
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
+pwsh ./scripts/extension/Package-Extension.ps1 -Collection extension/collections/developer.collection.json
 ```
 
-The `-Collection` parameter filters artifacts based on the collection manifest's persona list.
+When `-Collection` targets a persona other than `hve-core-all`, the prepare script copies the persona template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
+
+### Inner Dev Loop
+
+For rapid iteration without running the full build pipeline, copy the persona template manually:
+
+```bash
+# 1. Copy the developer template
+cp extension/package.developer.json extension/package.json
+
+# 2. Run prepare to generate contributes
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
+
+# 3. Inspect the result
+cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
+
+# 4. Restore canonical package.json
+git checkout extension/package.json
+```
+
+The template file stays clean. Use `git checkout extension/package.json` to restore the canonical state at any time.
 
 ### Collection Resolution
 
