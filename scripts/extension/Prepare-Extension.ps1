@@ -1006,6 +1006,89 @@ function New-PrepareResult {
     }
 }
 
+function Test-TemplateConsistency {
+    <#
+    .SYNOPSIS
+        Validates persona template metadata against its collection manifest.
+    .DESCRIPTION
+        Compares name, displayName, and description fields between a persona
+        package template (e.g. package.developer.json) and the corresponding
+        collection manifest. Emits warnings for divergences and returns a list
+        of mismatches.
+    .PARAMETER TemplatePath
+        Path to the persona package template JSON file.
+    .PARAMETER CollectionManifest
+        Parsed collection manifest hashtable with name, displayName, description.
+    .OUTPUTS
+        [hashtable] With Mismatches array and IsConsistent bool.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$TemplatePath,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest
+    )
+
+    $result = @{
+        Mismatches   = @()
+        IsConsistent = $true
+    }
+
+    if (-not (Test-Path $TemplatePath)) {
+        $result.Mismatches += @{
+            Field    = 'file'
+            Template = $TemplatePath
+            Manifest = 'N/A'
+            Message  = "Template file not found: $TemplatePath"
+        }
+        $result.IsConsistent = $false
+        return $result
+    }
+
+    try {
+        $template = Get-Content -Path $TemplatePath -Raw | ConvertFrom-Json
+    }
+    catch {
+        $result.Mismatches += @{
+            Field    = 'file'
+            Template = $TemplatePath
+            Manifest = 'N/A'
+            Message  = "Failed to parse template: $($_.Exception.Message)"
+        }
+        $result.IsConsistent = $false
+        return $result
+    }
+
+    $fieldsToCheck = @('name', 'displayName', 'description')
+    foreach ($field in $fieldsToCheck) {
+        $templateValue = $null
+        $manifestValue = $null
+
+        if ($template.PSObject.Properties[$field]) {
+            $templateValue = $template.$field
+        }
+        if ($CollectionManifest.ContainsKey($field)) {
+            $manifestValue = $CollectionManifest[$field]
+        }
+
+        if ($null -ne $templateValue -and $null -ne $manifestValue -and $templateValue -ne $manifestValue) {
+            $result.Mismatches += @{
+                Field    = $field
+                Template = $templateValue
+                Manifest = $manifestValue
+                Message  = "$field diverges: template='$templateValue' manifest='$manifestValue'"
+            }
+            $result.IsConsistent = $false
+        }
+    }
+
+    return $result
+}
+
 function Invoke-PrepareExtension {
     <#
     .SYNOPSIS
@@ -1209,6 +1292,16 @@ function Invoke-PrepareExtension {
         $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
         if (-not (Test-Path $templatePath)) {
             return New-PrepareResult -Success $false -ErrorMessage "Persona template not found: $templatePath"
+        }
+
+        # Validate template consistency against collection manifest
+        $consistency = Test-TemplateConsistency -TemplatePath $templatePath -CollectionManifest $collectionManifest
+        if (-not $consistency.IsConsistent) {
+            Write-Host "`n--- Template Consistency Warnings ---" -ForegroundColor Yellow
+            foreach ($mismatch in $consistency.Mismatches) {
+                Write-Warning "Template/manifest mismatch: $($mismatch.Message)"
+                Write-CIAnnotation -Message "Template/manifest mismatch ($collectionId): $($mismatch.Message)" -Level Warning
+            }
         }
 
         # Back up canonical package.json for later restore
