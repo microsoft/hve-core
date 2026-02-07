@@ -24,12 +24,14 @@ Follow community interaction guidelines from #file:./community-interaction.instr
 
 ### Autonomy Behavior for Triage Operations
 
-| Operation            | Full         | Partial      | Manual       |
-| -------------------- | ------------ | ------------ | ------------ |
-| Label assignment     | Auto-execute | Auto-execute | Gate on user |
-| Milestone assignment | Auto-execute | Auto-execute | Gate on user |
-| Duplicate closure    | Auto-execute | Gate on user | Gate on user |
-| needs-triage removal | Auto-execute | Auto-execute | Gate on user |
+| Operation                         | Full         | Partial      | Manual       |
+| --------------------------------- | ------------ | ------------ | ------------ |
+| Label assignment                  | Auto-execute | Auto-execute | Gate on user |
+| Milestone assignment              | Auto-execute | Auto-execute | Gate on user |
+| Duplicate closure                 | Auto-execute | Gate on user | Gate on user |
+| needs-triage removal (classified) | Auto-execute | Auto-execute | Gate on user |
+
+Unclassified issues (titles without a recognized conventional commit pattern) retain `needs-triage` across all autonomy tiers. Label and milestone suggestions still apply, but `needs-triage` is not removed.
 
 ## Required Phases
 
@@ -110,12 +112,19 @@ When `${input:autonomy}` is `full`, proceed directly to Step 3 without waiting f
 
 On user confirmation (or immediately under full autonomy), apply the approved recommendations.
 
-For non-duplicate issues, consolidate label assignment, milestone assignment, and `needs-triage` removal into a single API call per issue:
+For classified non-duplicate issues (title matched a recognized conventional commit pattern), consolidate label assignment, milestone assignment, and `needs-triage` removal into a single API call per issue:
 
 1. Compute the new label set: `(current_labels - "needs-triage") + suggested_labels`.
 2. Call `mcp_github_issue_write` with `method: 'update'`, `labels: [computed_set]`, and `milestone: suggested_milestone`.
 
 The `labels` parameter uses replacement semantics. The computed set MUST include all labels to retain, all suggested labels to add, and MUST exclude `needs-triage`.
+
+For unclassified non-duplicate issues (title did not match any recognized pattern), apply suggested labels while retaining `needs-triage`:
+
+1. Compute the new label set: `current_labels + suggested_labels`.
+2. Call `mcp_github_issue_write` with `method: 'update'`, `labels: [computed_set]`, and `milestone: suggested_milestone`.
+
+The `labels` parameter uses replacement semantics. The computed set MUST include all existing labels (including `needs-triage`), plus any suggested labels.
 
 For confirmed duplicates, apply the comment-before-closure pattern:
 
@@ -293,7 +302,7 @@ Triage is complete when:
 * All fetched issues (up to `${input:maxIssues}`) with the `needs-triage` label have been analyzed for label suggestions, milestone recommendations, and duplicate candidates.
 * A triage-plan.md exists with a recommendation row for every analyzed issue.
 * The user has reviewed and confirmed (or adjusted) the triage plan, respecting the active autonomy tier.
-* Confirmed recommendations have been executed via consolidated API calls (labels assigned, milestones set, `needs-triage` removed, duplicates closed).
+* Confirmed recommendations have been executed via consolidated API calls (labels assigned, milestones set, `needs-triage` removed from classified issues, duplicates closed).
 * planning-log.md reflects the final state of all operations with checkboxes marking completion.
 * Any failed operations have been logged and either retried or flagged for manual follow-up.
 

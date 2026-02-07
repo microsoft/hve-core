@@ -336,7 +336,7 @@ Phase tracking applies when the consuming workflow file defines phases (see the 
 Handoff file requirements:
 
 * Agents must include a reference to each issue defined in issues-plan.md.
-* Agents must order entries with Create actions first, Update actions second, Link actions third, Close actions fourth, and No Change entries last.
+* Agents must order entries with Create actions first, Update actions second, Link actions third, Close actions fourth, Comment actions fifth, and No Change entries last.
 * Agents must include a markdown checkbox next to each issue with a summary.
 * Agents must include project-relative paths to all planning files.
 * Agents must update the Summary section whenever the Issues section changes.
@@ -368,6 +368,7 @@ This convention enables resumable execution. When an execution run is interrupte
 | Update    | {{update_count}}   |
 | Link      | {{link_count}}     |
 | Close     | {{close_count}}    |
+| Comment   | {{comment_count}}  |
 | No Change | {{no_change_count}} |
 
 ## Issues
@@ -396,6 +397,12 @@ This convention enables resumable execution. When an execution run is interrupte
 - [ ] Close #{{issue_number}}
   - Reason: {{state_reason}} (completed|not_planned|duplicate)
   - Duplicate of: #{{duplicate_of}} (if applicable)
+
+### Comment
+
+- [ ] Comment on #{{issue_number}}
+  - Body: {{comment_body}}
+  - Rationale: {{reason}}
 
 ### No Change
 
@@ -637,19 +644,19 @@ When uncertain about milestone assignment, agents should default to the next ODD
 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).
 
-| Field         | Create   | Update   | Link     | Close    |
-| ------------- | -------- | -------- | -------- | -------- |
-| title         | REQUIRED | Optional | N/A      | N/A      |
-| body          | REQUIRED | Optional | N/A      | N/A      |
-| labels        | REQUIRED | Optional | N/A      | N/A      |
-| assignees     | Optional | Optional | N/A      | N/A      |
-| milestone     | Optional | Optional | N/A      | N/A      |
-| issue_number  | N/A      | REQUIRED | REQUIRED | REQUIRED |
-| state         | N/A      | Optional | N/A      | REQUIRED |
-| state_reason  | N/A      | N/A      | N/A      | REQUIRED |
-| sub_issue_id  | N/A      | N/A      | REQUIRED | N/A      |
-| duplicate_of  | N/A      | N/A      | N/A      | Optional |
-| type          | Optional | Optional | N/A      | N/A      |
+| Field        | Create   | Update   | Link     | Close    | Comment  |
+| ------------ | -------- | -------- | -------- | -------- | -------- |
+| title        | REQUIRED | Optional | N/A      | N/A      | N/A      |
+| body         | REQUIRED | Optional | N/A      | N/A      | REQUIRED |
+| labels       | REQUIRED | Optional | N/A      | N/A      | N/A      |
+| assignees    | Optional | Optional | N/A      | N/A      | N/A      |
+| milestone    | Optional | Optional | N/A      | N/A      | N/A      |
+| issue_number | N/A      | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+| state        | N/A      | Optional | N/A      | REQUIRED | N/A      |
+| state_reason | N/A      | N/A      | N/A      | REQUIRED | N/A      |
+| sub_issue_id | N/A      | N/A      | REQUIRED | N/A      | N/A      |
+| duplicate_of | N/A      | N/A      | N/A      | Optional | N/A      |
+| type         | Optional | Optional | N/A      | N/A      | N/A      |
 
 Rules:
 
@@ -658,6 +665,7 @@ Rules:
 * Link operations must provide both issue_number (parent) and sub_issue_id (child).
 * Close operations must provide issue_number, state set to `closed`, and a state_reason (one of: `completed`, `not_planned`, `duplicate`).
 * When closing as `duplicate`, the `duplicate_of` field should reference the original issue number.
+* Comment operations must provide issue_number and body (passed to `mcp_github_add_issue_comment`).
 * Call `mcp_github_list_issue_types` before using the `type` field to confirm the organization supports issue types.
 
 ## Three-Tier Autonomy Model

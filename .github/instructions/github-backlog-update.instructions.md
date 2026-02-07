@@ -52,7 +52,7 @@ When handoff-logs.md exists next to ${input:handoffFile}:
 * Read handoff-logs.md and ${input:handoffFile}.
 * Identify operations with unchecked `[ ]` status.
 * Rebuild the temporary ID mapping from previously completed Create entries (the Issue Number field in each completed log entry records the `{{TEMP-N}}` to `#actual` mapping).
-* Resume processing in priority order: Create → Update → Link → Close, starting from the first unchecked operation in that sequence.
+* Resume processing in priority order: Create → Update → Link → Close → Comment, starting from the first unchecked operation in that sequence.
 
 When handoff-logs.md does not exist:
 

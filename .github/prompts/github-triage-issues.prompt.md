@@ -58,16 +58,17 @@ Present the triage plan to the user as a summary table.
 Execution follows the `${input:autonomy}` tier per the Three-Tier Autonomy Model in the planning specification. Under `partial` (default), label assignments, milestone assignments, and `needs-triage` removal auto-execute, but duplicate closures gate on user approval. Under `full`, all operations execute immediately. Under `manual`, every operation gates on user confirmation.
 
 1. Collect user confirmation or modifications per the active autonomy tier before applying gated changes.
-2. For each confirmed non-duplicate issue, compute the replacement label set as `(current_labels - "needs-triage") + suggested_labels` and apply labels, milestone, and `needs-triage` removal in a single `mcp_github_issue_write` call with `method: 'update'`. The `labels` parameter uses replacement semantics: include all labels to retain, all labels to add, and exclude `needs-triage`.
-3. For confirmed Match-category duplicates, close using `mcp_github_issue_write` with `state: 'closed'`, `state_reason: 'duplicate'`, and `duplicate_of` referencing the original issue.
-4. Update planning-log.md with execution results for each processed issue.
+2. For each confirmed non-duplicate issue whose title matched a recognized conventional commit pattern, compute the replacement label set as `(current_labels - "needs-triage") + suggested_labels` and apply labels, milestone, and `needs-triage` removal in a single `mcp_github_issue_write` call with `method: 'update'`. The `labels` parameter uses replacement semantics: include all labels to retain, all labels to add, and exclude `needs-triage`.
+3. For each confirmed non-duplicate issue whose title did not match a recognized pattern, compute the replacement label set as `current_labels + suggested_labels` (retaining `needs-triage`) and apply labels and milestone in a single `mcp_github_issue_write` call with `method: 'update'`. The `labels` parameter uses replacement semantics: include all existing labels including `needs-triage`, plus all suggested labels.
+4. For confirmed Match-category duplicates, close using `mcp_github_issue_write` with `state: 'closed'`, `state_reason: 'duplicate'`, and `duplicate_of` referencing the original issue.
+5. Update planning-log.md with execution results for each processed issue.
 
 ## Success Criteria
 
 * All fetched issues have triage recommendations with label suggestions, milestone assignments, and duplicate assessments.
 * The triage plan has been reviewed per the active autonomy tier before execution.
 * Labels and milestones are applied using replacement semantics in consolidated API calls.
-* The `needs-triage` label is removed from all processed issues.
+* The `needs-triage` label is removed from all classified issues. Unclassified issues retain `needs-triage` for manual review.
 * Planning artifacts are created in `.copilot-tracking/github-issues/triage/{{YYYY-MM-DD}}/`.
 
 ## Error Handling

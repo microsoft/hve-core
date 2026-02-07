@@ -87,8 +87,9 @@ Execution:
 3. Execute `mcp_github_search_issues` and paginate until all results are retrieved.
 4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `${input:includeSubIssues}` is true, also fetch sub-issues.
 5. Present results grouped by state and labels.
-6. Log discovered issues in *planning-log.md* and deliver a conversational summary.
-7. Skip Phases 2-3; no planning files are required for user-centric discovery.
+6. Create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*.
+7. Log discovered issues in *planning-log.md* and deliver a conversational summary.
+8. Skip Phases 2-3; no additional planning files beyond *planning-log.md* are required for user-centric discovery.
 
 #### Path B: Artifact-Driven Discovery
 
@@ -148,8 +149,9 @@ Execution:
 3. Execute `mcp_github_search_issues` for each query and paginate results.
 4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `${input:includeSubIssues}` is true, also fetch sub-issues.
 5. Present results grouped by state and labels.
-6. Log discovered issues in *planning-log.md* and deliver a conversational summary.
-7. Skip Phases 2-3; no planning files are required for search-based discovery.
+6. Create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*.
+7. Log discovered issues in *planning-log.md* and deliver a conversational summary.
+8. Skip Phases 2-3; no additional planning files beyond *planning-log.md* are required for search-based discovery.
 
 ### Phase 2: Plan Issues
 

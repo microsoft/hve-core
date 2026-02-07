@@ -33,7 +33,8 @@ Resolve the repository owner and name from the active workspace context or user 
    * Path A (User-Centric): User requests assigned issues, milestone progress, or their own work without referencing artifacts or search terms.
    * Path B (Artifact-Driven): Documents, PRDs, or requirements are provided via `${input:documents}` or conversation. User requests issue creation or updates from artifacts.
    * Path C (Search-Based): User provides `${input:searchTerms}` directly without artifacts or assignment context.
-3. When Path B is selected, create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*. When the organization supports issue types, call `mcp_github_list_issue_types` with the owner parameter.
+3. Create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*.
+4. When Path B is selected and the organization supports issue types, call `mcp_github_list_issue_types` with the owner parameter.
 
 When neither documents nor search terms are provided and user intent does not indicate assigned-issue retrieval, ask the user to clarify their discovery goal before proceeding.
 
