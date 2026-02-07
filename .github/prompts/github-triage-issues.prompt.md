@@ -1,5 +1,5 @@
 ---
-description: 'Triage untriaged GitHub issues with automated label suggestions, milestone assignment, and duplicate detection'
+description: 'Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection'
 agent: 'github-backlog-manager'
 maturity: experimental
 ---
