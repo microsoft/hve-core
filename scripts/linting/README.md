@@ -242,6 +242,50 @@ Validates all links in markdown files using markdown-link-check npm package.
 * Annotations: Error for each broken link
 * Exit Code: Non-zero if broken links found
 
+### Copyright Header Validation
+
+#### `Test-CopyrightHeaders.ps1`
+
+Validates copyright and SPDX license headers in source files.
+
+**Purpose**: Ensure all PowerShell and shell scripts include the required Microsoft copyright notice and MIT SPDX license identifier in their first 15 lines.
+
+**Features**:
+
+* Scans `.ps1`, `.psm1`, `.psd1`, and `.sh` files recursively
+* Checks for `Copyright (c) Microsoft Corporation` header
+* Checks for `SPDX-License-Identifier: MIT` identifier
+* Configurable file extensions and exclude paths
+* Exports JSON results with per-file compliance details
+* Calculates compliance percentage across all scanned files
+
+**Parameters**:
+
+* `-Path` (string) - Root path to scan (default: repository root via `git rev-parse --show-toplevel`)
+* `-FileExtensions` (string[]) - File extensions to check (default: `@('*.ps1', '*.psm1', '*.psd1', '*.sh')`)
+* `-OutputPath` (string) - Path for JSON results (default: `logs/copyright-header-results.json`)
+* `-FailOnMissing` (switch) - Exit with code 1 if any files lack required headers
+* `-ExcludePaths` (string[]) - Directories to exclude (default: `@('node_modules', '.git', 'vendor', 'logs')`)
+
+**Usage**:
+
+```powershell
+# Check all source files (report only)
+./scripts/linting/Test-CopyrightHeaders.ps1
+
+# Check and fail on missing headers
+./scripts/linting/Test-CopyrightHeaders.ps1 -FailOnMissing
+
+# Check specific path with verbose output
+./scripts/linting/Test-CopyrightHeaders.ps1 -Path ./scripts -FailOnMissing -Verbose
+```
+
+**GitHub Actions Integration**:
+
+* Workflow: `.github/workflows/copyright-headers.yml`
+* Artifacts: `copyright-header-results` (JSON)
+* Exit Code: Non-zero if validation fails (with `-FailOnMissing`)
+
 ## Shared Module
 
 ### `Modules/LintingHelpers.psm1`

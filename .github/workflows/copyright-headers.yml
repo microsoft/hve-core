@@ -1,0 +1,56 @@
+name: Copyright Headers
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on copyright header violations'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  copyright-headers:
+    name: Copyright Header Validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Validate copyright headers
+        id: validate
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          & scripts/linting/Test-CopyrightHeaders.ps1 -FailOnMissing
+          if ($LASTEXITCODE -ne 0) {
+            "COPYRIGHT_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: copyright-header-results
+          path: |
+            logs/copyright-header-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Check results
+        if: "!inputs.soft-fail"
+        shell: pwsh
+        run: |
+          if ($env:COPYRIGHT_FAILED -eq 'true') {
+            Write-Error "Copyright header validation found violations"
+            exit 1
+          }

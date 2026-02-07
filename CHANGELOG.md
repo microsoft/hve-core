@@ -12,6 +12,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.2.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.1.0...hve-core-v2.2.0) (2026-02-06)
+
+
+### ✨ Features
+
+* add incident response prompt template ([#386](https://github.com/microsoft/hve-core/issues/386)) ([0adb35c](https://github.com/microsoft/hve-core/commit/0adb35ccc7e81b6d88ba3ff718c4f6a551230a05))
+* add Skills and VS Code Extension categories to issue/PR templates ([#410](https://github.com/microsoft/hve-core/issues/410)) ([108e160](https://github.com/microsoft/hve-core/commit/108e160c4c34229e40c757b6820ddb669cb2e58d))
+* **hve-core-guidance-instructions:** update guidance artifacts and MCP config ([#402](https://github.com/microsoft/hve-core/issues/402)) ([25b34de](https://github.com/microsoft/hve-core/commit/25b34de39c8d7efac15bcd945f7366b9b2c6cfe7))
+* **security:** add action version consistency validation ([#423](https://github.com/microsoft/hve-core/issues/423)) ([f3bb787](https://github.com/microsoft/hve-core/commit/f3bb787bbf502177da5159d622890576f8399f5a))
+* **workflows:** add copyright header validation CI workflow ([#429](https://github.com/microsoft/hve-core/issues/429)) ([c53de22](https://github.com/microsoft/hve-core/commit/c53de22371068ecf93097f06d59d95290c201df2))
+
+
+### 🐛 Bug Fixes
+
+* **docs:** add missing Copilot footers, consolidate validation exclusions ([#419](https://github.com/microsoft/hve-core/issues/419)) ([e40f960](https://github.com/microsoft/hve-core/commit/e40f960bf1c00dbc94f9a96d772f5a1aafbbdee4))
+* **scripts:** include CIHelpers module + packaging script testability ([#420](https://github.com/microsoft/hve-core/issues/420)) ([da26edf](https://github.com/microsoft/hve-core/commit/da26edf36874f01728a2972d0fd94deb38efbf59))
+
+
+### ♻️ Refactoring
+
+* migrate inline CI code to CIHelpers module ([#393](https://github.com/microsoft/hve-core/issues/393)) ([adf6a5f](https://github.com/microsoft/hve-core/commit/adf6a5f6f080a9606dbff1a0bfa99522ca28ad39))
+
+
+### 🔧 Maintenance
+
+* **templates:** align issue templates with conventional commit format ([#427](https://github.com/microsoft/hve-core/issues/427)) ([2d28702](https://github.com/microsoft/hve-core/commit/2d287021ebb6adf02659ea882f251d103018e986))
+
 ## [2.1.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.0.1...hve-core-v2.1.0) (2026-02-04)
 
 

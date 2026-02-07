@@ -50,6 +50,14 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  copyright-headers:
+    name: Copyright Headers
+    uses: ./.github/workflows/copyright-headers.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   yaml-lint:
     name: YAML Lint
     uses: ./.github/workflows/yaml-lint.yml
