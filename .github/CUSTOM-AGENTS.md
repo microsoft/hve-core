@@ -64,10 +64,11 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent              | Purpose                                          | Key Constraint                        |
-|--------------------|--------------------------------------------------|---------------------------------------|
-| **pr-review**      | 4-phase PR review with tracking artifacts        | Review-only; never modifies code      |
-| **prompt-builder** | Engineers and validates instruction/prompt files | Dual-persona system with auto-testing |
+| Agent                  | Purpose                                             | Key Constraint                        |
+|------------------------|-----------------------------------------------------|---------------------------------------|
+| **pr-review**          | 4-phase PR review with tracking artifacts           | Review-only; never modifies code      |
+| **prompt-builder**     | Engineers and validates instruction/prompt files    | Dual-persona system with auto-testing |
+| **security-champion**  | Security-focused code review with SDL and OWASP     | Advisory-only; hands off to planners  |
 
 ### Generator Agents
 
@@ -242,6 +243,27 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+
+### security-champion
+
+**Purpose:** Security-focused code reviewer applying Microsoft SDL practices and OWASP guidelines.
+
+**Workflow:** Scan code → Identify vulnerabilities → Suggest mitigations → Reference SDL/OWASP guidance
+
+**Core Frameworks:**
+
+* OWASP Top 10 for web application security
+* OWASP Top 10 for LLM Applications (2025) for AI/ML security
+* Microsoft Security Development Lifecycle (SDL) practices
+
+**Areas Covered:**
+
+* Design: Threat modeling, architecture patterns, Zero Trust, trust boundaries
+* Code: Input validation, authentication, secrets management, supply chain
+* Build/Deploy: CI/CD security, code signing, container configuration
+* Runtime: Security monitoring, incident response, platform baselines
+
+**Critical:** Advisory-only. Provides security guidance and vulnerability analysis. Hands off to security-plan-creator for comprehensive plans or task-researcher for deeper investigation.
 
 ### gen-jupyter-notebook
 
