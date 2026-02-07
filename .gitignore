@@ -445,6 +445,9 @@ pr-reference.xml
 # Copilot tracking
 .copilot-tracking/
 
+# Dependency pinning test artifacts
+dependency-pinning-artifacts/
+
 # MCP server configuration - exclude local token files
 .mcp/*-local.json
 .mcp/*.local.json
