@@ -4,6 +4,7 @@
     "name": "hve-developer",
     "displayName": "HVE Core - Developer Edition",
     "description": "AI-powered coding agents and prompts curated for software engineers",
+    "publisher": "ise-hve-essentials",
     "personas": [
         "developer"
     ]

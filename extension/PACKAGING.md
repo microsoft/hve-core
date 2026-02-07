@@ -267,65 +267,67 @@ Collection manifests are defined in `extension/collections/`:
 | Full       | `hve-core-all.collection.json` | All artifacts regardless of persona    |
 | Developer  | `developer.collection.json`    | Software engineering focused artifacts |
 
-### Persona Template Files
+### Collection Manifest as Single Source of Truth
 
-Each persona collection has a corresponding `package.{collection-id}.json` template file in `extension/`. These files contain static metadata (name, display name, description, publisher) for the persona edition. The `contributes` section is empty because `Prepare-Extension.ps1` populates it dynamically at build time.
+Collection manifests in `extension/collections/` serve as the single source of truth for extension metadata. Each manifest contains all metadata fields required for packaging: name, displayName, description, publisher, and personas.
 
-| Template                 | Collection | Purpose                           |
-| ------------------------ | ---------- | --------------------------------- |
-| `package.json`           | Full       | Canonical manifest (hve-core-all) |
-| `package.developer.json` | Developer  | Developer edition metadata        |
+| Field         | Purpose                                   | Example                             |
+| ------------- | ----------------------------------------- | ----------------------------------- |
+| `id`          | Collection identifier                     | `developer`                         |
+| `name`        | Extension package name                    | `hve-developer`                     |
+| `displayName` | Human-readable title                      | `HVE Core - Developer Edition`      |
+| `description` | Brief description for marketplace listing | `AI-powered coding agents for...`   |
+| `publisher`   | Marketplace publisher ID                  | `ise-hve-essentials`                |
+| `personas`    | Target personas for filtering artifacts   | `["developer"]`                     |
 
-The canonical `extension/package.json` serves double duty: it is both the default build target and the `hve-core-all` template. No separate `package.hve-core-all.json` file exists.
+The canonical `extension/package.json` serves as the base package manifest for the `hve-core-all` collection.
 
 When building a persona collection, `Prepare-Extension.ps1`:
 
-1. Backs up `package.json` to `package.json.bak`
-2. Copies the persona template (`package.developer.json`) over `package.json`
-3. Generates `contributes` into the copied file
-4. Serializes the result as `package.json`
-
-After packaging, `Package-Extension.ps1` restores the canonical `package.json` from backup in its `finally` block.
+1. Validates collection manifest has all required fields
+2. Reads the canonical `package.json`
+3. Overrides metadata fields (name, displayName, description, publisher) from collection manifest
+4. Generates `contributes` with filtered artifacts
+5. Auto-generates README.md from registry and manifest
+6. Serializes the result as `package.json`
+7. Restores canonical `package.json` from git in finally block
 
 #### Version Synchronization
 
-Template files contain a `version` field managed by `release-please`. The `release-please-config.json` file includes `extra-files` entries for each template, ensuring versions stay synchronized across all persona templates and the canonical `package.json`.
+Only `extension/package.json` contains a `version` field managed by `release-please`. Collection manifests do not include version fields. All extension variants share the same version number from the canonical package.json.
 
 ### Building Collection Packages
 
 To build a specific collection package:
 
 ```bash
-# Build the full collection (default, no template copy)
+# Build the full collection (default, uses canonical package.json as-is)
 pwsh ./scripts/extension/Prepare-Extension.ps1
 pwsh ./scripts/extension/Package-Extension.ps1
 
-# Build a persona-specific collection (copies persona template)
+# Build a persona-specific collection (dynamic metadata override)
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
 pwsh ./scripts/extension/Package-Extension.ps1 -Collection extension/collections/developer.collection.json
 ```
 
-When `-Collection` targets a persona other than `hve-core-all`, the prepare script copies the persona template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
+When `-Collection` targets a persona other than `hve-core-all`, the prepare script dynamically overrides package.json metadata from the collection manifest before generating `contributes`. The packaging script relies on git restore to reset `package.json` after building.
 
 ### Inner Dev Loop
 
-For rapid iteration without running the full build pipeline, copy the persona template manually:
+For rapid iteration without running the full build pipeline:
 
 ```bash
-# 1. Copy the developer template
-cp extension/package.developer.json extension/package.json
-
-# 2. Run prepare to generate contributes
+# 1. Run prepare with collection to override metadata and generate contributes
 pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json
 
-# 3. Inspect the result
+# 2. Inspect the result
 cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
 
-# 4. Restore canonical package.json
+# 3. Restore canonical package.json
 git checkout extension/package.json
 ```
 
-The template file stays clean. Use `git checkout extension/package.json` to restore the canonical state at any time.
+The canonical package.json is automatically restored from git after the build completes. Use `git checkout extension/package.json` to restore manually at any time.
 
 ### Collection Resolution
 

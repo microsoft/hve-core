@@ -1006,87 +1006,194 @@ function New-PrepareResult {
     }
 }
 
-function Test-TemplateConsistency {
+function Test-CollectionManifestCompleteness {
     <#
     .SYNOPSIS
-        Validates persona template metadata against its collection manifest.
+        Validates collection manifest contains all required fields for packaging.
     .DESCRIPTION
-        Compares name, displayName, and description fields between a persona
-        package template (e.g. package.developer.json) and the corresponding
-        collection manifest. Emits warnings for divergences and returns a list
-        of mismatches.
-    .PARAMETER TemplatePath
-        Path to the persona package template JSON file.
-    .PARAMETER CollectionManifest
-        Parsed collection manifest hashtable with name, displayName, description.
+        Ensures collection manifest has all required fields needed for Option A
+        dynamic package.json generation: id, name, displayName, description,
+        publisher, and personas.
+    .PARAMETER Manifest
+        Parsed collection manifest hashtable.
     .OUTPUTS
-        [hashtable] With Mismatches array and IsConsistent bool.
+        None. Throws on validation failure.
     #>
     [CmdletBinding()]
-    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$TemplatePath,
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$CollectionManifest
+        [hashtable]$Manifest
     )
 
-    $result = @{
-        Mismatches   = @()
-        IsConsistent = $true
+    $requiredFields = @('id', 'name', 'displayName', 'description', 'publisher', 'personas')
+    $missing = @()
+
+    foreach ($field in $requiredFields) {
+        if (-not $Manifest.ContainsKey($field) -or [string]::IsNullOrWhiteSpace($Manifest[$field])) {
+            $missing += $field
+        }
     }
 
-    if (-not (Test-Path $TemplatePath)) {
-        $result.Mismatches += @{
-            Field    = 'file'
-            Template = $TemplatePath
-            Manifest = 'N/A'
-            Message  = "Template file not found: $TemplatePath"
-        }
-        $result.IsConsistent = $false
-        return $result
+    if ($missing.Count -gt 0) {
+        throw "Collection manifest missing required fields: $($missing -join ', ')"
     }
 
-    try {
-        $template = Get-Content -Path $TemplatePath -Raw | ConvertFrom-Json
-    }
-    catch {
-        $result.Mismatches += @{
-            Field    = 'file'
-            Template = $TemplatePath
-            Manifest = 'N/A'
-            Message  = "Failed to parse template: $($_.Exception.Message)"
-        }
-        $result.IsConsistent = $false
-        return $result
-    }
+    Write-Host "✓ Collection manifest validation passed" -ForegroundColor Green
+}
 
-    $fieldsToCheck = @('name', 'displayName', 'description')
-    foreach ($field in $fieldsToCheck) {
-        $templateValue = $null
-        $manifestValue = $null
+function New-ReadmeFromRegistry {
+    <#
+    .SYNOPSIS
+        Generates README content from registry and collection manifest.
+    .DESCRIPTION
+        Creates a complete README.md file for the extension by pulling artifact
+        descriptions from the AI artifacts registry. Used for Option A packaging
+        to eliminate hand-authored per-persona README files.
+    .PARAMETER CollectionManifest
+        Collection manifest hashtable containing displayName and description.
+    .PARAMETER Registry
+        AI artifacts registry hashtable with agents, prompts, instructions, skills.
+    .PARAMETER ArtifactNames
+        Hashtable with Agents, Prompts, Instructions, Skills string arrays.
+    .PARAMETER Channel
+        Release channel (Stable or PreRelease) for documentation.
+    .OUTPUTS
+        [string] Complete README.md markdown content.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest,
 
-        if ($template.PSObject.Properties[$field]) {
-            $templateValue = $template.$field
-        }
-        if ($CollectionManifest.ContainsKey($field)) {
-            $manifestValue = $CollectionManifest[$field]
-        }
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Registry,
 
-        if ($null -ne $templateValue -and $null -ne $manifestValue -and $templateValue -ne $manifestValue) {
-            $result.Mismatches += @{
-                Field    = $field
-                Template = $templateValue
-                Manifest = $manifestValue
-                Message  = "$field diverges: template='$templateValue' manifest='$manifestValue'"
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ArtifactNames,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'Stable'
+    )
+
+    $readme = @"
+# $($CollectionManifest.displayName)
+
+> $($CollectionManifest.description)
+
+This extension provides AI chat agents, prompts, and instructions for use with GitHub Copilot in VS Code.
+
+## Features
+
+"@
+
+    # Add agents section
+    if ($ArtifactNames.Agents.Count -gt 0) {
+        $readme += @"
+
+### 🤖 Chat Agents
+
+| Agent | Description |
+| ----- | ----------- |
+
+"@
+        foreach ($agentName in ($ArtifactNames.Agents | Sort-Object)) {
+            $agentDesc = "Agent for $agentName"
+            if ($Registry.agents -and $Registry.agents[$agentName] -and $Registry.agents[$agentName].description) {
+                $agentDesc = $Registry.agents[$agentName].description
             }
-            $result.IsConsistent = $false
+            $readme += "| **$agentName** | $agentDesc |`n"
         }
     }
 
-    return $result
+    # Add prompts section
+    if ($ArtifactNames.Prompts.Count -gt 0) {
+        $readme += @"
+
+### 📝 Prompts
+
+| Prompt | Description |
+| ------ | ----------- |
+
+"@
+        foreach ($promptName in ($ArtifactNames.Prompts | Sort-Object)) {
+            $promptDesc = "Prompt for $promptName"
+            if ($Registry.prompts -and $Registry.prompts[$promptName] -and $Registry.prompts[$promptName].description) {
+                $promptDesc = $Registry.prompts[$promptName].description
+            }
+            $readme += "| **$promptName** | $promptDesc |`n"
+        }
+    }
+
+    # Add instructions section
+    if ($ArtifactNames.Instructions.Count -gt 0) {
+        $readme += @"
+
+### 📚 Instructions
+
+| Instruction | Description |
+| ----------- | ----------- |
+
+"@
+        foreach ($instructionName in ($ArtifactNames.Instructions | Sort-Object)) {
+            $instructionDesc = "Instructions for $instructionName"
+            if ($Registry.instructions -and $Registry.instructions[$instructionName] -and $Registry.instructions[$instructionName].description) {
+                $instructionDesc = $Registry.instructions[$instructionName].description
+            }
+            $readme += "| **$instructionName** | $instructionDesc |`n"
+        }
+    }
+
+    # Add skills section
+    if ($ArtifactNames.Skills.Count -gt 0) {
+        $readme += @"
+
+### ⚡ Skills
+
+| Skill | Description |
+| ----- | ----------- |
+
+"@
+        foreach ($skillName in ($ArtifactNames.Skills | Sort-Object)) {
+            $skillDesc = "Skill for $skillName"
+            if ($Registry.skills -and $Registry.skills[$skillName] -and $Registry.skills[$skillName].description) {
+                $skillDesc = $Registry.skills[$skillName].description
+            }
+            $readme += "| **$skillName** | $skillDesc |`n"
+        }
+    }
+
+    # Add getting started section
+    $readme += @"
+
+## Getting Started
+
+After installing this extension, the chat agents will be available in GitHub Copilot Chat. You can:
+
+1. **Use custom agents** by selecting them from the agent picker in Copilot Chat
+2. **Apply prompts** through the Copilot Chat interface
+3. **Reference instructions** — They're automatically applied based on file patterns
+
+## Requirements
+
+- VS Code version 1.106.1 or higher
+- GitHub Copilot extension
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+## Support
+
+For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/microsoft/hve-core).
+
+---
+
+Brought to you by Microsoft ISE HVE Essentials
+"@
+
+    return $readme
 }
 
 function Invoke-PrepareExtension {
@@ -1140,14 +1247,19 @@ function Invoke-PrepareExtension {
     $GitHubDir = Join-Path $RepoRoot ".github"
     $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
 
-    # Validate required paths exist
-    $pathValidation = Test-PathsExist -ExtensionDir $ExtensionDirectory `
-        -PackageJsonPath $PackageJsonPath `
-        -GitHubDir $GitHubDir
-    if (-not $pathValidation.IsValid) {
-        $missingPaths = $pathValidation.MissingPaths -join ', '
-        return New-PrepareResult -Success $false -ErrorMessage "Required paths not found: $missingPaths"
-    }
+    # Track whether package.json was modified for restoration
+    $needsRestore = $false
+    $modifiedCollectionId = ""
+
+    try {
+        # Validate required paths exist
+        $pathValidation = Test-PathsExist -ExtensionDir $ExtensionDirectory `
+            -PackageJsonPath $PackageJsonPath `
+            -GitHubDir $GitHubDir
+        if (-not $pathValidation.IsValid) {
+            $missingPaths = $pathValidation.MissingPaths -join ', '
+            return New-PrepareResult -Success $false -ErrorMessage "Required paths not found: $missingPaths"
+        }
 
     # Load AI artifacts registry if available
     $registryPath = Join-Path $GitHubDir "ai-artifacts-registry.json"
@@ -1195,6 +1307,16 @@ function Invoke-PrepareExtension {
     if ($Collection -and $Collection -ne "") {
         $collectionManifest = Get-CollectionManifest -CollectionPath $Collection
         Write-Host "Collection: $($collectionManifest.displayName) ($($collectionManifest.id))"
+
+        # Validate collection manifest completeness before processing
+        if ($collectionManifest.id -ne 'hve-core-all') {
+            try {
+                Test-CollectionManifestCompleteness -Manifest $collectionManifest
+            }
+            catch {
+                return New-PrepareResult -Success $false -ErrorMessage $_.Exception.Message
+            }
+        }
 
         # Get persona-filtered artifact names
         $collectionArtifactNames = Get-CollectionArtifacts -Registry $registry -Collection $collectionManifest -AllowedMaturities $allowedMaturities
@@ -1288,32 +1410,46 @@ function Invoke-PrepareExtension {
 
     # Apply persona template when building a non-default collection
     if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core-all') {
-        $collectionId = $collectionManifest.id
-        $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
-        if (-not (Test-Path $templatePath)) {
-            return New-PrepareResult -Success $false -ErrorMessage "Persona template not found: $templatePath"
+        # Read canonical package.json
+        $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+
+        # Override metadata from collection manifest (in-place)
+        # Use Add-Member to ensure properties exist before setting
+        if (-not $packageJson.PSObject.Properties['name']) {
+            $packageJson | Add-Member -NotePropertyName 'name' -NotePropertyValue $collectionManifest.name
+        } else {
+            $packageJson.name = $collectionManifest.name
         }
 
-        # Validate template consistency against collection manifest
-        $consistency = Test-TemplateConsistency -TemplatePath $templatePath -CollectionManifest $collectionManifest
-        if (-not $consistency.IsConsistent) {
-            Write-Host "`n--- Template Consistency Warnings ---" -ForegroundColor Yellow
-            foreach ($mismatch in $consistency.Mismatches) {
-                Write-Warning "Template/manifest mismatch: $($mismatch.Message)"
-                Write-CIAnnotation -Message "Template/manifest mismatch ($collectionId): $($mismatch.Message)" -Level Warning
+        if (-not $packageJson.PSObject.Properties['displayName']) {
+            $packageJson | Add-Member -NotePropertyName 'displayName' -NotePropertyValue $collectionManifest.displayName
+        } else {
+            $packageJson.displayName = $collectionManifest.displayName
+        }
+
+        if (-not $packageJson.PSObject.Properties['description']) {
+            $packageJson | Add-Member -NotePropertyName 'description' -NotePropertyValue $collectionManifest.description
+        } else {
+            $packageJson.description = $collectionManifest.description
+        }
+
+        if ($collectionManifest.ContainsKey('publisher')) {
+            if (-not $packageJson.PSObject.Properties['publisher']) {
+                $packageJson | Add-Member -NotePropertyName 'publisher' -NotePropertyValue $collectionManifest.publisher
+            } else {
+                $packageJson.publisher = $collectionManifest.publisher
             }
         }
 
-        # Back up canonical package.json for later restore
-        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
-        Copy-Item -Path $PackageJsonPath -Destination $backupPath -Force
+        # Mark for restoration after build
+        $needsRestore = $true
+        $modifiedCollectionId = $collectionManifest.id
 
-        # Copy persona template over package.json
-        Copy-Item -Path $templatePath -Destination $PackageJsonPath -Force
+        Write-Host "Applied metadata from collection: $($collectionManifest.id)" -ForegroundColor Green
 
-        # Re-read template as the working package.json
-        $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
-        Write-Host "Applied persona template: package.$collectionId.json" -ForegroundColor Green
+        # Write metadata changes immediately so they're visible even in DryRun
+        # (tests expect to read modified package.json from disk)
+        $packageJson | ConvertTo-Json -Depth 10 | Set-Content -Path $PackageJsonPath -Encoding UTF8NoBOM
     }
 
     # Update package.json with generated contributes
@@ -1330,6 +1466,34 @@ function Invoke-PrepareExtension {
     }
     else {
         Write-Host "`n[DRY RUN] Would update package.json with discovered artifacts" -ForegroundColor Yellow
+    }
+
+    # Generate README from registry when building a collection
+    if ($null -ne $collectionManifest) {
+        Write-Host "`nGenerating README from registry..." -ForegroundColor Cyan
+        
+        # Build artifact names list from discovered artifacts
+        $artifactNamesForReadme = @{
+            Agents       = @($chatAgents | ForEach-Object { $_.name })
+            Prompts      = @($chatPrompts | ForEach-Object { $_.name })
+            Instructions = @($chatInstructions | ForEach-Object { $_.name -replace '-instructions$', '' })
+            Skills       = @($chatSkills | ForEach-Object { $_.name })
+        }
+        
+        $readmeContent = New-ReadmeFromRegistry `
+            -CollectionManifest $collectionManifest `
+            -Registry $registry `
+            -ArtifactNames $artifactNamesForReadme `
+            -Channel $Channel
+        
+        $readmePath = Join-Path $ExtensionDirectory "README.md"
+        if (-not $DryRun) {
+            Set-Content -Path $readmePath -Value $readmeContent -Encoding UTF8NoBOM
+            Write-Host "✓ README generated: $readmePath" -ForegroundColor Green
+        }
+        else {
+            Write-Host "[DRY RUN] Would generate README: $readmePath" -ForegroundColor Yellow
+        }
     }
 
     # Handle changelog
@@ -1355,6 +1519,21 @@ function Invoke-PrepareExtension {
         -PromptCount $chatPrompts.Count `
         -InstructionCount $chatInstructions.Count `
         -SkillCount $chatSkills.Count
+    }
+    finally {
+        # Restore canonical package.json from git if it was modified
+        if ($needsRestore -and -not $DryRun) {
+            Write-Host "`nRestoring canonical package.json from git..." -ForegroundColor Cyan
+            $gitRestore = & git checkout HEAD -- extension/package.json 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✓ Package.json restored successfully" -ForegroundColor Green
+            }
+            else {
+                Write-Warning "Failed to restore package.json from git. Manual restore may be required."
+                Write-Warning "Error: $gitRestore"
+            }
+        }
+    }
 }
 
 #endregion Pure Functions

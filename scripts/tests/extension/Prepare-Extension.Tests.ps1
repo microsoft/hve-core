@@ -950,15 +950,16 @@ applyTo: "**/*.js"
         $result.ErrorMessage | Should -Match 'Invalid version format'
     }
 
-    Context 'Persona template copy' {
+    Context 'Metadata override from collection manifest (Option A)' {
         BeforeAll {
-            # Developer collection manifest
+            # Developer collection manifest with publisher
             $script:devCollectionPath = Join-Path $script:tempDir 'developer.collection.json'
             @{
                 id          = 'developer'
                 name        = 'hve-developer'
                 displayName = 'HVE Core - Developer Edition'
                 description = 'Developer edition'
+                publisher   = 'ise-hve-essentials'
                 personas    = @('developer')
             } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:devCollectionPath
 
@@ -966,49 +967,38 @@ applyTo: "**/*.js"
             $script:allCollectionPath = Join-Path $script:tempDir 'hve-core-all.collection.json'
             @{
                 id          = 'hve-core-all'
-                name        = 'hve-core-all'
-                displayName = 'HVE Core - All'
+                name        = 'hve-core'
+                displayName = 'HVE Core'
                 description = 'All artifacts'
+                publisher   = 'ise-hve-essentials'
                 personas    = @('hve-core-all')
             } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:allCollectionPath
 
-            # Collection manifest referencing a missing template
-            $script:missingCollectionPath = Join-Path $script:tempDir 'nonexistent.collection.json'
+            # Collection manifest missing required fields
+            $script:incompleteCollectionPath = Join-Path $script:tempDir 'incomplete.collection.json'
             @{
-                id          = 'nonexistent'
-                name        = 'nonexistent'
-                displayName = 'Nonexistent'
-                description = 'Missing template'
-                personas    = @('nonexistent')
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:missingCollectionPath
+                id          = 'incomplete'
+                name        = 'incomplete'
+                personas    = @('incomplete')
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:incompleteCollectionPath
 
-            # Persona template for developer collection
-            @'
-{
-    "name": "hve-developer",
-    "version": "1.2.3",
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:extDir 'package.developer.json')
-
-            # Update registry with developer and nonexistent persona entries
+            # Update registry with developer persona entry
             $registryContent = @{
                 version  = '1.0'
                 personas = @{
                     definitions = @{
                         'hve-core-all' = @{ name = 'All'; description = 'All artifacts' }
                         'developer'    = @{ name = 'Developer'; description = 'Developer artifacts' }
-                        'nonexistent'  = @{ name = 'Nonexistent'; description = 'Missing template' }
                     }
                 }
                 agents       = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer'); tags = @(); description = 'Test agent' }
                 }
                 prompts      = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer'); tags = @(); description = 'Test prompt' }
                 }
                 instructions = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
+                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer'); tags = @(); description = 'Test instructions' }
                 }
                 skills       = @{}
             }
@@ -1021,13 +1011,9 @@ applyTo: "**/*.js"
 
         AfterEach {
             $script:originalPackageJson | Set-Content -Path (Join-Path $script:extDir 'package.json')
-            $bakPath = Join-Path $script:extDir 'package.json.bak'
-            if (Test-Path $bakPath) {
-                Remove-Item -Path $bakPath -Force
-            }
         }
 
-        It 'Skips template copy when no collection specified' {
+        It 'Skips metadata override when no collection specified' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
@@ -1037,10 +1023,9 @@ applyTo: "**/*.js"
             $result.Success | Should -BeTrue
             $currentContent = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw
             $currentContent | Should -Be $script:originalPackageJson
-            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
         }
 
-        It 'Skips template copy for hve-core-all collection' {
+        It 'Skips metadata override for hve-core-all collection' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
@@ -1049,22 +1034,21 @@ applyTo: "**/*.js"
                 -DryRun
 
             $result.Success | Should -BeTrue
-            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
         }
 
-        It 'Returns error when persona template file missing' {
+        It 'Returns error when collection manifest missing required fields' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
                 -Channel 'Stable' `
-                -Collection $script:missingCollectionPath `
+                -Collection $script:incompleteCollectionPath `
                 -DryRun
 
             $result.Success | Should -BeFalse
-            $result.ErrorMessage | Should -Match 'Persona template not found'
+            $result.ErrorMessage | Should -Match 'missing required fields'
         }
 
-        It 'Copies template to package.json for non-default collection' {
+        It 'Applies metadata override from collection manifest for non-default collection' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
@@ -1075,9 +1059,12 @@ applyTo: "**/*.js"
             $result.Success | Should -BeTrue
             $updatedJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
             $updatedJson.name | Should -Be 'hve-developer'
+            $updatedJson.displayName | Should -Be 'HVE Core - Developer Edition'
+            $updatedJson.description | Should -Be 'Developer edition'
+            $updatedJson.publisher | Should -Be 'ise-hve-essentials'
         }
 
-        It 'Creates package.json.bak backup before template copy' {
+        It 'Does not create package.json.bak backup (Option A uses git restore)' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
@@ -1087,9 +1074,7 @@ applyTo: "**/*.js"
 
             $result.Success | Should -BeTrue
             $bakPath = Join-Path $script:extDir 'package.json.bak'
-            Test-Path $bakPath | Should -BeTrue
-            $bakContent = Get-Content -Path $bakPath -Raw
-            $bakContent | Should -Be $script:originalPackageJson
+            Test-Path $bakPath | Should -BeFalse
         }
     }
 }
