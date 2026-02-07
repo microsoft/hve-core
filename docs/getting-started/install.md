@@ -190,7 +190,7 @@ These artifacts are useful during your workflow session but are ephemeral by des
 
 Some HVE-Core agents use MCP (Model Context Protocol) servers to integrate with Azure DevOps, GitHub, or documentation services. These are optional enhancements; agents work without MCP configuration.
 
-If you use agents like `ado-prd-to-wit` or `github-issue-manager`, see [MCP Server Configuration](mcp-configuration.md) for setup instructions. That guide includes:
+If you use agents like `ado-prd-to-wit` or `github-backlog-manager`, see [MCP Server Configuration](mcp-configuration.md) for setup instructions. That guide includes:
 
 * Which agents require which MCP servers
 * Complete configuration templates

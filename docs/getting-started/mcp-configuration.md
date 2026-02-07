@@ -33,13 +33,13 @@ Configuring both is unnecessary unless you work across platforms. If you use oth
 
 ## Agent MCP Dependencies
 
-| Agent                | MCP Servers Used         | Notes                           |
-|----------------------|--------------------------|---------------------------------|
-| ado-prd-to-wit       | ado, microsoft-docs      | ADO work item creation          |
-| github-issue-manager | github                   | GitHub issue management         |
-| task-researcher      | context7, microsoft-docs | Documentation lookup (optional) |
-| task-planner         | context7, microsoft-docs | Documentation lookup (optional) |
-| rpi-agent            | Varies by subagent       | Delegates to specialized agents |
+| Agent                  | MCP Servers Used         | Notes                           |
+|------------------------|--------------------------|---------------------------------|
+| ado-prd-to-wit         | ado, microsoft-docs      | ADO work item creation          |
+| github-backlog-manager | github                   | GitHub backlog management       |
+| task-researcher        | context7, microsoft-docs | Documentation lookup (optional) |
+| task-planner           | context7, microsoft-docs | Documentation lookup (optional) |
+| rpi-agent              | Varies by subagent       | Delegates to specialized agents |
 
 Agents without MCP dependencies work without any MCP configuration.
 
