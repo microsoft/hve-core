@@ -34,13 +34,10 @@ Central orchestrator for GitHub backlog management that classifies incoming requ
 
 Workflow conventions, planning file templates, similarity assessment, and the three-tier autonomy model are defined in the [backlog planning instructions](../instructions/github-backlog-planning.instructions.md). Read the relevant sections of that file when a workflow requires planning file creation or similarity assessment. Architecture and design rationale are documented in `.copilot-tracking/research/2025-07-15-backlog-management-tooling-research.md` when available.
 
-> [!NOTE]
-> This orchestrator ships under lead maintainer exemption authority per Decision D1. Backlog management is a distinct domain from task planning, and the agent-acceptance policy for planning agents does not apply.
-
 ## Core Directives
 
 * Classify every request before dispatching. Resolve ambiguous requests through heuristic analysis rather than user interrogation.
-* Maintain state files in `.copilot-tracking/github-issues/<workflow>/<date>/` for every workflow run.
+* Maintain state files in `.copilot-tracking/github-issues/<planning-type>/<scope-name>/` for every workflow run per directory conventions in the [planning specification](../instructions/github-backlog-planning.instructions.md).
 * Default to Partial autonomy unless the user specifies otherwise.
 * Announce phase transitions with a brief summary of outcomes and next actions.
 * Reference instruction files by path or targeted section rather than loading full contents unconditionally.
@@ -76,15 +73,15 @@ Transition to Phase 2 once classification is confirmed.
 
 ### Phase 2: Workflow Dispatch
 
-Load the corresponding instruction file and execute the workflow. Each run creates a date-stamped tracking directory under `.copilot-tracking/github-issues/`.
+Load the corresponding instruction file and execute the workflow. Each run creates a tracking directory under `.copilot-tracking/github-issues/` using the scope conventions from the [planning specification](../instructions/github-backlog-planning.instructions.md).
 
-| Workflow        | Instruction Source                                                                                       | Tracking Path                                       |
-| --------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Triage          | [github-backlog-triage.instructions.md](../instructions/github-backlog-triage.instructions.md)           | `.copilot-tracking/github-issues/triage/{{date}}/`    |
-| Discovery       | [github-backlog-discovery.instructions.md](../instructions/github-backlog-discovery.instructions.md)     | `.copilot-tracking/github-issues/discovery/{{date}}/` |
-| Sprint Planning | Discovery followed by Triage as a coordinated sequence                                                   | `.copilot-tracking/github-issues/sprint/{{date}}/`    |
-| Execution       | [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)           | `.copilot-tracking/github-issues/execution/{{date}}/` |
-| Single Issue    | Per-issue operations from [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)                                        | `.copilot-tracking/github-issues/execution/{{date}}/` |
+| Workflow        | Instruction Source                                                                                       | Tracking Path                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Triage          | [github-backlog-triage.instructions.md](../instructions/github-backlog-triage.instructions.md)           | `.copilot-tracking/github-issues/triage/{{YYYY-MM-DD}}/`      |
+| Discovery       | [github-backlog-discovery.instructions.md](../instructions/github-backlog-discovery.instructions.md)     | `.copilot-tracking/github-issues/discovery/{{scope-name}}/`   |
+| Sprint Planning | Discovery followed by Triage as a coordinated sequence                                                   | `.copilot-tracking/github-issues/sprint/{{milestone-kebab}}/` |
+| Execution       | [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)           | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
+| Single Issue    | Per-issue operations from [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)                                        | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
 
 For each dispatched workflow:
 

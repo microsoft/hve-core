@@ -248,7 +248,7 @@ Triggered when a PR review identifies specific changes needed before the PR can 
 
 Post via:
 
-1. `mcp_github_add_issue_comment` with the change request, or `mcp_github_pull_request_review_write` with method `create` and event `REQUEST_CHANGES`.
+1. `mcp_github_add_issue_comment` with the change request.
 
 #### Scenario 16: Redirecting to Discussions
 
