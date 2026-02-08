@@ -69,7 +69,7 @@ Template placeholders used across scenarios:
 
 Triggered when a contributor opens their first issue or PR in the repository. Tone is warm and genuine, encouraging first engagement.
 
-> Welcome to the project, @{{contributor}}! 🎉 Thank you for your first contribution. Please review our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and expectations. A maintainer will review your submission within the next few business days.
+> Welcome to the project, @{{contributor}}! 🎉 Thank you for your first contribution. Please review our [CONTRIBUTING.md](https://github.com/{{owner}}/{{repo}}/blob/main/CONTRIBUTING.md) for guidelines and expectations. A maintainer will review your submission within the next few business days.
 
 Post via:
 
@@ -109,7 +109,7 @@ Post via:
 
 Triggered when a contributor reports a security vulnerability through any channel. Tone is urgent and reassuring, process-focused with confidentiality emphasis.
 
-> Thank you for reporting this security concern, @{{contributor}}. We take security seriously and will investigate promptly. Please review our [SECURITY.md](SECURITY.md) for next steps on the responsible disclosure process. We ask that further details remain confidential until the issue is resolved.
+> Thank you for reporting this security concern, @{{contributor}}. We take security seriously and will investigate promptly. Please review our [SECURITY.md](https://github.com/{{owner}}/{{repo}}/blob/main/SECURITY.md) for next steps on the responsible disclosure process. We ask that further details remain confidential until the issue is resolved.
 
 Post via:
 
@@ -280,7 +280,7 @@ Triggered when a conversation becomes unproductive, personal, or heated, but has
 
 > We appreciate everyone's engagement on this topic. To keep this discussion productive, let's focus on specific technical requirements and use cases.
 >
-> Our [Code of Conduct](CODE_OF_CONDUCT.md) applies to all interactions. Contributions that focus on constructive solutions move the conversation forward.
+> Our [Code of Conduct](https://github.com/{{owner}}/{{repo}}/blob/main/CODE_OF_CONDUCT.md) applies to all interactions. Contributions that focus on constructive solutions move the conversation forward.
 
 Post via:
 
@@ -290,9 +290,9 @@ Post via:
 
 Triggered when a conversation has crossed Code of Conduct boundaries or de-escalation has been insufficient. Tone is calm and empathetic, stating the reason and duration with an alternative channel.
 
-> This conversation is being locked for {{time_period}} to allow a cooling-off period. Our [Code of Conduct](CODE_OF_CONDUCT.md) outlines the expectations for all community interactions.
+> This conversation is being locked for {{time_period}} to allow a cooling-off period. Our [Code of Conduct](https://github.com/{{owner}}/{{repo}}/blob/main/CODE_OF_CONDUCT.md) outlines the expectations for all community interactions.
 >
-> If you need to continue this discussion, please reach out to the maintainers through the channels listed in [SUPPORT.md](SUPPORT.md).
+> If you need to continue this discussion, please reach out to the maintainers through the channels listed in [SUPPORT.md](https://github.com/{{owner}}/{{repo}}/blob/main/SUPPORT.md).
 
 Post via:
 

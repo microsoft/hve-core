@@ -108,6 +108,7 @@ Valid `<planning-type>` values:
 * `triage`: Issue triage, label assignment, and duplicate detection
 * `sprint`: Sprint planning and milestone organization
 * `backlog`: Backlog refinement and prioritization
+* `execution`: Issue creation, update, and closure from finalized plans
 
 Normalization rules for `<scope-name>`:
 

@@ -13,19 +13,19 @@ tools:
 handoffs:
   - label: "Discover"
     agent: github-backlog-manager
-    prompt: github-discover-issues.prompt.md
+    prompt: /github-discover-issues
   - label: "Triage"
     agent: github-backlog-manager
-    prompt: github-triage-issues.prompt.md
+    prompt: /github-triage-issues
   - label: "Sprint"
     agent: github-backlog-manager
-    prompt: github-sprint-plan.prompt.md
+    prompt: /github-sprint-plan
   - label: "Execute"
     agent: github-backlog-manager
-    prompt: github-execute-backlog.prompt.md
+    prompt: /github-execute-backlog
   - label: "Save"
     agent: memory
-    prompt: checkpoint.prompt.md
+    prompt: /checkpoint
 ---
 
 # GitHub Backlog Manager
