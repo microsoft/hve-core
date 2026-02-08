@@ -172,7 +172,7 @@ Post via:
 
 Triggered when an issue has had no activity for an extended period and lacks sufficient information to act on. Tone is neutral and informational with no blame and a clear reopen path.
 
-> Closing this issue due to inactivity over the past {{time_period}}. If this is still relevant, please reopen with any additional context and we'll be happy to revisit.
+> Closing this issue due to inactivity over the past 74 days. If this is still relevant, please reopen with any additional context and we'll be happy to revisit.
 
 Post via:
 
@@ -183,7 +183,7 @@ Post via:
 
 Triggered when a PR has had no activity for an extended period and has fallen behind the base branch. Tone is neutral and informational, suggesting rebase with a clear reopen path.
 
-> Closing this PR due to inactivity over the past {{time_period}}. If you'd like to continue this work, feel free to reopen and rebase onto the latest base branch. We're happy to resume the review.
+> Closing this PR due to inactivity over the past 21 days. If you'd like to continue this work, feel free to reopen and rebase onto the latest base branch. We're happy to resume the review.
 
 Post via:
 
