@@ -185,11 +185,12 @@ For issue and discussion inactivity policy, see [Inactivity Closure Policy](./GO
 
 The inactivity clock runs only when the PR is waiting on the author. Reviewer-side delays do not count against the author.
 
-| Stage   | Trigger                                                     | Label              | Action                       |
-| :------ | :---------------------------------------------------------- | :----------------- | :--------------------------- |
-| Active  | Author activity within the past 14 days                     | (none)             | Normal review cycle          |
-| Stale   | 14 days without author activity while `waiting-on-author`   | `stale`            | Reminder comment posted      |
-| Closed  | 7 days after `stale` label without author activity          | `closed-stale`     | PR closed with summary       |
+| Stage  | Trigger                                                           | Label                 | Action                  |
+|:-------|:------------------------------------------------------------------|:----------------------|:------------------------|
+| Active | Author activity within the past 14 days while `waiting-on-author` | (none)                | Normal review cycle     |
+| Paused | PR is labeled `waiting-on-reviewer`                               | `waiting-on-reviewer` | Inactivity clock paused |
+| Stale  | 14 days without author activity while `waiting-on-author`         | `stale`               | Reminder comment posted |
+| Closed | 7 days after `stale` label without author activity                | `closed-stale`        | PR closed with summary  |
 
 Label usage:
 

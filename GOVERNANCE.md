@@ -162,13 +162,13 @@ For pull request inactivity policy, see [Pull Request Inactivity Policy](./CONTR
 
 ### Issues
 
-Issue inactivity follows a two-stage lifecycle:
+Issue inactivity follows a three-stage lifecycle:
 
-| Stage        | Trigger                                      | Label          | Action                                   |
-| :----------- | :------------------------------------------- | :------------- | :--------------------------------------- |
-| Active       | Any activity within the past 60 days         | (none)         | Normal lifecycle                         |
-| Stale        | 60 days without activity                     | `stale`        | Warning comment posted                   |
-| Closed-stale | 14 days after `stale` label without activity | `closed-stale` | Issue closed as `not_planned`            |
+| Stage        | Trigger                                      | Label          | Action                        |
+|:-------------|:---------------------------------------------|:---------------|:------------------------------|
+| Active       | Any activity within the past 60 days         | (none)         | Normal lifecycle              |
+| Stale        | 60 days without activity                     | `stale`        | Warning comment posted        |
+| Closed-stale | 14 days after `stale` label without activity | `closed-stale` | Issue closed as `not_planned` |
 
 Exemptions that prevent automatic closure:
 
