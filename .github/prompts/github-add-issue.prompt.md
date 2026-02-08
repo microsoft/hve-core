@@ -1,304 +1,86 @@
 ---
-agent: "agent"
-description: "Add a GitHub issue to the backlog using discovered issue templates from .github/ISSUE_TEMPLATE/"
-maturity: stable
+description: 'Create a GitHub issue using discovered repository templates and conversational field collection'
+agent: 'github-backlog-manager'
+argument-hint: "[templateName=...] [title=...] [labels=...]"
+maturity: experimental
 ---
 
-# Add GitHub Issue to Backlog
+# Add GitHub Issue
 
-This prompt is invoked by `github-issue-manager.agent.md` for issue creation workflow.
-It can also be run standalone for direct issue creation tasks.
+Discover available issue templates from the repository, collect required and optional fields through conversation, create the issue via GitHub MCP tools, and log the result for tracking.
 
-Follow all instructions from #file:../instructions/markdown.instructions.md
-
-## Role
-
-You WILL create GitHub issues by discovering available issue templates and collecting the necessary information. You WILL guide users through the process conversationally and ensure all required fields are collected before creation.
-
-## General User Conversation Guidance
-
-When a user wants to create an issue:
-
-1. Discover available issue templates from `.github/ISSUE_TEMPLATE/`
-2. Present template options if multiple exist
-3. Collect required and optional field values conversationally
-4. Create the issue via GitHub MCP tools
-5. Log the creation to an artifact file for tracking
-
-Be conversational and guide users step-by-step. Ask one question at a time and provide examples proactively.
+Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md for shared conventions and the GitHub MCP Tool Catalog.
 
 ## Inputs
 
-* **${input:templateName}**: Specific template to use (optional, will discover if not provided)
-* **${input:title}**: Issue title (optional, will prompt if not provided)
-* **${input:body}**: Issue body content (optional, will prompt if not provided)
-* **${input:labels}**: Comma-separated labels (optional)
-* **${input:assignees}**: Comma-separated assignees (optional)
+* `${input:templateName}`: (Optional) Specific template name to use. When not provided, discover available templates and present options.
+* `${input:title}`: (Optional) Issue title. When not provided, prompt during field collection.
+* `${input:body}`: (Optional) Issue body content. When not provided, prompt during field collection.
+* `${input:labels}`: (Optional) Comma-separated labels to apply.
+* `${input:assignees}`: (Optional) Comma-separated assignees.
 
-## Protocol
+## Required Steps
 
-### 1. Template Discovery
+The workflow proceeds through five steps: resolve repository context, discover available templates, collect issue details from the user, create the issue, and log the result as a tracking artifact.
 
-You WILL discover and parse available issue templates from `.github/ISSUE_TEMPLATE/` directory.
+### Step 1: Resolve Repository Context
 
-1. Use `list_dir` to check if `.github/ISSUE_TEMPLATE/` exists
-2. If directory exists:
-   * Enumerate all `.yml` and `.md` files in the directory
-   * For each template file, use `read_file` to load content
-   * Parse YAML frontmatter to extract:
-     * `name`: Template display name
-     * `about`: Template description
-     * `title`: Default issue title pattern
-     * `labels`: Default labels array
-     * `assignees`: Default assignees array
-   * For `.yml` forms, parse the `body` array to extract field definitions:
-     * Field `type`: input, textarea, dropdown, checkboxes, markdown
-     * Field `id`: Unique identifier for the field
-     * Field `attributes`: Contains label, description, placeholder, options
-     * Field `validations`: Contains required flag
-   * Build a template registry with all discovered templates
-3. If directory does not exist or is empty:
-   * Use generic fallback with basic fields: title, body, labels, assignees
-   * Inform user that no custom templates were found
+Establish the target repository and verify access before proceeding.
 
-**YAML Form Template Structure**:
+1. Call `mcp_github_get_me` to verify repository access and determine the authenticated user.
+2. Derive the repository owner and name from the active workspace git remote or user input.
+3. Call `mcp_github_list_issue_types` with the owner parameter to determine whether the organization supports issue types. Record valid type values for use during issue creation.
 
-```yaml
-name: Bug Report
-description: File a bug report
-title: "fix: "
-labels: ["bug", "triage"]
-assignees:
-  - octocat
-body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time to fill out this bug report!
-  - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
-  - type: textarea
-    id: what-happened
-    attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-    validations:
-      required: true
-```
+### Step 2: Discover Templates
 
-**Markdown Template Structure**:
+Locate and parse issue templates from the repository.
 
-```markdown
----
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: enhancement
-assignees: ''
----
+1. Use `list_dir` to check whether `.github/ISSUE_TEMPLATE/` exists in the repository.
+2. When the directory exists, enumerate `.yml` and `.md` template files and read each with `read_file`. Extract the template name, description, default title pattern, default labels, default assignees, and field definitions from YAML frontmatter and body content.
+3. When the directory does not exist or is empty, proceed with generic fields (title, body, labels, assignees) and inform the user that no custom templates were found.
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+### Step 3: Collect Issue Details
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-```
+Select a template and gather field values through conversation.
 
-### 2. Template Selection
+1. When `${input:templateName}` matches a discovered template, use it. When multiple templates exist and no input was provided, present the available options and ask the user to select one. When only one template exists, use it automatically.
+2. For each required field not already provided through inputs, prompt the user with the field label and description. Validate that required fields are not empty before continuing.
+3. For optional fields not provided through inputs, ask the user whether they want to supply a value.
+4. Merge template defaults with user-provided values for labels and assignees, removing duplicates.
+5. When the organization supports issue types (from Step 1), include the type field in collection if the template or user specifies one.
 
-You WILL allow user to select which template to use or specify custom fields.
+### Step 4: Create Issue
 
-1. If `${input:templateName}` is provided, locate that template in the registry
-2. If not provided and multiple templates exist:
-   * Present list of available templates with names and descriptions
-   * Ask user to select a template by name or number
-   * Wait for user response
-3. If only one template exists, use it automatically
-4. If no templates exist, proceed with generic field collection
+Submit the issue to GitHub and confirm the result.
 
-### 3. Field Collection
+1. Call `mcp_github_issue_write` with `method: 'create'`, supplying the owner, repo, title, formatted body, labels, and assignees collected in previous steps. Include the `type` parameter only when the organization supports issue types and a type was selected.
+2. On success, extract the issue number and URL from the response and confirm creation with the user.
+3. On failure, report the error and suggest corrections or a retry.
 
-You WILL collect all required and optional field values from the user.
+### Step 5: Log Artifact
 
-1. Extract field definitions from selected template or use generic fields
-2. For each required field:
-   * Check if value was provided in inputs (e.g., `${input:title}`)
-   * If not provided, prompt user with field label and description
-   * Validate that required fields are not empty
-3. For each optional field:
-   * Check if value was provided in inputs
-   * If not provided, ask user if they want to provide a value
-   * Accept empty values for optional fields
-4. Apply template defaults:
-   * Use template's default title pattern if user didn't override
-   * Merge template's default labels with user-provided labels:
-     * Remove duplicates (case-insensitive comparison)
-     * Order: template labels first, then user-provided labels
-     * Normalize to lowercase for consistency
-   * Merge template's default assignees with user-provided assignees:
-     * Remove duplicates (case-insensitive comparison)
-     * Order: template assignees first, then user-provided assignees
-     * Normalize to lowercase for consistency
-5. Build final issue data structure
+Record the created issue for tracking purposes.
 
-**Conversation Flow Example**:
-
-```text
-Agent: I found 3 issue templates:
-1. Bug Report - File a bug report
-2. Feature Request - Suggest an idea for this project
-3. Documentation - Report missing or incorrect documentation
-
-Which template would you like to use? (1-3)
-
-User: 1
-
-Agent: Great! Let's create a Bug Report.
-
-What happened? (Required)
-Please describe the bug you encountered.
-
-User: The login button doesn't work on mobile devices
-
-Agent: Would you like to provide contact details? (Optional)
-How can we get in touch if we need more info?
-
-User: john@example.com
-
-Agent: Creating issue...
-```
-
-### 4. Issue Creation
-
-You WILL create the GitHub issue using MCP tools.
-
-1. Use `mcp_github_create_issue` tool with collected data:
-   * `title`: Final issue title
-   * `body`: Formatted issue body with all field values using markdown structure:
-     * **Field Name**: Value (for each collected field)
-     * Blank line between each field for readability
-     * Preserve original field formatting and line breaks
-     * Example: "**Description**: User's issue description\n\n**Priority**: High"
-   * `labels`: Array of label strings
-   * `assignees`: Array of assignee usernames
-2. Handle tool response:
-   * On success: Extract issue number and URL from response
-   * On failure: Report error to user and suggest retry or corrections
-3. Confirm creation with user, providing issue number and URL
-
-**MCP Tool Call Structure Example**:
-
-```json
-{
-  "tool": "mcp_github_create_issue",
-  "parameters": {
-    "title": "fix: login button doesn't work on mobile devices",
-    "body": "**What happened?**\nThe login button doesn't work on mobile devices\n\n**Contact Details**\njohn@example.com",
-    "labels": ["bug", "triage"],
-    "assignees": ["octocat"]
-  }
-}
-```
-
-**Expected Response**:
-
-```json
-{
-  "number": 42,
-  "html_url": "https://github.com/owner/repo/issues/42",
-  "state": "open",
-  "title": "fix: login button doesn't work on mobile devices"
-}
-```
-
-### 5. Artifact Logging
-
-You WILL log issue creation to artifact file for tracking and reference.
-
-1. Create or append to artifact file in `.copilot-tracking/github-issues/`
-2. Use filename pattern: `issue-{number}.md`
-3. Include in artifact:
-   * Issue number and URL
-   * Creation timestamp
-   * Template used
-   * All field values provided
-   * Issue state and metadata
-4. Confirm artifact location to user
-
-**Artifact File Template**:
-
-```markdown
-# GitHub Issue #42
-
-**Created**: 2025-01-15T10:30:00Z
-**URL**: https://github.com/owner/repo/issues/42
-**State**: open
-**Template**: Bug Report
-
-## Metadata
-
-* **Labels**: bug, triage
-* **Assignees**: @octocat
-* **Milestone**: None
-* **Projects**: None
-
-## Content
-
-### Title
-
-fix: login button doesn't work on mobile devices
-
-### Body
-
-**What happened?**
-The login button doesn't work on mobile devices
-
-**Contact Details**
-john@example.com
-
-## Timeline
-
-* 2025-01-15T10:30:00Z - Issue created via GitHub MCP
-```
-
-## Output Requirements
-
-After successful completion, you must provide:
-
-1. **Issue Confirmation**:
-   * Issue number and clickable URL
-   * Issue title
-   * Applied labels and assignees
-   * Current state (always "open" for new issues)
-
-2. **Artifact Location**:
-   * Full path to created artifact file
-   * Brief summary of logged information
-
-3. **Next Steps** (optional suggestions):
-   * Link to view the issue on GitHub
-   * Suggest adding comments or updating the issue
-   * Mention related issues or templates
-
-## Error Handling
-
-* **Template Directory Missing**: Use generic fallback fields, inform user
-* **Template Parse Error**: Skip malformed template, continue with others
-* **Required Field Missing**: Re-prompt user until value provided
-* **Issue Creation Failure**: Display error message, suggest corrections
-* **MCP Tool Unavailable**: Inform user to install GitHub MCP extension
+1. Create or append to an artifact file in `.copilot-tracking/github-issues/` using the filename pattern `issue-{number}.md`.
+2. Include the issue number, URL, creation timestamp, template used, applied labels, assignees, and field values.
+3. Confirm the artifact location to the user.
 
 ## Success Criteria
 
-* Issue successfully created on GitHub with correct metadata
-* Artifact file created in `.copilot-tracking/github-issues/`
-* User receives confirmation with issue number and URL
-* All required fields validated before creation
-* Template defaults properly applied
+* Repository context is resolved and access is verified before template discovery.
+* All available templates are discovered and presented when multiple exist.
+* Required fields are validated before issue creation.
+* The issue is created with correct metadata including labels, assignees, and type when supported.
+* An artifact file is created in `.copilot-tracking/github-issues/` with issue details.
+
+## Error Handling
+
+* Template directory missing: proceed with generic fields and inform the user.
+* Template parse error: skip the malformed template, continue with remaining templates, and warn the user.
+* Required field missing after prompting: re-prompt until a value is provided.
+* Issue creation failure: display the error message and suggest corrections.
+* Organization does not support issue types: omit the type parameter silently.
+
+---
+
+Proceed with creating the GitHub issue following the Required Steps.

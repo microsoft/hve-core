@@ -82,7 +82,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 | Agent                    | Purpose                                                    | Key Constraint                            |
 |--------------------------|------------------------------------------------------------|-------------------------------------------|
-| **github-issue-manager** | Interactive GitHub issue filing and navigation             | Uses MCP GitHub tools                     |
+| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction | Uses MCP GitHub tools                     |
 | **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items |
 | **hve-core-installer**   | Decision-driven HVE-Core installation with 6 methods       | Environment detection and validation      |
 
@@ -290,20 +290,16 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Parses Terraform, Bicep, ARM, or shell scripts. Uses pure ASCII for consistent alignment. Groups by network boundary.
 
-### github-issue-manager
+### github-backlog-manager
 
-**Creates:** Issue tracking artifacts:
+> [!NOTE]
+> Replaces the deprecated `github-issue-manager` agent. Consolidates issue management with backlog discovery, triage, and community interaction workflows.
 
-* `.copilot-tracking/github-issues/issue-{number}.md` (issue creation logs with API responses)
-* `.copilot-tracking/github-issues/issues-list-{timestamp}.md` (navigation session results)
-* `.copilot-tracking/github-issues/search-{timestamp}.md` (search query results)
-* `.copilot-tracking/github-issues/session-state.md` (active context and filter state)
-* `.copilot-tracking/github-issues/draft-issue.md` (working draft before submission)
-* `.copilot-tracking/github-issues/current-filters.md` (saved filter configurations)
+**Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
 
-**Workflow:** Issue Creation | Issue Navigation | Issue Search
+**Workflow:** Issue Creation | Backlog Discovery | Triage | Community Interaction
 
-**Critical:** Uses MCP GitHub tools. Translates natural language to GitHub search syntax. Maintains session context across turns.
+**Critical:** Uses MCP GitHub tools. Follows community interaction guidelines from `community-interaction.instructions.md` for all contributor-facing comments.
 
 ### ado-prd-to-wit
 

@@ -12,7 +12,7 @@ Specialized AI assistants for specific development tasks:
 
 #### Development Workflow
 
-- **github-issue-manager** - Manage GitHub issues efficiently
+- **github-backlog-manager** - Consolidated GitHub backlog management with community interaction
 - **pr-review** - Comprehensive pull request review assistant
 - **rpi-agent** - Professional evidence-backed agent with structured subagent delegation for research, codebase discovery, and complex tasks
 - **task-implementor** - Implement tasks from detailed plans

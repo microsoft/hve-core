@@ -61,9 +61,9 @@
         "description": "Develop a multi-page Streamlit dashboard"
       },
       {
-        "name": "github-issue-manager",
-        "path": "./.github/agents/github-issue-manager.agent.md",
-        "description": "Interactive GitHub issue management with conversational workflows for filing, navigating, and searching issues"
+        "name": "github-backlog-manager",
+        "path": "./.github/agents/github-backlog-manager.agent.md",
+        "description": "Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core"
       },
       {
         "name": "hve-core-installer",
@@ -185,7 +185,27 @@
       {
         "name": "github-add-issue",
         "path": "./.github/prompts/github-add-issue.prompt.md",
-        "description": "Add a GitHub issue to the backlog using discovered issue templates from .github/ISSUE_TEMPLATE/"
+        "description": "Create a GitHub issue using discovered repository templates and conversational field collection"
+      },
+      {
+        "name": "github-discover-issues",
+        "path": "./.github/prompts/github-discover-issues.prompt.md",
+        "description": "Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review"
+      },
+      {
+        "name": "github-execute-backlog",
+        "path": "./.github/prompts/github-execute-backlog.prompt.md",
+        "description": "Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file"
+      },
+      {
+        "name": "github-sprint-plan",
+        "path": "./.github/prompts/github-sprint-plan.prompt.md",
+        "description": "Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog"
+      },
+      {
+        "name": "github-triage-issues",
+        "path": "./.github/prompts/github-triage-issues.prompt.md",
+        "description": "Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection"
       },
       {
         "name": "prompt-analyze",
@@ -277,7 +297,12 @@
       {
         "name": "commit-message-instructions",
         "path": "./.github/instructions/commit-message.instructions.md",
-        "description": "Required instructions for creating all commit messages - Brought to you by microsoft/edge-ai"
+        "description": "Required instructions for creating all commit messages - Brought to you by microsoft/hve-core"
+      },
+      {
+        "name": "community-interaction-instructions",
+        "path": "./.github/instructions/community-interaction.instructions.md",
+        "description": "Community interaction voice, tone, and response templates for GitHub-facing agents and prompts"
       },
       {
         "name": "csharp-tests-instructions",
@@ -293,6 +318,31 @@
         "name": "git-merge-instructions",
         "path": "./.github/instructions/git-merge.instructions.md",
         "description": "Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls."
+      },
+      {
+        "name": "github-backlog-discovery-instructions",
+        "path": "./.github/instructions/github-backlog-discovery.instructions.md",
+        "description": "Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery"
+      },
+      {
+        "name": "github-backlog-planning-instructions",
+        "path": "./.github/instructions/github-backlog-planning.instructions.md",
+        "description": "Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence"
+      },
+      {
+        "name": "github-backlog-triage-instructions",
+        "path": "./.github/instructions/github-backlog-triage.instructions.md",
+        "description": "Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection"
+      },
+      {
+        "name": "github-backlog-update-instructions",
+        "path": "./.github/instructions/github-backlog-update.instructions.md",
+        "description": "Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations"
+      },
+      {
+        "name": "hve-core-location-instructions",
+        "path": "./.github/instructions/hve-core-location.instructions.md",
+        "description": "Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree."
       },
       {
         "name": "markdown-instructions",

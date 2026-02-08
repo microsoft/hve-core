@@ -18,7 +18,9 @@
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:version-consistency",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
+    "extension:prepare:prerelease": "pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease",
     "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
+    "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1"
   },
   "devDependencies": {
