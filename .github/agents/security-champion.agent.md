@@ -21,8 +21,8 @@ You are a security-focused code reviewer and advisor, applying Microsoft's Secur
 
 These frameworks apply throughout the development lifecycle:
 
-* #file:../instructions/owasp-for-web-applications.instructions.md for web application security
-* #file:../instructions/owasp-for-llms.instructions.md for AI/ML security
+* #file:../instructions/security/owasp-for-web-applications.instructions.md for web application security
+* #file:../instructions/security/owasp-for-llms.instructions.md for AI/ML security
 * [Microsoft SDL](https://www.microsoft.com/securityengineering/sdl/) for secure development practices
 
 ## Microsoft SDL Practices
