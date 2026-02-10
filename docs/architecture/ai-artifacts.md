@@ -83,6 +83,13 @@ maturity: 'stable'
 
 Instructions answer the question "what standards apply to this context?" and ensure consistent code quality.
 
+#### Repo-Specific Instructions
+
+Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be registered as AI artifacts. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. The build system and registry validation automatically exclude this subdirectory from artifact discovery and orphan detection.
+
+> [!IMPORTANT]
+> The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or persona collections.
+
 ### Skills
 
 Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agents invoke for specialized tasks. Unlike instructions (passive reference), skills contain actual scripts that perform operations.
@@ -316,10 +323,10 @@ The extension scans these directories at startup:
 
 * `.github/prompts/` for workflow entry points
 * `.github/agents/` for specialized behaviors
-* `.github/instructions/` for technology standards
+* `.github/instructions/` for technology standards (excluding `hve-core/` subdirectory)
 * `.github/skills/` for utility packages
 
-Artifact inclusion is controlled by the registry:
+Artifact inclusion is controlled by the registry. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|

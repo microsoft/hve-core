@@ -36,9 +36,14 @@ All instruction files **MUST** be placed in:
 ├── language-name.instructions.md        # Language-specific
 ├── framework-name.instructions.md       # Framework-specific
 ├── workflow-name.instructions.md        # Workflow-specific
-└── subfolder/
-        └── specialized.instructions.md      # Organized by domain
+├── subfolder/
+│       └── specialized.instructions.md  # Organized by domain
+└── hve-core/
+        └── repo-only.instructions.md    # Repo-specific (NOT distributed)
 ```
+
+> [!IMPORTANT]
+> The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or persona collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
 
 **Examples**:
 
@@ -116,7 +121,10 @@ lastUpdated: '2025-11-19'
 
 ## Registry Entry Requirements
 
-All instructions must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+All instructions must have a corresponding entry in `.github/ai-artifacts-registry.json`, except for repo-specific instructions placed in `.github/instructions/hve-core/`. This entry controls distribution and persona filtering.
+
+> [!NOTE]
+> Instructions in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to the registry. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
 
 ### Adding Your Instructions to the Registry
 

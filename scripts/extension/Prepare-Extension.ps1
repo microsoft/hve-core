@@ -760,6 +760,12 @@ function Get-DiscoveredInstructions {
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
 
     foreach ($instrFile in $instructionFiles) {
+        # Skip repo-specific instructions not intended for distribution
+        $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
+        if ($instrRelPath -like 'hve-core/*') {
+            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
         $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }

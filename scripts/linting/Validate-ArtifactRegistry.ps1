@@ -402,12 +402,14 @@ function Find-OrphanArtifacts {
         }
     }
 
-    # Scan instructions (including subdirectories)
+    # Scan instructions (including subdirectories, excluding repo-specific hve-core/ folder)
     $instructionsDir = Join-Path $RepoRoot '.github/instructions'
     if (Test-Path $instructionsDir) {
         $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter '*.instructions.md' -File -Recurse -ErrorAction SilentlyContinue
         foreach ($file in $instructionFiles) {
             $relativePath = [System.IO.Path]::GetRelativePath($instructionsDir, $file.FullName) -replace '\\', '/'
+            # Skip repo-specific instructions not intended for distribution
+            if ($relativePath -like 'hve-core/*') { continue }
             $key = $relativePath -replace '\.instructions\.md$', ''
             if (-not $Registry['instructions'].ContainsKey($key)) {
                 $warnings.Add("Orphan instruction file not in registry: $($file.FullName)")

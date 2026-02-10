@@ -148,6 +148,17 @@ When contributing a new artifact:
 4. Declare any dependencies in `requires` if the artifact depends on other artifacts
 5. Run `npm run lint:registry` to validate the registry entry
 
+### Repo-Specific Instructions Exclusion
+
+Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to the registry. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository. They are excluded from:
+
+* The AI artifacts registry
+* Extension packaging and distribution
+* Persona collection builds
+* Orphan detection in registry validation
+
+If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/` or a technology-specific subdirectory (e.g., `csharp/`, `bash/`).
+
 ## Persona Taxonomy
 
 Personas represent user roles that consume HVE-Core artifacts. The persona system enables role-specific artifact collections without fragmenting the codebase.

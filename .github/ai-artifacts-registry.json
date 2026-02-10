@@ -160,6 +160,37 @@
                 "skills": []
             }
         },
+        "github-backlog-manager": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog",
+                "orchestration"
+            ],
+            "requires": {
+                "agents": [
+                    "memory"
+                ],
+                "prompts": [
+                    "github-discover-issues",
+                    "github-triage-issues",
+                    "github-sprint-plan",
+                    "github-execute-backlog",
+                    "checkpoint"
+                ],
+                "instructions": [
+                    "github-backlog-discovery",
+                    "github-backlog-planning",
+                    "github-backlog-triage",
+                    "github-backlog-update",
+                    "community-interaction"
+                ],
+                "skills": []
+            }
+        },
         "github-issue-manager": {
             "maturity": "stable",
             "personas": [
@@ -504,12 +535,62 @@
             ]
         },
         "github-add-issue": {
-            "maturity": "stable",
+            "maturity": "deprecated",
             "personas": [
                 "hve-core-all"
             ],
             "tags": [
                 "github"
+            ]
+        },
+        "github-discover-issues": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-execute-backlog": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-sprint-plan": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-triage-issues": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "incident-response": {
+            "maturity": "stable",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "operations",
+                "incident"
             ]
         },
         "prompt-analyze": {
@@ -670,6 +751,16 @@
                 "git"
             ]
         },
+        "community-interaction": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "documentation"
+            ]
+        },
         "git-merge": {
             "maturity": "stable",
             "personas": [
@@ -677,6 +768,46 @@
             ],
             "tags": [
                 "git"
+            ]
+        },
+        "github-backlog-discovery": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-backlog-planning": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-backlog-triage": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
+            ]
+        },
+        "github-backlog-update": {
+            "maturity": "experimental",
+            "personas": [
+                "hve-core-all"
+            ],
+            "tags": [
+                "github",
+                "backlog"
             ]
         },
         "hve-core-location": {

@@ -444,6 +444,7 @@ To create a new persona collection:
 * The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
 * Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
+* Repo-specific instructions under `.github/instructions/hve-core/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository
 
