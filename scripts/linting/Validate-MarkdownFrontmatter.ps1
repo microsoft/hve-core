@@ -261,8 +261,11 @@ function Test-JsonSchemaValidation {
     pattern matching, enum values, and minimum length requirements.
 
     Validation coverage:
-    - required: Field presence validation
-    - type: string, array, boolean type checking
+    - required: Field presence validation (root + nested objects)
+    - type: string, array, boolean, object type checking
+    - properties: Nested object property validation
+    - items: Array item validation
+    - oneOf: Composition keyword support (exactly one subschema must match)
     - pattern: Regex pattern matching for strings
     - enum: Allowed value constraints
     - minLength: Minimum string length validation
@@ -373,8 +376,35 @@ function Test-JsonSchemaValidation {
             [OutputType([hashtable])]
             param(
                 [Parameter(Mandatory = $true)]
+                [ValidateScript({ $_ -is [hashtable] -or $_ -is [pscustomobject] })]
                 [object]$InputObject
             )
+
+            function ConvertTo-ObjectArray {
+                <#
+                .SYNOPSIS
+                    Converts an enumerable to an object array, converting nested objects to hashtables.
+                #>
+                [CmdletBinding()]
+                [OutputType([object[]])]
+                param(
+                    [Parameter(Mandatory = $true)]
+                    [System.Collections.IEnumerable]$Enumerable
+                )
+
+                $list = [System.Collections.Generic.List[object]]::new()
+                foreach ($item in $Enumerable) {
+                    if ($item -is [pscustomobject] -or $item -is [hashtable]) {
+                        $list.Add((ConvertTo-HashTable -InputObject $item))
+                    }
+                    else {
+                        $list.Add($item)
+                    }
+                }
+
+                # Prevent PowerShell from unrolling single-element arrays when used in expressions/assignments.
+                return ,$list.ToArray()
+            }
 
             if ($InputObject -is [hashtable]) {
                 $out = @{}
@@ -384,16 +414,7 @@ function Test-JsonSchemaValidation {
                         $out[$k] = ConvertTo-HashTable -InputObject $v
                     }
                     elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
-                        $arr = @()
-                        foreach ($item in $v) {
-                            if ($item -is [pscustomobject] -or $item -is [hashtable]) {
-                                $arr += (ConvertTo-HashTable -InputObject $item)
-                            }
-                            else {
-                                $arr += $item
-                            }
-                        }
-                        $out[$k] = $arr
+                        $out[$k] = ConvertTo-ObjectArray -Enumerable $v
                     }
                     else {
                         $out[$k] = $v
@@ -410,16 +431,7 @@ function Test-JsonSchemaValidation {
                         $out[$p.Name] = ConvertTo-HashTable -InputObject $v
                     }
                     elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
-                        $arr = @()
-                        foreach ($item in $v) {
-                            if ($item -is [pscustomobject] -or $item -is [hashtable]) {
-                                $arr += (ConvertTo-HashTable -InputObject $item)
-                            }
-                            else {
-                                $arr += $item
-                            }
-                        }
-                        $out[$p.Name] = $arr
+                        $out[$p.Name] = ConvertTo-ObjectArray -Enumerable $v
                     }
                     else {
                         $out[$p.Name] = $v
@@ -428,7 +440,6 @@ function Test-JsonSchemaValidation {
                 return $out
             }
 
-            return @{}
         }
 
         function Test-ValueAgainstSchema {
