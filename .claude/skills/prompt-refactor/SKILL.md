@@ -4,6 +4,7 @@ description: Refactor and compress prompt engineering artifacts through iterativ
 maturity: stable
 context: fork
 agent: prompt-builder
+disable-model-invocation: true
 argument-hint: "file=... [requirements=...]"
 ---
 

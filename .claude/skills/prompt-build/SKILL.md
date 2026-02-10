@@ -4,6 +4,7 @@ description: Build or improve prompt engineering artifacts following quality cri
 maturity: stable
 context: fork
 agent: prompt-builder
+disable-model-invocation: true
 argument-hint: "file=... [requirements=...]"
 ---
 

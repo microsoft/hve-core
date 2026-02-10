@@ -1,7 +1,6 @@
 ---
 name: task-researcher
 description: Research orchestrator that dispatches task-researcher-subagent instances for all investigation activities. Synthesizes subagent findings into authoritative research documents. Use proactively for research tasks requiring multi-source analysis.
-tools: Task, TaskOutput, Bash, Glob, Grep, Read, Edit, Write, WebFetch, TodoWrite, TaskStop, AskUserQuestion, Skill
 model: inherit
 ---
 
