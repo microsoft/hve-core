@@ -756,7 +756,7 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result.IsValid | Should -BeTrue
         }
 
-        It 'Rejects handoff missing required prompt? (prompt is optional)' {
+        It 'Accepts handoff without prompt (prompt is optional)' {
             $frontmatter = @{
                 description = 'test'
                 handoffs    = @(
