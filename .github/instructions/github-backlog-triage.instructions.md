@@ -14,15 +14,7 @@ Follow all instructions from #file:./github-backlog-planning.instructions.md whi
 
 Follow community interaction guidelines from #file:./community-interaction.instructions.md when posting comments visible to external contributors.
 
-## Inputs
-
-* `${input:owner}`: (Required) Repository owner (username or organization).
-* `${input:repo}`: (Required) Repository name.
-* `${input:maxIssues:20}`: (Optional, defaults to 20) Maximum number of untriaged issues to process per batch.
-* `${input:milestone}`: (Optional) Override milestone name. When provided, skip milestone discovery and use this value for all non-duplicate issues.
-* `${input:autonomy:partial}`: (Optional, defaults to partial) Autonomy tier controlling confirmation gates. Values: `full`, `partial`, `manual`. See the Three-Tier Autonomy Model in the planning specification.
-
-### Autonomy Behavior for Triage Operations
+## Autonomy Behavior for Triage Operations
 
 | Operation                         | Full         | Partial      | Manual       |
 | --------------------------------- | ------------ | ------------ | ------------ |
@@ -41,7 +33,7 @@ Fetch and analyze untriaged issues to build a comprehensive triage assessment. P
 
 #### Step 1: Discover Available Milestones
 
-Before analyzing issues, determine the current EVEN and next ODD milestones. When `${input:milestone}` is provided, skip this step and use the override value.
+Before analyzing issues, determine the current EVEN and next ODD milestones. When `milestone` is provided, skip this step and use the override value.
 
 1. Search for recent issues with milestone assignments using `mcp_github_search_issues` to identify active milestone names.
 2. Derive the current EVEN milestone and next ODD milestone from the discovered names.
@@ -57,7 +49,7 @@ Search for issues carrying the `needs-triage` label using `mcp_github_search_iss
 repo:{owner}/{repo} is:issue is:open label:needs-triage
 ```
 
-Paginate results using `perPage` and `page` parameters, limiting to `${input:maxIssues}` total issues.
+Paginate results using `perPage` and `page` parameters, limiting to `maxIssues` total issues.
 
 When no untriaged issues are found, inform the user and end the workflow. No further phases apply.
 
@@ -106,7 +98,7 @@ Present the triage plan to the user, highlighting:
 * Issues flagged as potential duplicates
 * Issues requiring manual review (ambiguous titles, conflicting labels, uncertain similarity)
 
-When `${input:autonomy}` is `full`, proceed directly to Step 3 without waiting for user confirmation. When `partial`, gate on duplicate closures only. When `manual`, wait for user confirmation of the entire plan.
+When `autonomy` is `full`, proceed directly to Step 3 without waiting for user confirmation. When `partial`, gate on duplicate closures only. When `manual`, wait for user confirmation of the entire plan.
 
 #### Step 3: Execute Confirmed Recommendations
 
@@ -299,7 +291,7 @@ Use the planning-log.md template from the planning specification. Set the planni
 
 Triage is complete when:
 
-* All fetched issues (up to `${input:maxIssues}`) with the `needs-triage` label have been analyzed for label suggestions, milestone recommendations, and duplicate candidates.
+* All fetched issues (up to `maxIssues`) with the `needs-triage` label have been analyzed for label suggestions, milestone recommendations, and duplicate candidates.
 * A triage-plan.md exists with a recommendation row for every analyzed issue.
 * The user has reviewed and confirmed (or adjusted) the triage plan, respecting the active autonomy tier.
 * Confirmed recommendations have been executed via consolidated API calls (labels assigned, milestones set, `needs-triage` removed from classified issues, duplicates closed).

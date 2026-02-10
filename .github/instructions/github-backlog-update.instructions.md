@@ -16,17 +16,9 @@ The execution protocol processes a handoff plan file to create, update, link, an
 
 All operations MUST execute sequentially. Parallel execution is not supported due to dependency chains between Create, Link, and Update operations.
 
-### Inputs
-
-* `${input:handoffFile}`: Path to handoff.md or triage-plan.md containing planned issue operations (required)
-* `${input:owner}`: Repository owner (inferred from handoff file if not provided)
-* `${input:repo}`: Repository name (inferred from handoff file if not provided)
-* `${input:autonomy}`: Autonomy tier controlling confirmation gates (one of: `full`, `partial`, `manual`; defaults to `partial`)
-* `${input:dryRun}`: When `true`, simulate all operations without executing (defaults to `false`)
-
 ### Outputs
 
-* handoff-logs.md created next to ${input:handoffFile} containing per-operation processing status and results
+* handoff-logs.md created next to `handoff` containing per-operation processing status and results
 * Issues created, updated, linked, or closed in the target GitHub repository
 
 ### Trigger Conditions
@@ -47,9 +39,9 @@ Parent issues MUST be created before children to ensure sub-issue linking resolv
 
 ### Step 1: Initialize or Resume
 
-When handoff-logs.md exists next to ${input:handoffFile}:
+When handoff-logs.md exists next to `handoff`:
 
-* Read handoff-logs.md and ${input:handoffFile}.
+* Read handoff-logs.md and `handoff`.
 * Identify operations with unchecked `[ ]` status.
 * Rebuild the temporary ID mapping from previously completed Create entries (the Issue Number field in each completed log entry records the `{{TEMP-N}}` to `#actual` mapping).
 * Resume processing in priority order: Create → Update → Link → Close → Comment, starting from the first unchecked operation in that sequence.
@@ -57,12 +49,12 @@ When handoff-logs.md exists next to ${input:handoffFile}:
 When handoff-logs.md does not exist:
 
 * Create handoff-logs.md using the template from #file:./github-backlog-planning.instructions.md.
-* Populate the Operations section from ${input:handoffFile}.
+* Populate the Operations section from `handoff`.
 * Record all inputs in the Execution Summary section.
 
 Validate the handoff before processing:
 
-* Confirm ${input:owner} and ${input:repo} are set (from inputs or parsed from the handoff file header).
+* Confirm `owner` and `repo` are set (from inputs or parsed from the handoff file header).
 * Verify all numeric issue references exist by calling `mcp_github_issue_read` with method `get` for each number. Skip `{{TEMP-N}}` placeholders during this validation since those issues do not exist yet.
 * Verify label names are valid by calling `mcp_github_get_label` for each unique label in the plan.
 * Call `mcp_github_list_issue_types` to confirm whether the organization supports issue types before using the `type` field.
@@ -82,7 +74,7 @@ Process operations in this fixed order, matching the handoff.md template section
 Checkpoint after each operation completes:
 
 * Check the autonomy tier to determine whether a confirmation gate is required. Refer to the Three-Tier Autonomy Model in #file:./github-backlog-planning.instructions.md for gate definitions. When the user declines a gated operation, mark it as `Skipped` in handoff-logs.md and continue.
-* When `${input:dryRun}` is `true`, simulate the operation and log it as `dry-run` without executing (see the Dry Run Mode section).
+* When `dryRun` is `true`, simulate the operation and log it as `dry-run` without executing (see the Dry Run Mode section).
 * After each Create, resolve the `{{TEMP-N}}` placeholder to the actual issue number returned by `mcp_github_issue_write`. Record the mapping in handoff-logs.md.
 * When a `{{TEMP-N}}` reference appears in a Link or Update operation, resolve it from the mapping table before calling the MCP tool.
 * Update the checkbox to `[x]` in handoff.md after each operation completes.
@@ -97,7 +89,7 @@ When an operation has no pending changes:
 
 ### Step 3: Finalize and Report
 
-* Re-read handoff-logs.md and compare against ${input:handoffFile}.
+* Re-read handoff-logs.md and compare against `handoff`.
 * Process any missed operations that were skipped due to dependency failures and have since been unblocked. Limit this retry pass to one additional iteration; log any operations still blocked after the retry as `Failed`.
 * Cross-check created issues against the plan to confirm all `{{TEMP-N}}` placeholders resolved.
 * Generate a handoff summary with counts: issues created, updated, closed, linked, failed, and skipped.
@@ -185,19 +177,19 @@ Comments posted to GitHub issues or pull requests are visible to external contri
 
 ## Autonomy Levels
 
-The autonomy model controls confirmation gates during execution. Defaults to Partial Autonomy when `${input:autonomy}` is not specified. Refer to the Three-Tier Autonomy Model in #file:./github-backlog-planning.instructions.md for the full specification and gate definitions.
+The autonomy model controls confirmation gates during execution. Defaults to Partial Autonomy when `autonomy` is not specified. Refer to the Three-Tier Autonomy Model in #file:./github-backlog-planning.instructions.md for the full specification and gate definitions.
 
 When the user declines a gated operation, mark it as `Skipped` in handoff-logs.md and continue to the next operation.
 
 ## Dry Run Mode
 
-When `${input:dryRun}` is `true`:
+When `dryRun` is `true`:
 
 * Simulate all operations without calling MCP tools that modify state.
 * Read-only validation calls (`mcp_github_issue_read`, `mcp_github_get_label`) still execute to verify references.
 * Generate handoff-logs.md with all operations marked as `dry-run` status.
 * Present the execution summary for user review.
-* Re-invoke with `${input:dryRun}` set to `false` to execute the plan.
+* Re-invoke with `dryRun` set to `false` to execute the plan.
 
 ## Handoff File Format
 

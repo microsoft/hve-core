@@ -10,17 +10,6 @@ Discover GitHub issues through three paths: user-centric queries, artifact-drive
 
 ## Scope
 
-**Inputs**:
-
-| Input                       | Required | Description                                                      |
-| --------------------------- | -------- | ---------------------------------------------------------------- |
-| `${input:owner}`            | Yes      | Repository owner, user or organization                           |
-| `${input:repo}`             | Yes      | Repository name                                                  |
-| `${input:milestone}`        | No       | Milestone name or number to scope searches                       |
-| `${input:documents}`        | No       | File paths or URLs of source documents (PRDs, RFCs, ADRs)        |
-| `${input:searchTerms}`      | No       | Keywords or phrases to supplement extracted terms                 |
-| `${input:includeSubIssues}` | No       | Fetch sub-issues for each discovered issue (default: `false`)    |
-
 **Discovery path selection**:
 
 * User-centric (Path A): User requests their issues, assigned work, or milestone progress without referencing artifacts
@@ -49,7 +38,7 @@ Paths A and C produce a conversational summary with counts and relevant issue li
 * `mcp_github_search_issues`: Search with `assignee:` qualifier scoped to `repo:{owner}/{repo}`
   * Key params: `query` (required), `owner`, `repo`, `perPage`, `page`
 * `mcp_github_issue_read`: Hydrate results with `method: 'get'` for full details
-  * When `${input:includeSubIssues}` is true, also call with `method: 'get_sub_issues'`
+  * When `includeSubIssues` is true, also call with `method: 'get_sub_issues'`
 
 **Artifact-driven discovery (Path B)**:
 
@@ -83,9 +72,9 @@ Use when:
 Execution:
 
 1. Call `mcp_github_get_me` to determine the authenticated user.
-2. Build a search query with `repo:{owner}/{repo} is:issue assignee:{username}`. Apply `milestone:` and `label:` qualifiers when `${input:milestone}` or label context is provided.
+2. Build a search query with `repo:{owner}/{repo} is:issue assignee:{username}`. Apply `milestone:` and `label:` qualifiers when `milestone` or label context is provided.
 3. Execute `mcp_github_search_issues` and paginate until all results are retrieved.
-4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `${input:includeSubIssues}` is true, also fetch sub-issues.
+4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `includeSubIssues` is true, also fetch sub-issues.
 5. Present results grouped by state and labels.
 6. Create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*.
 7. Log discovered issues in *planning-log.md* and deliver a conversational summary.
@@ -95,7 +84,7 @@ Execution:
 
 Use when:
 
-* Documents, PRDs, or requirements are provided via `${input:documents}` or conversation
+* Documents, PRDs, or requirements are provided via `documents` or conversation
 * User explicitly requests issue creation or updates from artifacts
 
 Skip conditions:
@@ -109,9 +98,9 @@ Execution:
 3. Read each document to completion and extract discrete requirements, acceptance criteria, and action items using the document parsing guidelines in this file.
 4. Record each extracted requirement as a candidate issue entry in *issue-analysis.md* with: temporary ID, suggested title in conventional commit format, body summary, suggested labels, suggested milestone, and source reference.
 5. Build keyword groups from extracted requirements per the Search Protocol in *github-backlog-planning.instructions.md*.
-6. Compose GitHub search queries scoped to `repo:{owner}/{repo}`. Apply `milestone:` qualifier when `${input:milestone}` is provided.
+6. Compose GitHub search queries scoped to `repo:{owner}/{repo}`. Apply `milestone:` qualifier when `milestone` is provided.
 7. Execute `mcp_github_search_issues` for each keyword group and paginate results.
-8. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `${input:includeSubIssues}` is true, also fetch sub-issues.
+8. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `includeSubIssues` is true, also fetch sub-issues.
 9. Assess similarity between each fetched issue and the candidate set using the Similarity Assessment Framework in *github-backlog-planning.instructions.md*. Classify each pair as Match, Similar, Distinct, or Uncertain.
 10. De-duplicate results across keyword groups; retain the highest similarity category when the same issue appears in multiple searches.
 11. Log all progress in *planning-log.md* with search queries, result counts, and similarity assessments.
@@ -145,9 +134,9 @@ Use when:
 Execution:
 
 1. Call `mcp_github_get_me` to verify repository access.
-2. Build search queries from `${input:searchTerms}` scoped to `repo:{owner}/{repo}`. Apply `milestone:` qualifier when `${input:milestone}` is provided.
+2. Build search queries from `searchTerms` scoped to `repo:{owner}/{repo}`. Apply `milestone:` qualifier when `milestone` is provided.
 3. Execute `mcp_github_search_issues` for each query and paginate results.
-4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `${input:includeSubIssues}` is true, also fetch sub-issues.
+4. Hydrate each result via `mcp_github_issue_read` with `method: 'get'`. When `includeSubIssues` is true, also fetch sub-issues.
 5. Present results grouped by state and labels.
 6. Create the planning folder at `.copilot-tracking/github-issues/discovery/<scope-name>/` and initialize *planning-log.md*.
 7. Log discovered issues in *planning-log.md* and deliver a conversational summary.
