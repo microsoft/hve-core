@@ -262,10 +262,10 @@ Each artifact entry contains metadata for filtering and dependency resolution:
 
 Personas represent user roles that consume artifacts. The registry defines these personas:
 
-| Persona              | Identifier         | Target Users                       |
-|----------------------|--------------------|------------------------------------|
-| **All**              | `hve-core-all`     | Universal inclusion                |
-| **Developer**        | `developer`        | Software engineers                 |
+| Persona       | Identifier     | Target Users        |
+|---------------|----------------|---------------------|
+| **All**       | `hve-core-all` | Universal inclusion |
+| **Developer** | `developer`    | Software engineers  |
 
 Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific personas for targeted distribution.
 
@@ -298,7 +298,7 @@ The build system resolves collections by:
 Collections carry their own maturity level, independent of artifact-level maturity. This controls whether the entire collection is built for a given release channel:
 
 | Collection Maturity | PreRelease Channel | Stable Channel |
-| ------------------- | ------------------ | -------------- |
+|---------------------|--------------------|----------------|
 | `stable`            | Included           | Included       |
 | `preview`           | Included           | Included       |
 | `experimental`      | Included           | Excluded       |

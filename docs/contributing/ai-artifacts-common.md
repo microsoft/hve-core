@@ -216,7 +216,7 @@ Some artifacts require other artifacts to function correctly. The `requires` fie
 
 | Type           | Purpose                                                                          |
 |----------------|----------------------------------------------------------------------------------|
-| `agents`       | Agents this artifact dispatches at runtime via `runSubagent` (excludes handoffs)  |
+| `agents`       | Agents this artifact dispatches at runtime via `runSubagent` (excludes handoffs) |
 | `prompts`      | Prompts this artifact invokes or references                                      |
 | `instructions` | Instructions this artifact relies on for code generation                         |
 | `skills`       | Skills this artifact executes for specialized tasks                              |
@@ -228,7 +228,7 @@ Some artifacts require other artifacts to function correctly. The `requires` fie
 Handoff targets and `requires` dependencies follow different maturity rules during extension packaging:
 
 | Mechanism  | Maturity Filtered | Reason                                                                    |
-| ---------- | ----------------- | ------------------------------------------------------------------------- |
+|------------|-------------------|---------------------------------------------------------------------------|
 | `requires` | Yes               | Runtime dependencies are excluded when their maturity exceeds the channel |
 | `handoffs` | No                | UI buttons must resolve to a valid agent or the button is broken          |
 

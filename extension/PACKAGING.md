@@ -367,7 +367,7 @@ Collection manifests are defined in `extension/collections/`:
 Each persona collection has a corresponding `package.{collection-id}.json` template file in `extension/`. These files contain static metadata (name, display name, description, publisher) for the persona edition. The `contributes` section is empty because `Prepare-Extension.ps1` populates it dynamically at build time.
 
 | Template                 | Collection | Purpose                           |
-| ------------------------ | ---------- | --------------------------------- |
+|--------------------------|------------|-----------------------------------|
 | `package.json`           | Full       | Canonical manifest (hve-core-all) |
 | `package.developer.json` | Developer  | Developer edition metadata        |
 
@@ -511,21 +511,21 @@ Collection manifests follow this structure:
 }
 ```
 
-| Field         | Required | Description                                                           |
-|---------------|----------|-----------------------------------------------------------------------|
-| `id`          | Yes      | Unique identifier for the collection                                  |
-| `name`        | Yes      | Extension package name                                                |
-| `displayName` | Yes      | Marketplace display name                                              |
-| `description` | Yes      | Marketplace description text                                          |
+| Field         | Required | Description                                                                                           |
+|---------------|----------|-------------------------------------------------------------------------------------------------------|
+| `id`          | Yes      | Unique identifier for the collection                                                                  |
+| `name`        | Yes      | Extension package name                                                                                |
+| `displayName` | Yes      | Marketplace display name                                                                              |
+| `description` | Yes      | Marketplace description text                                                                          |
 | `maturity`    | No       | Release channel eligibility (`stable`, `preview`, `experimental`, `deprecated`). Defaults to `stable` |
-| `personas`    | Yes      | Array of persona identifiers to include                               |
+| `personas`    | Yes      | Array of persona identifiers to include                                                               |
 
 #### Collection Maturity and Channel Eligibility
 
 The `maturity` field controls which release channels include the collection:
 
 | Collection Maturity | PreRelease Channel | Stable Channel |
-| ------------------- | ------------------ | -------------- |
+|---------------------|--------------------|----------------|
 | `stable`            | Yes                | Yes            |
 | `preview`           | Yes                | Yes            |
 | `experimental`      | Yes                | No             |

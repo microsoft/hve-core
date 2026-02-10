@@ -8,37 +8,37 @@ HVE Core - Developer Edition provides a focused collection of AI chat agents, pr
 
 ### 🤖 Chat Agents
 
-| Agent | Description |
-| ----- | ----------- |
-| **memory** | Conversation memory persistence for session continuity |
-| **rpi-agent** | Autonomous RPI orchestrator dispatching task agents through Research, Plan, Implement, Review, and Discover phases |
-| **task-implementor** | Executes implementation plans with progressive tracking and change records |
-| **task-planner** | Implementation planner for creating actionable implementation plans |
-| **task-researcher** | Task research specialist for comprehensive project analysis |
-| **task-reviewer** | Reviews completed implementation work for accuracy, completeness, and convention compliance |
+| Agent                | Description                                                                                                        |
+|----------------------|--------------------------------------------------------------------------------------------------------------------|
+| **memory**           | Conversation memory persistence for session continuity                                                             |
+| **rpi-agent**        | Autonomous RPI orchestrator dispatching task agents through Research, Plan, Implement, Review, and Discover phases |
+| **task-implementor** | Executes implementation plans with progressive tracking and change records                                         |
+| **task-planner**     | Implementation planner for creating actionable implementation plans                                                |
+| **task-researcher**  | Task research specialist for comprehensive project analysis                                                        |
+| **task-reviewer**    | Reviews completed implementation work for accuracy, completeness, and convention compliance                        |
 
 ### 📝 Prompts
 
-| Prompt | Description |
-| ------ | ----------- |
-| **checkpoint** | Save or restore conversation context using memory files |
-| **rpi** | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks |
-| **task-implement** | Locates and executes implementation plans using task-implementor mode |
-| **task-plan** | Initiates implementation planning based on user context or research documents |
-| **task-research** | Initiates research for implementation planning based on user requirements |
-| **task-review** | Initiates implementation review based on user context or automatic artifact discovery |
+| Prompt             | Description                                                                           |
+|--------------------|---------------------------------------------------------------------------------------|
+| **checkpoint**     | Save or restore conversation context using memory files                               |
+| **rpi**            | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks      |
+| **task-implement** | Locates and executes implementation plans using task-implementor mode                 |
+| **task-plan**      | Initiates implementation planning based on user context or research documents         |
+| **task-research**  | Initiates research for implementation planning based on user requirements             |
+| **task-review**    | Initiates implementation review based on user context or automatic artifact discovery |
 
 ### 📚 Instructions
 
-| Instruction | Description |
-| ----------- | ----------- |
-| **commit-message** | Required instructions for creating all commit messages |
-| **markdown** | Required instructions for creating or editing any Markdown files |
+| Instruction        | Description                                                      |
+|--------------------|------------------------------------------------------------------|
+| **commit-message** | Required instructions for creating all commit messages           |
+| **markdown**       | Required instructions for creating or editing any Markdown files |
 
 ### ⚡ Skills
 
-| Skill | Description |
-| ----- | ----------- |
+| Skill            | Description                                               |
+|------------------|-----------------------------------------------------------|
 | **video-to-gif** | Video-to-GIF conversion with FFmpeg two-pass optimization |
 
 ## Getting Started
@@ -72,7 +72,7 @@ Prompts are available in the Copilot Chat prompt picker and can be used to gener
 HVE Core offers two installation channels:
 
 | Channel     | Description                                             | Maturity Levels                     |
-| ----------- | ------------------------------------------------------- | ----------------------------------- |
+|-------------|---------------------------------------------------------|-------------------------------------|
 | Stable      | Production-ready artifacts only                         | `stable`                            |
 | Pre-release | Early access to new features and experimental artifacts | `stable`, `preview`, `experimental` |
 
