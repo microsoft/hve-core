@@ -89,10 +89,13 @@ Answer these questions to find your recommended installation method:
 
 HVE-Core supports persona-based artifact collections tailored to specific roles:
 
-| Collection    | Identifier      | Description                          |
-|---------------|-----------------|--------------------------------------|
-| **Full**      | `hve-core`      | All artifacts (recommended for most) |
-| **Developer** | `hve-developer` | Software engineering focus           |
+| Collection    | Extension Name  | Registry ID    | Maturity     | Description                          |
+|---------------|-----------------|----------------|--------------|--------------------------------------|
+| **Full**      | `hve-core`      | `hve-core-all` | Stable       | All artifacts (recommended for most) |
+| **Developer** | `hve-developer` | `developer`    | Experimental | Software engineering focus           |
+
+> [!NOTE]
+> Experimental collections are only available via PreRelease extension builds. The Stable channel includes the Full collection only.
 
 ### Extension Installation (Full Collection)
 

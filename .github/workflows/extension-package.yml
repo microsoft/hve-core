@@ -26,7 +26,7 @@ on:
     outputs:
       version:
         description: 'Version that was packaged'
-        value: ${{ jobs.package.outputs.version }}
+        value: ${{ jobs.discover-collections.outputs.version }}
       collections-matrix:
         description: 'JSON matrix of collections that were actually packaged (filtered by channel and maturity)'
         value: ${{ jobs.discover-collections.outputs.matrix }}
@@ -42,11 +42,17 @@ jobs:
       contents: read
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
+      version: ${{ steps.read-version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
+
+      - name: Read package version
+        id: read-version
+        shell: bash
+        run: echo "version=$(jq -r .version extension/package.json)" >> "$GITHUB_OUTPUT"
 
       - name: Discover collection manifests
         id: discover
@@ -97,8 +103,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
-    outputs:
-      version: ${{ steps.package.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2

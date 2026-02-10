@@ -256,12 +256,9 @@ Add the `requires` field to artifacts that depend on others:
 
 ### Dependency Resolution
 
-When installing artifacts via clone methods, the installer agent resolves dependencies:
+Dependency resolution currently operates at **build time** during extension packaging. The `Resolve-RequiresDependencies` function in `Prepare-Extension.ps1` walks `requires` blocks to compute the transitive closure of all dependent artifacts across types (agents, prompts, instructions, skills). Similarly, `Resolve-HandoffDependencies` performs BFS traversal of agent handoff declarations to ensure all reachable agents are included in the package.
 
-1. User selects artifacts to install (by persona or explicit selection)
-2. Installer reads the registry and builds dependency graph
-3. Required artifacts are automatically included regardless of persona filter
-4. Circular dependencies are detected and reported as validation errors
+For clone-based installations, the installer agent supports **agent-only persona filtering** in Phase 7. Full installer-side dependency resolution (automatically including required prompts, instructions, and skills based on the dependency graph) is planned for a future release.
 
 ### Dependency Best Practices
 
