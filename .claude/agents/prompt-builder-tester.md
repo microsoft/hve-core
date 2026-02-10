@@ -1,7 +1,6 @@
 ---
 name: prompt-builder-tester
 description: Tests prompt engineering artifacts by executing them literally in a sandbox and evaluating results against quality criteria.
-tools: Read, Write, Edit, Glob, Grep, Bash
 model: inherit
 ---
 

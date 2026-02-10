@@ -1,7 +1,7 @@
 ---
 name: task-researcher-subagent
 description: Investigation specialist dispatched by task-researcher for focused research tasks. Performs codebase searches, external documentation retrieval, and web queries for a single research topic.
-tools: Read, Grep, Glob, WebFetch, Bash, Write
+mcpServers: microsoft-docs, context7
 model: inherit
 ---
 

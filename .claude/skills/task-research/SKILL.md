@@ -8,10 +8,6 @@ disable-model-invocation: true
 argument-hint: "[topic]"
 ---
 
-# Task Research
-
 Research the following topic for implementation planning:
 
 $ARGUMENTS
-
-Discover applicable `.github/instructions/*.instructions.md` files based on file types and technologies involved, and proceed with the Required Phases.
