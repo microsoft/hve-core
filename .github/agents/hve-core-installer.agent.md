@@ -1065,26 +1065,100 @@ Copying agents enables local customization and offline use.
 
 Options:
   [1] Install all agents (recommended)
-  [2] Install RPI Core only
-  [3] Skip agent installation
+  [2] Install by persona collection
+  [3] Install RPI Core only
+  [4] Skip agent installation
 
-Your choice? (1/2/3)
+Your choice? (1/2/3/4)
 ```
 <!-- </agent-copy-prompt> -->
 
 User input handling:
 
-* "1", "all", "install all" → Copy all agents
-* "2", "rpi", "rpi core", "core" → Copy RPI Core bundle only
-* "3", "skip", "none", "no" → Skip to success report
+* "1", "all", "install all" → Copy all stable agents
+* "2", "persona", "collection", "by persona" → Proceed to Persona Selection sub-flow
+* "3", "rpi", "rpi core", "core" → Copy RPI Core bundle only
+* "4", "skip", "none", "no" → Skip to success report
 * Unclear response → Ask for clarification
+
+### Persona Selection Sub-Flow
+
+When the user selects option 2, read the artifact registry to present available personas.
+
+**Step 1: Read registry and build persona agent counts**
+
+Read `.github/ai-artifacts-registry.json` from the HVE-Core source (at `$hveCoreBasePath`). Parse `personas.definitions` for display names and descriptions. For each agent entry, count stable agents per persona (exclude `experimental` and `deprecated` maturity).
+
+**Step 2: Present persona options**
+
+<!-- <persona-selection-prompt> -->
+```text
+🎭 Persona Collection Selection
+
+Choose one or more personas to install agents tailored to your role.
+Agents marked for all personas are always included.
+
+| # | Persona            | Agents | Description                      |
+|---|--------------------|--------|----------------------------------|
+| 1 | Developer          | [N]    | Software engineers writing code  |
+| 2 | TPM                | [N]    | Program/product managers         |
+| 3 | DevOps Engineer    | [N]    | Platform, SRE, infrastructure    |
+| 4 | Architect          | [N]    | Solution/system architects       |
+| 5 | Technical Writer   | [N]    | Documentation specialists        |
+
+Enter persona number(s) separated by commas (e.g., "1, 3"):
+```
+<!-- </persona-selection-prompt> -->
+
+Agent counts `[N]` include agents matching the persona plus all `hve-core-all` agents with `stable` maturity.
+
+User input handling:
+
+* Single number (e.g., "1") → Select that persona
+* Multiple numbers (e.g., "1, 3") → Combine agent sets from selected personas
+* Persona name (e.g., "developer") → Match by identifier
+* Unclear response → Ask for clarification
+
+**Step 3: Build filtered agent list**
+
+For each selected persona identifier:
+
+1. Iterate through `agents` in the registry
+2. Include agents where `maturity` is `stable` AND `personas` array contains the selected persona identifier OR `hve-core-all`
+3. Deduplicate across multiple selected personas
+
+**Step 4: Present filtered agents for confirmation**
+
+<!-- <persona-confirmation-prompt> -->
+```text
+📋 Agents for [Persona Name(s)]
+
+The following [N] agents will be copied:
+
+  • [agent-name-1] - [agent description from registry tags]
+  • [agent-name-2] - [agent description from registry tags]
+  ...
+
+Proceed with installation? (yes/no)
+```
+<!-- </persona-confirmation-prompt> -->
+
+User input handling:
+
+* "yes", "y" → Proceed with copy using filtered agent list
+* "no", "n" → Return to Checkpoint 6 for re-selection
+* Unclear response → Ask for clarification
+
+> [!NOTE]
+> Persona filtering applies to agents only. Copying of related prompts, instructions, and skills based on persona is planned for a future release.
 
 ### Agent Bundle Definitions
 
 | Bundle | Agents |
 | ------ | ------ |
 | `rpi-core` | task-researcher, task-planner, task-implementor, rpi-agent |
-| `all` | All 20 agents (see prompt for full list) |
+| `all` | All stable agents from the registry |
+| `persona:<id>` | Stable agents matching the persona plus all `hve-core-all` agents |
 
 ### Collision Detection
 
@@ -1106,6 +1180,10 @@ $targetDir = ".github/agents"
 $filesToCopy = switch ($selection) {
     "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "rpi-agent.agent.md") }
     "all" { Get-ChildItem "$sourceDir/*.agent.md" | ForEach-Object { $_.Name } }
+    default {
+        # Persona-based: $selection contains filtered agent names from registry
+        $personaAgents
+    }
 }
 
 # Check for collisions
@@ -1187,6 +1265,7 @@ $manifest = @{
     source = "microsoft/hve-core"
     version = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
     installed = (Get-Date -Format "o")
+    collection = $collectionId  # "hve-core-all", "rpi-core", or persona id(s) e.g. "developer" or "developer,devops"
     files = @{}; skip = @()
 }
 
@@ -1263,6 +1342,7 @@ if (Test-Path $manifestPath) {
     Write-Host "INSTALLED_VERSION=$($manifest.version)"
     Write-Host "SOURCE_VERSION=$sourceVersion"
     Write-Host "VERSION_CHANGED=$($sourceVersion -ne $manifest.version)"
+    Write-Host "INSTALLED_COLLECTION=$($manifest.collection ?? 'hve-core-all')"
 } else {
     Write-Host "UPGRADE_MODE=false"
 }
