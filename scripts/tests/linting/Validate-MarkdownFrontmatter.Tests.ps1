@@ -706,6 +706,30 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:OneOfSchema
             $result.IsValid | Should -BeFalse
         }
+
+        It 'Rejects when value matches multiple oneOf subschemas' {
+            $schema = @{
+                required   = @('description')
+                properties = @{
+                    description = @{ type = 'string'; minLength = 1 }
+                    model       = @{
+                        oneOf = @(
+                            @{ type = 'string' },
+                            @{ type = 'string'; minLength = 1 }
+                        )
+                    }
+                }
+            } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+
+            $frontmatter = @{
+                description = 'test'
+                model       = 'x'
+            }
+
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $schema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -like "*exactly one*" } | Should -Not -BeNullOrEmpty
+        }
     }
 
     Context 'Nested object and array validation' {
@@ -764,6 +788,134 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
                 )
             }
             $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Accepts nested object values provided as PSCustomObject' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(
+                    [pscustomobject]@{ label = 'Next'; agent = 'task-planner' }
+                )
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Rejects handoff item when item is not an object' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @('not-an-object')
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'handoffs\[0\].*object' } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Rejects handoff with empty label due to nested minLength' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(
+                    @{ label = ''; agent = 'task-planner' }
+                )
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'handoffs\[0\]\.label.*minimum length' } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Accepts complex object values provided as hashtable (covers conversion of arrays and nested objects)' {
+            $schema = @{
+                required   = @('description', 'meta')
+                properties = @{
+                    description = @{ type = 'string'; minLength = 1 }
+                    meta        = @{
+                        type       = 'object'
+                        required   = @('tags', 'items', 'child')
+                        properties = @{
+                            tags  = @{ type = 'array'; items = @{ type = 'string' } }
+                            items = @{
+                                type  = 'array'
+                                items = @{
+                                    type       = 'object'
+                                    required   = @('name')
+                                    properties = @{
+                                        name = @{ type = 'string'; minLength = 1 }
+                                    }
+                                }
+                            }
+                            child = @{
+                                type       = 'object'
+                                required   = @('id')
+                                properties = @{
+                                    id = @{ type = 'string'; minLength = 1 }
+                                }
+                            }
+                        }
+                    }
+                }
+            } | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+
+            $frontmatter = @{
+                description = 'test'
+                meta        = @{
+                    tags  = @('a', 'b')
+                    items = @(
+                        [pscustomobject]@{ name = 'x' }
+                        @{ name = 'y' }
+                    )
+                    child = [pscustomobject]@{ id = 'c1' }
+                }
+            }
+
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $schema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Accepts complex object values provided as PSCustomObject (covers conversion of arrays and nested objects)' {
+            $schema = @{
+                required   = @('description', 'meta')
+                properties = @{
+                    description = @{ type = 'string'; minLength = 1 }
+                    meta        = @{
+                        type       = 'object'
+                        required   = @('tags', 'items', 'child')
+                        properties = @{
+                            tags  = @{ type = 'array'; items = @{ type = 'string' } }
+                            items = @{
+                                type  = 'array'
+                                items = @{
+                                    type       = 'object'
+                                    required   = @('name')
+                                    properties = @{
+                                        name = @{ type = 'string'; minLength = 1 }
+                                    }
+                                }
+                            }
+                            child = @{
+                                type       = 'object'
+                                required   = @('id')
+                                properties = @{
+                                    id = @{ type = 'string'; minLength = 1 }
+                                }
+                            }
+                        }
+                    }
+                }
+            } | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+
+            $frontmatter = @{
+                description = 'test'
+                meta        = [pscustomobject]@{
+                    tags  = @('a')
+                    items = @(
+                        [pscustomobject]@{ name = 'x' }
+                    )
+                    child = @{ id = 'c1' }
+                }
+            }
+
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $schema
             $result.IsValid | Should -BeTrue
         }
 
