@@ -2,7 +2,7 @@
 title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 author: Microsoft
-ms.date: 2026-01-22
+ms.date: 2026-02-10
 ms.topic: concept
 ---
 
@@ -94,7 +94,6 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 * Provide self-contained utility packages with documentation and scripts
 * Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
 * Execute actual operations rather than providing guidance
-* Declare maturity level controlling extension channel inclusion
 
 **Directory structure:**
 
@@ -114,7 +113,6 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion with FFmpeg optimization'
-maturity: stable
 ---
 ```
 
@@ -124,7 +122,8 @@ maturity: stable
 |---------------|---------------------------------------------------------|
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
-| `maturity`    | `stable`, `preview`, `experimental`, or `deprecated`    |
+
+Maturity is tracked in the artifact registry, not in skill frontmatter. See [Artifact Registry](#artifact-registry) for details.
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -263,10 +262,10 @@ Each artifact entry contains metadata for filtering and dependency resolution:
 
 Personas represent user roles that consume artifacts. The registry defines these personas:
 
-| Persona       | Identifier     | Target Users        |
-|---------------|----------------|---------------------|
-| **All**       | `hve-core-all` | Universal inclusion |
-| **Developer** | `developer`    | Software engineers  |
+| Persona              | Identifier         | Target Users                       |
+|----------------------|--------------------|------------------------------------|
+| **All**              | `hve-core-all`     | Universal inclusion                |
+| **Developer**        | `developer`        | Software engineers                 |
 
 Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific personas for targeted distribution.
 
