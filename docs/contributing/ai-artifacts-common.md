@@ -223,6 +223,19 @@ Some artifacts require other artifacts to function correctly. The `requires` fie
 
 > **Note**: Frontmatter `handoffs` (UI buttons that suggest next agents) are resolved dynamically during packaging and MUST NOT be listed in `requires.agents`. Only agents invoked programmatically through `runSubagent` belong here.
 
+### Handoff vs Requires Maturity Filtering
+
+Handoff targets and `requires` dependencies follow different maturity rules during extension packaging:
+
+| Mechanism  | Maturity Filtered | Reason                                                                    |
+| ---------- | ----------------- | ------------------------------------------------------------------------- |
+| `requires` | Yes               | Runtime dependencies are excluded when their maturity exceeds the channel |
+| `handoffs` | No                | UI buttons must resolve to a valid agent or the button is broken          |
+
+During extension packaging (`scripts/extension/Prepare-Extension.ps1`), the `Resolve-HandoffDependencies` function encounters a handoff target whose maturity falls outside the allowed set and still includes that agent in the package. The maturity check only gates whether the target's own handoffs are traversed further. This ensures that a stable agent handing off to a preview agent produces a functional UI button in both stable and pre-release channels.
+
+The companion function `Resolve-RequiresDependencies` in the same script applies strict maturity filtering: dependencies whose maturity level is outside the allowed set are excluded entirely.
+
 ### Declaring Dependencies
 
 Add the `requires` field to artifacts that depend on others:

@@ -260,7 +260,7 @@ The workflow validates the version is ODD before proceeding.
 
 ### Agent Maturity Filtering
 
-When packaging, agents are filtered by their `maturity` frontmatter field:
+When packaging, artifacts are filtered by their `maturity` field in `.github/ai-artifacts-registry.json`:
 
 | Channel    | Included Maturity Levels            |
 |------------|-------------------------------------|
@@ -348,8 +348,8 @@ When building a collection, the system:
 
 1. Reads the collection manifest to get the target personas
 2. Reads the artifact registry (`.github/ai-artifacts-registry.json`)
-3. Includes artifacts where `personas` array contains any of the collection's personas
-4. Includes all `hve-core-all` artifacts as the base set
+3. Includes artifacts whose `personas` array contains any of the collection's personas
+4. Includes artifacts with an empty `personas` array (universal artifacts shared across all collections)
 5. Resolves artifact dependencies to ensure completeness
 
 ### Testing Collection Builds Locally
@@ -358,7 +358,7 @@ To verify artifact inclusion before publishing:
 
 ```bash
 # 1. Prepare with collection filtering
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection developer -Verbose
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection extension/collections/developer.collection.json -Verbose
 
 # 2. Check package.json for included artifacts
 cat extension/package.json | jq '.contributes.chatAgents'

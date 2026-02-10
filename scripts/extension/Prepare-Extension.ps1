@@ -337,7 +337,10 @@ function Resolve-HandoffDependencies {
                 $data = ConvertFrom-Yaml -Yaml $yamlContent
                 if ($data.ContainsKey('handoffs') -and $data.handoffs -is [System.Collections.IEnumerable] -and $data.handoffs -isnot [string]) {
                     foreach ($handoff in $data.handoffs) {
-                        # Handle both string format and object format (with 'agent' field)
+                        # Handle both string format and object format (with 'agent' field).
+                        # Handoff targets bypass maturity filtering by design.
+                        # See docs/contributing/ai-artifacts-common.md
+                        # "Handoff vs Requires Maturity Filtering" for rationale.
                         $targetAgent = $null
                         if ($handoff -is [string]) {
                             $targetAgent = $handoff
