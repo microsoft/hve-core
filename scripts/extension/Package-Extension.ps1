@@ -580,6 +580,8 @@ function Copy-CollectionArtifacts {
         foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
             $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
             $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
             if (Test-Path $srcPath) {
                 Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
             }

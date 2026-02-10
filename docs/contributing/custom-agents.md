@@ -237,11 +237,11 @@ Choose personas based on who benefits most from your agent:
 
 ### Declaring Agent Dependencies
 
-If your agent delegates to other agents, invokes prompts, or generates code that follows specific instructions, declare these in the `requires` field:
+If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or generates code that follows specific instructions, declare these in the `requires` field. Handoff targets declared in frontmatter are resolved dynamically during packaging and should not be listed here:
 
 ```json
 "requires": {
-    "agents": ["task-planner"],        // Agents this agent hands off to
+    "agents": ["task-planner"],        // Agents dispatched at runtime via runSubagent
     "prompts": ["task-plan"],          // Prompts this agent invokes
     "instructions": ["python-script"], // Instructions for generated code
     "skills": []                       // Skills this agent executes
