@@ -1085,11 +1085,11 @@ User input handling:
 
 When the user selects option 2, read the artifact registry to present available personas.
 
-**Step 1: Read registry and build persona agent counts**
+#### Step 1: Read registry and build persona agent counts
 
 Read `.github/ai-artifacts-registry.json` from the HVE-Core source (at `$hveCoreBasePath`). Parse `personas.definitions` for display names and descriptions. For each agent entry, count stable agents per persona (exclude `experimental` and `deprecated` maturity).
 
-**Step 2: Present persona options**
+#### Step 2: Present persona options
 
 <!-- <persona-selection-prompt> -->
 ```text
@@ -1119,7 +1119,7 @@ User input handling:
 * Persona name (e.g., "developer") → Match by identifier
 * Unclear response → Ask for clarification
 
-**Step 3: Build filtered agent list**
+#### Step 3: Build filtered agent list
 
 For each selected persona identifier:
 
@@ -1127,7 +1127,7 @@ For each selected persona identifier:
 2. Include agents where `maturity` is `stable` AND `personas` array contains the selected persona identifier OR `hve-core-all`
 3. Deduplicate across multiple selected personas
 
-**Step 4: Present filtered agents for confirmation**
+#### Step 4: Present filtered agents for confirmation
 
 <!-- <persona-confirmation-prompt> -->
 ```text

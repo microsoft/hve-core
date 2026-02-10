@@ -30,6 +30,7 @@ param(
     [string[]]$ExcludePaths = @(
         'scripts/tests/Fixtures/**',
         'extension/README.md',
+        'extension/README.*.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md'
     ),
