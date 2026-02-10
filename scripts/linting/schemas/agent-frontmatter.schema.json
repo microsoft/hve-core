@@ -75,7 +75,7 @@
     "disable-model-invocation": {
       "type": "boolean",
       "default": false,
-      "description": "When true, prevents this agent from invoking other models or subagents."
+      "description": "When true, prevents this agent from invoking subagents (including other custom agents). It does not affect which model this agent uses or how the model picker works."
     },
     "handoffs": {
       "type": "array",
