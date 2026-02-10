@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-02-07
 ms.topic: guide
 keywords:
   - contributing
@@ -60,6 +60,10 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Your First Code Contribution](#your-first-code-contribution)
   - [Improving The Documentation](#improving-the-documentation)
+- [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
+  - [Active Pull Requests](#active-pull-requests)
+  - [Draft Pull Requests](#draft-pull-requests)
+  - [Exemptions](#exemptions)
 - [Style Guides](#style-guides)
   - [Local Development Setup](#local-development-setup)
   - [Coding Conventions](#coding-conventions)
@@ -170,6 +174,45 @@ This project also includes a Dev Container for development work, and using that 
 ### Improving The Documentation
 
 If you see issues with the documentation, please follow the [your first code contribution](#your-first-code-contribution) guidance.
+
+## Pull Request Inactivity Policy
+
+Pull requests that remain inactive accumulate merge conflicts and delay feedback loops. This section defines closure timelines for inactive PRs. Automation that enforces this policy is a separate effort that references these thresholds.
+
+For issue and discussion inactivity policy, see [Inactivity Closure Policy](./GOVERNANCE.md#inactivity-closure-policy) in GOVERNANCE.md.
+
+### Active Pull Requests
+
+The inactivity clock runs only when the PR is waiting on the author. Reviewer-side delays do not count against the author.
+
+| Stage  | Trigger                                                           | Label                 | Action                  |
+|:-------|:------------------------------------------------------------------|:----------------------|:------------------------|
+| Active | Author activity within the past 14 days while `waiting-on-author` | (none)                | Normal review cycle     |
+| Paused | PR is labeled `waiting-on-reviewer`                               | `waiting-on-reviewer` | Inactivity clock paused |
+| Stale  | 14 days without author activity while `waiting-on-author`         | `stale`               | Reminder comment posted |
+| Closed | 7 days after `stale` label without author activity                | `closed-stale`        | PR closed with summary  |
+
+Label usage:
+
+- `waiting-on-author` is applied when the reviewer requests changes or the author needs to resolve conflicts. The inactivity clock starts.
+- `waiting-on-reviewer` is applied when the author has addressed feedback and awaits re-review. The inactivity clock pauses.
+
+### Draft Pull Requests
+
+Draft PRs are fully exempt from inactivity closure. Converting a draft to "ready for review" starts the normal active PR lifecycle.
+
+### Exemptions
+
+The following conditions prevent automatic closure of a pull request:
+
+- PR is in draft state
+- PR is labeled `do-not-close`
+- PR is labeled `waiting-on-reviewer`
+
+Reopening rules:
+
+- Authors can reopen a stale-closed PR at any time with updated changes
+- Reopening removes the `stale` label and resets the inactivity clock
 
 ## Style Guides
 
