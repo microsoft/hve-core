@@ -1135,8 +1135,8 @@ For each selected persona identifier:
 
 The following [N] agents will be copied:
 
-  • [agent-name-1] - [agent description from registry tags]
-  • [agent-name-2] - [agent description from registry tags]
+  • [agent-name-1] - tags: [tag-1, tag-2]
+  • [agent-name-2] - tags: [tag-1, tag-2]
   ...
 
 Proceed with installation? (yes/no)

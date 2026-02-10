@@ -47,7 +47,7 @@ After installing this extension, the chat agents will be available in GitHub Cop
 
 1. **Use custom agents** by selecting the custom agent from the agent picker drop-down list in Copilot Chat
 2. **Apply prompts** through the Copilot Chat interface
-3. **Reference instructions** — They're automatically applied based on file patterns
+3. **Reference instructions**: they're automatically applied based on file patterns
 
 ### Post-Installation Setup
 
