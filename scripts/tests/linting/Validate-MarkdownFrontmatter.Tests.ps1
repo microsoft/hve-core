@@ -663,6 +663,132 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result.Errors | Where-Object { $_ -like '*description*' -and $_ -like '*length*' } | Should -Not -BeNullOrEmpty
         }
     }
+
+    Context 'oneOf validation' {
+        BeforeAll {
+            $script:OneOfSchema = @{
+                required   = @('description')
+                properties = @{
+                    description = @{ type = 'string'; minLength = 1 }
+                    model       = @{
+                        oneOf = @(
+                            @{ type = 'string' },
+                            @{ type = 'array'; items = @{ type = 'string' } }
+                        )
+                    }
+                }
+            } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        }
+
+        It 'Accepts string for oneOf string|array field' {
+            $frontmatter = @{
+                description = 'test'
+                model       = 'gpt-5'
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:OneOfSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Accepts array for oneOf string|array field' {
+            $frontmatter = @{
+                description = 'test'
+                model       = @('gpt-5', 'claude-sonnet')
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:OneOfSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Rejects invalid type for oneOf string|array field' {
+            $frontmatter = @{
+                description = 'test'
+                model       = 123
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:OneOfSchema
+            $result.IsValid | Should -BeFalse
+        }
+    }
+
+    Context 'Nested object and array validation' {
+        BeforeAll {
+            $script:NestedSchema = @{
+                required   = @('description')
+                properties = @{
+                    description = @{ type = 'string'; minLength = 1 }
+                    agents      = @{
+                        oneOf = @(
+                            @{ type = 'array'; items = @{ type = 'string' } },
+                            @{ type = 'string'; enum = @('*') }
+                        )
+                    }
+                    handoffs    = @{
+                        type  = 'array'
+                        items = @{
+                            type       = 'object'
+                            required   = @('label', 'agent')
+                            properties = @{
+                                label  = @{ type = 'string'; minLength = 1 }
+                                agent  = @{ type = 'string'; minLength = 1 }
+                                prompt = @{ type = 'string' }
+                                model  = @{ type = 'string' }
+                                send   = @{ type = 'boolean' }
+                            }
+                        }
+                    }
+                }
+            } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        }
+
+        It 'Accepts agents as * string' {
+            $frontmatter = @{
+                description = 'test'
+                agents      = '*'
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Accepts agents as array of strings' {
+            $frontmatter = @{
+                description = 'test'
+                agents      = @('task-researcher', 'task-planner')
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Rejects handoff missing required prompt? (prompt is optional)' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(
+                    @{ label = 'Next'; agent = 'task-planner' }
+                )
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeTrue
+        }
+
+        It 'Rejects handoff missing required label' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(
+                    @{ agent = 'task-planner'; prompt = '/task-plan' }
+                )
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+        }
+
+        It 'Rejects handoff with invalid send type' {
+            $frontmatter = @{
+                description = 'test'
+                handoffs    = @(
+                    @{ label = 'Next'; agent = 'task-planner'; send = 'yes' }
+                )
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+        }
+    }
 }
 
 #endregion
