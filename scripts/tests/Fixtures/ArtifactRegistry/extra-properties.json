@@ -1,0 +1,41 @@
+{
+    "$schema": "../schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0",
+    "personas": {
+        "definitions": {
+            "developer": {
+                "name": "Developer",
+                "description": "Software engineers"
+            }
+        }
+    },
+    "agents": {
+        "extra-agent": {
+            "maturity": "stable",
+            "personas": [
+                "developer"
+            ],
+            "tags": [
+                "test"
+            ],
+            "customField": true
+        }
+    },
+    "prompts": {
+        "extra-prompt": {
+            "maturity": "stable",
+            "personas": [
+                "developer"
+            ],
+            "tags": [
+                "test"
+            ],
+            "requires": {
+                "agents": []
+            }
+        }
+    },
+    "instructions": {},
+    "skills": {},
+    "extraTopLevel": "should-not-be-here"
+}

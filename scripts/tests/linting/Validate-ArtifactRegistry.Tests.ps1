@@ -27,6 +27,12 @@ BeforeAll {
     $script:UnknownDepRefsPath = Join-Path $script:FixtureDir 'unknown-dep-refs.json'
     $script:CircularDepsPath = Join-Path $script:FixtureDir 'circular-deps.json'
     $script:NoRequiresPath = Join-Path $script:FixtureDir 'no-requires.json'
+    $script:InvalidMaturityPath = Join-Path $script:FixtureDir 'invalid-maturity.json'
+    $script:MissingArtifactFieldsPath = Join-Path $script:FixtureDir 'missing-artifact-fields.json'
+    $script:ExtraPropertiesPath = Join-Path $script:FixtureDir 'extra-properties.json'
+    $script:InvalidPersonaFormatInArtifactPath = Join-Path $script:FixtureDir 'invalid-persona-format-in-artifact.json'
+    $script:ExtraPersonaPropertiesPath = Join-Path $script:FixtureDir 'extra-persona-properties.json'
+    $script:SchemaPath = Join-Path $PSScriptRoot '../../linting/schemas/ai-artifacts-registry.schema.json'
 }
 
 #region Test-RegistryStructure Tests
@@ -77,6 +83,23 @@ Describe 'Test-RegistryStructure' -Tag 'Unit' {
         It 'Reports missing personas.definitions' {
             $result = Test-RegistryStructure -RegistryPath $script:MissingPersonasDefsPath
             $result.Errors | Should -Contain 'Missing required field: personas.definitions'
+        }
+    }
+
+    Context 'Additional properties validation' {
+        It 'Reports unexpected top-level properties' {
+            $result = Test-RegistryStructure -RegistryPath $script:ExtraPropertiesPath
+            $result.Errors | Where-Object { $_ -match 'Unexpected top-level property: extraTopLevel' } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports unexpected personas sub-properties' {
+            $result = Test-RegistryStructure -RegistryPath $script:ExtraPersonaPropertiesPath
+            $result.Errors | Where-Object { $_ -match 'Unexpected property in personas: extraSection' } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Does not report errors for valid top-level properties' {
+            $result = Test-RegistryStructure -RegistryPath $script:ValidRegistryPath
+            $result.Errors | Where-Object { $_ -match 'Unexpected' } | Should -BeNullOrEmpty
         }
     }
 }
@@ -136,6 +159,244 @@ Describe 'Test-PersonaReferences' -Tag 'Unit' {
             $registry = $content | ConvertFrom-Json -AsHashtable
             $result = Test-PersonaReferences -Registry $registry
             $result.Errors | Where-Object { $_ -match 'references undefined persona' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Persona definition additional properties' {
+        It 'Reports unexpected properties on persona definitions' {
+            $content = Get-Content $script:ExtraPersonaPropertiesPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-PersonaReferences -Registry $registry
+            $result.Errors | Where-Object { $_ -match "has unexpected property: extraField" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Does not report errors for valid persona definitions' {
+            $result = Test-PersonaReferences -Registry $script:ValidRegistry
+            $result.Errors | Where-Object { $_ -match 'unexpected property' } | Should -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion
+
+#region Test-ArtifactEntries Tests
+
+Describe 'Test-ArtifactEntries' -Tag 'Unit' {
+    BeforeAll {
+        $content = Get-Content $script:ValidRegistryPath -Raw
+        $script:ValidRegistry = $content | ConvertFrom-Json -AsHashtable
+    }
+
+    Context 'Valid registry' {
+        It 'Passes with fully valid registry' {
+            $result = Test-ArtifactEntries -Registry $script:ValidRegistry
+            $result.Success | Should -BeTrue
+            $result.Errors.Count | Should -Be 0
+        }
+    }
+
+    Context 'Maturity validation' {
+        It 'Reports invalid maturity value' {
+            $content = Get-Content $script:InvalidMaturityPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "invalid maturity 'INVALID'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Accepts all valid maturity values' {
+            foreach ($maturity in @('stable', 'preview', 'experimental', 'deprecated')) {
+                $registry = @{
+                    agents       = @{}
+                    prompts      = @{
+                        'test' = @{ maturity = $maturity; personas = @(); tags = @() }
+                    }
+                    instructions = @{}
+                    skills       = @{}
+                }
+                $result = Test-ArtifactEntries -Registry $registry
+                $result.Errors | Where-Object { $_ -match 'maturity' } | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'Required artifact fields' {
+        It 'Reports missing maturity field' {
+            $content = Get-Content $script:MissingArtifactFieldsPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "missing required field 'maturity'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports missing personas field' {
+            $content = Get-Content $script:MissingArtifactFieldsPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "missing required field 'personas'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports missing tags field' {
+            $registry = @{
+                agents       = @{}
+                prompts      = @{
+                    'no-tags' = @{ maturity = 'stable'; personas = @() }
+                }
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "missing required field 'tags'" } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Persona reference format in artifacts' {
+        It 'Reports invalid persona reference format' {
+            $content = Get-Content $script:InvalidPersonaFormatInArtifactPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "invalid persona reference format 'Bad Format!'" } | Should -Not -BeNullOrEmpty
+            $result.Errors | Where-Object { $_ -match "invalid persona reference format '123-invalid'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Accepts valid persona reference format' {
+            $registry = @{
+                agents       = @{}
+                prompts      = @{
+                    'good' = @{ maturity = 'stable'; personas = @('developer', 'dev-ops-2'); tags = @() }
+                }
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match 'persona reference format' } | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Additional properties on artifacts' {
+        It 'Reports unexpected properties on agent entries' {
+            $content = Get-Content $script:ExtraPropertiesPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "unexpected property 'customField'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports requires block on non-agent sections' {
+            $content = Get-Content $script:ExtraPropertiesPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "prompts/extra-prompt.*unexpected property 'requires'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Allows requires block on agent entries' {
+            $result = Test-ArtifactEntries -Registry $script:ValidRegistry
+            $result.Errors | Where-Object { $_ -match "unexpected property 'requires'" } | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Agent requires block structure' {
+        It 'Reports unexpected properties in requires block' {
+            $registry = @{
+                agents       = @{
+                    'bad-requires' = @{
+                        maturity = 'stable'
+                        personas = @()
+                        tags     = @()
+                        requires = @{ agents = @(); unknownRef = @() }
+                    }
+                }
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "unexpected property in requires: 'unknownRef'" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports non-array values in requires block' {
+            $registry = @{
+                agents       = @{
+                    'bad-requires' = @{
+                        maturity = 'stable'
+                        personas = @()
+                        tags     = @()
+                        requires = @{ agents = 'not-an-array' }
+                    }
+                }
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match 'requires.agents must be an array' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Type validation' {
+        It 'Reports non-array personas value' {
+            $registry = @{
+                agents       = @{}
+                prompts      = @{
+                    'bad-type' = @{ maturity = 'stable'; personas = 'not-array'; tags = @() }
+                }
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "'personas' must be an array" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Reports non-array tags value' {
+            $registry = @{
+                agents       = @{}
+                prompts      = @{
+                    'bad-type' = @{ maturity = 'stable'; personas = @(); tags = 'not-array' }
+                }
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Errors | Where-Object { $_ -match "'tags' must be an array" } | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion
+
+#region Test-JsonSchemaValidation Tests
+
+Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
+    Context 'Schema file existence' {
+        It 'Reports error when schema file does not exist' {
+            $result = Test-JsonSchemaValidation -RegistryPath $script:ValidRegistryPath -SchemaPath '/nonexistent/schema.json'
+            $result.Success | Should -BeFalse
+            $result.Errors[0] | Should -Match 'Schema file not found'
+        }
+    }
+
+    Context 'Valid registry against schema' {
+        It 'Passes with valid registry' {
+            $result = Test-JsonSchemaValidation -RegistryPath $script:ValidRegistryPath -SchemaPath $script:SchemaPath
+            $result.Success | Should -BeTrue
+            $result.Errors.Count | Should -Be 0
+        }
+    }
+
+    Context 'Invalid registry against schema' {
+        It 'Reports schema violations for invalid maturity' {
+            $result = Test-JsonSchemaValidation -RegistryPath $script:InvalidMaturityPath -SchemaPath $script:SchemaPath
+            $result.Success | Should -BeFalse
+            $result.Errors.Count | Should -BeGreaterThan 0
+        }
+
+        It 'Reports schema violations for missing required artifact fields' {
+            $result = Test-JsonSchemaValidation -RegistryPath $script:MissingArtifactFieldsPath -SchemaPath $script:SchemaPath
+            $result.Success | Should -BeFalse
+            $result.Errors.Count | Should -BeGreaterThan 0
+        }
+
+        It 'Reports schema violations for extra properties' {
+            $result = Test-JsonSchemaValidation -RegistryPath $script:ExtraPropertiesPath -SchemaPath $script:SchemaPath
+            $result.Success | Should -BeFalse
+            $result.Errors.Count | Should -BeGreaterThan 0
         }
     }
 }
@@ -982,6 +1243,18 @@ Describe 'Edge Cases' -Tag 'Unit' {
             Mock Test-Path { return $true }
             $result = Test-ArtifactFileExistence -Registry $registry -RepoRoot $TestDrive
             $result.Success | Should -BeTrue
+        }
+
+        It 'Test-ArtifactEntries succeeds with empty sections' {
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Test-ArtifactEntries -Registry $registry
+            $result.Success | Should -BeTrue
+            $result.Errors.Count | Should -Be 0
         }
 
         It 'Handles empty personas definitions' {

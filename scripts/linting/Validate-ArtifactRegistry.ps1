@@ -14,7 +14,10 @@
 
 .DESCRIPTION
     Validates the `.github/ai-artifacts-registry.json` file by checking:
-    - JSON structure and required fields
+    - JSON structure, required fields, and additional-property constraints
+    - JSON Schema validation (PowerShell 7.4+ with Test-Json -SchemaFile)
+    - Per-artifact required fields (maturity, personas, tags)
+    - Maturity enum values and persona reference format
     - Persona ID format and reference validity
     - Artifact file existence on disk
     - Dependency reference validity
@@ -107,6 +110,23 @@ function Test-RegistryStructure {
         $errors.Add("Missing required field: personas.definitions")
     }
 
+    # Additional properties - top level
+    $allowedTopLevel = @('$schema', 'version', 'personas', 'agents', 'prompts', 'instructions', 'skills')
+    foreach ($key in $registry.Keys) {
+        if ($key -notin $allowedTopLevel) {
+            $errors.Add("Unexpected top-level property: $key")
+        }
+    }
+
+    # Additional properties - personas
+    if ($registry.ContainsKey('personas')) {
+        foreach ($key in $registry['personas'].Keys) {
+            if ($key -ne 'definitions') {
+                $errors.Add("Unexpected property in personas: $key")
+            }
+        }
+    }
+
     return @{
         Success  = ($errors.Count -eq 0)
         Errors   = $errors
@@ -141,6 +161,13 @@ function Test-PersonaReferences {
         if (-not $persona.ContainsKey('description') -or [string]::IsNullOrEmpty($persona['description'])) {
             $errors.Add("Persona '$personaId' missing 'description' field")
         }
+        # Additional properties on persona definitions
+        $allowedPersonaProps = @('name', 'description')
+        foreach ($prop in $persona.Keys) {
+            if ($prop -notin $allowedPersonaProps) {
+                $errors.Add("Persona '$personaId' has unexpected property: $prop")
+            }
+        }
     }
 
     # Validate persona references in artifacts
@@ -156,6 +183,157 @@ function Test-PersonaReferences {
                 }
             }
         }
+    }
+
+    return @{ Success = ($errors.Count -eq 0); Errors = $errors }
+}
+
+function Test-ArtifactEntries {
+    <#
+    .SYNOPSIS
+        Validates per-artifact required fields, maturity enum, and property constraints.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Registry
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $validMaturity = @('stable', 'preview', 'experimental', 'deprecated')
+    $personaPattern = '^[a-z][a-z0-9-]*$'
+
+    $simpleAllowed = @('maturity', 'personas', 'tags')
+    $agentAllowed = @('maturity', 'personas', 'tags', 'requires')
+    $requiresAllowed = @('agents', 'prompts', 'instructions', 'skills')
+
+    $sectionAllowed = @{
+        agents       = $agentAllowed
+        prompts      = $simpleAllowed
+        instructions = $simpleAllowed
+        skills       = $simpleAllowed
+    }
+
+    foreach ($section in $sectionAllowed.Keys) {
+        if (-not $Registry.ContainsKey($section)) { continue }
+
+        foreach ($key in $Registry[$section].Keys) {
+            $entry = $Registry[$section][$key]
+            $prefix = "${section}/${key}"
+
+            if ($entry -isnot [hashtable]) {
+                $errors.Add("${prefix}: entry must be an object")
+                continue
+            }
+
+            # Required field: maturity
+            if (-not $entry.ContainsKey('maturity')) {
+                $errors.Add("${prefix}: missing required field 'maturity'")
+            }
+            elseif ($entry['maturity'] -notin $validMaturity) {
+                $errors.Add("${prefix}: invalid maturity '$($entry['maturity'])'. Must be one of: $($validMaturity -join ', ')")
+            }
+
+            # Required field: personas
+            if (-not $entry.ContainsKey('personas')) {
+                $errors.Add("${prefix}: missing required field 'personas'")
+            }
+            elseif ($entry['personas'] -isnot [System.Collections.IList]) {
+                $errors.Add("${prefix}: 'personas' must be an array")
+            }
+            else {
+                foreach ($p in $entry['personas']) {
+                    if ($p -notmatch $personaPattern) {
+                        $errors.Add("${prefix}: invalid persona reference format '$p'. Must match: $personaPattern")
+                    }
+                }
+            }
+
+            # Required field: tags
+            if (-not $entry.ContainsKey('tags')) {
+                $errors.Add("${prefix}: missing required field 'tags'")
+            }
+            elseif ($entry['tags'] -isnot [System.Collections.IList]) {
+                $errors.Add("${prefix}: 'tags' must be an array")
+            }
+
+            # No unexpected properties
+            $allowed = $sectionAllowed[$section]
+            foreach ($prop in $entry.Keys) {
+                if ($prop -notin $allowed) {
+                    $errors.Add("${prefix}: unexpected property '$prop'")
+                }
+            }
+
+            # Agent requires block structure
+            if ($section -eq 'agents' -and $entry.ContainsKey('requires')) {
+                $requires = $entry['requires']
+                if ($requires -isnot [hashtable]) {
+                    $errors.Add("${prefix}: 'requires' must be an object")
+                }
+                else {
+                    foreach ($reqProp in $requires.Keys) {
+                        if ($reqProp -notin $requiresAllowed) {
+                            $errors.Add("${prefix}: unexpected property in requires: '$reqProp'")
+                        }
+                        elseif ($requires[$reqProp] -isnot [System.Collections.IList]) {
+                            $errors.Add("${prefix}: requires.$reqProp must be an array")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return @{ Success = ($errors.Count -eq 0); Errors = $errors }
+}
+
+function Test-JsonSchemaValidation {
+    <#
+    .SYNOPSIS
+        Validates registry JSON against the schema file using Test-Json when available.
+    .DESCRIPTION
+        Requires PowerShell 7.4+ for Test-Json -SchemaFile support. Skips gracefully
+        on older versions.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RegistryPath,
+
+        [Parameter(Mandatory)]
+        [string]$SchemaPath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+
+    if (-not (Test-Path $SchemaPath)) {
+        $errors.Add("Schema file not found: $SchemaPath")
+        return @{ Success = $false; Errors = $errors }
+    }
+
+    if ($PSVersionTable.PSVersion -lt [version]'7.4') {
+        Write-Verbose "Skipping JSON Schema validation: requires PowerShell 7.4+ (current: $($PSVersionTable.PSVersion))"
+        return @{ Success = $true; Errors = $errors }
+    }
+
+    try {
+        $content = Get-Content -Path $RegistryPath -Raw
+        $schemaErrors = $null
+        $valid = Test-Json -Json $content -SchemaFile $SchemaPath -ErrorAction SilentlyContinue -ErrorVariable schemaErrors
+        if (-not $valid) {
+            foreach ($schemaErr in $schemaErrors) {
+                $errors.Add("Schema violation: $schemaErr")
+            }
+            if ($errors.Count -eq 0) {
+                $errors.Add("Registry does not conform to JSON Schema")
+            }
+        }
+    }
+    catch {
+        $errors.Add("JSON Schema validation error: $($_.Exception.Message)")
     }
 
     return @{ Success = ($errors.Count -eq 0); Errors = $errors }
@@ -565,16 +743,25 @@ try {
             $personaResult = Test-PersonaReferences -Registry $registry
             $allErrors.AddRange($personaResult.Errors)
 
-            # Step 3: File existence
+            # Step 3: Artifact entry validation (maturity, personas, tags, additionalProperties)
+            $entryResult = Test-ArtifactEntries -Registry $registry
+            $allErrors.AddRange($entryResult.Errors)
+
+            # Step 4: JSON Schema validation (PowerShell 7.4+)
+            $schemaPath = Join-Path $PSScriptRoot 'schemas/ai-artifacts-registry.schema.json'
+            $schemaResult = Test-JsonSchemaValidation -RegistryPath $RegistryPath -SchemaPath $schemaPath
+            $allErrors.AddRange($schemaResult.Errors)
+
+            # Step 5: File existence
             $fileResult = Test-ArtifactFileExistence -Registry $registry -RepoRoot $RepoRoot
             $allErrors.AddRange($fileResult.Errors)
 
-            # Step 4: Dependency references
+            # Step 6: Dependency references
             $depResult = Test-DependencyReferences -Registry $registry
             $allErrors.AddRange($depResult.Errors)
             $allWarnings.AddRange($depResult.Warnings)
 
-            # Step 5: Orphan detection
+            # Step 7: Orphan detection
             $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $RepoRoot
             $allWarnings.AddRange($orphanResult.Warnings)
 

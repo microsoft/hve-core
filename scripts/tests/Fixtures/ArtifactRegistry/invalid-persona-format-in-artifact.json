@@ -1,0 +1,27 @@
+{
+    "$schema": "../schemas/ai-artifacts-registry.schema.json",
+    "version": "1.0",
+    "personas": {
+        "definitions": {
+            "developer": {
+                "name": "Developer",
+                "description": "Software engineers"
+            }
+        }
+    },
+    "agents": {
+        "bad-persona-ref": {
+            "maturity": "stable",
+            "personas": [
+                "Bad Format!",
+                "123-invalid"
+            ],
+            "tags": [
+                "test"
+            ]
+        }
+    },
+    "prompts": {},
+    "instructions": {},
+    "skills": {}
+}
