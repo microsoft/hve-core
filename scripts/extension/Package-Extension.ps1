@@ -500,7 +500,8 @@ function Copy-CollectionArtifacts {
         foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
             $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
             if (-not (Test-Path $srcPath)) {
-                throw "Collection artifact not found: $srcPath (referenced by contributes.chatAgents in package.json)"
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatAgents in package.json)"
+                continue
             }
             Copy-Item -Path $srcPath -Destination $agentsDestDir -Force
         }
@@ -511,7 +512,8 @@ function Copy-CollectionArtifacts {
         foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
             $srcPath = Join-Path $RepoRoot ($prompt.path -replace '^\.[\\/]', '')
             if (-not (Test-Path $srcPath)) {
-                throw "Collection artifact not found: $srcPath (referenced by contributes.chatPromptFiles in package.json)"
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatPromptFiles in package.json)"
+                continue
             }
             $destPath = Join-Path $ExtensionDirectory ($prompt.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
@@ -525,7 +527,8 @@ function Copy-CollectionArtifacts {
         foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
             $srcPath = Join-Path $RepoRoot ($instr.path -replace '^\.[\\/]', '')
             if (-not (Test-Path $srcPath)) {
-                throw "Collection artifact not found: $srcPath (referenced by contributes.chatInstructions in package.json)"
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatInstructions in package.json)"
+                continue
             }
             $destPath = Join-Path $ExtensionDirectory ($instr.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
@@ -539,7 +542,8 @@ function Copy-CollectionArtifacts {
         foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
             $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
             if (-not (Test-Path $srcPath)) {
-                throw "Collection artifact not found: $srcPath (referenced by contributes.chatSkills in package.json)"
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatSkills in package.json)"
+                continue
             }
             $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
