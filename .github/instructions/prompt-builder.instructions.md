@@ -1,6 +1,6 @@
 ---
 description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
-applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
+applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md, .claude/agents/*.md'
 maturity: stable
 ---
 
@@ -16,7 +16,7 @@ This section defines file type selection criteria, authoring patterns, and valid
 
 *Extension*: `.prompt.md`
 
-Purpose: Single-session workflows where users invoke a prompt and Copilot executes to completion.
+Purpose: Single-session workflows where users invoke a prompt and the agent executes to completion.
 
 Characteristics:
 
@@ -48,7 +48,7 @@ An Inputs section documents available input variables:
 
 #### Argument Hints
 
-The `argument-hint` frontmatter field shows users expected inputs in the VS Code prompt picker:
+The `argument-hint` frontmatter field shows users expected inputs in the prompt picker:
 
 * Keep hints brief with required arguments first, then optional arguments.
 * Use `[]` for positional arguments and `key=value` for named parameters.
@@ -91,11 +91,30 @@ Autonomous agents execute tasks with minimal user interaction:
 
 Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
 
+#### Claude Agents
+
+*Location*: `.claude/agents/<name>.md`
+
+Claude agents define behavioral instructions for specialized task execution. Agents are loaded by skills (via `agent:` frontmatter) or passed to the Task tool.
+
+Characteristics:
+
+* Frontmatter declares `name`, `description`, and optionally `tools` and `model`.
+* The `tools` field is a comma-separated list of available tools.
+* Include `Task` in the tools list only when the agent dispatches subagents.
+* Set `model` to `inherit` to use the parent model.
+* Body contains full behavioral instructions: core principles, phases or steps, subagent delegation rules, response format, and operational constraints.
+
+Two execution contexts exist:
+
+* Standalone (via skill): The agent runs in the main session and can dispatch Task subagents (one level deep).
+* Dispatched (via Task call): The agent runs as a Task and cannot dispatch further Tasks; it falls back to direct tool usage.
+
 ### Instructions Files
 
 *Extension*: `.instructions.md`
 
-Purpose: Auto-applied guidance based on file patterns. Instructions define conventions, standards, and patterns that Copilot follows when working with matching files.
+Purpose: Auto-applied guidance based on file patterns. Instructions define conventions, standards, and patterns that agents follow when working with matching files.
 
 Characteristics:
 
@@ -113,9 +132,13 @@ Validation guidelines:
 
 *File Name*: `SKILL.md`
 
+Purpose: Skills provide task-specific entry points. Skills are the recommended pattern for new and updated artifacts. Two structural variants exist: script-based skills that bundle executable scripts, and agent-based skills that delegate to agents. When refactoring existing commands (`.claude/commands/`), convert them to agent-based skills.
+
+#### Script-Based Skills
+
 *Location*: `.github/skills/<skill-name>/SKILL.md`
 
-Purpose: Self-contained packages that bundle documentation with executable scripts for specific tasks. Skills differ from prompts and agents by providing concrete utilities rather than conversational guidance.
+Self-contained packages that bundle documentation with executable scripts for specific tasks. Script-based skills differ from prompts and agents by providing concrete utilities rather than conversational guidance.
 
 Characteristics:
 
@@ -123,7 +146,7 @@ Characteristics:
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
 
-Skill directory structure:
+Directory structure:
 
 ```text
 .github/skills/<skill-name>/
@@ -139,35 +162,29 @@ Skill directory structure:
     └── README.md               # Usage examples (recommended)
 ```
 
-### Optional Directories
+##### Optional Directories
 
-#### scripts/
-
-Contains executable code that agents run to perform tasks:
+**scripts/** contains executable code that agents run to perform tasks:
 
 * Scripts are self-contained or clearly document dependencies.
 * Include helpful error messages and handle edge cases gracefully.
 * Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
 
-#### references/
-
-Contains additional documentation that agents read when needed:
+**references/** contains additional documentation that agents read when needed:
 
 * *REFERENCE.md* for detailed technical reference material.
 * Domain-specific files such as `finance.md` or `legal.md`.
 * Keep individual reference files focused; agents load these on demand.
 
-#### assets/
-
-Contains static resources:
+**assets/** contains static resources:
 
 * Templates for documents or configuration files.
 * Images such as diagrams or examples.
 * Data files such as lookup tables or schemas.
 
-#### Skill Content Structure
+##### Content Structure
 
-Skill files include these sections in order:
+Script-based skill files include these sections in order:
 
 1. **Title (H1)**: Clear heading matching skill purpose.
 2. **Overview**: Brief explanation of what the skill does.
@@ -177,6 +194,89 @@ Skill files include these sections in order:
 6. **Script Reference**: Usage examples for bash and PowerShell.
 7. **Troubleshooting**: Common issues and solutions.
 8. **Attribution Footer**: Standard footer with attribution.
+
+Validation guidelines:
+
+* Include `name` frontmatter matching the skill directory name (required).
+* Include `description` frontmatter (required).
+* Include `maturity` frontmatter (required).
+* Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
+* Document prerequisites for each supported platform.
+* Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
+* Additional sections can be added between Parameters Reference and Troubleshooting as needed.
+
+#### Agent-Based Skills
+
+*Location*: `.claude/skills/<skill-name>/SKILL.md`
+
+Lightweight entry points that delegate to agents via the `agent:` frontmatter field. The skill body passes `$ARGUMENTS` to the agent along with mode-specific directives. Users invoke skills via `/project:<skill-name>`.
+
+Characteristics:
+
+* Frontmatter delegates to an agent via `agent:` which loads the corresponding `.claude/agents/<agent>.md` file.
+* The `$ARGUMENTS` placeholder in the body receives user input at invocation.
+* No bundled scripts; agents use tools (Read, Write, Edit, Bash, Grep, Glob, WebFetch) directly.
+* Skill body provides activation instructions and mode context for the agent.
+
+Directory structure:
+
+```text
+.claude/skills/<skill-name>/
+└── SKILL.md                    # Skill definition (required, only file)
+```
+
+Content structure:
+
+1. **Frontmatter**: `name`, `description`, `maturity`, and optional `context`, `agent`, `argument-hint`, `disable-model-invocation`.
+2. **Title (H1)**: Clear heading matching skill purpose.
+3. **Activation body**: Passes `$ARGUMENTS` to the agent with mode-specific directives.
+
+Frontmatter fields:
+
+| Field                      | Required | Description                                                                                    |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `name`                     | Yes      | Skill identifier in lowercase kebab-case matching the directory name.                          |
+| `description`              | Yes      | Brief description shown in the skill picker and agent registry.                                |
+| `maturity`                 | Yes      | Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.                         |
+| `context`                  | No       | Set to `fork` to run in an isolated context. Omit or set to `none` for the main context.       |
+| `agent`                    | No       | Agent name to delegate to. Loads `.claude/agents/<agent>.md` when the skill activates.         |
+| `argument-hint`            | No       | Hint text shown in the skill picker (for example, `"file=... [requirements=...]"`).            |
+| `disable-model-invocation` | No       | Set to `true` to prevent the model from invoking this skill automatically.                     |
+
+Example agent-based skill:
+
+```yaml
+---
+name: prompt-build
+description: Build or improve prompt engineering artifacts following quality criteria.
+maturity: stable
+context: fork
+agent: prompt-builder
+argument-hint: "file=... [requirements=...]"
+disable-model-invocation: true
+---
+```
+
+```markdown
+# Prompt Build
+
+Build or improve the following prompt engineering artifact:
+
+$ARGUMENTS
+
+Operate in build mode. Discover applicable `.github/instructions/*.instructions.md`
+files based on file types and technologies involved, and proceed with the Required Phases.
+```
+
+Validation guidelines:
+
+* Include `name` frontmatter matching the skill directory name (required).
+* Include `description` frontmatter (required).
+* Include `maturity` frontmatter (required).
+* Include `agent` frontmatter when delegating to an agent.
+* Include `$ARGUMENTS` in the body when the skill accepts user input.
+* Keep the body concise: title, activation instruction, and mode directive.
+* Keep *SKILL.md* under 500 lines.
 
 ### Progressive Disclosure
 
@@ -201,16 +301,6 @@ scripts/extract.py
 
 Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
 
-Validation guidelines:
-
-* Include `name` frontmatter matching the skill directory name (required).
-* Include `description` frontmatter (required).
-* Include `maturity` frontmatter (required).
-* Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
-* Document prerequisites for each supported platform.
-* Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
-* Additional sections can be added between Parameters Reference and Troubleshooting as needed.
-
 ## Frontmatter Requirements
 
 This section defines frontmatter field requirements for prompt engineering artifacts.
@@ -228,21 +318,26 @@ Note: VS Code shows a validation warning for the `maturity:` field as it's not i
 
 Optional fields vary by file type:
 
-* `name:` - Skill identifier (required for skill files only). Must match the skill directory name using lowercase kebab-case.
+* `name:` - Skill or agent identifier. Required for skill files; match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns (required for instructions files only).
-* `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
-* `agent:` - Agent delegation for prompt files.
+* `tools:` - Tool declarations for agents. Specify as a comma-separated list of available tools (for example, `Task, Read, Write, Edit, Glob, Grep, Bash, WebFetch, TodoWrite`). When omitted, default tools are provided. When restricting tools, list only tools available in the execution context.
+* `handoffs:` - Agent handoff declarations. Use `agent:` for the target reference.
+* `agent:` - Agent delegation for prompt files and skills. For skills, loads `.claude/agents/<agent>.md` when the skill activates.
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification.
+* `model:` - Model specification. Set to `inherit` to use the parent model, or specify a model name.
+* `context:` - Set to `fork` for isolated context execution in skills.
+* `disable-model-invocation:` - Set to `true` to prevent automatic model invocation of the skill.
 
 ### Tool Availability
 
 When authoring prompts that reference specific tools:
 
-* Verify tool availability in the current VS Code context before including in `tools:` frontmatter.
-* When a user references tools not available in the active context, inform them which tools need to be enabled.
-* Do not include tools that VS Code flags as unknown.
+* Declare tools accurately in the `tools:` frontmatter when restricting available tools.
+* Verify tool availability in the target execution context before including in `tools:` frontmatter.
+* Common tools: `Task`, `TaskOutput`, `TaskStop`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `WebFetch`, `TodoWrite`, `AskUserQuestion`, `Skill`.
+* Include `Task` only when the agent dispatches subagents via the Task tool.
+* Leaf subagents (terminal agents that do not dispatch further Tasks) omit `Task` from their tools list.
+* When an agent is dispatched as a Task by another agent, the platform blocks nested Task dispatch regardless of the tools declaration.
 
 ## Protocol Patterns
 
@@ -401,25 +496,35 @@ Successful prompts demonstrate these qualities:
 
 Prompt instructions for subagents keep the subagent focused on specific tasks.
 
+### Subagent Dispatch
+
+Dispatch mechanisms vary by platform. When the dispatch tool is unavailable, follow the subagent instructions directly.
+
 Tool invocation:
 
-* Include an explicit instruction to use the runSubagent tool when dispatching a subagent.
-* When runSubagent is unavailable, follow the subagent instructions directly or stop if runSubagent is required for the task.
+* Include an explicit instruction to use the appropriate dispatch tool (such as `runSubagent` or `Task`).
+* For Task-based dispatch: read the subagent agent file (`.claude/agents/<subagent>.md`), construct a prompt combining the agent file content with context from prior phases and specific instructions for the current dispatch, and call `Task(subagent_type="general-purpose", prompt=<constructed prompt>)`.
+* When the dispatch tool is unavailable, perform the subagent instructions directly using available tools.
 
-Task specification:
+Nesting constraint:
+
+* Task nesting is limited to one level deep. Agents dispatched as Tasks cannot dispatch further Tasks.
+* Design agents to fall back to direct tool usage when running as a dispatched Task.
+
+### Task Specification
 
 * Specify which custom agents or instructions files to follow.
 * Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
 * Indicate the types of tasks the subagent completes.
 * Provide the subagent a step-based protocol when multiple steps are needed.
 
-Response format:
+### Response Format
 
 * Provide a structured response format or criteria for what the subagent returns.
 * When the subagent writes its response to files, specify which file to create or update.
 * Allow the subagent to respond with clarifying questions to avoid guessing.
 
-Execution patterns:
+### Execution Patterns
 
 * Prompt instructions can loop and call the subagent multiple times until the task completes.
 * Multiple subagents can run in parallel when work allows (for example, document researcher collects from documents while GitHub researcher collects from repositories).
