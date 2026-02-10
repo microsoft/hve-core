@@ -83,43 +83,15 @@ jobs:
     permissions:
       contents: read
 
-  discover-vsix:
-    name: Discover VSIX Artifacts
-    needs: [package]
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Discover collection artifacts
-        id: discover
-        shell: bash
-        run: |
-          # Build publish matrix from collection manifests
-          collections_dir="extension/collections"
-          matrix_json=$(find "$collections_dir" -name '*.collection.json' -type f | sort | while IFS= read -r file; do
-            id=$(jq -r '.id' "$file")
-            name=$(jq -r '.name' "$file")
-            echo "{\"id\":\"$id\",\"name\":\"$name\"}"
-          done | jq -s '{include: .}')
-
-          echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
-          echo "Discovered collections for publish:"
-          echo "$matrix_json" | jq .
-
   publish:
     name: Publish ${{ matrix.id }}
-    needs: [package, discover-vsix]
+    needs: [package]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     environment: marketplace
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.discover-vsix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.package.outputs.collections-matrix) }}
     permissions:
       contents: read
       id-token: write

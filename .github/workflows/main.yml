@@ -106,38 +106,14 @@ jobs:
     permissions:
       contents: read
 
-  discover-release-collections:
-    name: Discover Release Collections
-    needs: [release-please, extension-package-release]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Discover collection manifests
-        id: discover
-        shell: bash
-        run: |
-          collections_dir="extension/collections"
-          matrix_json=$(find "$collections_dir" -name '*.collection.json' -type f | sort | while IFS= read -r file; do
-            id=$(jq -r '.id' "$file")
-            echo "{\"id\":\"$id\"}"
-          done | jq -s '{include: .}')
-          echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
-
   attest-and-upload:
     name: Attest and Upload (${{ matrix.id }})
-    needs: [release-please, extension-package-release, discover-release-collections]
+    needs: [release-please, extension-package-release]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.discover-release-collections.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.extension-package-release.outputs.collections-matrix) }}
     permissions:
       contents: write
       id-token: write

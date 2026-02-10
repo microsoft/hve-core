@@ -27,6 +27,9 @@ on:
       version:
         description: 'Version that was packaged'
         value: ${{ jobs.package.outputs.version }}
+      collections-matrix:
+        description: 'JSON matrix of collections that were actually packaged (filtered by channel and maturity)'
+        value: ${{ jobs.discover-collections.outputs.matrix }}
 
 permissions:
   contents: read

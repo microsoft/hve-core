@@ -121,45 +121,6 @@ function Test-VsceAvailable {
     }
 }
 
-function Get-ExtensionOutputPath {
-    <#
-    .SYNOPSIS
-        Constructs the expected .vsix output path from extension directory and version.
-    .PARAMETER ExtensionDirectory
-        The path to the extension directory.
-    .PARAMETER ExtensionName
-        The name of the extension (from package.json).
-    .PARAMETER PackageVersion
-        The version string to use in the filename.
-    .PARAMETER CollectionId
-        Optional collection identifier to use instead of the extension name in the filename.
-    .OUTPUTS
-        String path to the expected .vsix file.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$PackageVersion,
-
-        [Parameter(Mandatory = $false)]
-        [string]$CollectionId = ""
-    )
-
-    $vsixFileName = if ($CollectionId -and $CollectionId -ne "") {
-        "$CollectionId-$PackageVersion.vsix"
-    } else {
-        "$ExtensionName-$PackageVersion.vsix"
-    }
-    return Join-Path $ExtensionDirectory $vsixFileName
-}
-
 function Test-ExtensionManifestValid {
     <#
     .SYNOPSIS
@@ -493,11 +454,6 @@ function Get-PackagingDirectorySpec {
         @{
             Source      = Join-Path $RepoRoot "docs/templates"
             Destination = Join-Path $ExtensionDirectory "docs/templates"
-            IsFile      = $false
-        },
-        @{
-            Source      = Join-Path $RepoRoot ".github/skills"
-            Destination = Join-Path $ExtensionDirectory ".github/skills"
             IsFile      = $false
         }
     )
