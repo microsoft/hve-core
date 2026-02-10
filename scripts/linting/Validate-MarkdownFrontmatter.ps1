@@ -473,21 +473,33 @@ function Test-JsonSchemaValidation {
             # Handle oneOf by validating against each subschema.
             if ($Schema.oneOf) {
                 $passCount = 0
-                $lastErrors = @()
+                $subschemaErrors = [System.Collections.Generic.List[object]]::new()
+
+                $i = 0
                 foreach ($sub in $Schema.oneOf) {
                     $subErrs = Test-ValueAgainstSchema -Value $Value -Schema $sub -Path $Path
                     if ($subErrs.Count -eq 0) {
                         $passCount++
                     }
                     else {
-                        $lastErrors = $subErrs
+                        # Capture errors per subschema so failures are stable and actionable (not dependent on ordering).
+                        $subschemaErrors.Add(@{ Index = $i; Errors = $subErrs })
                     }
+
+                    $i++
                 }
 
                 if ($passCount -ne 1) {
                     # oneOf semantics: exactly one schema must match
                     if ($passCount -eq 0) {
-                        foreach ($e in $lastErrors) { $localErrors.Add($e) }
+                        $localErrors.Add("Field '$Path' must match one of the allowed schemas")
+
+                        foreach ($entry in $subschemaErrors) {
+                            $idx = $entry.Index
+                            foreach ($e in $entry.Errors) {
+                                $localErrors.Add("oneOf[$idx]: $e")
+                            }
+                        }
                     }
                     else {
                         $localErrors.Add("Field '$Path' must match exactly one of the allowed schemas")
