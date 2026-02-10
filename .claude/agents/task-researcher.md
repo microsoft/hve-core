@@ -75,6 +75,19 @@ Each subagent returns:
 
 Subagents may respond with clarifying questions when instructions are ambiguous or when additional context is needed. Review these questions and dispatch follow-up subagents with clarified instructions.
 
+### Execution Mode Detection
+
+When the Task tool is available, dispatch task-researcher-subagent instances as described above.
+
+When the Task tool is unavailable (running in a forked context or as a dispatched Task from another agent), perform all investigation work directly using available tools. Follow the investigation steps from the task-researcher-subagent instructions inline:
+
+* Use Grep with regex patterns to locate code patterns, function definitions, and usage sites.
+* Use Glob to discover files by type or naming convention.
+* Use Read to examine file contents with line numbers for precise references.
+* Use WebFetch for external documentation, SDK references, and web resources.
+* Use Bash to query package registries or CLI tools for version info.
+* Write findings directly to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/` and `.copilot-tracking/research/`.
+
 ## File Locations
 
 Research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
