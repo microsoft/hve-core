@@ -2,7 +2,7 @@
 title: Governance
 description: Project governance model, roles, decision-making processes, and contribution authority for HVE Core
 author: HVE Core Team
-ms.date: 2026-01-21
+ms.date: 2026-02-07
 ms.topic: reference
 keywords:
   - governance
@@ -153,6 +153,36 @@ When contributors disagree on technical or process matters:
 3. **Maintainer decision**: If consensus remains elusive, maintainers make a binding decision
 
 Code of conduct violations follow the process defined in [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
+
+## Inactivity Closure Policy
+
+Open issues and discussions that remain inactive create noise for contributors and maintainers. This section defines the lifecycle policy for closing inactive items. Automation that enforces this policy (stale bot, scheduled workflows) is a separate effort that references these thresholds.
+
+For pull request inactivity policy, see [Pull Request Inactivity Policy](./CONTRIBUTING.md#pull-request-inactivity-policy) in CONTRIBUTING.md.
+
+### Issues
+
+Issue inactivity follows a three-stage lifecycle:
+
+| Stage        | Trigger                                      | Label          | Action                        |
+|:-------------|:---------------------------------------------|:---------------|:------------------------------|
+| Active       | Any activity within the past 60 days         | (none)         | Normal lifecycle              |
+| Stale        | 60 days without activity                     | `stale`        | Warning comment posted        |
+| Closed-stale | 14 days after `stale` label without activity | `closed-stale` | Issue closed as `not_planned` |
+
+Exemptions that prevent automatic closure:
+
+* Issues labeled `pinned`, `security`, or `do-not-close`
+* Issues assigned to any milestone
+
+Reopening rules:
+
+* Any participant can reopen a stale-closed issue with additional context
+* Reopening removes the `stale` label and resets the inactivity clock
+
+### Discussions
+
+The same 60-day warning and 14-day closure thresholds apply to GitHub Discussions in principle. The same exemptions that prevent automatic closure for issues (pinned, security, do-not-close, or assigned to a milestone) and the same reopening behavior (reopening clears any stale status and resets the inactivity clock) apply to Discussions. Because current automation tooling (actions/stale) does not support Discussions, enforcement is manual through periodic triage until dedicated tooling is implemented.
 
 ## Access Continuity
 
