@@ -21,16 +21,13 @@ Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent 
 * Define single-session workflows with clear inputs and outputs
 * Accept user inputs through `${input:varName}` template syntax
 * Delegate to agents via `agent:` frontmatter references
-* Specify invocation context through `mode:` field values
 
 **Frontmatter structure:**
 
 ```yaml
 ---
 description: 'Protocol for creating ADO pull requests'
-mode: 'workflow'
 agent: 'task-planner'
-maturity: 'stable'
 ---
 ```
 
@@ -54,7 +51,6 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
 handoffs: ['task-implementor', 'task-researcher']
-maturity: 'stable'
 ---
 ```
 
@@ -77,7 +73,6 @@ Instructions (`.instructions.md`) encode technology-specific standards and conve
 ---
 description: 'Python scripting standards with type hints'
 applyTo: '**/*.py, **/*.ipynb'
-maturity: 'stable'
 ---
 ```
 
@@ -277,7 +272,7 @@ Artifacts assigned to `hve-core-all` appear in the full collection and may also 
 
 ### Collection Build System
 
-Collections define persona-filtered artifact packages. Each collection manifest specifies which personas to include:
+Collections define persona-filtered artifact packages. Each collection manifest specifies which personas to include and controls release channel eligibility through a `maturity` field:
 
 ```json
 {
@@ -285,6 +280,7 @@ Collections define persona-filtered artifact packages. Each collection manifest 
     "name": "hve-developer",
     "displayName": "HVE Core - Developer Edition",
     "description": "AI-powered coding agents curated for software engineers",
+    "maturity": "stable",
     "personas": ["developer"]
 }
 ```
@@ -292,10 +288,24 @@ Collections define persona-filtered artifact packages. Each collection manifest 
 The build system resolves collections by:
 
 1. Reading the collection manifest to identify target personas
-2. Filtering registry entries by persona membership
-3. Including the `hve-core-all` persona artifacts as the base
-4. Adding persona-specific artifacts
-5. Resolving dependencies for included artifacts
+2. Checking collection-level maturity against the target release channel
+3. Filtering registry entries by persona membership
+4. Including the `hve-core-all` persona artifacts as the base
+5. Adding persona-specific artifacts
+6. Resolving dependencies for included artifacts
+
+#### Collection Maturity
+
+Collections carry their own maturity level, independent of artifact-level maturity. This controls whether the entire collection is built for a given release channel:
+
+| Collection Maturity | PreRelease Channel | Stable Channel |
+| ------------------- | ------------------ | -------------- |
+| `stable`            | Included           | Included       |
+| `preview`           | Included           | Included       |
+| `experimental`      | Included           | Excluded       |
+| `deprecated`        | Excluded           | Excluded       |
+
+New collections should start as `experimental` until validated, then transition to `stable` by changing a single field. The `maturity` field is optional and defaults to `stable` when omitted.
 
 ### Dependency Resolution
 
@@ -334,6 +344,8 @@ Artifact inclusion is controlled by the registry. Repo-specific instructions und
 | `preview`      | Excluded       | Included            |
 | `experimental` | Excluded       | Included            |
 | `deprecated`   | Excluded       | Excluded            |
+
+The maturity table above applies to individual artifacts. Collections also carry a `maturity` field that gates the entire package at the channel level (see [Collection Maturity](#collection-maturity)).
 
 ### Collection Packages
 

@@ -91,6 +91,68 @@ function Get-AllowedMaturities {
     return @('stable')
 }
 
+function Test-CollectionMaturityEligible {
+    <#
+    .SYNOPSIS
+        Checks whether a collection is eligible for the specified release channel.
+    .DESCRIPTION
+        Pure function that evaluates collection-level maturity against channel rules.
+        Experimental collections are eligible only for PreRelease. Deprecated collections
+        are excluded from all channels.
+    .PARAMETER CollectionManifest
+        Parsed collection manifest hashtable.
+    .PARAMETER Channel
+        Release channel ('Stable' or 'PreRelease').
+    .OUTPUTS
+        [hashtable] With IsEligible bool and Reason string.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel
+    )
+
+    $maturity = 'stable'
+    if ($CollectionManifest.ContainsKey('maturity') -and $CollectionManifest['maturity']) {
+        $maturity = $CollectionManifest['maturity']
+    }
+
+    switch ($maturity) {
+        'deprecated' {
+            return @{
+                IsEligible = $false
+                Reason     = "Collection '$($CollectionManifest.id)' is deprecated and excluded from all channels"
+            }
+        }
+        'experimental' {
+            if ($Channel -eq 'Stable') {
+                return @{
+                    IsEligible = $false
+                    Reason     = "Collection '$($CollectionManifest.id)' is experimental and excluded from Stable channel"
+                }
+            }
+            return @{ IsEligible = $true; Reason = '' }
+        }
+        'preview' {
+            return @{ IsEligible = $true; Reason = '' }
+        }
+        'stable' {
+            return @{ IsEligible = $true; Reason = '' }
+        }
+        default {
+            return @{
+                IsEligible = $false
+                Reason     = "Collection '$($CollectionManifest.id)' has invalid maturity value: $maturity"
+            }
+        }
+    }
+}
+
 function Get-RegistryData {
     <#
     .SYNOPSIS
@@ -1150,6 +1212,16 @@ function Invoke-PrepareExtension {
     if ($Collection -and $Collection -ne "") {
         $collectionManifest = Get-CollectionManifest -CollectionPath $Collection
         Write-Host "Collection: $($collectionManifest.displayName) ($($collectionManifest.id))"
+
+        # Check collection-level maturity eligibility
+        $collectionEligibility = Test-CollectionMaturityEligible -CollectionManifest $collectionManifest -Channel $Channel
+        if (-not $collectionEligibility.IsEligible) {
+            Write-Host "`n⏭️  $($collectionEligibility.Reason)" -ForegroundColor Yellow
+            return New-PrepareResult -Success $true -Version $version
+        }
+
+        $collectionMaturity = if ($collectionManifest.ContainsKey('maturity')) { $collectionManifest['maturity'] } else { 'stable' }
+        Write-Host "Collection maturity: $collectionMaturity"
 
         # Get persona-filtered artifact names
         $collectionArtifactNames = Get-CollectionArtifacts -Registry $registry -Collection $collectionManifest -AllowedMaturities $allowedMaturities

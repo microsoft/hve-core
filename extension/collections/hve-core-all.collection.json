@@ -4,6 +4,7 @@
     "name": "hve-core",
     "displayName": "HVE Core",
     "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
+    "maturity": "stable",
     "personas": [
         "hve-core-all"
     ]

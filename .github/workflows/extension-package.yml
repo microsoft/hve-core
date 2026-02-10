@@ -50,16 +50,35 @@ jobs:
         shell: bash
         run: |
           collections_dir="extension/collections"
+          channel="${{ inputs.channel }}"
+          if [ -z "$channel" ]; then
+            channel="Stable"
+          fi
+
           if [ ! -d "$collections_dir" ]; then
             echo "::error::Collections directory not found: $collections_dir"
             exit 1
           fi
 
-          # Build JSON array of collection manifests
+          # Build JSON array of collection manifests, filtering by maturity
           matrix_json=$(find "$collections_dir" -name '*.collection.json' -type f | sort | while IFS= read -r file; do
             id=$(jq -r '.id' "$file")
             name=$(jq -r '.name' "$file")
-            echo "{\"id\":\"$id\",\"name\":\"$name\",\"manifest\":\"$file\"}"
+            maturity=$(jq -r '.maturity // "stable"' "$file")
+
+            # Skip deprecated collections for all channels
+            if [ "$maturity" = "deprecated" ]; then
+              echo "::notice::Skipping deprecated collection: $id" >&2
+              continue
+            fi
+
+            # Skip experimental collections for Stable channel
+            if [ "$channel" = "Stable" ] && [ "$maturity" = "experimental" ]; then
+              echo "::notice::Skipping experimental collection '$id' for Stable channel" >&2
+              continue
+            fi
+
+            echo "{\"id\":\"$id\",\"name\":\"$name\",\"manifest\":\"$file\",\"maturity\":\"$maturity\"}"
           done | jq -s '{include: .}')
 
           echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"

@@ -33,6 +33,17 @@
             "type": "string",
             "minLength": 1
         },
+        "maturity": {
+            "type": "string",
+            "enum": [
+                "stable",
+                "preview",
+                "experimental",
+                "deprecated"
+            ],
+            "default": "stable",
+            "description": "Collection-level maturity controlling release channel eligibility. Experimental collections are released only as PreRelease. Deprecated collections are excluded from all releases."
+        },
         "personas": {
             "type": "array",
             "items": {

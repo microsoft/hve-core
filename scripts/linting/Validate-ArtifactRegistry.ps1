@@ -613,6 +613,99 @@ function Find-OrphanArtifacts {
     return @{ Warnings = $warnings }
 }
 
+function Test-CollectionManifests {
+    <#
+    .SYNOPSIS
+        Validates collection manifest files against their schema and registry.
+    .DESCRIPTION
+        Checks all collection manifest files in extension/collections/ for:
+        - Valid JSON structure
+        - Valid maturity enum values
+        - Persona references matching registry definitions
+        - JSON Schema validation (PowerShell 7.4+)
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Registry,
+
+        [Parameter(Mandatory)]
+        [string]$RepoRoot
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $warnings = [System.Collections.Generic.List[string]]::new()
+
+    $collectionsDir = Join-Path $RepoRoot 'extension/collections'
+    if (-not (Test-Path $collectionsDir)) {
+        return @{ Success = $true; Errors = $errors; Warnings = $warnings }
+    }
+
+    $validMaturity = @('stable', 'preview', 'experimental', 'deprecated')
+    $definedPersonas = @()
+    if ($Registry.ContainsKey('personas') -and $Registry['personas'].ContainsKey('definitions')) {
+        $definedPersonas = @($Registry['personas']['definitions'].Keys)
+    }
+
+    $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.json' -File -ErrorAction SilentlyContinue
+
+    # JSON Schema validation for collection manifests
+    $collectionSchemaPath = Join-Path $RepoRoot 'scripts/linting/schemas/collection.schema.json'
+
+    foreach ($file in $collectionFiles) {
+        $prefix = "collection/$($file.BaseName -replace '\.collection$', '')"
+
+        try {
+            $content = Get-Content -Path $file.FullName -Raw
+            $manifest = $content | ConvertFrom-Json -AsHashtable
+        }
+        catch {
+            $errors.Add("${prefix}: Failed to parse JSON: $_")
+            continue
+        }
+
+        # Validate maturity value if present
+        if ($manifest.ContainsKey('maturity')) {
+            if ($manifest['maturity'] -notin $validMaturity) {
+                $errors.Add("${prefix}: invalid maturity '$($manifest['maturity'])'. Must be one of: $($validMaturity -join ', ')")
+            }
+        }
+
+        # Validate persona references
+        if ($manifest.ContainsKey('personas')) {
+            foreach ($persona in $manifest['personas']) {
+                if ($definedPersonas.Count -gt 0 -and $persona -notin $definedPersonas -and $persona -ne 'hve-core-all') {
+                    $warnings.Add("${prefix}: references persona '$persona' not defined in registry")
+                }
+            }
+        }
+
+        # Warn about deprecated collections that still exist in the build directory
+        if ($manifest.ContainsKey('maturity') -and $manifest['maturity'] -eq 'deprecated') {
+            $warnings.Add("${prefix}: collection is deprecated and will be excluded from all builds")
+        }
+
+        # JSON Schema validation (PowerShell 7.4+)
+        if ((Test-Path $collectionSchemaPath) -and $PSVersionTable.PSVersion -ge [version]'7.4') {
+            try {
+                $schemaErrors = $null
+                $valid = Test-Json -Json $content -SchemaFile $collectionSchemaPath -ErrorAction SilentlyContinue -ErrorVariable schemaErrors
+                if (-not $valid) {
+                    foreach ($schemaErr in $schemaErrors) {
+                        $errors.Add("${prefix}: schema violation: $schemaErr")
+                    }
+                }
+            }
+            catch {
+                $errors.Add("${prefix}: schema validation error: $($_.Exception.Message)")
+            }
+        }
+    }
+
+    return @{ Success = ($errors.Count -eq 0); Errors = $errors; Warnings = $warnings }
+}
+
 #endregion Validation Functions
 
 #region Output Functions
@@ -764,6 +857,11 @@ try {
             # Step 7: Orphan detection
             $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $RepoRoot
             $allWarnings.AddRange($orphanResult.Warnings)
+
+            # Step 8: Collection manifest validation
+            $collectionResult = Test-CollectionManifests -Registry $registry -RepoRoot $RepoRoot
+            $allErrors.AddRange($collectionResult.Errors)
+            $allWarnings.AddRange($collectionResult.Warnings)
 
             # Build result
             $result = @{

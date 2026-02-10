@@ -21,6 +21,86 @@ Describe 'Get-AllowedMaturities' {
 
 }
 
+Describe 'Test-CollectionMaturityEligible' {
+    It 'Returns eligible for stable collection on Stable channel' {
+        $manifest = @{ id = 'test'; maturity = 'stable' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeTrue
+        $result.Reason | Should -BeNullOrEmpty
+    }
+
+    It 'Returns eligible for stable collection on PreRelease channel' {
+        $manifest = @{ id = 'test'; maturity = 'stable' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Returns eligible for preview collection on Stable channel' {
+        $manifest = @{ id = 'test'; maturity = 'preview' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Returns eligible for preview collection on PreRelease channel' {
+        $manifest = @{ id = 'test'; maturity = 'preview' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Returns ineligible for experimental collection on Stable channel' {
+        $manifest = @{ id = 'exp-coll'; maturity = 'experimental' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'experimental.*excluded from Stable'
+    }
+
+    It 'Returns eligible for experimental collection on PreRelease channel' {
+        $manifest = @{ id = 'exp-coll'; maturity = 'experimental' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Returns ineligible for deprecated collection on Stable channel' {
+        $manifest = @{ id = 'old-coll'; maturity = 'deprecated' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'deprecated.*excluded from all channels'
+    }
+
+    It 'Returns ineligible for deprecated collection on PreRelease channel' {
+        $manifest = @{ id = 'old-coll'; maturity = 'deprecated' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'deprecated.*excluded from all channels'
+    }
+
+    It 'Defaults to stable when maturity key is absent' {
+        $manifest = @{ id = 'no-maturity' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Defaults to stable when maturity value is empty string' {
+        $manifest = @{ id = 'empty-maturity'; maturity = '' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeTrue
+    }
+
+    It 'Returns ineligible for unknown maturity value' {
+        $manifest = @{ id = 'bad-coll'; maturity = 'alpha' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'invalid maturity value'
+    }
+
+    It 'Returns hashtable with expected keys' {
+        $manifest = @{ id = 'test'; maturity = 'stable' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.Keys | Should -Contain 'IsEligible'
+        $result.Keys | Should -Contain 'Reason'
+    }
+}
+
 Describe 'Test-PathsExist' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
@@ -1078,6 +1158,89 @@ applyTo: "**/*.js"
             Test-Path $bakPath | Should -BeTrue
             $bakContent = Get-Content -Path $bakPath -Raw
             $bakContent | Should -Be $script:originalPackageJson
+        }
+    }
+
+    Context 'Collection maturity gating' {
+        BeforeAll {
+            # Deprecated collection manifest
+            $script:deprecatedCollectionPath = Join-Path $script:tempDir 'deprecated.collection.json'
+            @{
+                id          = 'deprecated-coll'
+                name        = 'deprecated-ext'
+                displayName = 'Deprecated Collection'
+                description = 'Deprecated collection for testing'
+                personas    = @('hve-core-all')
+                maturity    = 'deprecated'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:deprecatedCollectionPath
+
+            # Experimental collection manifest
+            $script:experimentalCollectionPath = Join-Path $script:tempDir 'experimental.collection.json'
+            @{
+                id          = 'experimental-coll'
+                name        = 'experimental-ext'
+                displayName = 'Experimental Collection'
+                description = 'Experimental collection for testing'
+                personas    = @('hve-core-all')
+                maturity    = 'experimental'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:experimentalCollectionPath
+
+            # Persona template for experimental collection
+            @'
+{
+    "name": "experimental-ext",
+    "version": "1.2.3",
+    "contributes": {}
+}
+'@ | Set-Content -Path (Join-Path $script:extDir 'package.experimental-coll.json')
+        }
+
+        It 'Returns early success for deprecated collection on Stable channel' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:deprecatedCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $result.AgentCount | Should -Be 0
+        }
+
+        It 'Returns early success for deprecated collection on PreRelease channel' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'PreRelease' `
+                -Collection $script:deprecatedCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $result.AgentCount | Should -Be 0
+        }
+
+        It 'Returns early success for experimental collection on Stable channel' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'Stable' `
+                -Collection $script:experimentalCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $result.AgentCount | Should -Be 0
+        }
+
+        It 'Processes experimental collection on PreRelease channel' {
+            $result = Invoke-PrepareExtension `
+                -ExtensionDirectory $script:extDir `
+                -RepoRoot $script:tempDir `
+                -Channel 'PreRelease' `
+                -Collection $script:experimentalCollectionPath `
+                -DryRun
+
+            $result.Success | Should -BeTrue
+            $result.AgentCount | Should -BeGreaterThan 0
         }
     }
 }

@@ -822,6 +822,224 @@ Describe 'Find-OrphanArtifacts' -Tag 'Unit' {
 
 #endregion
 
+#region Test-CollectionManifests Tests
+
+Describe 'Test-CollectionManifests' -Tag 'Unit' {
+    BeforeAll {
+        $script:TestRoot = Join-Path $TestDrive 'collection-manifests-test'
+        $script:CollectionsDir = Join-Path $script:TestRoot 'extension/collections'
+        $script:SchemaDir = Join-Path $script:TestRoot 'scripts/linting/schemas'
+
+        $script:BaseRegistry = @{
+            personas = @{
+                definitions = @{
+                    'hve-core-all' = @{ name = 'All'; description = 'All artifacts' }
+                    'developer'    = @{ name = 'Developer'; description = 'Developer artifacts' }
+                }
+            }
+            agents       = @{}
+            prompts      = @{}
+            instructions = @{}
+            skills       = @{}
+        }
+    }
+
+    BeforeEach {
+        if (Test-Path $script:TestRoot) {
+            Remove-Item -Path $script:TestRoot -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:CollectionsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:SchemaDir -Force | Out-Null
+
+        # Copy real schema for JSON Schema validation
+        $realSchemaPath = Join-Path $PSScriptRoot '../../linting/schemas/collection.schema.json'
+        if (Test-Path $realSchemaPath) {
+            Copy-Item -Path $realSchemaPath -Destination (Join-Path $script:SchemaDir 'collection.schema.json')
+        }
+    }
+
+    Context 'Missing collections directory' {
+        It 'Returns success when collections directory does not exist' {
+            $emptyRoot = Join-Path $TestDrive 'no-collections'
+            New-Item -ItemType Directory -Path $emptyRoot -Force | Out-Null
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $emptyRoot
+            $result.Success | Should -BeTrue
+            $result.Errors.Count | Should -Be 0
+            $result.Warnings.Count | Should -Be 0
+        }
+    }
+
+    Context 'Valid manifests' {
+        It 'Passes for a valid collection manifest with stable maturity' {
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'test-coll'
+                name        = 'test-ext'
+                displayName = 'Test Collection'
+                description = 'A valid test collection'
+                personas    = @('hve-core-all')
+                maturity    = 'stable'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'test-coll.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeTrue
+            $result.Errors.Count | Should -Be 0
+        }
+
+        It 'Passes for manifest without maturity field (defaults assumed)' {
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'no-maturity'
+                name        = 'no-maturity-ext'
+                displayName = 'No Maturity'
+                description = 'Collection without maturity field'
+                personas    = @('developer')
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'no-maturity.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeTrue
+        }
+    }
+
+    Context 'Invalid maturity values' {
+        It 'Reports error for invalid maturity enum value' {
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'bad-maturity'
+                name        = 'bad-maturity-ext'
+                displayName = 'Bad Maturity'
+                description = 'Collection with invalid maturity'
+                personas    = @('hve-core-all')
+                maturity    = 'alpha'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'bad-maturity.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match "invalid maturity 'alpha'" } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Deprecated collection warnings' {
+        It 'Emits warning for deprecated collection' {
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'old-coll'
+                name        = 'old-ext'
+                displayName = 'Old Collection'
+                description = 'A deprecated collection'
+                personas    = @('hve-core-all')
+                maturity    = 'deprecated'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'old-coll.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeTrue
+            $result.Warnings | Where-Object { $_ -match 'deprecated.*excluded from all builds' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Persona reference validation' {
+        It 'Warns when persona is not defined in registry' {
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'unknown-persona'
+                name        = 'unknown-persona-ext'
+                displayName = 'Unknown Persona'
+                description = 'Collection with undefined persona'
+                personas    = @('nonexistent-persona')
+                maturity    = 'stable'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'unknown-persona.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Warnings | Where-Object { $_ -match "references persona 'nonexistent-persona' not defined" } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Does not warn for hve-core-all persona even when not in definitions' {
+            $emptyPersonaRegistry = @{
+                personas     = @{ definitions = @{} }
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'all-coll'
+                name        = 'all-ext'
+                displayName = 'All Collection'
+                description = 'Uses hve-core-all persona'
+                personas    = @('hve-core-all')
+                maturity    = 'stable'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'all-coll.collection.json')
+
+            $result = Test-CollectionManifests -Registry $emptyPersonaRegistry -RepoRoot $script:TestRoot
+            $result.Warnings | Where-Object { $_ -match 'hve-core-all' } | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Invalid JSON' {
+        It 'Reports error for malformed JSON file' {
+            '{ invalid json }' | Set-Content -Path (Join-Path $script:CollectionsDir 'broken.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'Failed to parse JSON' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Multiple manifest validation' {
+        It 'Validates all collection files in directory' {
+            # Valid manifest
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'valid'
+                name        = 'valid-ext'
+                displayName = 'Valid'
+                description = 'Valid collection'
+                personas    = @('hve-core-all')
+                maturity    = 'stable'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'valid.collection.json')
+
+            # Invalid maturity manifest
+            @{
+                '$schema'   = '../schemas/collection.schema.json'
+                id          = 'invalid'
+                name        = 'invalid-ext'
+                displayName = 'Invalid'
+                description = 'Invalid collection'
+                personas    = @('hve-core-all')
+                maturity    = 'bogus'
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir 'invalid.collection.json')
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            $result.Success | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match "invalid maturity 'bogus'" } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'All valid maturity values accepted' {
+        It 'Accepts stable, preview, experimental, and deprecated maturities' {
+            foreach ($maturity in @('stable', 'preview', 'experimental', 'deprecated')) {
+                @{
+                    '$schema'   = '../schemas/collection.schema.json'
+                    id          = "$maturity-coll"
+                    name        = "$maturity-ext"
+                    displayName = "$maturity Collection"
+                    description = "Collection with $maturity maturity"
+                    personas    = @('hve-core-all')
+                    maturity    = $maturity
+                } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:CollectionsDir "$maturity.collection.json")
+            }
+
+            $result = Test-CollectionManifests -Registry $script:BaseRegistry -RepoRoot $script:TestRoot
+            # No maturity-related errors (deprecated warnings are fine)
+            $result.Errors | Where-Object { $_ -match 'invalid maturity' } | Should -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion
+
 #region Write-RegistryValidationOutput Tests
 
 Describe 'Write-RegistryValidationOutput' -Tag 'Unit' {

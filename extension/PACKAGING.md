@@ -506,17 +506,34 @@ Collection manifests follow this structure:
     "name": "hve-developer",
     "displayName": "HVE Core - Developer Edition",
     "description": "AI-powered coding agents curated for software engineers",
+    "maturity": "stable",
     "personas": ["developer"]
 }
 ```
 
-| Field         | Required | Description                             |
-|---------------|----------|-----------------------------------------|
-| `id`          | Yes      | Unique identifier for the collection    |
-| `name`        | Yes      | Extension package name                  |
-| `displayName` | Yes      | Marketplace display name                |
-| `description` | Yes      | Marketplace description text            |
-| `personas`    | Yes      | Array of persona identifiers to include |
+| Field         | Required | Description                                                           |
+|---------------|----------|-----------------------------------------------------------------------|
+| `id`          | Yes      | Unique identifier for the collection                                  |
+| `name`        | Yes      | Extension package name                                                |
+| `displayName` | Yes      | Marketplace display name                                              |
+| `description` | Yes      | Marketplace description text                                          |
+| `maturity`    | No       | Release channel eligibility (`stable`, `preview`, `experimental`, `deprecated`). Defaults to `stable` |
+| `personas`    | Yes      | Array of persona identifiers to include                               |
+
+#### Collection Maturity and Channel Eligibility
+
+The `maturity` field controls which release channels include the collection:
+
+| Collection Maturity | PreRelease Channel | Stable Channel |
+| ------------------- | ------------------ | -------------- |
+| `stable`            | Yes                | Yes            |
+| `preview`           | Yes                | Yes            |
+| `experimental`      | Yes                | No             |
+| `deprecated`        | No                 | No             |
+
+Collection-level maturity is independent of artifact-level maturity. A `stable` collection can contain `preview` artifacts, which are filtered by the existing artifact-level channel logic. The collection maturity gates the entire package, while artifact maturity gates individual files within it.
+
+Omitting the `maturity` field defaults to `stable`, maintaining backward compatibility with existing manifests.
 
 ### Adding New Collections
 
@@ -531,6 +548,7 @@ To create a new persona collection:
         "name": "hve-my-persona",
         "displayName": "HVE Core - My Persona Edition",
         "description": "Description of artifacts included for this persona",
+        "maturity": "experimental",
         "personas": ["my-persona"]
     }
     ```
@@ -539,6 +557,9 @@ To create a new persona collection:
 3. Tag relevant artifacts with the new persona in the registry
 4. Test the build locally with `-Collection my-persona`
 5. Submit PR with the new collection manifest
+
+> [!TIP]
+> New collections should start with `"maturity": "experimental"` until validated. Change to `"stable"` when the collection is ready for production.
 
 ## Notes
 
