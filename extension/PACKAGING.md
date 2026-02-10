@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-02-06
+ms.date: 2026-02-10
 ms.topic: reference
 ---
 
@@ -59,6 +59,61 @@ The extension is automatically packaged and published through GitHub Actions:
 | `.github/workflows/extension-package.yml` | Reusable workflow | Packages extension with flexible versioning |
 | `.github/workflows/extension-publish.yml` | Release/manual    | Publishes to VS Code Marketplace            |
 | `.github/workflows/main.yml`              | Push to main      | Includes extension packaging in CI          |
+
+## Packaging Pipeline Overview
+
+Extension packaging is a two-step process: **Prepare** discovers and filters artifacts into `package.json`, then **Package** copies files, runs `vsce`, and cleans up.
+
+```mermaid
+flowchart LR
+    subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
+        P1[Load Registry] --> P2[Discover Artifacts]
+        P2 --> P3["Filter by Maturity<br/>+ Collection"]
+        P3 --> P4[Resolve Dependencies]
+        P4 --> P5[Write package.json]
+    end
+
+    subgraph Package["Step 2 · Package-Extension.ps1"]
+        K1[Resolve Version] --> K2["Copy Assets<br/>to extension/"]
+        K2 --> K3[vsce package]
+        K3 --> K4[Cleanup & Restore]
+    end
+
+    Prepare --> Package --> VSIX[".vsix"]
+```
+
+### Artifact Discovery and Resolution
+
+The prepare step discovers all artifact files on disk, filters them through the registry, and optionally narrows the set to a specific persona collection. Dependency resolution ensures transitive handoff and requires references pull in all needed artifacts.
+
+```mermaid
+flowchart TB
+    REG[ai-artifacts-registry.json] -->|Get-RegistryData| INPUTS
+    CH[Channel: Stable / PreRelease] -->|Get-AllowedMaturities| INPUTS
+    CM["Collection Manifest<br/>optional"] -->|Get-CollectionManifest| INPUTS
+
+    INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
+
+    DISC --> AG["Agents<br/>.github/agents/*.agent.md"]
+    DISC --> PR["Prompts<br/>.github/prompts/*.prompt.md"]
+    DISC --> IN["Instructions<br/>.github/instructions/*.instructions.md"]
+    DISC --> SK["Skills<br/>.github/skills/*/SKILL.md"]
+
+    AG -->|Filter by maturity| FM[Maturity-Filtered Set]
+    PR -->|Filter by maturity| FM
+    IN -->|"Filter by maturity<br/>+ exclude hve-core/"| FM
+    SK -->|Filter by maturity| FM
+
+    FM --> CF{"Collection<br/>specified?"}
+    CF -->|No| FINAL[Final Artifact Set]
+    CF -->|Yes| PA["Filter by persona + globs<br/>Get-CollectionArtifacts"]
+    PA --> HD["Resolve Handoff Closure<br/>BFS through agent frontmatter"]
+    HD --> RD["Resolve Requires Dependencies<br/>BFS through registry requires"]
+    RD --> INT["Intersect with<br/>discovered artifacts"]
+    INT --> FINAL
+
+    FINAL --> UPD["Update package.json contributes<br/>chatAgents · chatPromptFiles<br/>chatInstructions · chatSkills"]
+```
 
 ## Packaging the Extension
 
@@ -121,11 +176,36 @@ The packaging script automatically:
 
 * Uses version from `package.json` (or specified version)
 * Optionally appends dev patch number for pre-release builds
-* Copies required `.github` directory
-* Copies `scripts/dev-tools` directory (developer utilities)
+* Copies required directories into `extension/` (or only filtered artifacts in collection mode)
 * Packages the extension using `vsce`
-* Cleans up temporary files
-* Restores original `package.json` version if temporarily modified
+* Cleans up temporary files and restores all modified files
+
+```mermaid
+flowchart TB
+    PKG["package.json"] -->|"Read & validate"| VER[Resolve Version]
+    VER --> TMPVER{"Version<br/>changed?"}
+    TMPVER -->|Yes| WRITE["Temporarily update<br/>package.json version"]
+    TMPVER -->|No| PREP
+    WRITE --> PREP[Prepare Extension Directory]
+
+    PREP --> MODE{"Collection<br/>mode?"}
+    MODE -->|"Full (default)"| FULL["Copy entire .github/<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/<br/>+ .github/skills/"]
+    MODE -->|Collection| COLL["Copy only artifacts listed<br/>in package.json contributes<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/"]
+
+    FULL --> RDM{"Persona<br/>README?"}
+    COLL --> RDM
+    RDM -->|Yes| SWAP["Swap README.md<br/>with README.{id}.md"]
+    RDM -->|No| VSCE
+    SWAP --> VSCE
+
+    VSCE["vsce package --no-dependencies"] --> VSIX[".vsix output"]
+
+    VSIX --> CLEAN["Finally: Cleanup"]
+    CLEAN --> R1["Restore package.json.bak"]
+    CLEAN --> R2["Restore README.md.bak"]
+    CLEAN --> R3["Remove .github/ docs/ scripts/"]
+    CLEAN --> R4["Restore original version"]
+```
 
 ### Manual Packaging (Legacy)
 
@@ -344,13 +424,34 @@ The template file stays clean. Use `git checkout extension/package.json` to rest
 
 ### Collection Resolution
 
-When building a collection, the system:
+When building a collection, the system applies a multi-stage filter pipeline: persona matching, maturity gating, optional glob patterns, and two rounds of dependency resolution.
 
-1. Reads the collection manifest to get the target personas
-2. Reads the artifact registry (`.github/ai-artifacts-registry.json`)
-3. Includes artifacts whose `personas` array contains any of the collection's personas
-4. Includes artifacts with an empty `personas` array (universal artifacts shared across all collections)
-5. Resolves artifact dependencies to ensure completeness
+```mermaid
+flowchart TB
+    REG["Registry Entry<br/>personas · maturity · requires"] --> PF{"Persona match?<br/>empty personas = universal"}
+    CM["Collection Manifest<br/>personas array"] --> PF
+    CH["Channel<br/>Stable / PreRelease"] --> MF
+
+    PF -->|Yes| MF{"Maturity<br/>allowed?"}
+    PF -->|No| EXCLUDE[Excluded]
+
+    MF -->|Yes| GLOB{"Passes include/exclude<br/>glob filter?"}
+    MF -->|No| EXCLUDE
+
+    GLOB -->|Yes| SEED[Seed Artifact]
+    GLOB -->|No| EXCLUDE
+
+    SEED --> HANDOFF["Resolve Handoff Closure<br/>BFS through agent frontmatter<br/>handoff targets bypass maturity filter"]
+    HANDOFF --> REQUIRES["Resolve Requires Dependencies<br/>BFS through registry requires blocks<br/>across agents · prompts · instructions · skills"]
+    REQUIRES --> FINAL[Final Collection Artifact Set]
+```
+
+Key behaviors:
+
+* Artifacts with an empty `personas` array are universal and included in every collection
+* Handoff targets bypass maturity filtering by design (an agent must be able to hand off to its declared targets)
+* The `requires` block supports transitive resolution: if agent A requires agent B, and B requires instruction C, all three are included
+* Optional `include` and `exclude` glob arrays in the collection manifest provide fine-grained control per artifact type
 
 ### Testing Collection Builds Locally
 
