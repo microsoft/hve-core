@@ -2,7 +2,6 @@
 name: prompt-analyze
 description: Evaluate prompt engineering artifacts against quality criteria without modification.
 maturity: stable
-context: fork
 agent: prompt-builder
 disable-model-invocation: true
 argument-hint: "file=..."

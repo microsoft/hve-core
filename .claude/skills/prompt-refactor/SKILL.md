@@ -2,7 +2,6 @@
 name: prompt-refactor
 description: Refactor and compress prompt engineering artifacts through iterative improvement.
 maturity: stable
-context: fork
 agent: prompt-builder
 disable-model-invocation: true
 argument-hint: "file=... [requirements=...]"

@@ -2,7 +2,6 @@
 name: prompt-build
 description: Build or improve prompt engineering artifacts following quality criteria. Dispatches prompt-builder agent for phase-based authoring workflow.
 maturity: stable
-context: fork
 agent: prompt-builder
 disable-model-invocation: true
 argument-hint: "file=... [requirements=...]"
