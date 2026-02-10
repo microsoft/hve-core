@@ -912,6 +912,309 @@ Describe 'Restore-PackageJsonVersion' {
     }
 }
 
+Describe 'Get-PersonaReadmePath' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "persona-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testDir 'extension'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Returns null for hve-core-all collection' {
+        $collectionPath = Join-Path $script:testDir 'collection.json'
+        @{ id = 'hve-core-all'; name = 'all' } | ConvertTo-Json | Set-Content $collectionPath
+
+        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Returns persona README path when file exists' {
+        $collectionPath = Join-Path $script:testDir 'collection.json'
+        @{ id = 'developer'; name = 'dev' } | ConvertTo-Json | Set-Content $collectionPath
+
+        $personaReadme = Join-Path $script:extDir 'README.developer.md'
+        Set-Content -Path $personaReadme -Value '# Developer README'
+
+        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -Be $personaReadme
+    }
+
+    It 'Returns null when persona README file does not exist' {
+        $collectionPath = Join-Path $script:testDir 'collection.json'
+        @{ id = 'security'; name = 'sec' } | ConvertTo-Json | Set-Content $collectionPath
+
+        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Set-PersonaReadme' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "set-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    BeforeEach {
+        New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Original README'
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Swaps README.md with persona README and creates backup' {
+        $personaPath = Join-Path $script:testDir 'README.developer.md'
+        Set-Content -Path $personaPath -Value '# Developer README'
+
+        Set-PersonaReadme -ExtensionDirectory $script:testDir -PersonaReadmePath $personaPath -Operation Swap
+
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Developer README'
+
+        Test-Path (Join-Path $script:testDir 'README.md.bak') | Should -BeTrue
+        $backupContent = Get-Content -Path (Join-Path $script:testDir 'README.md.bak') -Raw
+        $backupContent | Should -Match 'Original README'
+    }
+
+    It 'Warns and returns early when no persona path for swap' {
+        Mock Write-Warning {}
+        Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Swap
+
+        Should -Invoke Write-Warning -Times 1
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+    }
+
+    It 'Restores README.md from backup and removes backup file' {
+        # Create backup state
+        Set-Content -Path (Join-Path $script:testDir 'README.md.bak') -Value '# Original README'
+        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Persona README'
+
+        Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Restore
+
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+        Test-Path (Join-Path $script:testDir 'README.md.bak') | Should -BeFalse
+    }
+
+    It 'Restore is a no-op when no backup exists' {
+        { Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Restore } | Should -Not -Throw
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+    }
+}
+
+Describe 'Copy-CollectionArtifacts' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "copy-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testDir 'extension'
+        $script:repoRoot = Join-Path $script:testDir 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Copies agents from repo to extension directory' {
+        # Create source agent
+        $agentsSrc = Join-Path $script:repoRoot '.github/agents'
+        New-Item -Path $agentsSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsSrc 'task-planner.agent.md') -Value '# Agent'
+
+        # Create package.json with contributes referencing agents
+        $pkgJson = @{
+            contributes = @{
+                chatAgents = @(
+                    @{ path = './.github/agents/task-planner.agent.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/agents/task-planner.agent.md') | Should -BeTrue
+    }
+
+    It 'Copies prompts from repo to extension directory' {
+        # Create source prompt
+        $promptsSrc = Join-Path $script:repoRoot '.github/prompts'
+        New-Item -Path $promptsSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $promptsSrc 'my-prompt.prompt.md') -Value '# Prompt'
+
+        $pkgJson = @{
+            contributes = @{
+                chatPromptFiles = @(
+                    @{ path = './.github/prompts/my-prompt.prompt.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/prompts/my-prompt.prompt.md') | Should -BeTrue
+    }
+
+    It 'Copies instructions from repo to extension directory' {
+        # Create source instruction
+        $instrSrc = Join-Path $script:repoRoot '.github/instructions'
+        New-Item -Path $instrSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $instrSrc 'commit-message.instructions.md') -Value '# Instructions'
+
+        $pkgJson = @{
+            contributes = @{
+                chatInstructions = @(
+                    @{ path = './.github/instructions/commit-message.instructions.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/instructions/commit-message.instructions.md') | Should -BeTrue
+    }
+
+    It 'Copies skills recursively from repo to extension directory' {
+        # Create source skill with nested file
+        $skillSrc = Join-Path $script:repoRoot '.github/skills/video-to-gif'
+        New-Item -Path $skillSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'SKILL.md') -Value '# Skill'
+
+        $pkgJson = @{
+            contributes = @{
+                chatSkills = @(
+                    @{ path = './.github/skills/video-to-gif' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/skills/video-to-gif') | Should -BeTrue
+    }
+
+    It 'Skips missing source files without error' {
+        $pkgJson = @{
+            contributes = @{
+                chatAgents       = @( @{ path = './.github/agents/nonexistent.agent.md' } )
+                chatPromptFiles  = @( @{ path = './.github/prompts/nonexistent.prompt.md' } )
+                chatInstructions = @( @{ path = './.github/instructions/nonexistent.instructions.md' } )
+                chatSkills       = @( @{ path = './.github/skills/nonexistent' } )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+    }
+
+    It 'Handles empty contributes sections' {
+        $pkgJson = @{ contributes = @{} }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+    }
+}
+
+Describe 'Invoke-PackageExtension - Collection mode' {
+    BeforeAll {
+        $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testRoot 'extension'
+        $script:repoRoot = Join-Path $script:testRoot 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
+        New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+            contributes = @{}
+        }
+        $manifest | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+        Set-Content -Path (Join-Path $script:extDir 'README.md') -Value '# Default README'
+    }
+
+    AfterEach {
+        if (Test-Path $script:testRoot) {
+            Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Uses collection-filtered artifact copy when Collection specified' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $collectionPath = Join-Path $script:testRoot 'collection.json'
+        @{ id = 'developer'; name = 'dev'; displayName = 'Developer'; personas = @('developer') } | ConvertTo-Json | Set-Content $collectionPath
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -Collection $collectionPath
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Swaps persona README when collection has matching persona README' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $collectionPath = Join-Path $script:testRoot 'collection.json'
+        @{ id = 'developer'; name = 'dev'; displayName = 'Developer'; personas = @('developer') } | ConvertTo-Json | Set-Content $collectionPath
+
+        # Create persona README in extension directory
+        Set-Content -Path (Join-Path $script:extDir 'README.developer.md') -Value '# Developer Persona'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -Collection $collectionPath
+
+        # README should be restored after packaging completes
+        $readmeContent = Get-Content -Path (Join-Path $script:extDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Default README'
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Returns failure when no vsix file generated after successful vsce command' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -Match 'No .vsix file found after packaging'
+    }
+}
+
 Describe 'CI Integration - Package-Extension' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "ci-int-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
