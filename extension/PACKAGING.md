@@ -69,11 +69,17 @@ The extension is automatically packaged and published through GitHub Actions:
 First, update `package.json` with discovered agents, prompts, and instructions:
 
 ```bash
-# Discover components and update package.json
+# Discover components and update package.json (Stable channel)
 pwsh ./scripts/extension/Prepare-Extension.ps1
 
 # Or use npm script
 npm run extension:prepare
+
+# For PreRelease channel (includes preview and experimental artifacts)
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+
+# Or use npm script
+npm run extension:prepare:prerelease
 ```
 
 The preparation script automatically:
@@ -89,11 +95,17 @@ The preparation script automatically:
 Then package the extension:
 
 ```bash
-# Package using version from package.json
+# Package using version from package.json (Stable channel)
 pwsh ./scripts/extension/Package-Extension.ps1
 
 # Or use npm script
 npm run extension:package
+
+# Package for PreRelease channel
+pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease
+
+# Or use npm script
+npm run extension:package:prerelease
 
 # Package with specific version
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.3"
@@ -222,12 +234,15 @@ Users can switch between channels in VS Code via the "Switch to Pre-Release Vers
 Package for the pre-release channel with the `-PreRelease` switch:
 
 ```bash
+# Prepare with PreRelease channel filtering
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
+# Or use npm script
+npm run extension:prepare:prerelease
+
 # Package for pre-release channel (includes experimental agents)
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
-
-# Prepare with PreRelease channel filtering first
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
-pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.1.0" -PreRelease
+# Or use npm script for default version
+npm run extension:package:prerelease
 ```
 
 The `-PreRelease` switch adds `--pre-release` to the vsce command, marking the package for the Marketplace pre-release track.
