@@ -32,6 +32,7 @@ BeforeAll {
     $script:ExtraPropertiesPath = Join-Path $script:FixtureDir 'extra-properties.json'
     $script:InvalidPersonaFormatInArtifactPath = Join-Path $script:FixtureDir 'invalid-persona-format-in-artifact.json'
     $script:ExtraPersonaPropertiesPath = Join-Path $script:FixtureDir 'extra-persona-properties.json'
+    $script:RenamedFileMismatchPath = Join-Path $script:FixtureDir 'renamed-file-mismatch.json'
     $script:SchemaPath = Join-Path $PSScriptRoot '../../linting/schemas/ai-artifacts-registry.schema.json'
 }
 
@@ -816,6 +817,115 @@ Describe 'Find-OrphanArtifacts' -Tag 'Unit' {
             }
             $result = Find-OrphanArtifacts -Registry $registry -RepoRoot $emptyRepoRoot
             $result.Warnings.Count | Should -Be 0
+        }
+    }
+}
+
+#endregion
+
+#region Renamed-File Mismatch Tests (Dual-Direction Detection)
+
+Describe 'Renamed-File Mismatch Detection' -Tag 'Unit' {
+    BeforeAll {
+        $script:RenameTestRoot = Join-Path $TestDrive 'rename-test-repo'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:RenameTestRoot) {
+            Remove-Item -Path $script:RenameTestRoot -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/agents" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/prompts" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/instructions" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/skills" -Force | Out-Null
+    }
+
+    Context 'File added but not in registry (orphan promoted to error with -WarningsAsErrors)' {
+        It 'Detects orphan file and treats as error when WarningsAsErrors is enabled' {
+            Set-Content -Path "$script:RenameTestRoot/.github/agents/new-unregistered.agent.md" -Value '# New Agent'
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:RenameTestRoot
+            $orphanResult.Warnings | Where-Object { $_ -match 'new-unregistered' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'File removed but still in registry (existence error)' {
+        It 'Detects missing file for stale registry key' {
+            # Registry references old-agent-name but no file exists
+            $content = Get-Content $script:RenamedFileMismatchPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+            $result = Test-ArtifactFileExistence -Registry $registry -RepoRoot $script:RenameTestRoot
+            $result.Success | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'agents/old-agent-name: File not found' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Renamed file: old key errors AND new file detected as orphan' {
+        It 'Detects both old-key existence error and new-file orphan warning' {
+            # Registry has old-agent-name; file was renamed to new-agent-name on disk
+            Set-Content -Path "$script:RenameTestRoot/.github/agents/new-agent-name.agent.md" -Value '# Renamed Agent'
+
+            $content = Get-Content $script:RenamedFileMismatchPath -Raw
+            $registry = $content | ConvertFrom-Json -AsHashtable
+
+            # Old key should fail existence check
+            $existenceResult = Test-ArtifactFileExistence -Registry $registry -RepoRoot $script:RenameTestRoot
+            $existenceResult.Success | Should -BeFalse
+            $existenceResult.Errors | Where-Object { $_ -match 'agents/old-agent-name: File not found' } | Should -Not -BeNullOrEmpty
+
+            # New file should be detected as orphan
+            $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:RenameTestRoot
+            $orphanResult.Warnings | Where-Object { $_ -match 'new-agent-name' } | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Covers instruction file rename across subdirectories' {
+            # Registry has instruction key "subdir/old-instruction"; file renamed to "subdir/new-instruction"
+            New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/instructions/subdir" -Force | Out-Null
+            Set-Content -Path "$script:RenameTestRoot/.github/instructions/subdir/new-instruction.instructions.md" -Value '# Renamed Instruction'
+
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{
+                    'subdir/old-instruction' = @{
+                        maturity = 'stable'
+                        personas = @('developer')
+                        tags     = @('test')
+                    }
+                }
+                skills       = @{}
+            }
+
+            # Old key should fail existence check
+            $existenceResult = Test-ArtifactFileExistence -Registry $registry -RepoRoot $script:RenameTestRoot
+            $existenceResult.Success | Should -BeFalse
+            $existenceResult.Errors | Where-Object { $_ -match 'instructions/subdir/old-instruction: File not found' } | Should -Not -BeNullOrEmpty
+
+            # New file should be detected as orphan
+            $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:RenameTestRoot
+            $orphanResult.Warnings | Where-Object { $_ -match 'new-instruction' } | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'hve-core exclusion preserved during rename scenarios' {
+        It 'Does not report orphan for renamed file under hve-core directory' {
+            New-Item -ItemType Directory -Path "$script:RenameTestRoot/.github/instructions/hve-core" -Force | Out-Null
+            Set-Content -Path "$script:RenameTestRoot/.github/instructions/hve-core/renamed-workflow.instructions.md" -Value '# Renamed'
+
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+
+            $orphanResult = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:RenameTestRoot
+            $orphanResult.Warnings | Where-Object { $_ -match 'hve-core' } | Should -BeNullOrEmpty
         }
     }
 }

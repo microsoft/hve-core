@@ -89,6 +89,15 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  artifact-registry-validation:
+    name: Artifact Registry Validation
+    uses: ./.github/workflows/artifact-registry-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      warnings-as-errors: true
+
   link-lang-check:
     name: Link Language Check
     uses: ./.github/workflows/link-lang-check.yml
