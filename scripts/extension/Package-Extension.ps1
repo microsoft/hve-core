@@ -542,7 +542,7 @@ function Copy-CollectionArtifacts {
         $agentsDestDir = Join-Path $ExtensionDirectory ".github/agents"
         New-Item -Path $agentsDestDir -ItemType Directory -Force | Out-Null
         foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
-            $srcPath = Join-Path $RepoRoot ($agent.path.TrimStart('./'))
+            $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
             if (Test-Path $srcPath) {
                 Copy-Item -Path $srcPath -Destination $agentsDestDir -Force
             }
@@ -552,8 +552,8 @@ function Copy-CollectionArtifacts {
     # Copy filtered prompts
     if ($preparedPkgJson.contributes.chatPromptFiles) {
         foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
-            $srcPath = Join-Path $RepoRoot ($prompt.path.TrimStart('./'))
-            $destPath = Join-Path $ExtensionDirectory ($prompt.path.TrimStart('./'))
+            $srcPath = Join-Path $RepoRoot ($prompt.path -replace '^\.[\\/]', '')
+            $destPath = Join-Path $ExtensionDirectory ($prompt.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
             New-Item -Path $destDir -ItemType Directory -Force | Out-Null
             if (Test-Path $srcPath) {
@@ -565,8 +565,8 @@ function Copy-CollectionArtifacts {
     # Copy filtered instructions
     if ($preparedPkgJson.contributes.chatInstructions) {
         foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
-            $srcPath = Join-Path $RepoRoot ($instr.path.TrimStart('./'))
-            $destPath = Join-Path $ExtensionDirectory ($instr.path.TrimStart('./'))
+            $srcPath = Join-Path $RepoRoot ($instr.path -replace '^\.[\\/]', '')
+            $destPath = Join-Path $ExtensionDirectory ($instr.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
             New-Item -Path $destDir -ItemType Directory -Force | Out-Null
             if (Test-Path $srcPath) {
@@ -578,8 +578,8 @@ function Copy-CollectionArtifacts {
     # Copy filtered skills
     if ($preparedPkgJson.contributes.chatSkills) {
         foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
-            $srcPath = Join-Path $RepoRoot ($skill.path.TrimStart('./'))
-            $destPath = Join-Path $ExtensionDirectory ($skill.path.TrimStart('./'))
+            $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
+            $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
             if (Test-Path $srcPath) {
                 Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
             }

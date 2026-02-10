@@ -214,12 +214,14 @@ Some artifacts require other artifacts to function correctly. The `requires` fie
 
 ### Dependency Types
 
-| Type           | Purpose                                                  |
-|----------------|----------------------------------------------------------|
-| `agents`       | Agents this artifact delegates to or hands off to        |
-| `prompts`      | Prompts this artifact invokes or references              |
-| `instructions` | Instructions this artifact relies on for code generation |
-| `skills`       | Skills this artifact executes for specialized tasks      |
+| Type           | Purpose                                                                          |
+|----------------|----------------------------------------------------------------------------------|
+| `agents`       | Agents this artifact dispatches at runtime via `runSubagent` (excludes handoffs)  |
+| `prompts`      | Prompts this artifact invokes or references                                      |
+| `instructions` | Instructions this artifact relies on for code generation                         |
+| `skills`       | Skills this artifact executes for specialized tasks                              |
+
+> **Note**: Frontmatter `handoffs` (UI buttons that suggest next agents) are resolved dynamically during packaging and MUST NOT be listed in `requires.agents`. Only agents invoked programmatically through `runSubagent` belong here.
 
 ### Declaring Dependencies
 
