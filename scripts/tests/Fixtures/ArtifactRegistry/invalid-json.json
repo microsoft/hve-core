@@ -1,4 +1,4 @@
 {
-    "$schema": "../schemas/ai-artifacts-registry.schema.json",
+    "$schema": "../../../linting/schemas/ai-artifacts-registry.schema.json",
     "version": "1.0""malformed JSON - missing comma after version"
 }
