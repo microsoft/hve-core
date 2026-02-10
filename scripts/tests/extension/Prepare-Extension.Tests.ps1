@@ -21,58 +21,6 @@ Describe 'Get-AllowedMaturities' {
 
 }
 
-Describe 'Get-FrontmatterData' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Extracts description from frontmatter' {
-        $testFile = Join-Path $script:tempDir 'test.md'
-        @'
----
-description: "Test description"
----
-# Content
-'@ | Set-Content -Path $testFile
-
-        $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
-        $result.description | Should -Be 'Test description'
-    }
-
-    It 'Returns hashtable with only description key' {
-        $testFile = Join-Path $script:tempDir 'desc-only.md'
-        @'
----
-description: "Desc"
-maturity: preview
----
-# Content
-'@ | Set-Content -Path $testFile
-
-        $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'fallback'
-        $result.Keys | Should -Contain 'description'
-        $result.Keys | Should -Not -Contain 'maturity'
-    }
-
-    It 'Uses fallback description when not in frontmatter' {
-        $testFile = Join-Path $script:tempDir 'no-desc.md'
-        @'
----
-applyTo: "**"
----
-# Content
-'@ | Set-Content -Path $testFile
-
-        $result = Get-FrontmatterData -FilePath $testFile -FallbackDescription 'My Fallback'
-        $result.description | Should -Be 'My Fallback'
-    }
-}
-
 Describe 'Test-PathsExist' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())

@@ -461,51 +461,6 @@ function Resolve-RequiresDependencies {
     }
 }
 
-function Get-FrontmatterData {
-    <#
-    .SYNOPSIS
-        Extracts description from YAML frontmatter.
-    .DESCRIPTION
-        Function that parses YAML frontmatter from a markdown file
-        and returns a hashtable with the description value.
-    .PARAMETER FilePath
-        Path to the markdown file to parse.
-    .PARAMETER FallbackDescription
-        Default description if none found in frontmatter.
-    .OUTPUTS
-        [hashtable] With description key.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath,
-
-        [Parameter(Mandatory = $false)]
-        [string]$FallbackDescription = ""
-    )
-
-    $content = Get-Content -Path $FilePath -Raw
-    $description = ""
-
-    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-        $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
-        try {
-            $data = ConvertFrom-Yaml -Yaml $yamlContent
-            if ($data.ContainsKey('description')) {
-                $description = $data.description
-            }
-        }
-        catch {
-            Write-Warning "Failed to parse YAML frontmatter in $(Split-Path -Leaf $FilePath): $_"
-        }
-    }
-
-    return @{
-        description = if ($description) { $description } else { $FallbackDescription }
-    }
-}
-
 function Test-PathsExist {
     <#
     .SYNOPSIS
@@ -619,17 +574,14 @@ function Get-DiscoveredAgents {
             $maturity = $Registry.agents[$agentName].maturity
         }
 
-        $frontmatter = Get-FrontmatterData -FilePath $agentFile.FullName -FallbackDescription "AI agent for $agentName"
-
         if ($AllowedMaturities -notcontains $maturity) {
             $result.Skipped += @{ Name = $agentName; Reason = "maturity: $maturity" }
             continue
         }
 
         $result.Agents += [PSCustomObject]@{
-            name        = $agentName
-            path        = "./.github/agents/$($agentFile.Name)"
-            description = $frontmatter.description
+            name = $agentName
+            path = "./.github/agents/$($agentFile.Name)"
         }
     }
 
@@ -685,15 +637,11 @@ function Get-DiscoveredPrompts {
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
-        $displayName = ($promptName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
-
         # Determine maturity from registry if available, else default to stable
         $maturity = "stable"
         if ($Registry.Count -gt 0 -and $Registry.ContainsKey('prompts') -and $Registry.prompts.ContainsKey($promptName)) {
             $maturity = $Registry.prompts[$promptName].maturity
         }
-
-        $frontmatter = Get-FrontmatterData -FilePath $promptFile.FullName -FallbackDescription "Prompt for $displayName"
 
         if ($AllowedMaturities -notcontains $maturity) {
             $result.Skipped += @{ Name = $promptName; Reason = "maturity: $maturity" }
@@ -703,9 +651,8 @@ function Get-DiscoveredPrompts {
         $relativePath = [System.IO.Path]::GetRelativePath($GitHubDir, $promptFile.FullName) -replace '\\', '/'
 
         $result.Prompts += [PSCustomObject]@{
-            name        = $promptName
-            path        = "./.github/$relativePath"
-            description = $frontmatter.description
+            name = $promptName
+            path = "./.github/$relativePath"
         }
     }
 
@@ -768,7 +715,6 @@ function Get-DiscoveredInstructions {
         }
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
         $instrName = "$baseName-instructions"
-        $displayName = ($baseName -replace '-', ' ') -replace '(\b\w)', { $_.Groups[1].Value.ToUpper() }
 
         # Determine maturity from registry using relative path key
         $relPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
@@ -777,8 +723,6 @@ function Get-DiscoveredInstructions {
         if ($Registry.Count -gt 0 -and $Registry.ContainsKey('instructions') -and $Registry.instructions.ContainsKey($registryKey)) {
             $maturity = $Registry.instructions[$registryKey].maturity
         }
-
-        $frontmatter = Get-FrontmatterData -FilePath $instrFile.FullName -FallbackDescription "Instructions for $displayName"
 
         if ($AllowedMaturities -notcontains $maturity) {
             $result.Skipped += @{ Name = $instrName; Reason = "maturity: $maturity" }
@@ -789,9 +733,8 @@ function Get-DiscoveredInstructions {
         $normalizedRelativePath = (Join-Path ".github" $relativePathFromGitHub) -replace '\\', '/'
 
         $result.Instructions += [PSCustomObject]@{
-            name        = $instrName
-            path        = "./$normalizedRelativePath"
-            description = $frontmatter.description
+            name = $instrName
+            path = "./$normalizedRelativePath"
         }
     }
 
@@ -859,12 +802,9 @@ function Get-DiscoveredSkills {
             continue
         }
 
-        $frontmatter = Get-FrontmatterData -FilePath $skillFile -FallbackDescription "Skill for $skillName"
-
         $result.Skills += [PSCustomObject]@{
-            name        = $skillName
-            path        = "./.github/skills/$skillName"
-            description = $frontmatter.description
+            name = $skillName
+            path = "./.github/skills/$skillName"
         }
     }
 
@@ -917,6 +857,12 @@ function Update-PackageJsonContributes {
 
     # Clone the object to avoid modifying the original
     $updated = $PackageJson | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+
+    # Strip name and description; VS Code reads these from the files directly
+    $ChatAgents = @($ChatAgents | Select-Object -Property path)
+    $ChatPromptFiles = @($ChatPromptFiles | Select-Object -Property path)
+    $ChatInstructions = @($ChatInstructions | Select-Object -Property path)
+    $ChatSkills = @($ChatSkills | Select-Object -Property path)
 
     # Ensure contributes section exists
     if (-not $updated.contributes) {
