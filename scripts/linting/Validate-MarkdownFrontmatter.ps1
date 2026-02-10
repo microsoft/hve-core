@@ -274,8 +274,10 @@ function Test-JsonSchemaValidation {
 
     Limitations (intentional for soft validation):
     - $ref: Schema references not resolved
-    - allOf/anyOf/oneOf: Composition keywords not supported
-    - object: Nested object validation not implemented
+    - allOf/anyOf: Composition keywords not supported
+    - oneOf: Supported (exactly one subschema must match)
+    - object: Supported for required/properties/items patterns used in repo schemas
+    - additionalProperties: Not enforced
 
     .PARAMETER Frontmatter
     Hashtable containing parsed frontmatter key-value pairs.
