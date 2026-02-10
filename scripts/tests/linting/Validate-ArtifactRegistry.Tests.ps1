@@ -511,6 +511,37 @@ Describe 'Find-OrphanArtifacts' -Tag 'Unit' {
         }
     }
 
+    Context 'Repo-specific instruction exclusion' {
+        It 'Skips instruction files in hve-core subdirectory' {
+            New-Item -ItemType Directory -Path "$script:OrphanTestRoot/.github/instructions/hve-core" -Force | Out-Null
+            Set-Content -Path "$script:OrphanTestRoot/.github/instructions/hve-core/workflows.instructions.md" -Value '# Repo-specific'
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:OrphanTestRoot
+            $result.Warnings | Where-Object { $_ -match 'hve-core' } | Should -BeNullOrEmpty
+        }
+
+        It 'Still detects orphan instructions in other subdirectories' {
+            New-Item -ItemType Directory -Path "$script:OrphanTestRoot/.github/instructions/hve-core" -Force | Out-Null
+            New-Item -ItemType Directory -Path "$script:OrphanTestRoot/.github/instructions/other" -Force | Out-Null
+            Set-Content -Path "$script:OrphanTestRoot/.github/instructions/hve-core/workflows.instructions.md" -Value '# Repo-specific'
+            Set-Content -Path "$script:OrphanTestRoot/.github/instructions/other/orphan.instructions.md" -Value '# Orphan'
+            $registry = @{
+                agents       = @{}
+                prompts      = @{}
+                instructions = @{}
+                skills       = @{}
+            }
+            $result = Find-OrphanArtifacts -Registry $registry -RepoRoot $script:OrphanTestRoot
+            $result.Warnings | Where-Object { $_ -match 'other/orphan' } | Should -Not -BeNullOrEmpty
+            $result.Warnings | Where-Object { $_ -match 'hve-core' } | Should -BeNullOrEmpty
+        }
+    }
+
     Context 'Missing directories' {
         It 'Handles missing artifact directories gracefully' {
             $emptyRepoRoot = Join-Path $TestDrive 'empty-repo'

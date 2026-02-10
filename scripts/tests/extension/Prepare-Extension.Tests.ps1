@@ -231,6 +231,46 @@ applyTo: "**/*.ps1"
         $result = Get-DiscoveredInstructions -InstructionsDir $nonexistentPath -GitHubDir $script:ghDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeFalse
     }
+
+    It 'Skips repo-specific instructions in hve-core subdirectory' {
+        $hveCoreDir = Join-Path $script:instrDir 'hve-core'
+        New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
+        @'
+---
+description: "Repo-specific workflow instruction"
+applyTo: "**/.github/workflows/*.yml"
+---
+'@ | Set-Content -Path (Join-Path $hveCoreDir 'workflows.instructions.md')
+
+        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $instrNames = $result.Instructions | ForEach-Object { $_.name }
+        $instrNames | Should -Not -Contain 'workflows-instructions'
+        $result.Skipped | Where-Object { $_.Reason -match 'repo-specific' } | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Still discovers instructions in other subdirectories' {
+        $hveCoreDir = Join-Path $script:instrDir 'hve-core'
+        $otherDir = Join-Path $script:instrDir 'csharp'
+        New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $otherDir -Force | Out-Null
+        @'
+---
+description: "Repo-specific"
+applyTo: "**/.github/workflows/*.yml"
+---
+'@ | Set-Content -Path (Join-Path $hveCoreDir 'workflows.instructions.md')
+        @'
+---
+description: "C# instruction"
+applyTo: "**/*.cs"
+---
+'@ | Set-Content -Path (Join-Path $otherDir 'csharp.instructions.md')
+
+        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $instrNames = $result.Instructions | ForEach-Object { $_.name }
+        $instrNames | Should -Contain 'csharp-instructions'
+        $instrNames | Should -Not -Contain 'workflows-instructions'
+    }
 }
 
 Describe 'Get-RegistryData' {
