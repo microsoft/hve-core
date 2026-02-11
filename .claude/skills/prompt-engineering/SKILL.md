@@ -1,10 +1,11 @@
 ---
-description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
-applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md, .claude/agents/*.md'
+name: prompt-engineering
+description: Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria.
 maturity: stable
+user-invocable: false
 ---
 
-# Prompt Builder Instructions
+# Prompt Engineering
 
 Authoring standards for prompt engineering artifacts. Apply when creating or modifying prompt, agent, instructions, or skill files.
 
@@ -116,11 +117,11 @@ Directory structure:
 
 ```text
 .github/skills/<skill-name>/
-├── SKILL.md          # Main skill definition (required)
-├── scripts/          # Bash (.sh) and PowerShell (.ps1) scripts
-├── references/       # Technical reference files loaded on demand
-├── assets/           # Templates, images, and data files
-└── examples/         # Usage examples (recommended)
+  SKILL.md          # Main skill definition (required)
+  scripts/          # Bash (.sh) and PowerShell (.ps1) scripts
+  references/       # Technical reference files loaded on demand
+  assets/           # Templates, images, and data files
+  examples/         # Usage examples (recommended)
 ```
 
 Content structure (sections in order):
