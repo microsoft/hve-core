@@ -142,7 +142,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit $exitCode
     }
     catch {
-        Write-Error "Invoke-LinkLanguageCheck failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Invoke-LinkLanguageCheck failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

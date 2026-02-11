@@ -496,7 +496,7 @@ try {
     }
 }
 catch {
-    Write-Error "Generate PR Reference failed: $($_.Exception.Message)"
+    Write-Error -ErrorAction Continue "Generate PR Reference failed: $($_.Exception.Message)"
     Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
 }

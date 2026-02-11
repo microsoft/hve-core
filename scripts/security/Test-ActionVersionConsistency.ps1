@@ -417,7 +417,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Test-ActionVersionConsistency failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Test-ActionVersionConsistency failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

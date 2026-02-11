@@ -731,7 +731,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Prepare-Extension failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Prepare-Extension failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

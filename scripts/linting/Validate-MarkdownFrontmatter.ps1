@@ -786,7 +786,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
     }
     catch {
-        Write-Error "Validate-MarkdownFrontmatter failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Validate-MarkdownFrontmatter failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

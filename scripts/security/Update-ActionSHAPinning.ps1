@@ -908,8 +908,6 @@ function Set-ContentPreservePermission {
 
 #region Main Execution
 
-Set-StrictMode -Version Latest
-
 function Invoke-ActionSHAPinningUpdate {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([void])]
@@ -927,6 +925,8 @@ function Invoke-ActionSHAPinningUpdate {
         [Parameter()]
         [switch]$UpdateStale
     )
+
+    Set-StrictMode -Version Latest
 
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'
@@ -1018,7 +1018,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Update-ActionSHAPinning failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Update-ActionSHAPinning failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

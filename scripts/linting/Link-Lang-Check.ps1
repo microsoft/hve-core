@@ -386,7 +386,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Link-Lang-Check failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Link-Lang-Check failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

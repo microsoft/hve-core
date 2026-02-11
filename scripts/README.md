@@ -146,7 +146,8 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "ScriptName failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "ScriptName failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }

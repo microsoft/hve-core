@@ -397,7 +397,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Markdown-Link-Check failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Markdown-Link-Check failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

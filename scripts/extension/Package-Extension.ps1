@@ -823,13 +823,13 @@ if ($MyInvocation.InvocationName -ne '.') {
             -PreRelease:$PreRelease
 
         if (-not $result.Success) {
-            Write-Error $result.ErrorMessage
+            Write-Error -ErrorAction Continue $result.ErrorMessage
             exit 1
         }
         exit 0
     }
     catch {
-        Write-Error "Package-Extension failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Package-Extension failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
