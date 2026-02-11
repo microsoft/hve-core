@@ -6,65 +6,65 @@ ms.date: 2025-11-26
 ms.topic: reference
 ---
 
-This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (chatmodes, prompts, and instructions files).
+This document defines shared standards, conventions, and quality gates that apply to **all** AI artifact contributions to hve-core (agents, prompts, and instructions files).
 
-## Chatmodes Not Accepted
+## Agents Not Accepted
 
-The following chatmode types will likely be **rejected or closed automatically** because **equivalent chatmodes already exist in hve-core**:
+The following agent types will likely be **rejected or closed automatically** because **equivalent agents already exist in hve-core**:
 
-### Duplicate Chatmode Categories
+### Duplicate Agent Categories
 
-* **Research or Discovery Agents**: Chatmodes that search for, gather, or discover information
-  * ❌ Reason: Existing chatmodes already handle research and discovery workflows
-  * ✅ Alternative: Use existing research-focused chatmodes in `.github/chatmodes/`
+* **Research or Discovery Agents**: Agents that search for, gather, or discover information
+  * ❌ Reason: Existing agents already handle research and discovery workflows
+  * ✅ Alternative: Use existing research-focused agents in `.github/agents/`
 
-* **Indexing or Referencing Agents**: Chatmodes that catalog, index, or create references to existing projects
-  * ❌ Reason: Existing chatmodes already provide indexing and referencing capabilities
-  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core chatmodes
-  * ✅ Alternative: Use existing reference management chatmodes that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+* **Indexing or Referencing Agents**: Agents that catalog, index, or create references to existing projects
+  * ❌ Reason: Existing agents already provide indexing and referencing capabilities
+  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
+  * ✅ Alternative: Use existing reference management agents that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
 
-* **Planning Agents**: Chatmodes that plan work, break down tasks, or organize backlog items
-  * ❌ Reason: Existing chatmodes already handle work planning and task organization
-  * ✅ Alternative: Use existing planning-focused chatmodes in `.github/chatmodes/`
+* **Planning Agents**: Agents that plan work, break down tasks, or organize backlog items
+  * ❌ Reason: Existing agents already handle work planning and task organization
+  * ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
 
 * **Implementation Agents**: General-purpose coding agents that implement features
-  * ❌ Reason: Existing chatmodes already provide implementation guidance
-  * ✅ Alternative: Use existing implementation-focused chatmodes
+  * ❌ Reason: Existing agents already provide implementation guidance
+  * ✅ Alternative: Use existing implementation-focused agents
 
 ### Rationale for Rejection
 
-These chatmode types are rejected because:
+These agent types are rejected because:
 
-1. **Existing chatmodes are hardened and heavily utilized**: The hve-core library already contains production-tested chatmodes in these categories
-2. **Consistency and maintenance**: Coalescing around existing chatmodes reduces fragmentation and maintenance burden
-3. **Avoid duplication**: Multiple chatmodes serving the same purpose create confusion and divergent behavior
-4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing chatmodes
+1. **Existing agents are hardened and heavily utilized**: The hve-core library already contains production-tested agents in these categories
+2. **Consistency and maintenance**: Coalescing around existing agents reduces fragmentation and maintenance burden
+3. **Avoid duplication**: Multiple agents serving the same purpose create confusion and divergent behavior
+4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing agents
 
 ### Before Submitting
 
-When planning to submit a chatmode that falls into these categories:
+When planning to submit an agent that falls into these categories:
 
-1. **Question necessity**: Does your use case truly require a new chatmode, or can existing chatmodes meet your needs?
-2. **Review existing chatmodes**: Examine `.github/chatmodes/` to identify chatmodes that already serve your purpose
-3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing chatmodes
-4. **Consider enhancement over creation**: If existing chatmodes don't fully meet your requirements, evaluate whether your changes are:
+1. **Question necessity**: Does your use case truly require a new agent, or can existing agents meet your needs?
+2. **Review existing agents**: Examine `.github/agents/` to identify agents that already serve your purpose
+3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. **Consider enhancement over creation**: If existing agents don't fully meet your requirements, evaluate whether your changes are:
    * **Generic enough** to benefit all users
-   * **Valuable enough** to justify modifying the existing chatmode
-5. **Propose enhancements**: Submit a PR to enhance an existing chatmode rather than creating a duplicate
+   * **Valuable enough** to justify modifying the existing agent
+5. **Propose enhancements**: Submit a PR to enhance an existing agent rather than creating a duplicate
 
-### What Makes a Good New Chatmode
+### What Makes a Good New Agent
 
-Focus on chatmodes that:
+Focus on agents that:
 
-* **Fill gaps**: Address use cases not covered by existing chatmodes
+* **Fill gaps**: Address use cases not covered by existing agents
 * **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
-* **Are non-overlapping**: Have clearly distinct purposes from existing chatmodes
-* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing chatmodes
+* **Are non-overlapping**: Have clearly distinct purposes from existing agents
+* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing agents
 * **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
 
 ## Model Version Requirements
 
-All AI artifacts (chatmodes, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
+All AI artifacts (agents, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
 
 ### Accepted Models
 
@@ -84,6 +84,46 @@ All AI artifacts (chatmodes, instructions, prompts) **MUST** target the **latest
 2. **Maintenance burden**: Supporting multiple model versions creates testing and compatibility overhead
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
+
+## Maturity Field Requirements
+
+All AI artifacts (agents, instructions, prompts) **MUST** include a `maturity` field in frontmatter.
+
+### Purpose
+
+The maturity field controls which extension channel includes the artifact:
+
+* **Stable channel**: Only artifacts with `maturity: stable`
+* **Pre-release channel**: Artifacts with `stable`, `preview`, or `experimental` maturity
+
+### Valid Values
+
+| Value          | Description                                 | Stable Channel | Pre-release Channel |
+|----------------|---------------------------------------------|----------------|---------------------|
+| `stable`       | Production-ready, fully tested              | ✅ Included     | ✅ Included          |
+| `preview`      | Feature-complete, may have rough edges      | ❌ Excluded     | ✅ Included          |
+| `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
+| `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
+
+### Default for New Contributions
+
+New artifacts **SHOULD** use `maturity: stable` unless:
+
+* The artifact is a proof-of-concept or experimental feature
+* The artifact requires additional testing or feedback before wide release
+* The contributor explicitly intends to target early adopters
+
+### Example
+
+```yaml
+---
+description: 'Specialized agent for security analysis'
+maturity: 'stable'
+tools: ['codebase', 'search']
+---
+```
+
+For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
 **Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
 
@@ -443,13 +483,40 @@ Brought to you by microsoft/hve-core
 * Exact text: "Brought to you by microsoft/hve-core"
 * Or team-specific: "Brought to you by microsoft/edge-ai"
 
+## GitHub Issue Title Conventions
+
+When filing issues against hve-core, use Conventional Commit-style title prefixes that match the repository's commit message format.
+
+### Issue Title Format
+
+| Issue Type           | Title Prefix          | Example                                         |
+|----------------------|-----------------------|-------------------------------------------------|
+| Bug reports          | `fix:`                | `fix: validation script fails on Windows paths` |
+| Agent requests       | `feat(agents):`       | `feat(agents): add Azure cost analysis agent`   |
+| Prompt requests      | `feat(prompts):`      | `feat(prompts): add PR description generator`   |
+| Instruction requests | `feat(instructions):` | `feat(instructions): add Go language standards` |
+| Skill requests       | `feat(skills):`       | `feat(skills): add diagram generation skill`    |
+| General features     | `feat:`               | `feat: support multi-root workspaces`           |
+| Documentation        | `docs:`               | `docs: clarify installation steps`              |
+
+### Benefits
+
+* Issue titles align with commit and PR title conventions
+* Automated changelog generation works correctly
+* Scopes clearly identify affected artifact categories
+* Consistent formatting across all project tracking
+
+### Reference
+
+See [commit-message.instructions.md](../../.github/instructions/commit-message.instructions.md) for the complete list of types and scopes.
+
 ## Getting Help
 
 When contributing AI artifacts:
 
 ### Review Examples
 
-* **Chatmodes**: Examine files in `.github/chatmodes/`
+* **Agents**: Examine files in `.github/agents/`
 * **Prompts**: Examine files in `.github/prompts/`
 * **Instructions**: Examine files in `.github/instructions/`
 
@@ -457,7 +524,7 @@ When contributing AI artifacts:
 
 * Read `.github/copilot-instructions.md` for repository-wide conventions
 * Review existing files in same category for patterns
-* Use `prompt-builder.chatmode.md` agent for guided assistance
+* Use `prompt-builder.agent.md` agent for guided assistance
 
 ### Ask Questions
 
@@ -467,11 +534,14 @@ When contributing AI artifacts:
 
 ### Common Resources
 
-* [Contributing Chatmodes](chatmodes.md) - Agent configurations
+* [Contributing Custom Agents](custom-agents.md) - Agent configurations
 * [Contributing Prompts](prompts.md) - Workflow guidance
 * [Contributing Instructions](instructions.md) - Technology standards
-* [Pull Request Template](../../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
+* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 
 ---
 
-Brought to you by microsoft/hve-core
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

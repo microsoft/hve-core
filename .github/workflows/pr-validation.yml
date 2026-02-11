@@ -8,6 +8,10 @@ on:
       - develop
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 # Minimal permissions for security
 permissions:
   contents: read
@@ -46,6 +50,34 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  copyright-headers:
+    name: Copyright Headers
+    uses: ./.github/workflows/copyright-headers.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  yaml-lint:
+    name: YAML Lint
+    uses: ./.github/workflows/yaml-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+
+  pester-tests:
+    name: PowerShell Tests
+    uses: ./.github/workflows/pester-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      soft-fail: false
+      changed-files-only: false
+      code-coverage: true
+
   frontmatter-validation:
     name: Frontmatter Validation
     uses: ./.github/workflows/frontmatter-validation.yml
@@ -83,3 +115,34 @@ jobs:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  npm-audit:
+    name: npm Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+
+  codeql:
+    name: CodeQL Security Analysis
+    uses: ./.github/workflows/codeql-analysis.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read

@@ -1,0 +1,113 @@
+name: Package Extension
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Full version to use (e.g., 1.0.0 or empty to use package.json)'
+        required: false
+        type: string
+        default: ''
+      dev-patch-number:
+        description: 'Dev patch number to append (creates version like 1.0.0-dev.123)'
+        required: false
+        type: string
+        default: ''
+      use-changelog:
+        description: 'Whether to download and use changelog artifact'
+        required: false
+        type: boolean
+        default: false
+      channel:
+        description: 'Release channel (Stable or PreRelease) controlling agent maturity filtering'
+        required: false
+        type: string
+        default: 'Stable'
+    outputs:
+      version:
+        description: 'Version that was packaged'
+        value: ${{ jobs.package.outputs.version }}
+      vsix-file:
+        description: 'Path to the packaged VSIX file'
+        value: ${{ jobs.package.outputs.vsix-file }}
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      vsix-file: ${{ steps.package.outputs.vsix-file }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install -g @vscode/vsce@3.7.1
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Download changelog artifact
+        if: inputs.use-changelog
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: changelog
+          path: ./
+        continue-on-error: true
+
+      - name: Prepare extension resources
+        id: prepare
+        shell: pwsh
+        run: |
+          $channel = "${{ inputs.channel }}".Trim()
+          if (-not $channel) { $channel = 'Stable' }
+          
+          Write-Host "🔧 Preparing extension for $channel channel..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel
+
+      - name: Package extension
+        id: package
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}".Trim()
+          $devPatch = "${{ inputs.dev-patch-number }}".Trim()
+          
+          Write-Host "📦 Packaging extension..."
+          
+          $arguments = @{}
+          
+          if ($version) {
+            $arguments['Version'] = $version
+          }
+          
+          if ($devPatch) {
+            $arguments['DevPatchNumber'] = $devPatch
+          }
+          
+          if (Test-Path "./CHANGELOG.md") {
+            $arguments['ChangelogPath'] = "./CHANGELOG.md"
+          }
+          
+          ./scripts/extension/Package-Extension.ps1 @arguments
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: extension-vsix
+          path: extension/*.vsix
+          retention-days: 30

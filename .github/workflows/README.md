@@ -52,6 +52,7 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
 | `main.yml`                        | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
+| `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
 
 **pr-validation.yml jobs**: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
@@ -113,11 +114,6 @@ All workflows in this repository follow security best practices:
 * `persist-credentials: false` used in checkouts to prevent credential leakage
 * Secrets inherited explicitly with `secrets: inherit`
 * No hardcoded tokens or credentials
-
-### Network Hardening
-
-* `step-security/harden-runner` used in all jobs for egress policy auditing
-* Egress policy set to `audit` mode for visibility
 
 ## Maintenance
 
@@ -215,6 +211,21 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 * High: 181-365 days
 * Critical: >365 days
 
+#### `scorecard.yml`
+
+**Purpose**: Performs OpenSSF Scorecard analysis for security posture assessment
+
+**Triggers**: `schedule` (Sundays at 3 AM UTC), `push` to main
+
+**Features**:
+
+* **Analysis**: Supply chain security, CI/CD best practices, code review practices
+* **Integration**: Results published to OpenSSF Scorecard API and GitHub Security tab
+* **Badge**: Live Scorecard badge available for README display
+* **Artifacts**: SARIF results retained for 90 days
+
+**Outputs**: SARIF results uploaded to GitHub Security tab, job summary with badge link
+
 ## Architecture Decisions
 
 ### CodeQL Execution Strategy
@@ -236,13 +247,13 @@ This architecture ensures:
 
 **Workflow Execution Matrix**:
 
-| Event                                | Workflows That Run                                       | CodeQL Included    |
-|--------------------------------------|----------------------------------------------------------|--------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅ Yes              |
-| Merge to main                        | `main.yml` (5 jobs)                                      | ✅ Yes              |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅ Yes (standalone) |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌ No               |
+| Event                                | Workflows That Run                                       | CodeQL Included       |
+|--------------------------------------|----------------------------------------------------------|-----------------------|
+| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
+| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
+| Merge to main                        | `main.yml` (5 jobs)                                      | ✅  Yes               |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
@@ -252,7 +263,7 @@ To add a new workflow to the repository:
 
 1. Create `{tool-name}.yml` following existing patterns
 2. Implement 4-channel result publishing (annotations, artifacts, SARIF if security, summaries)
-3. Add harden-runner and SHA pinning
+3. Use SHA pinning for all actions
 4. Use minimal permissions
 5. Add soft-fail input support
 6. Update `pr-validation.yml` and `main.yml` to include new job
@@ -487,7 +498,6 @@ permissions:
 
 * All actions MUST be pinned to SHA commits (not tags or branches)
 * Include SHA comment showing the tag/version (e.g., `# v4.2.2`)
-* Use Harden Runner for audit logging
 * Disable credential persistence when checking out code: `persist-credentials: false`
 
 ## Troubleshooting

@@ -66,11 +66,22 @@ Prompt files **MUST**:
 
 * **Purpose**: Defines when/how the prompt is invoked
 * **Valid values**:
-  * `agent` - Used by specialized AI agents/chatmodes
+  * `agent` - Used by specialized AI agents
   * `assistant` - General-purpose assistance context
   * `copilot` - GitHub Copilot-specific workflows
   * `workflow` - Automated workflow/pipeline context
 * **Example**: `workflow`
+
+**`maturity`** (string enum, MANDATORY)
+
+* **Purpose**: Controls which extension channel includes this prompt
+* **Valid values**:
+  * `stable` - Production-ready, included in Stable and Pre-release channels
+  * `preview` - Feature-complete, included in Pre-release channel only
+  * `experimental` - Early development, included in Pre-release channel only
+  * `deprecated` - Scheduled for removal, excluded from all channels
+* **Default**: New prompts should use `stable` unless targeting early adopters
+* **Example**: `stable`
 
 ### Optional Fields
 
@@ -105,6 +116,7 @@ Prompt files **MUST**:
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
 mode: 'workflow'
+maturity: 'stable'
 category: 'ado'
 version: '1.0.0'
 author: 'microsoft/hve-core'
@@ -296,7 +308,7 @@ What artifacts are produced:
 ## Output Artifacts
 
 1. **Pull Request**: Created in ADO with metadata
-2. **Handoff Document**: `.copilot-tracking/pr/YYYYMMDD-pr-{{id}}-handoff.md`
+2. **Handoff Document**: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
 3. **Validation Report**: Summary of PR creation status
 ```
 
@@ -375,7 +387,7 @@ Specifications for generated files:
 ```markdown
 ## Handoff Document Format
 
-File: `.copilot-tracking/pr/YYYYMMDD-pr-{{id}}-handoff.md`
+File: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
 
 Content:
 
@@ -417,6 +429,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
+* [ ] Maturity field set appropriately (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined
@@ -491,7 +504,7 @@ All checks **MUST** pass before merge.
 ## Related Documentation
 
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Chatmodes](chatmodes.md) - AI agent configuration files
+* [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
 * [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
@@ -501,4 +514,7 @@ See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#gettin
 
 ---
 
-Brought to you by microsoft/hve-core
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

@@ -19,9 +19,39 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── dev-tools/       Development utilities (PR reference generation)
+├── extension/       VS Code extension packaging utilities
+├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
-└── security/        Security scanning and SHA pinning scripts
+├── security/        Security scanning and SHA pinning scripts
+└── tests/           Pester test organization
 ```
+
+## Dev Tools
+
+Development utilities for working with hve-core.
+
+| Script                     | Purpose                                   |
+|----------------------------|-------------------------------------------|
+| `Generate-PrReference.ps1` | Generate PR reference XML for reviews     |
+| `pr-ref-gen.sh`            | Shell wrapper for PR reference generation |
+
+## Extension
+
+VS Code extension packaging utilities.
+
+| Script                  | Purpose                                  |
+|-------------------------|------------------------------------------|
+| `Package-Extension.ps1` | Package the VS Code extension            |
+| `Prepare-Extension.ps1` | Prepare extension contents for packaging |
+
+## Library
+
+Shared utility modules used across scripts.
+
+| Script                     | Purpose                              |
+|----------------------------|--------------------------------------|
+| `Get-VerifiedDownload.ps1` | Download files with SHA verification |
 
 ## Linting Scripts
 
@@ -42,6 +72,24 @@ The `security/` directory contains scripts for security scanning and dependency 
 * **Dependency Pinning**: Validate SHA pinning compliance
 * **SHA Staleness**: Check for outdated SHA pins
 * **SHA Updates**: Automate updating GitHub Actions SHA pins
+
+## Tests
+
+Pester test organization matching the scripts structure.
+
+| Directory    | Tests For                     |
+|--------------|-------------------------------|
+| `dev-tools/` | PR reference generation tests |
+| `extension/` | Extension packaging tests     |
+| `lib/`       | Library utility tests         |
+| `linting/`   | Linting script tests          |
+| `security/`  | Security validation tests     |
+
+Run all tests:
+
+```bash
+npm run test
+```
 
 ## Usage
 

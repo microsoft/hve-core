@@ -1,0 +1,25 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+        informational: true
+
+ignore:
+  - "scripts/tests/**"
+  - "logs/**"
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true
+
+flags:
+  pester:
+    paths:
+      - "scripts/**"
+    carryforward: true

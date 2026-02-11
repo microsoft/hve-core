@@ -1,8 +1,10 @@
-﻿# Validate-MarkdownFrontmatter.ps1
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+# Validate-MarkdownFrontmatter.ps1
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
-# Created: 2025-11-05
 #
 # This script validates:
 # - Required frontmatter fields (title, description, author, ms.date)
@@ -10,12 +12,27 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
+#Requires -Version 7.0
+
+using namespace System.Collections.Generic
+# Import FrontmatterValidation module with 'using' to make PowerShell class types
+# (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
+using module .\Modules\FrontmatterValidation.psm1
+
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$Paths = @('.'),
 
     [Parameter(Mandatory = $false)]
     [string[]]$Files = @(),
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$ExcludePaths = @(
+        'scripts/tests/Fixtures/**',
+        'extension/README.md',
+        'pr.md',
+        '.github/PULL_REQUEST_TEMPLATE.md'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$WarningsAsErrors,
@@ -27,192 +44,81 @@ param(
     [string]$BaseBranch = "origin/main",
 
     [Parameter(Mandatory = $false)]
-    [switch]$SkipFooterValidation,
+    [switch]$EnableSchemaValidation,
 
     [Parameter(Mandatory = $false)]
-    [switch]$EnableSchemaValidation
+    [string[]]$FooterExcludePaths = @(
+        'CHANGELOG.md',
+        'dependency-pinning-artifacts/**'
+    ),
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipFooterValidation
 )
 
-# Import LintingHelpers module
+$ErrorActionPreference = 'Stop'
+
+# Import helper modules
+# Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
-function Get-MarkdownFrontmatter {
-    <#
-    .SYNOPSIS
-    Extracts YAML frontmatter from a markdown file.
+#region Type Definitions
 
-    .DESCRIPTION
-    Parses YAML frontmatter from the beginning of a markdown file and returns
-    a structured object containing the frontmatter data and content.
+class SchemaValidationResult {
+    [bool]$IsValid
+    [string[]]$Errors
+    [string[]]$Warnings
+    [string]$SchemaUsed
+    [string]$Note
 
-    .PARAMETER FilePath
-    Path to the markdown file to parse.
-
-    .OUTPUTS
-    Returns a hashtable with Frontmatter, FrontmatterEndIndex, and Content properties.
-    #>
-
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$FilePath
-    )
-
-    if (-not (Test-Path $FilePath)) {
-        Write-Warning "File not found: $FilePath"
-        return $null
-    }
-
-    try {
-        $content = Get-Content -Path $FilePath -Raw -Encoding UTF8
-
-        # Check if file starts with YAML frontmatter
-        if (-not $content.StartsWith("---")) {
-            return $null
-        }
-
-        # Find the end of frontmatter
-        $lines = $content -split "`n"
-        $endIndex = -1
-
-        for ($i = 1; $i -lt $lines.Count; $i++) {
-            if ($lines[$i].Trim() -eq "---") {
-                $endIndex = $i
-                break
-            }
-        }
-
-        if ($endIndex -eq -1) {
-            Write-Warning "Malformed YAML frontmatter in: $FilePath"
-            return $null
-        }
-
-        # Extract frontmatter lines
-        $frontmatterLines = $lines[1..($endIndex - 1)]
-        $frontmatter = @{}
-
-        foreach ($line in $frontmatterLines) {
-            $trimmedLine = $line.Trim()
-            if ($trimmedLine -eq "" -or $trimmedLine.StartsWith("#")) {
-                continue
-            }
-
-            if ($line -match "^([^:]+):\s*(.*)$") {
-                $key = $matches[1].Trim()
-                $value = $matches[2].Trim()
-
-                # Handle array values (YAML arrays starting with -)
-                if ($value.StartsWith("[") -and $value.EndsWith("]")) {
-                    # Parse JSON-style array
-                    try {
-                        $frontmatter[$key] = $value | ConvertFrom-Json
-                    }
-                    catch {
-                        $frontmatter[$key] = $value
-                    }
-                }
-                else {
-                    # Check if this is the start of a YAML array
-                    if ($value.StartsWith("-") -or $value.Trim() -eq "") {
-                        $arrayValues = @()
-                        if ($value.StartsWith("-")) {
-                            $arrayValues += $value.Substring(1).Trim()
-                        }
-
-                        # Look for additional array items
-                        $j = $frontmatterLines.IndexOf($line) + 1
-                        while ($j -lt $frontmatterLines.Count -and $frontmatterLines[$j].StartsWith("  -")) {
-                            $arrayValues += $frontmatterLines[$j].Substring(3).Trim()
-                            $j++
-                        }
-
-                        if ($arrayValues.Count -gt 0) {
-                            $frontmatter[$key] = $arrayValues
-                        }
-                        else {
-                            $frontmatter[$key] = $value
-                        }
-                    }
-                    else {
-                        # Remove quotes if present
-                        if (($value.StartsWith('"') -and $value.EndsWith('"')) -or
-                            ($value.StartsWith("'") -and $value.EndsWith("'"))) {
-                            $value = $value.Substring(1, $value.Length - 2)
-                        }
-                        $frontmatter[$key] = $value
-                    }
-                }
-            }
-        }
-
-        return @{
-            Frontmatter         = $frontmatter
-            FrontmatterEndIndex = $endIndex + 1
-            Content             = ($lines[($endIndex + 1)..($lines.Count - 1)] -join "`n")
-        }
-    }
-    catch {
-        Write-Warning "Error parsing frontmatter in ${FilePath}: [$($_.Exception.GetType().Name)] $($_.Exception.Message)"
-        return $null
+    SchemaValidationResult([bool]$isValid, [string[]]$errors, [string[]]$warnings, [string]$schemaUsed, [string]$note) {
+        $this.IsValid = $isValid
+        $this.Errors = if ($null -eq $errors) { @() } else { $errors }
+        $this.Warnings = if ($null -eq $warnings) { @() } else { $warnings }
+        $this.SchemaUsed = $schemaUsed
+        $this.Note = $note
     }
 }
 
-function Test-MarkdownFooter {
-    <#
-    .SYNOPSIS
-    Checks if a markdown file has the standard Copilot footer.
+# ValidationResult replaced by ValidationSummary in FrontmatterValidation.psm1
 
-    .DESCRIPTION
-    Validates that markdown files end with the standard Copilot attribution footer.
-    Supports both plain text and markdownlint-wrapped variants.
+# FileTypeInfo and ValidationIssue classes are defined in FrontmatterValidation.psm1
 
-    .PARAMETER Content
-    The full content of the markdown file (from Get-MarkdownFrontmatter result).
-
-    .OUTPUTS
-    Returns $true if footer is present and valid, $false otherwise.
-    #>
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Content
-    )
-
-    # Normalize content (remove HTML comments and markdown formatting)
-    # Use (?s) for multiline HTML comments and comprehensive markdown format removal
-    $normalized = $Content -replace '(?s)<!--.*?-->', ''  # Remove HTML comments (multiline)
-    $normalized = $normalized -replace '\*\*([^*]+)\*\*', '$1'  # Remove bold (**text**)
-    $normalized = $normalized -replace '__([^_]+)__', '$1'  # Remove bold (__text__)
-    $normalized = $normalized -replace '\*([^*]+)\*', '$1'  # Remove italic (*text*)
-    $normalized = $normalized -replace '_([^_]+)_', '$1'  # Remove italic (_text_)
-    $normalized = $normalized -replace '~~([^~]+)~~', '$1'  # Remove strikethrough
-    $normalized = $normalized -replace '`([^`]+)`', '$1'  # Remove inline code
-    $normalized = $normalized.TrimEnd()
-
-    # Core footer pattern (flexible for line breaks and formatting variations)
-    $pattern = '🤖\s*Crafted\s+with\s+precision\s+by\s+✨Copilot\s+following\s+brilliant\s+human\s+instruction[,\s]+(then\s+)?carefully\s+refined\s+by\s+our\s+team\s+of\s+discerning\s+human\s+reviewers\.?'
-    
-    return $normalized -match $pattern
-}
+#endregion Type Definitions
 
 function Initialize-JsonSchemaValidation {
     <#
     .SYNOPSIS
-    Initializes JSON Schema validation using PowerShell native capabilities.
+    Validates that PowerShell JSON processing capabilities are available.
 
     .DESCRIPTION
-    Validates that schema files exist and PowerShell can process JSON.
-    Uses PowerShell's built-in JSON and YAML processing capabilities.
+    Pure function that tests whether PowerShell can process JSON data,
+    which is required for JSON Schema validation operations. Does not
+    load external modules or modify state.
+
+    .INPUTS
+    None.
+
+    .OUTPUTS
+    [bool] $true if JSON processing is available; $false otherwise.
+
+    .EXAMPLE
+    if (Initialize-JsonSchemaValidation) {
+        $schema = Get-Content 'schema.json' | ConvertFrom-Json
+    }
+
+    .NOTES
+    PowerShell 7+ includes built-in JSON support via ConvertFrom-Json
+    and ConvertTo-Json cmdlets. This function verifies that capability.
     #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
     try {
-        # Check if we can work with JSON (built into PowerShell)
         $testJson = '{"test": "value"}' | ConvertFrom-Json
-        if ($null -eq $testJson) {
-            Write-Warning "PowerShell JSON processing not available."
-            return $false
-        }
-        
-        # Schema validation is ready using PowerShell native capabilities
-        return $true
+        return ($null -ne $testJson)
     }
     catch {
         Write-Warning "Error initializing schema validation: $_"
@@ -223,82 +129,116 @@ function Initialize-JsonSchemaValidation {
 function Get-SchemaForFile {
     <#
     .SYNOPSIS
-    Determines the appropriate JSON Schema for a given file.
+    Determines the appropriate JSON Schema for a given file path.
+
+    .DESCRIPTION
+    Resolves the correct JSON Schema to use for validating a file's frontmatter
+    based on the schema-mapping.json configuration. Matches file paths against
+    glob patterns defined in the mapping rules.
+
+    Pattern matching priority:
+    1. Directory-based patterns (e.g., 'docs/**/*.md')
+    2. Pipe-separated root file patterns (e.g., 'README.md|CONTRIBUTING.md')
+    3. Simple file patterns
+    4. Default schema fallback
 
     .PARAMETER FilePath
-    The path of the file to get schema for.
+    Absolute or relative path to the file needing schema resolution.
+
+    .PARAMETER RepoRoot
+    Repository root directory for computing relative paths. If not specified,
+    attempts to locate .git directory by walking up the directory tree.
+
+    .PARAMETER SchemaDirectory
+    Directory containing JSON Schema files. Defaults to 'schemas' subdirectory
+    relative to this script.
+
+    .INPUTS
+    [string] File path to resolve schema for.
 
     .OUTPUTS
-    Returns the schema file path or null if no specific schema applies.
+    [string] Absolute path to the appropriate JSON Schema file.
+    Returns $null if no schema applies or configuration is missing.
+
+    .EXAMPLE
+    $schema = Get-SchemaForFile -FilePath 'docs/getting-started/README.md'
+    # Returns path to docs-frontmatter.schema.json
+
+    .EXAMPLE
+    $schema = Get-SchemaForFile -FilePath '.github/instructions/shell.instructions.md' -RepoRoot '/repo'
+    # Returns path to instruction-frontmatter.schema.json
+
+    .NOTES
+    Relies on schema-mapping.json in the SchemaDirectory for pattern definitions.
     #>
+    [CmdletBinding()]
+    [OutputType([string])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
+        [Parameter(Mandatory = $true, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$FilePath,
+
+        [Parameter(Mandatory = $false)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$SchemaDirectory
     )
 
-    $schemaDir = Join-Path -Path $PSScriptRoot -ChildPath 'schemas'
+    $schemaDir = if ($SchemaDirectory) { $SchemaDirectory } else { Join-Path -Path $PSScriptRoot -ChildPath 'schemas' }
     $mappingPath = Join-Path -Path $schemaDir -ChildPath 'schema-mapping.json'
-    
+
     if (-not (Test-Path $mappingPath)) {
         return $null
     }
 
     try {
         $mapping = Get-Content $mappingPath | ConvertFrom-Json
-        
-        # Find repository root by searching for .git directory
-        $repoRoot = $PSScriptRoot
-        while ($repoRoot -and -not (Test-Path (Join-Path $repoRoot '.git'))) {
-            $repoRoot = Split-Path -Parent $repoRoot
+
+        if (-not $RepoRoot) {
+            $RepoRoot = $PSScriptRoot
+            while ($RepoRoot -and -not (Test-Path (Join-Path $RepoRoot '.git'))) {
+                $RepoRoot = Split-Path -Parent $RepoRoot
+            }
+            if (-not $RepoRoot) {
+                Write-Warning "Could not find repository root"
+                return $null
+            }
         }
-        if (-not $repoRoot) {
-            Write-Warning "Could not find repository root"
-            return $null
-        }
-        
-        $relativePath = [System.IO.Path]::GetRelativePath($repoRoot, $FilePath) -replace '\\', '/'
+
+        $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $FilePath) -replace '\\', '/'
         $fileName = [System.IO.Path]::GetFileName($FilePath)
 
         foreach ($rule in $mapping.mappings) {
-            # Directory-based patterns (check these FIRST for proper specificity)
+            # Handle recursive glob patterns (e.g., docs/**/*.md)
             if ($rule.pattern -like "*/**/*") {
-                # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
-                $regexPattern = $rule.pattern
+                $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
-                $regexPattern = $regexPattern -replace '\.', '\.'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
-            # Simple pattern matching for root file names only
+            # Handle pipe-separated filename alternatives (e.g., README.md|CONTRIBUTING.md)
             elseif ($rule.pattern -match '\|') {
                 $patterns = $rule.pattern -split '\|'
-                # Only match if file is in root (relativePath equals fileName)
                 if ($relativePath -eq $fileName -and $fileName -in $patterns) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
-            # Simple file patterns
+            # Handle simple glob patterns with wildcard pre-filter
             elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
-                # Convert glob to regex: '**/' => '(.*/)?', '*' => '[^/]*', '.' => '\.'
-                $regexPattern = $rule.pattern
+                $regexPattern = $rule.pattern -replace '\.', '\.'
                 $regexPattern = $regexPattern -replace '\*\*/', '(.*/)?'
                 $regexPattern = $regexPattern -replace '\*', '[^/]*'
-                $regexPattern = $regexPattern -replace '\.', '\.'
                 $regexPattern = '^' + $regexPattern + '$'
                 if ($relativePath -match $regexPattern) {
                     return Join-Path -Path $schemaDir -ChildPath $rule.schema
                 }
             }
-            # Simple file patterns
-            elseif ($relativePath -like $rule.pattern -or $fileName -like $rule.pattern) {
-                return Join-Path -Path $schemaDir -ChildPath $rule.schema
-            }
         }
 
-        # Return default schema if available
         if ($mapping.defaultSchema) {
             return Join-Path -Path $schemaDir -ChildPath $mapping.defaultSchema
         }
@@ -313,776 +253,481 @@ function Get-SchemaForFile {
 function Test-JsonSchemaValidation {
     <#
     .SYNOPSIS
-    Validates frontmatter against JSON Schema using PowerShell native capabilities.
+    Validates a frontmatter hashtable against a JSON Schema.
+
+    .DESCRIPTION
+    Performs validation of frontmatter data against a JSON Schema file using
+    PowerShell native capabilities. Checks required fields, type constraints,
+    pattern matching, enum values, and minimum length requirements.
+
+    Validation coverage:
+    - required: Field presence validation
+    - type: string, array, boolean type checking
+    - pattern: Regex pattern matching for strings
+    - enum: Allowed value constraints
+    - minLength: Minimum string length validation
+
+    Limitations (intentional for soft validation):
+    - $ref: Schema references not resolved
+    - allOf/anyOf/oneOf: Composition keywords not supported
+    - object: Nested object validation not implemented
 
     .PARAMETER Frontmatter
-    The frontmatter hashtable to validate.
+    Hashtable containing parsed frontmatter key-value pairs.
 
     .PARAMETER SchemaPath
-    Path to the JSON Schema file.
+    Absolute path to the JSON Schema file.
+
+    .PARAMETER SchemaContent
+    Pre-loaded schema object (PSCustomObject from ConvertFrom-Json).
+    Alternative to SchemaPath for testing without file I/O.
+
+    .INPUTS
+    [hashtable] Frontmatter data to validate.
 
     .OUTPUTS
-    Returns validation result with errors and warnings.
-    
+    [SchemaValidationResult] Object containing:
+      - IsValid: Boolean indicating validation success
+      - Errors: Array of error messages
+      - Warnings: Array of warning messages
+      - SchemaUsed: Path to schema file used
+      - Note: Additional validation context
+
+    .EXAMPLE
+    $frontmatter = @{ title = 'My Doc'; description = 'A description' }
+    $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaPath 'schemas/docs.schema.json'
+    if (-not $result.IsValid) {
+        $result.Errors | ForEach-Object { Write-Error $_ }
+    }
+
+    .EXAMPLE
+    # Testing with in-memory schema
+    $schema = @{
+        required = @('title')
+        properties = @{
+            title = @{ type = 'string'; minLength = 1 }
+        }
+    } | ConvertTo-Json | ConvertFrom-Json
+    $result = Test-JsonSchemaValidation -Frontmatter @{ title = '' } -SchemaContent $schema
+    # Result.Errors contains "Field 'title' must have minimum length of 1"
+
     .NOTES
-    Validation limitations (intentional for soft validation):
-    - $ref references are not resolved (workaround: inline base schema properties)
-    - allOf/anyOf/oneOf schema composition is not supported
-    - object type validation is not implemented
-    - enum and minLength validations are supported
+    This implements soft validation suitable for advisory feedback without
+    blocking builds on schema violations.
     #>
+    [CmdletBinding(DefaultParameterSetName = 'SchemaPath')]
+    [OutputType([SchemaValidationResult])]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [hashtable]$Frontmatter,
 
-        [Parameter(Mandatory = $true)]
-        [string]$SchemaPath
+        [Parameter(Mandatory = $true, ParameterSetName = 'SchemaPath')]
+        [ValidateNotNullOrEmpty()]
+        [string]$SchemaPath,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'SchemaContent')]
+        [PSCustomObject]$SchemaContent
     )
 
-    if (-not (Test-Path $SchemaPath)) {
-        return @{
-            IsValid = $false
-            Errors = @("Schema file not found: $SchemaPath")
-            Warnings = @()
+    $errors = [List[string]]::new()
+    $warnings = [List[string]]::new()
+    $schemaUsed = $SchemaPath
+
+    if ($PSCmdlet.ParameterSetName -eq 'SchemaPath') {
+        if (-not (Test-Path $SchemaPath)) {
+            return [SchemaValidationResult]::new(
+                $false,
+                @("Schema file not found: $SchemaPath"),
+                @(),
+                $SchemaPath,
+                $null
+            )
         }
+
+        try {
+            $SchemaContent = Get-Content $SchemaPath -Raw | ConvertFrom-Json
+        }
+        catch {
+            return [SchemaValidationResult]::new(
+                $false,
+                @("Failed to parse schema: $_"),
+                @(),
+                $SchemaPath,
+                $null
+            )
+        }
+    }
+    else {
+        $schemaUsed = '<in-memory>'
     }
 
     try {
-        # Load the schema file
-        $schemaContent = Get-Content $SchemaPath -Raw | ConvertFrom-Json
-        $errors = @()
-        $warnings = @()
-
-        # Basic validation using PowerShell native capabilities
-        # Check required fields
-        if ($schemaContent.required) {
-            foreach ($requiredField in $schemaContent.required) {
+        if ($SchemaContent.required) {
+            foreach ($requiredField in $SchemaContent.required) {
                 if (-not $Frontmatter.ContainsKey($requiredField)) {
-                    $errors += "Missing required field: $requiredField"
+                    $errors.Add("Missing required field: $requiredField")
                 }
             }
         }
 
-        # Check field types if properties are defined
-        if ($schemaContent.properties) {
-            foreach ($prop in $schemaContent.properties.PSObject.Properties) {
+        if ($SchemaContent.properties) {
+            foreach ($prop in $SchemaContent.properties.PSObject.Properties) {
                 $fieldName = $prop.Name
                 $fieldSchema = $prop.Value
-                
+
                 if ($Frontmatter.ContainsKey($fieldName)) {
                     $value = $Frontmatter[$fieldName]
-                    
-                    # Type validation
+
                     if ($fieldSchema.type) {
                         switch ($fieldSchema.type) {
                             'string' {
                                 if ($value -isnot [string]) {
-                                    $errors += "Field '$fieldName' must be a string"
+                                    $errors.Add("Field '$fieldName' must be a string")
                                 }
                             }
                             'array' {
-                                if ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable]) {
-                                    $errors += "Field '$fieldName' must be an array"
+                                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays
+                                if ($value -is [string] -or ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable])) {
+                                    $errors.Add("Field '$fieldName' must be an array")
                                 }
                             }
                             'boolean' {
                                 if ($value -isnot [bool] -and $value -notin @('true', 'false', 'True', 'False')) {
-                                    $errors += "Field '$fieldName' must be a boolean"
+                                    $errors.Add("Field '$fieldName' must be a boolean")
                                 }
                             }
                         }
                     }
-                    
-                    # Pattern validation for strings
+
                     if ($fieldSchema.pattern -and $value -is [string]) {
                         if ($value -notmatch $fieldSchema.pattern) {
-                            $errors += "Field '$fieldName' does not match required pattern: $($fieldSchema.pattern)"
+                            $errors.Add("Field '$fieldName' does not match required pattern: $($fieldSchema.pattern)")
                         }
                     }
-                    
-                    # Enum validation
+
                     if ($fieldSchema.enum) {
                         if ($value -is [array]) {
                             foreach ($item in $value) {
                                 if ($item -notin $fieldSchema.enum) {
-                                    $errors += "Field '$fieldName' contains invalid value: $item. Allowed: $($fieldSchema.enum -join ', ')"
+                                    $errors.Add("Field '$fieldName' contains invalid value: $item. Allowed: $($fieldSchema.enum -join ', ')")
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             if ($value -notin $fieldSchema.enum) {
-                                $errors += "Field '$fieldName' must be one of: $($fieldSchema.enum -join ', '). Got: $value"
+                                $errors.Add("Field '$fieldName' must be one of: $($fieldSchema.enum -join ', '). Got: $value")
                             }
                         }
                     }
-                    
-                    # MinLength validation for strings
+
                     if ($fieldSchema.minLength -and $value -is [string]) {
                         if ($value.Length -lt $fieldSchema.minLength) {
-                            $errors += "Field '$fieldName' must have minimum length of $($fieldSchema.minLength)"
+                            $errors.Add("Field '$fieldName' must have minimum length of $($fieldSchema.minLength)")
                         }
                     }
                 }
             }
         }
 
-        return @{
-            IsValid = ($errors.Count -eq 0)
-            Errors = $errors
-            Warnings = $warnings
-            SchemaUsed = $SchemaPath
-            Note = "Schema validation using PowerShell native capabilities"
-        }
+        return [SchemaValidationResult]::new(
+            ($errors.Count -eq 0),
+            $errors.ToArray(),
+            $warnings.ToArray(),
+            $schemaUsed,
+            'Schema validation using PowerShell native capabilities'
+        )
     }
     catch {
-        return @{
-            IsValid = $false
-            Errors = @("Schema validation error: $_")
-            Warnings = @()
-        }
+        return [SchemaValidationResult]::new(
+            $false,
+            @("Schema validation error: $_"),
+            @(),
+            $schemaUsed,
+            $null
+        )
     }
 }
+
+# Get-FileTypeInfo is provided by FrontmatterValidation.psm1 via 'using module' directive
 
 function Test-FrontmatterValidation {
     <#
     .SYNOPSIS
-    Validates frontmatter across all markdown files in specified paths.
+    Validates frontmatter consistency across markdown files.
 
     .DESCRIPTION
-    Performs comprehensive frontmatter validation including required fields,
-    date format validation, and content type-specific requirements.
+    Thin wrapper that delegates validation to FrontmatterValidation module functions.
+    Supports directory scanning, explicit file lists, and git diff-based changed files.
 
     .PARAMETER Paths
-    Array of paths to search for markdown files.
+    Directory paths to search recursively for markdown files.
 
     .PARAMETER Files
-    Array of specific file paths to validate (takes precedence over Paths).
+    Specific file paths to validate. Takes precedence over Paths.
+
+    .PARAMETER ExcludePaths
+    Glob patterns for paths to exclude from validation.
 
     .PARAMETER WarningsAsErrors
-    Treat warnings as errors (fail validation on warnings).
+    Treat warnings as errors.
+
+    .PARAMETER ChangedFilesOnly
+    Only validate files changed since the base branch.
+
+    .PARAMETER BaseBranch
+    Git reference for comparison. Default: 'origin/main'.
 
     .PARAMETER EnableSchemaValidation
-    Enable JSON Schema validation against defined schemas.
+    Enable JSON Schema validation (advisory only).
+
+    .PARAMETER FooterExcludePaths
+    Array of wildcard patterns for files to exclude from footer validation only.
+    Uses PowerShell -like operator for matching against relative paths.
+    Path separators are normalized to forward slashes for cross-platform support.
 
     .OUTPUTS
-    Returns validation results with errors and warnings.
+    ValidationSummary from FrontmatterValidation module.
     #>
-
+    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $false)]
-        [AllowEmptyCollection()]
         [string[]]$Paths = @(),
-
-        [Parameter(Mandatory = $false)]
-        [switch]$SkipFooterValidation,
-
-        [Parameter(Mandatory = $false)]
-        [AllowEmptyCollection()]
         [string[]]$Files = @(),
-
-        [Parameter(Mandatory = $false)]
+        [string[]]$ExcludePaths = @(),
         [switch]$WarningsAsErrors,
-
-        [Parameter(Mandatory = $false)]
         [switch]$ChangedFilesOnly,
-
-        [Parameter(Mandatory = $false)]
         [string]$BaseBranch = "origin/main",
-
-        [Parameter(Mandatory = $false)]
-        [switch]$EnableSchemaValidation
+        [switch]$EnableSchemaValidation,
+        [string[]]$FooterExcludePaths = @(),
+        [switch]$SkipFooterValidation
     )
-    
-    # Get repository root
+
+    # Resolve repository root
     $repoRoot = (Get-Location).Path
     if (-not (Test-Path ".git")) {
         $gitRoot = git rev-parse --show-toplevel 2>$null
-        if ($gitRoot) {
-            $repoRoot = $gitRoot
-        }
+        if ($gitRoot) { $repoRoot = $gitRoot }
     }
-    
-    # Parse .gitignore patterns
-    $gitignorePatterns = @()
-    $gitignorePath = Join-Path $repoRoot ".gitignore"
-    if (Test-Path $gitignorePath) {
-        $gitignorePatterns = Get-Content $gitignorePath | Where-Object {
-            $_ -and 
-            -not $_.StartsWith('#') -and 
-            $_.Trim() -ne ''
-        } | ForEach-Object {
-            $pattern = $_.Trim()
-            # Convert gitignore patterns to PowerShell wildcard patterns
-            if ($pattern.EndsWith('/')) {
-                # Directory pattern
-                "*\$($pattern.TrimEnd('/'))\*"
-            }
-            elseif ($pattern.Contains('/')) {
-                # Path pattern
-                "*\$($pattern.Replace('/', '\'))*"
-            }
-            else {
-                # Simple pattern
-                "*\$pattern\*"
-            }
-        }
-    }
-    
-    Write-Host "🔍 Validating frontmatter across markdown files..." -ForegroundColor Cyan
-    
-    # Input validation and sanitization
-    $errors = @()
-    $warnings = @()
-    $filesWithErrors = [System.Collections.Generic.HashSet[string]]::new()
-    $filesWithWarnings = [System.Collections.Generic.HashSet[string]]::new()
 
-    # If ChangedFilesOnly is specified, get changed files from git
+    Write-Host "🔍 Validating frontmatter across markdown files..." -ForegroundColor Cyan
+
+    # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $gitChangedFiles = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
-        if ($gitChangedFiles.Count -gt 0) {
-            $Files = $gitChangedFiles
-            Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
-        }
-        else {
+        $Files = @(Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch)
+        if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
-            return @{
-                Errors            = @()
-                Warnings          = @()
-                HasIssues         = $false
-                TotalFilesChecked = 0
-            }
+            # Return empty summary with TotalFiles=0 to accurately represent no files validated
+            # The caller handles this as success when ChangedFilesOnly mode is used
+            $emptySummary = & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
+            $null = $emptySummary.Complete()
+            return $emptySummary
         }
+        Write-Host "Found $(@($Files).Count) changed markdown files to validate" -ForegroundColor Cyan
     }
 
-    # Sanitize Files array - remove empty or null entries
-    if ($Files.Count -gt 0) {
-        $sanitizedFiles = @()
-        foreach ($file in $Files) {
-            if (-not [string]::IsNullOrEmpty($file)) {
-                $sanitizedFiles += $file.Trim()
-            }
-            else {
-                Write-Verbose "Filtering out empty file path from Files array"
-            }
-        }
-        $Files = $sanitizedFiles
-    }
-
-    # Sanitize Paths array - remove empty or null entries
-    if ($Paths.Count -gt 0) {
-        $sanitizedPaths = @()
-        foreach ($path in $Paths) {
-            if (-not [string]::IsNullOrEmpty($path)) {
-                $sanitizedPaths += $path.Trim()
-            }
-            else {
-                Write-Verbose "Filtering out empty path from Paths array"
-            }
-        }
-        $Paths = $sanitizedPaths
-    }
-
-    # Ensure we have at least one valid input source
-    if ($Files.Count -eq 0 -and $Paths.Count -eq 0) {
-        $warnings += "No valid files or paths provided for validation"
-        return @{
-            Errors            = @()
-            Warnings          = $warnings
-            HasIssues         = $true
-            TotalFilesChecked = 0
-        }
-    }
-
-    # Get markdown files either from specific files or from paths
-    [System.Collections.ArrayList]$markdownFiles = @()
-
+    # Resolve files from paths if not provided directly
+    [string[]]$resolvedFiles = @()
     if ($Files.Count -gt 0) {
         Write-Host "Validating specific files..." -ForegroundColor Cyan
-        foreach ($file in $Files) {
-            if (-not [string]::IsNullOrEmpty($file) -and (Test-Path $file -PathType Leaf)) {
-                if ($file -like "*.md") {
-                    $fileItem = Get-Item $file
-                    if ($null -ne $fileItem -and -not [string]::IsNullOrEmpty($fileItem.FullName)) {
-                        $markdownFiles += $fileItem
-                        Write-Verbose "Added specific file: $file"
-                    }
-                }
-                else {
-                    Write-Verbose "Skipping non-markdown file: $file"
-                }
-            }
-            else {
-                Write-Warning "File not found or invalid: $file"
-            }
-        }
+        $resolvedFiles = $Files | Where-Object { -not [string]::IsNullOrEmpty($_) } |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { (Test-Path $_ -PathType Leaf) -and ($_ -like "*.md") } |
+            ForEach-Object { (Get-Item $_).FullName }
     }
-    else {
+    elseif ($Paths.Count -gt 0) {
         Write-Host "Searching for markdown files in specified paths..." -ForegroundColor Cyan
-        foreach ($path in $Paths) {
+        $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath (Join-Path $repoRoot ".gitignore")
+        foreach ($path in ($Paths | Where-Object { -not [string]::IsNullOrEmpty($_) })) {
             if (Test-Path $path) {
-                # Get files and filter manually with strongly typed array
                 $rawFiles = Get-ChildItem -Path $path -Filter '*.md' -Recurse -File -ErrorAction SilentlyContinue
-                
-                # Manual filtering with strongly typed array to prevent implicit string conversion
-                [System.IO.FileInfo[]]$files = @()
                 foreach ($f in $rawFiles) {
-                    if ($null -eq $f -or
-                        [string]::IsNullOrEmpty($f.FullName) -or
-                        $f.PSIsContainer -eq $true) {
-                        continue
-                    }
-                    
-                    # Check against gitignore patterns
+                    if ($null -eq $f -or [string]::IsNullOrEmpty($f.FullName)) { continue }
                     $excluded = $false
                     foreach ($pattern in $gitignorePatterns) {
-                        if ($f.FullName -like $pattern) {
-                            $excluded = $true
-                            break
-                        }
+                        if ($f.FullName -like $pattern) { $excluded = $true; break }
                     }
-                    
-                    if (-not $excluded) {
-                        $files += $f
-                    }
-                }
-                
-                if ($files.Count -gt 0) {
-                    [void]$markdownFiles.AddRange($files)
-                    Write-Verbose "Found $($files.Count) markdown files in $path"
-                }  
-                else {
-                    Write-Verbose "No markdown files found in $path"
-                }
-            }
-            else {
-                Write-Warning "Path not found: $path"
-            }
-        }
-    }
-    
-    Write-Host "Found $($markdownFiles.Count) total markdown files to validate" -ForegroundColor Cyan
-
-    # Initialize schema validation once before processing files
-    $schemaValidationEnabled = $false
-    if ($EnableSchemaValidation) {
-        $schemaValidationEnabled = Initialize-JsonSchemaValidation
-        if (-not $schemaValidationEnabled) {
-            Write-Warning "Schema validation requested but not available - continuing without schema validation"
-        }
-    }
-
-    foreach ($file in $markdownFiles) {
-        # Skip null file objects or files with empty/null paths
-        if ($null -eq $file) {
-            Write-Verbose "Skipping null file object"
-            continue
-        }
-        
-        if ([string]::IsNullOrEmpty($file.FullName)) {
-            Write-Verbose "Skipping file with empty path"
-            continue
-        }
-
-        Write-Verbose "Validating: $($file.FullName)"
-
-        try {
-            $frontmatter = Get-MarkdownFrontmatter -FilePath $file.FullName
-
-            if ($frontmatter) {
-                # Soft validation mode: Schema validation reports issues via Write-Warning without failing builds.
-                # This provides comprehensive advisory feedback while manual validation below enforces critical rules.
-                if ($schemaValidationEnabled) {
-                    $schemaPath = Get-SchemaForFile -FilePath $file.FullName
-                    if ($schemaPath) {
-                        $schemaResult = Test-JsonSchemaValidation -Frontmatter $frontmatter.Frontmatter -SchemaPath $schemaPath
-                        if ($schemaResult.Errors.Count -gt 0) {
-                            Write-Warning "JSON Schema validation errors in $($file.FullName):"
-                            $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
-                        }
-                        if ($schemaResult.Warnings.Count -gt 0) {
-                            Write-Verbose "JSON Schema validation warnings in $($file.FullName):"
-                            $schemaResult.Warnings | ForEach-Object { Write-Verbose "  - $_" }
-                        }
-                    }
-                }
-
-                # Determine content type and required fields
-                $isGitHub = $file.DirectoryName -like "*.github*"
-                $isChatMode = $file.Name -like "*.chatmode.md"
-                $isPrompt = $file.Name -like "*.prompt.md"
-                $isInstruction = $file.Name -like "*.instructions.md"
-                $isRootCommunityFile = ($file.DirectoryName -eq $repoRoot) -and 
-                                       ($file.Name -in @('CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 
-                                                        'SECURITY.md', 'SUPPORT.md', 'README.md'))
-                $isDevContainer = $file.DirectoryName -like "*.devcontainer*" -and $file.Name -eq 'README.md'
-
-                # Determine if file should have footer
-                $shouldHaveFooter = $false
-                $footerSeverity = 'Error'  # Default to error if footer is required
-
-                # Set footer requirements for root community files
-                if ($isRootCommunityFile) {
-                    # All root community files require footers in hve-core
-                    $shouldHaveFooter = $true
-                    $footerSeverity = 'Error'
-                }
-                elseif ($isDevContainer) {
-                    # DevContainer docs are custom
-                    $shouldHaveFooter = $true
-                    $footerSeverity = 'Error'
-                }
-                elseif ($isGitHub) {
-                    if ($file.Name -eq 'README.md') {
-                        # GitHub subdirectory READMEs should have footers
-                        $shouldHaveFooter = $true
-                        $footerSeverity = 'Error'
-                    }
-                    # Chatmodes, instructions, and prompts are excluded from footer validation
-                    # (they are internal configuration files, not public documentation)
-                }
-
-                # Validate required fields for root community files
-                if ($isRootCommunityFile) {
-                    $requiredFields = @('title', 'description')
-                    $suggestedFields = @('author', 'ms.date')
-
-                    foreach ($field in $requiredFields) {
-                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
-                            $errors += $errorMsg
-                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
-                        }
-                    }
-
-                    foreach ($field in $suggestedFields) {
-                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $warningMsg = "Suggested field '$field' missing in: $($file.FullName)"
-                            $warnings += $warningMsg
-                            [void]$filesWithWarnings.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'warning' -Message "Suggested field '$field' missing" -File $file.FullName
-                        }
-                    }
-
-                    # Validate date format (ISO 8601: YYYY-MM-DD)
-                    if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
-                        $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
-                            $warningMsg = "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
-                            $warnings += $warningMsg
-                            [void]$filesWithWarnings.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName
-                        }
-                    }
-                }
-                # Validate .devcontainer documentation
-                elseif ($isDevContainer) {
-                    $requiredFields = @('title', 'description')
-
-                    foreach ($field in $requiredFields) {
-                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $errorMsg = "Missing required field '$field' in: $($file.FullName)"
-                            $errors += $errorMsg
-                            [void]$filesWithErrors.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
-                        }
-                    }
-                }
-
-                # GitHub resources have different requirements
-                elseif ($isGitHub) {
-                    # ChatMode files (.chatmode.md) have specific frontmatter structure
-                    if ($isChatMode) {
-                        # ChatMode files typically have description, tools, etc. but not standard doc fields
-                        # Only warn if missing description as it's commonly used
-                        if (-not $frontmatter.Frontmatter.ContainsKey('description')) {
-                            $warnings += "ChatMode file missing 'description' field: $($file.FullName)"
-                            [void]$filesWithWarnings.Add($file.FullName)
-                        }
-                    }
-                    # Instruction files (.instructions.md) have specific patterns
-                    elseif ($isInstruction) {
-                        # Instruction files should have 'applyTo' field for context-specific instructions
-                        # This is informational only - does not fail validation
-                        if (-not $frontmatter.Frontmatter.ContainsKey('applyTo')) {
-                            Write-Verbose "Instruction file missing optional 'applyTo' field: $($file.FullName)"
-                        }
-                        
-                        # Validate required description field for instruction files
-                        if (-not $frontmatter.Frontmatter.ContainsKey('description')) {
-                            $errors += "Instruction file missing required 'description' field: $($file.FullName)"
-                            [void]$filesWithErrors.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field 'description'" -File $file.FullName
-                        }
-                    }
-                    # Prompt files (.prompt.md) are instructions/templates
-                    elseif ($isPrompt) {
-                        # Prompt files are typically instruction content, no specific frontmatter required
-                        # These are generally freeform content
-                    }
-                    # Other GitHub files (exclude standard GitHub templates)
-                    elseif ($file.Name -like "*template*" -and 
-                           -not ($file.Name -in @('PULL_REQUEST_TEMPLATE.md', 'ISSUE_TEMPLATE.md')) -and 
-                           -not $frontmatter.Frontmatter.ContainsKey('name')) {
-                        $warnings += "GitHub template missing 'name' field: $($file.FullName)"
-                        [void]$filesWithWarnings.Add($file.FullName)
-                    }
-                }
-
-                # Validate keywords array (applies to all content types)
-                if ($frontmatter.Frontmatter.ContainsKey('keywords')) {
-                    $keywords = $frontmatter.Frontmatter['keywords']
-                    if ($keywords -isnot [array] -and $keywords -notmatch ',') {
-                        $warnings += "Keywords should be an array in: $($file.FullName)"
-                        [void]$filesWithWarnings.Add($file.FullName)
-                    }
-                }
-                # Validate estimated_reading_time if present
-                if ($frontmatter.Frontmatter.ContainsKey('estimated_reading_time')) {
-                    $readingTime = $frontmatter.Frontmatter['estimated_reading_time']
-                    if ($readingTime -notmatch '^\d+$') {
-                        $warnings += "Invalid estimated_reading_time format in: $($file.FullName). Should be a number."
-                        [void]$filesWithWarnings.Add($file.FullName)
-                    }
-                }
-                
-                # Manual validation enforces critical rules (fails builds); schema validation above provides comprehensive advisory feedback (soft mode).
-                $isDocsFile = $file.DirectoryName -like "*docs*" -and -not $isGitHubLocal
-                if ($isDocsFile) {
-                    # Documentation files should have comprehensive frontmatter
-                    $requiredDocsFields = @('title', 'description')
-                    $suggestedDocsFields = @('author', 'ms.date', 'ms.topic')
-                    
-                    foreach ($field in $requiredDocsFields) {
-                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $errors += "Documentation file missing required field '$field' in: $($file.FullName)"
-                            [void]$filesWithErrors.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'error' -Message "Missing required field '$field'" -File $file.FullName
-                        }
-                    }
-                    
-                    foreach ($field in $suggestedDocsFields) {
-                        if (-not $frontmatter.Frontmatter.ContainsKey($field)) {
-                            $warnings += "Documentation file missing suggested field '$field' in: $($file.FullName)"
-                            [void]$filesWithWarnings.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'warning' -Message "Suggested field '$field' missing" -File $file.FullName
-                        }
-                    }
-                    
-                    # Validate date format for docs
-                    if ($frontmatter.Frontmatter.ContainsKey('ms.date')) {
-                        $date = $frontmatter.Frontmatter['ms.date']
-                        if ($date -notmatch '^\d{4}-\d{2}-\d{2}$') {
-                            $warnings += "Invalid date format in: $($file.FullName). Expected YYYY-MM-DD (ISO 8601), got: $date"
-                            [void]$filesWithWarnings.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'warning' -Message "Invalid date format: Expected YYYY-MM-DD (ISO 8601), got: $date" -File $file.FullName
-                        }
-                    }
-                }
-
-                # Validate footer presence
-                if (-not $SkipFooterValidation -and $shouldHaveFooter -and $frontmatter.Content) {
-                    $hasFooter = Test-MarkdownFooter -Content $frontmatter.Content
-                    
-                    if (-not $hasFooter) {
-                        $footerMessage = "Missing standard Copilot footer in: $($file.FullName)"
-                        
-                        if ($footerSeverity -eq 'Error') {
-                            $errors += $footerMessage
-                            [void]$filesWithErrors.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'error' -Message "Missing standard Copilot footer" -File $file.FullName
-                        }
-                        else {
-                            $warnings += $footerMessage
-                            [void]$filesWithWarnings.Add($file.FullName)
-                            Write-GitHubAnnotation -Type 'warning' -Message "Missing standard Copilot footer" -File $file.FullName
-                        }
-                    }
-                }
-            }
-            else {
-                # Only warn for main docs, not for GitHub files, prompts, or chatmodes
-                $isGitHubLocal = $file.DirectoryName -like "*.github*"
-                $isMainDocLocal = ($file.DirectoryName -like "*docs*" -or
-                    $file.DirectoryName -like "*scripts*") -and
-                -not $isGitHubLocal
-
-                if ($isMainDocLocal) {
-                    $warnings += "No frontmatter found in: $($file.FullName)"
-                    [void]$filesWithWarnings.Add($file.FullName)
+                    if (-not $excluded) { $resolvedFiles += $f.FullName }
                 }
             }
         }
-        catch {
-            $errors += "Error processing file '$($file.FullName)': $($_.Exception.Message)"
-            Write-Verbose "Error processing file '$($file.FullName)': $($_.Exception.Message)"
+    }
+
+    # Apply exclude patterns
+    if ($ExcludePaths.Count -gt 0 -and $resolvedFiles.Count -gt 0) {
+        $resolvedFiles = $resolvedFiles | Where-Object {
+            $relativePath = $_.Replace($repoRoot, '').TrimStart('\', '/').Replace('\', '/')
+            $excluded = $false
+            foreach ($excludePattern in $ExcludePaths) {
+                if ($relativePath -like $excludePattern) { $excluded = $true; break }
+            }
+            -not $excluded
         }
     }
 
-    # Get repository root for logs directory
-    $repoRoot = (Get-Location).Path
-    if (-not (Test-Path ".git")) {
-        $gitRoot = git rev-parse --show-toplevel 2>$null
-        if ($gitRoot) {
-            $repoRoot = $gitRoot
+    if ($resolvedFiles.Count -eq 0) {
+        Write-Warning "No valid files or paths provided for validation"
+        return & (Get-Module FrontmatterValidation) { [ValidationSummary]::new() }
+    }
+
+    Write-Host "Found $($resolvedFiles.Count) total markdown files to validate" -ForegroundColor Cyan
+
+    # Use module's orchestration function for core validation
+    $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
+
+    # Optional schema validation overlay (advisory only)
+    # Uses frontmatter already parsed by Invoke-FrontmatterValidation
+    if ($EnableSchemaValidation -and (Initialize-JsonSchemaValidation)) {
+        foreach ($fileResult in $summary.Results) {
+            if ($fileResult.HasFrontmatter -and $fileResult.Frontmatter) {
+                $schemaPath = Get-SchemaForFile -FilePath $fileResult.FilePath
+                if ($schemaPath) {
+                    $schemaResult = Test-JsonSchemaValidation -Frontmatter $fileResult.Frontmatter -SchemaPath $schemaPath
+                    if ($schemaResult.Errors.Count -gt 0) {
+                        Write-Warning "JSON Schema validation errors in $($fileResult.FilePath)"
+                        $schemaResult.Errors | ForEach-Object { Write-Warning "  - $_" }
+                    }
+                }
+            }
         }
     }
 
-    # Create logs directory and export results
+    # Output to console
+    Write-ValidationConsoleOutput -Summary $summary -ShowDetails
+
+    # CI annotations
+    if (Test-CIEnvironment) {
+        Write-CIAnnotations -Summary $summary
+    }
+
+    # Export results
     $logsDir = Join-Path -Path $repoRoot -ChildPath 'logs'
     if (-not (Test-Path $logsDir)) {
         New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     }
+    Export-ValidationResults -Summary $summary -OutputPath (Join-Path $logsDir 'frontmatter-validation-results.json')
 
-    $resultsJson = @{
-        timestamp = (Get-Date).ToUniversalTime().ToString('o')
-        script = 'frontmatter-validation'
-        summary = @{
-            total_files = $markdownFiles.Count
-            files_with_errors = $filesWithErrors.Count
-            files_with_warnings = $filesWithWarnings.Count
-            total_errors = $errors.Count
-            total_warnings = $warnings.Count
-        }
-        errors = $errors
-        warnings = $warnings
-    }
-
-    $resultsPath = Join-Path -Path $logsDir -ChildPath 'frontmatter-validation-results.json'
-    $resultsJson | ConvertTo-Json -Depth 10 | Set-Content -Path $resultsPath -Encoding UTF8
-
-    # Output results
-    $hasIssues = $false
-
-    if ($warnings.Count -gt 0) {
-        Write-Host "⚠️ Warnings found:" -ForegroundColor Yellow
-        $warnings | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
-        if ($WarningsAsErrors) {
-            $hasIssues = $true
-        }
-    }
-
-    if ($errors.Count -gt 0) {
-        Write-Host "❌ Errors found:" -ForegroundColor Red
-        $errors | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
-        $hasIssues = $true
-    }
-
-    # Generate GitHub step summary
+    # GitHub step summary
+    $hasIssues = $summary.GetExitCode($WarningsAsErrors) -ne 0
     if ($hasIssues) {
         $summaryContent = @"
 ## ❌ Frontmatter Validation Failed
 
-**Files checked:** $($markdownFiles.Count)
-**Files with errors:** $($resultsJson.summary.files_with_errors)
-**Files with warnings:** $($resultsJson.summary.files_with_warnings)
-**Total errors:** $($errors.Count)
-**Total warnings:** $($warnings.Count)
-
-### Issues Found
-
-"@
-        
-        if ($errors.Count -gt 0) {
-            $summaryContent += "`n#### Errors`n`n"
-            foreach ($errorItem in $errors | Select-Object -First 10) {
-                $summaryContent += "- ❌ $errorItem`n"
-            }
-            if ($errors.Count -gt 10) {
-                $summaryContent += "`n*... and $($errors.Count - 10) more errors*`n"
-            }
-        }
-        
-        if ($warnings.Count -gt 0) {
-            $summaryContent += "`n#### Warnings`n`n"
-            foreach ($warning in $warnings | Select-Object -First 10) {
-                $summaryContent += "- ⚠️ $warning`n"
-            }
-            if ($warnings.Count -gt 10) {
-                $summaryContent += "`n*... and $($warnings.Count - 10) more warnings*`n"
-            }
-        }
-        
-        $summaryContent += @"
-
-
-### How to Fix
-
-1. Review the errors and warnings listed above
-2. Update frontmatter fields as required
-3. Ensure date formats follow ISO 8601 (YYYY-MM-DD)
-4. Add missing Copilot attribution footer where required
-5. Re-run validation to verify fixes
+**Files checked:** $($summary.TotalFiles)
+**Files with errors:** $($summary.FilesWithErrors)
+**Files with warnings:** $($summary.FilesWithWarnings)
+**Total errors:** $($summary.TotalErrors)
+**Total warnings:** $($summary.TotalWarnings)
 
 See the uploaded artifact for complete details.
 "@
-        
-        Write-GitHubStepSummary -Content $summaryContent
-        Set-GitHubEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
+        Write-CIStepSummary -Content $summaryContent
+        Set-CIEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
     }
     else {
         $summaryContent = @"
 ## ✅ Frontmatter Validation Passed
 
-**Files checked:** $($markdownFiles.Count)
+**Files checked:** $($summary.TotalFiles)
 **Errors:** 0
 **Warnings:** 0
 
 All frontmatter fields are valid and properly formatted. Great job! 🎉
 "@
-        
-        Write-GitHubStepSummary -Content $summaryContent
+        Write-CIStepSummary -Content $summaryContent
         Write-Host "✅ Frontmatter validation completed successfully" -ForegroundColor Green
     }
 
-    return @{
-        Errors            = $errors
-        Warnings          = $warnings
-        HasIssues         = $hasIssues
-        TotalFilesChecked = $markdownFiles.Count
-    }
+    return $summary
 }
 
 function Get-ChangedMarkdownFileGroup {
     <#
     .SYNOPSIS
-    Gets list of changed markdown files from git diff.
+    Retrieves changed markdown files from git diff comparison.
 
     .DESCRIPTION
-    Uses git diff to identify changed markdown files, with fallback strategies for different scenarios.
+    Uses git diff to identify markdown files that have changed between the current
+    HEAD and a base branch. Implements a fallback strategy when standard comparison
+    methods fail:
+
+    1. First attempts: git merge-base comparison with specified base branch
+    2. Fallback 1: Comparison with HEAD~1 (previous commit)
+    3. Fallback 2: Staged and unstaged files against HEAD
 
     .PARAMETER BaseBranch
-    The base branch to compare against (default: origin/main).
+    Git reference for the base branch to compare against. Defaults to 'origin/main'.
+    Can be any valid git ref (branch name, tag, commit SHA).
+
+    .PARAMETER FallbackStrategy
+    Controls fallback behavior when primary comparison fails.
+    - 'Auto' (default): Tries all fallback strategies automatically
+    - 'HeadOnly': Only uses HEAD~1 fallback
+    - 'None': No fallback, returns empty on failure
+
+    .INPUTS
+    None. Does not accept pipeline input.
 
     .OUTPUTS
-    Returns array of file paths for changed markdown files.
+    [string[]] Array of relative file paths for changed markdown files.
+    Returns empty array if no changes detected or git operations fail.
+
+    .EXAMPLE
+    $changedFiles = Get-ChangedMarkdownFileGroup
+    # Returns markdown files changed compared to origin/main
+
+    .EXAMPLE
+    $changedFiles = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/develop'
+    # Returns markdown files changed compared to develop branch
+
+    .EXAMPLE
+    $changedFiles = Get-ChangedMarkdownFileGroup -FallbackStrategy 'None'
+    # Returns empty array if merge-base comparison fails
+
+    .NOTES
+    Requires git to be available in PATH. Files must exist on disk to be included
+    in the result (deleted files are excluded).
     #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
     param(
+        [Parameter(Mandatory = $false, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$BaseBranch = "origin/main",
+
         [Parameter(Mandatory = $false)]
-        [string]$BaseBranch = "origin/main"
+        [ValidateSet('Auto', 'HeadOnly', 'None')]
+        [string]$FallbackStrategy = 'Auto'
     )
 
-    $changedMarkdownFiles = @()
-
     try {
-        # Try to get changed files from the merge base
         $changedFiles = git diff --name-only $(git merge-base HEAD $BaseBranch) HEAD 2>$null
         if ($LASTEXITCODE -ne 0) {
-            Write-Verbose "Merge base failed, trying HEAD~1"
-            # Fallback to comparing with HEAD~1 if merge-base fails
+            Write-Verbose "Merge base comparison with '$BaseBranch' failed"
+
+            if ($FallbackStrategy -eq 'None') {
+                Write-Warning "Unable to determine changed files from git (no fallback enabled)"
+                return @()
+            }
+
+            Write-Verbose "Attempting fallback: HEAD~1 comparison"
             $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-            if ($LASTEXITCODE -ne 0) {
-                Write-Verbose "HEAD~1 failed, trying staged/unstaged files"
-                # Last fallback - get staged and unstaged files
+
+            if ($LASTEXITCODE -ne 0 -and $FallbackStrategy -eq 'Auto') {
+                Write-Verbose "HEAD~1 comparison failed, attempting staged/unstaged files"
                 $changedFiles = git diff --name-only HEAD 2>$null
+
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "Unable to determine changed files from git"
                     return @()
                 }
             }
+            elseif ($LASTEXITCODE -ne 0) {
+                Write-Warning "Unable to determine changed files from git"
+                return @()
+            }
         }
 
-        # Filter for markdown files that exist and are not empty
-        $changedMarkdownFiles = $changedFiles | Where-Object {
+        [string[]]$changedMarkdownFiles = $changedFiles | Where-Object {
             -not [string]::IsNullOrEmpty($_) -and
             $_ -match '\.md$' -and
             (Test-Path $_ -PathType Leaf)
@@ -1099,23 +744,52 @@ function Get-ChangedMarkdownFileGroup {
     }
 }
 
-# Main execution
-if ($MyInvocation.InvocationName -ne '.') {
-    if ($ChangedFilesOnly) {
-        $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
-    }
-    elseif ($Files.Count -gt 0) {
-        $result = Test-FrontmatterValidation -Files $Files -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
-    }
-    else {
-        $result = Test-FrontmatterValidation -Paths $Paths -WarningsAsErrors:$WarningsAsErrors -SkipFooterValidation:$SkipFooterValidation -EnableSchemaValidation:$EnableSchemaValidation
-    }
+#region Main Execution
+try {
+    if ($MyInvocation.InvocationName -ne '.') {
+        if ($ChangedFilesOnly) {
+            $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
+        }
+        elseif ($Files.Count -gt 0) {
+            $result = Test-FrontmatterValidation -Files $Files -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
+        }
+        else {
+            $result = Test-FrontmatterValidation -Paths $Paths -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
+        }
 
-    if ($result.HasIssues) {
-        exit 1
-    }
-    else {
-        Write-Host "✅ All frontmatter validation checks passed!" -ForegroundColor Green
-        exit 0
+        # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
+        # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
+        if ($result -is [System.Array]) {
+            $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
+        }
+
+        # In ChangedFilesOnly mode with no changed files, TotalFiles=0 is a successful no-op
+        if ($ChangedFilesOnly -and $null -ne $result -and $result.TotalFiles -eq 0) {
+            Write-Host "✅ No changed markdown files to validate - success!" -ForegroundColor Green
+            exit 0
+        }
+
+        # Validate result object before calling GetExitCode to prevent method invocation errors
+        # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
+        if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
+            $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
+            Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
+            exit 1
+        }
+
+        $exitCode = $result.GetExitCode($WarningsAsErrors)
+        if ($exitCode -ne 0) {
+            exit $exitCode
+        }
+        else {
+            Write-Host "✅ All frontmatter validation checks passed!" -ForegroundColor Green
+            exit 0
+        }
     }
 }
+catch {
+    Write-Error -ErrorAction Continue "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "Validate Markdown Frontmatter failed: $($_.Exception.Message)" -Level Error
+    exit 1
+}
+#endregion

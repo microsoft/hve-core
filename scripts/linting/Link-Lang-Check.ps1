@@ -1,4 +1,8 @@
-﻿<#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
+<#
 .SYNOPSIS
     Language Path Link Checker and Fixer
 
@@ -15,6 +19,9 @@
 
 .PARAMETER Fix
     Fix URLs by removing "en-us/" instead of just reporting them
+
+.PARAMETER ExcludePaths
+    Glob patterns for paths to exclude from checking (e.g., 'scripts/tests/**')
 
 .EXAMPLE
     # Search for URLs containing 'en-us' and output as JSON
@@ -42,8 +49,15 @@
 
 [CmdletBinding()]
 param(
-    [switch]$Fix
+    [switch]$Fix,
+    [string[]]$ExcludePaths = @()
 )
+
+$ErrorActionPreference = 'Stop'
+
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
 function Get-GitTextFile {
     <#
@@ -108,7 +122,7 @@ function Find-LinksInFile {
     $linksFound = @()
 
     try {
-        $lines = Get-Content -Path $FilePath -Encoding UTF8 -ErrorAction Stop
+        $lines = @(Get-Content -Path $FilePath -Encoding UTF8 -ErrorAction Stop)
     }
     catch {
         Write-Verbose "Could not read $FilePath`: $_"
@@ -267,13 +281,34 @@ function ConvertTo-JsonOutput {
     return $jsonData
 }
 
-# Main script execution
-try {
+#region Main Execution
+if (-not $script:SkipMain) {
+    try {
     if ($Verbose) {
         Write-Information "Getting list of git-tracked text files..." -InformationAction Continue
     }
 
     $files = Get-GitTextFile
+
+    # Apply exclusion patterns
+    if ($ExcludePaths.Count -gt 0) {
+        $originalCount = $files.Count
+        $files = $files | Where-Object {
+            $filePath = $_
+            $excluded = $false
+            foreach ($pattern in $ExcludePaths) {
+                if ($filePath -like $pattern) {
+                    $excluded = $true
+                    break
+                }
+            }
+            -not $excluded
+        }
+        if ($Verbose) {
+            $excludedCount = $originalCount - $files.Count
+            Write-Information "Excluded $excludedCount files matching exclusion patterns" -InformationAction Continue
+        }
+    }
 
     if ($Verbose) {
         Write-Information "Found $($files.Count) git-tracked text files" -InformationAction Continue
@@ -338,9 +373,12 @@ try {
             Write-Output "No URLs containing 'en-us' were found."
         }
     }
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Link Lang Check failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message "Link Lang Check failed: $($_.Exception.Message)" -Level Error
+        exit 1
+    }
 }
-catch {
-    Write-Error "An error occurred: $_"
-    exit 1
-}
-
+#endregion

@@ -1,0 +1,14 @@
+name: CI Shell Downloads
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download without checksum
+        run: |
+          curl -sSL https://example.com/install.sh | bash
+          wget -O - https://example.com/script.sh | sh
+      - name: Download with checksum
+        run: |
+          curl -sSL https://example.com/tool.tar.gz -o tool.tar.gz
+          echo "abc123def456 tool.tar.gz" | sha256sum -c -

@@ -41,7 +41,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   scan:
@@ -55,13 +54,8 @@ jobs:
       unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
       is-compliant: ${{ steps.pinning.outputs.is-compliant }}
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@92c522aaa6f53af082553dedc1596c80b71aba33 # v2.10.2
-        with:
-          egress-policy: audit
-
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
 
@@ -130,8 +124,27 @@ jobs:
             
             # Fire GitHub Actions warnings for each violation
             if ($unpinnedCount -gt 0) {
+              # Escape function to prevent workflow command injection
+              function ConvertTo-GHAEscaped($Value, [switch]$ForProperty) {
+                if ([string]::IsNullOrEmpty($Value)) { return $Value }
+                $escaped = $Value -replace '%', '%25'
+                $escaped = $escaped -replace "`r", '%0D'
+                $escaped = $escaped -replace "`n", '%0A'
+                $escaped = $escaped -replace '::', '%3A%3A'
+                if ($ForProperty) {
+                  $escaped = $escaped -replace ':', '%3A'
+                  $escaped = $escaped -replace ',', '%2C'
+                }
+                return $escaped
+              }
+              
               foreach ($violation in $report.Violations) {
-                Write-Output "::warning file=$($violation.File),line=$($violation.Line)::Unpinned $($violation.Type) dependency: $($violation.Name)@$($violation.Version) (Severity: $($violation.Severity))"
+                $escapedFile = ConvertTo-GHAEscaped $violation.File -ForProperty
+                $escapedName = ConvertTo-GHAEscaped $violation.Name
+                $escapedVersion = ConvertTo-GHAEscaped $violation.Version
+                $escapedType = ConvertTo-GHAEscaped $violation.Type
+                $escapedSeverity = ConvertTo-GHAEscaped $violation.Severity
+                Write-Output "::warning file=$escapedFile,line=$($violation.Line)::Unpinned $escapedType dependency: $escapedName@$escapedVersion (Severity: $escapedSeverity)"
               }
             }
           }
@@ -150,7 +163,7 @@ jobs:
 
       - name: Upload validation report
         if: inputs.upload-artifact && always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4.4.3
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
           name: dependency-pinning-results
           path: logs/dependency-pinning-results.json

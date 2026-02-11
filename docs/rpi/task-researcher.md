@@ -1,8 +1,8 @@
 ---
 title: Task Researcher Guide
-description: Use the Task Researcher chat mode to conduct deep, evidence-based research before coding
+description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - task researcher
@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Researcher chat mode transforms uncertainty into verified knowledge through deep, autonomous research. It investigates your codebase, external documentation, and APIs to create evidence-backed recommendations.
+The Task Researcher custom agent transforms uncertainty into verified knowledge through deep, autonomous research. It investigates your codebase, external documentation, and APIs to create evidence-backed recommendations.
 
 ## When to Use Task Researcher
 
@@ -32,12 +32,15 @@ Escalate to Task Researcher when your task involves:
 4. **Recommends** ONE approach per technical scenario
 5. **Outputs** a comprehensive research document
 
+> [!NOTE]
+> **Why the constraint matters:** Task Researcher knows it will never write the code. This single constraint transforms its behavior—it searches for existing patterns instead of inventing new ones, cites specific files as evidence, and questions its own assumptions because it can't hide them in implementation.
+
 ## Output Artifact
 
 Task Researcher creates a research document at:
 
 ```text
-.copilot-tracking/research/YYYYMMDD-<topic>-research.md
+.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md
 ```
 
 This document includes:
@@ -50,11 +53,22 @@ This document includes:
 
 ## How to Use Task Researcher
 
-### Step 1: Select the Chat Mode
+### Option 1: Use the Prompt Shortcut (Recommended)
+
+Type `/task-research <topic>` in GitHub Copilot Chat where `<topic>` describes what you want to research:
+
+```text
+/task-research Azure Blob Storage integration for Python pipelines
+```
+
+This automatically switches to Task Researcher and begins the research protocol.
+
+### Option 2: Select the Custom Agent Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the chat mode dropdown at the top
+2. Click the agent picker dropdown at the top
 3. Select **Task Researcher**
+4. Describe your task
 
 ### Step 2: Describe Your Task
 
@@ -128,6 +142,12 @@ After Task Researcher completes:
 
 Pass the research document path to Task Planner so it can create an actionable implementation plan.
 
+> [!TIP]
+> Use the **📋 Create Plan** handoff button when available to transition directly to Task Planner with context.
+
 ---
 
-🤖 *Crafted with precision by ✨Copilot using the RPI workflow*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

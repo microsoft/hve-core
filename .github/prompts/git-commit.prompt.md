@@ -1,6 +1,7 @@
 ---
 agent: 'agent'
 description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
+maturity: stable
 ---
 
 # Stage, Generate, and Commit
@@ -52,10 +53,10 @@ Example for a large change (structure illustration after committing):
 Commit created successfully with the following message:
 
 ```markdown
-feat: add repo-wide instruction files including prompts and chatmodes
+feat: add repo-wide instruction files including prompts and agents
 
 * add commit message, markdown, C# along with C# test instructions
-* introduce task planner and researcher, prompt builder, and adr creation chatmodes
+* introduce task planner and researcher, prompt builder, and adr creation agents
 * configure markdownlint and VS Code workspace settings
 * add ADO work items prompts for getting and preparing my work items
 * add .gitignore and cleanup README newlines

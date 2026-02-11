@@ -1,4 +1,18 @@
-# VS Code MCP Server Configuration
+---
+title: VS Code MCP Server Configuration
+description: Configuration guide for GitHub MCP server integration with VS Code Copilot
+author: Microsoft
+ms.date: 2025-06-13
+ms.topic: reference
+keywords:
+  - mcp
+  - github copilot
+  - vscode
+  - configuration
+estimated_reading_time: 3
+---
+
+## Overview
 
 This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
@@ -94,3 +108,7 @@ Once configured, the MCP server provides:
 - [VS Code MCP Extension Guide](https://code.visualstudio.com/api/extension-guides/ai/mcp)
 - [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server)
 - [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,8 +1,8 @@
 ---
 title: Task Planner Guide
-description: Use the Task Planner chat mode to create actionable implementation plans from research findings
+description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 author: Microsoft
-ms.date: 2025-01-28
+ms.date: 2026-01-24
 ms.topic: tutorial
 keywords:
   - task planner
@@ -12,7 +12,7 @@ keywords:
 estimated_reading_time: 4
 ---
 
-The Task Planner chat mode transforms research findings into actionable implementation plans. It creates coordinated planning files with checkboxes, detailed specifications, and line number references for precise execution.
+The Task Planner custom agent transforms research findings into actionable implementation plans. It creates coordinated planning files with checkboxes, detailed specifications, and line number references for precise execution.
 
 ## When to Use Task Planner
 
@@ -26,23 +26,23 @@ Use Task Planner after completing research when you need:
 ## What Task Planner Does
 
 1. **Validates** that research exists (MANDATORY first step)
-2. **Creates** three coordinated planning files
+2. **Creates** two coordinated planning files
 3. **Links** specifications to research with line numbers
 4. **Organizes** tasks into logical phases with dependencies
-5. **Generates** an implementation prompt for Task Implementor
+
+> [!NOTE]
+> **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria—the plan becomes a contract that prevents improvisation during implementation.
 
 ## Output Artifacts
 
-Task Planner creates three files:
+Task Planner creates two files:
 
 ```text
 .copilot-tracking/
 ├── plans/
-│   └── YYYYMMDD-<topic>-plan.instructions.md   # Checklist with phases
-├── details/
-│   └── YYYYMMDD-<topic>-details.md             # Specifications for each task
-└── prompts/
-    └── implement-<topic>.prompt.md              # Execution instructions
+│   └── {{YYYY-MM-DD}}-<topic>-plan.instructions.md   # Checklist with phases
+└── details/
+    └── {{YYYY-MM-DD}}-<topic>-details.md             # Specifications for each task
 ```
 
 ### Plan File
@@ -53,20 +53,28 @@ Contains checkboxes for phases and tasks, references to details with line number
 
 Contains specifications for each task: files to modify, success criteria, research references.
 
-### Implementation Prompt
-
-Contains step-by-step instructions for Task Implementor, including stop controls.
-
 ## How to Use Task Planner
 
 ### Step 1: Clear Context
 
 🔴 **Start with `/clear` or a new chat** after Task Researcher completes.
 
-### Step 2: Select the Chat Mode
+### Step 2: Invoke Task Planner
+
+#### Option 1: Use the Prompt Shortcut (Recommended)
+
+Type `/task-plan` in GitHub Copilot Chat with the research document opened in the editor. This automatically switches to Task Planner and begins the planning protocol. You can optionally provide the research file path:
+
+```text
+/task-plan
+```
+
+If you don't specify a file, Task Planner will search for recent research documents in `.copilot-tracking/research/` and ask you to confirm which one to use.
+
+#### Option 2: Select the Custom Agent Manually
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Click the chat mode dropdown
+2. Click the agent picker dropdown
 3. Select **Task Planner**
 
 ### Step 3: Reference Your Research
@@ -83,10 +91,10 @@ Task Planner will create all three files. Review:
 
 ## Example Prompt
 
-```text
-Using the research from .copilot-tracking/research/20250128-blob-storage-research.md,
-create an implementation plan for adding Azure Blob Storage integration.
+With `.copilot-tracking/research/2025-01-28-blob-storage-research.md` opened in the editor
 
+```text
+/task-plan
 Focus on:
 - The streaming upload approach recommended in the research
 - Phased rollout: storage client first, then writer class, then tests
@@ -126,7 +134,7 @@ Specific work items within phases:
 
 ```markdown
 * [ ] Task 1.1: Create BlobStorageClient class
-  * Details: .copilot-tracking/details/20250128-blob-storage-details.md (Lines 10-25)
+  * Details: .copilot-tracking/details/2025-01-28-blob-storage-details.md (Lines 10-25)
 ```
 
 ### Line References
@@ -151,10 +159,18 @@ After Task Planner completes:
 
 1. **Review** all three planning files
 2. **Clear context** using `/clear` or starting a new chat
-3. **Proceed to implementation** with [Task Implementor](task-implementor.md)
+3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor.md)
 
-Use the generated implementation prompt (`.copilot-tracking/prompts/implement-*.prompt.md`) with Task Implementor.
+The `/task-implement` prompt automatically locates the plan and switches to Task Implementor.
+
+> [!TIP]
+> Use the **⚡ Implement** handoff button when available to transition directly to Task Implementor with context.
+
+After implementation, continue to [Task Reviewer](task-reviewer.md) to validate against specifications.
 
 ---
 
-🤖 *Crafted with precision by ✨Copilot using the RPI workflow*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

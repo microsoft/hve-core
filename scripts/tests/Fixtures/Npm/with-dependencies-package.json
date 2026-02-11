@@ -1,0 +1,23 @@
+{
+  "name": "test-package-with-deps",
+  "version": "2.0.0",
+  "description": "Test package with actual dependencies",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "express": "~4.18.2"
+  },
+  "devDependencies": {
+    "jest": "29.7.0",
+    "typescript": "*"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  }
+}

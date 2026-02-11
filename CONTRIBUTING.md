@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-02-07
 ms.topic: guide
 keywords:
   - contributing
@@ -38,10 +38,18 @@ This project uses several tools to maintain code quality and consistency:
 Run these npm scripts to validate your changes before submitting:
 
 ```bash
+npm run lint:all         # Run all linters
 npm run lint:md          # Run markdownlint
+npm run lint:ps          # Run PowerShell analyzer
+npm run lint:yaml        # Run YAML linter
+npm run lint:frontmatter # Validate markdown frontmatter
+npm run lint:md-links    # Check markdown links
 npm run spell-check      # Run cspell
 npm run format:tables    # Format markdown tables
+npm run test:ps          # Run PowerShell tests
 ```
+
+For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
 
 ### Development Environment
 
@@ -53,32 +61,39 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Required Tools](#required-tools)
   - [Validation Commands](#validation-commands)
   - [Development Environment](#development-environment)
-  - [Code of Conduct](#code-of-conduct)
-  - [I Have a Question](#i-have-a-question)
-  - [I Want To Contribute](#i-want-to-contribute)
-    - [Reporting Bugs](#reporting-bugs)
-      - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
-      - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
-    - [Suggesting Enhancements](#suggesting-enhancements)
-      - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
-      - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
-    - [Your First Code Contribution](#your-first-code-contribution)
-    - [Improving The Documentation](#improving-the-documentation)
-  - [Style Guides](#style-guides)
-    - [Local Development Setup](#local-development-setup)
-    - [Coding Conventions](#coding-conventions)
-  - [Release Process](#release-process)
-    - [How Releases Work](#how-releases-work)
-    - [Version Determination](#version-determination)
-    - [Commit Message Examples](#commit-message-examples)
-    - [Release Validation](#release-validation)
-  - [Attribution](#attribution)
+- [Code of Conduct](#code-of-conduct)
+- [I Have a Question](#i-have-a-question)
+- [I Want To Contribute](#i-want-to-contribute)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Suggesting Enhancements](#suggesting-enhancements)
+  - [Your First Code Contribution](#your-first-code-contribution)
+  - [Improving The Documentation](#improving-the-documentation)
+- [AI Artifact Contributions](#ai-artifact-contributions)
+- [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
+  - [Active Pull Requests](#active-pull-requests)
+  - [Draft Pull Requests](#draft-pull-requests)
+  - [Exemptions](#exemptions)
+- [Style Guides](#style-guides)
+  - [Local Development Setup](#local-development-setup)
+  - [Coding Conventions](#coding-conventions)
+- [Testing Requirements](#testing-requirements)
+  - [When Tests Are Required](#when-tests-are-required)
+  - [Test Conventions](#test-conventions)
+  - [Running Tests Locally](#running-tests-locally)
+- [Release Process](#release-process)
+  - [How Releases Work](#how-releases-work)
+  - [Version Determination](#version-determination)
+  - [Commit Message Examples](#commit-message-examples)
+  - [Release Validation](#release-validation)
+- [Attribution](#attribution)
 
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
 [Code of Conduct](./CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please see the [Code of Conduct](./CODE_OF_CONDUCT.md) instructions on how to report unacceptable behavior.
+
+For maintainer authority, decision-making processes, and role definitions, see [GOVERNANCE.md](./GOVERNANCE.md).
 
 ## I Have a Question
 
@@ -169,6 +184,80 @@ This project also includes a Dev Container for development work, and using that 
 
 If you see issues with the documentation, please follow the [your first code contribution](#your-first-code-contribution) guidance.
 
+For AI artifact documentation (agents, prompts, instructions, skills), see the [AI Artifact Contributions](#ai-artifact-contributions) section below and refer to the specialized guides in [docs/contributing/](./docs/contributing/README.md).
+
+## AI Artifact Contributions
+
+HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
+
+### Getting Started with AI Artifacts
+
+Start with the [AI Artifacts Contributing Hub](./docs/contributing/README.md) for an overview of all artifact types and contribution standards.
+
+### Artifact Types
+
+| Artifact Type    | Purpose                                                                                           | Guide                                                       |
+|------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| **Agents**       | Define specialized AI assistants with domain expertise and specific workflows                     | [Custom Agents Guide](./docs/contributing/custom-agents.md) |
+| **Instructions** | Establish repository-specific coding standards and conventions that Copilot follows automatically | [Instructions Guide](./docs/contributing/instructions.md)   |
+| **Prompts**      | Create reusable prompt templates for common tasks and workflows                                   | [Prompts Guide](./docs/contributing/prompts.md)             |
+| **Skills**       | Build self-contained packages with documentation and executable scripts for specific tasks        | [Skills Guide](./docs/contributing/skills.md)               |
+
+### Essential Resources
+
+Before contributing AI artifacts, review these resources:
+
+- [Common Standards](./docs/contributing/ai-artifacts-common.md) - Shared quality gates, conventions, and rejection criteria that apply to all artifact types
+- [Release Process](./docs/contributing/release-process.md) - Extension channels, maturity levels, version calculation, and publishing workflow
+- [Branch Protection](./docs/contributing/branch-protection.md) - CI requirements, automated checks, and code review expectations
+- [Project Roadmap](./docs/contributing/ROADMAP.md) - Current focus areas and future direction
+
+### Quick Reference
+
+- Agents directory: [`.github/agents/`](./.github/agents/)
+- Instructions directory: [`.github/instructions/`](./.github/instructions/)
+- Prompts directory: [`.github/prompts/`](./.github/prompts/)
+- Skills directory: [`.github/skills/`](./.github/skills/)
+
+## Pull Request Inactivity Policy
+
+Pull requests that remain inactive accumulate merge conflicts and delay feedback loops. This section defines closure timelines for inactive PRs. Automation that enforces this policy is a separate effort that references these thresholds.
+
+For issue and discussion inactivity policy, see [Inactivity Closure Policy](./GOVERNANCE.md#inactivity-closure-policy) in GOVERNANCE.md.
+
+### Active Pull Requests
+
+The inactivity clock runs only when the PR is waiting on the author. Reviewer-side delays do not count against the author.
+
+| Stage  | Trigger                                                           | Label                 | Action                  |
+|:-------|:------------------------------------------------------------------|:----------------------|:------------------------|
+| Active | Author activity within the past 14 days while `waiting-on-author` | (none)                | Normal review cycle     |
+| Paused | PR is labeled `waiting-on-reviewer`                               | `waiting-on-reviewer` | Inactivity clock paused |
+| Stale  | 14 days without author activity while `waiting-on-author`         | `stale`               | Reminder comment posted |
+| Closed | 7 days after `stale` label without author activity                | `closed-stale`        | PR closed with summary  |
+
+Label usage:
+
+- `waiting-on-author` is applied when the reviewer requests changes or the author needs to resolve conflicts. The inactivity clock starts.
+- `waiting-on-reviewer` is applied when the author has addressed feedback and awaits re-review. The inactivity clock pauses.
+
+### Draft Pull Requests
+
+Draft PRs are fully exempt from inactivity closure. Converting a draft to "ready for review" starts the normal active PR lifecycle.
+
+### Exemptions
+
+The following conditions prevent automatic closure of a pull request:
+
+- PR is in draft state
+- PR is labeled `do-not-close`
+- PR is labeled `waiting-on-reviewer`
+
+Reopening rules:
+
+- Authors can reopen a stale-closed PR at any time with updated changes
+- Reopening removes the `stale` label and resets the inactivity clock
+
 ## Style Guides
 
 This project uses automated linters to ensure code quality and consistency. These linters can be run locally using the npm scripts described in the [Build and Validation Requirements](#build-and-validation-requirements) section.
@@ -195,6 +284,48 @@ Refer to the [DevContainer README](./.devcontainer/README.md) for detailed infor
 - Run spell checking before committing changes
 - Format tables using the markdown-table-formatter tool
 
+### Copyright and License Headers
+
+All source files must include copyright and license headers to meet OpenSSF Best Practices badge criteria. See [Copyright Header Guidelines](./docs/contributing/copyright-headers.md) for format requirements and placement rules by file type.
+
+## Testing Requirements
+
+New functionality MUST include tests. This policy ensures code quality and prevents regressions.
+
+### When Tests Are Required
+
+- New PowerShell scripts require corresponding `*.Tests.ps1` files
+- Bug fixes should include a regression test when feasible
+- Documentation-only or configuration-only changes do not require tests
+
+CI reports coverage at an 18% informational baseline; focus on meaningful coverage for new code rather than a strict percentage.
+
+### Test Conventions
+
+| Item      | Convention                                            |
+|-----------|-------------------------------------------------------|
+| Location  | `scripts/tests/` (mirrors source directory structure) |
+| Naming    | `*.Tests.ps1` suffix matching source script name      |
+| Framework | Pester 5.x                                            |
+
+Minimal example:
+
+```powershell
+Describe 'Get-Example' {
+    It 'Returns expected output' {
+        Get-Example | Should -Be 'expected'
+    }
+}
+```
+
+### Running Tests Locally
+
+```bash
+npm run test:ps
+```
+
+All PRs run Pester tests automatically via GitHub Actions. Tests must pass before merge.
+
 ## Release Process
 
 This project uses [release-please](https://github.com/googleapis/release-please) for automated version management and releases.
@@ -202,10 +333,7 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 ### How Releases Work
 
 1. **Commit with Conventional Commits** - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/commit-message.instructions.md))
-2. **Release PR Creation** - After commits are pushed to `main`, release-please automatically creates or updates a "release PR" that includes:
-   - Updated version in `package.json`
-   - Generated `CHANGELOG.md` entry
-   - Preview of GitHub release notes
+2. **Release PR Creation** - After commits are pushed to `main`, release-please automatically creates or updates a "release PR"
 3. **Review Release PR** - Maintainers review the release PR to verify version bump and changelog accuracy
 4. **Merge to Release** - When the release PR is merged, a git tag and GitHub Release are automatically created
 
@@ -213,10 +341,12 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 Version bumps are determined by commit types:
 
-- `feat:` commits → **Minor** version bump (1.0.0 → 1.1.0)
-- `fix:` commits → **Patch** version bump (1.0.0 → 1.0.1)
-- `docs:`, `chore:`, `refactor:` commits → **No version bump** (appear in changelog only)
-- Commits with `BREAKING CHANGE:` footer or `!` after type → **Major** version bump (1.0.0 → 2.0.0)
+| Commit Type                    | Version Bump | Example                  |
+|--------------------------------|--------------|--------------------------|
+| `feat:`                        | Minor        | 1.0.0 → 1.1.0            |
+| `fix:`                         | Patch        | 1.0.0 → 1.0.1            |
+| `docs:`, `chore:`, `refactor:` | No bump      | Appear in changelog only |
+| `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0            |
 
 ### Commit Message Examples
 
@@ -237,6 +367,8 @@ BREAKING CHANGE: prompt files now require category frontmatter field"
 ```
 
 For complete commit message format requirements, see [commit-message.instructions.md](./.github/instructions/commit-message.instructions.md).
+
+For complete release process documentation including extension publishing, maturity lifecycle, and detailed version calculation workflows, see the [Release Process Guide](./docs/contributing/release-process.md).
 
 ### Release Validation
 

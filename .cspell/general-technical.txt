@@ -1155,6 +1155,13 @@ zonemap
 zref
 zscaler
 
+# Codecov Configuration
+carryforward
+
+# Mermaid Diagram Labels
+SCHED
+SECCHECK
+
 # Academic & Technical Terms
 anonymization
 anonymize
@@ -1194,6 +1201,7 @@ auditifnotexists
 gdpr
 hipaa
 oidc
+oldsha
 OSSF
 passwordless
 siem
@@ -1327,6 +1335,8 @@ Upselling
 
 # Development & DevOps
 agile
+choco
+chocolatey
 cicd
 devops
 scrum
@@ -1340,9 +1350,12 @@ shellcheck
 nslookup
 journalctl
 vimdiff
+virtualenv
+venv
 mergetool
 gitmessage
 pipefail
+errexit
 esac
 keyid
 openpgp
@@ -1352,6 +1365,7 @@ keepbackup
 checkpointed
 parameterless
 notnull
+notmatch
 gettype
 lockfiles
 workitem
@@ -1379,6 +1393,8 @@ typeparam
 colcon
 pathlib
 popen
+popd
+pushd
 expanduser
 reqwest
 pyyaml
@@ -1392,6 +1408,9 @@ cloudevents
 datasize
 mult
 reqs
+toplevel
+mapfile
+Hashtable
 
 # Video & Image Processing
 drawtext
@@ -1458,3 +1477,6 @@ isort
 mymodule
 mypy
 sandboxed
+Sigstore
+Overreliance
+Contestability

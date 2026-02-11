@@ -31,6 +31,9 @@ You'll create:
 
 **Why use RPI for this?** Multiple unknowns: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
 
+> [!IMPORTANT]
+> **Why this matters:** AI can't tell the difference between investigating and implementing. When you ask for code, it writes code—patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
+
 ## Before You Start
 
 **The `/clear` command** resets Copilot's context between phases. Each RPI phase should start fresh—the artifacts (research doc, plan) carry the context forward, not the chat history.
@@ -40,7 +43,7 @@ You'll create:
 ### Switch to Task Researcher
 
 1. Open Copilot Chat (`Ctrl+Alt+I`)
-1. Click the chat mode dropdown at the top
+1. Click the agent picker dropdown at the top
 1. Select **Task Researcher**
 
 ### Your Research Prompt
@@ -52,10 +55,10 @@ Research what's needed to create a PowerShell script for this repository that
 validates every subfolder under docs/ contains a README.md file.
 
 Consider:
-- Existing PowerShell script patterns in scripts/linting/
-- PSScriptAnalyzer conventions and settings
-- How npm scripts are structured in package.json
-- Expected output format (exit codes, messages)
+* Existing PowerShell script patterns in scripts/linting/
+* PSScriptAnalyzer conventions and settings
+* How npm scripts are structured in package.json
+* Expected output format (exit codes, messages)
 ```
 
 ### What You'll Get
@@ -83,7 +86,7 @@ From the research output, identify:
 ### Clear and Switch
 
 1. Type `/clear` in the chat to reset context
-1. Click the chat mode dropdown
+1. Click the agent picker dropdown
 1. Select **Task Planner**
 
 ### Your Planning Prompt
@@ -94,11 +97,11 @@ Copy and paste this prompt (include findings from Phase 1):
 Create an implementation plan to add a README validation script.
 
 Requirements from research:
-- Script location: scripts/linting/Test-DocsReadme.ps1
-- Follow PowerShell conventions (Verb-Noun naming, comment-based help)
-- Add npm script "check:docs-readme" to package.json
-- Exit 0 on success, exit 1 on failure
-- Output list of folders missing README.md
+* Script location: scripts/linting/Test-DocsReadme.ps1
+* Follow PowerShell conventions (Verb-Noun naming, comment-based help)
+* Add npm script "check:docs-readme" to package.json
+* Exit 0 on success, exit 1 on failure
+* Output list of folders missing README.md
 ```
 
 ### Plan Output
@@ -125,7 +128,7 @@ Task Planner creates a structured plan with:
 ### Clear and Switch to Implementor
 
 1. Type `/clear` in the chat to reset context
-1. Click the chat mode dropdown
+1. Click the agent picker dropdown
 1. Select **Task Implementor**
 
 ### Your Implementation Prompt
@@ -203,18 +206,19 @@ Rename-Item docs/rpi/README.md.bak README.md
 
 ## Next Steps
 
-* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md)
-* **Simple tasks** - Skip RPI and use prompts directly
+* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md) and/or [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent)
+* **Simple tasks** - Use [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) or prompts directly
 * **Contribute** - Read [Contributing Guide](../contributing/README.md)
 
 ## Resources
 
-| Resource                                       | Description                       |
-|------------------------------------------------|-----------------------------------|
-| [RPI Overview](../rpi/README.md)               | Full RPI workflow documentation   |
-| [Task Researcher](../rpi/task-researcher.md)   | Deep dive on research phase       |
-| [Task Planner](../rpi/task-planner.md)         | Deep dive on planning phase       |
-| [Task Implementor](../rpi/task-implementor.md) | Deep dive on implementation phase |
+| Resource                                              | Description                          |
+|-------------------------------------------------------|--------------------------------------|
+| [RPI Overview](../rpi/README.md)                      | Full RPI workflow documentation      |
+| [Task Researcher](../rpi/task-researcher.md)          | Deep dive on research phase          |
+| [Task Planner](../rpi/task-planner.md)                | Deep dive on planning phase          |
+| [Task Implementor](../rpi/task-implementor.md)        | Deep dive on implementation phase    |
+| [RPI Agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) | Autonomous single-workflow execution |
 
 ---
 

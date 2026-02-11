@@ -1,10 +1,13 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # Invoke-PSScriptAnalyzer.ps1
 #
 # Purpose: Wrapper for PSScriptAnalyzer with GitHub Actions integration
 # Author: HVE Core Team
-# Created: 2025-11-05
+
+#Requires -Version 7.0
 
 [CmdletBinding()]
 param(
@@ -21,8 +24,11 @@ param(
     [string]$OutputPath = "logs/psscriptanalyzer-results.json"
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
@@ -39,96 +45,104 @@ $filesToAnalyze = @()
 
 if ($ChangedFilesOnly) {
     Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
-    $filesToAnalyze = Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1')
+    $filesToAnalyze = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1'))
 }
 else {
     Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
     $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-    $filesToAnalyze = Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath
+    $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
 }
 
-if ($filesToAnalyze.Count -eq 0) {
+if (@($filesToAnalyze).Count -eq 0) {
     Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
-    Set-GitHubOutput -Name "count" -Value "0"
-    Set-GitHubOutput -Name "issues" -Value "0"
+    Set-CIOutput -Name "count" -Value "0"
+    Set-CIOutput -Name "issues" -Value "0"
     exit 0
 }
 
 Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
-Set-GitHubOutput -Name "count" -Value $filesToAnalyze.Count
+Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
 
-# Run PSScriptAnalyzer
-$allResults = @()
-$hasErrors = $false
+#region Main Execution
+try {
+    # Run PSScriptAnalyzer
+    $allResults = @()
+    $hasErrors = $false
 
-foreach ($file in $filesToAnalyze) {
-    $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
-    Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
-    
-    $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
-    
-    if ($results) {
-        $allResults += $results
+    foreach ($file in $filesToAnalyze) {
+        $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
+        Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
         
-        foreach ($result in $results) {
-            # Create GitHub annotation
-            Write-GitHubAnnotation `
-                -Type $result.Severity.ToString().ToLower() `
-                -Message "$($result.RuleName): $($result.Message)" `
-                -File $filePath `
-                -Line $result.Line `
-                -Column $result.Column
+        $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
+        
+        if ($results) {
+            $allResults += $results
             
-            $icon = switch ($result.Severity) {
-                'Error' { '❌'; $hasErrors = $true }
-                'Warning' { '⚠️' }
-                default { 'ℹ️' }
+            foreach ($result in $results) {
+                $annotationLevel = switch ($result.Severity) {
+                    'Error' { 'Error' }
+                    'Warning' { 'Warning' }
+                    'Information' { 'Notice' }
+                    default { 'Notice' }
+                }
+
+                Write-CIAnnotation `
+                    -Message "$($result.RuleName): $($result.Message)" `
+                    -Level $annotationLevel `
+                    -File $filePath `
+                    -Line $result.Line `
+                    -Column $result.Column
+                
+                $icon = switch ($result.Severity) {
+                    'Error' { '❌'; $hasErrors = $true }
+                    'Warning' { '⚠️' }
+                    default { 'ℹ️' }
+                }
+                
+                Write-Host "  $icon [$($result.Severity)] $($result.RuleName): $($result.Message) (Line $($result.Line))" -ForegroundColor $(
+                    if ($result.Severity -eq 'Error') { 'Red' }
+                    elseif ($result.Severity -eq 'Warning') { 'Yellow' }
+                    else { 'Cyan' }
+                )
             }
-            
-            Write-Host "  $icon [$($result.Severity)] $($result.RuleName): $($result.Message) (Line $($result.Line))" -ForegroundColor $(
-                if ($result.Severity -eq 'Error') { 'Red' }
-                elseif ($result.Severity -eq 'Warning') { 'Yellow' }
-                else { 'Cyan' }
-            )
+        }
+        else {
+            Write-Host "  ✅ No issues found" -ForegroundColor Green
         }
     }
-    else {
-        Write-Host "  ✅ No issues found" -ForegroundColor Green
+
+    # Export results
+    $summary = @{
+        TotalFiles     = @($filesToAnalyze).Count
+        TotalIssues    = @($allResults).Count
+        Errors         = @($allResults | Where-Object Severity -eq 'Error').Count
+        Warnings       = @($allResults | Where-Object Severity -eq 'Warning').Count
+        Information    = @($allResults | Where-Object Severity -eq 'Information').Count
+        HasErrors      = $hasErrors
     }
-}
 
-# Export results
-$summary = @{
-    TotalFiles     = $filesToAnalyze.Count
-    TotalIssues    = $allResults.Count
-    Errors         = ($allResults | Where-Object Severity -eq 'Error').Count
-    Warnings       = ($allResults | Where-Object Severity -eq 'Warning').Count
-    Information    = ($allResults | Where-Object Severity -eq 'Information').Count
-    HasErrors      = $hasErrors
-}
+    $allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
+    $summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
 
-$allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
-$summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
+    # Set outputs
+    Set-CIOutput -Name "issues" -Value $summary.TotalIssues
+    Set-CIOutput -Name "errors" -Value $summary.Errors
+    Set-CIOutput -Name "warnings" -Value $summary.Warnings
 
-# Set outputs
-Set-GitHubOutput -Name "issues" -Value $summary.TotalIssues
-Set-GitHubOutput -Name "errors" -Value $summary.Errors
-Set-GitHubOutput -Name "warnings" -Value $summary.Warnings
+    if ($hasErrors) {
+        Set-CIEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
+    }
 
-if ($hasErrors) {
-    Set-GitHubEnv -Name "PSSCRIPTANALYZER_FAILED" -Value "true"
-}
+    # Write summary
+    Write-CIStepSummary -Content "## PSScriptAnalyzer Results`n"
 
-# Write summary
-Write-GitHubStepSummary -Content "## PSScriptAnalyzer Results`n"
-
-if ($summary.TotalIssues -eq 0) {
-    Write-GitHubStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
-    Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
-    exit 0
-}
-else {
-    Write-GitHubStepSummary -Content @"
+    if ($summary.TotalIssues -eq 0) {
+        Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
+        Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
+        exit 0
+    }
+    else {
+        Write-CIStepSummary -Content @"
 ❌ **Status**: Failed
 
 | Metric | Count |
@@ -140,6 +154,13 @@ else {
 | Information | $($summary.Information) |
 "@
     
-    Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        exit 1
+    }
+}
+catch {
+    Write-Error -ErrorAction Continue "PSScriptAnalyzer failed: $($_.Exception.Message)"
+    Write-CIAnnotation -Message "PSScriptAnalyzer failed: $($_.Exception.Message)" -Level Error
     exit 1
 }
+#endregion

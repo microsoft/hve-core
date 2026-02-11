@@ -1,57 +1,70 @@
 ---
 description: "Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking."
 applyTo: '**/.copilot-tracking/pr/new/**'
+maturity: stable
 ---
 
-# Azure DevOps Pull Request Creation & Workflow
+# Azure DevOps Pull Request Creation
 
 Follow all instructions from #file:./ado-wit-planning.instructions.md for planning file conventions while executing this workflow.
 
 ## Scope
 
-Apply this procedure when creating a new Azure DevOps pull request with:
+Apply this procedure when creating a new Azure DevOps pull request with automated PR description generation, work item discovery and linking, reviewer identification from git history, and complete traceability through planning documents.
 
-* Automated PR description generation from branch changes
-* Discovery and linking of related User Stories and Bugs
-* Identification of potential reviewers from git history
-* Complete traceability through planning documents
-* Automated PR creation via Azure DevOps MCP tools
+Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` using the specified Azure DevOps project `${input:adoProject}` and repository `${input:repository}`.
 
-* Output planning files under `.copilot-tracking/pr/new/<normalized-branch-name>/`
-* Default Azure DevOps project: `${input:adoProject}`
-* Default repository: `${input:repository}`
+## Inputs
+
+* `${input:adoProject}`: (Required) Azure DevOps project name or ID.
+* `${input:repository}`: (Required) Repository name or ID.
+* `${input:sourceBranch}`: (Optional) Source branch name. Defaults to current git branch.
+* `${input:baseBranch:origin/main}`: (Optional) Base branch for comparison.
+* `${input:similarityThreshold:50}`: (Optional) Minimum similarity score (0-100) for work item matching.
+* `${input:workItemStates:["New", "Active", "Resolved"]}`: (Optional) Work item state filter.
+* `${input:workItemIds}`: (Optional) Explicit work item IDs to link, bypassing discovery.
+* `${input:isDraft:false}`: (Optional) Create PR as draft.
+* `${input:noGates:false}`: (Optional) Skip user confirmation gates.
+* `${input:includeMarkdown:true}`: (Optional) Include markdown file diffs in PR reference.
 
 ## Deliverables
 
-* `pr-reference.xml` - Complete git diff and commit history
-* `pr.md` - Generated pull request description
-* `pr-analysis.md` - Analysis of changes and discovered work items
-* `reviewer-analysis.md` - Potential reviewers with rationale
-* `planning-log.md` - Structured operational log
-* `handoff.md` - Final PR creation plan with all details
-* Conversational recap summarizing PR creation results with URL
+* `pr-reference.xml` - Git diff and commit history
+* `pr.md` - Pull request description
+* `pr-analysis.md` - Change analysis and work item findings
+* `reviewer-analysis.md` - Reviewer analysis with rationale
+* `planning-log.md` - Operational log
+* `handoff.md` - Final PR creation plan
+* Conversational recap with PR URL
 
 ## Tooling
 
-* `run_in_terminal` (zsh) for git operations:
-   1. Sync remote base branch: `git fetch <remote> <branch-name> --prune`
-   2. Generate PR reference XML: `scripts/dev-tools/pr-ref-gen.sh --base-branch "${input:baseBranch}" --output ".copilot-tracking/pr/new/<normalized-branch-name>/pr-reference.xml"`
-   3. Get current user: `git config user.email`
-   4. Get file contributors: `git log --all --pretty=format:'%H %an <%ae>' -- <file-pattern> | head -20`
-* Azure DevOps MCP tools:
-  * `mcp_ado_search_workitem` for work item discovery
-  * `mcp_ado_wit_get_work_item` or `mcp_ado_wit_get_work_items_batch_by_ids` for hydration
-  * `mcp_ado_repo_create_pull_request` for PR creation
-  * `mcp_ado_wit_link_work_item_to_pull_request` for linking work items
-  * `mcp_ado_core_get_identity_ids` for resolving reviewer emails to Azure DevOps identity IDs
-  * `mcp_ado_repo_update_pull_request_reviewers` for adding/removing reviewers programmatically
-* Workspace utilities: `list_dir`, `read_file`, `grep_search`
-* Persist all tool output into planning files per #file:./ado-wit-planning.instructions.md
+Git operations via `run_in_terminal`:
 
-<!-- <tracking-directory-structure> -->
+* `git fetch <remote> <branch-name> --prune` to sync remote
+* `scripts/dev-tools/pr-ref-gen.sh --base-branch "${input:baseBranch}" --output "<path>/pr-reference.xml"` for PR reference
+* `git config user.email` for current user
+* `git log --all --pretty=format:'%H %an <%ae>' -- <file-pattern> | head -20` for contributors
+
+### Azure DevOps MCP Tools
+
+* `mcp_ado_repo_get_repo_by_name_or_id` - Resolve repository IDs from name. Parameters: `project`, `repositoryNameOrId`.
+* `mcp_ado_repo_create_pull_request` - Create pull request. Required: `repositoryId`, `sourceRefName`, `targetRefName`, `title`. Optional: `description`, `isDraft`, `labels` (array), `workItems` (space-separated IDs), `forkSourceRepositoryId`.
+* `mcp_ado_repo_update_pull_request` - Update PR settings. Required: `repositoryId`, `pullRequestId`. Optional: `title`, `description`, `status` (Active|Abandoned), `isDraft`, `autoComplete`, `mergeStrategy` (NoFastForward|Squash|Rebase|RebaseMerge), `deleteSourceBranch`, `transitionWorkItems`, `bypassReason`, `labels`.
+* `mcp_ado_repo_update_pull_request_reviewers` - Add or remove reviewers. Required: `repositoryId`, `pullRequestId`, `reviewerIds` (array of GUIDs), `action` (add|remove).
+* `mcp_ado_wit_link_work_item_to_pull_request` - Link work item to PR. Required: `projectId` (GUID), `repositoryId`, `pullRequestId`, `workItemId`. Optional: `pullRequestProjectId` (for cross-project linking).
+* `mcp_ado_search_workitem` - Search work items. Parameters: `searchText`, `project`, `workItemType`, `state`, `assignedTo`, `top`, `skip`.
+* `mcp_ado_wit_get_work_item` - Get work item details. Parameters: `id`, `project`, `expand`, `fields`.
+* `mcp_ado_wit_get_work_items_batch_by_ids` - Batch get work items. Parameters: `project`, `ids` (array), `fields`.
+* `mcp_ado_core_get_identity_ids` - Resolve identity GUIDs from email or name. Parameters: `searchFilter`.
+
+Workspace utilities: `list_dir`, `read_file`, `grep_search`
+
+Persist all tool output into planning files per ado-wit-planning.instructions.md.
+
 ## Tracking Directory Structure
 
-All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{normalized branch name}}`.
+All PR creation tracking artifacts reside in `.copilot-tracking/pr/new/{{normalized branch name}}`.
 
 ```plaintext
 .copilot-tracking/
@@ -72,14 +85,11 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 * Replace `/` with `-`
 * Strip special characters except hyphens
 * Example: `feat/ACR-Private-Public` → `feat-acr-private-public`
-<!-- </tracking-directory-structure> -->
 
-<!-- <planning-file-formats> -->
 ## Planning File Formats
 
 ### pr-analysis.md
 
-<!-- <template-pr-analysis-md> -->
 ````markdown
 # Pull Request Analysis - [Branch Name]
 * **Source Branch**: [Source branch name]
@@ -118,11 +128,9 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 
 * [Optional notes about the analysis]
 ````
-<!-- </template-pr-analysis-md> -->
 
 ### reviewer-analysis.md
 
-<!-- <template-reviewer-analysis-md> -->
 ````markdown
 # Reviewer Analysis - [Branch Name]
 * **Current User**: [Current git user email]
@@ -146,12 +154,14 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 ## Potential Reviewers (excluding current user)
 
 1. **[Reviewer 1 Name]** <[email]>
+   * **Identity ID**: [Azure DevOps GUID or "Manual addition required"]
    * **Contribution Score**: [High|Medium|Low]
    * **Files**: [List of changed files they contributed to]
    * **Rationale**: [Why they would be a good reviewer]
    * **User Decision**: [Pending|Required|Optional|Skip]
 
 2. **[Reviewer 2 Name]** <[email]>
+   * **Identity ID**: [Azure DevOps GUID or "Manual addition required"]
    * **Contribution Score**: [High|Medium|Low]
    * **Files**: [List of changed files they contributed to]
    * **Rationale**: [Why they would be a good reviewer]
@@ -162,11 +172,9 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 * **Recommended Reviewers**: [List of high-contribution reviewers]
 * **Additional Reviewers**: [List of lower-contribution reviewers]
 ````
-<!-- </template-reviewer-analysis-md> -->
 
 ### handoff.md
 
-<!-- <template-handoff-md> -->
 ````markdown
 # Pull Request Creation Handoff
 * **Project**: [Azure DevOps project]
@@ -221,7 +229,7 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 
 ## MCP Tool Call Plan
 
-### 2. Create Pull Request
+### 1. Create Pull Request
 
 **Tool**: `mcp_ado_repo_create_pull_request`
 
@@ -233,6 +241,8 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
   * Example: `feat(scope): description` (NOT `# feat(scope): description`)
 * `description`: "[PR description from pr.md body WITH full markdown formatting]"
 * `isDraft`: [true|false]
+* `labels`: ["label-name"] (optional)
+* `workItems`: "[space-separated work item IDs]" (optional, alternative to separate linking calls)
 
 **Expected Result**: Pull request created with ID [PR-ID]
 
@@ -271,10 +281,59 @@ All PR creation tracking artifacts MUST reside in `.copilot-tracking/pr/new/{{no
 
 **User Confirmation**: [Pending|Approved]
 ````
-<!-- </template-handoff-md> -->
-<!-- </planning-file-formats> -->
 
-## Workflow Overview
+### planning-log.md
+
+````markdown
+# Planning Log - [Branch Name]
+
+* **Source Branch**: [branch name]
+* **Target Branch**: [target branch]
+* **Project**: [Azure DevOps project]
+* **Repository**: [Repository name]
+* **Current Phase**: [Phase number]
+* **Previous Phase**: [Phase number or N/A]
+
+## Phase Progress
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1: Setup | [Complete/In Progress/Pending] | [Notes] |
+| Phase 2: PR Description | [Complete/In Progress/Pending] | [Notes] |
+| Phase 3: Work Item Discovery | [Complete/In Progress/Pending/Skipped] | [Notes] |
+| Phase 3a: Work Item Creation | [Complete/In Progress/Pending/Skipped] | [Notes] |
+| Phase 4: Reviewer Identification | [Complete/In Progress/Pending] | [Notes] |
+| Phase 5: User Confirmation | [Complete/In Progress/Pending/Skipped] | [Notes] |
+| Phase 6: PR Creation | [Complete/In Progress/Pending] | [Notes] |
+| Phase 7: Final Recap | [Complete/In Progress/Pending] | [Notes] |
+
+## Artifacts
+
+* **pr-reference.xml**: [Generated/Existing/Pending]
+* **pr.md**: [Generated/Pending]
+* **pr-analysis.md**: [Generated/Pending]
+* **reviewer-analysis.md**: [Generated/Pending]
+* **handoff.md**: [Generated/Pending]
+
+## Work Items
+
+* Discovered: [Count]
+* Created: [Count or N/A]
+* Selected for linking: [Count]
+* IDs: [Comma-separated list]
+
+## Reviewers
+
+* Identified: [Count]
+* Identity resolved: [Count]
+* Pending manual addition: [Count]
+
+## Recovery Information
+
+If context is summarized, read all files from the planning directory and resume from the current phase recorded above.
+````
+
+## Protocol Overview
 
 This workflow follows a progressive confirmation model where user reviews and approves each section before proceeding:
 
@@ -283,7 +342,7 @@ This workflow follows a progressive confirmation model where user reviews and ap
 3. **PR Creation** (Phase 6): Execute after final user signoff
 4. **Completion** (Phase 7): Deliver recap with PR URL
 
-**Critical**: Do NOT present all information at once. Present each confirmation gate separately and wait for user response before proceeding to the next gate.
+Present each confirmation gate separately and wait for user response before proceeding to the next gate. Avoid presenting all information at once.
 
 ### No-Gates Mode
 
@@ -297,9 +356,9 @@ When `${input:noGates}` is true:
 * Create PR immediately with all discovered linkages
 * Deliver final recap in Phase 7 as usual
 
-## Workflow
+## Required Phases
 
-### Phase 1 – Setup & PR Reference Generation (Silent)
+### Phase 1: Setup and PR Reference Generation
 
 Execute without presenting details to user:
 
@@ -309,30 +368,27 @@ Execute without presenting details to user:
 4. Check if `pr-reference.xml` exists:
    * If exists: Use existing file silently.
    * If not exists: Generate using `scripts/dev-tools/pr-ref-gen.sh` with optional `--no-md-diff` flag if `${input:includeMarkdown}` is false.
-5. Read complete `pr-reference.xml` (page through if >2000 lines).
+5. Read complete `pr-reference.xml`. For files exceeding 2000 lines, read in 1000-2000 line chunks, capturing complete commit boundaries before advancing to the next chunk.
 6. Log artifact in `planning-log.md` with status `Complete`.
 
-### Phase 2 – Generate PR Description (Silent)
+### Phase 2: Generate PR Description
 
 Execute without presenting to user yet:
 
-1. **CRITICAL**: Analyze `pr-reference.xml` completely before writing any content.
-2. **CRITICAL**: Do NOT invent or assume changes not present in `pr-reference.xml`.
-3. **CRITICAL**: Only include changes visible in `pr-reference.xml`.
-4. Generate `pr.md` in the planning directory (NOT in root) following the PR File Format below.
-5. Extract commit types, scopes, and key changes for PR title and description.
-6. Use past tense for all descriptions.
-7. Describe WHAT changed, not speculating WHY.
-8. Use natural, conversational language that reads like human communication.
-9. Match tone and terminology from commit messages.
-10. Group and order changes by SIGNIFICANCE and IMPORTANCE (most significant first).
-11. Combine related changes into single descriptive points.
-12. Only add sub-bullets when they provide genuine clarification value.
-13. Only include "Notes," "Important," or "Follow-up" sections if supported by commit messages or code comments.
-14. Extract changed file list with descriptions for Gate 1 presentation.
-15. Log generation in `planning-log.md`.
+1. Analyze `pr-reference.xml` completely before writing any content. Include only changes visible in the reference file; do not invent or assume changes.
+2. Generate `pr.md` in the planning directory (not in root) following the PR File Format below.
+3. Extract commit types, scopes, and key changes for PR title and description.
+4. Use past tense for all descriptions.
+5. Describe WHAT changed, not speculating WHY.
+6. Use natural, conversational language that reads like human communication.
+7. Match tone and terminology from commit messages.
+8. Group and order changes by SIGNIFICANCE and IMPORTANCE (most significant first).
+9. Combine related changes into single descriptive points.
+10. Only add sub-bullets when they provide genuine clarification value.
+11. Only include "Notes," "Important," or "Follow-up" sections if supported by commit messages or code comments.
+12. Extract changed file list with descriptions for Gate 1 presentation.
+13. Log generation in `planning-log.md`.
 
-<!-- <pr-file-format> -->
 **PR File Format for pr.md**:
 
 ```markdown
@@ -383,9 +439,8 @@ Execute without presenting to user yet:
 * Changes related to linting errors or auto-generated documentation
 * Speculative benefits ("improves security") unless explicit in commits
 * Follow-up tasks for documentation or tests (unless in commit messages)
-<!-- </pr-file-format> -->
 
-### Phase 3 – Discover Related Work Items (Silent)
+### Phase 3: Discover Related Work Items
 
 **Skip this phase entirely if `${input:workItemIds}` is provided by the user.**
 
@@ -415,52 +470,19 @@ Execute without presenting to user yet:
    * Proceed to Phase 3a - Create Work Item for PR
    * After Phase 3a completion, continue to Phase 4
 
-### Phase 3a – Create Work Item for PR (Conditional)
+### Phase 3a: Create Work Item for PR
 
-**Execute this phase ONLY when Phase 3 discovers zero viable work items.**
+Execute this phase when Phase 3 discovers zero viable work items.
 
-Read in and follow instructions from ado-wit-discovery.instructions.md and ado-update-wit-items.instructions.md to create a work item for this PR:
+Follow ado-wit-discovery.instructions.md and ado-update-wit-items.instructions.md to create a work item:
 
-1. **Setup Work Item Discovery Planning**:
-   * Determine folder name from PR context (e.g., branch name without `feat/`, `fix/`, etc.)
-   * Create planning directory: `.copilot-tracking/workitems/discovery/<folder-name>/`
-   * Initialize planning files following ado-wit-discovery.instructions.md templates
+1. Create planning directory `.copilot-tracking/workitems/discovery/<folder-name>/` using the branch name without prefix.
+2. Reuse `pr-reference.xml`, PR title, description, and keyword groups from previous phases.
+3. Follow ado-wit-discovery.instructions.md phases to plan creation of ONE User Story or Bug based on PR content. Derive type from branch name or commit type (feat → User Story, fix → Bug).
+4. Execute work item creation following ado-update-wit-items.instructions.md. Capture created work item ID in `handoff-logs.md`.
+5. Store created work item ID for Phase 6 linking. Update `pr-analysis.md` with created work item details.
 
-2. **Reuse PR Analysis Artifacts**:
-   * Copy or reference `pr-reference.xml` from PR planning directory
-   * Use existing PR title, description, and change analysis from Phase 2
-   * Use existing ACTIVE KEYWORD GROUPS from Phase 3
-   * Skip git-branch-diff.xml generation (already have pr-reference.xml)
-
-3. **Execute Work Item Discovery Workflow**:
-   * Follow Phase 1 of ado-wit-discovery.instructions.md using PR artifacts
-   * Create `artifact-analysis.md` from PR context (commits, files, changes)
-   * Follow Phase 2 to discover Features for potential parent linking (User Stories only)
-   * Follow Phase 3 to plan work item creation:
-     * Create ONE User Story or Bug based on PR content
-     * Derive work item type from branch name or commit type (feat → User Story, fix → Bug)
-     * Title: Extract from PR title following work item conventions
-     * Description: Adapt from PR description with rationale
-     * Acceptance Criteria: Derive from PR changes and commit messages
-     * Link to parent Feature if discovered (User Stories only)
-   * Follow Phase 4 to assemble `handoff.md` with Create action
-
-4. **Execute Work Item Creation**:
-   * Follow instructions from ado-update-wit-items.instructions.md
-   * Create `handoff-logs.md` in work item planning directory
-   * Process the Create action from `handoff.md`
-   * Use `mcp_ado_wit_create_work_item` to create the work item
-   * Capture created work item ID in `handoff-logs.md`
-   * Log creation result in PR `planning-log.md`
-
-5. **Link Created Work Item to PR Flow**:
-   * Store created work item ID for use in Phase 6 linking
-   * Update PR `pr-analysis.md` with created work item details
-   * Log in PR `planning-log.md` that work item was created for this PR
-
-**Note**: This phase creates exactly ONE work item representing the PR's purpose. Skip Feature/Epic creation. Keep planning files in work item discovery folder separate from PR planning folder.
-
-### Phase 4 – Identify Potential Reviewers (Silent)
+### Phase 4: Identify Potential Reviewers
 
 Execute without presenting to user yet:
 
@@ -479,20 +501,17 @@ Execute without presenting to user yet:
 5. Resolve Azure DevOps identity IDs:
    * For each unique reviewer email, call `mcp_ado_core_get_identity_ids` with `searchFilter` set to the email
    * Extract `id` (GUID) from response and store with reviewer record
-   * If no match or multiple matches found, mark for manual addition
+   * For GitHub noreply emails (`*@users.noreply.github.com`): Search git history for alternative email addresses using `git log --author="<username>" --pretty=format:'%ae' | sort -u`, then retry identity resolution with discovered alternatives
+   * If no match found after alternatives, mark reviewer for manual addition
+   * If multiple matches found, use most recent activity or mark for user disambiguation
 6. Capture analysis in `reviewer-analysis.md` with rationale and resolved identity IDs.
 7. Log potential reviewers and resolution status in `planning-log.md`.
 
-### Phase 5 – User Review & Confirmation (Progressive Gates)
+### Phase 5: User Review and Confirmation
 
-**Skip this entire phase if `${input:noGates}` is true. Proceed directly to Phase 6 with:**
+Skip this phase when `${input:noGates}` is true; proceed directly to Phase 6 using all discovered work items, created work items from Phase 3a, and top 2 reviewers by contribution score.
 
-* All discovered work items from Phase 3
-* If Phase 3a created a work item, use that created work item
-* Top 2 reviewers by contribution score from Phase 4 (minimum 2 optional reviewers)
-* Auto-approve all content from Phases 1-4
-
-**Critical**: Present each gate separately. Wait for user approval/modification before proceeding to next gate.
+Present each gate separately and wait for user approval before proceeding to the next gate.
 
 #### Gate 1: Changed Files Review
 
@@ -511,8 +530,7 @@ Execute without presenting to user yet:
 * If ≤ 50 files: Present full list inline with change descriptions
 * If > 50 files: Provide summary statistics and link to `pr-analysis.md`, instruct user to review and confirm when ready
 
-<!-- <example-gate1-small-changeset> -->
-**Presentation Format (≤50 files)**:
+**Presentation Format**:
 
 ```markdown
 ## 📄 Changed Files Review
@@ -520,55 +538,16 @@ Execute without presenting to user yet:
 I've analyzed [count] changed files in your PR:
 
 ### Modified Files
-
-1. **[path/to/file1.ext]**
-   * [Brief description of changes]
-
-2. **[path/to/file2.ext]**
-   * [Brief description of changes]
+1. [path/to/file1.ext]: [Brief description of changes]
+2. [path/to/file2.ext]: [Brief description of changes]
 
 ### Quality Review
+✅ No Issues Found (or ⚠️ list issues requiring attention)
 
-✅ **No Issues Found**
-
-[OR if issues found:]
-
-⚠️ **Issues Requiring Attention**:
-* [Issue 1 with file reference]
-* [Issue 2 with file reference]
-
-Please review the changes. You can:
-* Continue ("Approved" or "Continue")
-* Remove files ("Remove [filename]")
-* Add missing files ("Add [filename]")
-* Make other modifications (specify what to change)
+Please review the changes. Reply with "Continue", "Remove [filename]", or "Add [filename]".
 ```
-<!-- </example-gate1-small-changeset> -->
 
-<!-- <example-gate1-large-changeset> -->
-**Presentation Format (>50 files)**:
-
-```markdown
-## 📄 Changed Files Review
-
-Your PR includes **[count] changed files** - this is a large changeset.
-
-**Summary**:
-* Modified: [count]
-* Added: [count]
-* Deleted: [count]
-
-**Key Changes**:
-* [Top 3-5 most significant changes with file paths]
-
-**Quality Review**:
-[✅ No major issues found OR ⚠️ List of issues requiring attention]
-
-📋 **Complete file list**: `.copilot-tracking/pr/new/[normalized-branch]/pr-analysis.md`
-
-Please review the full analysis and let me know when to continue or if you need modifications.
-```
-<!-- </example-gate1-large-changeset> -->
+For changesets over 50 files, provide summary statistics and link to `pr-analysis.md`.
 
 **Wait for user response before proceeding to Gate 2.**
 
@@ -587,37 +566,20 @@ Please review the full analysis and let me know when to continue or if you need 
    * Unintended changes or accidental file inclusion
    * Missing referenced files
 
-<!-- <example-gate2> -->
 **Presentation Format**:
 
 ```markdown
 ## 📝 Pull Request Title & Description
 
-**Title**:
-```text
-
-[Generated title from pr.md]
-
-```
+**Title**: [Generated title from pr.md]
 
 **Description**:
+[Complete PR description from pr.md with markdown preserved]
 
-```markdown
-[Complete PR description from pr.md]
+**Security & Compliance Check**: [Results]
+
+Reply with "Continue", "Change title to: [new title]", or "Regenerate description".
 ```
-
-**Security & Compliance Check**:
-[Details of security and compliance check]
-
-Please review the PR content. You can:
-
-* Continue ("Approved" or "Continue")
-* Modify title ("Change title to: [new title]")
-* Modify description ("Update description: [changes]")
-* Request regeneration ("Regenerate description")
-
-```text
-<!-- </example-gate2> -->
 
 **Wait for user response before proceeding to Gate 3.**
 
@@ -629,41 +591,23 @@ Please review the PR content. You can:
 4. For each work item provide:
    * Work item ID and type
    * Title
-   * Current state
+   * Current state (for Closed items, add note: "Linking provides historical traceability")
    * Similarity score (percentage) - or "Created for this PR" if from Phase 3a
    * 1-2 sentence relevance reasoning
+5. For work items in Closed state, ask user to confirm if linking for historical traceability is desired.
 
-<!-- <example-gate3> -->
 **Presentation Format**:
 
 ```markdown
 ## 🔗 Work Items to Link
 
-[If work item was created in Phase 3a:]
-I created a new work item for this PR since no existing work items matched:
-
-### ADO-[ID] - [Type] - New
-**Title**: [Work item title]
-**Status**: Created for this PR
-**Why link**: Work item created to track this pull request's changes
-
-[If work items were discovered in Phase 3:]
 I found [count] work items that may relate to your changes:
 
-### ADO-[ID] - [Type] - [State]
-**Title**: [Work item title]
-**Similarity**: [XX]%
-**Why link**: [1-2 sentence relevance explanation]
+1. ADO-[ID] - [Type] - [State]: [Title] ([XX]% similarity)
+   Why: [1-2 sentence relevance]
 
-[Repeat for each work item, maximum 10]
-
-Which work items should be linked to this PR?
-* Link specific IDs: "Link [ID1], [ID2]"
-* Link all: "Link all"
-* Skip linking: "None" or "Skip"
-* See more options: "Show more"
+Reply with "Link [ID1], [ID2]", "Link all", or "Skip".
 ```
-<!-- </example-gate3> -->
 
 **Wait for user response and capture selections. Proceed to Gate 4.**
 
@@ -673,7 +617,6 @@ Which work items should be linked to this PR?
 2. Separate into Recommended and Additional categories based on contribution score.
 3. Provide contribution score and rationale for each.
 
-<!-- <example-gate4> -->
 **Presentation Format**:
 
 ```markdown
@@ -681,24 +624,11 @@ Which work items should be linked to this PR?
 
 Based on git history of changed files:
 
-### Recommended Reviewers
+1. [Name] ([email]) - [High/Medium] - [XX] commits: [Rationale]
+2. [Name] ([email]) - [Medium/Low] - [XX] commits: [Rationale]
 
-1. **[Name]** ([email])
-   * Contribution: [High/Medium] - [XX] commits to changed files
-   * Rationale: [Why they should review]
-
-### Additional Reviewers
-
-1. **[Name]** ([email])
-   * Contribution: [Medium/Low] - [XX] commits
-   * Rationale: [Why they might be helpful]
-
-Please confirm reviewers:
-* Approve: "Approved" or "Continue"
-* Modify: "Add [name/email]" or "Remove [name/email]"
-* Skip: "None" or "Skip reviewers"
+Reply with "Continue", "Add [email]", "Remove [email]", or "Skip".
 ```
-<!-- </example-gate4> -->
 
 **Wait for user response and capture selections. Proceed to Gate 5.**
 
@@ -708,227 +638,113 @@ Please confirm reviewers:
 2. Present comprehensive summary of everything that will be created.
 3. Request final signoff before executing PR creation.
 
-<!-- <example-gate5> -->
 **Presentation Format**:
 
 ```markdown
 ## ✨ Final Pull Request Summary
 
-Ready to create your PR with these details:
+**Pull Request**: [Title] | [source-branch] → [target-branch] | [count] files
+**Work Items**: [count] to link
+**Reviewers**: [count] total
 
-**Pull Request**:
-* **Title**: [Confirmed title]
-* **Source**: [source-branch] → [target-branch]
-* **Draft**: [Yes/No]
-* **Files**: [count] changed files
-
-**Work Items** ([count] to link):
-* ADO-[ID]: [Title]
-[List all confirmed work items]
-
-**Reviewers** ([count] total):
-* [Name] ([email]) - Required
-[List all confirmed reviewers]
-
-📄 **Planning Files**: `.copilot-tracking/pr/new/[normalized-branch]/`
-📋 **Detailed Plan**: `handoff.md`
-
-Everything looks good? Reply with:
-* **"Create PR"** or **"Approved"** - I'll create the pull request now
-* **"Modify [aspect]"** - Make changes before creating
-* **"Cancel"** - Stop without creating the PR
+Reply with "Create PR", "Modify [aspect]", or "Cancel".
 ```
-<!-- </example-gate5> -->
 
 **Wait for explicit "Create PR" or "Approved" confirmation before proceeding to Phase 6.**
 
 ### Phase 5 Modification Handling
 
-When user requests modifications at any gate:
+When user requests modifications at any gate, update the relevant planning file, log changes in `planning-log.md`, and re-present that gate for confirmation. Track modification count per gate; after 3+ iterations, suggest an alternative approach or pause.
 
-1. **File Changes** (Gate 1):
-   * User can request file additions/removals
-   * Regenerate `pr-reference.xml` if files added/removed via git commands
-   * Re-run Phase 2 if significant changes
-   * Return to Gate 1 for re-confirmation
+### Phase 6: Create Pull Request and Link Work Items
 
-2. **Title/Description Changes** (Gate 2):
-   * Update `pr.md` with user-requested changes
-   * Log modifications in `planning-log.md`
-   * Re-present Gate 2 for confirmation
+Proceed after user gives explicit approval.
 
-3. **Work Item Changes** (Gate 3):
-   * Add/remove work items from link list
-   * If user provides new IDs, fetch and validate them
-   * Update `pr-analysis.md` with confirmed selections
-   * Re-present Gate 3 for confirmation
+1. Resolve repository and project IDs:
+   * Use `${input:repository}` directly if GUID format; otherwise call `mcp_ado_repo_get_repo_by_name_or_id` with project and repository name.
+   * Use `${input:adoProject}` directly if GUID; otherwise extract from `mcp_ado_search_workitem` response metadata.
+   * For GitHub-backed Azure DevOps projects where repository is not found: Verify the GitHub connection in Azure DevOps project settings (Project Settings → Repos → GitHub connections). The repository may require explicit configuration before appearing in ADO queries.
+   * Log both IDs in `planning-log.md`.
 
-4. **Reviewer Changes** (Gate 4):
-   * Add/remove reviewers from list
-   * Validate email addresses if new reviewers added
-   * Update `reviewer-analysis.md` with confirmed selections
-   * Re-present Gate 4 for confirmation
-
-5. **Final Changes** (Gate 5):
-   * Allow modifications to any aspect
-   * Return to specific gate for that aspect
-   * Rebuild summary after modifications
-
-**Iteration Protocol**:
-
-* Track modification count per gate in `planning-log.md`
-* After 3+ iterations on same gate, suggest alternative approach or pause
-* Always confirm changes before proceeding
-
-### Phase 6 – Create Pull Request & Link Work Items
-
-**Only proceed after user gives explicit approval.**
-
-1. **Resolve Repository and Project IDs**:
-   * **Repository ID**: If `${input:repository}` is a GUID format, use directly; otherwise:
-     * Search workspace for repository configuration (`.azure/`, `azure-pipelines.yml`, or project docs)
-     * Use `mcp_ado_repo_list_pull_requests_by_project` to discover repository ID from project
-     * If unavailable, ask user to provide repository ID
-   * **Project ID**: ADO project ID required for work item linking:
-     * If `${input:adoProject}` is a GUID, use directly
-     * Otherwise, use `mcp_ado_search_workitem` response metadata to extract project ID
-     * If unavailable, note work item linking will require manual completion
-   * Log both IDs in `planning-log.md`
-
-2. **Prepare Source and Target Branch References**:
+2. Prepare branch references:
    * Source: `refs/heads/${input:sourceBranch}` (or current branch)
-   * Target: Extract branch name from `${input:baseBranch}` (e.g., `origin/main` → `refs/heads/main`)
+   * Target: Remove remote prefix from `${input:baseBranch}` and prepend `refs/heads/`. Examples:
+     * `origin/main` → `refs/heads/main`
+     * `upstream/develop` → `refs/heads/develop`
+     * `main` → `refs/heads/main`
 
-3. **Create Pull Request**:
-   * Tool: `mcp_ado_repo_create_pull_request`
-   * Required parameters:
-     * `repositoryId`: [Repository ID from step 1]
-     * `sourceRefName`: [Source ref from step 2]
-     * `targetRefName`: [Target ref from step 2]
-     * `title`: [PR title from pr.md with leading # and whitespace removed]
-   * Optional parameters:
-     * `description`: [Body of pr.md after first line with full markdown formatting]
-     * `isDraft`: `${input:isDraft}`
-   * Capture returned pull request ID and URL
-   * Log PR creation result in `planning-log.md`
-   * Update `handoff.md` with actual PR ID and URL
+3. Create pull request using `mcp_ado_repo_create_pull_request` with `repositoryId`, `sourceRefName`, `targetRefName`, and `title` (from pr.md without leading #). Optionally include `description`, `isDraft`, and `labels`. The `workItems` parameter accepts space-separated IDs to link work items during creation, simplifying the workflow. Capture returned PR ID and URL.
 
-4. **Link Work Items** (if any were selected/provided):
-   * For each work item to link:
-     * Tool: `mcp_ado_wit_link_work_item_to_pull_request`
-     * Required parameters:
-       * `projectId`: [Project ID from step 1 - must be GUID format]
-       * `repositoryId`: [Repository ID from step 1]
-       * `pullRequestId`: [PR ID from step 3]
-       * `workItemId`: [Work item ID to link]
-     * Log each linking result in `planning-log.md`
-     * Update `handoff.md` checkbox for each work item
-   * If project ID unavailable, document work items for manual linking in final recap
+4. Link additional work items using `mcp_ado_wit_link_work_item_to_pull_request` for each selected work item not linked during creation. Requires `projectId` (GUID format), `repositoryId`, `pullRequestId`, and `workItemId`. For cross-project linking, include `pullRequestProjectId`. Log results in `planning-log.md`.
 
-5. **Add Reviewers** (if any were confirmed and resolved):
-   * Tool: `mcp_ado_repo_update_pull_request_reviewers`
-   * Parameters: `repositoryId`, `pullRequestId`, `reviewerIds` (array of GUIDs), `action: "add"`
-   * **Important**: All reviewers are added as **optional** reviewers by default
-   * **No-Gates Mode**: If `${input:noGates}` is true, add top 2 reviewers by contribution score (minimum 2 optional reviewers)
-   * Add all reviewers with resolved identity IDs in a single batch call
-   * For reviewers without resolved IDs, document in final recap for manual addition via Azure DevOps UI
-   * Log reviewer addition results in `planning-log.md`
+5. Add reviewers using `mcp_ado_repo_update_pull_request_reviewers` with resolved identity GUIDs. All reviewers are added as optional by default. In no-gates mode, add top 2 by contribution score. Document unresolved reviewers for manual addition.
 
-6. **Final Validation**:
-   * Read back `handoff.md` to verify all checkboxes
-   * Confirm PR URL is accessible
-   * Verify work item links in Azure DevOps (if possible via tools)
+6. Validate completion by reading `handoff.md` to verify checkboxes and confirming PR URL accessibility.
 
-<!-- <example-mcp-tool-calls> -->
-## MCP Tool Call Examples
-
-### Create Pull Request
+## MCP Tool Reference
 
 ```javascript
+// Resolve repository ID from name
+mcp_ado_repo_get_repo_by_name_or_id({
+  project: "<project-name-or-guid>",
+  repositoryNameOrId: "<repo-name>"
+})
+
+// Create PR (with optional work item and label linking)
 mcp_ado_repo_create_pull_request({
-  repositoryId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  sourceRefName: "refs/heads/feat/acr-dual-access",
+  repositoryId: "<guid>",
+  sourceRefName: "refs/heads/<branch>",
   targetRefName: "refs/heads/main",
-  title: "feat(acr): add dual public/private access support",
-  description: "## Summary\n\nAdds support for dual access patterns...",
-  isDraft: false
+  title: "feat(scope): description",
+  description: "## Summary\n\nChanges...",
+  isDraft: false,
+  labels: ["label-name"],           // Optional: add labels at creation
+  workItems: "1234 5678"             // Optional: space-separated work item IDs
 })
-```
 
-### Link Work Item to Pull Request
+// Update PR (set autocomplete, merge strategy, labels)
+mcp_ado_repo_update_pull_request({
+  repositoryId: "<guid>",
+  pullRequestId: 1234,
+  autoComplete: true,                 // Enable autocomplete when policies pass
+  mergeStrategy: "Squash",            // NoFastForward|Squash|Rebase|RebaseMerge
+  deleteSourceBranch: true,           // Delete source after merge
+  transitionWorkItems: true           // Transition linked work items
+})
 
-```javascript
+// Link work item (for cross-project, add pullRequestProjectId)
 mcp_ado_wit_link_work_item_to_pull_request({
-  projectId: "hve-core-project-id",  // Must be project ID, not name
-  repositoryId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  projectId: "<project-guid>",
+  repositoryId: "<repo-guid>",
   pullRequestId: 1234,
-  workItemId: 5678
+  workItemId: 5678,
+  pullRequestProjectId: "<pr-project-guid>"  // Optional: cross-project linking
 })
-```
 
-### Resolve Reviewer Identity IDs
+// Resolve identity (requires activate_ado_identity_and_search_tools)
+mcp_ado_core_get_identity_ids({ searchFilter: "user@example.com" })
 
-```javascript
-// Resolve single reviewer email to Azure DevOps identity ID
-mcp_ado_core_get_identity_ids({
-  searchFilter: "sample.name@example.com"
-})
-// Returns: [{"id":"d291b0c4-a05c-4ea6-8df1-4b41d5f39eff","displayName":"Sample Name","descriptor":"aad.YTkz..."}]
-```
-
-### Add Reviewers to Pull Request
-
-```javascript
-// Add multiple reviewers in a single batch call
+// Add reviewers
 mcp_ado_repo_update_pull_request_reviewers({
-  repositoryId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  repositoryId: "<guid>",
   pullRequestId: 1234,
-  reviewerIds: [
-    "d291b0c4-a05c-4ea6-8df1-4b41d5f39eff",  // Sample Name
-    "f5e6d7c8-b9a0-1234-5678-90abcdef1234"   // Another reviewer
-  ],
+  reviewerIds: ["<identity-guid-1>", "<identity-guid-2>"],
   action: "add"
 })
 ```
-<!-- </example-mcp-tool-calls> -->
 
-### Phase 7 – Deliver Final Recap
+### Phase 7: Deliver Final Recap
 
-Provide conversational summary covering:
+Provide conversational summary covering PR creation status and URL, work items linked, reviewers status, planning workspace location, and next steps.
 
-* PR creation status and URL
-* Work items linked (count and IDs)
-* Reviewers status (added or manual action required)
-* Planning workspace location
-* Next steps if any
-
-<!-- <example-final-recap> -->
 ```markdown
 ## ✅ Pull Request Created Successfully
 
-**PR Number**: [PR ID number]
-**URL**: [PR URL]
-**Title**: [PR title]
-**Status**: [Active|Draft]
-
-### Linked Work Items
-* ADO-[ID]: [Title]
-* ADO-[ID]: [Title]
-
-### Reviewers
-* **Required**: [Name] ([email])
-* **Optional**: [Name] ([email])
-* **Note**: Reviewers added automatically or manually via [PR URL] if identity resolution failed
-
-### Planning Files
-All artifacts saved to: `.copilot-tracking/pr/new/[normalized-branch]/`
-
-**Next Steps**:
-1. Review the PR at [PR URL]
-2. Add reviewers if not done automatically
-3. Monitor for build status and feedback
+**PR**: [PR ID] | [PR URL] | [Active|Draft]
+**Linked**: ADO-[ID], ADO-[ID]
+**Reviewers**: [Name] (added) | [Name] (manual)
+**Files**: `.copilot-tracking/pr/new/[branch]/`
 ```
-<!-- </example-final-recap> -->
 
 ## Error Recovery
 

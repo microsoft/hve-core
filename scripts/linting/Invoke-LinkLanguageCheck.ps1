@@ -1,69 +1,83 @@
 ﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # Invoke-LinkLanguageCheck.ps1
 #
 # Purpose: Wrapper for Link-Lang-Check.ps1 with GitHub Actions integration
 # Author: HVE Core Team
-# Created: 2025-11-05
+
+#Requires -Version 7.0
 
 [CmdletBinding()]
-param()
+param(
+    [string[]]$ExcludePaths = @()
+)
+
+$ErrorActionPreference = 'Stop'
 
 # Import shared helpers
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-# Get repository root
-$repoRoot = git rev-parse --show-toplevel 2>$null
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Not in a git repository"
-    exit 1
-}
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
-# Create logs directory if it doesn't exist
-$logsDir = Join-Path $repoRoot "logs"
-if (-not (Test-Path $logsDir)) {
-    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-}
+function Invoke-LinkLanguageCheckCore {
+    [CmdletBinding()]
+    param(
+        [string[]]$ExcludePaths = @()
+    )
 
-Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Not in a git repository"
+        return 1
+    }
 
-# Run the language check script
-$jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") 2>&1
+    $logsDir = Join-Path $repoRoot "logs"
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
 
-try {
-    $results = $jsonOutput | ConvertFrom-Json
-    
-    if ($results -and $results.Count -gt 0) {
-        Write-Host "Found $($results.Count) URLs with 'en-us' language paths`n" -ForegroundColor Yellow
-        
-        # Create annotations
-        foreach ($item in $results) {
-            Write-GitHubAnnotation `
-                -Type 'warning' `
-                -Message "URL contains language path: $($item.original_url)" `
-                -File $item.file `
-                -Line $item.line_number
+    Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
+
+    try {
+        $scriptArgs = @{}
+        if ($ExcludePaths.Count -gt 0) {
+            $scriptArgs['ExcludePaths'] = $ExcludePaths
         }
-        
-        # Save results
-        $outputData = @{
-            timestamp = (Get-Date).ToUniversalTime().ToString("o")
-            script = "link-lang-check"
-            summary = @{
-                total_issues = $results.Count
-                files_affected = ($results | Select-Object -ExpandProperty file -Unique).Count
+        $jsonOutput = & (Join-Path $PSScriptRoot "Link-Lang-Check.ps1") @scriptArgs 2>&1
+
+        $results = $jsonOutput | ConvertFrom-Json
+
+        if ($results -and $results.Count -gt 0) {
+            Write-Host "Found $($results.Count) URLs with 'en-us' language paths`n" -ForegroundColor Yellow
+
+            foreach ($item in $results) {
+                Write-CIAnnotation `
+                    -Message "URL contains language path: $($item.original_url)" `
+                    -Level Warning `
+                    -File $item.file `
+                    -Line $item.line_number
             }
-            issues = $results
-        }
-        $outputData | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
-        
-        Set-GitHubOutput -Name "issues" -Value $results.Count
-        Set-GitHubEnv -Name "LINK_LANG_FAILED" -Value "true"
-        
-        # Write summary
-        $uniqueFiles = $results | Select-Object -ExpandProperty file -Unique
-        
-        Write-GitHubStepSummary -Content @"
+
+            $outputData = @{
+                timestamp = (Get-Date).ToUniversalTime().ToString("o")
+                script = "link-lang-check"
+                summary = @{
+                    total_issues = $results.Count
+                    files_affected = ($results | Select-Object -ExpandProperty file -Unique).Count
+                }
+                issues = $results
+            }
+            $outputData | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
+
+            Set-CIOutput -Name "issues" -Value $results.Count
+            Set-CIEnv -Name "LINK_LANG_FAILED" -Value "true"
+
+            $uniqueFiles = $results | Select-Object -ExpandProperty file -Unique
+
+            Write-CIStepSummary -Content @"
 ## Link Language Path Check Results
 
 ⚠️ **Status**: Issues Found
@@ -79,15 +93,20 @@ scripts/linting/Link-Lang-Check.ps1 -Fix
 ``````
 
 **Files affected:**
-$(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_).Count; "- $_ ($count occurrence(s))" }) -join "`n")
+$(($uniqueFiles | ForEach-Object { 
+    $count = ($results | Where-Object file -eq $_).Count
+    $safePath = if ((Get-CIPlatform) -eq 'azdo') {
+        ConvertTo-AzureDevOpsEscaped -Value $_
+    } else { $_ }
+    "- $safePath ($count occurrence(s))"
+}) -join "`n")
 "@
-        
-        exit 1
-    }
-    else {
+
+            return 1
+        }
+
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
-        
-        # Save empty results
+
         $emptyResults = @{
             timestamp = (Get-Date).ToUniversalTime().ToString("o")
             script = "link-lang-check"
@@ -98,22 +117,29 @@ $(($uniqueFiles | ForEach-Object { $count = ($results | Where-Object file -eq $_
             issues = @()
         }
         $emptyResults | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
-        
-        Set-GitHubOutput -Name "issues" -Value "0"
-        
-        Write-GitHubStepSummary -Content @"
+
+        Set-CIOutput -Name "issues" -Value "0"
+
+        Write-CIStepSummary -Content @"
 ## Link Language Path Check Results
 
 ✅ **Status**: Passed
 
 No URLs with language-specific paths detected.
 "@
-        
-        exit 0
+
+        return 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Link-language check failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message "Link-language check failed: $($_.Exception.Message)" -Level Error
+        return 1
     }
 }
-catch {
-    Write-Error "Error parsing results: $_"
-    Write-Host "Raw output: $jsonOutput"
-    exit 1
+
+#region Main Execution
+if (-not $script:SkipMain) {
+    $exitCode = Invoke-LinkLanguageCheckCore -ExcludePaths $ExcludePaths
+    exit $exitCode
 }
+#endregion

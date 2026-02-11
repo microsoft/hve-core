@@ -1,0 +1,12 @@
+{
+  "tools": [
+    {
+      "name": "gitleaks",
+      "repo": "gitleaks/gitleaks",
+      "version": "8.16.0",
+      "sha256": "oldsha256oldsha256oldsha256oldsha256oldsha256oldsha256oldsha25612",
+      "downloadUrlTemplate": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_windows_x64.zip",
+      "notes": "Outdated version for testing staleness"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# actionlint configuration
+# See: https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+self-hosted-runner:
+  labels: []
+
+# Configuration variables defined in the repository/organization.
+# Set to null to disable strict checking.
+config-variables:
+  - RELEASE_APP_ID

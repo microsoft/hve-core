@@ -1,4 +1,7 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -45,8 +48,12 @@ param(
     [switch]$UpdateStale
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Import CIHelpers for workflow command escaping
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+
+$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
@@ -97,21 +104,66 @@ function Test-GitHubToken {
 
         $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
 
-        if ($response.data.viewer) {
+        $data = $null
+        if ($response -is [hashtable]) {
+            $data = $response['data']
+        }
+        elseif ($response.PSObject.Properties.Name -contains 'data') {
+            $data = $response.data
+        }
+
+        $viewer = $null
+        $rateLimit = $null
+        if ($data) {
+            if ($data -is [hashtable]) {
+                $viewer = $data['viewer']
+                $rateLimit = $data['rateLimit']
+            }
+            else {
+                if ($data.PSObject.Properties.Name -contains 'viewer') {
+                    $viewer = $data.viewer
+                }
+                if ($data.PSObject.Properties.Name -contains 'rateLimit') {
+                    $rateLimit = $data.rateLimit
+                }
+            }
+        }
+
+        if ($viewer) {
             $result.Valid = $true
             $result.Authenticated = $true
-            $result.User = $response.data.viewer.login
+            if ($viewer -is [hashtable]) {
+                $result.User = $viewer['login']
+            }
+            elseif ($viewer.PSObject.Properties.Name -contains 'login') {
+                $result.User = $viewer.login
+            }
             $result.Message = "Authenticated as $($result.User)"
         }
-        elseif ($response.data.rateLimit) {
+        elseif ($rateLimit) {
             $result.Valid = $true
             $result.Authenticated = $false
             $result.Message = "Unauthenticated access - limited rate limits"
         }
 
-        $result.RateLimit = $response.data.rateLimit.limit
-        $result.Remaining = $response.data.rateLimit.remaining
-        $result.ResetAt = $response.data.rateLimit.resetAt
+        if ($rateLimit) {
+            if ($rateLimit -is [hashtable]) {
+                $result.RateLimit = $rateLimit['limit']
+                $result.Remaining = $rateLimit['remaining']
+                $result.ResetAt = $rateLimit['resetAt']
+            }
+            else {
+                if ($rateLimit.PSObject.Properties.Name -contains 'limit') {
+                    $result.RateLimit = $rateLimit.limit
+                }
+                if ($rateLimit.PSObject.Properties.Name -contains 'remaining') {
+                    $result.Remaining = $rateLimit.remaining
+                }
+                if ($rateLimit.PSObject.Properties.Name -contains 'resetAt') {
+                    $result.ResetAt = $rateLimit.resetAt
+                }
+            }
+        }
 
         if ($result.Remaining -lt 100) {
             $result.Message += " | WARNING: Only $($result.Remaining) API calls remaining (resets at $($result.ResetAt))"
@@ -201,8 +253,11 @@ function Invoke-GitHubAPIWithRetry {
         }
         catch {
             $statusCode = $null
-            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-                $statusCode = [int]$_.Exception.Response.StatusCode
+            if ($_.Exception.PSObject.Properties.Name -contains 'Response') {
+                $response = $_.Exception.Response
+                if ($response -and $response.PSObject.Properties.Name -contains 'StatusCode') {
+                    $statusCode = [int]$response.StatusCode
+                }
             }
 
             # Check if rate limited (403 or 429)
@@ -242,11 +297,12 @@ $ActionSHAMap = @{
     "actions/cache@v3"                     = "actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8" # v3.3.1
     "actions/upload-artifact@v4"           = "actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808" # v4.3.6
     "actions/upload-artifact@v3"           = "actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3" # v3.1.3
+    "actions/download-artifact@v7"         = "actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131" # v7.0.0
     "actions/download-artifact@v4"         = "actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16" # v4.1.8
     "actions/download-artifact@v3"         = "actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a" # v3.0.2
+    "actions/attest-build-provenance@v2"   = "actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2" # v2.2.3
     "github/super-linter@v6"               = "github/super-linter@4ac6c1e9bce95c4e5e456c8c2c6b468998248097" # v6.8.0
     "github/super-linter@v5"               = "github/super-linter@45fc0d88288beee4701c62761281edfee85655d7" # v5.7.2
-    "step-security/harden-runner@v2"       = "step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde" # v2.9.1
     "hashicorp/setup-terraform@v3"         = "hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8" # v3.1.1
     "hashicorp/setup-terraform@v2"         = "hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1" # v2.0.3
     "azure/login@v2"                       = "azure/login@6c251865b4e6290e7b78be643ea2d005bc51f69a" # v2.1.1
@@ -390,11 +446,29 @@ function Write-OutputResult {
             Write-Output "##[section]GitHub Actions Security Issues Found:"
             foreach ($issue in $Results) {
                 $message = "$($issue.Title) - $($issue.Description)"
-                if ($issue.File) {
-                    $message += " (File: $($issue.File))"
+                $fileValue = $null
+                $recommendationValue = $null
+                if ($issue -is [hashtable]) {
+                    if ($issue.ContainsKey('File')) {
+                        $fileValue = $issue['File']
+                    }
+                    if ($issue.ContainsKey('Recommendation')) {
+                        $recommendationValue = $issue['Recommendation']
+                    }
                 }
-                if ($issue.Recommendation) {
-                    $message += " Recommendation: $($issue.Recommendation)"
+                else {
+                    if ($issue.PSObject.Properties.Name -contains 'File') {
+                        $fileValue = $issue.File
+                    }
+                    if ($issue.PSObject.Properties.Name -contains 'Recommendation') {
+                        $recommendationValue = $issue.Recommendation
+                    }
+                }
+                if ($fileValue) {
+                    $message += " (File: $fileValue)"
+                }
+                if ($recommendationValue) {
+                    $message += " Recommendation: $recommendationValue"
                 }
                 Write-Output "##[warning]$message"
             }
@@ -408,13 +482,8 @@ function Write-OutputResult {
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                if ($issue.File) {
-                    $normalizedPath = $issue.File -replace '\\', '/'
-                    Write-Output "::warning file=$normalizedPath::$message"
-                }
-                else {
-                    Write-Output "::warning::$message"
-                }
+                $fileParam = if ($issue.File) { " file=$($issue.File -replace '\\', '/')" } else { "" }
+                Write-Output "::warning$fileParam::$message"
             }
             return
         }
@@ -426,15 +495,10 @@ function Write-OutputResult {
 
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                $sourcePath = $issue.File
-                if ($sourcePath) {
-                    Write-Output "##vso[task.logissue type=warning;sourcepath=$sourcePath]$message"
-                }
-                else {
-                    Write-Output "##vso[task.logissue type=warning]$message"
-                }
+                $fileParam = if ($issue.File) { ";sourcepath=$($issue.File)" } else { "" }
+                Write-Output "##vso[task.logissue type=warning$fileParam]$message"
             }
-            Write-Output "##vso[task.complete result=SucceededWithIssues]"
+            Write-Output "##vso[task.complete result=SucceededWithIssues]Security issues found"
             return
         }
         default {
@@ -523,8 +587,11 @@ function Get-LatestCommitSHA {
     }
     catch {
         $statusCode = $null
-        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-            $statusCode = [int]$_.Exception.Response.StatusCode
+        if ($_.Exception.PSObject.Properties.Name -contains 'Response') {
+            $response = $_.Exception.Response
+            if ($response -and $response.PSObject.Properties.Name -contains 'StatusCode') {
+                $statusCode = [int]$response.StatusCode
+            }
         }
 
         if ($statusCode -eq 404) {
@@ -743,14 +810,42 @@ function Export-SecurityReport {
 
     $reportPath = "scripts/security/sha-pinning-report-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
 
+    $sumActionsProcessed = 0
+    $sumActionsPinned = 0
+    $sumActionsSkipped = 0
+    foreach ($result in $Results) {
+        if ($result -is [hashtable]) {
+            if ($result.ContainsKey('ActionsProcessed') -and $null -ne $result['ActionsProcessed']) {
+                $sumActionsProcessed += [int]$result['ActionsProcessed']
+            }
+            if ($result.ContainsKey('ActionsPinned') -and $null -ne $result['ActionsPinned']) {
+                $sumActionsPinned += [int]$result['ActionsPinned']
+            }
+            if ($result.ContainsKey('ActionsSkipped') -and $null -ne $result['ActionsSkipped']) {
+                $sumActionsSkipped += [int]$result['ActionsSkipped']
+            }
+        }
+        else {
+            if ($result.PSObject.Properties.Name -contains 'ActionsProcessed' -and $null -ne $result.ActionsProcessed) {
+                $sumActionsProcessed += [int]$result.ActionsProcessed
+            }
+            if ($result.PSObject.Properties.Name -contains 'ActionsPinned' -and $null -ne $result.ActionsPinned) {
+                $sumActionsPinned += [int]$result.ActionsPinned
+            }
+            if ($result.PSObject.Properties.Name -contains 'ActionsSkipped' -and $null -ne $result.ActionsSkipped) {
+                $sumActionsSkipped += [int]$result.ActionsSkipped
+            }
+        }
+    }
+
     $report = @{
         GeneratedAt     = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
         Summary         = @{
             TotalWorkflows   = @($Results).Count
             WorkflowsChanged = @($Results | Where-Object { $_.PSObject.Properties.Name -contains 'ContentChanged' -and $_.ContentChanged }).Count
-            TotalActions     = ($Results | Measure-Object ActionsProcessed -Sum).Sum
-            ActionsPinned    = ($Results | Measure-Object ActionsPinned -Sum).Sum
-            ActionsSkipped   = ($Results | Measure-Object ActionsSkipped -Sum).Sum
+            TotalActions     = $sumActionsProcessed
+            ActionsPinned    = $sumActionsPinned
+            ActionsSkipped   = $sumActionsSkipped
         }
         WorkflowResults = $Results
         SHAMappings     = $ActionSHAMap
@@ -813,8 +908,12 @@ function Set-ContentPreservePermission {
     }
 }
 
-# Main execution
-try {
+#region Main Execution
+if (-not $script:SkipMain) {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
+
+    try {
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'
     }
@@ -903,8 +1002,12 @@ try {
         Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
         Write-SecurityLog "WhatIf mode: No files were modified. Run without -WhatIf to apply changes." -Level 'Info'
     }
+
+    exit 0
 }
 catch {
     Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
+    Write-CIAnnotation -Message $_.Exception.Message -Level Error
     exit 1
+}
 }

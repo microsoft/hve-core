@@ -1,0 +1,12 @@
+name: CI Mixed
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'

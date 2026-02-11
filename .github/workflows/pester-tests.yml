@@ -1,0 +1,195 @@
+name: Pester Tests
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on test failures'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only test changed PowerShell files'
+        required: false
+        type: boolean
+        default: true
+      code-coverage:
+        description: 'Enable code coverage reporting'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  pester:
+    name: PowerShell Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Codecov OIDC when enable-code-coverage is true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Create logs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
+          Import-Module Pester -RequiredVersion 5.7.1
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Get changed PowerShell files
+        id: changed-files
+        if: inputs.changed-files-only
+        shell: pwsh
+        run: |
+          # Get changed PowerShell files between base and head
+          $diffOutput = git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ps1' '*.psm1' 2>$null
+          $changedFiles = @($diffOutput -split "`n" | Where-Object { $_ -and $_.Trim() })
+          
+          if ($changedFiles.Count -eq 0) {
+            Write-Host "No changed PowerShell files found"
+            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            exit 0
+          }
+          
+          Write-Host "Changed PowerShell files:"
+          $changedFiles | ForEach-Object { Write-Host "  - $_" }
+
+          # Map source files to their test files
+          $testFiles = @()
+          foreach ($file in $changedFiles) {
+            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
+            # Look for corresponding test file anywhere in scripts/tests
+            $matchingTests = Get-ChildItem -Path "scripts/tests" -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            if ($matchingTests) {
+              $testFiles += $matchingTests.FullName
+            }
+          }
+
+          # Also include any directly changed test files
+          $changedTests = @($changedFiles | Where-Object { $_ -like '*.Tests.ps1' })
+          foreach ($test in $changedTests) {
+            $fullPath = Join-Path (Get-Location) $test
+            if (Test-Path $fullPath) {
+              $testFiles += $fullPath
+            }
+          }
+
+          $testFiles = @($testFiles | Select-Object -Unique)
+          if ($testFiles.Count -eq 0) {
+            Write-Host "No matching test files for changed PowerShell files"
+            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            Write-Host "Found $($testFiles.Count) test file(s) to run:"
+            $testFiles | ForEach-Object { Write-Host "  - $_" }
+            "HAS_CHANGES=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "TEST_PATHS=$($testFiles -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+      - name: Run Pester Tests
+        id: pester
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        shell: pwsh
+        run: |
+          $params = @{ CI = $true }
+          
+          # Enable code coverage if requested
+          $codeCoverage = ('${{ inputs.code-coverage }}' -eq 'true')
+          if ($codeCoverage) {
+            $params['CodeCoverage'] = $true
+          }
+          
+          # Use specific test paths if changed-files-only is enabled
+          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:TEST_PATHS) {
+            $testPaths = $env:TEST_PATHS -split ';'
+            $params['TestPath'] = $testPaths
+          }
+          
+          $config = & './scripts/tests/pester.config.ps1' @params
+          $results = Invoke-Pester -Configuration $config
+
+          if ($results.FailedCount -gt 0) {
+            "PESTER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+          # Output coverage percentage if available
+          if ($codeCoverage -and $results.CodeCoverage) {
+            $coveragePercent = [math]::Round($results.CodeCoverage.CoveragePercent, 2)
+            Write-Host "Code coverage: $coveragePercent%"
+            "coverage=$coveragePercent" >> $env:GITHUB_OUTPUT
+          }
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload test results
+        if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: pester-test-results
+          path: logs/pester-results.xml
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload Coverage Report
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: coverage-report
+          path: logs/coverage.xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload to Codecov
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: logs/coverage.xml
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: pester
+          name: pester-coverage
+
+      - name: Coverage Threshold Check
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        shell: pwsh
+        run: |
+          $coverageValue = '${{ steps.pester.outputs.coverage }}'
+          if ([string]::IsNullOrWhiteSpace($coverageValue)) {
+            Write-Warning "Coverage output is empty - skipping threshold check"
+            exit 0
+          }
+          $percentage = [double]$coverageValue
+          $threshold = 18  # Informational baseline
+
+          Write-Host "Coverage: $percentage%"
+          Write-Host "Baseline threshold: $threshold%"
+
+          if ($percentage -lt $threshold) {
+            Write-Warning "Coverage $percentage% is below baseline $threshold% - informational only"
+          } else {
+            Write-Host "Coverage meets or exceeds baseline threshold" -ForegroundColor Green
+          }
+
+      - name: Check results
+        if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
+        shell: pwsh
+        run: |
+          if ($env:PESTER_FAILED -eq 'true') {
+            Write-Error "Pester tests failed"
+            exit 1
+          }

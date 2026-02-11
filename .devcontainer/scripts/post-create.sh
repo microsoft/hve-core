@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #
 # post-create.sh
 # Install NPM dependencies for HVE Core development container
@@ -29,7 +31,7 @@ fix_volume_ownerships() {
 
 npm_install() {
   echo "Installing NPM dependencies..."
-  npm install
+  npm ci
   echo "NPM dependencies installed successfully"
 }
 

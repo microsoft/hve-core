@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tool version and checksum manifest for staleness detection",
+  "tools": [
+    {
+      "name": "actionlint",
+      "repo": "rhysd/actionlint",
+      "version": "1.7.10",
+      "sha256": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
+      "downloadUrlTemplate": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
+      "notes": "Used in devcontainer for GitHub Actions workflow linting"
+    },
+    {
+      "name": "gitleaks",
+      "repo": "gitleaks/gitleaks",
+      "version": "8.30.0",
+      "sha256": "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e",
+      "downloadUrlTemplate": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
+      "notes": "Used in devcontainer for secret scanning"
+    }
+  ]
+}

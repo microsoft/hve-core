@@ -1,8 +1,12 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
 # LintingHelpers.psm1
 #
 # Purpose: Shared helper functions for linting scripts and workflows
 # Author: HVE Core Team
-# Created: 2025-11-05
+
+Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
 
 function Get-ChangedFilesFromGit {
     <#
@@ -145,7 +149,7 @@ function Get-GitIgnorePatterns {
     Path to .gitignore file.
 
     .OUTPUTS
-    Array of wildcard patterns.
+    Array of wildcard patterns using platform-appropriate separators.
     #>
     [CmdletBinding()]
     param(
@@ -157,165 +161,33 @@ function Get-GitIgnorePatterns {
         return @()
     }
 
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+
     $patterns = Get-Content $GitIgnorePath | Where-Object {
         $_ -and -not $_.StartsWith('#') -and $_.Trim() -ne ''
     } | ForEach-Object {
         $pattern = $_.Trim()
         
+        # Normalize to platform separator
+        $normalizedPattern = $pattern.Replace('/', $sep).Replace('\', $sep)
+        
         if ($pattern.EndsWith('/')) {
-            "*\$($pattern.TrimEnd('/'))\*"
+            "*$sep$($normalizedPattern.TrimEnd($sep))$sep*"
         }
-        elseif ($pattern.Contains('/')) {
-            "*\$($pattern.Replace('/', '\'))*"
+        elseif ($pattern.Contains('/') -or $pattern.Contains('\')) {
+            "*$sep$normalizedPattern*"
         }
         else {
-            "*\$pattern\*"
+            "*$sep$normalizedPattern$sep*"
         }
     }
 
     return $patterns
 }
 
-function Write-GitHubAnnotation {
-    <#
-    .SYNOPSIS
-    Writes GitHub Actions annotations for errors, warnings, or notices.
-
-    .PARAMETER Type
-    Annotation type: 'error', 'warning', or 'notice'.
-
-    .PARAMETER Message
-    The annotation message.
-
-    .PARAMETER File
-    Optional file path.
-
-    .PARAMETER Line
-    Optional line number.
-
-    .PARAMETER Column
-    Optional column number.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('error', 'warning', 'notice')]
-        [string]$Type,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
-
-        [Parameter(Mandatory = $false)]
-        [string]$File,
-
-        [Parameter(Mandatory = $false)]
-        [int]$Line,
-
-        [Parameter(Mandatory = $false)]
-        [int]$Column
-    )
-
-    $annotation = "::${Type}"
-    
-    $properties = @()
-    if ($File) { $properties += "file=$File" }
-    if ($Line -gt 0) { $properties += "line=$Line" }
-    if ($Column -gt 0) { $properties += "col=$Column" }
-    
-    if ($properties.Count -gt 0) {
-        $annotation += " $($properties -join ',')"
-    }
-    
-    $annotation += "::$Message"
-    
-    Write-Host $annotation
-}
-
-function Set-GitHubOutput {
-    <#
-    .SYNOPSIS
-    Sets GitHub Actions output variable.
-
-    .PARAMETER Name
-    Output variable name.
-
-    .PARAMETER Value
-    Output value.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Value
-    )
-
-    if ($env:GITHUB_OUTPUT) {
-        "$Name=$Value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - output: $Name=$Value"
-    }
-}
-
-function Set-GitHubEnv {
-    <#
-    .SYNOPSIS
-    Sets GitHub Actions environment variable.
-
-    .PARAMETER Name
-    Environment variable name.
-
-    .PARAMETER Value
-    Environment value.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Value
-    )
-
-    if ($env:GITHUB_ENV) {
-        "$Name=$Value" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - env: $Name=$Value"
-    }
-}
-
-function Write-GitHubStepSummary {
-    <#
-    .SYNOPSIS
-    Appends content to GitHub Actions step summary.
-
-    .PARAMETER Content
-    Markdown content to append.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Content
-    )
-
-    if ($env:GITHUB_STEP_SUMMARY) {
-        $Content | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - summary content: $Content"
-    }
-}
-
-# Export functions
+# Export local functions only - CIHelpers functions are used via direct import
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
     'Get-FilesRecursive',
-    'Get-GitIgnorePatterns',
-    'Write-GitHubAnnotation',
-    'Set-GitHubOutput',
-    'Set-GitHubEnv',
-    'Write-GitHubStepSummary'
+    'Get-GitIgnorePatterns'
 )

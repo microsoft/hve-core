@@ -1,0 +1,14 @@
+# Exclude everything by default
+**
+
+# Include only the extension essentials
+!.github/prompts/**
+!.github/instructions/**
+!.github/agents/**
+!docs/templates/**
+!scripts/dev-tools/**
+!scripts/lib/Modules/CIHelpers.psm1
+!package.json
+!README.md
+!LICENSE
+!CHANGELOG.md

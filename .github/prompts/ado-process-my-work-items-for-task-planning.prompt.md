@@ -1,6 +1,6 @@
 ---
-mode: "agent"
 description: "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
+maturity: stable
 ---
 
 # Process My Work Items for Task Planning
@@ -37,7 +37,7 @@ Processing protocol:
 * Read planning files from specified directory (`work-items.md`, `artifact-analysis.md`, `planning-log.md`)
 * Enrich work items with repository context using semantic search and file analysis
 * Generate comprehensive `task-planning-logs.md` handoff file for task research and planning
-* Create structured handoff sections ready for `task-researcher.chatmode.md` and `task-planner.chatmode.md`
+* Create structured handoff sections ready for `task-researcher.agent.md` and `task-planner.agent.md`
 * Update planning-log.md with processing progress and discoveries
 * Provide conversational summary of processed work items and handoff file location
 
@@ -156,7 +156,7 @@ Additional Items: [WI IDs]
 * Top Recommendation ID: {id}
 * All Processed IDs: [comma-separated list]
 * Processing Date: YYYY-MM-DD
-* Ready for: task-researcher.chatmode.md, task-planner.chatmode.md
+* Ready for: task-researcher.agent.md, task-planner.agent.md
 ```
 
 **Conversation Summary:**
