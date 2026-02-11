@@ -68,16 +68,27 @@ Agent files support conversational workflows (multi-turn interactions) and auton
 
 *Location*: `.claude/agents/<name>.md`
 
-Behavioral instructions for specialized task execution, loaded by skills (via `agent:` frontmatter) or passed to the Task tool.
+Behavioral instructions for specialized task execution, loaded by skills (via `agent:` frontmatter or inline) or passed to the Task tool.
 
-* Frontmatter declares `name`, `description`, and optionally `tools` (comma-separated) and `model` (`inherit` for parent model).
-* Include `Task` in tools only when the agent dispatches subagents.
-* Body contains: core principles, phases or steps, subagent delegation rules, response format, and operational constraints.
+Agent roles:
+
+* Orchestrator agents dispatch subagents via Task, manage phases, and synthesize results.
+* Leaf agents perform direct work using a step-based protocol and return structured responses. Leaf agents do not dispatch further Tasks.
+
+Frontmatter:
+
+* Declares `name`, `description`, and optionally `tools` (comma-separated) and `model` (`inherit` for parent model).
+* Include `Task` in tools only when the agent dispatches subagents. Leaf subagents omit `Task`.
+
+Recommended body sections: Core Principles, Tool Usage, Required Steps or Phases, Structured Response (for leaf agents), Operational Constraints, File Locations.
 
 Execution contexts:
 
-* Standalone (via skill): Runs in the main session, can dispatch Task subagents (one level deep).
+* Standalone (via skill without `context: fork`): Runs in the main session, can dispatch Task subagents (one level deep).
+* Forked (via skill with `context: fork`): Runs as an isolated subagent without conversation history. Cannot dispatch Tasks. Results are summarized and returned to the invoking context.
 * Dispatched (via Task call): Runs as a Task, cannot dispatch further Tasks; falls back to direct tool usage.
+
+Agents designed for Task dispatch include an Execution Mode Detection section with fallback behavior for when the Task tool is unavailable.
 
 ### Instructions Files
 
@@ -92,7 +103,7 @@ Auto-applied guidance based on file patterns. Define conventions, standards, and
 
 *File Name*: `SKILL.md`
 
-Skills provide task-specific entry points and are the recommended pattern for new artifacts. Two variants exist: script-based skills that bundle executable scripts, and agent-based skills that delegate to agents. Convert existing commands (`.claude/commands/`) to agent-based skills.
+Skills provide task-specific entry points and are the recommended pattern for new artifacts. Two variants exist: script-based skills that bundle executable scripts, and agent-based skills. Convert existing commands (`.claude/commands/`) to agent-based skills.
 
 #### Script-Based Skills
 
@@ -133,12 +144,20 @@ Validation:
 
 *Location*: `.claude/skills/<skill-name>/SKILL.md`
 
+Three agent-based skill patterns exist:
+
+* Delegation Skills delegate to a named agent via `agent:` frontmatter. The agent runs in the main conversation context with Task tool access.
+* Orchestrator Skills contain full orchestration logic in the skill body and dispatch subagents directly via the Task tool.
+* Forked Skills use `context: fork` to run as isolated subagents without Task tool access.
+
+##### Delegation Skills
+
 Lightweight entry points that delegate to agents via `agent:` frontmatter. The skill body passes `$ARGUMENTS` with mode-specific directives controlling which phases the agent executes. Multiple skills can share a single agent by providing different mode directives.
 
 * Frontmatter delegates to an agent via `agent:` which loads `.claude/agents/<agent>.md`.
 * `$ARGUMENTS` in the body receives user input at invocation.
 * No bundled scripts; agents use tools directly.
-* Set `context: fork` for isolated execution (typical for multi-phase workflows or subagent dispatch).
+* When the skill does not orchestrate subagents, set `context: fork` for isolated execution.
 * Set `disable-model-invocation: true` for skills requiring explicit user invocation only.
 
 Content structure:
@@ -155,8 +174,8 @@ Frontmatter fields:
 | `name`                     | Yes      | Skill identifier in lowercase kebab-case matching the directory name.                          |
 | `description`              | Yes      | Brief description shown in the skill picker and agent registry.                                |
 | `maturity`                 | Yes      | Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.                         |
-| `context`                  | No       | Set to `fork` to run in an isolated context. Omit or set to `none` for the main context.       |
-| `agent`                    | No       | Agent name to delegate to. Loads `.claude/agents/<agent>.md` when the skill activates.         |
+| `context`                  | No       | Set to `fork` for isolated subagent execution without Task tool access. Omit for main conversation context. |
+| `agent`                    | No       | Without `context: fork`: delegates to `.claude/agents/<agent>.md`. With `context: fork`: selects subagent type (`Explore`, `Plan`, `general-purpose`, or custom). |
 | `argument-hint`            | No       | Hint text shown in the skill picker (for example, `"file=... [requirements=...]"`).            |
 | `disable-model-invocation` | No       | Set to `true` to prevent the model from invoking this skill automatically.                     |
 
@@ -193,7 +212,6 @@ Example skill with frontmatter and mode directives (build mode, full workflow):
 name: prompt-build
 description: Build or improve prompt engineering artifacts following quality criteria.
 maturity: stable
-context: fork
 agent: prompt-builder
 argument-hint: "file=... [requirements=...]"
 disable-model-invocation: true
@@ -229,6 +247,93 @@ Validation:
 * Include a Mode Directives section when the skill controls agent mode selection.
 * Keep the body concise; follow the Progressive Disclosure guidelines for size limits.
 
+##### Orchestrator Skills
+
+Skills that contain full orchestration logic in their body without `agent:` frontmatter. The skill dispatches subagents directly via the Task tool.
+
+* No `agent:` frontmatter; the skill body serves as the orchestrator.
+* Dispatches `.claude/agents/<subagent>.md` via the Task tool directly from the skill body.
+* Single-purpose: one skill dispatches one or more subagent instances for a specific workflow.
+* Self-contained: all orchestration logic lives in one file.
+
+When to use instead of delegation skills:
+
+* The workflow has a single purpose that does not need multiple modes.
+* All orchestration logic fits naturally in the skill body.
+* Agent reuse across multiple skills is not needed.
+
+Content structure:
+
+1. Frontmatter with `name`, `description`, `maturity`, and optionally `disable-model-invocation`, `argument-hint`.
+2. Title (H1) matching the skill purpose.
+3. Core Principles, Subagent Delegation, Execution Mode Detection, File Locations.
+4. Required Phases with phase-based protocol.
+5. Output Templates and Response Format.
+
+Include an Execution Mode Detection section with fallback behavior for when the Task tool is unavailable. When the Task tool is available, dispatch subagent instances. When it is unavailable, read the subagent file and perform all work directly.
+
+Validation:
+
+* Include `name`, `description`, `maturity` frontmatter. No `agent:` field.
+* Include `$ARGUMENTS` when the skill accepts user input.
+* Include an Execution Mode Detection section for Task tool fallback.
+* Keep the body concise; follow the Progressive Disclosure guidelines for size limits.
+
+##### Forked Skills
+
+Skills with `context: fork` that run as isolated subagents. The skill content becomes the subagent's task prompt. The subagent does not have access to conversation history. Results are summarized and returned to the main conversation.
+
+* Forked skills cannot dispatch subagents via the Task tool. This is an architectural constraint; subagents cannot spawn other subagents.
+* The `agent` field selects the subagent configuration rather than delegating to an agent file.
+* Use `disable-model-invocation: true` for skills that should not be auto-triggered.
+
+When to use `context: fork`:
+
+* Self-contained leaf tasks that do not need conversation history or subagent delegation.
+* Read-only research or codebase exploration.
+* Deployment or build procedures that follow a fixed procedure.
+* Code review or summarization tasks operating on explicit inputs.
+
+Avoid `context: fork` for:
+
+* Orchestrator skills that dispatch subagents via the Task tool.
+* Skills that need access to conversation history for context-dependent decisions.
+* Guideline-only skills without explicit task instructions.
+
+The `agent` field with `context: fork`:
+
+| Agent Value | Model | Tools | Use Case |
+|-------------|-------|-------|----------|
+| `Explore` | Haiku | Read-only (denied Write/Edit) | File discovery, code search |
+| `Plan` | Inherits parent | Read-only (denied Write/Edit) | Codebase research for planning |
+| `general-purpose` (default) | Inherits parent | All tools (except Task) | Multi-step operations |
+| Custom (`.claude/agents/<name>`) | Per agent config | Per agent config (except Task) | Specialized workflows |
+
+Example forked skill:
+
+```yaml
+---
+name: deep-research
+description: Research a topic thoroughly
+context: fork
+agent: Explore
+---
+```
+
+```markdown
+Research $ARGUMENTS thoroughly:
+
+* Find relevant files using Glob and Grep.
+* Read and analyze the code.
+* Summarize findings with specific file references.
+```
+
+Validation:
+
+* Include `name`, `description`, `maturity` frontmatter.
+* Set `context: fork` in frontmatter.
+* Include explicit task instructions with `$ARGUMENTS`; guideline-only content is not suitable for forked execution.
+
 ### Progressive Disclosure
 
 Structure skills for efficient context loading. Keep *SKILL.md* under 500 lines; move detailed reference to separate files. Use relative paths from the skill root, one level deep.
@@ -254,11 +359,12 @@ VS Code shows a validation warning for `maturity:` as it is not in VS Code's sch
 * `applyTo:` - Glob patterns (required for instructions files).
 * `tools:` - Comma-separated tool list for agents. When omitted, defaults are provided. Include `Task` only when the agent dispatches subagents. Leaf subagents omit `Task`.
 * `handoffs:` - Agent handoff declarations using `agent:` for the target.
-* `agent:` - Agent delegation for prompts and skills. Loads `.claude/agents/<agent>.md`.
+* `agent:` - Without `context: fork`: delegates orchestration to `.claude/agents/<agent>.md` in the main conversation context with Task tool access. With `context: fork`: selects the subagent type (`Explore`, `Plan`, `general-purpose`, or custom) for isolated execution without Task tool access.
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Set to `inherit` for parent model, or specify a model name.
-* `context:` - Set to `fork` for isolated context execution.
+* `context:` - Set to `fork` for isolated subagent execution. Forked skills cannot dispatch subagents via the Task tool. Omit for main conversation context with full tool access.
 * `disable-model-invocation:` - Set to `true` to prevent automatic invocation.
+* `mcpServers:` - MCP server dependencies for Claude Code agents. Comma-separated server names (for example, `microsoft-docs, context7`).
 
 Common tools: `Task`, `TaskOutput`, `TaskStop`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Bash`, `WebFetch`, `TodoWrite`, `AskUserQuestion`, `Skill`.
 
@@ -378,12 +484,14 @@ Dispatch and specification:
 * Task nesting is limited to one level deep. Design agents to fall back to direct tool usage when dispatched.
 * Specify which agents or instructions files to follow, and indicate the task types the subagent completes.
 * Provide a step-based protocol when multiple steps are needed.
+* Skills and agents that dispatch subagents include an Execution Mode Detection section with fallback instructions for when the Task tool is unavailable.
 
 Response and execution:
 
 * Provide structured response format or criteria for what the subagent returns.
-* When the subagent writes to files, specify which file to create or update.
-* Allow clarifying questions to avoid guessing.
+* Leaf agents include a Structured Response section defining a markdown template with standardized fields for return values (for example: Question, Status, Output File, Key Findings, Potential Next Research, Clarifying Questions, Notes).
+* When the subagent writes to files, specify which file to create or update. Subagents write findings to designated directories; the orchestrator reads those files to synthesize results.
+* Allow clarifying questions to avoid guessing. Subagents may respond with clarifying questions; the orchestrator reviews and either dispatches follow-up subagents or escalates to the user.
 * Prompt instructions can loop and call the subagent multiple times until the task completes.
 * Multiple subagents can run in parallel when work allows.
 

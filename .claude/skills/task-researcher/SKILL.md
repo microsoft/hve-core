@@ -1,5 +1,5 @@
 ---
-name: task-research
+name: task-researcher
 description: Initiates deep and comprehensive analysis of research topics.
 maturity: stable
 disable-model-invocation: true
