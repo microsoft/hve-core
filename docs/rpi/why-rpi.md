@@ -52,7 +52,7 @@ The magic happens because each phase starts fresh. When you clear context betwee
 
 **Without RPI**, AI thinks: "This looks like a reasonable variable name. I'll use `prefix`."
 
-**With RPI**, Task Researcher finds: "12 existing modules in this repository use `resource_prefix`, not `prefix`. See [variables.tf#L47](../infrastructure/modules/base/variables.tf#L47) for the established pattern."
+**With RPI**, Task Researcher finds: "12 existing modules in this repository use `resource_prefix`, not `prefix`. See `variables.tf#L47` for the established pattern."
 
 When AI knows it cannot implement during research, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
 
