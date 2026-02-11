@@ -549,7 +549,12 @@ function Test-JsonSchemaValidation {
                     }
                     'array' {
                         # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays.
-                        if ($Value -is [string] -or ($Value -isnot [array] -and $Value -isnot [System.Collections.IEnumerable])) {
+                        # Also exclude dictionaries/hashtables: they are IEnumerable, but semantically map to objects, not arrays.
+                        if (
+                            $Value -is [string] -or
+                            $Value -is [System.Collections.IDictionary] -or
+                            ($Value -isnot [array] -and $Value -isnot [System.Collections.IEnumerable])
+                        ) {
                             $localErrors.Add("Field '$Path' must be an array")
                             return $localErrors.ToArray()
                         }

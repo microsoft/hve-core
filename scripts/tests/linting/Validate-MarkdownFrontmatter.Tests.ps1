@@ -529,6 +529,17 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result.IsValid | Should -BeFalse
             $result.Errors | Should -Contain "Field 'applyTo' must be an array"
         }
+
+        It 'Reports error when hashtable provided for array field' {
+            # Hashtables/dictionaries are IEnumerable, but semantically objects, not arrays.
+            $frontmatter = @{
+                description = 'test'
+                applyTo     = @{ pattern = '*.md' }
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:ArrayTestSchema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "Field 'applyTo' must be an array"
+        }
     }
 
     Context 'Boolean type validation' {
