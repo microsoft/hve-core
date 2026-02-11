@@ -1,6 +1,6 @@
 ---
 name: task-researcher-subagent
-description: Investigation specialist for focused research subtopics. Performs codebase searches, external documentation retrieval, web queries, and uses relevant mcp tools for a research subtopic.
+description: Investigation specialist for focused research subtopics and research questions.
 mcpServers: microsoft-docs, context7
 model: inherit
 ---

@@ -1,6 +1,6 @@
 ---
 name: task-research
-description: Initiates research for implementation planning based on user requirements. Dispatches task-researcher-subagent instances and synthesizes findings into research documents.
+description: Initiates deep and comprehensive analysis of research topics.
 maturity: stable
 disable-model-invocation: true
 argument-hint: "[topic]"
