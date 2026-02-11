@@ -53,8 +53,6 @@ $ErrorActionPreference = 'Stop'
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
-$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
-
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
 
@@ -909,11 +907,27 @@ function Set-ContentPreservePermission {
 }
 
 #region Main Execution
-if (-not $script:SkipMain) {
-    Set-StrictMode -Version Latest
-    $ErrorActionPreference = 'Stop'
 
-    try {
+Set-StrictMode -Version Latest
+
+function Invoke-ActionSHAPinningUpdate {
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([void])]
+    param(
+        [Parameter()]
+        [string]$WorkflowPath = ".github/workflows",
+
+        [Parameter()]
+        [switch]$OutputReport,
+
+        [Parameter()]
+        [ValidateSet("json", "azdo", "github", "console", "BuildWarning", "Summary")]
+        [string]$OutputFormat = "console",
+
+        [Parameter()]
+        [switch]$UpdateStale
+    )
+
     if ($UpdateStale) {
         Write-SecurityLog "Starting GitHub Actions SHA update process (updating stale pins)..." -Level 'Info'
     }
@@ -940,13 +954,12 @@ if (-not $script:SkipMain) {
         $results += $result
     }
 
-    # Generate summary
     $totalActions = ($results | Measure-Object ActionsProcessed -Sum).Sum
     $totalPinned = ($results | Measure-Object ActionsPinned -Sum).Sum
     $totalSkipped = ($results | Measure-Object ActionsSkipped -Sum).Sum
     $workflowsChanged = @($results | Where-Object { $_.PSObject.Properties.Name -contains 'ContentChanged' -and $_.ContentChanged }).Count
 
-    Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
+    Write-SecurityLog "" -Level 'Info'
     Write-SecurityLog "=== SHA Pinning Summary ===" -Level 'Info'
     Write-SecurityLog "Workflows processed: $(@($workflowFiles).Count)" -Level 'Info'
     Write-SecurityLog "Workflows changed: $workflowsChanged" -Level 'Success'
@@ -954,14 +967,11 @@ if (-not $script:SkipMain) {
     Write-SecurityLog "Actions SHA-pinned: $totalPinned" -Level 'Success'
     Write-SecurityLog "Actions requiring manual review: $totalSkipped" -Level 'Warning'
 
-    # Export report if requested
     if ($OutputReport) {
         $reportPath = Export-SecurityReport -Results $results
         Write-SecurityLog "Detailed report available at: $reportPath" -Level 'Info'
     }
 
-    # Show actions requiring manual review and add as security issues
-    # Get manual review actions with their workflow file context
     $manualReviewActions = @()
     foreach ($result in $results) {
         if ($result.PSObject.Properties.Name -contains 'Changes') {
@@ -978,12 +988,11 @@ if (-not $script:SkipMain) {
     }
 
     if ($manualReviewActions) {
-        Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
+        Write-SecurityLog "" -Level 'Info'
         Write-SecurityLog "=== Actions Requiring Manual SHA Pinning ===" -Level 'Warning'
         foreach ($action in $manualReviewActions) {
             Write-SecurityLog "  - $($action.Original)" -Level 'Warning'
 
-            # Add security issue for unpinned action
             Add-SecurityIssue -Type "GitHub Actions Security" `
                 -Severity "Medium" `
                 -Title "Unpinned GitHub Action" `
@@ -994,20 +1003,25 @@ if (-not $script:SkipMain) {
         Write-SecurityLog "Please research and add SHA mappings for these actions manually." -Level 'Warning'
     }
 
-    # Output results in requested format
     $summaryText = "Processed $(@($workflowFiles).Count) workflows, pinned $totalPinned actions, $totalSkipped require manual review"
     Write-OutputResult -OutputFormat $OutputFormat -Results $script:SecurityIssues -Summary $summaryText
 
     if ($WhatIfPreference) {
-        Write-SecurityLog "" -Level 'Info'  # Empty line for formatting
+        Write-SecurityLog "" -Level 'Info'
         Write-SecurityLog "WhatIf mode: No files were modified. Run without -WhatIf to apply changes." -Level 'Info'
     }
+}
 
-    exit 0
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-ActionSHAPinningUpdate -WorkflowPath $WorkflowPath -OutputReport:$OutputReport -OutputFormat $OutputFormat -UpdateStale:$UpdateStale
+        exit 0
+    }
+    catch {
+        Write-Error "Update-ActionSHAPinning failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
-catch {
-    Write-SecurityLog "Critical error in SHA pinning process: $($_.Exception.Message)" -Level 'Error'
-    Write-CIAnnotation -Message $_.Exception.Message -Level Error
-    exit 1
-}
-}
+
+#endregion Main Execution

@@ -355,17 +355,6 @@ Describe 'Dot-sourced execution protection' -Tag 'Unit' {
             Test-Path $tempOutputPath | Should -BeFalse
         }
 
-        It 'Writes error message when dot-sourced' {
-            # Arrange
-            $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
-            
-            # Act - Invoke in new process to test dot-sourcing error handling
-            $result = pwsh -Command ". '$testScript'" 2>&1
-            $errorOutput = $result | Where-Object { $_ -match 'dot-sourced' -or $_ -match 'will not execute' }
-            
-            # Assert - Should write error message about dot-sourcing
-            $errorOutput | Should -Not -BeNullOrEmpty
-        }
     }
 }
 

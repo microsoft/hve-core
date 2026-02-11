@@ -8,13 +8,11 @@
 
 .DESCRIPTION
     Tests the staleness checking functions without executing the main script.
-    Uses AST function extraction to avoid running main execution block.
+    Uses dot-source guard pattern for function isolation.
 #>
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Test-SHAStaleness.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
     . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
@@ -30,7 +28,6 @@ BeforeAll {
 AfterAll {
     # Restore environment after tests
     Restore-CIEnvironment
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 Describe 'Test-GitHubToken' -Tag 'Unit' {
@@ -326,9 +323,6 @@ Describe 'Main Script Execution' {
 
     Context 'Array coercion in main execution block' {
         BeforeEach {
-            # Clear HVE_SKIP_MAIN so script actually runs main block
-            $env:HVE_SKIP_MAIN = $null
-            
             # Create workflow with SHA-pinned action
             $workflowContent = @'
 name: Test
@@ -346,8 +340,6 @@ jobs:
         }
         
         AfterEach {
-            # Restore HVE_SKIP_MAIN
-            $env:HVE_SKIP_MAIN = '1'
             # Return to original location
             Set-Location $script:OriginalLocation
         }
@@ -464,9 +456,6 @@ jobs:
 
     Context 'CI environment integration' {
         BeforeEach {
-            # Clear HVE_SKIP_MAIN so script actually runs main block
-            $env:HVE_SKIP_MAIN = $null
-            
             # Save original environment
             $script:OriginalGHA = $env:GITHUB_ACTIONS
             $script:OriginalADO = $env:TF_BUILD
@@ -488,8 +477,6 @@ jobs:
         }
 
         AfterEach {
-            # Restore HVE_SKIP_MAIN
-            $env:HVE_SKIP_MAIN = '1'
             $env:GITHUB_ACTIONS = $script:OriginalGHA
             $env:TF_BUILD = $script:OriginalADO
             Set-Location $script:OriginalLocation
@@ -553,14 +540,10 @@ jobs:
 
     Context 'Empty and edge case scenarios' {
         BeforeEach {
-            # Clear HVE_SKIP_MAIN so script actually runs main block
-            $env:HVE_SKIP_MAIN = $null
             Set-Location $script:TestRepo
         }
         
         AfterEach {
-            # Restore HVE_SKIP_MAIN
-            $env:HVE_SKIP_MAIN = '1'
             Set-Location $script:OriginalLocation
         }
         

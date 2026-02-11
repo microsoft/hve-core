@@ -12,9 +12,6 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
-
     . $script:ScriptPath
 
     # Import LintingHelpers for mocking
@@ -25,7 +22,6 @@ BeforeAll {
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 #region Get-MarkdownTarget Tests
@@ -255,16 +251,6 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
         BeforeAll {
             $script:OriginalGHA = $env:GITHUB_ACTIONS
             $script:LinkCheckScript = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
-        }
-
-        BeforeEach {
-            # Clear HVE_SKIP_MAIN so the script's main block runs during integration tests
-            $env:HVE_SKIP_MAIN = $null
-        }
-
-        AfterEach {
-            # Restore HVE_SKIP_MAIN for function-only tests
-            $env:HVE_SKIP_MAIN = '1'
         }
 
         AfterAll {

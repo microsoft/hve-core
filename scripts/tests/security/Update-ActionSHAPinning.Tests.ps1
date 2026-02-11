@@ -4,8 +4,6 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Update-ActionSHAPinning.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
     . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
@@ -49,7 +47,6 @@ BeforeAll {
 
 AfterAll {
     Restore-CIEnvironment
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 Describe 'Get-ActionReference' -Tag 'Unit' {
