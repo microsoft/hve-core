@@ -55,27 +55,28 @@ flowchart TD
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                      | Purpose                         | npm Script                 |
-|-------------------------------|---------------------------------|----------------------------|
-| `markdown-lint.yml`           | Markdownlint validation         | `npm run lint:md`          |
-| `spell-check.yml`             | cspell dictionary check         | `npm run spell-check`      |
-| `frontmatter-validation.yml`  | AI artifact frontmatter schemas | `npm run lint:frontmatter` |
-| `markdown-link-check.yml`     | Broken link detection           | `npm run lint:md-links`    |
-| `link-lang-check.yml`         | Link language validation        | `npm run lint:links`       |
-| `yaml-lint.yml`               | YAML syntax validation          | `npm run lint:yaml`        |
-| `ps-script-analyzer.yml`      | PowerShell static analysis      | `npm run lint:ps`          |
-| `table-format.yml`            | Markdown table formatting       | `npm run format:tables`    |
-| `pester-tests.yml`            | PowerShell unit tests           | `npm run test:ps`          |
-| `dependency-pinning-scan.yml` | GitHub Actions pinning          | N/A (PowerShell direct)    |
-| `sha-staleness-check.yml`     | SHA reference freshness         | N/A (PowerShell direct)    |
-| `codeql-analysis.yml`         | CodeQL security scanning        | N/A (GitHub native)        |
-| `dependency-review.yml`       | Dependency vulnerability review | N/A (GitHub native)        |
-| `security-scan.yml`           | Composite security validation   | N/A                        |
-| `extension-package.yml`       | VS Code extension packaging     | N/A                        |
+| Workflow                           | Purpose                         | npm Script                 |
+|------------------------------------|---------------------------------|----------------------------|
+| `markdown-lint.yml`                | Markdownlint validation         | `npm run lint:md`          |
+| `spell-check.yml`                  | cspell dictionary check         | `npm run spell-check`      |
+| `frontmatter-validation.yml`       | AI artifact frontmatter schemas | `npm run lint:frontmatter` |
+| `markdown-link-check.yml`          | Broken link detection           | `npm run lint:md-links`    |
+| `link-lang-check.yml`              | Link language validation        | `npm run lint:links`       |
+| `yaml-lint.yml`                    | YAML syntax validation          | `npm run lint:yaml`        |
+| `ps-script-analyzer.yml`           | PowerShell static analysis      | `npm run lint:ps`          |
+| `table-format.yml`                 | Markdown table formatting       | `npm run format:tables`    |
+| `pester-tests.yml`                 | PowerShell unit tests           | `npm run test:ps`          |
+| `dependency-pinning-scan.yml`      | GitHub Actions pinning          | N/A (PowerShell direct)    |
+| `sha-staleness-check.yml`          | SHA reference freshness         | N/A (PowerShell direct)    |
+| `codeql-analysis.yml`              | CodeQL security scanning        | N/A (GitHub native)        |
+| `dependency-review.yml`            | Dependency vulnerability review | N/A (GitHub native)        |
+| `artifact-registry-validation.yml` | AI artifact registry validation | `npm run lint:registry`    |
+| `security-scan.yml`                | Composite security validation   | N/A                        |
+| `extension-package.yml`            | VS Code extension packaging     | N/A                        |
 
 ## PR Validation Pipeline
 
-The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs 12 parallel jobs covering linting, security, and testing.
+The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs 13 parallel jobs covering linting, security, and testing.
 
 ```mermaid
 flowchart LR
@@ -85,6 +86,7 @@ flowchart LR
         TF[table-format]
         YL[yaml-lint]
         FV[frontmatter-validation]
+        ARV[artifact-registry-validation]
         LLC[link-lang-check]
         MLC[markdown-link-check]
     end
@@ -103,20 +105,21 @@ flowchart LR
 
 ### Jobs
 
-| Job                      | Reusable Workflow             | Validates                      |
-|--------------------------|-------------------------------|--------------------------------|
-| spell-check              | `spell-check.yml`             | Spelling across all files      |
-| markdown-lint            | `markdown-lint.yml`           | Markdown formatting rules      |
-| table-format             | `table-format.yml`            | Markdown table structure       |
-| psscriptanalyzer         | `ps-script-analyzer.yml`      | PowerShell code quality        |
-| yaml-lint                | `yaml-lint.yml`               | YAML syntax                    |
-| pester-tests             | `pester-tests.yml`            | PowerShell unit tests          |
-| frontmatter-validation   | `frontmatter-validation.yml`  | AI artifact metadata           |
-| link-lang-check          | `link-lang-check.yml`         | Link accessibility             |
-| markdown-link-check      | `markdown-link-check.yml`     | Broken links                   |
-| dependency-pinning-check | `dependency-pinning-scan.yml` | Action SHA pinning             |
-| npm-audit                | Inline                        | npm dependency vulnerabilities |
-| codeql                   | `codeql-analysis.yml`         | Code security patterns         |
+| Job                          | Reusable Workflow                  | Validates                      |
+|------------------------------|------------------------------------|--------------------------------|
+| spell-check                  | `spell-check.yml`                  | Spelling across all files      |
+| markdown-lint                | `markdown-lint.yml`                | Markdown formatting rules      |
+| table-format                 | `table-format.yml`                 | Markdown table structure       |
+| psscriptanalyzer             | `ps-script-analyzer.yml`           | PowerShell code quality        |
+| yaml-lint                    | `yaml-lint.yml`                    | YAML syntax                    |
+| pester-tests                 | `pester-tests.yml`                 | PowerShell unit tests          |
+| frontmatter-validation       | `frontmatter-validation.yml`       | AI artifact metadata           |
+| link-lang-check              | `link-lang-check.yml`              | Link accessibility             |
+| markdown-link-check          | `markdown-link-check.yml`          | Broken links                   |
+| artifact-registry-validation | `artifact-registry-validation.yml` | AI artifact registry integrity |
+| dependency-pinning-check     | `dependency-pinning-scan.yml`      | Action SHA pinning             |
+| npm-audit                    | Inline                             | npm dependency vulnerabilities |
+| codeql                       | `codeql-analysis.yml`              | Code security patterns         |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
 
@@ -174,23 +177,41 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `extension-publish.yml` workflow handles VS Code extension marketplace publishing through manual dispatch.
+The `extension-publish.yml` and `extension-publish-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per persona collection.
 
 ```mermaid
 flowchart LR
-    PC[prepare-changelog] --> PKG[package]
-    NV[normalize-version] --> PKG
-    PKG --> PUB[publish]
+    PC[prepare-changelog] --> DC[discover-collections]
+    NV[normalize-version] --> DC
+    DC --> PKG["package (matrix)"]
+    PKG --> PUB["publish (matrix)"]
 ```
 
 ### Publishing Jobs
 
-| Job               | Purpose                                  |
-|-------------------|------------------------------------------|
-| prepare-changelog | Extract release notes from CHANGELOG.md  |
-| normalize-version | Ensure version consistency               |
-| package           | Build VSIX using `extension-package.yml` |
-| publish           | Upload to VS Code Marketplace via vsce   |
+| Job                  | Purpose                                                     |
+|----------------------|-------------------------------------------------------------|
+| prepare-changelog    | Extract release notes from CHANGELOG.md                     |
+| normalize-version    | Ensure version consistency                                  |
+| validate-version     | Enforce ODD minor version for pre-release channel           |
+| discover-collections | Scan collection manifests, filter by maturity and channel   |
+| package (matrix)     | Build one VSIX per collection using `extension-package.yml` |
+| publish (matrix)     | Upload each VSIX to VS Code Marketplace via OIDC + vsce     |
+
+### Collection-Based Packaging
+
+Collection manifests in `extension/collections/*.collection.json` define persona-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
+
+| Collection     | Maturity     | Included In        |
+|----------------|--------------|--------------------|
+| `hve-core-all` | Stable       | Stable, PreRelease |
+| `developer`    | Experimental | PreRelease only    |
+
+Maturity filtering rules:
+
+* **Deprecated** collections are always excluded.
+* **Experimental** collections are excluded from Stable channel builds.
+* **Stable** collections are included in all channel builds.
 
 ### Version Channels
 
@@ -203,17 +224,18 @@ flowchart LR
 
 Workflows invoke validation through npm scripts defined in `package.json`:
 
-| npm Script         | Command                            | Used By                    |
-|--------------------|------------------------------------|----------------------------|
-| `lint:md`          | `markdownlint-cli2`                | markdown-lint.yml          |
-| `spell-check`      | `cspell`                           | spell-check.yml            |
-| `lint:frontmatter` | `Validate-MarkdownFrontmatter.ps1` | frontmatter-validation.yml |
-| `lint:md-links`    | `Markdown-Link-Check.ps1`          | markdown-link-check.yml    |
-| `lint:links`       | `Invoke-LinkLanguageCheck.ps1`     | link-lang-check.yml        |
-| `lint:yaml`        | `Invoke-YamlLint.ps1`              | yaml-lint.yml              |
-| `lint:ps`          | `Invoke-PSScriptAnalyzer.ps1`      | ps-script-analyzer.yml     |
-| `format:tables`    | `markdown-table-formatter`         | table-format.yml           |
-| `test:ps`          | `Invoke-Pester`                    | pester-tests.yml           |
+| npm Script         | Command                            | Used By                          |
+|--------------------|------------------------------------|----------------------------------|
+| `lint:md`          | `markdownlint-cli2`                | markdown-lint.yml                |
+| `spell-check`      | `cspell`                           | spell-check.yml                  |
+| `lint:frontmatter` | `Validate-MarkdownFrontmatter.ps1` | frontmatter-validation.yml       |
+| `lint:md-links`    | `Markdown-Link-Check.ps1`          | markdown-link-check.yml          |
+| `lint:links`       | `Invoke-LinkLanguageCheck.ps1`     | link-lang-check.yml              |
+| `lint:yaml`        | `Invoke-YamlLint.ps1`              | yaml-lint.yml                    |
+| `lint:ps`          | `Invoke-PSScriptAnalyzer.ps1`      | ps-script-analyzer.yml           |
+| `format:tables`    | `markdown-table-formatter`         | table-format.yml                 |
+| `lint:registry`    | `Validate-ArtifactRegistry.ps1`    | artifact-registry-validation.yml |
+| `test:ps`          | `Invoke-Pester`                    | pester-tests.yml                 |
 
 ## Related Documentation
 

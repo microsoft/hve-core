@@ -51,7 +51,8 @@
         "adr-creation": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "architecture",
@@ -67,7 +68,8 @@
         "arch-diagram-builder": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "architecture",
@@ -83,7 +85,8 @@
         "brd-builder": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "planning",
@@ -148,7 +151,8 @@
         "gen-streamlit-dashboard": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "data-science"
@@ -213,7 +217,8 @@
         "hve-core-installer": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "tooling"
@@ -228,7 +233,8 @@
         "memory": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -247,7 +253,8 @@
         "pr-review": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "github",
@@ -263,7 +270,8 @@
         "prd-builder": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "planning",
@@ -279,7 +287,8 @@
         "prompt-builder": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "prompt-engineering"
@@ -335,7 +344,8 @@
         "security-plan-creator": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "architecture",
@@ -351,7 +361,8 @@
         "task-implementor": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -369,7 +380,8 @@
         "task-planner": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -385,7 +397,8 @@
         "task-researcher": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -401,7 +414,8 @@
         "task-reviewer": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -417,7 +431,8 @@
         "test-streamlit-dashboard": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "data-science",
@@ -435,7 +450,8 @@
         "ado-create-pull-request": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "ado",
@@ -482,7 +498,8 @@
         "checkpoint": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -501,7 +518,8 @@
         "git-commit": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -510,7 +528,8 @@
         "git-commit-message": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -519,7 +538,8 @@
         "git-merge": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -528,7 +548,8 @@
         "git-setup": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -596,7 +617,8 @@
         "prompt-analyze": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "prompt-engineering"
@@ -605,7 +627,8 @@
         "prompt-build": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "prompt-engineering"
@@ -614,7 +637,8 @@
         "prompt-refactor": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "prompt-engineering"
@@ -623,7 +647,8 @@
         "pull-request": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "github",
@@ -656,7 +681,8 @@
         "task-implement": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -666,7 +692,8 @@
         "task-plan": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -676,7 +703,8 @@
         "task-research": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -686,7 +714,8 @@
         "task-review": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "rpi",
@@ -745,7 +774,8 @@
         "commit-message": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -764,7 +794,8 @@
         "git-merge": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "git"
@@ -813,7 +844,8 @@
         "hve-core-location": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "tooling"
@@ -836,7 +868,8 @@
         "prompt-builder": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "prompt-engineering"
@@ -845,7 +878,8 @@
         "python-script": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language"
@@ -854,7 +888,8 @@
         "uv-projects": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language"
@@ -872,7 +907,8 @@
         "bash/bash": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language"
@@ -881,7 +917,8 @@
         "bicep/bicep": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language",
@@ -891,7 +928,8 @@
         "csharp/csharp": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language"
@@ -900,7 +938,8 @@
         "csharp/csharp-tests": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language",
@@ -910,7 +949,8 @@
         "terraform/terraform": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "language",
@@ -922,7 +962,8 @@
         "video-to-gif": {
             "maturity": "stable",
             "personas": [
-                "hve-core-all"
+                "hve-core-all",
+                "developer"
             ],
             "tags": [
                 "media",
