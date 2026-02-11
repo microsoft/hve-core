@@ -49,10 +49,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Read package version
+      - name: Resolve effective version
         id: read-version
         shell: bash
-        run: echo "version=$(jq -r .version extension/package.json)" >> "$GITHUB_OUTPUT"
+        run: |
+          version="${{ inputs.version }}"
+          dev_patch="${{ inputs.dev-patch-number }}"
+          if [ -z "$version" ]; then
+            version=$(jq -r .version extension/package.json)
+          fi
+          if [ -n "$dev_patch" ]; then
+            version="${version}-dev.${dev_patch}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Discover collection manifests
         id: discover

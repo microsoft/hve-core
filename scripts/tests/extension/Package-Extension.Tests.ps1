@@ -584,6 +584,53 @@ Describe 'Invoke-PackageExtension' {
             $restored.description | Should -Be 'Original description'
         }
     }
+
+    It 'Cleans pre-existing copied directories before preparing extension' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        # Pre-create directories that should be cleaned before packaging
+        $preExistingGithub = Join-Path $script:extDir '.github/stale'
+        $preExistingScripts = Join-Path $script:extDir 'scripts/old'
+        New-Item -Path $preExistingGithub -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $preExistingGithub 'leftover.md') -Value 'stale'
+        New-Item -Path $preExistingScripts -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $preExistingScripts 'leftover.ps1') -Value 'stale'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        # Stale files should have been removed during pre-clean
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Returns failure when an unexpected error occurs during orchestration' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-PackagingDirectorySpec { throw 'Simulated unexpected failure' }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -Match 'Simulated unexpected failure'
+    }
 }
 
 Describe 'Test-PackagingInputsValid' {
