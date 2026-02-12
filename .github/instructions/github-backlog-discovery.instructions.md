@@ -21,7 +21,7 @@ Output location: `.copilot-tracking/github-issues/discovery/<scope-name>/` where
 ## Deliverables
 
 | File                   | Path A | Path B | Path C |
-| ---------------------- | ------ | ------ | ------ |
+|------------------------|--------|--------|--------|
 | *planning-log.md*      | Yes    | Yes    | Yes    |
 | *issue-analysis.md*    | No     | Yes    | No     |
 | *issues-plan.md*       | No     | Yes    | No     |
@@ -111,7 +111,7 @@ Execution:
 Map document types and content patterns to issue attributes.
 
 | Document Type | Content Pattern           | Suggested Label   | Issue Type  |
-| ------------- | ------------------------- | ----------------- | ----------- |
+|---------------|---------------------------|-------------------|-------------|
 | PRD           | Feature requirement       | `feature`         | Feature     |
 | PRD           | User story                | `feature`         | User story  |
 | BRD           | Business enhancement      | `enhancement`     | Enhancement |
@@ -148,12 +148,12 @@ Apply to artifact-driven discovery (Path B) only.
 
 #### Similarity-Based Actions
 
-| Category  | Action                                                              |
-| --------- | ------------------------------------------------------------------- |
-| Match     | Link candidate to existing issue; plan an Update if fields diverge  |
-| Similar   | Flag for user review with a comparison summary                      |
-| Distinct  | Plan as a new issue                                                 |
-| Uncertain | Request user guidance before proceeding                             |
+| Category  | Action                                                             |
+|-----------|--------------------------------------------------------------------|
+| Match     | Link candidate to existing issue; plan an Update if fields diverge |
+| Similar   | Flag for user review with a comparison summary                     |
+| Distinct  | Plan as a new issue                                                |
+| Uncertain | Request user guidance before proceeding                            |
 
 #### Hierarchy Grouping
 
@@ -207,19 +207,19 @@ Additional triggers are defined in the Human Review Triggers section of *github-
 
 These sections in *github-backlog-planning.instructions.md* inform discovery operations:
 
-| Section                         | Used In         | Purpose                                              |
-| ------------------------------- | --------------- | ---------------------------------------------------- |
-| Search Protocol                 | Phase 1, Path B | Keyword group construction and query composition     |
-| Similarity Assessment Framework | Phase 1, Path B | Classifying candidate-to-existing issue pairs        |
-| Planning File Templates         | Phases 1-3      | Structure for all output files                       |
+| Section                         | Used In         | Purpose                                                |
+|---------------------------------|-----------------|--------------------------------------------------------|
+| Search Protocol                 | Phase 1, Path B | Keyword group construction and query composition       |
+| Similarity Assessment Framework | Phase 1, Path B | Classifying candidate-to-existing issue pairs          |
+| Planning File Templates         | Phases 1-3      | Structure for all output files                         |
 | Content Sanitization Guards     | Phase 2         | Strip local paths and planning IDs from GitHub content |
-| Temporary ID Mapping            | Phase 2         | `{{TEMP-N}}` placeholders for new issues             |
-| Three-Tier Autonomy Model       | Phase 3         | Confirmation gates during handoff review             |
-| State Persistence Protocol      | All phases      | Context recovery after summarization                 |
-| Issue Field Matrix              | Phase 2         | Required and optional fields per operation type      |
-| Milestone Discovery Protocol    | Phase 2         | Role-based milestone classification for assignment   |
-| Label Taxonomy Reference        | Phase 2         | Label selection and title pattern mapping            |
-| Human Review Triggers           | Phase 3         | Additional conditions for pausing execution          |
+| Temporary ID Mapping            | Phase 2         | `{{TEMP-N}}` placeholders for new issues               |
+| Three-Tier Autonomy Model       | Phase 3         | Confirmation gates during handoff review               |
+| State Persistence Protocol      | All phases      | Context recovery after summarization                   |
+| Issue Field Matrix              | Phase 2         | Required and optional fields per operation type        |
+| Milestone Discovery Protocol    | Phase 2         | Role-based milestone classification for assignment     |
+| Label Taxonomy Reference        | Phase 2         | Label selection and title pattern mapping              |
+| Human Review Triggers           | Phase 3         | Additional conditions for pausing execution            |
 
 ---
 

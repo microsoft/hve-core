@@ -61,7 +61,7 @@ To set a milestone, labels, or assignees on a pull request, call `mcp_github_iss
 Common PR field operations via the Issues API:
 
 | Operation         | Tool                           | Method   | Key Fields                                 |
-| ----------------- | ------------------------------ | -------- | ------------------------------------------ |
+|-------------------|--------------------------------|----------|--------------------------------------------|
 | Set PR Milestone  | `mcp_github_issue_write`       | `update` | owner, repo, issue_number (PR#), milestone |
 | Set PR Labels     | `mcp_github_issue_write`       | `update` | owner, repo, issue_number (PR#), labels    |
 | Set PR Assignees  | `mcp_github_issue_write`       | `update` | owner, repo, issue_number (PR#), assignees |
@@ -75,7 +75,7 @@ Common PR field operations via the Issues API:
 When an operation produces a comment visible to external contributors, the comment body follows scenario templates from `community-interaction.instructions.md`. This applies to closure messages, information requests, acknowledgments, and redirects.
 
 | Operation       | Scenario                                             | Template Guidance                    |
-| --------------- | ---------------------------------------------------- | ------------------------------------ |
+|-----------------|------------------------------------------------------|--------------------------------------|
 | Close duplicate | Scenario 7: Closing a Duplicate Issue                | Duplicate closure with original link |
 | Close completed | Scenario 8: Closing a Completed Issue                | Summary of resolution with thanks    |
 | Close won't-fix | Scenario 9: Closing a Won't-Fix Issue                | Rationale with appreciation          |
@@ -363,13 +363,13 @@ This convention enables resumable execution. When an execution run is interrupte
 
 ## Summary
 
-| Action    | Count              |
-| --------- | ------------------ |
-| Create    | {{create_count}}   |
-| Update    | {{update_count}}   |
-| Link      | {{link_count}}     |
-| Close     | {{close_count}}    |
-| Comment   | {{comment_count}}  |
+| Action    | Count               |
+|-----------|---------------------|
+| Create    | {{create_count}}    |
+| Update    | {{update_count}}    |
+| Link      | {{link_count}}      |
+| Close     | {{close_count}}     |
+| Comment   | {{comment_count}}   |
 | No Change | {{no_change_count}} |
 
 ## Issues
@@ -422,13 +422,13 @@ handoff-logs.md records per-issue processing results during execution. The execu
 
 ## Execution Summary
 
-| Metric    | Value          |
-| --------- | -------------- |
-| Started   | {{timestamp}}  |
-| Completed | {{timestamp}}  |
-| Succeeded | {{count}}      |
-| Failed    | {{count}}      |
-| Skipped   | {{count}}      |
+| Metric    | Value         |
+|-----------|---------------|
+| Started   | {{timestamp}} |
+| Completed | {{timestamp}} |
+| Succeeded | {{count}}     |
+| Failed    | {{count}}     |
+| Skipped   | {{count}}     |
 
 ## Operations
 
@@ -520,12 +520,12 @@ When a field is absent from the discovered issue:
 
 ### Similarity Categories
 
-| Category  | Meaning                                                  | Action                          |
-| --------- | -------------------------------------------------------- | ------------------------------- |
-| Match     | Same issue; creating both would duplicate effort         | Update existing issue           |
-| Similar   | Related enough that consolidation may be appropriate     | Review with user before deciding |
-| Distinct  | Different issues with minimal overlap                    | Create new issue                |
-| Uncertain | Insufficient information or conflicting signals          | Request user guidance           |
+| Category  | Meaning                                              | Action                           |
+|-----------|------------------------------------------------------|----------------------------------|
+| Match     | Same issue; creating both would duplicate effort     | Update existing issue            |
+| Similar   | Related enough that consolidation may be appropriate | Review with user before deciding |
+| Distinct  | Different issues with minimal overlap                | Create new issue                 |
+| Uncertain | Insufficient information or conflicting signals      | Request user guidance            |
 
 ### Assessment Template
 
@@ -534,12 +534,12 @@ For each comparison, record the assessment using this format:
 ```markdown
 ### Issue Similarity Assessment
 
-| Aspect           | Existing #{{number}}     | Proposed Issue           | Match Level              |
-| ---------------- | ------------------------ | ------------------------ | ------------------------ |
-| Title            | {{existing_title}}       | {{proposed_title}}       | {{High/Medium/Low/None}} |
-| Body/Description | {{existing_summary}}     | {{proposed_summary}}     | {{High/Medium/Low/None}} |
-| Labels           | {{existing_labels}}      | {{proposed_labels}}      | {{overlap_count}}/{{total}} |
-| Milestone        | {{existing_milestone}}   | {{proposed_milestone}}   | {{Same/Different/None}}  |
+| Aspect           | Existing #{{number}}   | Proposed Issue         | Match Level                 |
+|------------------|------------------------|------------------------|-----------------------------|
+| Title            | {{existing_title}}     | {{proposed_title}}     | {{High/Medium/Low/None}}    |
+| Body/Description | {{existing_summary}}   | {{proposed_summary}}   | {{High/Medium/Low/None}}    |
+| Labels           | {{existing_labels}}    | {{proposed_labels}}    | {{overlap_count}}/{{total}} |
+| Milestone        | {{existing_milestone}} | {{proposed_milestone}} | {{Same/Different/None}}     |
 
 **Category:** {{Match/Similar/Distinct/Uncertain}}
 **Recommended Action:** {{Update existing/Create new/Needs review/Skip}}
@@ -584,32 +584,32 @@ Agents must request user guidance when:
 
 The repository uses 17 labels organized by purpose. Labels influence milestone assignment through the milestone discovery protocol.
 
-| Label             | Description                                          | Target Role   |
-| ----------------- | ---------------------------------------------------- | ------------- |
-| `bug`             | Something is not working; targets stable for fixes   | stable        |
-| `feature`         | New capability or functionality                      | pre-release   |
-| `enhancement`     | Improvement to existing functionality                | any           |
-| `documentation`   | Improvements or additions to documentation           | any           |
-| `maintenance`     | Chores, refactoring, dependency updates              | stable        |
-| `security`        | Security vulnerability or hardening; may be expedited | stable       |
-| `breaking-change` | Incompatible API or behavior change; pre-release only | pre-release  |
-| `needs-triage`    | Requires label and milestone assignment              | unclassified  |
-| `duplicate`       | This issue already exists; closed immediately        | unclassified  |
-| `wontfix`         | This will not be worked on; closed                   | unclassified  |
-| `good-first-issue` | Good for newcomers                                  | any           |
-| `help-wanted`     | Extra attention is needed                            | any           |
-| `question`        | Further information is requested; informational only | unclassified  |
-| `agents`          | Related to agent files                               | any           |
-| `prompts`         | Related to prompt files                              | any           |
-| `instructions`    | Related to instructions files                        | any           |
-| `infrastructure`  | CI/CD, workflows, build tooling                      | stable        |
+| Label              | Description                                           | Target Role  |
+|--------------------|-------------------------------------------------------|--------------|
+| `bug`              | Something is not working; targets stable for fixes    | stable       |
+| `feature`          | New capability or functionality                       | pre-release  |
+| `enhancement`      | Improvement to existing functionality                 | any          |
+| `documentation`    | Improvements or additions to documentation            | any          |
+| `maintenance`      | Chores, refactoring, dependency updates               | stable       |
+| `security`         | Security vulnerability or hardening; may be expedited | stable       |
+| `breaking-change`  | Incompatible API or behavior change; pre-release only | pre-release  |
+| `needs-triage`     | Requires label and milestone assignment               | unclassified |
+| `duplicate`        | This issue already exists; closed immediately         | unclassified |
+| `wontfix`          | This will not be worked on; closed                    | unclassified |
+| `good-first-issue` | Good for newcomers                                    | any          |
+| `help-wanted`      | Extra attention is needed                             | any          |
+| `question`         | Further information is requested; informational only  | unclassified |
+| `agents`           | Related to agent files                                | any          |
+| `prompts`          | Related to prompt files                               | any          |
+| `instructions`     | Related to instructions files                         | any          |
+| `infrastructure`   | CI/CD, workflows, build tooling                       | stable       |
 
 ### Label-to-Title Pattern Mapping
 
 When issue titles follow conventional commit format, agents should map patterns to labels:
 
 | Issue Title Pattern     | Suggested Labels            |
-| ----------------------- | --------------------------- |
+|-------------------------|-----------------------------|
 | `feat(agents):`         | feature, agents             |
 | `fix(scripts):`         | bug                         |
 | `chore(ci):`            | maintenance, infrastructure |
@@ -682,7 +682,7 @@ When uncertain about milestone assignment, or when no milestone clearly matches 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).
 
 | Field        | Create   | Update   | Link     | Close    | Comment  |
-| ------------ | -------- | -------- | -------- | -------- | -------- |
+|--------------|----------|----------|----------|----------|----------|
 | title        | REQUIRED | Optional | N/A      | N/A      | N/A      |
 | body         | REQUIRED | Optional | N/A      | N/A      | REQUIRED |
 | labels       | REQUIRED | Optional | N/A      | N/A      | N/A      |

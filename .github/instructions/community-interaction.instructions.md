@@ -32,19 +32,19 @@ Pronoun conventions for community interactions:
 
 Select tone characteristics based on the scenario category. This matrix guides template authoring and agent response generation.
 
-| Scenario Category  | Primary Tone           | Secondary Tone                 | Emoji Use                      | Response Length          |
-| ------------------ | ---------------------- | ------------------------------ | ------------------------------ | ------------------------ |
-| Welcoming/thanking | Warm, genuine          | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences            |
-| Celebrating        | Warm, celebratory      | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences            |
-| Closing (scope)    | Respectful, direct     | Scope-focused, door-open       | None                           | 2-3 sentences            |
-| Closing (completed)| Warm, confirming       | Specific, closure-giving       | Permitted (brief)              | 2-3 sentences            |
-| Closing (inactive) | Neutral, informational | Reopening-friendly             | None                           | 2 sentences              |
-| Declining PRs      | Appreciative, honest   | Criteria-focused, constructive | None                           | 3-4 sentences            |
-| Requesting info    | Constructive, specific | Actionable, time-bounded       | None                           | 3-4 sentences with list  |
-| Redirecting        | Helpful, brief         | Clear next steps               | None                           | 2 sentences              |
-| De-escalating      | Calm, empathetic       | Boundary-setting, process      | None                           | 2-3 sentences            |
-| Security           | Urgent, reassuring     | Process-focused, confidential  | None                           | 2-3 sentences            |
-| Onboarding         | Encouraging, supportive| Mentoring, context-providing   | Permitted (brief)              | 3-4 sentences            |
+| Scenario Category   | Primary Tone            | Secondary Tone                 | Emoji Use                      | Response Length         |
+|---------------------|-------------------------|--------------------------------|--------------------------------|-------------------------|
+| Welcoming/thanking  | Warm, genuine           | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences           |
+| Celebrating         | Warm, celebratory       | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences           |
+| Closing (scope)     | Respectful, direct      | Scope-focused, door-open       | None                           | 2-3 sentences           |
+| Closing (completed) | Warm, confirming        | Specific, closure-giving       | Permitted (brief)              | 2-3 sentences           |
+| Closing (inactive)  | Neutral, informational  | Reopening-friendly             | None                           | 2 sentences             |
+| Declining PRs       | Appreciative, honest    | Criteria-focused, constructive | None                           | 3-4 sentences           |
+| Requesting info     | Constructive, specific  | Actionable, time-bounded       | None                           | 3-4 sentences with list |
+| Redirecting         | Helpful, brief          | Clear next steps               | None                           | 2 sentences             |
+| De-escalating       | Calm, empathetic        | Boundary-setting, process      | None                           | 2-3 sentences           |
+| Security            | Urgent, reassuring      | Process-focused, confidential  | None                           | 2-3 sentences           |
+| Onboarding          | Encouraging, supportive | Mentoring, context-providing   | Permitted (brief)              | 3-4 sentences           |
 
 ## Scenario Catalog
 

@@ -100,7 +100,7 @@ When an operation has no pending changes:
 ## Supported Operations
 
 | Operation        | MCP Tool                       | Method   | Required Fields                                  |
-| ---------------- | ------------------------------ | -------- | ------------------------------------------------ |
+|------------------|--------------------------------|----------|--------------------------------------------------|
 | Create           | `mcp_github_issue_write`       | `create` | owner, repo, title, body, labels                 |
 | Update           | `mcp_github_issue_write`       | `update` | owner, repo, issue_number                        |
 | Close            | `mcp_github_issue_write`       | `update` | owner, repo, issue_number, state, state_reason   |

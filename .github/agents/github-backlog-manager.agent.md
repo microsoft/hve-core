@@ -52,13 +52,13 @@ Three phases structure every interaction: classify the request, dispatch the app
 
 Classify the user's request into one of five workflow categories using keyword signals and contextual heuristics.
 
-| Workflow        | Keyword Signals                                                       | Contextual Indicators                                                    |
-| --------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Triage          | label, prioritize, categorize, triage, untriaged, needs-triage        | Label assignment, milestone setting, duplicate detection                 |
-| Discovery       | discover, find, extract, gaps, roadmap, PRD, requirements, document   | Documents, specs, or roadmaps as input sources                           |
-| Sprint Planning | sprint, milestone, release, plan, prepare, capacity, velocity         | End-to-end sprint or release preparation cycles                          |
-| Execution       | create, update, close, execute, apply, implement, batch               | A finalized plan or explicit create/update/close actions                 |
-| Single Issue    | a specific issue number (#NNN), one issue, this issue                 | Operations scoped to an individual issue                                 |
+| Workflow        | Keyword Signals                                                     | Contextual Indicators                                    |
+|-----------------|---------------------------------------------------------------------|----------------------------------------------------------|
+| Triage          | label, prioritize, categorize, triage, untriaged, needs-triage      | Label assignment, milestone setting, duplicate detection |
+| Discovery       | discover, find, extract, gaps, roadmap, PRD, requirements, document | Documents, specs, or roadmaps as input sources           |
+| Sprint Planning | sprint, milestone, release, plan, prepare, capacity, velocity       | End-to-end sprint or release preparation cycles          |
+| Execution       | create, update, close, execute, apply, implement, batch             | A finalized plan or explicit create/update/close actions |
+| Single Issue    | a specific issue number (#NNN), one issue, this issue               | Operations scoped to an individual issue                 |
 
 Disambiguation heuristics for overlapping signals:
 
@@ -76,13 +76,13 @@ Transition to Phase 2 once classification is confirmed.
 
 Load the corresponding instruction file and execute the workflow. Each run creates a tracking directory under `.copilot-tracking/github-issues/` using the scope conventions from the [planning specification](../instructions/github-backlog-planning.instructions.md).
 
-| Workflow        | Instruction Source                                                                                       | Tracking Path                                                 |
-| --------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Triage          | [github-backlog-triage.instructions.md](../instructions/github-backlog-triage.instructions.md)           | `.copilot-tracking/github-issues/triage/{{YYYY-MM-DD}}/`      |
-| Discovery       | [github-backlog-discovery.instructions.md](../instructions/github-backlog-discovery.instructions.md)     | `.copilot-tracking/github-issues/discovery/{{scope-name}}/`   |
-| Sprint Planning | Discovery followed by Triage as a coordinated sequence                                                   | `.copilot-tracking/github-issues/sprint/{{milestone-kebab}}/` |
-| Execution       | [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)           | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
-| Single Issue    | Per-issue operations from [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)                                        | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
+| Workflow        | Instruction Source                                                                                                       | Tracking Path                                                 |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| Triage          | [github-backlog-triage.instructions.md](../instructions/github-backlog-triage.instructions.md)                           | `.copilot-tracking/github-issues/triage/{{YYYY-MM-DD}}/`      |
+| Discovery       | [github-backlog-discovery.instructions.md](../instructions/github-backlog-discovery.instructions.md)                     | `.copilot-tracking/github-issues/discovery/{{scope-name}}/`   |
+| Sprint Planning | Discovery followed by Triage as a coordinated sequence                                                                   | `.copilot-tracking/github-issues/sprint/{{milestone-kebab}}/` |
+| Execution       | [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md)                           | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
+| Single Issue    | Per-issue operations from [github-backlog-update.instructions.md](../instructions/github-backlog-update.instructions.md) | `.copilot-tracking/github-issues/execution/{{YYYY-MM-DD}}/`   |
 
 For each dispatched workflow:
 
@@ -115,12 +115,12 @@ Phase 3 completes the interaction. Offer the handoff buttons for follow-up workf
 
 Thirteen GitHub MCP tools support backlog operations across four categories:
 
-| Category        | Tools                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| Category        | Tools                                                                                                                                                     |
+|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Discovery       | `mcp_github_get_me`, `mcp_github_list_issues`, `mcp_github_search_issues`, `mcp_github_issue_read`, `mcp_github_list_issue_types`, `mcp_github_get_label` |
-| Mutation        | `mcp_github_issue_write`, `mcp_github_add_issue_comment`, `mcp_github_assign_copilot_to_issue`                |
-| Relationships   | `mcp_github_sub_issue_write`                                                                                  |
-| Project Context | `mcp_github_search_pull_requests`, `mcp_github_list_pull_requests`, `mcp_github_update_pull_request`          |
+| Mutation        | `mcp_github_issue_write`, `mcp_github_add_issue_comment`, `mcp_github_assign_copilot_to_issue`                                                            |
+| Relationships   | `mcp_github_sub_issue_write`                                                                                                                              |
+| Project Context | `mcp_github_search_pull_requests`, `mcp_github_list_pull_requests`, `mcp_github_update_pull_request`                                                      |
 
 Call `mcp_github_get_me` at the start of any workflow to establish authenticated user context. Call `mcp_github_list_issue_types` before using the `type` parameter on `mcp_github_issue_write`.
 
@@ -152,7 +152,7 @@ The Save handoff delegates to the memory agent with the checkpoint prompt, prese
 The three-tier autonomy model controls when human approval is required:
 
 | Mode              | Behavior                                                          |
-| ----------------- | ----------------------------------------------------------------- |
+|-------------------|-------------------------------------------------------------------|
 | Full              | All operations proceed without approval gates                     |
 | Partial (default) | Create, close, and milestone operations require explicit approval |
 | Manual            | Every GitHub-mutating operation pauses for confirmation           |

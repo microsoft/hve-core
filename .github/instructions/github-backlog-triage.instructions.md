@@ -17,7 +17,7 @@ Follow community interaction guidelines from #file:./community-interaction.instr
 ## Autonomy Behavior for Triage Operations
 
 | Operation                         | Full         | Partial      | Manual       |
-| --------------------------------- | ------------ | ------------ | ------------ |
+|-----------------------------------|--------------|--------------|--------------|
 | Label assignment                  | Auto-execute | Auto-execute | Gate on user |
 | Milestone assignment              | Auto-execute | Auto-execute | Gate on user |
 | Duplicate closure                 | Auto-execute | Gate on user | Gate on user |
@@ -137,20 +137,20 @@ Group issues by suggested label when multiple issues share the same recommendati
 
 When issue titles follow conventional commit format, map patterns to labels using this table.
 
-| Title Pattern                     | Suggested Labels                  | Description             |
-| --------------------------------- | --------------------------------- | ----------------------- |
-| `feat:` or `feat(scope):`         | `feature`                         | New functionality       |
-| `fix:` or `fix(scope):`           | `bug`                             | Bug fix                 |
-| `docs:` or `docs(scope):`         | `documentation`                   | Documentation change    |
-| `chore:` or `chore(scope):`       | `maintenance`                     | Maintenance task        |
-| `refactor:`                       | `maintenance`                     | Code refactoring        |
-| `test:`                           | `maintenance`                     | Test changes            |
-| `ci:`                             | `maintenance`, `infrastructure`   | CI/CD changes           |
-| `perf:`                           | `enhancement`                     | Performance improvement |
-| `style:`                          | `maintenance`                     | Code style changes      |
-| `build:`                          | `infrastructure`                  | Build system changes    |
-| `security:`                       | `security`                        | Security fix            |
-| `breaking:` or `BREAKING CHANGE`  | `breaking-change`                 | Breaking change         |
+| Title Pattern                    | Suggested Labels                | Description             |
+|----------------------------------|---------------------------------|-------------------------|
+| `feat:` or `feat(scope):`        | `feature`                       | New functionality       |
+| `fix:` or `fix(scope):`          | `bug`                           | Bug fix                 |
+| `docs:` or `docs(scope):`        | `documentation`                 | Documentation change    |
+| `chore:` or `chore(scope):`      | `maintenance`                   | Maintenance task        |
+| `refactor:`                      | `maintenance`                   | Code refactoring        |
+| `test:`                          | `maintenance`                   | Test changes            |
+| `ci:`                            | `maintenance`, `infrastructure` | CI/CD changes           |
+| `perf:`                          | `enhancement`                   | Performance improvement |
+| `style:`                         | `maintenance`                   | Code style changes      |
+| `build:`                         | `infrastructure`                | Build system changes    |
+| `security:`                      | `security`                      | Security fix            |
+| `breaking:` or `BREAKING CHANGE` | `breaking-change`               | Breaking change         |
 
 When a title does not match any conventional commit pattern, retain the `needs-triage` label and flag the issue for manual review.
 
@@ -159,7 +159,7 @@ When a title does not match any conventional commit pattern, retain the `needs-t
 Extract scope keywords from the conventional commit title pattern `type(scope):` and map them to scope labels.
 
 | Scope Keyword    | Scope Label    |
-| ---------------- | -------------- |
+|------------------|----------------|
 | `(agents)`       | `agents`       |
 | `(prompts)`      | `prompts`      |
 | `(instructions)` | `instructions` |
@@ -170,15 +170,15 @@ Additional scope keywords may be mapped when they align with the label taxonomy 
 
 Milestone assignment follows the versioning strategy discovered during Phase 1, Step 1. Apply these recommendations based on issue characteristics.
 
-| Issue Characteristic        | Stability Target | Proximity Target | Rationale                                          |
-| --------------------------- | ---------------- | ---------------- | -------------------------------------------------- |
-| Bug fix                     | stable           | current          | Production fixes target the nearest stable release |
-| Security fix                | stable           | current          | Security patches ship in the nearest stable release |
-| Maintenance or refactoring  | stable           | current          | Low-risk changes target stable releases            |
-| Documentation improvement   | stable           | current          | Documentation ships with stable releases           |
-| New feature                 | pre-release      | next             | Features incubate before stable release            |
-| Breaking change             | pre-release      | next             | Breaking changes land in development milestones    |
-| Infrastructure improvement  | stable           | current          | CI/CD and build changes target stable releases     |
+| Issue Characteristic       | Stability Target | Proximity Target | Rationale                                           |
+|----------------------------|------------------|------------------|-----------------------------------------------------|
+| Bug fix                    | stable           | current          | Production fixes target the nearest stable release  |
+| Security fix               | stable           | current          | Security patches ship in the nearest stable release |
+| Maintenance or refactoring | stable           | current          | Low-risk changes target stable releases             |
+| Documentation improvement  | stable           | current          | Documentation ships with stable releases            |
+| New feature                | pre-release      | next             | Features incubate before stable release             |
+| Breaking change            | pre-release      | next             | Breaking changes land in development milestones     |
+| Infrastructure improvement | stable           | current          | CI/CD and build changes target stable releases      |
 
 When uncertain about milestone assignment, default to the nearest pre-release or next milestone and flag the issue for human review.
 
@@ -196,12 +196,12 @@ Build search queries from the issue title and body:
 
 ### Duplicate Resolution
 
-| Similarity Category | Action                                                                 |
-| ------------------- | ---------------------------------------------------------------------- |
+| Similarity Category | Action                                                                             |
+|---------------------|------------------------------------------------------------------------------------|
 | Match               | Suggest closing the untriaged issue as duplicate with a reference to the original. |
-| Similar             | Flag both issues for user review with a comparison summary.            |
-| Distinct            | Proceed with label and milestone assignment.                           |
-| Uncertain           | Request user guidance before taking action.                            |
+| Similar             | Flag both issues for user review with a comparison summary.                        |
+| Distinct            | Proceed with label and milestone assignment.                                       |
+| Uncertain           | Request user guidance before taking action.                                        |
 
 When a Match is found, record the original issue number in the triage plan for the `duplicate_of` field. The Close operation must include `state_reason: 'duplicate'` per the issue field matrix in the planning specification.
 
@@ -214,12 +214,12 @@ Duplicate closure follows the comment-before-closure pattern:
 
 Assess priority based on the suggested label to determine triage ordering. Process higher-priority issues first.
 
-| Priority | Label(s)                       | Handling                                                                               |
-| -------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| Priority | Label(s)                       | Handling                                                                                          |
+|----------|--------------------------------|---------------------------------------------------------------------------------------------------|
 | Highest  | `security`                     | Flag for immediate attention. Assign to the nearest stable or current milestone with expedited notation. |
-| High     | `bug`                          | Assign to the nearest stable or current milestone. Prioritize in triage plan.          |
-| Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                       |
-| Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items. |
+| High     | `bug`                          | Assign to the nearest stable or current milestone. Prioritize in triage plan.                     |
+| Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                                  |
+| Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items.           |
 
 Issues with the `breaking-change` label are escalated to the nearest pre-release or next milestone regardless of other priority signals. Under partial and manual autonomy, flag `breaking-change` issues for human review before applying milestone assignment, consistent with the Human Review Triggers in the planning specification.
 
