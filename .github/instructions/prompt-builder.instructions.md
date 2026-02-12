@@ -6,38 +6,28 @@ maturity: stable
 
 # Prompt Builder Instructions
 
-These instructions define authoring standards for prompt engineering artifacts. Apply these standards when creating or modifying prompt, agent, instructions, or skill files.
+Authoring standards for prompt engineering artifacts. Apply when creating or modifying prompt, agent, instructions, or skill files.
 
 ## File Types
-
-This section defines file type selection criteria, authoring patterns, and validation checks.
 
 ### Prompt Files
 
 *Extension*: `.prompt.md`
 
-Purpose: Single-session workflows where users invoke a prompt and Copilot executes to completion.
+Single-session workflows where users invoke a prompt and the agent executes to completion.
 
-Characteristics:
-
-* Single invocation completes the workflow.
 * Frontmatter includes `agent: 'agent-name'` to delegate to an agent.
 * Content ends with `---` followed by an activation instruction.
-* Use `#file:` only when the prompt must pull in the full contents of another file.
-* When the full contents are not required, refer to the file by path or to the relevant section.
+* Use `#file:` only when the full contents of another file are needed; otherwise refer by path.
+* Reference tools in body text using `#tool:<tool-name>` syntax (for example, `#tool:search`, `#tool:web`). For MCP tools, use `#tool:<server>/<tool>` (for example, `#tool:github/add_issue_comment`). Specific tools within a tool set use `#tool:<set>/<tool>` (for example, `#tool:search/listDirectory`, `#tool:web/githubRepo`). Backticks should not be used around #tool: references in prompt and agent files.
 * Input variables use `${input:variableName}` or `${input:variableName:defaultValue}` syntax.
 
-Consider adding sequential steps when the prompt involves multiple distinct actions that benefit from ordered execution. Simple prompts that accomplish a single task do not need protocol structure.
+Add sequential steps when the prompt involves multiple distinct actions. Simple single-task prompts do not need protocol structure.
 
 #### Input Variables
 
-Input variables allow prompts to accept user-provided values or use defaults:
-
-* `${input:topic}` is a required input, inferred from user prompt, attached files, or conversation.
-* `${input:chat:true}` is an optional input with default value `true`.
-* `${input:baseBranch:origin/main}` is an optional input defaulting to `origin/main`.
-
-An Inputs section documents available input variables:
+* `${input:topic}` - required input, inferred from user prompt, attached files, or conversation.
+* `${input:chat:true}` - optional input with default value `true`.
 
 ```markdown
 ## Inputs
@@ -48,223 +38,123 @@ An Inputs section documents available input variables:
 
 #### Argument Hints
 
-The `argument-hint` frontmatter field shows users expected inputs in the VS Code prompt picker:
-
-* Keep hints brief with required arguments first, then optional arguments.
-* Use `[]` for positional arguments and `key=value` for named parameters.
-* Use `{option1|option2}` for enumerated choices and `...` for free-form text.
+The `argument-hint` frontmatter field shows expected inputs in the prompt picker. Keep hints brief with required arguments first. Use `[]` for positional arguments, `key=value` for named parameters, `{option1|option2}` for enumerated choices, and `...` for free-form text.
 
 ```yaml
 argument-hint: "topic=... [chat={true|false}]"
 ```
 
-Validation guidelines:
+Validation:
 
-* When steps are used, follow the Step-Based Protocols section for structure.
+* Follow the Step-Based Protocols section when steps are used.
 * Document input variables in an Inputs section when present.
 
 ### Agent Files
 
 *Extension*: `.agent.md`
 
-Purpose: Agent files support both conversational workflows (multi-turn interactions with a specialized assistant) and autonomous workflows (task execution with minimal user interaction).
+Agent files support conversational workflows (multi-turn interactions) and autonomous workflows (task execution with minimal user interaction). Frontmatter requires `name` and defines available `tools`, `agents`, and optional `handoffs`.
 
 #### Conversational Agents
 
-Conversational agents guide users through multi-turn interactions:
-
-* Users guide the conversation through different activities or stages.
-* State persists across conversation turns via planning files when needed.
-* Frontmatter defines available `tools` and optional `handoffs` to other agents.
-* Typically represents a domain expert or specialized assistant role.
-
-Consider adding phases when the workflow involves distinct stages that users move between interactively. Simple conversational assistants that respond to varied requests do not need protocol structure. Follow the Phase-Based Protocols section for phase structure guidelines.
+* Users guide the conversation through different stages; state persists via planning files when needed.
+* Add phases when the workflow involves distinct interactive stages. Follow the Phase-Based Protocols section.
 
 #### Autonomous Agents
 
-Autonomous agents execute tasks with minimal user interaction:
-
-* Executes autonomously after receiving initial instructions.
-* Frontmatter defines available `tools` and optional `handoffs` to other agents.
-* Typically completes a bounded task and reports results.
+* Execute autonomously after receiving initial instructions and report results.
 * May dispatch subagents for parallelizable work.
-
-Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
 
 ### Instructions Files
 
 *Extension*: `.instructions.md`
 
-Purpose: Auto-applied guidance based on file patterns. Instructions define conventions, standards, and patterns that Copilot follows when working with matching files.
-
-Characteristics:
+Auto-applied guidance based on file patterns. Define conventions, standards, and patterns for matching files.
 
 * Frontmatter includes `applyTo` with glob patterns (for example, `**/*.py`).
-* Applied automatically when editing files matching the pattern.
-* Define coding standards, naming conventions, and best practices.
-
-Validation guidelines:
-
-* Include `applyTo` frontmatter with valid glob patterns.
-* Content defines standards and conventions.
 * Wrap examples in fenced code blocks.
 
 ### Skill Files
 
 *File Name*: `SKILL.md`
 
+Agent Skills are folders of instructions, scripts, and resources that Copilot loads on demand to perform specialized tasks. Skills follow an open standard ([agentskills.io](https://agentskills.io)) and work across VS Code, Copilot CLI, and Copilot coding agent.
+
 *Location*: `.github/skills/<skill-name>/SKILL.md`
 
-Purpose: Self-contained packages that bundle documentation with executable scripts for specific tasks. Skills differ from prompts and agents by providing concrete utilities rather than conversational guidance.
-
-Characteristics:
-
-* Bundled with bash and PowerShell scripts in the same directory.
-* Provides step-by-step instructions for task execution.
-* Includes prerequisites, parameters, and troubleshooting sections.
-
-Skill directory structure:
+Directory structure:
 
 ```text
 .github/skills/<skill-name>/
-├── SKILL.md                    # Main skill definition (required)
-├── scripts/                    # Executable scripts (optional)
-│   ├── <action>.sh             # Bash script for macOS/Linux
-│   └── <action>.ps1            # PowerShell script for Windows
-├── references/                 # Additional documentation (optional)
-│   └── REFERENCE.md            # Detailed technical reference
-├── assets/                     # Static resources (optional)
-│   └── templates/              # Document or configuration templates
-└── examples/
-    └── README.md               # Usage examples (recommended)
+├── SKILL.md          # Main skill definition (required)
+├── scripts/          # Bash (.sh) and PowerShell (.ps1) scripts
+├── references/       # Technical reference files loaded on demand
+├── assets/           # Templates, images, and data files
+└── examples/         # Usage examples (recommended)
 ```
 
-### Optional Directories
+Frontmatter requires `name` (lowercase kebab-case, max 64 characters) and `description` (capabilities and when to use, max 1024 characters). HVE-Core convention also includes `maturity`.
 
-#### scripts/
+Body content structure:
 
-Contains executable code that agents run to perform tasks:
+1. Title (H1), overview of what the skill helps accomplish, and when to use it.
+2. Step-by-step procedures and guidelines.
+3. References to included scripts or resources using relative paths.
 
-* Scripts are self-contained or clearly document dependencies.
-* Include helpful error messages and handle edge cases gracefully.
-* Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
+Reference files within the skill directory using relative paths (for example, `[test script](./test-template.js)`).
 
-#### references/
+#### Skill Validation
 
-Contains additional documentation that agents read when needed:
+All skills include `name` and `description` frontmatter (`maturity` by HVE-Core convention). Additional validation:
 
-* *REFERENCE.md* for detailed technical reference material.
-* Domain-specific files such as `finance.md` or `legal.md`.
-* Keep individual reference files focused; agents load these on demand.
+* Scripts provide parallel bash and PowerShell implementations for cross-platform use.
+* Description states both what the skill does and when to use it, enabling Copilot to decide when to load it.
 
-#### assets/
-
-Contains static resources:
-
-* Templates for documents or configuration files.
-* Images such as diagrams or examples.
-* Data files such as lookup tables or schemas.
-
-#### Skill Content Structure
-
-Skill files include these sections in order:
-
-1. **Title (H1)**: Clear heading matching skill purpose.
-2. **Overview**: Brief explanation of what the skill does.
-3. **Prerequisites**: Platform-specific installation requirements.
-4. **Quick Start**: Basic usage with default settings.
-5. **Parameters Reference**: Table documenting all options with defaults.
-6. **Script Reference**: Usage examples for bash and PowerShell.
-7. **Troubleshooting**: Common issues and solutions.
-8. **Attribution Footer**: Standard footer with attribution.
+Follow the Progressive Disclosure guidelines for size limits.
 
 ### Progressive Disclosure
 
-Structure skills for efficient context usage:
+Structure skills for efficient context loading. Keep *SKILL.md* under 500 lines; move detailed reference to separate files. Use relative paths from the skill root, one level deep.
 
-1. **Metadata** (~100 tokens): The `name` and `description` frontmatter fields load at startup for all skills.
-2. **Instructions** (<5000 tokens recommended): The full *SKILL.md* body loads when the skill activates.
-3. **Resources** (as needed): Files in `scripts/`, `references/`, or `assets/` load only when required.
-
-Keep the main *SKILL.md* under 500 lines. Move detailed reference material to separate files.
-
-### File References
-
-When referencing other files in the skill, use relative paths from the skill root:
-
-```markdown
-See [the reference guide](references/REFERENCE.md) for details.
-
-Run the extraction script:
-scripts/extract.py
-```
-
-Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
-
-Validation guidelines:
-
-* Include `name` frontmatter matching the skill directory name (required).
-* Include `description` frontmatter (required).
-* Include `maturity` frontmatter (required).
-* Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
-* Document prerequisites for each supported platform.
-* Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
-* Additional sections can be added between Parameters Reference and Troubleshooting as needed.
+1. Metadata (`name`, `description`) loads at startup for all skills (~100 tokens). Copilot uses this to decide relevance.
+2. Full *SKILL.md* body loads on activation (<5000 tokens recommended).
+3. Files in `scripts/`, `references/`, or `assets/` load only when referenced.
 
 ## Frontmatter Requirements
 
-This section defines frontmatter field requirements for prompt engineering artifacts.
-
 ### Required Fields
 
-All prompt engineering artifacts include these frontmatter fields:
+All prompt engineering artifacts include:
 
 * `description:` - Brief description of the artifact's purpose.
-* `maturity:` - Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.
-
-Note: VS Code shows a validation warning for the `maturity:` field as it's not in VS Code's schema. This is expected; the field is required by the HVE-Core codebase for artifact lifecycle tracking. Ignore VS Code validation warnings for the `maturity:` attribute.
+* `maturity:` - Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`. Required by HVE-Core convention for all artifacts; only formally required in the skill schema, other schemas default to `stable`. VS Code shows a validation warning for this field; this is expected and can be ignored.
 
 ### Optional Fields
 
-Optional fields vary by file type:
-
-* `name:` - Skill identifier (required for skill files only). Must match the skill directory name using lowercase kebab-case.
-* `applyTo:` - Glob patterns (required for instructions files only).
-* `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
-* `agent:` - Agent delegation for prompt files.
+* `name:` - Identifier for skill and agent files. Required for both; use lowercase kebab-case (matching the directory name for skills or the file name stem for agents).
+* `applyTo:` - Glob patterns (required for instructions files).
+* `tools:` - YAML array of tool names for agents. When omitted, defaults are provided. Not required when `agents:` is specified. Include `agent` only when the agent dispatches subagents without using the `agents:` property. Use human-readable tool names with `#tool:` syntax (for example, `search`, `fetch`, `agent`). For MCP tools, use the `<server>/<tool>` format (for example, `github/add_issue_comment`). To include all tools from an MCP server, use `<server>/*`.
+* `handoffs:` - Array of handoff objects with required `label`, `agent`, `prompt` fields and an optional `send` boolean.
+* `target:` - Target environment: `vscode` or `github-copilot`. Agents only.
+* `agents:` - YAML array of agent names available as subagents in this agent. Use `*` to allow all agents, or `[]` to prevent subagent use. When specified, a separate `tools:` declaration is not required.
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification.
-
-### Tool Availability
-
-When authoring prompts that reference specific tools:
-
-* Verify tool availability in the current VS Code context before including in `tools:` frontmatter.
-* When a user references tools not available in the active context, inform them which tools need to be enabled.
-* Do not include tools that VS Code flags as unknown.
+* `model:` - Set to `inherit` for parent model, or specify a model name. Supports a single model name (string) or a prioritized list of models (array) where the system tries each in order.
+* `disable-model-invocation:` - Set to `true` to prevent the agent from being invoked as a subagent by other agents. Use when the agent should only be triggered explicitly by users.
+* `user-invokable:` - Set to `false` to hide the agent from the agents dropdown in chat. Agents with `user-invokable: false` remain accessible as subagents. Use for subagent-only agents.
+* `mcp-servers:` - Array of MCP server configuration objects for agents targeting `github-copilot`.
 
 ## Protocol Patterns
 
-Protocol patterns apply to prompt and agent files. Skill files follow their own content structure defined in the Skill Content Structure section rather than step-based or phase-based protocols.
+Protocol patterns apply to prompt and agent files. Skill files follow their own content structure.
 
 ### Step-Based Protocols
 
-Step-based protocols define groupings of sequential prompt instructions that execute in order. Add this structure when the workflow benefits from explicit ordering of distinct actions.
+Sequential prompt instructions that execute in order. Add when the workflow benefits from explicit ordering.
 
-Structure guidelines:
-
-* A `## Required Steps` section contains all steps and provides an overview of how the protocol flows.
-* Protocol steps contain groupings of prompt instructions that execute as a whole group, in order.
-
-Step conventions:
-
-* Format steps as `### Step N: Short Summary` within the Required Steps section.
-* Give each step an accurate short summary that indicates the grouping of prompt instructions.
-* Include prompt instructions to follow while implementing the step.
+* A `## Required Steps` section contains all steps.
+* Format steps as `### Step N: Short Summary`.
 * Steps can repeat or move to a previous step based on instructions.
-
-Activation line: End the prompt file with a horizontal rule (`---`) followed by an instruction to begin.
+* End the prompt with `---` followed by an activation instruction.
 
 ```markdown
 ## Required Steps
@@ -286,22 +176,12 @@ Proceed with the user's request following the Required Steps.
 
 ### Phase-Based Protocols
 
-Phase-based protocols define groups of instructions for iterating on user requests through conversation. Add this structure when the workflow involves distinct stages that users move between interactively.
+Groups of instructions for iterating on user requests through conversation. Add when the workflow involves distinct interactive stages.
 
-Structure guidelines:
-
-* A `## Required Phases` section contains all phases and provides an overview of how the protocol flows.
-* Protocol phases contain groupings of prompt instructions that execute as a whole group.
-* Protocol steps (optional) can be added inside phases when a phase has a series of ordered actions.
-* Conversation guidelines include instructions on interacting with the user through each of the phases.
-
-Phase conventions:
-
-* Format phases as `### Phase N: Short Summary` within the Required Phases section.
-* Give each phase an accurate short summary that indicates the grouping of prompt instructions.
+* A `## Required Phases` section contains all phases.
+* Format phases as `### Phase N: Short Summary`.
 * Announce phase transitions and summarize outcomes when completing phases.
-* Include instructions on when to complete the phase and move onto the next phase.
-* Completing the phase can be signaled from the user or from some ending condition.
+* Steps (optional) can be added inside phases for ordered actions within a phase.
 
 ```markdown
 ## Required Phases
@@ -325,104 +205,61 @@ Phase conventions:
 
 ### Shared Protocol Placement
 
-Protocols can be shared across multiple files by placing the protocol into a `{{name}}.instructions.md` file. Use `#file:` only when the full contents of the protocol file are needed; otherwise, refer to the file by path or to the relevant section.
+Share protocols across files by placing them in a `{{name}}.instructions.md` file. Use `#file:` only when full contents are needed; otherwise refer by path.
 
 ## Prompt Writing Style
 
-Prompt instructions have the following characteristics:
-
 * Guide the model on what to do, rather than command it.
-* Written with proper grammar and formatting.
-
-Additional characteristics:
-
-* Use protocol-based structure with descriptive language when phases or ordered steps are needed.
-* Use `*` bulleted lists for groupings and `1.` ordered lists for sequential instruction steps.
-* Use **bold** only for human readability when drawing attention to a key concept.
-* Use *italics* only for human readability when introducing new concepts, file names, or technical terms.
-* Each line other than section headers and frontmatter requirements is treated as a prompt instruction.
-* Follow standard markdown conventions and instructions for the codebase.
-* Bulleted and ordered lists can appear without a title instruction when the section heading already provides context.
+* Use `*` bulleted lists for groupings and `1.` ordered lists for sequential steps.
+* Use **bold** for key concepts and *italics* for new terms, file names, or technical terms.
+* Each line other than headers and frontmatter is treated as a prompt instruction.
+* Lists can appear without a title when the section heading provides context.
 
 ### User-Facing Responses
 
-When instructions describe how to respond to users in conversation:
-
-* Format file references as markdown links: `[filename](path/to/file)`.
-* Format URLs as markdown links: `[display text](https://example.com)`.
-* Use workspace-relative paths for file links.
-* Do not wrap file paths or links in backticks. Backticks prevent the conversation viewer from rendering clickable links.
-* Use placeholders like `{{YYYY-MM-DD}}` or `{{task}}` for dynamic path segments.
+* Format file references and URLs as markdown links (not backticks, which prevent clickable rendering).
+* Use placeholders like `{{YYYY-MM-DD}}` for dynamic path segments.
+* Prefer guidance style over command style.
 
 ```markdown
-<!-- Avoid backticks around file paths -->
-2. Attach or open `.copilot-tracking/plans/2026-01-24-task-plan.instructions.md`.
-
 <!-- Use markdown links for file references -->
 2. Attach or open [2026-01-24-task-plan.instructions.md](.copilot-tracking/plans/2026-01-24-task-plan.instructions.md).
 
-<!-- Use markdown links for URLs -->
-See the [official documentation](https://docs.example.com/guide) for details.
-```
-
-Prefer guidance style over command style:
-
-```markdown
-<!-- Avoid command style -->
-You must search the folder and you will collect all conventions.
-
-<!-- Use guidance style -->
+<!-- Use guidance style, not command style -->
 Search the folder and collect conventions into the research document.
 ```
 
-### Patterns to Avoid
-
-The following patterns provide limited value as prompt instructions:
-
-* ALL CAPS directives and emphasis markers.
-* Second-person commands with modal verbs (will, must, shall). For example, "You will" or "You must."
-* Condition-heavy and overly branching instructions. Prefer providing a phase-based or step-based protocol framework.
-* List items where each item has a bolded title line. For example, `* **Line item** - Avoid adding line items like this`.
-* Forcing prompt instruction lists to have three or more items when fewer suffice.
-* XML-style groupings of prompt instructions. Use markdown sections for grouping related prompt instructions instead.
+Follow *writing-style.instructions.md* for language conventions and patterns to avoid.
 
 ## Prompt Key Criteria
 
 Successful prompts demonstrate these qualities:
 
-* Clarity: Each prompt instruction can be followed without guessing intent.
-* Consistency: Prompt instructions produce similar results with similar inputs.
-* Alignment: Prompt instructions match the conventions or standards provided by the user.
-* Coherence: Prompt instructions avoid conflicting with other prompt instructions in the same or related prompt files.
-* Calibration: Prompts provide just enough instruction to complete the user requests, avoiding overt specificity without being too vague.
-* Correctness: Prompts provide instruction on asking the user whenever unclear about progression, avoiding guessing.
+* *Clarity*: Each prompt instruction can be followed without guessing intent.
+* *Consistency*: Prompt instructions produce similar results with similar inputs.
+* *Alignment*: Prompt instructions match the conventions or standards provided by the user.
+* *Coherence*: Prompt instructions avoid conflicting with other prompt instructions in the same or related prompt files.
+* *Calibration*: Prompts provide just enough instruction to complete the user requests, avoiding overt specificity without being too vague.
+* *Correctness*: Prompts provide instruction on asking the user whenever unclear about progression, avoiding guessing.
 
 ## Subagent Prompt Criteria
 
-Prompt instructions for subagents keep the subagent focused on specific tasks.
+Dispatch and specification:
 
-Tool invocation:
+* Reference subagents by name (for example, "Use the research agent to gather context") rather than referencing the dispatch tool directly.
+* When #tool:agent is unavailable, perform the subagent instructions directly.
+* Specify which agents or instructions files the subagent follows, and indicate the task types the subagent completes.
+* Restrict available subagents using the `agents:` frontmatter property when the orchestrator should only use specific subagents.
+* Provide a step-based protocol when multiple steps are needed.
 
-* Include an explicit instruction to use the runSubagent tool when dispatching a subagent.
-* When runSubagent is unavailable, follow the subagent instructions directly or stop if runSubagent is required for the task.
+Response and execution:
 
-Task specification:
-
-* Specify which custom agents or instructions files to follow.
-* Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
-* Indicate the types of tasks the subagent completes.
-* Provide the subagent a step-based protocol when multiple steps are needed.
-
-Response format:
-
-* Provide a structured response format or criteria for what the subagent returns.
-* When the subagent writes its response to files, specify which file to create or update.
-* Allow the subagent to respond with clarifying questions to avoid guessing.
-
-Execution patterns:
-
+* Provide structured response format or criteria for what the subagent returns.
+* Leaf agents include a Structured Response section defining a markdown template with standardized fields for return values (for example: Question, Status, Output File, Key Findings, Potential Next Research, Clarifying Questions, Notes).
+* When the subagent writes to files, specify which file to create or update. Subagents write findings to designated directories; the orchestrator reads those files to synthesize results.
+* Allow clarifying questions to avoid guessing. Subagents may respond with clarifying questions; the orchestrator reviews and either dispatches follow-up subagents or escalates to the user.
 * Prompt instructions can loop and call the subagent multiple times until the task completes.
-* Multiple subagents can run in parallel when work allows (for example, document researcher collects from documents while GitHub researcher collects from repositories).
+* Multiple subagents can run in parallel when work allows.
 
 ## Prompt Quality Criteria
 

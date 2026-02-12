@@ -1,6 +1,7 @@
 ---
 description: "Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core"
 agent: 'task-planner'
+argument-hint: "[topic] [research=...]"
 maturity: stable
 ---
 
@@ -12,15 +13,6 @@ maturity: stable
 * ${input:research}: (Optional) Research file path from user prompt, open file, or conversation
 
 ## Required Steps
-
-**Important requirements**, repeat to yourself these important requirements:
-
-* **Important**, always be thorough and accurate.
-* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
-* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
-* Refactor the plan documents as needed whenever discovering or identifying new details.
-* Make sure the plan documents are complete and accurate.
-* Repeat steps and phases as needed to be thorough and accurate.
 
 ### Step 1: Gather Context
 
@@ -45,13 +37,9 @@ Create implementation plan and implementation details files:
 * Add details and file targets as they are identified.
 * Revise steps when new information changes the approach.
 * Include phase-level validation and a final validation phase.
-
-### Step 4: Return Results
-
-Summarize planning outcomes:
-
 * List implementation plan files created and their locations.
 * Note any scope items deferred for future planning.
+* Return to Step 1 if additional context is needed during plan creation.
 
 ---
 

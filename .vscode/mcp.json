@@ -1,8 +1,45 @@
 {
+    "inputs": [
+    {
+      "id": "ado_org",
+      "type": "promptString",
+      "description": "Azure DevOps organization name  (e.g. 'contoso')",
+      "default": ""
+    },
+    {
+      "id": "ado_tenant",
+      "type": "promptString",
+      "description": "Azure tenant ID (required for multi-tenant scenarios)",
+      "default": ""
+    }
+  ],
   "servers": {
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
-    }
+    },
+    "terraform": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "hashicorp/terraform-mcp-server"
+      ]
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "microsoft-docs": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    // "ado": {
+    //   "type": "stdio",
+    //   "command": "npx",
+    //   "args": ["-y", "@azure-devops/mcp", "${input:ado_org}", "--tenant", "${input:ado_tenant}", "-d", "core", "work", "work-items", "search", "repositories", "pipelines"]
+    // },
   }
 }
