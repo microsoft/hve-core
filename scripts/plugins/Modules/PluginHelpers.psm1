@@ -127,6 +127,235 @@ function Get-AllCollections {
     return $collections
 }
 
+function Get-ArtifactFiles {
+    <#
+    .SYNOPSIS
+    Discovers all artifact files from .github/ directories.
+
+    .DESCRIPTION
+    Scans .github/agents/, .github/prompts/, .github/instructions/ (recursively),
+    and .github/skills/ to build a complete list of collection items. Returns
+    repo-relative paths with forward slashes.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root directory.
+
+    .OUTPUTS
+    [hashtable[]] Array of hashtables with path and kind keys.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot
+    )
+
+    $items = @()
+
+    # Agents
+    $agentsDir = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
+    if (Test-Path -Path $agentsDir) {
+        $agentFiles = Get-ChildItem -Path $agentsDir -Filter '*.agent.md' -File
+        foreach ($file in $agentFiles) {
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+            $items += @{ path = $relativePath; kind = 'agent' }
+        }
+    }
+
+    # Prompts
+    $promptsDir = Join-Path -Path $RepoRoot -ChildPath '.github/prompts'
+    if (Test-Path -Path $promptsDir) {
+        $promptFiles = Get-ChildItem -Path $promptsDir -Filter '*.prompt.md' -File
+        foreach ($file in $promptFiles) {
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+            $items += @{ path = $relativePath; kind = 'prompt' }
+        }
+    }
+
+    # Instructions (recursive for subfolders)
+    $instructionsDir = Join-Path -Path $RepoRoot -ChildPath '.github/instructions'
+    if (Test-Path -Path $instructionsDir) {
+        $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter '*.instructions.md' -File -Recurse
+        foreach ($file in $instructionFiles) {
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+            $items += @{ path = $relativePath; kind = 'instruction' }
+        }
+    }
+
+    # Skills (directories containing SKILL.md)
+    $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
+    if (Test-Path -Path $skillsDir) {
+        $skillDirs = Get-ChildItem -Path $skillsDir -Directory
+        foreach ($dir in $skillDirs) {
+            $skillFile = Join-Path -Path $dir.FullName -ChildPath 'SKILL.md'
+            if (Test-Path -Path $skillFile) {
+                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
+                $items += @{ path = $relativePath; kind = 'skill' }
+            }
+        }
+    }
+
+    return $items
+}
+
+function Test-ArtifactDeprecated {
+    <#
+    .SYNOPSIS
+    Checks whether an artifact has maturity: deprecated in its frontmatter.
+
+    .DESCRIPTION
+    Reads the frontmatter of the artifact file (or SKILL.md for skills) and
+    returns $true when the maturity field equals deprecated.
+
+    .PARAMETER ItemPath
+    Repo-relative path to the artifact.
+
+    .PARAMETER Kind
+    The artifact kind: agent, prompt, instruction, or skill.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root.
+
+    .OUTPUTS
+    [bool] True when the artifact is deprecated.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ItemPath,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    if ($Kind -eq 'skill') {
+        $filePath = Join-Path -Path $RepoRoot -ChildPath $ItemPath -AdditionalChildPath 'SKILL.md'
+    }
+    else {
+        $filePath = Join-Path -Path $RepoRoot -ChildPath $ItemPath
+    }
+
+    if (-not (Test-Path -Path $filePath)) {
+        return $false
+    }
+
+    $frontmatter = Get-ArtifactFrontmatter -FilePath $filePath
+    return ($frontmatter.maturity -eq 'deprecated')
+}
+
+function Update-HveCoreAllCollection {
+    <#
+    .SYNOPSIS
+    Auto-updates hve-core-all.collection.yml with all non-deprecated artifacts.
+
+    .DESCRIPTION
+    Discovers all artifacts from .github/ directories, excludes deprecated items,
+    and rewrites the hve-core-all collection manifest. Preserves existing
+    metadata fields (id, name, description, tags, display).
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root directory.
+
+    .PARAMETER DryRun
+    When specified, logs changes without writing to disk.
+
+    .OUTPUTS
+    [hashtable] With ItemCount, AddedCount, RemovedCount, and DeprecatedCount keys.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    $collectionPath = Join-Path -Path $RepoRoot -ChildPath 'collections/hve-core-all.collection.yml'
+
+    # Read existing manifest to preserve metadata
+    $existing = Get-CollectionManifest -CollectionPath $collectionPath
+    $existingPaths = @($existing.items | ForEach-Object { $_.path })
+
+    # Discover all artifacts
+    $allItems = Get-ArtifactFiles -RepoRoot $RepoRoot
+
+    # Filter deprecated
+    $deprecatedCount = 0
+    $filteredItems = @()
+    foreach ($item in $allItems) {
+        if (Test-ArtifactDeprecated -ItemPath $item.path -Kind $item.kind -RepoRoot $RepoRoot) {
+            $deprecatedCount++
+            Write-Verbose "Excluding deprecated: $($item.path)"
+            continue
+        }
+        $filteredItems += $item
+    }
+
+    # Sort: by kind order (agent, prompt, instruction, skill), then by path
+    $kindOrder = @{ 'agent' = 0; 'prompt' = 1; 'instruction' = 2; 'skill' = 3 }
+    $sortedItems = $filteredItems | Sort-Object { $kindOrder[$_.kind] }, { $_.path }
+
+    # Build new items array as ordered hashtables for clean YAML output
+    $newItems = @()
+    foreach ($item in $sortedItems) {
+        $newItems += [ordered]@{
+            path = $item.path
+            kind = $item.kind
+        }
+    }
+
+    # Compute diff
+    $newPaths = @($sortedItems | ForEach-Object { $_.path })
+    $added = @($newPaths | Where-Object { $_ -notin $existingPaths })
+    $removed = @($existingPaths | Where-Object { $_ -notin $newPaths })
+
+    Write-Host "`n--- hve-core-all Auto-Update ---" -ForegroundColor Cyan
+    Write-Host "  Discovered: $($allItems.Count) artifacts"
+    Write-Host "  Deprecated: $deprecatedCount (excluded)"
+    Write-Host "  Final: $($newItems.Count) items"
+    if ($added.Count -gt 0) {
+        Write-Host "  Added: $($added -join ', ')" -ForegroundColor Green
+    }
+    if ($removed.Count -gt 0) {
+        Write-Host "  Removed: $($removed -join ', ')" -ForegroundColor Yellow
+    }
+
+    if ($DryRun) {
+        Write-Host '  [DRY RUN] No changes written' -ForegroundColor Yellow
+    }
+    else {
+        # Rebuild manifest preserving metadata
+        $manifest = [ordered]@{
+            id          = $existing.id
+            name        = $existing.name
+            description = $existing.description
+            tags        = $existing.tags
+            items       = $newItems
+            display     = $existing.display
+        }
+
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path $collectionPath -Value $yaml -Encoding utf8 -NoNewline
+        Write-Verbose "Updated $collectionPath"
+    }
+
+    return @{
+        ItemCount       = $newItems.Count
+        AddedCount      = $added.Count
+        RemovedCount    = $removed.Count
+        DeprecatedCount = $deprecatedCount
+    }
+}
+
 function Get-PluginItemName {
     <#
     .SYNOPSIS
@@ -537,14 +766,17 @@ function Write-PluginDirectory {
 }
 
 Export-ModuleMember -Function @(
-    'Get-CollectionManifest',
+    'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
     'Get-AllCollections',
+    'Get-CollectionManifest',
     'Get-PluginItemName',
     'Get-PluginSubdirectory',
+    'New-GenerateResult',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
-    'New-GenerateResult',
     'New-RelativeSymlink',
+    'Test-ArtifactDeprecated',
+    'Update-HveCoreAllCollection',
     'Write-PluginDirectory'
 )

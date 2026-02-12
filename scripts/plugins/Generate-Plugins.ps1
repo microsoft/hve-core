@@ -106,6 +106,10 @@ function Invoke-PluginGeneration {
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $pluginsDir = Join-Path -Path $RepoRoot -ChildPath 'plugins'
 
+    # Auto-update hve-core-all collection with discovered artifacts
+    $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
+    Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
+
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
 

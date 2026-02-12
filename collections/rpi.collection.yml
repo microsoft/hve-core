@@ -32,6 +32,9 @@ items:
 
       Persistent memory agent for saving and loading context checkpoints
       across workflow phases.
+  # Prompt Engineering agents
+  - path: .github/agents/prompt-builder.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/rpi.prompt.md
     kind: prompt
@@ -45,12 +48,22 @@ items:
     kind: prompt
   - path: .github/prompts/checkpoint.prompt.md
     kind: prompt
+  # Prompt Engineering prompts
+  - path: .github/prompts/prompt-analyze.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-build.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-refactor.prompt.md
+    kind: prompt
   # Common instructions
   - path: .github/instructions/writing-style.instructions.md
     kind: instruction
   - path: .github/instructions/markdown.instructions.md
     kind: instruction
   - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Prompt Engineering instructions
+  - path: .github/instructions/prompt-builder.instructions.md
     kind: instruction
 display:
   ordering: manual
