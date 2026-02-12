@@ -214,12 +214,12 @@ Duplicate closure follows the comment-before-closure pattern:
 
 Assess priority based on the suggested label to determine triage ordering. Process higher-priority issues first.
 
-| Priority | Label(s)                       | Handling                                                                                          |
-|----------|--------------------------------|---------------------------------------------------------------------------------------------------|
+| Priority | Label(s)                       | Handling                                                                                                 |
+|----------|--------------------------------|----------------------------------------------------------------------------------------------------------|
 | Highest  | `security`                     | Flag for immediate attention. Assign to the nearest stable or current milestone with expedited notation. |
-| High     | `bug`                          | Assign to the nearest stable or current milestone. Prioritize in triage plan.                     |
-| Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                                  |
-| Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items.           |
+| High     | `bug`                          | Assign to the nearest stable or current milestone. Prioritize in triage plan.                            |
+| Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                                         |
+| Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items.                  |
 
 Issues with the `breaking-change` label are escalated to the nearest pre-release or next milestone regardless of other priority signals. Under partial and manual autonomy, flag `breaking-change` issues for human review before applying milestone assignment, consistent with the Human Review Triggers in the planning specification.
 

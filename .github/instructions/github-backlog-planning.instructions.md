@@ -655,18 +655,18 @@ For CalVer, sprint, and feature naming patterns, apply the same date-based rule 
 
 Map issue characteristics to target milestone roles after completing the discovery steps. Each entry specifies a stability target and a proximity target independently.
 
-| Issue Characteristic         | Stability Target | Proximity Target |
-| ---------------------------- | ---------------- | ---------------- |
-| Bug fix (production)         | stable           | current          |
-| Security vulnerability       | stable           | current          |
-| Maintenance and refactoring  | stable           | current          |
-| Documentation improvement    | stable           | current          |
-| New feature                  | pre-release      | next             |
-| Breaking change              | pre-release      | next             |
-| Experimental capability      | pre-release      | next             |
-| Infrastructure improvement   | stable           | current          |
-| Low-risk enhancement         | stable           | current          |
-| High-risk enhancement        | pre-release      | next             |
+| Issue Characteristic        | Stability Target | Proximity Target |
+|-----------------------------|------------------|------------------|
+| Bug fix (production)        | stable           | current          |
+| Security vulnerability      | stable           | current          |
+| Maintenance and refactoring | stable           | current          |
+| Documentation improvement   | stable           | current          |
+| New feature                 | pre-release      | next             |
+| Breaking change             | pre-release      | next             |
+| Experimental capability     | pre-release      | next             |
+| Infrastructure improvement  | stable           | current          |
+| Low-risk enhancement        | stable           | current          |
+| High-risk enhancement       | pre-release      | next             |
 
 Resolve milestone selection deterministically using these targets:
 
