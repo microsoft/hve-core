@@ -669,6 +669,19 @@ Rules:
 * Comment operations must provide issue_number and body (passed to `mcp_github_add_issue_comment`).
 * Call `mcp_github_list_issue_types` before using the `type` field to confirm the organization supports issue types.
 
+### Local-Only Path Guard
+
+Paths under `.copilot-tracking/` are gitignored and exist only in the local workspace. References to these paths are invalid on GitHub because readers cannot access the files.
+
+Before composing an issue body, comment, or any field value destined for a GitHub API call, scan for paths matching `.copilot-tracking/`. When a match is found:
+
+1. Do not include the path in the GitHub-bound content.
+2. Extract the relevant details (findings, data points, or conclusions) from the referenced file and inline them into the issue body instead.
+3. Warn the user that a local-only path was detected and present the extracted details for confirmation before proceeding.
+4. Replace the file reference with a descriptive summary such as "Internal research" or "Local analysis" followed by the inlined details.
+
+This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, milestone descriptions). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*) may reference `.copilot-tracking/` paths because those files remain local.
+
 ## Three-Tier Autonomy Model
 
 The autonomy model controls confirmation gates during issue operations. The consuming workflow file must specify the active tier. When no tier is specified, agents should default to Partial Autonomy.

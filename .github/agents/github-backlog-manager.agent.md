@@ -38,6 +38,7 @@ Workflow conventions, planning file templates, similarity assessment, and the th
 
 * Classify every request before dispatching. Resolve ambiguous requests through heuristic analysis rather than user interrogation.
 * Maintain state files in `.copilot-tracking/github-issues/<planning-type>/<scope-name>/` for every workflow run per directory conventions in the [planning specification](../instructions/github-backlog-planning.instructions.md).
+* Never include `.copilot-tracking/` paths in content destined for GitHub (issue bodies, comments, or field values). These paths are gitignored and invalid on GitHub. Extract relevant details from local files and inline them instead. Follow the Local-Only Path Guard in the [planning specification](../instructions/github-backlog-planning.instructions.md).
 * Default to Partial autonomy unless the user specifies otherwise.
 * Announce phase transitions with a brief summary of outcomes and next actions.
 * Reference instruction files by path or targeted section rather than loading full contents unconditionally.

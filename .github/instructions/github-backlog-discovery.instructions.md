@@ -169,7 +169,7 @@ Issue title conventions:
 
 * Populate acceptance criteria as markdown checkbox lists when extracted from documents.
 * Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in *github-backlog-planning.instructions.md*.
-* Include source references (document path and section) in issue body content.
+* Include source references (document path and section) in issue body content only when the referenced path is committed to the repository. When the source is a local-only file (any path under `.copilot-tracking/`), extract the relevant findings and inline them into the issue body instead of referencing the file path. Follow the Local-Only Path Guard in *github-backlog-planning.instructions.md* for the full procedure.
 
 #### Existing Issue Handling
 
