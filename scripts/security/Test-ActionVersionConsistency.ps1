@@ -75,9 +75,6 @@ $ErrorActionPreference = 'Stop'
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
-# Support dot-sourcing for Pester tests
-$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
-
 function Write-ConsistencyLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -357,52 +354,73 @@ function Export-ConsistencyReport {
 
 #region Main Execution
 
-try {
-    if (-not $script:SkipMain) {
-        Write-ConsistencyLog 'Starting GitHub Actions version consistency analysis...' -Level Info
-        Write-ConsistencyLog "Scanning path: $Path" -Level Info
+function Invoke-ActionVersionConsistencyCheck {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$Path = '.github/workflows',
 
-        # Scan for violations
-        $result = Get-ActionVersionViolations -WorkflowPath $Path
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Table', 'Json', 'Sarif')]
+        [string]$Format = 'Table',
 
-        $violations = $result.Violations
-        $mismatchCount = @($violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' }).Count
-        $missingCount = @($violations | Where-Object { $_.ViolationType -eq 'MissingVersionComment' }).Count
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath,
 
-        Write-ConsistencyLog "Scanned $($result.TotalActions) SHA-pinned actions" -Level Info
-        Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
-        Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnMismatch,
 
-        # Export report
-        Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnMissingComment
+    )
 
-        # Determine exit code
-        $exitCode = 0
+    Write-ConsistencyLog 'Starting GitHub Actions version consistency analysis...' -Level Info
+    Write-ConsistencyLog "Scanning path: $Path" -Level Info
 
-        if ($FailOnMismatch -and $mismatchCount -gt 0) {
-            Write-ConsistencyLog "Failing due to $mismatchCount version mismatch(es) (-FailOnMismatch enabled)" -Level Error
-            $exitCode = 1
-        }
+    $result = Get-ActionVersionViolations -WorkflowPath $Path
 
-        if ($FailOnMissingComment -and $missingCount -gt 0) {
-            Write-ConsistencyLog "Failing due to $missingCount missing version comment(s) (-FailOnMissingComment enabled)" -Level Error
-            $exitCode = 1
-        }
+    $violations = $result.Violations
+    $mismatchCount = @($violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' }).Count
+    $missingCount = @($violations | Where-Object { $_.ViolationType -eq 'MissingVersionComment' }).Count
 
-        if ($exitCode -eq 0 -and $violations.Count -eq 0) {
-            Write-ConsistencyLog 'All SHA-pinned actions have consistent version comments!' -Level Success
-        }
+    Write-ConsistencyLog "Scanned $($result.TotalActions) SHA-pinned actions" -Level Info
+    Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
+    Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
 
-        exit $exitCode
+    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions
+
+    $failed = $false
+
+    if ($FailOnMismatch -and $mismatchCount -gt 0) {
+        Write-ConsistencyLog "Failing due to $mismatchCount version mismatch(es) (-FailOnMismatch enabled)" -Level Error
+        $failed = $true
+    }
+
+    if ($FailOnMissingComment -and $missingCount -gt 0) {
+        Write-ConsistencyLog "Failing due to $missingCount missing version comment(s) (-FailOnMissingComment enabled)" -Level Error
+        $failed = $true
+    }
+
+    if ($failed) {
+        throw 'Version consistency violations detected'
+    }
+
+    if ($violations.Count -eq 0) {
+        Write-ConsistencyLog 'All SHA-pinned actions have consistent version comments!' -Level Success
     }
 }
-catch {
-    Write-ConsistencyLog "Version consistency analysis failed: $($_.Exception.Message)" -Level Error
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-ActionVersionConsistencyCheck -Path $Path -Format $Format -OutputPath $OutputPath -FailOnMismatch:$FailOnMismatch -FailOnMissingComment:$FailOnMissingComment
+        exit 0
     }
-    exit 1
+    catch {
+        Write-Error -ErrorAction Continue "Test-ActionVersionConsistency failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
 
-#endregion
+#endregion Main Execution

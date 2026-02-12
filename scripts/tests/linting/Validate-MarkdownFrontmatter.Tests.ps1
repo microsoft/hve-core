@@ -363,6 +363,24 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
             $result | Should -Match 'base-frontmatter\.schema\.json'
         }
     }
+
+    Context 'Auto RepoRoot resolution' {
+        It 'Auto-detects repo root when RepoRoot is not specified' {
+            $result = Get-SchemaForFile -FilePath 'docs/guide/readme.md' -SchemaDirectory $script:SchemaDir
+            $result | Should -Match 'docs-frontmatter\.schema\.json'
+        }
+
+        It 'Returns null when no .git directory is found' {
+            $isolatedDir = Join-Path $TestDrive 'isolated-schemas'
+            New-Item -ItemType Directory -Path $isolatedDir -Force | Out-Null
+            '{"mappings": [], "defaultSchema": "base.schema.json"}' | Set-Content -Path (Join-Path $isolatedDir 'schema-mapping.json')
+
+            Mock Test-Path { return $false } -ParameterFilter { $Path -like '*\.git' -or $Path -like '*/.git' }
+
+            $result = Get-SchemaForFile -FilePath 'test.md' -SchemaDirectory $isolatedDir 3>$null
+            $result | Should -BeNullOrEmpty
+        }
+    }
 }
 
 #endregion
@@ -975,6 +993,81 @@ Content
             Should -Invoke Get-ChangedMarkdownFileGroup -ParameterFilter { $BaseBranch -eq 'develop' }
         }
     }
+
+    Context 'EnableSchemaValidation mode' {
+        BeforeEach {
+            @"
+---
+title: Schema Test Doc
+description: Valid test document for schema overlay
+---
+
+# Test Content
+"@ | Set-Content -Path "$script:TestRepoRoot/docs/schema-test.md" -Encoding UTF8
+        }
+
+        It 'Invokes schema validation on files with frontmatter' {
+            Mock Initialize-JsonSchemaValidation { return $true }
+            Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'docs-frontmatter.schema.json') }
+            Mock Test-JsonSchemaValidation {
+                return [PSCustomObject]@{ IsValid = $true; Errors = @(); Warnings = @() }
+            }
+
+            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation
+
+            Should -Invoke Get-SchemaForFile -Times 1
+            Should -Invoke Test-JsonSchemaValidation -Times 1
+        }
+
+        It 'Writes warnings when schema validation reports errors' {
+            Mock Initialize-JsonSchemaValidation { return $true }
+            Mock Get-SchemaForFile { return (Join-Path $script:SchemaDir 'docs-frontmatter.schema.json') }
+            Mock Test-JsonSchemaValidation {
+                return [PSCustomObject]@{ IsValid = $false; Errors = @('Missing required field: ms.date'); Warnings = @() }
+            }
+
+            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation -WarningVariable warnings 3>$null
+
+            $schemaWarnings = $warnings | Where-Object { $_ -match 'JSON Schema validation errors' -or $_ -match 'ms\.date' }
+            $schemaWarnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Skips schema check when file has no frontmatter' {
+            @"
+# No Frontmatter
+
+Just content without YAML.
+"@ | Set-Content -Path "$script:TestRepoRoot/docs/no-fm-schema.md" -Encoding UTF8
+
+            Mock Initialize-JsonSchemaValidation { return $true }
+            Mock Get-SchemaForFile {}
+            Mock Test-JsonSchemaValidation {}
+
+            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/no-fm-schema.md") -EnableSchemaValidation -SkipFooterValidation
+
+            Should -Invoke Get-SchemaForFile -Times 0
+        }
+
+        It 'Skips Test-JsonSchemaValidation when no schema matches file' {
+            Mock Initialize-JsonSchemaValidation { return $true }
+            Mock Get-SchemaForFile { return $null }
+            Mock Test-JsonSchemaValidation {}
+
+            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation
+
+            Should -Invoke Get-SchemaForFile -Times 1
+            Should -Invoke Test-JsonSchemaValidation -Times 0
+        }
+
+        It 'Skips overlay entirely when Initialize-JsonSchemaValidation returns false' {
+            Mock Initialize-JsonSchemaValidation { return $false }
+            Mock Get-SchemaForFile {}
+
+            $null = Test-FrontmatterValidation -Files @("$script:TestRepoRoot/docs/schema-test.md") -EnableSchemaValidation -SkipFooterValidation
+
+            Should -Invoke Get-SchemaForFile -Times 0
+        }
+    }
 }
 
 #endregion
@@ -1187,6 +1280,29 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
 
             # Step summary should be written
             Test-Path $stepSummaryPath | Should -BeTrue
+        }
+
+        It 'Writes fail step summary and sets FRONTMATTER_VALIDATION_FAILED env var' {
+            Mock Set-CIEnv { }
+
+            $env:GITHUB_ACTIONS = 'true'
+            $stepSummaryPath = Join-Path $TestDrive 'step-summary-fail.md'
+            $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
+
+            # File without frontmatter generates warning; -WarningsAsErrors makes GetExitCode non-zero
+            $testFile = Join-Path $TestDrive 'fail-ci.md'
+            Set-Content $testFile "# No Frontmatter`n`nContent without YAML front matter."
+
+            $null = Test-FrontmatterValidation -Files @($testFile) -WarningsAsErrors -SkipFooterValidation
+
+            Test-Path $stepSummaryPath | Should -BeTrue
+            $content = Get-Content $stepSummaryPath -Raw
+            $content | Should -Match 'Failed'
+
+            # Set-CIEnv writes to GITHUB_ENV file, not in-process env vars
+            Should -Invoke Set-CIEnv -Times 1 -Exactly -ParameterFilter {
+                $Name -eq 'FRONTMATTER_VALIDATION_FAILED' -and $Value -eq 'true'
+            }
         }
     }
 
