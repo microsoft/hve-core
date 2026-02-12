@@ -1,5 +1,5 @@
 {
   "name": "project-planning",
-  "version": "1.0.0",
-  "description": "PRDs, BRDs, ADRs, architecture diagrams, and documentation operations"
+  "description": "PRDs, BRDs, ADRs, architecture diagrams, and documentation operations",
+  "version": "1.0.0"
 }

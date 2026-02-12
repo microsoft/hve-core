@@ -8,8 +8,9 @@ tags:
   - csharp
   - python
   - terraform
+  - uv
 items:
-  # Language instructions
+  # Bundle-specific instructions
   - path: .github/instructions/bash/bash.instructions.md
     kind: instruction
   - path: .github/instructions/bicep/bicep.instructions.md

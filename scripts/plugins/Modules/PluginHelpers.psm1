@@ -231,7 +231,7 @@ function New-PluginManifestContent {
         [string]$Description
     )
 
-    return @{
+    return [ordered]@{
         name        = $CollectionId
         description = $Description
         version     = '1.0.0'

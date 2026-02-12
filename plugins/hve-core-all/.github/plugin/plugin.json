@@ -1,5 +1,5 @@
 {
   "name": "hve-core-all",
-  "version": "1.0.0",
-  "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills"
+  "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
+  "version": "1.0.0"
 }

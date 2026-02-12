@@ -1,5 +1,5 @@
 {
   "name": "data-science",
-  "version": "1.0.0",
-  "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards"
+  "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
+  "version": "1.0.0"
 }

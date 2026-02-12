@@ -1,5 +1,5 @@
 {
   "name": "prompt-engineering",
-  "version": "1.0.0",
-  "description": "Tools for analyzing, building, and refactoring prompts, agents, and instructions"
+  "description": "Tools for analyzing, building, and refactoring prompts, agents, and instructions",
+  "version": "1.0.0"
 }
