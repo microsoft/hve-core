@@ -12,7 +12,6 @@ manifests.
 |----------------------------|---------------------------|-----------------------------------------------|
 | Generate-Plugins.ps1       | `npm run plugin:generate` | Generate plugin directories from collections  |
 | Validate-Collections.ps1   | `npm run plugin:validate` | Validate collection manifests                 |
-| Generate-Badges.ps1        | `npm run plugin:badges`   | Generate VS Code install badge catalog        |
 | Modules/PluginHelpers.psm1 | (library)                 | Shared YAML parsing, symlink, and frontmatter |
 
 ## Prerequisites

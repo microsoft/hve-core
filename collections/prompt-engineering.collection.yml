@@ -55,4 +55,3 @@ items:
     kind: instruction
 display:
   ordering: manual
-  show_badge: true

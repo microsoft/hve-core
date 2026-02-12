@@ -73,4 +73,3 @@ items:
     kind: instruction
 display:
   ordering: alpha
-  show_badge: true

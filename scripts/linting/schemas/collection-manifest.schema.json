@@ -57,10 +57,6 @@
           "enum": ["alpha", "manual"],
           "default": "alpha"
         },
-        "show_badge": {
-          "type": "boolean",
-          "default": false
-        },
         "featured": {
           "type": "boolean",
           "default": false

@@ -33,8 +33,7 @@ param(
         'extension/README.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
-        'plugins/**',
-        'docs/catalog.md'
+        'plugins/**'
     ),
 
     [Parameter(Mandatory = $false)]

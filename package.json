@@ -23,8 +23,7 @@
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
-    "plugin:validate": "pwsh -File scripts/plugins/Validate-Collections.ps1",
-    "plugin:badges": "pwsh -File scripts/plugins/Generate-Badges.ps1"
+    "plugin:validate": "pwsh -File scripts/plugins/Validate-Collections.ps1"
   },
   "devDependencies": {
     "cspell": "9.6.4",

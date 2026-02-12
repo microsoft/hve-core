@@ -155,4 +155,3 @@ items:
 display:
   ordering: alpha
   featured: true
-  show_badge: true

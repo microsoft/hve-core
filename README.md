@@ -37,19 +37,29 @@ The RPI (Research → Plan → Implement) methodology structures complex enginee
 
 ### VS Code Extension (Simplest)
 
-**Recommended for most users:** Install HVE Core directly from the VS Code Marketplace for zero-configuration setup:
-
-[![Install from Marketplace](https://img.shields.io/badge/Install_from_Marketplace-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+**Recommended for most users:** Install HVE Core directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for zero-configuration setup.
 
 See [Extension Installation Guide](docs/getting-started/methods/extension.md) for details.
 
-### Automated Custom Installation
+### Copilot CLI Plugin Installation
+
+Install individual collections or the full HVE Core suite using Copilot CLI plugin commands:
+
+```bash
+# Install the full HVE Core suite
+copilot install hve-core-all
+
+# Install individual collections
+copilot install rpi
+copilot install ado
+copilot install prompt-engineering
+```
+
+See [CLI Plugin Installation Guide](docs/getting-started/methods/cli-plugins.md) for available collections and usage.
+
+### Automated Agent Installation
 
 For customization or team version control, use the `hve-core-installer` agent:
-
-[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
-
-After installing the agent:
 
 1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
 2. Select `hve-core-installer` from the agent list
@@ -68,6 +78,7 @@ The installer will:
 For manual setup or alternative installation methods, see the [Getting Started Guide](docs/getting-started/README.md) which covers:
 
 * [VS Code Extension](docs/getting-started/methods/extension.md) ⭐ - Marketplace install, zero config
+* [Copilot CLI Plugins](docs/getting-started/methods/cli-plugins.md) - Terminal-based CLI workflows
 * [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
 * [Submodule](docs/getting-started/methods/submodule.md) - Team version control
 * [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers
