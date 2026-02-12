@@ -582,27 +582,27 @@ Agents must request user guidance when:
 
 ## Label Taxonomy Reference
 
-The repository uses 17 labels organized by purpose. Labels influence milestone assignment through the EVEN/ODD versioning strategy.
+The repository uses 17 labels organized by purpose. Labels influence milestone assignment through the milestone discovery protocol.
 
-| Label             | Description                                  | Versioning                  |
-| ----------------- | -------------------------------------------- | --------------------------- |
-| `bug`             | Something is not working                     | EVEN (stable fix)           |
-| `feature`         | New capability or functionality              | ODD (pre-release)           |
-| `enhancement`     | Improvement to existing functionality        | EVEN or ODD                 |
-| `documentation`   | Improvements or additions to documentation   | EVEN or ODD                 |
-| `maintenance`     | Chores, refactoring, dependency updates      | EVEN (stable)               |
-| `security`        | Security vulnerability or hardening          | EVEN (stable, expedited)    |
-| `breaking-change` | Incompatible API or behavior change          | ODD (pre-release only)      |
-| `needs-triage`    | Requires label and milestone assignment      | None (pre-assignment)       |
-| `duplicate`       | This issue already exists                    | None (closed immediately)   |
-| `wontfix`         | This will not be worked on                   | None (closed)               |
-| `good-first-issue`| Good for newcomers                           | EVEN or ODD                 |
-| `help-wanted`     | Extra attention is needed                    | EVEN or ODD                 |
-| `question`        | Further information is requested             | None (informational)        |
-| `agents`          | Related to agent files                       | EVEN or ODD                 |
-| `prompts`         | Related to prompt files                      | EVEN or ODD                 |
-| `instructions`    | Related to instructions files                | EVEN or ODD                 |
-| `infrastructure`  | CI/CD, workflows, build tooling              | EVEN (stable)               |
+| Label             | Description                                          | Target Role   |
+| ----------------- | ---------------------------------------------------- | ------------- |
+| `bug`             | Something is not working; targets stable for fixes   | stable        |
+| `feature`         | New capability or functionality                      | pre-release   |
+| `enhancement`     | Improvement to existing functionality                | any           |
+| `documentation`   | Improvements or additions to documentation           | any           |
+| `maintenance`     | Chores, refactoring, dependency updates              | stable        |
+| `security`        | Security vulnerability or hardening; may be expedited | stable       |
+| `breaking-change` | Incompatible API or behavior change; pre-release only | pre-release  |
+| `needs-triage`    | Requires label and milestone assignment              | unclassified  |
+| `duplicate`       | This issue already exists; closed immediately        | unclassified  |
+| `wontfix`         | This will not be worked on; closed                   | unclassified  |
+| `good-first-issue` | Good for newcomers                                  | any           |
+| `help-wanted`     | Extra attention is needed                            | any           |
+| `question`        | Further information is requested; informational only | unclassified  |
+| `agents`          | Related to agent files                               | any           |
+| `prompts`         | Related to prompt files                              | any           |
+| `instructions`    | Related to instructions files                        | any           |
+| `infrastructure`  | CI/CD, workflows, build tooling                      | stable        |
 
 ### Label-to-Title Pattern Mapping
 
@@ -617,30 +617,66 @@ When issue titles follow conventional commit format, agents should map patterns 
 | `docs(templates):`      | documentation               |
 | No conventional pattern | needs-triage (retain)       |
 
-## Milestone Conventions
+## Milestone Discovery Protocol
 
-Milestones follow the EVEN/ODD versioning strategy:
+Discover the repository's milestone strategy at runtime by analyzing open milestones. This protocol replaces static versioning assumptions with dynamic classification.
 
-* **EVEN milestones** (v2.0, v2.2.0, v4.0): Stable releases. Bug fixes, security patches, maintenance, documentation, and low-risk enhancements.
-* **ODD milestones** (v1.0, v2.3.0, v3.0): Pre-release and development. New features, breaking changes, experimental capabilities, and high-risk enhancements.
+### Discovery Steps
 
-### Milestone Assignment Recommendations
+1. Discover open milestones by sampling recent open issues. Call `mcp_github_search_issues` with `repo:{owner}/{repo} is:issue is:open` sorted by `updated` descending, retrieving up to 100 results. Extract the `milestone` object from each result and aggregate unique milestones by title. Collect available fields (title, description, due_on, state, open_issues, closed_issues) from the milestone objects. Sort discovered milestones by due date ascending (nearest first). This approach may not surface milestones with zero open issues; when comprehensive coverage is required, optionally read the repo-specific override file `.github/milestone-strategy.yml` if it exists. When the file is not present, rely solely on the discovered milestones.
+2. Detect the dominant naming pattern from milestone titles using the rules in Naming Pattern Detection.
+3. Classify each milestone into an abstract role (`stable`, `pre-release`, `current`, `next`, `backlog`, `any`, `unclassified`) using the signal weighting in Role Classification. The `any` role means the label does not constrain milestone selection.
+4. Build the assignment map linking issue characteristics to target roles using the Assignment Map.
+5. Record the detected naming pattern, per-milestone role classification, generated assignment map, and confidence level (high, medium, low) in planning-log.md.
+6. When confidence is low, optionally check for the repo-specific override file `.github/milestone-strategy.yml` in the repository. If the file exists, apply the declared strategy. If the file does not exist, treat its absence as expected, present the discovered milestones to the user and request classification. When no user input is available, assign `unclassified` and flag for human review.
 
-| Issue Characteristic              | Recommended Milestone |
-| --------------------------------- | --------------------- |
-| Bug fix (production)              | Current EVEN          |
-| Security vulnerability            | Current EVEN (expedited) |
-| Maintenance and refactoring       | Current EVEN          |
-| Documentation improvement         | Current EVEN          |
-| New feature                       | Next ODD              |
-| Breaking change                   | Next ODD              |
-| Experimental capability           | Next ODD              |
-| Infrastructure improvement        | Current EVEN          |
-| Low-risk enhancement              | Current EVEN          |
-| High-risk enhancement             | Next ODD              |
+### Naming Pattern Detection
 
-When uncertain about milestone assignment, agents should default to the next ODD milestone and flag for human review.
+Evaluate milestone titles to identify the dominant naming pattern. A pattern is dominant when it matches more than 50% of open milestones.
 
+* SemVer: Titles match a major.minor.patch version pattern, optionally prefixed with `v` and optionally suffixed with a pre-release identifier (`-alpha`, `-beta`, `-rc`, `-preview`).
+* CalVer: Titles match a year-period pattern such as `2025-Q1` or `2025-03`.
+* Sprint: Titles match a sprint identifier such as `Sprint 12` or `sprint-12`.
+* Feature: Titles contain descriptive names without version or date patterns.
+* Mixed or unknown: No single pattern covers more than 50% of open milestones. Set confidence to low and proceed to the fallback in step 6.
+
+### Role Classification
+
+Classify each milestone into two orthogonal abstract roles using these signals in precedence order: one stability role and one proximity role.
+
+1. Explicit pre-release suffix in the title (`-beta`, `-rc`, `-preview`, `-alpha`): assign `pre-release` stability role. Highest signal.
+2. Description keywords: `stable`, `release`, `production`, `GA`, `LTS` suggest `stable` stability role. `pre-release`, `preview`, `beta`, `RC`, `experimental`, `development`, `canary`, `nightly` suggest `pre-release` stability role. Strong signal.
+3. Version number parity (SemVer only): even minor version suggests `stable`, odd minor version suggests `pre-release`. Weak signal, used when stronger stability signals are absent.
+4. Due date proximity (tiebreaker for proximity only): use date ordering only to choose between `current`, `next`, and `backlog` proximity roles. The nearest future due date with open issues is `current`, the second-nearest is `next`, and remaining milestones (including those without due dates) are `backlog`. Do not use due dates to distinguish `stable` versus `pre-release`; that distinction comes only from signals 1–3.
+
+For CalVer, sprint, and feature naming patterns, apply the same date-based rule for proximity roles: nearest due date is `current`, second-nearest is `next`, and milestones without due dates or with distant due dates are `backlog`.
+
+### Assignment Map
+
+Map issue characteristics to target milestone roles after completing the discovery steps. Each entry specifies a stability target and a proximity target independently.
+
+| Issue Characteristic         | Stability Target | Proximity Target |
+| ---------------------------- | ---------------- | ---------------- |
+| Bug fix (production)         | stable           | current          |
+| Security vulnerability       | stable           | current          |
+| Maintenance and refactoring  | stable           | current          |
+| Documentation improvement    | stable           | current          |
+| New feature                  | pre-release      | next             |
+| Breaking change              | pre-release      | next             |
+| Experimental capability      | pre-release      | next             |
+| Infrastructure improvement   | stable           | current          |
+| Low-risk enhancement         | stable           | current          |
+| High-risk enhancement        | pre-release      | next             |
+
+Resolve milestone selection deterministically using these targets:
+
+* First, prefer milestones that match both the stability target and the proximity target. Among these, choose the nearest by due date.
+* If no milestone matches both targets, relax stability and prefer any milestone with the target proximity. Among these, choose the nearest by due date.
+* If neither the combined target nor the proximity target can be satisfied (for example, in very sparse backlogs), choose the nearest suitable milestone by due date regardless of stability or proximity and document the rationale in the planning notes.
+
+Security vulnerabilities follow the same resolution logic but are escalated in priority: they skip lower-priority work in the target milestone and ship in the earliest available release.
+
+When uncertain about milestone assignment, or when no milestone clearly matches these rules, default to the nearest pre-release or next milestone and flag for human review.
 ## Issue Field Matrix
 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).

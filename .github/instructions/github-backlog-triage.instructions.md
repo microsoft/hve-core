@@ -8,7 +8,7 @@ maturity: experimental
 
 ## Purpose and Scope
 
-This workflow analyzes untriaged GitHub issues, suggests labels based on conventional commit title patterns, assigns milestones using the EVEN/ODD versioning strategy, and detects duplicates through similarity assessment.
+This workflow analyzes untriaged GitHub issues, suggests labels based on conventional commit title patterns, assigns milestones using the repository's discovered versioning strategy, and detects duplicates through similarity assessment.
 
 Follow all instructions from #file:./github-backlog-planning.instructions.md while executing this workflow.
 
@@ -33,11 +33,11 @@ Fetch and analyze untriaged issues to build a comprehensive triage assessment. P
 
 #### Step 1: Discover Available Milestones
 
-Before analyzing issues, determine the current EVEN and next ODD milestones. When `milestone` is provided, skip this step and use the override value.
+Before analyzing issues, discover the repository's milestone strategy. When `milestone` is provided as an override, skip this step and use that value.
 
-1. Search for recent issues with milestone assignments using `mcp_github_search_issues` to identify active milestone names.
-2. Derive the current EVEN milestone and next ODD milestone from the discovered names.
-3. Record the discovered milestones in planning-log.md for reference during analysis.
+1. Invoke the milestone discovery protocol defined in the Milestone Discovery Protocol section of `github-backlog-planning.instructions.md` to fetch, classify, and build the milestone assignment map.
+2. Record the detected naming pattern, per-milestone role classification, and generated assignment map in planning-log.md.
+3. When discovery confidence is low, attempt to load `.github/milestone-strategy.yml` as an optional override; if the file is not present or does not define a clear strategy, prompt the user before proceeding.
 
 When milestone discovery yields no results, prompt the user for milestone names before proceeding.
 
@@ -69,7 +69,7 @@ For each untriaged issue, perform the following analysis:
    * Extract technical context that clarifies issue intent for similarity comparison.
 4. Review existing labels for conflicts or gaps (for example, an issue labeled `enhancement` with a `fix:` title prefix).
 5. Search for potential duplicates using the similarity assessment framework per templates in the planning specification.
-6. Evaluate milestone fit based on the EVEN/ODD strategy and the priority assessment criteria defined in this file.
+6. Evaluate milestone fit based on the discovered milestone strategy and the priority assessment criteria defined in this file.
 
 #### Step 5: Record Analysis
 
@@ -109,14 +109,14 @@ For classified non-duplicate issues (title matched a recognized conventional com
 1. Compute the new label set: `(current_labels - "needs-triage") + suggested_labels`.
 2. Call `mcp_github_issue_write` with `method: 'update'`, `labels: [computed_set]`, and `milestone: suggested_milestone`.
 
-The `labels` parameter uses replacement semantics. The computed set MUST include all labels to retain, all suggested labels to add, and MUST exclude `needs-triage`.
+The `labels` parameter uses replacement semantics. The computed set must include all labels to retain, all suggested labels to add, and must exclude `needs-triage`.
 
 For unclassified non-duplicate issues (title did not match any recognized pattern), apply suggested labels while retaining `needs-triage`:
 
 1. Compute the new label set: `current_labels + suggested_labels`.
 2. Call `mcp_github_issue_write` with `method: 'update'`, `labels: [computed_set]`, and `milestone: suggested_milestone`.
 
-The `labels` parameter uses replacement semantics. The computed set MUST include all existing labels (including `needs-triage`), plus any suggested labels.
+The `labels` parameter uses replacement semantics. The computed set must include all existing labels (including `needs-triage`), plus any suggested labels.
 
 For confirmed duplicates, apply the comment-before-closure pattern:
 
@@ -164,23 +164,23 @@ Extract scope keywords from the conventional commit title pattern `type(scope):`
 | `(prompts)`      | `prompts`      |
 | `(instructions)` | `instructions` |
 
-Additional scope keywords MAY be mapped when they align with the label taxonomy defined in the planning specification. Scope keywords not present in the taxonomy (for example, `scripts`, `ci`, `workflows`, `templates`) SHOULD be noted in the analysis log as body context rather than assigned as labels.
+Additional scope keywords may be mapped when they align with the label taxonomy defined in the planning specification. Scope keywords not present in the taxonomy (for example, `scripts`, `ci`, `workflows`, `templates`) should be noted in the analysis log as body context rather than assigned as labels.
 
 ## Milestone Recommendation
 
-Milestone assignment follows the EVEN/ODD versioning strategy defined in the planning specification. Apply these recommendations based on issue characteristics.
+Milestone assignment follows the versioning strategy discovered during Phase 1, Step 1. Apply these recommendations based on issue characteristics.
 
-| Issue Characteristic        | Recommended Milestone      | Rationale                                      |
-| --------------------------- | -------------------------- | ---------------------------------------------- |
-| Bug fix                     | Current EVEN (stable)      | Stable releases receive production fixes       |
-| Security fix                | Current EVEN (expedited)   | Security patches ship in the nearest stable release |
-| Maintenance or refactoring  | Current EVEN (stable)      | Low-risk changes stabilize in EVEN releases    |
-| Documentation improvement   | Current EVEN (stable)      | Documentation ships with stable releases       |
-| New feature                 | Next ODD (pre-release)     | Features incubate in pre-release milestones    |
-| Breaking change             | Next major milestone       | Breaking changes require a major version bump  |
-| Infrastructure improvement  | Current EVEN (stable)      | CI/CD and build changes stabilize in EVEN releases |
+| Issue Characteristic        | Stability Target | Proximity Target | Rationale                                          |
+| --------------------------- | ---------------- | ---------------- | -------------------------------------------------- |
+| Bug fix                     | stable           | current          | Production fixes target the nearest stable release |
+| Security fix                | stable           | current          | Security patches ship in the nearest stable release |
+| Maintenance or refactoring  | stable           | current          | Low-risk changes target stable releases            |
+| Documentation improvement   | stable           | current          | Documentation ships with stable releases           |
+| New feature                 | pre-release      | next             | Features incubate before stable release            |
+| Breaking change             | pre-release      | next             | Breaking changes land in development milestones    |
+| Infrastructure improvement  | stable           | current          | CI/CD and build changes target stable releases     |
 
-When uncertain about milestone assignment, default to the next ODD milestone and flag the issue for human review.
+When uncertain about milestone assignment, default to the nearest pre-release or next milestone and flag the issue for human review.
 
 ## Duplicate Detection
 
@@ -203,7 +203,7 @@ Build search queries from the issue title and body:
 | Distinct            | Proceed with label and milestone assignment.                           |
 | Uncertain           | Request user guidance before taking action.                            |
 
-When a Match is found, record the original issue number in the triage plan for the `duplicate_of` field. The Close operation MUST include `state_reason: 'duplicate'` per the issue field matrix in the planning specification.
+When a Match is found, record the original issue number in the triage plan for the `duplicate_of` field. The Close operation must include `state_reason: 'duplicate'` per the issue field matrix in the planning specification.
 
 Duplicate closure follows the comment-before-closure pattern:
 
@@ -214,14 +214,14 @@ Duplicate closure follows the comment-before-closure pattern:
 
 Assess priority based on the suggested label to determine triage ordering. Process higher-priority issues first.
 
-| Priority | Label(s)                       | Handling                                         |
-| -------- | ------------------------------ | ------------------------------------------------ |
-| Highest  | `security`                     | Flag for immediate attention. Assign to current EVEN milestone with expedited notation. |
-| High     | `bug`                          | Assign to current EVEN milestone. Prioritize in triage plan. |
-| Normal   | `feature`, `enhancement`       | Assign to appropriate milestone per EVEN/ODD strategy. |
-| Lower    | `documentation`, `maintenance` | Assign to current EVEN milestone. Process after higher-priority items. |
+| Priority | Label(s)                       | Handling                                                                               |
+| -------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| Highest  | `security`                     | Flag for immediate attention. Assign to the nearest stable or current milestone with expedited notation. |
+| High     | `bug`                          | Assign to the nearest stable or current milestone. Prioritize in triage plan.          |
+| Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                       |
+| Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items. |
 
-Issues with the `breaking-change` label SHOULD be escalated to the user regardless of other labels, as breaking changes affect release planning.
+Issues with the `breaking-change` label are escalated to the nearest pre-release or next milestone regardless of other priority signals. Under partial and manual autonomy, flag `breaking-change` issues for human review before applying milestone assignment, consistent with the Human Review Triggers in the planning specification.
 
 ## Error Handling
 
@@ -239,7 +239,7 @@ The triage workflow produces output files in `.copilot-tracking/github-issues/tr
 
 ### triage-plan.md Template
 
-Planning markdown files MUST start and end with the directives defined in the planning specification.
+Planning markdown files must start and end with the directives defined in the planning specification.
 
 ```markdown
 <!-- markdownlint-disable-file -->
