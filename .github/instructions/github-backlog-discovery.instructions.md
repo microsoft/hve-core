@@ -168,8 +168,8 @@ Issue title conventions:
 #### New Issue Construction
 
 * Populate acceptance criteria as markdown checkbox lists when extracted from documents.
-* Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in *github-backlog-planning.instructions.md*.
-* Include source references (document path and section) in issue body content only when the referenced path is committed to the repository. When the source is a local-only file (any path under `.copilot-tracking/`), extract the relevant findings and inline them into the issue body instead of referencing the file path. Follow the Local-Only Path Guard in *github-backlog-planning.instructions.md* for the full procedure.
+* Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in #file:./github-backlog-planning.instructions.md.
+* Include source references (document path and section) in issue body content only when the referenced path is committed to the repository. When referencing other planned issues, use `{{TEMP-N}}` placeholders (resolved to actual issue numbers during execution) or descriptive phrases. Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md before composing any GitHub-bound content.
 
 #### Existing Issue Handling
 
@@ -212,6 +212,7 @@ These sections in *github-backlog-planning.instructions.md* inform discovery ope
 | Search Protocol                 | Phase 1, Path B | Keyword group construction and query composition     |
 | Similarity Assessment Framework | Phase 1, Path B | Classifying candidate-to-existing issue pairs        |
 | Planning File Templates         | Phases 1-3      | Structure for all output files                       |
+| Content Sanitization Guards     | Phase 2         | Strip local paths and planning IDs from GitHub content |
 | Temporary ID Mapping            | Phase 2         | `{{TEMP-N}}` placeholders for new issues             |
 | Three-Tier Autonomy Model       | Phase 3         | Confirmation gates during handoff review             |
 | State Persistence Protocol      | All phases      | Context recovery after summarization                 |

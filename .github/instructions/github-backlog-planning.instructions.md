@@ -669,20 +669,24 @@ Rules:
 * Comment operations must provide issue_number and body (passed to `mcp_github_add_issue_comment`).
 * Call `mcp_github_list_issue_types` before using the `type` field to confirm the organization supports issue types.
 
+## Content Sanitization Guards
+
+Before composing any content destined for a GitHub API call (issue titles, bodies, comments, labels, milestone descriptions, and other text fields), scan for the patterns below and apply the corresponding resolution. Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*, *handoff.md*, *handoff-logs.md*) are exempt because they remain local.
+
+Under Full Autonomy, log the replacement and proceed automatically. Under Partial or Manual autonomy, present the inlined content for user confirmation before the API call.
+
 ### Local-Only Path Guard
 
-Paths under `.copilot-tracking/` are gitignored and exist only in the local workspace. References to these paths are invalid on GitHub because readers cannot access the files.
+* **Detect**: Paths matching `.copilot-tracking/`.
+* **Resolve**: Read the referenced file, extract relevant details (findings, data points, conclusions), and inline them into the content. Replace the path with a descriptive label such as "Internal research" or "Local analysis" followed by the extracted details.
 
-Before composing an issue body, comment, or any field value destined for a GitHub API call, scan for paths matching `.copilot-tracking/`. When a match is found:
+### Planning Reference ID Guard
 
-1. Do not include the path in the GitHub-bound content.
-2. Extract the relevant details (findings, data points, or conclusions) from the referenced file.
-3. Replace the path reference with a descriptive summary such as "Internal research" or "Local analysis" followed by the extracted details inlined into the content.
-4. Handle user notification and confirmation according to the active autonomy tier:
-   * **Full Autonomy**: Do not introduce a confirmation gate. Log or summarize that a local-only path was detected, show the inlined replacement in the response, and proceed automatically with the GitHub operation.
-   * **Partial Autonomy** and **Confirmed Autonomy**: Warn the user that a local-only path was detected and present the inlined content for explicit confirmation before proceeding.
-
-This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, and other text fields). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*, *handoff.md*, *handoff-logs.md*) may reference `.copilot-tracking/` paths because those files remain local. The confirmation behavior in step 4 is governed by the Three-Tier Autonomy Model defined below.
+* **Detect**: Identifiers matching `IS` followed by digits and optional letter suffixes (for example, `IS001`, `IS002a`, `IS014`).
+* **Resolve**:
+  * When the actual GitHub issue number is known (from the temporary ID mapping table or handoff-logs.md), replace `IS[NNN]` with `#<actual_number>`.
+  * When the actual issue number is not yet known, replace `IS[NNN]` with a descriptive phrase summarizing the referenced work.
+  * When the reference is a self-reference, remove it or replace it with "this issue".
 
 ## Three-Tier Autonomy Model
 
