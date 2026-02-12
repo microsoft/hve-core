@@ -788,7 +788,12 @@ Describe 'Write-SecurityLog' -Tag 'Unit' {
 
 Describe 'Get-SHAForAction - Already Pinned' -Tag 'Unit' {
     BeforeAll {
+        $script:OriginalGitHubToken = $env:GITHUB_TOKEN
         $env:GITHUB_TOKEN = 'ghp_test123456789'
+    }
+
+    AfterAll {
+        $env:GITHUB_TOKEN = $script:OriginalGitHubToken
     }
 
     Context 'SHA-pinned action without UpdateStale' {
@@ -804,7 +809,7 @@ Describe 'Get-SHAForAction - Already Pinned' -Tag 'Unit' {
     }
 
     Context 'SHA-pinned action with UpdateStale' {
-        It 'Returns updated ref when latest SHA differs' {
+        It 'Returns original ref when UpdateStale is not specified' {
             $currentSHA = 'a' * 40
             $latestSHA = 'b' * 40
             $ref = "actions/checkout@$currentSHA"

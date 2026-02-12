@@ -1283,19 +1283,28 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
         }
 
         It 'Writes fail step summary and sets FRONTMATTER_VALIDATION_FAILED env var' {
-            $env:GITHUB_ACTIONS = 'true'
-            $stepSummaryPath = Join-Path $TestDrive 'step-summary-fail.md'
-            $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
+            $originalFrontmatterFailed = $env:FRONTMATTER_VALIDATION_FAILED
+            try {
+                $env:GITHUB_ACTIONS = 'true'
+                $stepSummaryPath = Join-Path $TestDrive 'step-summary-fail.md'
+                $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
 
-            # File without frontmatter generates warning; -WarningsAsErrors makes GetExitCode non-zero
-            $testFile = Join-Path $TestDrive 'fail-ci.md'
-            Set-Content $testFile "# No Frontmatter`n`nContent without YAML front matter."
+                # File without frontmatter generates warning; -WarningsAsErrors makes GetExitCode non-zero
+                $testFile = Join-Path $TestDrive 'fail-ci.md'
+                Set-Content $testFile "# No Frontmatter`n`nContent without YAML front matter."
 
-            $null = Test-FrontmatterValidation -Files @($testFile) -WarningsAsErrors -SkipFooterValidation
+                $null = Test-FrontmatterValidation -Files @($testFile) -WarningsAsErrors -SkipFooterValidation
 
-            Test-Path $stepSummaryPath | Should -BeTrue
-            $content = Get-Content $stepSummaryPath -Raw
-            $content | Should -Match 'Failed'
+                Test-Path $stepSummaryPath | Should -BeTrue
+                $content = Get-Content $stepSummaryPath -Raw
+                $content | Should -Match 'Failed'
+
+                # Environment variable should be set to indicate failure
+                $env:FRONTMATTER_VALIDATION_FAILED | Should -Not -BeNullOrEmpty
+            }
+            finally {
+                $env:FRONTMATTER_VALIDATION_FAILED = $originalFrontmatterFailed
+            }
         }
     }
 
