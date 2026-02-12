@@ -1,0 +1,45 @@
+id: ado
+name: Azure DevOps Integration
+description: Azure DevOps work item management, build monitoring, and pull request creation
+tags:
+  - azure-devops
+  - ado
+  - work-items
+  - builds
+  - pull-requests
+items:
+  # Agents
+  - path: .github/agents/ado-prd-to-wit.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/ado-create-pull-request.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado-get-build-info.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado-get-my-work-items.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado-process-my-work-items-for-task-planning.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado-update-wit-items.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Bundle-specific instructions
+  - path: .github/instructions/ado-create-pull-request.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado-get-build-info.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado-update-wit-items.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado-wit-discovery.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado-wit-planning.instructions.md
+    kind: instruction
+display:
+  ordering: manual
+  show_badge: true

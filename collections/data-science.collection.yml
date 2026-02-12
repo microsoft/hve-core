@@ -1,0 +1,35 @@
+id: data-science
+name: Data Science
+description: Data specification generation, Jupyter notebooks, and Streamlit dashboards
+tags:
+  - data
+  - jupyter
+  - streamlit
+  - dashboards
+  - visualization
+  - data-science
+items:
+  # Agents
+  - path: .github/agents/gen-data-spec.agent.md
+    kind: agent
+  - path: .github/agents/gen-jupyter-notebook.agent.md
+    kind: agent
+  - path: .github/agents/gen-streamlit-dashboard.agent.md
+    kind: agent
+  - path: .github/agents/test-streamlit-dashboard.agent.md
+    kind: agent
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Bundle-specific instructions
+  - path: .github/instructions/python-script.instructions.md
+    kind: instruction
+  - path: .github/instructions/uv-projects.instructions.md
+    kind: instruction
+display:
+  ordering: manual
+  show_badge: true

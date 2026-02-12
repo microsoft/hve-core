@@ -1,0 +1,32 @@
+id: prompt-engineering
+name: Prompt Engineering
+description: Tools for analyzing, building, and refactoring prompts, agents, and instructions
+tags:
+  - prompts
+  - agents
+  - authoring
+  - refactoring
+items:
+  # Agents
+  - path: .github/agents/prompt-builder.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/prompt-analyze.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-build.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-refactor.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Bundle-specific instructions
+  - path: .github/instructions/prompt-builder.instructions.md
+    kind: instruction
+display:
+  ordering: manual
+  show_badge: true

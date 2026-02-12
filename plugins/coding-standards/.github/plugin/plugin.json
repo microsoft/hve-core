@@ -1,0 +1,5 @@
+{
+  "name": "coding-standards",
+  "version": "1.0.0",
+  "description": "Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform projects"
+}

@@ -1,0 +1,36 @@
+id: project-planning
+name: Project Planning
+description: PRDs, BRDs, ADRs, architecture diagrams, and documentation operations
+tags:
+  - documentation
+  - architecture
+  - adr
+  - brd
+  - prd
+  - diagrams
+  - planning
+items:
+  # Agents
+  - path: .github/agents/doc-ops.agent.md
+    kind: agent
+  - path: .github/agents/adr-creation.agent.md
+    kind: agent
+  - path: .github/agents/arch-diagram-builder.agent.md
+    kind: agent
+  - path: .github/agents/brd-builder.agent.md
+    kind: agent
+  - path: .github/agents/prd-builder.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/doc-ops-update.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+display:
+  ordering: manual
+  show_badge: true

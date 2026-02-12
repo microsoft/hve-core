@@ -1,0 +1,1 @@
+../../../.github/prompts/doc-ops-update.prompt.md

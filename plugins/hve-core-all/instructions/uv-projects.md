@@ -1,0 +1,1 @@
+../../../.github/instructions/uv-projects.instructions.md

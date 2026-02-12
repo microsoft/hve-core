@@ -1,0 +1,27 @@
+id: security-planning
+name: Security Planning
+description: Security plan creation, incident response, and risk assessment
+tags:
+  - security
+  - incident-response
+  - risk
+  - planning
+items:
+  # Agents
+  - path: .github/agents/security-plan-creator.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/incident-response.prompt.md
+    kind: prompt
+  - path: .github/prompts/risk-register.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+display:
+  ordering: manual
+  show_badge: true
