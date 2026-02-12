@@ -1,6 +1,6 @@
 ---
 description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
-applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md, .claude/agents/*.md'
+applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 maturity: stable
 ---
 
@@ -19,6 +19,7 @@ Single-session workflows where users invoke a prompt and the agent executes to c
 * Frontmatter includes `agent: 'agent-name'` to delegate to an agent.
 * Content ends with `---` followed by an activation instruction.
 * Use `#file:` only when the full contents of another file are needed; otherwise refer by path.
+* Reference tools in body text using `#tool:<tool-name>` syntax (for example, `#tool:search`, `#tool:web`). For MCP tools, use `#tool:<server>/<tool>` (for example, `#tool:github/add_issue_comment`). Specific tools within a tool set use `#tool:<set>/<tool>` (for example, `#tool:search/listDirectory`, `#tool:web/githubRepo`). Backticks should not be used around #tool: references in prompt and agent files.
 * Input variables use `${input:variableName}` or `${input:variableName:defaultValue}` syntax.
 
 Add sequential steps when the prompt involves multiple distinct actions. Simple single-task prompts do not need protocol structure.
@@ -64,33 +65,6 @@ Agent files support conversational workflows (multi-turn interactions) and auton
 * Execute autonomously after receiving initial instructions and report results.
 * May dispatch subagents for parallelizable work.
 
-#### Claude Agents
-
-*Location*: `.claude/agents/<name>.md`
-
-Behavioral instructions for specialized task execution, loaded by skills (via `agent:` frontmatter or inline) or passed to the Task tool or runSubagent tool.
-
-Agent roles:
-
-* *Orchestrator agents* dispatch subagents via Task, manage phases, and synthesize results.
-* *Leaf agents* perform direct work using a step-based protocol and return structured responses without dispatching further Tasks.
-
-Frontmatter declares `name`, `description`, and optionally `tools` (YAML array) and `model` (`inherit` for parent model). Include `Task` in tools only when the agent dispatches subagents.
-
-Recommended body sections: Core Principles, Tool Usage, Required Steps or Phases, Structured Response (for leaf agents), Operational Constraints, File Locations.
-
-#### Execution Contexts
-
-Three execution contexts determine tool access and session behavior:
-
-* *Standalone* (skill without `context: fork`): Runs in the main session with Task tool or runSubagent tool access for one-level-deep subagent dispatch.
-* *Forked* (skill with `context: fork`): Runs as an isolated subagent without conversation history or Task tool or runSubagent tool access. Results are summarized and returned.
-* *Dispatched* (via Task call): Runs as a subagent task without further Task dispatch; falls back to direct tool usage.
-
-#### Task Tool or runSubagent Tool Fallback
-
-Skills and agents that dispatch subagents include an Execution Mode Detection section. When the Task tool or runSubagent tool is available, dispatch subagent instances. When unavailable, read the subagent file and perform all work directly. Task nesting is limited to one level deep.
-
 ### Instructions Files
 
 *Extension*: `.instructions.md`
@@ -104,13 +78,9 @@ Auto-applied guidance based on file patterns. Define conventions, standards, and
 
 *File Name*: `SKILL.md`
 
-Skills provide task-specific entry points and are the recommended pattern for new artifacts. Two variants exist: script-based skills that bundle executable scripts, and agent-based skills. Convert existing commands (`.claude/commands/`) to agent-based skills.
-
-#### Script-Based Skills
+Agent Skills are folders of instructions, scripts, and resources that Copilot loads on demand to perform specialized tasks. Skills follow an open standard ([agentskills.io](https://agentskills.io)) and work across VS Code, Copilot CLI, and Copilot coding agent.
 
 *Location*: `.github/skills/<skill-name>/SKILL.md`
-
-Self-contained packages bundling documentation with executable scripts.
 
 Directory structure:
 
@@ -123,191 +93,22 @@ Directory structure:
 └── examples/         # Usage examples (recommended)
 ```
 
-Content structure (sections in order):
+Frontmatter requires `name` (lowercase kebab-case, max 64 characters) and `description` (capabilities and when to use, max 1024 characters). HVE-Core convention also includes `maturity`.
 
-1. Title (H1), Overview, Prerequisites, Quick Start.
-2. Parameters Reference table, Script Reference with bash and PowerShell examples.
-3. Troubleshooting, Attribution Footer.
+Body content structure:
 
-#### Agent-Based Skills
+1. Title (H1), overview of what the skill helps accomplish, and when to use it.
+2. Step-by-step procedures and guidelines.
+3. References to included scripts or resources using relative paths.
 
-*Location*: `.claude/skills/<skill-name>/SKILL.md`
-
-Four agent-based skill patterns exist:
-
-* *Delegation skills* delegate to a named agent via `agent:` frontmatter. The agent runs in the main conversation context with Task tool or runSubagent tool access.
-* *Orchestrator skills* contain full orchestration logic in the skill body and dispatch subagents directly via the Task tool or runSubagent tool.
-* *Forked skills* use `context: fork` to run as isolated subagents without Task tool or runSubagent tool access.
-* *Rules-based skills* provide guidelines, standards, or conventions loaded as context by other skills or agents.
-
-All skill frontmatter fields are defined in Optional Fields. The `agent:` and `context:` fields behave differently depending on whether `context: fork` is set.
-
-#### Delegation Skills
-
-Lightweight entry points that delegate to agents via `agent:` frontmatter. The skill body passes `$ARGUMENTS` with mode-specific directives controlling which phases the agent executes. Multiple skills can share a single agent by providing different mode directives.
-
-Content structure:
-
-1. Frontmatter with `name`, `description`, `maturity`, and optional `context`, `agent`, `argument-hint`, `disable-model-invocation`.
-2. Title (H1) matching the skill purpose.
-3. Activation sentence incorporating `$ARGUMENTS`.
-4. Mode Directives section (H2) specifying phase scope and behavior.
-
-#### Mode Directives
-
-The Mode Directives section controls which phases the delegated agent executes and what behavioral emphasis to apply.
-
-Structure:
-
-* Opening line naming the mode and phase scope.
-* Descriptive label (for example, "Build mode behavior:").
-* Bulleted list of mode-specific behavioral instructions.
-* Optional closing instruction for discovering instructions files or proceeding with phases.
-
-Phase scope patterns:
-
-* Full workflow: "following the full 5-phase workflow: Baseline, Research, Build, Validate, Iterate".
-* Limited scope: "Execute Phase 1 only" with instructions to skip remaining phases.
-
-#### Multi-Skill Agent Delegation
-
-Multiple skills can delegate to the same agent with different mode directives. The agent reads directives from the invoking skill body.
-
-| Skill           | Mode     | Phase Scope  | argument-hint                   |
-| --------------- | -------- | ------------ | ------------------------------- |
-| prompt-build    | build    | Full workflow | `"file=... [requirements=...]"` |
-| prompt-refactor | refactor | Full workflow | `"file=... [requirements=...]"` |
-| prompt-analyze  | analyze  | Phase 1 only | `"file=..."`                    |
-
-Example delegation skill (build mode):
-
-```yaml
----
-name: prompt-build
-description: Build or improve prompt engineering artifacts following quality criteria.
-maturity: stable
-agent: prompt-builder
-argument-hint: "file=... [requirements=...]"
-disable-model-invocation: true
----
-```
-
-```markdown
-# Prompt Build
-
-Build or improve the following prompt engineering artifact: $ARGUMENTS
-
-## Mode Directives
-
-Operate in build mode following the full 5-phase workflow.
-
-Build mode behavior:
-
-* Create new artifacts or improve existing ones through all five phases.
-* When no explicit requirements are provided, refactor and improve all instructions in the referenced file.
-* When a non-prompt file is referenced, search for related prompt artifacts and update them, or build a new one.
-
-Discover applicable `.github/instructions/*.instructions.md` files and proceed with the Required Phases.
-```
-
-For limited-scope modes (such as analyze), the opening line restricts phase scope ("Execute Phase 1 only") and behavioral instructions skip remaining phases.
-
-#### Orchestrator Skills
-
-Skills that contain full orchestration logic in their body without `agent:` frontmatter. The skill dispatches subagents directly via the Task tool or runSubagent tool. Appropriate when the workflow has a single purpose without multiple modes, all orchestration logic fits in the skill body, and agent reuse across multiple skills is not needed.
-
-Content structure:
-
-1. Frontmatter with `name`, `description`, `maturity`, and optionally `disable-model-invocation`, `argument-hint`.
-2. Title (H1), Core Principles, Subagent Delegation, Execution Mode Detection, File Locations.
-3. Required Phases with phase-based protocol.
-4. Output Templates and Response Format.
-
-Include an Execution Mode Detection section (see Task Tool or runSubagent Tool Fallback).
-
-#### Forked Skills
-
-Skills with `context: fork` run as isolated subagents without conversation history or Task tool or runSubagent tool access. Results are summarized and returned to the main conversation. Subagents cannot spawn other subagents; this is an architectural constraint.
-
-Appropriate for self-contained leaf tasks such as read-only research, build/deployment procedures, or code review operating on explicit inputs. Not appropriate for orchestrator skills needing subagent dispatch, skills requiring conversation history, or guideline-only content without task instructions.
-
-The `agent` field with `context: fork`:
-
-| Agent Value | Model | Tools | Use Case |
-|-------------|-------|-------|----------|
-| `Explore` | Haiku | Read-only (denied Write/Edit) | File discovery, code search |
-| `Plan` | Inherits parent | Read-only (denied Write/Edit) | Codebase research for planning |
-| `general-purpose` (default) | Inherits parent | All tools (except Task) | Multi-step operations |
-| Custom (`.claude/agents/<name>`) | Per agent config | Per agent config (except Task) | Specialized workflows |
-
-Example forked skill:
-
-```yaml
----
-name: deep-research
-description: Research a topic thoroughly
-context: fork
-agent: Explore
----
-```
-
-```markdown
-Research $ARGUMENTS thoroughly:
-
-* Find relevant files using Glob and Grep.
-* Read and analyze the code.
-* Summarize findings with specific file references.
-```
-
-#### Rules-Based Skills
-
-Guideline-only skills that provide rules or instructions for working on specific file types or tasks. These skills contain authoring standards, conventions, or quality criteria rather than executable workflows.
-
-* Typically no `$ARGUMENTS` placeholder; the skill body contains instructional content.
-* Frontmatter includes `user-invocable: false` since users do not invoke these directly.
-* Never include `disable-model-invocation` frontmatter; the skill loads as context for other skills or agents, not as a user-invoked task.
-* Referenced by other agents or skills via the `skills:` frontmatter field.
-
-Content structure:
-
-1. Frontmatter with `name`, `description`, `maturity`, and `user-invocable: false`.
-2. Title (H1) and overview.
-3. Instructional sections defining standards, conventions, or quality criteria.
-
-Example rules-based skill:
-
-```yaml
----
-name: prompt-engineering
-description: Authoring standards for prompt engineering artifacts.
-maturity: stable
-user-invocable: false
----
-```
-
-```markdown
-# Prompt Engineering
-
-Authoring standards for prompt engineering artifacts. Apply when creating or modifying prompt files.
-
-## File Types
-
-...standards and conventions...
-
-## Quality Criteria
-
-...checklist items...
-```
+Reference files within the skill directory using relative paths (for example, `[test script](./test-template.js)`).
 
 #### Skill Validation
 
-All skills include `name`, `description`, and `maturity` frontmatter. Additional validation by type:
+All skills include `name` and `description` frontmatter (`maturity` by HVE-Core convention). Additional validation:
 
-* Script-based: Parallel bash and PowerShell scripts for cross-platform use.
-* Delegation: `agent` frontmatter field, `$ARGUMENTS` for user input, and a Mode Directives section when controlling agent mode.
-* Orchestrator: No `agent` field. Execution Mode Detection section for Task tool or runSubagent tool fallback. `$ARGUMENTS` for user input.
-* Forked: `context: fork` in frontmatter. Explicit task instructions with `$ARGUMENTS`; guideline-only content is not suitable.
-* Rules-based: `user-invocable: false` in frontmatter. No `disable-model-invocation` field. Instructional content only.
+* Scripts provide parallel bash and PowerShell implementations for cross-platform use.
+* Description states both what the skill does and when to use it, enabling Copilot to decide when to load it.
 
 Follow the Progressive Disclosure guidelines for size limits.
 
@@ -315,9 +116,9 @@ Follow the Progressive Disclosure guidelines for size limits.
 
 Structure skills for efficient context loading. Keep *SKILL.md* under 500 lines; move detailed reference to separate files. Use relative paths from the skill root, one level deep.
 
-1. Metadata (`name`, `description`) loads at startup for all skills (~100 tokens).
+1. Metadata (`name`, `description`) loads at startup for all skills (~100 tokens). Copilot uses this to decide relevance.
 2. Full *SKILL.md* body loads on activation (<5000 tokens recommended).
-3. Files in `scripts/`, `references/`, or `assets/` load only when required.
+3. Files in `scripts/`, `references/`, or `assets/` load only when referenced.
 
 ## Frontmatter Requirements
 
@@ -332,17 +133,15 @@ All prompt engineering artifacts include:
 
 * `name:` - Skill or agent identifier. Required for skills; use lowercase kebab-case matching the directory name.
 * `applyTo:` - Glob patterns (required for instructions files).
-* `tools:` - YAML array of tool names for agents. When omitted, defaults are provided. Include `Task` only when the agent dispatches subagents. Common tool names vary by platform; VS Code agents and Claude Code agents use different tool registries.
+* `tools:` - YAML array of tool names for agents. When omitted, defaults are provided. Include `agent` only when the agent dispatches subagents. Use human-readable tool names with `#tool:` syntax (for example, `search`, `fetch`, `agent`). For MCP tools, use the `<server>/<tool>` format (for example, `github/add_issue_comment`). To include all tools from an MCP server, use `<server>/*`.
 * `handoffs:` - Array of handoff objects with required `label`, `agent`, `prompt` fields and an optional `send` boolean.
 * `target:` - Target environment: `vscode` or `github-copilot`. Agents only.
-* `agent:` - Without `context: fork`: delegates orchestration to `.claude/agents/<agent>.md` in the main conversation context with Task tool or runSubagent tool access. With `context: fork`: selects the subagent type (`Explore`, `Plan`, `general-purpose`, or custom) for isolated execution without Task tool or runSubagent tool access. See Forked Skills for the agent value table.
+* `agents:` - YAML array of agent names available as subagents in this agent. Use `*` to allow all agents, or `[]` to prevent subagent use. When specified, include `agent` in the `tools` property.
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Set to `inherit` for parent model, or specify a model name.
-* `context:` - Set to `fork` for isolated subagent execution. Forked skills run without conversation history and cannot dispatch subagents via Task. Omit for main conversation context with full tool access.
-* `disable-model-invocation:` - Set to `true` to prevent automatic invocation. Not required for skills; include only on skills the user would not want automatically invoked, such as orchestrator skills like *task-researcher* or *prompt-builder* that execute multi-phase workflows.
-* `user-invocable:` - Set to `false` to prevent the skill from appearing in the `/` command picker. Use for skills that provide rules or instructions as context for other skills and agents, rather than being invoked directly by users.
-* `skills:` - YAML array of skill names loaded as context when the agent is dispatched.
-* `mcp-servers:` - Array of MCP server configuration objects for Claude Code agents.
+* `model:` - Set to `inherit` for parent model, or specify a model name. Supports a single model name (string) or a prioritized list of models (array) where the system tries each in order.
+* `disable-model-invocation:` - Set to `true` to prevent the agent from being invoked as a subagent by other agents. Use when the agent should only be triggered explicitly by users.
+* `user-invokable:` - Set to `false` to hide the agent from the agents dropdown in chat. Agents with `user-invokable: false` remain accessible as subagents. Use for subagent-only agents.
+* `mcp-servers:` - Array of MCP server configuration objects for agents targeting `github-copilot`.
 
 ## Protocol Patterns
 
@@ -447,12 +246,11 @@ Successful prompts demonstrate these qualities:
 
 Dispatch and specification:
 
-* Include an explicit instruction to use the dispatch tool (`runSubagent` or `Task`).
-* For Task-based dispatch: read the subagent file (`.claude/agents/<subagent>.md`), construct a prompt combining agent content with context from prior phases, and call `Task(subagent_type="general-purpose", prompt=<constructed prompt>)`.
-* When the dispatch tool is unavailable, perform the subagent instructions directly (see Task Tool or runSubagent Tool Fallback).
-* Specify which agents or instructions files to follow, and indicate the task types the subagent completes.
+* Reference subagents by name (for example, "Use the research agent to gather context") rather than referencing the dispatch tool directly.
+* When #tool:agent is unavailable, perform the subagent instructions directly.
+* Specify which agents or instructions files the subagent follows, and indicate the task types the subagent completes.
+* Restrict available subagents using the `agents:` frontmatter property when the orchestrator should only use specific subagents.
 * Provide a step-based protocol when multiple steps are needed.
-* Include an Execution Mode Detection section with fallback instructions.
 
 Response and execution:
 

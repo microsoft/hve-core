@@ -30,8 +30,9 @@ Contains the phases for the prompt engineering workflow. Execute phases in order
 
 ### Important guidelines to always follow
 
-* Be sure to use the runSubagent tool when the Phase or Step explicitly states, use the runSubagent tool.
+* Dispatch subagents using #tool:agent when a Phase or Step calls for subagent work.
 * For all Phases, avoid reading in the prompt file(s) and instead have the subagents read the prompt file(s).
+#tool:search, #tool:search/listDirectory, #tool:agent, #tool:github/add_issue_comment
 
 ### Phase 1: Baseline
 
@@ -39,7 +40,7 @@ This phase applies when the user points to an existing prompt, agent, or instruc
 
 #### Step 1: Baseline Testing Subagent
 
-Use the runSubagent tool to dispatch a subagent that tests the existing prompt file. The subagent follows the Prompt Tester Instructions section.
+Dispatch a subagent to test the existing prompt file. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -65,23 +66,23 @@ Actions:
 
 #### Research Subagent
 
-Use the runSubagent tool to dispatch a subagent that researches context for the prompt engineering task. The subagent gathers information from the codebase, documentation, and existing patterns to inform prompt creation or improvement.
+Dispatch a research subagent to gather context for the prompt engineering task from the codebase, documentation, and existing patterns to inform prompt creation or improvement.
 
 Subagent instructions:
 
 * Assign the research output folder using the naming convention from the Sandbox Environment section with a `-research` suffix.
 * Create a *research-log.md* file in the research folder to document findings.
 * Include the list of research targets and research questions to investigate.
-* Locate relevant files using semantic_search and grep_search.
-* Retrieve official documentation using microsoft-docs tools.
-* Search official repositories for patterns using github_repo.
+* Use #tool:search to locate relevant files.
+* Use #tool:microsoft-docs to retrieve official documentation.
+* Use #tool:web/githubRepo to search official repositories for patterns.
 * Fetch external resources when needed.
 * Document findings in the research log with source file paths or URLs, relevant code excerpts, patterns identified, and answers to each research question.
 * Return a summary confirming the research log file path and key findings.
 
 ### Phase 3: Build
 
-Use the runSubagent tool to dispatch a subagent that implements changes to the prompt engineering artifact. The subagent follows the Prompt Authoring Requirements from the instructions file.
+Dispatch a subagent to implement changes to the prompt engineering artifact. The subagent follows the Prompt Authoring Requirements from the instructions file.
 
 Subagent instructions:
 
@@ -102,7 +103,7 @@ This phase tests the created or modified artifact in a sandbox environment.
 
 #### Step 1: Validation Testing Subagent
 
-Use the runSubagent tool to dispatch a subagent that validates the prompt file. The subagent follows the Prompt Tester Instructions section.
+Dispatch a subagent to validate the prompt file. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -180,7 +181,7 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 
 ### Execution Subagent
 
-Use the runSubagent tool to dispatch a subagent that tests the prompt by following it literally. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
+Dispatch a subagent to test the prompt by following it literally. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
 
 Subagent instructions:
 
@@ -195,7 +196,7 @@ Subagent instructions:
 
 ### Evaluation Subagent
 
-Use the runSubagent tool to dispatch a subagent that evaluates the results of the execution. The subagent assesses whether the prompt achieved its goals and identifies any issues.
+Dispatch a subagent to evaluate the results of the execution. The subagent assesses whether the prompt achieved its goals and identifies any issues.
 
 Subagent instructions:
 

@@ -26,7 +26,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ### Step 1: Baseline Assessment
 
-Dispatch a subagent using `runSubagent` to evaluate the current state of the target file:
+Dispatch a subagent to evaluate the current state of the target file:
 
 * Read the target file at `${input:file}` and the prompt-builder instructions.
 * Identify quality issues, outdated patterns, and areas for compression.
@@ -35,7 +35,7 @@ Dispatch a subagent using `runSubagent` to evaluate the current state of the tar
 
 ### Step 2: Research and Verification
 
-Dispatch a research subagent using `runSubagent` to verify external references:
+Dispatch a research subagent to verify external references:
 
 * Identify all schema, API, SDK, or tool call instructions in the target file.
 * Use official documentation tools to verify accuracy and currency.

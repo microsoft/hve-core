@@ -26,7 +26,7 @@ Read the target file at `${input:file}` along with the prompt-builder instructio
 
 ### Step 2: Dispatch Execution Analysis Subagent
 
-Use `runSubagent` to analyze what the target prompt does. When `runSubagent` is unavailable, perform this analysis directly.
+Use a subagent to analyze what the target prompt does. When #tool:agent is unavailable, perform this analysis directly.
 
 Provide the subagent with these instructions:
 
@@ -39,7 +39,7 @@ Provide the subagent with these instructions:
 
 ### Step 3: Dispatch Evaluation Subagent
 
-Use `runSubagent` to validate the target against all Prompt Quality Criteria. When `runSubagent` is unavailable, perform this evaluation directly.
+Use a subagent to validate the target against all Prompt Quality Criteria. When #tool:agent is unavailable, perform this evaluation directly.
 
 Provide the subagent with these instructions:
 
