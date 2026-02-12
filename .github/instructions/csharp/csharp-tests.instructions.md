@@ -14,11 +14,11 @@ Use XUnit with NSubstitute for mocking. Focus on class behaviors rather than imp
 
 ### Mocking Libraries
 
-| Library | Usage |
-|---------|-------|
-| NSubstitute | Preferred for new projects |
-| FakeItEasy | Acceptable alternative |
-| Moq | Existing projects only (pin to 4.18.x or 4.20.2+) |
+| Library     | Usage                                             |
+|-------------|---------------------------------------------------|
+| NSubstitute | Preferred for new projects                        |
+| FakeItEasy  | Acceptable alternative                            |
+| Moq         | Existing projects only (pin to 4.18.x or 4.20.2+) |
 
 ## Test Naming
 

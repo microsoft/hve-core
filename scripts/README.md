@@ -23,6 +23,7 @@ scripts/
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
+├── plugins/         Copilot CLI plugin generation and validation
 ├── security/        Security scanning and SHA pinning scripts
 └── tests/           Pester test organization
 ```

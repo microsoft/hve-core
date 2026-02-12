@@ -143,11 +143,11 @@ Start responses with an operation label: **Detected**, **Saved**, or **Restored*
 
 Provide a summary table on save or restore:
 
-| Field            | Description               |
-| ---------------- | ------------------------- |
-| **File**         | Path to memory file       |
-| **Topic**        | Session topic summary     |
-| **Pending**      | Count of pending tasks    |
+| Field              | Description                              |
+|--------------------|------------------------------------------|
+| **File**           | Path to memory file                      |
+| **Topic**          | Session topic summary                    |
+| **Pending**        | Count of pending tasks                   |
 | **Open Questions** | Count of unresolved items (restore only) |
 
 On save, include resume instructions: `/clear` then `/checkpoint continue {{description}}`.

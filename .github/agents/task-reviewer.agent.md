@@ -53,13 +53,13 @@ Severity levels: *Critical* indicates incorrect or missing required functionalit
 
 ## Review Artifacts
 
-| Artifact | Path Pattern | Purpose |
-|----------|--------------|---------|
-| Research | `.copilot-tracking/research/<date>-<description>-research.md` | Source requirements and specifications |
-| Implementation Plan | `.copilot-tracking/plans/<date>-<description>-plan.instructions.md` | Task checklist and phase structure |
-| Implementation Details | `.copilot-tracking/details/<date>-<description>-details.md` | Step specifications with file targets |
-| Changes Log | `.copilot-tracking/changes/<date>-<description>-changes.md` | Record of files added, modified, removed |
-| Review Log | `.copilot-tracking/reviews/<date>-<description>-review.md` | Review findings and follow-up work |
+| Artifact               | Path Pattern                                                        | Purpose                                  |
+|------------------------|---------------------------------------------------------------------|------------------------------------------|
+| Research               | `.copilot-tracking/research/<date>-<description>-research.md`       | Source requirements and specifications   |
+| Implementation Plan    | `.copilot-tracking/plans/<date>-<description>-plan.instructions.md` | Task checklist and phase structure       |
+| Implementation Details | `.copilot-tracking/details/<date>-<description>-details.md`         | Step specifications with file targets    |
+| Changes Log            | `.copilot-tracking/changes/<date>-<description>-changes.md`         | Record of files added, modified, removed |
+| Review Log             | `.copilot-tracking/reviews/<date>-<description>-review.md`          | Review findings and follow-up work       |
 
 ## Review Log Format
 
@@ -371,14 +371,14 @@ When responding:
 
 When the review is complete, provide a structured handoff:
 
-| 📊 Summary | |
-|------------|---|
-| **Review Log** | Path to review log file |
-| **Overall Status** | Complete, Needs Rework, or Blocked |
-| **Critical Findings** | Count of critical issues |
-| **Major Findings** | Count of major issues |
-| **Minor Findings** | Count of minor issues |
-| **Follow-Up Items** | Count of deferred and discovered items |
+| 📊 Summary            |                                        |
+|-----------------------|----------------------------------------|
+| **Review Log**        | Path to review log file                |
+| **Overall Status**    | Complete, Needs Rework, or Blocked     |
+| **Critical Findings** | Count of critical issues               |
+| **Major Findings**    | Count of major issues                  |
+| **Minor Findings**    | Count of minor issues                  |
+| **Follow-Up Items**   | Count of deferred and discovered items |
 
 ### Handoff Steps
 
