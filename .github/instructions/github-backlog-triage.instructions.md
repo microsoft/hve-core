@@ -104,6 +104,8 @@ When `autonomy` is `full`, proceed directly to Step 3 without waiting for user c
 
 On user confirmation (or immediately under full autonomy), apply the approved recommendations.
 
+Before composing any comment or field value for a GitHub API call, scan for paths matching `.copilot-tracking/`. When found, follow the Local-Only Path Guard in *github-backlog-planning.instructions.md* to extract and inline the relevant details before proceeding.
+
 For classified non-duplicate issues (title matched a recognized conventional commit pattern), consolidate label assignment, milestone assignment, and `needs-triage` removal into a single API call per issue:
 
 1. Compute the new label set: `(current_labels - "needs-triage") + suggested_labels`.

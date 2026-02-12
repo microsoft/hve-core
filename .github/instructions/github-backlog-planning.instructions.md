@@ -676,11 +676,11 @@ Paths under `.copilot-tracking/` are gitignored and exist only in the local work
 Before composing an issue body, comment, or any field value destined for a GitHub API call, scan for paths matching `.copilot-tracking/`. When a match is found:
 
 1. Do not include the path in the GitHub-bound content.
-2. Extract the relevant details (findings, data points, or conclusions) from the referenced file and inline them into the issue body instead.
-3. Warn the user that a local-only path was detected and present the extracted details for confirmation before proceeding.
-4. Replace the file reference with a descriptive summary such as "Internal research" or "Local analysis" followed by the inlined details.
+2. Extract the relevant details (findings, data points, or conclusions) from the referenced file.
+3. Replace the path reference with a descriptive summary such as "Internal research" or "Local analysis" followed by the extracted details inlined into the content.
+4. Warn the user that a local-only path was detected and present the inlined content for confirmation before proceeding.
 
-This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, milestone descriptions). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*) may reference `.copilot-tracking/` paths because those files remain local.
+This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, and other text fields). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*, *handoff.md*, *handoff-logs.md*) may reference `.copilot-tracking/` paths because those files remain local.
 
 ## Three-Tier Autonomy Model
 

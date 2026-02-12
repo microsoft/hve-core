@@ -59,7 +59,7 @@ Validate the handoff before processing:
 * Verify label names are valid by calling `mcp_github_get_label` for each unique label in the plan.
 * Call `mcp_github_list_issue_types` to confirm whether the organization supports issue types before using the `type` field.
 * Map `{{TEMP-N}}` placeholders to execution order so parent issues are created before children that reference them.
-* Scan all issue body and comment content for paths matching `.copilot-tracking/`. When found, halt processing for that operation, warn the user, extract the relevant details from the referenced file, and present the inlined content for confirmation before proceeding. Follow the Local-Only Path Guard in *github-backlog-planning.instructions.md* for the full procedure.
+* Scan all issue body and comment content for paths matching `.copilot-tracking/`. When found, pause processing for that operation, warn the user, extract the relevant details from the referenced file, and present the inlined content for confirmation before proceeding. Follow the Local-Only Path Guard in *github-backlog-planning.instructions.md* for the full procedure.
 * When validation fails for a non-critical field (invalid label, unknown milestone), log a warning and continue. When validation fails for a critical field (missing repository, authentication error), abort with a message.
 
 ### Step 2: Process Operations
