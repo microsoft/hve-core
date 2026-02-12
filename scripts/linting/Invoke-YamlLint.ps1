@@ -50,45 +50,58 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-Write-Host "🔍 Running YAML Lint (actionlint)..." -ForegroundColor Cyan
+#region Functions
 
-# Check if actionlint is available
-$actionlintPath = Get-Command actionlint -ErrorAction SilentlyContinue
-if (-not $actionlintPath) {
-    Write-Error "actionlint is not installed. See script help for installation instructions."
-    exit 1
-}
+function Invoke-YamlLintCore {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [switch]$ChangedFilesOnly,
 
-Write-Verbose "Using actionlint: $($actionlintPath.Source)"
+        [Parameter(Mandatory = $false)]
+        [string]$BaseBranch = "origin/main",
 
-# Get files to analyze
-$workflowPath = ".github/workflows"
-$filesToAnalyze = @()
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "logs/yaml-lint-results.json"
+    )
 
-if ($ChangedFilesOnly) {
-    Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
-    $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml'))
-    $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
-}
-else {
-    Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
-    if (Test-Path $workflowPath) {
-        $filesToAnalyze = @(Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName })
+    Write-Host "🔍 Running YAML Lint (actionlint)..." -ForegroundColor Cyan
+
+    # Check if actionlint is available
+    $actionlintPath = Get-Command actionlint -ErrorAction SilentlyContinue
+    if (-not $actionlintPath) {
+        throw "actionlint is not installed. See script help for installation instructions."
     }
-}
 
-if (@($filesToAnalyze).Count -eq 0) {
-    Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
-    Set-CIOutput -Name "count" -Value "0"
-    Set-CIOutput -Name "issues" -Value "0"
-    exit 0
-}
+    Write-Verbose "Using actionlint: $($actionlintPath.Source)"
 
-Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
-Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
+    # Get files to analyze
+    $workflowPath = ".github/workflows"
+    $filesToAnalyze = @()
 
-#region Main Execution
-try {
+    if ($ChangedFilesOnly) {
+        Write-Host "Detecting changed workflow files..." -ForegroundColor Cyan
+        $changedFiles = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.yml', '*.yaml'))
+        $filesToAnalyze = @($changedFiles | Where-Object { $_ -like "$workflowPath/*" })
+    }
+    else {
+        Write-Host "Analyzing all workflow files..." -ForegroundColor Cyan
+        if (Test-Path $workflowPath) {
+            $filesToAnalyze = @(Get-ChildItem -Path $workflowPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | ForEach-Object { $_.FullName })
+        }
+    }
+
+    if (@($filesToAnalyze).Count -eq 0) {
+        Write-Host "✅ No workflow files to analyze" -ForegroundColor Green
+        Set-CIOutput -Name "count" -Value "0"
+        Set-CIOutput -Name "issues" -Value "0"
+        return
+    }
+
+    Write-Host "Analyzing $($filesToAnalyze.Count) workflow files..." -ForegroundColor Cyan
+    Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
+
     # Run actionlint with JSON output
     $actionlintArgs = @('-format', '{{json .}}')
     if ($ChangedFilesOnly -and $filesToAnalyze.Count -gt 0) {
@@ -161,7 +174,7 @@ try {
     if ($summary.TotalIssues -eq 0) {
         Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) workflow files passed validation."
         Write-Host "`n✅ All workflow files passed YAML linting!" -ForegroundColor Green
-        exit 0
+        return
     }
     else {
         Write-CIStepSummary -Content @"
@@ -175,12 +188,24 @@ try {
 "@
         
         Write-Host "`n❌ YAML Lint found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        throw "YAML Lint found $($summary.TotalIssues) issue(s)"
+    }
+}
+
+#endregion Functions
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-YamlLintCore -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -OutputPath $OutputPath
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "YAML Lint failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }
-catch {
-    Write-Error -ErrorAction Continue "YAML Lint failed: $($_.Exception.Message)"
-    Write-CIAnnotation -Message "YAML Lint failed: $($_.Exception.Message)" -Level Error
-    exit 1
-}
-#endregion
+
+#endregion Main Execution

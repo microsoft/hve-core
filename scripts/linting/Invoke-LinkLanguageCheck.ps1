@@ -20,8 +20,6 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
-
 function Invoke-LinkLanguageCheckCore {
     [CmdletBinding()]
     param(
@@ -138,8 +136,15 @@ No URLs with language-specific paths detected.
 }
 
 #region Main Execution
-if (-not $script:SkipMain) {
-    $exitCode = Invoke-LinkLanguageCheckCore -ExcludePaths $ExcludePaths
-    exit $exitCode
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        $exitCode = Invoke-LinkLanguageCheckCore -ExcludePaths $ExcludePaths
+        exit $exitCode
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Invoke-LinkLanguageCheck failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
-#endregion
+#endregion Main Execution

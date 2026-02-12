@@ -30,41 +30,58 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
-Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
+#region Functions
 
-# Ensure PSScriptAnalyzer is available
-if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-    Write-Host "Installing PSScriptAnalyzer module..." -ForegroundColor Yellow
-    Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
-}
+function Invoke-PSScriptAnalyzerCore {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [switch]$ChangedFilesOnly,
 
-Import-Module PSScriptAnalyzer
+        [Parameter(Mandatory = $false)]
+        [string]$BaseBranch = "origin/main",
 
-# Get files to analyze
-$filesToAnalyze = @()
+        [Parameter(Mandatory = $false)]
+        [string]$ConfigPath = (Join-Path $PSScriptRoot "PSScriptAnalyzer.psd1"),
 
-if ($ChangedFilesOnly) {
-    Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
-    $filesToAnalyze = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1'))
-}
-else {
-    Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
-    $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-    $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
-}
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "logs/psscriptanalyzer-results.json"
+    )
 
-if (@($filesToAnalyze).Count -eq 0) {
-    Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
-    Set-CIOutput -Name "count" -Value "0"
-    Set-CIOutput -Name "issues" -Value "0"
-    exit 0
-}
+    Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
-Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
-Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
+    # Ensure PSScriptAnalyzer is available
+    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+        Write-Host "Installing PSScriptAnalyzer module..." -ForegroundColor Yellow
+        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+    }
 
-#region Main Execution
-try {
+    Import-Module PSScriptAnalyzer
+
+    # Get files to analyze
+    $filesToAnalyze = @()
+
+    if ($ChangedFilesOnly) {
+        Write-Host "Detecting changed PowerShell files..." -ForegroundColor Cyan
+        $filesToAnalyze = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.ps1', '*.psm1', '*.psd1'))
+    }
+    else {
+        Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
+        $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
+        $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
+    }
+
+    if (@($filesToAnalyze).Count -eq 0) {
+        Write-Host "✅ No PowerShell files to analyze" -ForegroundColor Green
+        Set-CIOutput -Name "count" -Value "0"
+        Set-CIOutput -Name "issues" -Value "0"
+        return
+    }
+
+    Write-Host "Analyzing $($filesToAnalyze.Count) PowerShell files..." -ForegroundColor Cyan
+    Set-CIOutput -Name "count" -Value $filesToAnalyze.Count
+
     # Run PSScriptAnalyzer
     $allResults = @()
     $hasErrors = $false
@@ -139,7 +156,7 @@ try {
     if ($summary.TotalIssues -eq 0) {
         Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($summary.TotalFiles) PowerShell files passed linting checks."
         Write-Host "`n✅ All PowerShell files passed PSScriptAnalyzer checks!" -ForegroundColor Green
-        exit 0
+        return
     }
     else {
         Write-CIStepSummary -Content @"
@@ -155,12 +172,24 @@ try {
 "@
     
         Write-Host "`n❌ PSScriptAnalyzer found $($summary.TotalIssues) issue(s)" -ForegroundColor Red
+        throw "PSScriptAnalyzer found $($summary.TotalIssues) issue(s)"
+    }
+}
+
+#endregion Functions
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-PSScriptAnalyzerCore -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -ConfigPath $ConfigPath -OutputPath $OutputPath
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "PSScriptAnalyzer failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }
-catch {
-    Write-Error -ErrorAction Continue "PSScriptAnalyzer failed: $($_.Exception.Message)"
-    Write-CIAnnotation -Message "PSScriptAnalyzer failed: $($_.Exception.Message)" -Level Error
-    exit 1
-}
-#endregion
+
+#endregion Main Execution

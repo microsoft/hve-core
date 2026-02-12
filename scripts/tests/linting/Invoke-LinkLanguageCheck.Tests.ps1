@@ -21,15 +21,12 @@ BeforeAll {
     Import-Module $script:ModulePath -Force
     Import-Module $script:CIHelpersPath -Force
 
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
     . $script:ScriptPath
 }
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
     Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 #region Link-Lang-Check Invocation Tests
