@@ -642,25 +642,25 @@ Evaluate milestone titles to identify the dominant naming pattern. A pattern is 
 
 ### Role Classification
 
-Classify each milestone into an abstract role using these signals in precedence order:
+Classify each milestone into two orthogonal abstract roles using these signals in precedence order: one stability role and one proximity role.
 
-1. Explicit pre-release suffix in the title (`-beta`, `-rc`, `-preview`, `-alpha`): assign `pre-release` role. Highest signal.
-2. Description keywords: `stable`, `release`, `production`, `GA`, `LTS` suggest `stable` role. `pre-release`, `preview`, `beta`, `RC`, `experimental`, `development`, `canary`, `nightly` suggest `pre-release` role. Strong signal.
-3. Version number parity (SemVer only): even minor version suggests `stable`, odd minor version suggests `pre-release`. Weak signal, used when stronger signals are absent.
-4. Due date proximity (tiebreaker): use date ordering only to choose between `current`, `next`, and `backlog`. The nearest future due date with open issues is `current`, the second-nearest is `next`, and remaining milestones (including those without due dates) are `backlog`. Do not use due dates to distinguish `stable` versus `pre-release`; that distinction comes only from signals 1–3.
+1. Explicit pre-release suffix in the title (`-beta`, `-rc`, `-preview`, `-alpha`): assign `pre-release` stability role. Highest signal.
+2. Description keywords: `stable`, `release`, `production`, `GA`, `LTS` suggest `stable` stability role. `pre-release`, `preview`, `beta`, `RC`, `experimental`, `development`, `canary`, `nightly` suggest `pre-release` stability role. Strong signal.
+3. Version number parity (SemVer only): even minor version suggests `stable`, odd minor version suggests `pre-release`. Weak signal, used when stronger stability signals are absent.
+4. Due date proximity (tiebreaker for proximity only): use date ordering only to choose between `current`, `next`, and `backlog` proximity roles. The nearest future due date with open issues is `current`, the second-nearest is `next`, and remaining milestones (including those without due dates) are `backlog`. Do not use due dates to distinguish `stable` versus `pre-release`; that distinction comes only from signals 1–3.
 
-For CalVer, sprint, and feature naming patterns, apply the same date-based rule: nearest due date is `current`, second-nearest is `next`, and milestones without due dates or with distant due dates are `backlog`.
+For CalVer, sprint, and feature naming patterns, apply the same date-based rule for proximity roles: nearest due date is `current`, second-nearest is `next`, and milestones without due dates or with distant due dates are `backlog`.
 
 ### Assignment Map
 
-Map issue characteristics to target milestone roles after completing the discovery steps.
+Map issue characteristics to target milestone roles (stability and proximity) after completing the discovery steps.
 
-| Issue Characteristic         | Target Milestone Role                     |
-| ---------------------------- | ----------------------------------------- |
-| Bug fix (production)         | nearest stable or current                 |
-| Security vulnerability       | nearest stable or current (expedited)     |
-| Maintenance and refactoring  | nearest stable or current                 |
-| Documentation improvement    | nearest stable or current                 |
+| Issue Characteristic         | Target Milestone Roles (stability, proximity) |
+| ---------------------------- | --------------------------------------------- |
+| Bug fix (production)         | nearest stable or current                     |
+| Security vulnerability       | nearest stable or current (expedited)         |
+| Maintenance and refactoring  | nearest stable or current                     |
+| Documentation improvement    | nearest stable or current                     |
 | New feature                  | nearest pre-release or next               |
 | Breaking change              | nearest pre-release or next               |
 | Experimental capability      | nearest pre-release or next               |
