@@ -37,7 +37,9 @@ The RPI (Research → Plan → Implement) methodology structures complex enginee
 
 ### VS Code Extension (Simplest)
 
-**Recommended for most users:** Install HVE Core directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for zero-configuration setup.
+**Recommended for most users:** Install HVE Core directly from the VS Code Marketplace for zero-configuration setup:
+
+[![Install from Marketplace](https://img.shields.io/badge/Install_from_Marketplace-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
 See [Extension Installation Guide](docs/getting-started/methods/extension.md) for details.
 
@@ -64,10 +66,9 @@ See [CLI Plugin Installation Guide](docs/getting-started/methods/cli-plugins.md)
 
 For customization or team version control, use the `hve-core-installer` agent:
 
-* [Install HVE Core](https://aka.ms/install-hve-core) — VS Code stable
-* [Install in VS Code Insiders](https://aka.ms/install-hve-core-insiders) — VS Code Insiders
+[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
 
-Or start a guided installation:
+After installing the agent:
 
 1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
 2. Select `hve-core-installer` from the agent list
