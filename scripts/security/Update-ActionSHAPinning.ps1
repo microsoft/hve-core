@@ -702,7 +702,7 @@ function Get-SHAForAction {
 
 function Update-WorkflowFile {
     [CmdletBinding(SupportsShouldProcess)]
-    [OutputType([hashtable])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
         [string]$FilePath
@@ -717,7 +717,7 @@ function Update-WorkflowFile {
 
         if (@($actions).Count -eq 0) {
             Write-SecurityLog "No GitHub Actions found in $FilePath" -Level 'Info'
-            return @{
+            return [PSCustomObject]@{
                 FilePath         = $FilePath
                 ActionsProcessed = 0
                 ActionsPinned    = 0
@@ -777,7 +777,7 @@ function Update-WorkflowFile {
             }
         }
 
-        return @{
+        return [PSCustomObject]@{
             FilePath         = $FilePath
             ActionsProcessed = @($actions).Count
             ActionsPinned    = $actionsPinned
@@ -788,7 +788,7 @@ function Update-WorkflowFile {
     }
     catch {
         Write-SecurityLog "Error processing $FilePath : $($_.Exception.Message)" -Level 'Error'
-        return @{
+        return [PSCustomObject]@{
             FilePath         = $FilePath
             ActionsProcessed = 0
             ActionsPinned    = 0

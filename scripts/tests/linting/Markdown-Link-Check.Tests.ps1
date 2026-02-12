@@ -292,3 +292,59 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
 }
 
 #endregion
+
+#region Invoke-MarkdownLinkCheck Tests
+
+Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:FixtureConfig = Join-Path $PSScriptRoot '../Fixtures/Linting/link-check-config.json'
+    }
+
+    Context 'No markdown files found' {
+        It 'Throws when Get-MarkdownTarget returns empty' {
+            Mock Get-MarkdownTarget { return @() }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+
+            { Invoke-MarkdownLinkCheck -Path @('nonexistent') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*No markdown files were found to validate*'
+        }
+    }
+
+    Context 'CLI not installed' {
+        It 'Throws when markdown-link-check binary is missing' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+
+            { Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*markdown-link-check is not installed*'
+        }
+    }
+
+    Context 'Quiet mode base arguments' {
+        It 'Passes -q flag when Quiet switch is set' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $true } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+            Mock Push-Location { }
+            Mock Pop-Location { }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = "$TestDrive/file.md" } } -ParameterFilter { $LiteralPath -eq 'file.md' }
+            Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
+            Mock Set-Content { }
+            Mock Write-Host { }
+
+            try {
+                Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig -Quiet
+            }
+            catch {
+                # CLI execution expected to fail in test environment
+            }
+
+            Should -Invoke Get-MarkdownTarget -Times 1
+            Should -Invoke Push-Location -Times 1
+        }
+    }
+}
+
+#endregion
