@@ -678,9 +678,11 @@ Before composing an issue body, comment, or any field value destined for a GitHu
 1. Do not include the path in the GitHub-bound content.
 2. Extract the relevant details (findings, data points, or conclusions) from the referenced file.
 3. Replace the path reference with a descriptive summary such as "Internal research" or "Local analysis" followed by the extracted details inlined into the content.
-4. Warn the user that a local-only path was detected and present the inlined content for confirmation before proceeding.
+4. Handle user notification and confirmation according to the active autonomy tier:
+   * **Full Autonomy**: Do not introduce a confirmation gate. Log or summarize that a local-only path was detected, show the inlined replacement in the response, and proceed automatically with the GitHub operation.
+   * **Partial Autonomy** and **Confirmed Autonomy**: Warn the user that a local-only path was detected and present the inlined content for explicit confirmation before proceeding.
 
-This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, and other text fields). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*, *handoff.md*, *handoff-logs.md*) may reference `.copilot-tracking/` paths because those files remain local.
+This rule applies to all operation types (Create, Update, Comment) and all content fields (title, body, labels, and other text fields). Planning files (*issue-analysis.md*, *planning-log.md*, *issues-plan.md*, *handoff.md*, *handoff-logs.md*) may reference `.copilot-tracking/` paths because those files remain local. The confirmation behavior in step 4 is governed by the Three-Tier Autonomy Model defined below.
 
 ## Three-Tier Autonomy Model
 
