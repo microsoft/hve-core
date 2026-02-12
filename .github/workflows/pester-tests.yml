@@ -131,7 +131,19 @@ jobs:
           if ($codeCoverage -and $results.CodeCoverage) {
             $coveragePercent = [math]::Round($results.CodeCoverage.CoveragePercent, 2)
             Write-Host "Code coverage: $coveragePercent%"
-            "coverage=$coveragePercent" >> $env:GITHUB_OUTPUT
+            if ($env:GITHUB_OUTPUT) {
+              $outDir = Split-Path -Parent $env:GITHUB_OUTPUT
+              if ($outDir -and -not (Test-Path $outDir)) {
+                New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+              }
+              if (-not (Test-Path $env:GITHUB_OUTPUT)) {
+                New-Item -ItemType File -Path $env:GITHUB_OUTPUT -Force | Out-Null
+              }
+              "coverage=$coveragePercent" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            }
+            else {
+              Write-Warning "GITHUB_OUTPUT not set; skipping coverage output export."
+            }
           }
         continue-on-error: ${{ inputs.soft-fail }}
 

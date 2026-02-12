@@ -554,7 +554,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error "Invoke-MyValidator failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Invoke-MyValidator failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

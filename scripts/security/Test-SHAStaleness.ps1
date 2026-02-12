@@ -78,6 +78,9 @@ $ErrorActionPreference = 'Stop'
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
+# Script-scope collection of stale dependencies (used by multiple functions)
+$script:StaleDependencies = @()
+
 function Write-SecurityLog {
     param(
         [Parameter(Mandatory = $true)]
@@ -903,7 +906,7 @@ function Invoke-SHAStalenessCheck {
     Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
     Write-SecurityLog "Output format: $OutputFormat" -Level Info
 
-    # Initialize stale dependencies array
+    # Reset stale dependencies for this run
     $script:StaleDependencies = @()
 
     # Run staleness check for GitHub Actions

@@ -166,7 +166,7 @@ function Invoke-CopyrightHeaderCheck {
     [OutputType([void])]
     param(
         [Parameter(Mandatory = $false)]
-        [string]$Path = ((git rev-parse --show-toplevel 2>$null) ?? '.'),
+        [string]$Path = $(if ($p = git rev-parse --show-toplevel 2>$null) { $p } else { '.' }),
 
         [Parameter(Mandatory = $false)]
         [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh'),

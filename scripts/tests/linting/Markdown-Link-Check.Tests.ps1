@@ -338,7 +338,7 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
                 Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig -Quiet
             }
             catch {
-                # CLI execution expected to fail in test environment
+                Write-Verbose "CLI execution expected to fail in test environment: $_"
             }
 
             Should -Invoke Get-MarkdownTarget -Times 1

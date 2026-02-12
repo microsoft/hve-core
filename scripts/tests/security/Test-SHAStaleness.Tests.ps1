@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -459,6 +459,7 @@ jobs:
             # Save original environment
             $script:OriginalGHA = $env:GITHUB_ACTIONS
             $script:OriginalADO = $env:TF_BUILD
+            $script:OriginalGHOutput = $env:GITHUB_OUTPUT
             
             # Create test workflow
             $workflowContent = @'
@@ -479,6 +480,7 @@ jobs:
         AfterEach {
             $env:GITHUB_ACTIONS = $script:OriginalGHA
             $env:TF_BUILD = $script:OriginalADO
+            $env:GITHUB_OUTPUT = $script:OriginalGHOutput
             Set-Location $script:OriginalLocation
         }
 
@@ -660,7 +662,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
             }
 
             $sha = 'aaaa' * 10
-            $result = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
+            $null = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
                 "owner/repo@$sha" = @{ Repo = 'owner/repo'; SHA = $sha; File = 'test.yml' }
             }
 
@@ -680,7 +682,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
             }
 
             $sha = 'aaaa' * 10
-            $result = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
+            $null = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
                 "owner/repo@$sha" = @{ Repo = 'owner/repo'; SHA = $sha; File = 'test.yml' }
             }
 
@@ -701,7 +703,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
             }
 
             $sha = 'aaaa' * 10
-            $result = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
+            $null = Get-BulkGitHubActionsStaleness -ActionRepos @('owner/repo') -ShaToActionMap @{
                 "owner/repo@$sha" = @{ Repo = 'owner/repo'; SHA = $sha; File = 'test.yml' }
             }
 
@@ -814,7 +816,7 @@ jobs:
                 Mock Write-SecurityLog { }
                 Mock Get-BulkGitHubActionsStaleness { return @() }
 
-                $result = Test-GitHubActionsForStaleness
+                $null = Test-GitHubActionsForStaleness
 
                 # No SHA-pinned actions found = early return
                 Should -Not -Invoke Get-BulkGitHubActionsStaleness
@@ -842,7 +844,7 @@ jobs:
                 Mock Write-SecurityLog { }
                 Mock Get-BulkGitHubActionsStaleness { return @() }
 
-                $result = Test-GitHubActionsForStaleness
+                $null = Test-GitHubActionsForStaleness
 
                 Should -Invoke Get-BulkGitHubActionsStaleness -Times 1
             }
