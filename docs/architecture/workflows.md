@@ -136,7 +136,7 @@ flowchart LR
     style RP fill:#f9f,stroke:#333
 ```
 
-The release-please job includes a commit-message guard that skips execution when the push originates from a release-please bot merge (`chore(main): release ...`). This prevents an infinite loop where the bot's own merge commit would re-trigger the release workflow.
+The release-please job includes a commit-message guard that skips execution when the head commit message starts with `chore(main): release`. This prevents an infinite loop where release-please-generated merge commits would re-trigger the release workflow.
 
 ### Main Branch Jobs
 
@@ -147,7 +147,7 @@ The release-please job includes a commit-message guard that skips execution when
 | table-format              | Post-merge table validation    | None                                         |
 | dependency-pinning-scan   | Security pinning check         | None                                         |
 | pester-tests              | PowerShell unit tests          | None                                         |
-| release-please            | Automated release management   | All validation jobs (skipped on bot commits) |
+| release-please            | Automated release management   | All validation jobs (skipped on release commits) |
 | extension-package-release | Build release VSIX             | release-please (conditional)                 |
 | attest-and-upload         | Sign and upload VSIX           | extension-package-release                    |
 
