@@ -63,7 +63,9 @@ jobs:
           
           if ($changedFiles.Count -eq 0) {
             Write-Host "No changed PowerShell files found"
-            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            if ($env:GITHUB_ENV) {
+              "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            }
             exit 0
           }
           
@@ -93,12 +95,16 @@ jobs:
           $testFiles = @($testFiles | Select-Object -Unique)
           if ($testFiles.Count -eq 0) {
             Write-Host "No matching test files for changed PowerShell files"
-            "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            if ($env:GITHUB_ENV) {
+              "HAS_CHANGES=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+            }
           } else {
             Write-Host "Found $($testFiles.Count) test file(s) to run:"
             $testFiles | ForEach-Object { Write-Host "  - $_" }
-            "HAS_CHANGES=true" | Out-File -FilePath $env:GITHUB_ENV -Append
-            "TEST_PATHS=$($testFiles -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+            if ($env:GITHUB_ENV) {
+              "HAS_CHANGES=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+              "TEST_PATHS=$($testFiles -join ';')" | Out-File -FilePath $env:GITHUB_ENV -Append
+            }
           }
 
       - name: Run Pester Tests
@@ -123,7 +129,7 @@ jobs:
           $config = & './scripts/tests/pester.config.ps1' @params
           $results = Invoke-Pester -Configuration $config
 
-          if ($results.FailedCount -gt 0) {
+          if ($results.FailedCount -gt 0 -and $env:GITHUB_ENV) {
             "PESTER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
 

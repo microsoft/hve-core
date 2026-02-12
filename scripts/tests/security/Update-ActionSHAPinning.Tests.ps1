@@ -146,7 +146,7 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
     }
 
     Context 'Return value structure' {
-        It 'Returns hashtable with FilePath' {
+        It 'Returns PSCustomObject with FilePath' {
             $result = Update-WorkflowFile -FilePath $script:TestWorkflow
             $result | Should -BeOfType [PSCustomObject]
             $result.FilePath | Should -Be $script:TestWorkflow
