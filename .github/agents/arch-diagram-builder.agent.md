@@ -25,11 +25,11 @@ This workflow guides diagram generation through four stages:
 
 ### Arrow Types
 
-| Arrow   | Meaning                          |
-|---------|----------------------------------|
-| `---->` | Data flow / dependency           |
-| `<--->` | Bidirectional connection         |
-| `- - >` | Optional / conditional resource  |
+| Arrow   | Meaning                         |
+|---------|---------------------------------|
+| `---->` | Data flow / dependency          |
+| `<--->` | Bidirectional connection        |
+| `- - >` | Optional / conditional resource |
 
 ### Grouping
 
@@ -102,9 +102,9 @@ Diagram titles follow the format `<Solution or Project Name> Architecture` in ti
 |  :  +------------------+        +--------+---------+     :    |
 |  :                              +--------v---------+     :    |
 |  :                              |       ACR        |     :    |
-|  :                              +------------------+     :    |
-|  :-------------------------------------------------------:    |
-|  +------------------+        +------------------+             |
+| :                              +------------------+     : |
+|:---------------------------------------------------------:|
+|     +------------------+        +------------------+      |
 |  | Log Analytics    |<-------|  App Insights    |             |
 |  +------------------+        +------------------+             |
 +===============================================================+

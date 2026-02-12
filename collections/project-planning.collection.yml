@@ -1,0 +1,74 @@
+id: project-planning
+name: Project Planning
+description: PRDs, BRDs, ADRs, architecture diagrams, and documentation operations
+tags:
+  - documentation
+  - architecture
+  - adr
+  - brd
+  - prd
+  - diagrams
+  - planning
+items:
+  # Agents
+  - path: .github/agents/doc-ops.agent.md
+    kind: agent
+  - path: .github/agents/adr-creation.agent.md
+    kind: agent
+  - path: .github/agents/arch-diagram-builder.agent.md
+    kind: agent
+  - path: .github/agents/brd-builder.agent.md
+    kind: agent
+  - path: .github/agents/prd-builder.agent.md
+    kind: agent
+  # RPI agents
+  - path: .github/agents/rpi-agent.agent.md
+    kind: agent
+  - path: .github/agents/task-researcher.agent.md
+    kind: agent
+  - path: .github/agents/task-planner.agent.md
+    kind: agent
+  - path: .github/agents/task-implementor.agent.md
+    kind: agent
+  - path: .github/agents/task-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/memory.agent.md
+    kind: agent
+  # Prompt Engineering agents
+  - path: .github/agents/prompt-builder.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/doc-ops-update.prompt.md
+    kind: prompt
+  # RPI prompts
+  - path: .github/prompts/rpi.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-research.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-plan.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-implement.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-review.prompt.md
+    kind: prompt
+  - path: .github/prompts/checkpoint.prompt.md
+    kind: prompt
+  # Prompt Engineering prompts
+  - path: .github/prompts/prompt-analyze.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-build.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-refactor.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Prompt Engineering instructions
+  - path: .github/instructions/prompt-builder.instructions.md
+    kind: instruction
+display:
+  ordering: manual

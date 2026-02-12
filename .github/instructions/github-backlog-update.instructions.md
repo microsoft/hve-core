@@ -58,6 +58,7 @@ Validate the handoff before processing:
 * Verify label names are valid by calling `mcp_github_get_label` for each unique label in the plan.
 * Call `mcp_github_list_issue_types` to confirm whether the organization supports issue types before using the `type` field.
 * Map `{{TEMP-N}}` placeholders to execution order so parent issues are created before children that reference them.
+* Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md to all GitHub-bound fields (issue titles, bodies, comments, and other text fields) to resolve `.copilot-tracking/` paths and planning reference IDs (`IS[NNN]`) before execution.
 * When validation fails for a non-critical field (invalid label, unknown milestone), log a warning and continue. When validation fails for a critical field (missing repository, authentication error), abort with a message.
 
 ### Step 2: Process Operations
@@ -76,6 +77,7 @@ Checkpoint after each operation completes:
 * When `dryRun` is `true`, simulate the operation and log it as `dry-run` without executing (see the Dry Run Mode section).
 * After each Create, resolve the `{{TEMP-N}}` placeholder to the actual issue number returned by `mcp_github_issue_write`. Record the mapping in handoff-logs.md.
 * When a `{{TEMP-N}}` reference appears in a Link or Update operation, resolve it from the mapping table before calling the MCP tool.
+* Before each API call, re-apply the Planning Reference ID Guard from #file:./github-backlog-planning.instructions.md to catch planning reference IDs (such as `IS002`) that became resolvable after new `{{TEMP-N}}` mappings were established.
 * Update the checkbox to `[x]` in handoff.md after each operation completes.
 * Append an entry to handoff-logs.md recording the issue number, action taken, and any notes.
 * On failure, log the error and continue processing remaining operations. Do not abort the batch for a single failure.
@@ -97,7 +99,7 @@ When an operation has no pending changes:
 ## Supported Operations
 
 | Operation        | MCP Tool                       | Method   | Required Fields                                  |
-| ---------------- | ------------------------------ | -------- | ------------------------------------------------ |
+|------------------|--------------------------------|----------|--------------------------------------------------|
 | Create           | `mcp_github_issue_write`       | `create` | owner, repo, title, body, labels                 |
 | Update           | `mcp_github_issue_write`       | `update` | owner, repo, issue_number                        |
 | Close            | `mcp_github_issue_write`       | `update` | owner, repo, issue_number, state, state_reason   |
