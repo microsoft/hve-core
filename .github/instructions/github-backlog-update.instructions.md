@@ -78,7 +78,7 @@ Checkpoint after each operation completes:
 * When `dryRun` is `true`, simulate the operation and log it as `dry-run` without executing (see the Dry Run Mode section).
 * After each Create, resolve the `{{TEMP-N}}` placeholder to the actual issue number returned by `mcp_github_issue_write`. Record the mapping in handoff-logs.md.
 * When a `{{TEMP-N}}` reference appears in a Link or Update operation, resolve it from the mapping table before calling the MCP tool.
-* Before each API call, re-apply the Planning Reference ID Guard from #file:./github-backlog-planning.instructions.md to catch `IS[NNN]` references that became resolvable after new `{{TEMP-N}}` mappings were established.
+* Before each API call, re-apply the Planning Reference ID Guard from #file:./github-backlog-planning.instructions.md to catch planning reference IDs (such as `IS002`) that became resolvable after new `{{TEMP-N}}` mappings were established.
 * Update the checkbox to `[x]` in handoff.md after each operation completes.
 * Append an entry to handoff-logs.md recording the issue number, action taken, and any notes.
 * On failure, log the error and continue processing remaining operations. Do not abort the batch for a single failure.
