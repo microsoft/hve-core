@@ -1283,27 +1283,25 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
         }
 
         It 'Writes fail step summary and sets FRONTMATTER_VALIDATION_FAILED env var' {
-            $originalFrontmatterFailed = $env:FRONTMATTER_VALIDATION_FAILED
-            try {
-                $env:GITHUB_ACTIONS = 'true'
-                $stepSummaryPath = Join-Path $TestDrive 'step-summary-fail.md'
-                $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
+            Mock Set-CIEnv { }
 
-                # File without frontmatter generates warning; -WarningsAsErrors makes GetExitCode non-zero
-                $testFile = Join-Path $TestDrive 'fail-ci.md'
-                Set-Content $testFile "# No Frontmatter`n`nContent without YAML front matter."
+            $env:GITHUB_ACTIONS = 'true'
+            $stepSummaryPath = Join-Path $TestDrive 'step-summary-fail.md'
+            $env:GITHUB_STEP_SUMMARY = $stepSummaryPath
 
-                $null = Test-FrontmatterValidation -Files @($testFile) -WarningsAsErrors -SkipFooterValidation
+            # File without frontmatter generates warning; -WarningsAsErrors makes GetExitCode non-zero
+            $testFile = Join-Path $TestDrive 'fail-ci.md'
+            Set-Content $testFile "# No Frontmatter`n`nContent without YAML front matter."
 
-                Test-Path $stepSummaryPath | Should -BeTrue
-                $content = Get-Content $stepSummaryPath -Raw
-                $content | Should -Match 'Failed'
+            $null = Test-FrontmatterValidation -Files @($testFile) -WarningsAsErrors -SkipFooterValidation
 
-                # Environment variable should be set to indicate failure
-                $env:FRONTMATTER_VALIDATION_FAILED | Should -Not -BeNullOrEmpty
-            }
-            finally {
-                $env:FRONTMATTER_VALIDATION_FAILED = $originalFrontmatterFailed
+            Test-Path $stepSummaryPath | Should -BeTrue
+            $content = Get-Content $stepSummaryPath -Raw
+            $content | Should -Match 'Failed'
+
+            # Set-CIEnv writes to GITHUB_ENV file, not in-process env vars
+            Should -Invoke Set-CIEnv -Times 1 -Exactly -ParameterFilter {
+                $Name -eq 'FRONTMATTER_VALIDATION_FAILED' -and $Value -eq 'true'
             }
         }
     }
