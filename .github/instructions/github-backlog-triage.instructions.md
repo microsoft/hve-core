@@ -31,7 +31,7 @@ Unclassified issues (titles without a recognized conventional commit pattern) re
 
 Fetch and analyze untriaged issues to build a comprehensive triage assessment. Proceed to Phase 2 when all fetched issues have been analyzed and recorded.
 
-#### Step 1: Discover available milestones
+#### Step 1: Discover Available Milestones
 
 Before analyzing issues, discover the repository's milestone strategy. When `milestone` is provided as an override, skip this step and use that value.
 
@@ -221,7 +221,7 @@ Assess priority based on the suggested label to determine triage ordering. Proce
 | Normal   | `feature`, `enhancement`       | Assign to the appropriate milestone per the discovered strategy.                       |
 | Lower    | `documentation`, `maintenance` | Assign to the nearest stable or current milestone. Process after higher-priority items. |
 
-Issues with the `breaking-change` label are escalated to the nearest pre-release or next milestone regardless of other priority signals.
+Issues with the `breaking-change` label are escalated to the nearest pre-release or next milestone regardless of other priority signals. Under partial and manual autonomy, flag `breaking-change` issues for human review before applying milestone assignment, consistent with the Human Review Triggers in the planning specification.
 
 ## Error Handling
 

@@ -584,25 +584,25 @@ Agents must request user guidance when:
 
 The repository uses 17 labels organized by purpose. Labels influence milestone assignment through the milestone discovery protocol.
 
-| Label             | Description                                | Target Role                |
-| ----------------- | ------------------------------------------ | -------------------------- |
-| `bug`             | Something is not working                   | stable (fix)               |
-| `feature`         | New capability or functionality            | pre-release                |
-| `enhancement`     | Improvement to existing functionality      | any                        |
-| `documentation`   | Improvements or additions to documentation | any                        |
-| `maintenance`     | Chores, refactoring, dependency updates    | stable                     |
-| `security`        | Security vulnerability or hardening        | stable (expedited)         |
-| `breaking-change` | Incompatible API or behavior change        | pre-release (only)         |
-| `needs-triage`    | Requires label and milestone assignment    | none (pre-assignment)      |
-| `duplicate`       | This issue already exists                  | none (closed immediately)  |
-| `wontfix`         | This will not be worked on                 | none (closed)              |
-| `good-first-issue`| Good for newcomers                         | any                        |
-| `help-wanted`     | Extra attention is needed                  | any                        |
-| `question`        | Further information is requested           | none (informational)       |
-| `agents`          | Related to agent files                     | any                        |
-| `prompts`         | Related to prompt files                    | any                        |
-| `instructions`    | Related to instructions files              | any                        |
-| `infrastructure`  | CI/CD, workflows, build tooling            | stable                     |
+| Label             | Description                                          | Target Role   |
+| ----------------- | ---------------------------------------------------- | ------------- |
+| `bug`             | Something is not working; targets stable for fixes   | stable        |
+| `feature`         | New capability or functionality                      | pre-release   |
+| `enhancement`     | Improvement to existing functionality                | any           |
+| `documentation`   | Improvements or additions to documentation           | any           |
+| `maintenance`     | Chores, refactoring, dependency updates              | stable        |
+| `security`        | Security vulnerability or hardening; may be expedited | stable       |
+| `breaking-change` | Incompatible API or behavior change; pre-release only | pre-release  |
+| `needs-triage`    | Requires label and milestone assignment              | unclassified  |
+| `duplicate`       | This issue already exists; closed immediately        | unclassified  |
+| `wontfix`         | This will not be worked on; closed                   | unclassified  |
+| `good-first-issue` | Good for newcomers                                  | any           |
+| `help-wanted`     | Extra attention is needed                            | any           |
+| `question`        | Further information is requested; informational only | unclassified  |
+| `agents`          | Related to agent files                               | any           |
+| `prompts`         | Related to prompt files                              | any           |
+| `instructions`    | Related to instructions files                        | any           |
+| `infrastructure`  | CI/CD, workflows, build tooling                      | stable        |
 
 ### Label-to-Title Pattern Mapping
 
@@ -623,9 +623,9 @@ Discover the repository's milestone strategy at runtime by analyzing open milest
 
 ### Discovery Steps
 
-1. Fetch all open milestones using the GitHub Milestones API. Retrieve title, description, due_on, state, open_issues, and closed_issues. Sort by due date ascending (nearest first).
+1. Discover open milestones by sampling recent open issues. Call `mcp_github_search_issues` with `repo:{owner}/{repo} is:issue is:open` sorted by `updated` descending, retrieving up to 100 results. Extract the `milestone` object from each result and aggregate unique milestones by title. Collect available fields (title, description, due_on, state, open_issues, closed_issues) from the milestone objects. Sort discovered milestones by due date ascending (nearest first). This approach may not surface milestones with zero open issues; when comprehensive coverage is required, check for `.github/milestone-strategy.yml` as a supplement.
 2. Detect the dominant naming pattern from milestone titles using the rules in Naming Pattern Detection.
-3. Classify each milestone into an abstract role (`stable`, `pre-release`, `current`, `next`, `backlog`, `unclassified`) using the signal weighting in Role Classification.
+3. Classify each milestone into an abstract role (`stable`, `pre-release`, `current`, `next`, `backlog`, `any`, `unclassified`) using the signal weighting in Role Classification. The `any` role means the label does not constrain milestone selection.
 4. Build the assignment map linking issue characteristics to target roles using the Assignment Map.
 5. Record the detected naming pattern, per-milestone role classification, generated assignment map, and confidence level (high, medium, low) in planning-log.md.
 6. When confidence is low, check for `.github/milestone-strategy.yml` in the repository. If found, apply the declared strategy. If not found, present the discovered milestones to the user and request classification. When no user input is available, assign `unclassified` and flag for human review.
@@ -647,9 +647,9 @@ Classify each milestone into an abstract role using these signals in precedence 
 1. Explicit pre-release suffix in the title (`-beta`, `-rc`, `-preview`, `-alpha`): assign `pre-release` role. Highest signal.
 2. Description keywords: `stable`, `release`, `production`, `GA`, `LTS` suggest `stable` role. `pre-release`, `preview`, `beta`, `RC`, `experimental`, `development`, `canary`, `nightly` suggest `pre-release` role. Strong signal.
 3. Version number parity (SemVer only): even minor version suggests `stable`, odd minor version suggests `pre-release`. Weak signal, used when stronger signals are absent.
-4. Due date proximity (tiebreaker): nearest future due date with open issues is `current` or `stable`, second-nearest is `next` or `pre-release`.
+4. Due date proximity (tiebreaker): use date ordering only to choose between `current`, `next`, and `backlog`. The nearest future due date with open issues is `current`, the second-nearest is `next`, and remaining milestones (including those without due dates) are `backlog`. Do not use due dates to distinguish `stable` versus `pre-release`; that distinction comes only from signals 1–3.
 
-For CalVer, sprint, and feature naming patterns, classify by date proximity: nearest due date is `current`, second-nearest is `next`, milestones without due dates or with distant due dates are `backlog`.
+For CalVer, sprint, and feature naming patterns, apply the same date-based rule: nearest due date is `current`, second-nearest is `next`, and milestones without due dates or with distant due dates are `backlog`.
 
 ### Assignment Map
 
