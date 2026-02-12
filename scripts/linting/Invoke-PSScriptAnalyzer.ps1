@@ -145,7 +145,7 @@ function Invoke-PSScriptAnalyzerCore {
     }
 
     $allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
-    $summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
+    $summary | ConvertTo-Json | Out-File (Join-Path $logsDir "psscriptanalyzer-summary.json")
 
     # Set outputs
     Set-CIOutput -Name "issues" -Value $summary.TotalIssues
