@@ -668,8 +668,12 @@ Map issue characteristics to target milestone roles (stability and proximity) af
 | Low-risk enhancement         | nearest stable or current                 |
 | High-risk enhancement        | nearest pre-release or next               |
 
-When uncertain about milestone assignment, default to the nearest pre-release or next milestone and flag for human review.
+Compound role expressions combine a stability criterion (stable or pre-release) with a proximity criterion (current, next, backlog). Resolve them as follows:
 
+* For "nearest stable or current", first consider milestones classified as stable and choose the nearest among them. Only if no stable milestone exists, fall back to the nearest current milestone.
+* For "nearest pre-release or next", first consider milestones classified as pre-release and choose the nearest among them. Only if no pre-release milestone exists, fall back to the nearest next milestone.
+
+When uncertain about milestone assignment, or when no milestone clearly matches these rules, default to the nearest pre-release or next milestone and flag for human review.
 ## Issue Field Matrix
 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).
