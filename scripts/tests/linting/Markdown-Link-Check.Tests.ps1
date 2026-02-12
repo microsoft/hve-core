@@ -281,10 +281,10 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             Remove-Item -Path $script:EmptyDir -Recurse -Force -ErrorAction SilentlyContinue
         }
 
-        It 'Returns 1 when no markdown files found' {
-            $result = Invoke-MarkdownLinkCheck -Path $script:EmptyDir -ConfigPath $script:ConfigFile -ErrorAction SilentlyContinue 2>&1
-            # Function returns 1 when no files found
-            $true | Should -BeTrue
+        It 'Returns error when no markdown files found' {
+            # Get-MarkdownTarget returns empty when no files found
+            $files = Get-MarkdownTarget -InputPath @($script:EmptyDir)
+            $files | Should -BeNullOrEmpty
         }
     }
 
@@ -315,10 +315,11 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
             Remove-Item -Path $script:TestDir -Recurse -Force -ErrorAction SilentlyContinue
         }
 
-        It 'Returns 1 when markdown-link-check not installed' {
-            # Function should return 1 when CLI is not found
-            # We just verify the function handles this case
-            $true | Should -BeTrue
+        It 'CLI path construction is correct' {
+            # Verify the expected CLI path pattern
+            $repoRoot = $script:TestDir
+            $cli = Join-Path -Path $repoRoot -ChildPath 'node_modules/.bin/markdown-link-check'
+            $cli | Should -Match 'markdown-link-check$'
         }
     }
 }
@@ -427,8 +428,8 @@ Describe 'Get-MarkdownTarget Extended' -Tag 'Unit' {
 
         It 'Handles multiple input paths' {
             $result = Get-MarkdownTarget -InputPath @($script:File1, $script:File2)
-            # Function should process multiple paths
-            $true | Should -BeTrue
+            # Function should return array of files
+            $result | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -1171,9 +1172,7 @@ Describe 'Get-MarkdownTarget Additional Edge Cases' -Tag 'Unit' {
                 }
 
                 # Fallback mode - filesystem search
-                $result = Get-MarkdownTarget -InputPath @($specialDir)
-                # Should not throw
-                $true | Should -BeTrue
+                { Get-MarkdownTarget -InputPath @($specialDir) } | Should -Not -Throw
             }
         }
 

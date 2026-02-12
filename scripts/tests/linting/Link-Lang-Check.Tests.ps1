@@ -436,8 +436,8 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
                 if ($null -ne $jsonResult -and $jsonResult.Count -gt 0) {
                     $jsonResult.Count | Should -BeGreaterOrEqual 1
                 } else {
-                    # Script ran successfully but found no matches - acceptable
-                    $true | Should -BeTrue
+                    # Script ran successfully but found no matches - verify empty result
+                    $jsonResult | Should -BeNullOrEmpty
                 }
             }
             finally {
@@ -747,8 +747,9 @@ Link: https://docs.microsoft.com/en-us/windows
             # We test the Information stream behavior
             Invoke-LinkLanguageCheck -Fix
 
-            # Function should complete without error
-            $true | Should -BeTrue
+            # Function should complete and modify the file
+            $content = Get-Content -Path $script:VerboseFile -Raw
+            $content | Should -Not -Match 'en-us/'
         }
     }
 }

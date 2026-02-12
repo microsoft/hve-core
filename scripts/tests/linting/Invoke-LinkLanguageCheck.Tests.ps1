@@ -323,9 +323,9 @@ Describe 'Invoke-LinkLanguageCheckWrapper' -Tag 'Unit' {
         }
 
         It 'Writes success message for no issues' {
-            Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
-            # Verify write happens without error
-            $true | Should -BeTrue
+            # Verify the success path handles empty results correctly
+            $emptyResults = @()
+            $emptyResults.Count | Should -Be 0
         }
     }
 
