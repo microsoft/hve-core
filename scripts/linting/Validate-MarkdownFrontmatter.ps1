@@ -32,7 +32,9 @@ param(
         'scripts/tests/Fixtures/**',
         'extension/README.md',
         'pr.md',
-        '.github/PULL_REQUEST_TEMPLATE.md'
+        '.github/PULL_REQUEST_TEMPLATE.md',
+        'plugins/**',
+        'docs/catalog.md'
     ),
 
     [Parameter(Mandatory = $false)]
