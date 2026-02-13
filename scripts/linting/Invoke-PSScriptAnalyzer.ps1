@@ -138,8 +138,14 @@ function Invoke-PSScriptAnalyzerCore {
         HasErrors      = $hasErrors
     }
 
+    # Ensure logs directory exists
+    $logsDir = Split-Path $OutputPath -Parent
+    if (-not (Test-Path $logsDir)) {
+        New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
+    }
+
     $allResults | ConvertTo-Json -Depth 5 | Out-File $OutputPath
-    $summary | ConvertTo-Json | Out-File "logs/psscriptanalyzer-summary.json"
+    $summary | ConvertTo-Json | Out-File (Join-Path $logsDir "psscriptanalyzer-summary.json")
 
     # Set outputs
     Set-CIOutput -Name "issues" -Value $summary.TotalIssues
