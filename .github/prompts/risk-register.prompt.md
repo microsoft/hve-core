@@ -64,11 +64,11 @@ Include the following sections:
 
   **Example:**
 
-  | Risk ID | Risk Title                 | Description (Cause → Event → Impact)                                                                                                     | Probability | Impact | Risk Score (Qualitative) | Risk Score (Numeric) |
-  |---------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|-------------|--------|--------------------------|----------------------|
-  | R-001   | API rate limits exceeded   | High request volume without effective throttling → API rate limits are exceeded → Requests fail and downstream workflows degrade         | High        | Medium | High × Medium            | 6                    |
-  | R-002   | Key developer unavailable  | Single point of knowledge in a key area → Key developer becomes unavailable → Delivery slows and defects increase                        | Medium      | High   | Medium × High            | 6                    |
-  | R-003   | Third-party service outage | Dependency on an external provider → Third-party service becomes unavailable → Features relying on it fail and user experience degrades  | Medium      | Medium | Medium × Medium          | 4                    |
+  | Risk ID | Risk Title                 | Description (Cause → Event → Impact)                                                                                                    | Probability | Impact | Risk Score (Qualitative) | Risk Score (Numeric) |
+  |---------|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-------------|--------|--------------------------|----------------------|
+  | R-001   | API rate limits exceeded   | High request volume without effective throttling → API rate limits are exceeded → Requests fail and downstream workflows degrade        | High        | Medium | High × Medium            | 6                    |
+  | R-002   | Key developer unavailable  | Single point of knowledge in a key area → Key developer becomes unavailable → Delivery slows and defects increase                       | Medium      | High   | Medium × High            | 6                    |
+  | R-003   | Third-party service outage | Dependency on an external provider → Third-party service becomes unavailable → Features relying on it fail and user experience degrades | Medium      | Medium | Medium × Medium          | 4                    |
 
 * **Detailed Risk Entries**:
   * Risk ID and Title

@@ -21,7 +21,9 @@
     "extension:prepare:prerelease": "pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease",
     "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
-    "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1"
+    "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
+    "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
+    "plugin:validate": "pwsh -File scripts/plugins/Validate-Collections.ps1"
   },
   "devDependencies": {
     "cspell": "9.6.4",

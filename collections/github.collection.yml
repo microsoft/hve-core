@@ -1,0 +1,83 @@
+id: github
+name: GitHub Backlog Management
+description: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
+tags:
+  - github
+  - issues
+  - backlog
+  - triage
+  - sprint
+items:
+  # Agents
+  - path: .github/agents/github-backlog-manager.agent.md
+    kind: agent
+  # RPI agents
+  - path: .github/agents/rpi-agent.agent.md
+    kind: agent
+  - path: .github/agents/task-researcher.agent.md
+    kind: agent
+  - path: .github/agents/task-planner.agent.md
+    kind: agent
+  - path: .github/agents/task-implementor.agent.md
+    kind: agent
+  - path: .github/agents/task-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/memory.agent.md
+    kind: agent
+  # Prompt Engineering agents
+  - path: .github/agents/prompt-builder.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/github-add-issue.prompt.md
+    kind: prompt
+  - path: .github/prompts/github-discover-issues.prompt.md
+    kind: prompt
+  - path: .github/prompts/github-triage-issues.prompt.md
+    kind: prompt
+  - path: .github/prompts/github-execute-backlog.prompt.md
+    kind: prompt
+  - path: .github/prompts/github-sprint-plan.prompt.md
+    kind: prompt
+  # RPI prompts
+  - path: .github/prompts/rpi.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-research.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-plan.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-implement.prompt.md
+    kind: prompt
+  - path: .github/prompts/task-review.prompt.md
+    kind: prompt
+  - path: .github/prompts/checkpoint.prompt.md
+    kind: prompt
+  # Prompt Engineering prompts
+  - path: .github/prompts/prompt-analyze.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-build.prompt.md
+    kind: prompt
+  - path: .github/prompts/prompt-refactor.prompt.md
+    kind: prompt
+  # Common instructions
+  - path: .github/instructions/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/commit-message.instructions.md
+    kind: instruction
+  # Prompt Engineering instructions
+  - path: .github/instructions/prompt-builder.instructions.md
+    kind: instruction
+  # Bundle-specific instructions
+  - path: .github/instructions/github-backlog-discovery.instructions.md
+    kind: instruction
+  - path: .github/instructions/github-backlog-planning.instructions.md
+    kind: instruction
+  - path: .github/instructions/github-backlog-triage.instructions.md
+    kind: instruction
+  - path: .github/instructions/github-backlog-update.instructions.md
+    kind: instruction
+  - path: .github/instructions/community-interaction.instructions.md
+    kind: instruction
+display:
+  ordering: manual
