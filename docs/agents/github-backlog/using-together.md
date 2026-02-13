@@ -72,7 +72,7 @@ Flag duplicates with confidence scores and suggest labels using the
 standard taxonomy.
 ```
 
-Review the handoff file at `.copilot-tracking/github-issues/triage/hve-core/handoff-logs.md`. Adjust any label suggestions or duplicate flags before continuing.
+Review the handoff file at `.copilot-tracking/github-issues/triage/<YYYY-MM-DD>/handoff-logs.md`. Adjust any label suggestions or duplicate flags before continuing.
 
 ### Step 3: Clear and Plan
 
@@ -112,12 +112,12 @@ Review the execution results. If new issues were discovered during the process, 
 
 Planning files move through three states during the pipeline:
 
-| State         | Location                                  | Created By      | Consumed By |
-|---------------|-------------------------------------------|-----------------|-------------|
-| Analysis      | `discovery/<scope>/issue-analysis.md`     | Discovery       | Triage      |
-| Triage Plan   | `triage/<scope>/handoff-logs.md`          | Triage          | Execution   |
-| Sprint Plan   | `sprint-planning/<scope>/handoff-logs.md` | Sprint Planning | Execution   |
-| Execution Log | `<scope>/execution-log.md`                | Execution       | User review |
+| State         | Location                                          | Created By      | Consumed By |
+|---------------|---------------------------------------------------|-----------------| ------------|
+| Analysis      | `discovery/<scope>/issue-analysis.md`             | Discovery       | Triage      |
+| Triage Plan   | `triage/<YYYY-MM-DD>/handoff-logs.md`             | Triage          | Execution   |
+| Sprint Plan   | `sprint/<milestone-kebab>/handoff-logs.md`        | Sprint Planning | Execution   |
+| Execution Log | `execution/<YYYY-MM-DD>/execution-log.md`         | Execution       | User review |
 
 Files are created once and updated in place. The execution workflow marks checkboxes in handoff files as it processes each operation, providing a built-in audit trail.
 

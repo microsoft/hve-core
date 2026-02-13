@@ -61,7 +61,7 @@ When confidence exceeds the threshold, the workflow links the duplicate pair in 
 ## Output Artifacts
 
 ```text
-.copilot-tracking/github-issues/triage/<scope-name>/
+.copilot-tracking/github-issues/triage/<YYYY-MM-DD>/
 ├── triage-analysis.md    # Label suggestions and duplicate findings
 ├── triage-plan.md        # Recommended operations (label, close, link)
 └── handoff-logs.md       # Execution-ready handoff with checkboxes

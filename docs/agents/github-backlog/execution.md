@@ -61,7 +61,7 @@ This log supports recovery when execution is interrupted. Re-running execution o
 ## Output Artifacts
 
 ```text
-.copilot-tracking/github-issues/<scope-name>/
+.copilot-tracking/github-issues/execution/<YYYY-MM-DD>/
 ├── handoff-logs.md       # Updated with completion checkboxes
 └── execution-log.md      # Operation results and audit trail
 ```
@@ -87,7 +87,7 @@ Attach or reference the handoff file when starting an execution conversation. Th
 ## Example Prompt
 
 ```text
-Execute the triage handoff at .copilot-tracking/github-issues/triage/hve-core/handoff-logs.md.
+Execute the triage handoff at .copilot-tracking/github-issues/triage/2026-02-10/handoff-logs.md.
 Skip any operations on issues that have been updated in the last 24 hours.
 ```
 

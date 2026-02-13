@@ -48,7 +48,7 @@ This process ensures sprint plans build on existing repository structure rather 
 ## Output Artifacts
 
 ```text
-.copilot-tracking/github-issues/sprint-planning/<scope-name>/
+.copilot-tracking/github-issues/sprint/<milestone-kebab>/
 ├── sprint-analysis.md    # Milestone mapping and capacity review
 ├── sprint-plan.md        # Recommended assignments and sequencing
 └── handoff-logs.md       # Execution-ready handoff with checkboxes
