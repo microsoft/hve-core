@@ -25,6 +25,8 @@ items:
 - path: .github/agents/github-backlog-manager.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/github-issue-manager.agent.md
+  kind: agent
 - path: .github/agents/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/memory.agent.md
@@ -162,5 +164,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true
