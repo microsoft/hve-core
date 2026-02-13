@@ -136,20 +136,20 @@ flowchart LR
     style RP fill:#f9f,stroke:#333
 ```
 
-Release-please v4 handles `chore` type commits natively — they are not releasable and do not produce spurious release PRs, so no commit-message guard is needed.
+Release-please v4 handles `chore`-type commits natively. They are not releasable and do not produce spurious release PRs, so no commit-message guard is needed.
 
 ### Main Branch Jobs
 
-| Job                       | Purpose                        | Dependencies                                     |
-|---------------------------|--------------------------------|--------------------------------------------------|
-| spell-check               | Post-merge spelling validation | None                                             |
-| markdown-lint             | Post-merge markdown validation | None                                             |
-| table-format              | Post-merge table validation    | None                                             |
-| dependency-pinning-scan   | Security pinning check         | None                                             |
-| pester-tests              | PowerShell unit tests          | None                                             |
-| release-please            | Automated release management   | All validation jobs                              |
-| extension-package-release | Build release VSIX             | release-please (conditional)                     |
-| attest-and-upload         | Sign and upload VSIX           | extension-package-release                        |
+| Job                       | Purpose                        | Dependencies                 |
+|---------------------------|--------------------------------|------------------------------|
+| spell-check               | Post-merge spelling validation | None                         |
+| markdown-lint             | Post-merge markdown validation | None                         |
+| table-format              | Post-merge table validation    | None                         |
+| dependency-pinning-scan   | Security pinning check         | None                         |
+| pester-tests              | PowerShell unit tests          | None                         |
+| release-please            | Automated release management   | All validation jobs          |
+| extension-package-release | Build release VSIX             | release-please (conditional) |
+| attest-and-upload         | Sign and upload VSIX           | extension-package-release    |
 
 When release-please creates a release, the `extension-package-release` job builds the VSIX with the correct version, and `attest-and-upload` signs it with Sigstore attestation before uploading to the GitHub Release.
 
