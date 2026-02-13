@@ -1,0 +1,1 @@
+../../../.github/instructions/bicep/bicep.instructions.md

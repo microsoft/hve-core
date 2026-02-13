@@ -74,8 +74,7 @@ $helpersPath = Join-Path $PSScriptRoot "Modules/LintingHelpers.psm1"
 if (Test-Path $helpersPath) {
     Import-Module $helpersPath -Force
 }
-
-Write-Host "📄 Validating copyright headers..." -ForegroundColor Cyan
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 # Header patterns to check
 $CopyrightPattern = '^\s*#\s*Copyright\s*\(c\)\s*Microsoft\s+Corporation\.?\s*$'
@@ -83,6 +82,8 @@ $SpdxPattern = '^\s*#\s*SPDX-License-Identifier:\s*MIT\s*$'
 
 # Lines to check (accounting for shebang, #Requires, etc.)
 $MaxLinesToCheck = 15
+
+#region Functions
 
 function Test-FileHeaders {
     [CmdletBinding()]
@@ -160,74 +161,113 @@ function Get-FilesToCheck {
     return $files | Sort-Object FullName -Unique
 }
 
-# Ensure output directory exists
-$outputDir = Split-Path -Parent $OutputPath
-if ($outputDir -and -not (Test-Path $outputDir)) {
-    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-}
+function Invoke-CopyrightHeaderCheck {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [string]$Path = $(if ($p = git rev-parse --show-toplevel 2>$null) { $p } else { '.' }),
 
-# Get files to check
-Write-Host "Scanning for source files in: $Path" -ForegroundColor Gray
-$filesToCheck = Get-FilesToCheck -RootPath $Path -Extensions $FileExtensions -Exclude $ExcludePaths
+        [Parameter(Mandatory = $false)]
+        [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh'),
 
-if ($filesToCheck.Count -eq 0) {
-    Write-Host "⚠️  No files found matching criteria" -ForegroundColor Yellow
-    exit 0
-}
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "logs/copyright-header-results.json",
 
-Write-Host "Found $($filesToCheck.Count) files to check" -ForegroundColor Gray
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnMissing,
 
-# Check each file
-$results = @()
-$filesWithHeaders = 0
-$filesMissingHeaders = 0
+        [Parameter(Mandatory = $false)]
+        [string[]]$ExcludePaths = @('node_modules', '.git', 'vendor', 'logs')
+    )
 
-foreach ($file in $filesToCheck) {
-    $fileResult = Test-FileHeaders -FilePath $file.FullName
+    Write-Host "📄 Validating copyright headers..." -ForegroundColor Cyan
 
-    if ($fileResult.valid) {
-        $filesWithHeaders++
-        Write-Host "  ✅ $($fileResult.file)" -ForegroundColor Green
-    }
-    else {
-        $filesMissingHeaders++
-        $missing = @()
-        if (-not $fileResult.hasCopyright) { $missing += "copyright" }
-        if (-not $fileResult.hasSpdx) { $missing += "SPDX" }
-        Write-Host "  ❌ $($fileResult.file) (missing: $($missing -join ', '))" -ForegroundColor Red
+    # Ensure output directory exists
+    $outputDir = Split-Path -Parent $OutputPath
+    if ($outputDir -and -not (Test-Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $results += $fileResult
+    # Get files to check
+    Write-Host "Scanning for source files in: $Path" -ForegroundColor Gray
+    $filesToCheck = Get-FilesToCheck -RootPath $Path -Extensions $FileExtensions -Exclude $ExcludePaths
+
+    if ($filesToCheck.Count -eq 0) {
+        Write-Host "⚠️  No files found matching criteria" -ForegroundColor Yellow
+        return
+    }
+
+    Write-Host "Found $($filesToCheck.Count) files to check" -ForegroundColor Gray
+
+    # Check each file
+    $results = @()
+    $filesWithHeaders = 0
+    $filesMissingHeaders = 0
+
+    foreach ($file in $filesToCheck) {
+        $fileResult = Test-FileHeaders -FilePath $file.FullName
+
+        if ($fileResult.valid) {
+            $filesWithHeaders++
+            Write-Host "  ✅ $($fileResult.file)" -ForegroundColor Green
+        }
+        else {
+            $filesMissingHeaders++
+            $missing = @()
+            if (-not $fileResult.hasCopyright) { $missing += "copyright" }
+            if (-not $fileResult.hasSpdx) { $missing += "SPDX" }
+            Write-Host "  ❌ $($fileResult.file) (missing: $($missing -join ', '))" -ForegroundColor Red
+        }
+
+        $results += $fileResult
+    }
+
+    # Build output object
+    $output = @{
+        timestamp = (Get-Date -Format "o")
+        totalFiles = $filesToCheck.Count
+        filesWithHeaders = $filesWithHeaders
+        filesMissingHeaders = $filesMissingHeaders
+        compliancePercentage = if ($filesToCheck.Count -gt 0) {
+            [math]::Round(($filesWithHeaders / $filesToCheck.Count) * 100, 2)
+        } else { 100 }
+        results = $results
+    }
+
+    # Write results to file
+    $output | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+    Write-Host "`n📊 Results written to: $OutputPath" -ForegroundColor Cyan
+
+    # Summary
+    Write-Host "`n📋 Summary:" -ForegroundColor Cyan
+    Write-Host "   Total files:    $($output.totalFiles)" -ForegroundColor Gray
+    Write-Host "   With headers:   $($output.filesWithHeaders)" -ForegroundColor Green
+    Write-Host "   Missing headers: $($output.filesMissingHeaders)" -ForegroundColor $(if ($output.filesMissingHeaders -gt 0) { 'Red' } else { 'Green' })
+    Write-Host "   Compliance:     $($output.compliancePercentage)%" -ForegroundColor $(if ($output.compliancePercentage -eq 100) { 'Green' } else { 'Yellow' })
+
+    # Throw if requested and files are missing headers
+    if ($FailOnMissing -and $filesMissingHeaders -gt 0) {
+        throw "Validation failed: $filesMissingHeaders file(s) missing required headers"
+    }
+
+    Write-Host "`n✅ Copyright header validation complete" -ForegroundColor Green
 }
 
-# Build output object
-$output = @{
-    timestamp = (Get-Date -Format "o")
-    totalFiles = $filesToCheck.Count
-    filesWithHeaders = $filesWithHeaders
-    filesMissingHeaders = $filesMissingHeaders
-    compliancePercentage = if ($filesToCheck.Count -gt 0) {
-        [math]::Round(($filesWithHeaders / $filesToCheck.Count) * 100, 2)
-    } else { 100 }
-    results = $results
+#endregion Functions
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-CopyrightHeaderCheck -Path $Path -FileExtensions $FileExtensions -OutputPath $OutputPath -FailOnMissing:$FailOnMissing -ExcludePaths $ExcludePaths
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Copyright header validation failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
 
-# Write results to file
-$output | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
-Write-Host "`n📊 Results written to: $OutputPath" -ForegroundColor Cyan
-
-# Summary
-Write-Host "`n📋 Summary:" -ForegroundColor Cyan
-Write-Host "   Total files:    $($output.totalFiles)" -ForegroundColor Gray
-Write-Host "   With headers:   $($output.filesWithHeaders)" -ForegroundColor Green
-Write-Host "   Missing headers: $($output.filesMissingHeaders)" -ForegroundColor $(if ($output.filesMissingHeaders -gt 0) { 'Red' } else { 'Green' })
-Write-Host "   Compliance:     $($output.compliancePercentage)%" -ForegroundColor $(if ($output.compliancePercentage -eq 100) { 'Green' } else { 'Yellow' })
-
-# Exit with error if requested and files are missing headers
-if ($FailOnMissing -and $filesMissingHeaders -gt 0) {
-    Write-Host "`n❌ Validation failed: $filesMissingHeaders file(s) missing required headers" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "`n✅ Copyright header validation complete" -ForegroundColor Green
-exit 0
+#endregion Main Execution

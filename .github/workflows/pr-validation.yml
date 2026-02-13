@@ -89,6 +89,14 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  plugin-validation:
+    name: Plugin Validation
+    uses: ./.github/workflows/plugin-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   link-lang-check:
     name: Link Language Check
     uses: ./.github/workflows/link-lang-check.yml
@@ -130,8 +138,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

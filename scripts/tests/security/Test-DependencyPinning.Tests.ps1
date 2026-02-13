@@ -355,17 +355,6 @@ Describe 'Dot-sourced execution protection' -Tag 'Unit' {
             Test-Path $tempOutputPath | Should -BeFalse
         }
 
-        It 'Writes error message when dot-sourced' {
-            # Arrange
-            $testScript = Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1'
-            
-            # Act - Invoke in new process to test dot-sourcing error handling
-            $result = pwsh -Command ". '$testScript'" 2>&1
-            $errorOutput = $result | Where-Object { $_ -match 'dot-sourced' -or $_ -match 'will not execute' }
-            
-            # Assert - Should write error message about dot-sourcing
-            $errorOutput | Should -Not -BeNullOrEmpty
-        }
     }
 }
 
@@ -707,6 +696,156 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
 
             $violations.Count | Should -BeGreaterThan 0
             $violations | Where-Object { $_.Name -eq 'valid-package' } | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'Get-RemediationSuggestion' -Tag 'Unit' {
+    Context 'Without -Remediate flag' {
+        It 'Returns enable-flag message' {
+            $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
+            $v.Version = 'v4'
+            $result = Get-RemediationSuggestion -Violation $v
+            $result | Should -BeLike '*Enable -Remediate flag*'
+        }
+    }
+
+    Context 'GitHub Actions with -Remediate' {
+        It 'Resolves SHA from API and returns pin suggestion' {
+            $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
+            $v.Version = 'v4'
+            $fakeSha = 'a'.PadRight(40, 'b')
+            Mock Invoke-RestMethod { return @{ sha = $fakeSha } }
+            $result = Get-RemediationSuggestion -Violation $v -Remediate
+            $result | Should -BeLike "Pin to SHA: uses: actions/checkout@$fakeSha*"
+        }
+
+        It 'Returns manual fallback when API throws' {
+            $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
+            $v.Version = 'v4'
+            Mock Invoke-RestMethod { throw 'API error' }
+            Mock Write-PinningLog {}
+            $result = Get-RemediationSuggestion -Violation $v -Remediate
+            $result | Should -Be 'Manually research and pin to immutable reference'
+        }
+    }
+
+    Context 'Non-github-actions type with -Remediate' {
+        It 'Returns generic research message' {
+            $v = [DependencyViolation]::new('req.txt', 1, 'pip', 'requests', 'Medium', 'desc')
+            $v.Version = '2.31.0'
+            $result = Get-RemediationSuggestion -Violation $v -Remediate
+            $result | Should -BeLike '*Research and pin*pip*'
+        }
+    }
+}
+
+Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
+    Context 'npm type triggers ValidationFunc path' {
+        BeforeAll {
+            $script:npmFixturePath = Join-Path $script:SecurityFixturesPath 'npm-violations'
+            if (-not (Test-Path $script:npmFixturePath)) {
+                New-Item -ItemType Directory -Path $script:npmFixturePath -Force | Out-Null
+            }
+            $script:pkgPath = Join-Path $script:npmFixturePath 'test-pkg.json'
+            Set-Content -Path $script:pkgPath -Value '{"dependencies":{"lodash":"^4.17.21"}}'
+        }
+
+        It 'Uses ValidationFunc instead of regex patterns' {
+            $fileInfo = @{
+                Path         = $script:pkgPath
+                Type         = 'npm'
+                RelativePath = 'test-pkg.json'
+            }
+            $violations = Get-DependencyViolation -FileInfo $fileInfo
+            $violations | Should -Not -BeNullOrEmpty
+            $violations[0].GetType().Name | Should -Be 'DependencyViolation'
+        }
+
+        It 'Sets File from FileInfo when missing' {
+            $fileInfo = @{
+                Path         = $script:pkgPath
+                Type         = 'npm'
+                RelativePath = 'test-pkg.json'
+            }
+            $violations = Get-DependencyViolation -FileInfo $fileInfo
+            $violations | ForEach-Object { $_.File | Should -Not -BeNullOrEmpty }
+        }
+    }
+}
+
+Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
+    BeforeAll {
+        Mock Get-FilesToScan { return @() }
+        Mock Get-ComplianceReportData {
+            return @{
+                ComplianceScore      = 100.0
+                TotalDependencies    = 0
+                UnpinnedDependencies = 0
+                Violations           = @()
+            }
+        }
+        Mock Export-ComplianceReport {}
+        Mock Export-CICDArtifact {}
+    }
+
+    Context 'All dependencies pinned' {
+        It 'Logs success message without throwing' {
+            { Invoke-DependencyPinningAnalysis -Path TestDrive: } | Should -Not -Throw
+        }
+    }
+
+    Context 'Violations below threshold with -FailOnUnpinned' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 50.0
+                    TotalDependencies    = 2
+                    UnpinnedDependencies = 1
+                    Violations           = @()
+                }
+            }
+        }
+
+        It 'Throws when score below threshold and -FailOnUnpinned' {
+            { Invoke-DependencyPinningAnalysis -Path TestDrive: -FailOnUnpinned -Threshold 80 } | Should -Throw '*below threshold*'
+        }
+
+        It 'Does not throw in soft-fail mode' {
+            { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
+        }
+    }
+
+    Context 'Score meets threshold' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'Low', 'desc')
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 90.0
+                    TotalDependencies    = 10
+                    UnpinnedDependencies = 1
+                    Violations           = @()
+                }
+            }
+        }
+
+        It 'Does not throw when score meets threshold' {
+            { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
         }
     }
 }

@@ -8,6 +8,9 @@
 set -euo pipefail
 
 main() {
+  echo "Creating logs directory..."
+  mkdir -p logs
+
   echo "Installing NPM dependencies..."
   npm ci
   echo "NPM dependencies installed successfully"

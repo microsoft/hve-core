@@ -54,13 +54,13 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 
 ### Required Fields by File Type
 
-| File Type | Required Fields | Schema File |
-|-----------|----------------|-------------|
-| Root community files (README.md, CONTRIBUTING.md, etc.) | `title`, `description` | `root-community-frontmatter.schema.json` |
-| Documentation files (`docs/**/*.md`) | `title`, `description` | `docs-frontmatter.schema.json` |
-| Instruction files (`.github/**/*.instructions.md`) | `description`, `applyTo` | `instruction-frontmatter.schema.json` |
-| Agent files (`.github/**/*.agent.md`) | `description` | `agent-frontmatter.schema.json` |
-| Prompt files (`.github/**/*.prompt.md`) | `description` | `prompt-frontmatter.schema.json` |
+| File Type                                               | Required Fields          | Schema File                              |
+|---------------------------------------------------------|--------------------------|------------------------------------------|
+| Root community files (README.md, CONTRIBUTING.md, etc.) | `title`, `description`   | `root-community-frontmatter.schema.json` |
+| Documentation files (`docs/**/*.md`)                    | `title`, `description`   | `docs-frontmatter.schema.json`           |
+| Instruction files (`.github/**/*.instructions.md`)      | `description`, `applyTo` | `instruction-frontmatter.schema.json`    |
+| Agent files (`.github/**/*.agent.md`)                   | `description`            | `agent-frontmatter.schema.json`          |
+| Prompt files (`.github/**/*.prompt.md`)                 | `description`            | `prompt-frontmatter.schema.json`         |
 
 ### Recommended Fields
 
@@ -265,7 +265,7 @@ See <https://example.com> and [Docs](https://example.com/docs).
 <!-- <example-tables> -->
 ```markdown
 | Column A | Column B | Column C |
-| -------- | -------- | -------- |
+|----------|----------|----------|
 | Short    | Medium   | Longer   |
 | A        | BB       | CCC      |
 ```

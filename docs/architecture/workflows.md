@@ -2,7 +2,7 @@
 title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 author: WilliamBerryiii
-ms.date: 2026-01-22
+ms.date: 2026-02-10
 ms.topic: overview
 ---
 
@@ -133,20 +133,23 @@ flowchart LR
     V5[pester-tests] --> RP
     RP -->|release_created| PKG[extension-package-release]
     PKG --> ATT[attest-and-upload]
+    style RP fill:#f9f,stroke:#333
 ```
+
+The release-please job includes a commit-message guard that skips execution when the head commit message starts with `chore(main): release`. This prevents an infinite loop where release-please-generated merge commits would re-trigger the release workflow.
 
 ### Main Branch Jobs
 
-| Job                       | Purpose                        | Dependencies                 |
-|---------------------------|--------------------------------|------------------------------|
-| spell-check               | Post-merge spelling validation | None                         |
-| markdown-lint             | Post-merge markdown validation | None                         |
-| table-format              | Post-merge table validation    | None                         |
-| dependency-pinning-scan   | Security pinning check         | None                         |
-| pester-tests              | PowerShell unit tests          | None                         |
-| release-please            | Automated release management   | All validation jobs          |
-| extension-package-release | Build release VSIX             | release-please (conditional) |
-| attest-and-upload         | Sign and upload VSIX           | extension-package-release    |
+| Job                       | Purpose                        | Dependencies                                     |
+|---------------------------|--------------------------------|--------------------------------------------------|
+| spell-check               | Post-merge spelling validation | None                                             |
+| markdown-lint             | Post-merge markdown validation | None                                             |
+| table-format              | Post-merge table validation    | None                                             |
+| dependency-pinning-scan   | Security pinning check         | None                                             |
+| pester-tests              | PowerShell unit tests          | None                                             |
+| release-please            | Automated release management   | All validation jobs (skipped on release commits) |
+| extension-package-release | Build release VSIX             | release-please (conditional)                     |
+| attest-and-upload         | Sign and upload VSIX           | extension-package-release                        |
 
 When release-please creates a release, the `extension-package-release` job builds the VSIX with the correct version, and `attest-and-upload` signs it with Sigstore attestation before uploading to the GitHub Release.
 

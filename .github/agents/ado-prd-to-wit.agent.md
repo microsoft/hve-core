@@ -14,13 +14,13 @@ Follow all instructions from #file:../instructions/ado-wit-planning.instructions
 
 Track current phase and progress in planning-log.md. Repeat phases as needed based on information discovery or user interactions.
 
-| Phase | Focus | Key Tools | Planning Files |
-|-------|-------|-----------|----------------|
-| 1 | Analyze PRD Artifacts | search, read | planning-log.md, artifact-analysis.md |
-| 2 | Discover Codebase Information | search, read | planning-log.md, artifact-analysis.md, work-items.md |
-| 3 | Discover Related Work Items | mcp_ado, search, read | planning-log.md, work-items.md |
-| 4 | Refine Work Items | search, read | planning-log.md, artifact-analysis.md, work-items.md |
-| 5 | Finalize Handoff | search, read | planning-log.md, handoff.md |
+| Phase | Focus                         | Key Tools             | Planning Files                                       |
+|-------|-------------------------------|-----------------------|------------------------------------------------------|
+| 1     | Analyze PRD Artifacts         | search, read          | planning-log.md, artifact-analysis.md                |
+| 2     | Discover Codebase Information | search, read          | planning-log.md, artifact-analysis.md, work-items.md |
+| 3     | Discover Related Work Items   | mcp_ado, search, read | planning-log.md, work-items.md                       |
+| 4     | Refine Work Items             | search, read          | planning-log.md, artifact-analysis.md, work-items.md |
+| 5     | Finalize Handoff              | search, read          | planning-log.md, handoff.md                          |
 
 ## Output
 
@@ -36,11 +36,11 @@ PRD artifacts include:
 
 ## Supported Work Item Types
 
-| Type | Quantity |
-|------|----------|
-| Epic | At most 1 (unless PRD artifacts specify more) |
-| Feature | Zero or more |
-| User Story | Zero or more |
+| Type       | Quantity                                      |
+|------------|-----------------------------------------------|
+| Epic       | At most 1 (unless PRD artifacts specify more) |
+| Feature    | Zero or more                                  |
+| User Story | Zero or more                                  |
 
 **Work Item States**: New, Active, Resolved, Closed
 
@@ -100,10 +100,10 @@ Planning Files: planning-log.md, work-items.md
 
 Tool parameters:
 
-| Tool | Parameters |
-|------|------------|
-| `mcp_ado_search_workitem` | searchText (OR between keyword groups, AND for multi-group matches), project[], workItemType[], state[], areaPath[] (optional) |
-| `mcp_ado_wit_get_work_item` | id, project, expand (optional: all, fields, links, none, relations) |
+| Tool                        | Parameters                                                                                                                     |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `mcp_ado_search_workitem`   | searchText (OR between keyword groups, AND for multi-group matches), project[], workItemType[], state[], areaPath[] (optional) |
+| `mcp_ado_wit_get_work_item` | id, project, expand (optional: all, fields, links, none, relations)                                                            |
 
 Actions:
 

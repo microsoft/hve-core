@@ -1,0 +1,1 @@
+../../../.github/instructions/git-merge.instructions.md

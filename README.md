@@ -43,7 +43,26 @@ The RPI (Research → Plan → Implement) methodology structures complex enginee
 
 See [Extension Installation Guide](docs/getting-started/methods/extension.md) for details.
 
-### Automated Custom Installation
+### Copilot CLI Plugin Installation
+
+Register the hve-core marketplace source (one-time), then install collections:
+
+```bash
+# Register marketplace (one-time setup)
+copilot plugin marketplace add microsoft/hve-core
+
+# Install the full HVE Core suite
+copilot plugin install hve-core-all@hve-core
+
+# Or install individual collections
+copilot plugin install rpi@hve-core
+copilot plugin install ado@hve-core
+copilot plugin install prompt-engineering@hve-core
+```
+
+See [CLI Plugin Installation Guide](docs/getting-started/methods/cli-plugins.md) for available collections and usage.
+
+### Automated Agent Installation
 
 For customization or team version control, use the `hve-core-installer` agent:
 
@@ -68,6 +87,7 @@ The installer will:
 For manual setup or alternative installation methods, see the [Getting Started Guide](docs/getting-started/README.md) which covers:
 
 * [VS Code Extension](docs/getting-started/methods/extension.md) ⭐ - Marketplace install, zero config
+* [Copilot CLI Plugins](docs/getting-started/methods/cli-plugins.md) - Terminal-based CLI workflows
 * [Multi-Root Workspace](docs/getting-started/methods/multi-root.md) - Cross-environment portability
 * [Submodule](docs/getting-started/methods/submodule.md) - Team version control
 * [Peer Clone](docs/getting-started/methods/peer-clone.md) - Local VS Code, solo developers

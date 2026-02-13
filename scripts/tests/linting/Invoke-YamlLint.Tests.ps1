@@ -24,6 +24,8 @@ BeforeAll {
 
     # Create stub function for actionlint so it can be mocked even when not installed
     function global:actionlint { '[]' }
+
+    . $script:ScriptPath
 }
 
 AfterAll {
@@ -49,11 +51,11 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
         }
 
         It 'Accepts ChangedFilesOnly switch' {
-            { & $script:ScriptPath -ChangedFilesOnly } | Should -Not -Throw
+            { Invoke-YamlLintCore -ChangedFilesOnly } | Should -Not -Throw
         }
 
         It 'Accepts BaseBranch with ChangedFilesOnly' {
-            { & $script:ScriptPath -ChangedFilesOnly -BaseBranch 'develop' } | Should -Not -Throw
+            { Invoke-YamlLintCore -ChangedFilesOnly -BaseBranch 'develop' } | Should -Not -Throw
         }
     }
 
@@ -70,7 +72,7 @@ Describe 'Invoke-YamlLint Parameter Validation' -Tag 'Unit' {
 
         It 'Accepts custom output path' {
             $outputPath = Join-Path ([System.IO.Path]::GetTempPath()) 'test-yaml-lint.json'
-            { & $script:ScriptPath -OutputPath $outputPath } | Should -Not -Throw
+            { Invoke-YamlLintCore -OutputPath $outputPath } | Should -Not -Throw
         }
     }
 }
@@ -83,19 +85,14 @@ Describe 'actionlint Tool Availability' -Tag 'Unit' {
     Context 'Tool not installed' {
         BeforeEach {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock Write-Error {}
         }
 
         It 'Reports error when actionlint not installed' {
-            & $script:ScriptPath
-            Should -Invoke Write-Error -Times 1
+            { Invoke-YamlLintCore } | Should -Throw '*actionlint is not installed*'
         }
 
         It 'Writes appropriate error message' {
-            try { & $script:ScriptPath } catch { Write-Verbose 'Expected error' }
-            Should -Invoke Write-Error -Times 1 -ParameterFilter {
-                $Message -like '*actionlint is not installed*'
-            }
+            { Invoke-YamlLintCore } | Should -Throw '*actionlint is not installed*'
         }
     }
 
@@ -111,7 +108,7 @@ Describe 'actionlint Tool Availability' -Tag 'Unit' {
         }
 
         It 'Proceeds when actionlint available' {
-            { & $script:ScriptPath } | Should -Not -Throw
+            { Invoke-YamlLintCore } | Should -Not -Throw
         }
     }
 }
@@ -140,14 +137,14 @@ Describe 'File Discovery' -Tag 'Unit' {
                 )
             } -ParameterFilter { $Path -eq '.github/workflows' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Get-ChildItem -Times 1 -ParameterFilter { $Path -eq '.github/workflows' }
         }
 
         It 'Returns no files when workflows directory missing' {
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
         }
 
@@ -161,7 +158,7 @@ Describe 'File Discovery' -Tag 'Unit' {
                 )
             } -ParameterFilter { $Path -eq '.github/workflows' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             # Should only count 2 files (yml and yaml, not json)
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
@@ -180,14 +177,14 @@ Describe 'File Discovery' -Tag 'Unit' {
         It 'Uses Get-ChangedFilesFromGit when ChangedFilesOnly specified' {
             Mock Get-ChangedFilesFromGit { @('.github/workflows/ci.yml') }
 
-            & $script:ScriptPath -ChangedFilesOnly
+            Invoke-YamlLintCore -ChangedFilesOnly
             Should -Invoke Get-ChangedFilesFromGit -Times 1
         }
 
         It 'Passes BaseBranch to Get-ChangedFilesFromGit' {
             Mock Get-ChangedFilesFromGit { @() }
 
-            & $script:ScriptPath -ChangedFilesOnly -BaseBranch 'develop'
+            Invoke-YamlLintCore -ChangedFilesOnly -BaseBranch 'develop'
             Should -Invoke Get-ChangedFilesFromGit -Times 1 -ParameterFilter {
                 $BaseBranch -eq 'develop'
             }
@@ -202,7 +199,7 @@ Describe 'File Discovery' -Tag 'Unit' {
                 )
             }
 
-            & $script:ScriptPath -ChangedFilesOnly
+            Invoke-YamlLintCore -ChangedFilesOnly
             # Should only count 2 workflow files
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '2' }
         }
@@ -219,13 +216,13 @@ Describe 'File Discovery' -Tag 'Unit' {
         }
 
         It 'Sets count and issues to 0 when no files found' {
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' -and $Value -eq '0' }
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Exits with code 0 when no files found' {
-            { & $script:ScriptPath } | Should -Not -Throw
+            { Invoke-YamlLintCore } | Should -Not -Throw
         }
     }
 }
@@ -253,21 +250,21 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
         It 'Handles null output gracefully' {
             Mock actionlint { $null }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles "null" string output' {
             Mock actionlint { 'null' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
 
         It 'Handles empty array output' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
     }
@@ -278,7 +275,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
                 '{"message":"test error","filepath":".github/workflows/ci.yml","line":10,"column":5}'
             }
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             Should -Invoke Write-CIAnnotation -Times 1
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '1' }
         }
@@ -290,7 +287,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
                 '[{"message":"error 1","filepath":".github/workflows/ci.yml","line":10,"column":5},{"message":"error 2","filepath":".github/workflows/ci.yml","line":20,"column":3}]'
             }
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             Should -Invoke Write-CIAnnotation -Times 2
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '2' }
         }
@@ -301,7 +298,7 @@ Describe 'actionlint Output Parsing' -Tag 'Unit' {
             Mock actionlint { 'not valid json {{{' }
             Mock Write-Warning {}
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Write-Warning -Times 1
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' -and $Value -eq '0' }
         }
@@ -333,7 +330,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
                 '{"message":"property runs-on is required","filepath":".github/workflows/ci.yml","line":15,"column":5}'
             }
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter {
                 $Level -eq 'Error' -and
                 $Message -eq 'property runs-on is required' -and
@@ -348,7 +345,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
                 '[{"message":"error 1","filepath":"file1.yml","line":1,"column":1},{"message":"error 2","filepath":"file2.yml","line":2,"column":2}]'
             }
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             Should -Invoke Write-CIAnnotation -Times 2
         }
     }
@@ -360,7 +357,7 @@ Describe 'Issue Processing' -Tag 'Unit' {
             }
             Mock Write-Host {}
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             # Verify error output format includes file:line:column: message
             Should -Invoke Write-Host -ParameterFilter {
                 $Object -like '*ci.yml:10:5*test message*'
@@ -401,12 +398,12 @@ Describe 'Output Generation' -Tag 'Unit' {
 
         It 'Creates JSON output file at specified path' {
             # Use real filesystem for this test
-            & $script:ScriptPath -OutputPath $script:OutputFile
+            Invoke-YamlLintCore -OutputPath $script:OutputFile
             Test-Path $script:OutputFile | Should -BeTrue
         }
 
         It 'Output file contains valid JSON' {
-            & $script:ScriptPath -OutputPath $script:OutputFile
+            Invoke-YamlLintCore -OutputPath $script:OutputFile
             { Get-Content $script:OutputFile | ConvertFrom-Json } | Should -Not -Throw
         }
     }
@@ -429,7 +426,7 @@ Describe 'Output Generation' -Tag 'Unit' {
             $newDir = Join-Path $script:TempDir 'newlogs'
             $outputPath = Join-Path $newDir 'results.json'
 
-            & $script:ScriptPath -OutputPath $outputPath
+            Invoke-YamlLintCore -OutputPath $outputPath
             Test-Path $newDir | Should -BeTrue
         }
     }
@@ -458,21 +455,21 @@ Describe 'CI Integration' -Tag 'Unit' {
         It 'Sets count output with file count' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'count' }
         }
 
         It 'Sets issues output with issue count' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'issues' }
         }
 
         It 'Sets errors output with error count' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIOutput -Times 1 -ParameterFilter { $Name -eq 'errors' }
         }
     }
@@ -483,7 +480,7 @@ Describe 'CI Integration' -Tag 'Unit' {
                 '{"message":"error","filepath":"ci.yml","line":1,"column":1}'
             }
 
-            try { & $script:ScriptPath } catch { Write-Verbose 'Expected error' }
+            try { Invoke-YamlLintCore } catch { Write-Verbose 'Expected error' }
             Should -Invoke Set-CIEnv -Times 1 -ParameterFilter {
                 $Name -eq 'YAML_LINT_FAILED' -and $Value -eq 'true'
             }
@@ -492,7 +489,7 @@ Describe 'CI Integration' -Tag 'Unit' {
         It 'Does not set YAML_LINT_FAILED when no issues' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Set-CIEnv -Times 0 -ParameterFilter {
                 $Name -eq 'YAML_LINT_FAILED'
             }
@@ -503,7 +500,7 @@ Describe 'CI Integration' -Tag 'Unit' {
         It 'Writes success summary when no issues' {
             Mock actionlint { '[]' }
 
-            & $script:ScriptPath
+            Invoke-YamlLintCore
             Should -Invoke Write-CIStepSummary -Times 2
         }
 
@@ -512,7 +509,7 @@ Describe 'CI Integration' -Tag 'Unit' {
                 '{"message":"error","filepath":"ci.yml","line":1,"column":1}'
             }
 
-            try { & $script:ScriptPath } catch { Write-Verbose 'Expected error' }
+            try { Invoke-YamlLintCore } catch { Write-Verbose 'Expected error' }
             Should -Invoke Write-CIStepSummary -Times 2
         }
     }
@@ -537,7 +534,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
         It 'Returns success when no files to analyze' {
             Mock Test-Path { $false } -ParameterFilter { $Path -eq '.github/workflows' }
 
-            { & $script:ScriptPath } | Should -Not -Throw
+            { Invoke-YamlLintCore } | Should -Not -Throw
         }
 
         It 'Returns success when files have no issues' {
@@ -547,7 +544,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             } -ParameterFilter { $Path -eq '.github/workflows' }
             Mock actionlint { '[]' }
 
-            { & $script:ScriptPath } | Should -Not -Throw
+            { Invoke-YamlLintCore } | Should -Not -Throw
         }
     }
 
@@ -561,12 +558,8 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
 
         It 'Exits with error when actionlint not installed' {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'actionlint' }
-            Mock Write-Error {}
 
-            & $script:ScriptPath
-            Should -Invoke Write-Error -Times 1 -ParameterFilter {
-                $Message -like '*actionlint is not installed*'
-            }
+            { Invoke-YamlLintCore } | Should -Throw '*actionlint is not installed*'
         }
 
         It 'Exits with error when issues found' {
@@ -581,7 +574,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             Mock New-Item {}
             Mock Out-File {}
 
-            & $script:ScriptPath
+            try { Invoke-YamlLintCore } catch { $null = $_ }
             Should -Invoke Write-CIAnnotation -Times 1
         }
     }

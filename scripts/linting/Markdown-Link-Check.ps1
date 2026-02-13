@@ -50,8 +50,6 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
-$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
-
 function Get-MarkdownTarget {
     <#
     .SYNOPSIS
@@ -194,9 +192,15 @@ function Get-RelativePrefix {
     return $normalized
 }
 
-#region Main Execution
-if (-not $script:SkipMain) {
-    try {
+function Invoke-MarkdownLinkCheck {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [string[]]$Path,
+        [string]$ConfigPath,
+        [switch]$Quiet
+    )
+
     $scriptRootParent = Split-Path -Path $PSScriptRoot -Parent
     $repoRootPath = Split-Path -Path $scriptRootParent -Parent
     $repoRoot = Resolve-Path -LiteralPath $repoRootPath
@@ -204,8 +208,7 @@ if (-not $script:SkipMain) {
     $filesToCheck = @(Get-MarkdownTarget -InputPath $Path)
 
     if (-not $filesToCheck -or @($filesToCheck).Count -eq 0) {
-        Write-Error 'No markdown files were found to validate.'
-        exit 1
+        throw 'No markdown files were found to validate.'
     }
 
     $cli = Join-Path -Path $repoRoot.Path -ChildPath 'node_modules/.bin/markdown-link-check'
@@ -214,8 +217,7 @@ if (-not $script:SkipMain) {
     }
 
     if (-not (Test-Path -LiteralPath $cli)) {
-        Write-Error 'markdown-link-check is not installed. Run "npm install --save-dev markdown-link-check" first.'
-        exit 1
+        throw 'markdown-link-check is not installed. Run "npm install --save-dev markdown-link-check" first.'
     }
 
     $baseArguments = @('-c', $config.Path)
@@ -370,8 +372,7 @@ For more information, see the [markdown-link-check documentation](https://github
         Write-CIStepSummary -Content $summaryContent
         Set-CIEnv -Name "MARKDOWN_LINK_CHECK_FAILED" -Value "true"
 
-        Write-Error ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
-        exit 1
+        throw ("markdown-link-check reported failures for: {0}" -f ($failedFiles -join ', '))
     }
     else {
         $summaryContent = @"
@@ -386,13 +387,19 @@ Great job! All markdown links are valid. 🎉
 
         Write-CIStepSummary -Content $summaryContent
         Write-Output 'markdown-link-check completed successfully.'
+    }
+}
+
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-MarkdownLinkCheck -Path $Path -ConfigPath $ConfigPath -Quiet:$Quiet
         exit 0
     }
-    }
     catch {
-        Write-Error "Markdown Link Check failed: $($_.Exception.Message)" -ErrorAction Continue
-        Write-CIAnnotation -Message "Markdown Link Check failed: $($_.Exception.Message)" -Level Error
+        Write-Error -ErrorAction Continue "Markdown-Link-Check failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }
-#endregion
+#endregion Main Execution

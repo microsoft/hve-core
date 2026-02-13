@@ -10,13 +10,11 @@ using module ../../security/Modules/SecurityClasses.psm1
 
 .DESCRIPTION
     Tests version consistency checking functions without executing the main script.
-    Uses HVE_SKIP_MAIN environment variable to prevent main block execution.
+    Uses dot-source guard pattern for function isolation.
 #>
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
     . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
@@ -29,7 +27,6 @@ BeforeAll {
 
 AfterAll {
     Restore-CIEnvironment
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 Describe 'Write-ConsistencyLog' -Tag 'Unit' {
@@ -527,10 +524,8 @@ Describe 'Main Script Execution' -Tag 'Unit' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-a.yml') -Destination $script:TestWorkspace
             Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-b.yml') -Destination $script:TestWorkspace
 
-            # Clear HVE_SKIP_MAIN so subprocess runs main block (it's inherited from Pester's BeforeAll)
             $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
             $scriptContent = @"
-`$env:HVE_SKIP_MAIN = ''
 & '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMismatch
 exit `$LASTEXITCODE
 "@
@@ -542,10 +537,8 @@ exit `$LASTEXITCODE
         It 'Returns exit code 1 when FailOnMissingComment and missing comments exist' {
             Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $script:TestWorkspace
 
-            # Clear HVE_SKIP_MAIN so subprocess runs main block (it's inherited from Pester's BeforeAll)
             $tempScript = Join-Path $script:TestWorkspace 'run-test.ps1'
             $scriptContent = @"
-`$env:HVE_SKIP_MAIN = ''
 & '$($script:TestScript)' -Path '$($script:TestWorkspace)' -Format Json -FailOnMissingComment
 exit `$LASTEXITCODE
 "@

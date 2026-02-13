@@ -31,28 +31,28 @@ The main agent executes directly only for:
 
 ### Included Files
 
-| Pattern | Description |
-| ------- | ----------- |
-| `docs/**/*.md` | User-facing documentation, tutorials, guides |
-| `README.md` | Repository root README |
-| `CONTRIBUTING.md` | Contribution guidelines |
-| `CHANGELOG.md` | Release history |
-| `CODE_OF_CONDUCT.md` | Community standards |
-| `GOVERNANCE.md` | Project governance |
-| `SECURITY.md` | Security policy |
-| `SUPPORT.md` | Support information |
-| `LICENSE` | License file |
-| `scripts/**/*.md` | Script documentation and READMEs |
+| Pattern              | Description                                  |
+|----------------------|----------------------------------------------|
+| `docs/**/*.md`       | User-facing documentation, tutorials, guides |
+| `README.md`          | Repository root README                       |
+| `CONTRIBUTING.md`    | Contribution guidelines                      |
+| `CHANGELOG.md`       | Release history                              |
+| `CODE_OF_CONDUCT.md` | Community standards                          |
+| `GOVERNANCE.md`      | Project governance                           |
+| `SECURITY.md`        | Security policy                              |
+| `SUPPORT.md`         | Support information                          |
+| `LICENSE`            | License file                                 |
+| `scripts/**/*.md`    | Script documentation and READMEs             |
 
 ### Excluded Files
 
-| Pattern | Reason |
-| ------- | ------ |
+| Pattern                   | Reason                                             |
+|---------------------------|----------------------------------------------------|
 | `.github/instructions/**` | Convention source files, not documentation targets |
-| `.github/prompts/**` | Prompt engineering artifacts |
-| `.github/agents/**` | Agent definitions |
-| `.github/skills/**` | Skill packages |
-| `.copilot-tracking/**` | Tracking artifacts, not documentation |
+| `.github/prompts/**`      | Prompt engineering artifacts                       |
+| `.github/agents/**`       | Agent definitions                                  |
+| `.github/skills/**`       | Skill packages                                     |
+| `.copilot-tracking/**`    | Tracking artifacts, not documentation              |
 
 Apply scope filtering before any discovery or processing. Subagents receive only in-scope file lists.
 
@@ -355,11 +355,11 @@ All subagents return responses containing:
 
 Use available npm scripts for automated validation:
 
-| Script | Purpose |
-| ------ | ------- |
-| `npm run lint:md` | Markdownlint validation |
+| Script                     | Purpose                       |
+|----------------------------|-------------------------------|
+| `npm run lint:md`          | Markdownlint validation       |
 | `npm run lint:frontmatter` | Frontmatter schema validation |
-| `npm run lint:md-links` | Link validity checking |
+| `npm run lint:md-links`    | Link validity checking        |
 
 If validation scripts are unavailable, rely on manual review against instructions files.
 
@@ -398,14 +398,14 @@ Include at each phase transition:
 
 When all phases complete, provide:
 
-| Summary | |
-| ------- | --- |
-| Session File | Path to session tracking file |
-| Iterations | Count of discovery-to-implementation cycles |
-| Files Analyzed | Total in-scope files reviewed |
-| Issues Found | Total issues discovered |
-| Issues Fixed | Count of issues resolved |
-| Validation Status | Passed, Failed with count, or Partial |
-| Followup Items | Count requiring manual intervention |
+| Summary           |                                             |
+|-------------------|---------------------------------------------|
+| Session File      | Path to session tracking file               |
+| Iterations        | Count of discovery-to-implementation cycles |
+| Files Analyzed    | Total in-scope files reviewed               |
+| Issues Found      | Total issues discovered                     |
+| Issues Fixed      | Count of issues resolved                    |
+| Validation Status | Passed, Failed with count, or Partial       |
+| Followup Items    | Count requiring manual intervention         |
 
 Suggest a commit message following [commit-message.instructions.md](../instructions/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.

@@ -33,12 +33,12 @@ When subagents need additional context, use these tools: `semantic_search`, `gre
 
 ## Required Artifacts
 
-| Artifact | Path Pattern | Required |
-|----------|--------------|----------|
-| Implementation Plan | `.copilot-tracking/plans/<date>-<description>-plan.instructions.md` | Yes |
-| Implementation Details | `.copilot-tracking/details/<date>-<description>-details.md` | Yes |
-| Research | `.copilot-tracking/research/<date>-<description>-research.md` | No |
-| Changes Log | `.copilot-tracking/changes/<date>-<description>-changes.md` | Yes |
+| Artifact               | Path Pattern                                                        | Required |
+|------------------------|---------------------------------------------------------------------|----------|
+| Implementation Plan    | `.copilot-tracking/plans/<date>-<description>-plan.instructions.md` | Yes      |
+| Implementation Details | `.copilot-tracking/details/<date>-<description>-details.md`         | Yes      |
+| Research               | `.copilot-tracking/research/<date>-<description>-research.md`       | No       |
+| Changes Log            | `.copilot-tracking/changes/<date>-<description>-changes.md`         | Yes      |
 
 Reference relevant guidance in `.github/instructions/**` before editing code. Dispatch subagents for inline research when context is missing.
 
@@ -130,12 +130,12 @@ Start responses with: `## ⚡ Task Implementor: [Task Description]`
 
 When implementation completes, provide a structured handoff:
 
-| 📊 Summary | |
-|------------|---|
-| **Changes Log** | Link to changes log file |
-| **Phases Completed** | Count of completed phases |
-| **Files Changed** | Added / Modified / Removed counts |
-| **Validation Status** | Passed, Failed, or Skipped |
+| 📊 Summary            |                                   |
+|-----------------------|-----------------------------------|
+| **Changes Log**       | Link to changes log file          |
+| **Phases Completed**  | Count of completed phases         |
+| **Files Changed**     | Added / Modified / Removed counts |
+| **Validation Status** | Passed, Failed, or Skipped        |
 
 ### Ready for Review
 

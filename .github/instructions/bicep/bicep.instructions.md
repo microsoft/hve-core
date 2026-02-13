@@ -15,11 +15,11 @@ These instructions define conventions for Bicep Infrastructure as Code (IaC) dev
 Bicep MCP tools provide schema information and best practices:
 
 <!-- <reference-mcp-tools> -->
-| Tool | Purpose | Parameters |
-|------|---------|------------|
-| `mcp_bicep_experim_get_az_resource_type_schema` | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
-| `mcp_bicep_experim_list_az_resource_types_for_provider` | Lists all available resource types for a provider namespace | `providerNamespace` (required) |
-| `mcp_bicep_experim_get_bicep_best_practices` | Returns current Bicep authoring best practices | None |
+| Tool                                                    | Purpose                                                                 | Parameters                                     |
+|---------------------------------------------------------|-------------------------------------------------------------------------|------------------------------------------------|
+| `mcp_bicep_experim_get_az_resource_type_schema`         | Retrieves the schema for a specific Azure resource type and API version | `azResourceType`, `apiVersion` (both required) |
+| `mcp_bicep_experim_list_az_resource_types_for_provider` | Lists all available resource types for a provider namespace             | `providerNamespace` (required)                 |
+| `mcp_bicep_experim_get_bicep_best_practices`            | Returns current Bicep authoring best practices                          | None                                           |
 <!-- </reference-mcp-tools> -->
 
 ## Project Structure
@@ -75,14 +75,14 @@ Parameter conventions:
 
 Functional groupings organize parameters by their purpose:
 
-| Group | Description | Examples |
-| ----- | ----------- | -------- |
-| Identity | Authentication and authorization | Managed identity names, RBAC assignments |
+| Group      | Description                       | Examples                                             |
+|------------|-----------------------------------|------------------------------------------------------|
+| Identity   | Authentication and authorization  | Managed identity names, RBAC assignments             |
 | Networking | Network connectivity and security | VNet names, subnet configurations, private endpoints |
-| Storage | Data persistence | Storage account settings, container names |
-| Monitoring | Observability and diagnostics | Log Analytics workspace, diagnostic settings |
-| Compute | Processing resources | VM sizes, instance counts, scaling rules |
-| Security | Encryption and secrets | Key Vault names, encryption settings |
+| Storage    | Data persistence                  | Storage account settings, container names            |
+| Monitoring | Observability and diagnostics     | Log Analytics workspace, diagnostic settings         |
+| Compute    | Processing resources              | VM sizes, instance counts, scaling rules             |
+| Security   | Encryption and secrets            | Key Vault names, encryption settings                 |
 
 * Boolean parameters start with `should` or `is`
 * Required parameters have no defaults
@@ -104,10 +104,10 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
 Resource names follow [Azure naming conventions](https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming):
 
 <!-- <conventions-resource-naming> -->
-| Pattern | Example |
-|---------|---------|
-| Hyphens allowed | `{abbrev}-${common.resourcePrefix}-{optional}-${common.environment}-${common.instance}` |
-| No hyphens | `{abbrev}${common.resourcePrefix}{optional}${common.environment}${common.instance}` |
+| Pattern           | Example                                                                                             |
+|-------------------|-----------------------------------------------------------------------------------------------------|
+| Hyphens allowed   | `{abbrev}-${common.resourcePrefix}-{optional}-${common.environment}-${common.instance}`             |
+| No hyphens        | `{abbrev}${common.resourcePrefix}{optional}${common.environment}${common.instance}`                 |
 | Length restricted | `'{abbrev}${uniqueString(common.resourcePrefix, {optional}, common.environment, common.instance)}'` |
 <!-- </conventions-resource-naming> -->
 
@@ -126,13 +126,13 @@ Resource names follow [Azure naming conventions](https://learn.microsoft.com/azu
 
 ## Module Conventions
 
-| Aspect | Main Module | Sub-Module |
-| ------ | ----------- | ---------- |
-| Location | `bicep/main.bicep` | `bicep/modules/{name}.bicep` |
-| Parameters | Include defaults when sensible | No defaults (parent provides all values) |
-| Resources | Defined in `main.bicep` | Scoped to specific functionality |
-| References | Orchestrates sub-modules | Cannot reference other sub-modules directly |
-| Lookups | Receive resource names for `existing` lookups (not IDs) | Inherit scope from parent |
+| Aspect     | Main Module                                             | Sub-Module                                  |
+|------------|---------------------------------------------------------|---------------------------------------------|
+| Location   | `bicep/main.bicep`                                      | `bicep/modules/{name}.bicep`                |
+| Parameters | Include defaults when sensible                          | No defaults (parent provides all values)    |
+| Resources  | Defined in `main.bicep`                                 | Scoped to specific functionality            |
+| References | Orchestrates sub-modules                                | Cannot reference other sub-modules directly |
+| Lookups    | Receive resource names for `existing` lookups (not IDs) | Inherit scope from parent                   |
 
 ## Type System
 
@@ -215,12 +215,12 @@ Function conventions:
 
 Bicep 0.36+ includes these additional built-in functions:
 
-| Function | Purpose | Example |
-| -------- | ------- | ------- |
-| `parseUri(uri)` | Parses URI into components (scheme, host, port, path, query) | `parseUri('https://example.com/path?q=1').host` |
-| `buildUri(scheme, host, path?, port?, query?)` | Constructs URI from components | `buildUri('https', 'api.example.com', '/v1', 443)` |
-| `loadDirectoryFileInfo(path)` | Gets file metadata from directory at compile time | `loadDirectoryFileInfo('./configs/')` |
-| `deployer().userPrincipalName` | Gets the deploying user's principal | `deployer().userPrincipalName` |
+| Function                                       | Purpose                                                      | Example                                            |
+|------------------------------------------------|--------------------------------------------------------------|----------------------------------------------------|
+| `parseUri(uri)`                                | Parses URI into components (scheme, host, port, path, query) | `parseUri('https://example.com/path?q=1').host`    |
+| `buildUri(scheme, host, path?, port?, query?)` | Constructs URI from components                               | `buildUri('https', 'api.example.com', '/v1', 443)` |
+| `loadDirectoryFileInfo(path)`                  | Gets file metadata from directory at compile time            | `loadDirectoryFileInfo('./configs/')`              |
+| `deployer().userPrincipalName`                 | Gets the deploying user's principal                          | `deployer().userPrincipalName`                     |
 
 ## Resource Decorators
 
@@ -247,29 +247,29 @@ Section order with `/* */` comment headers:
 
 ## API Versioning
 
-| Guideline | Details |
-| --------- | ------- |
-| Discover versions | Use `mcp_bicep_experim_list_az_resource_types_for_provider` and `get_az_resource_type_schema` |
-| Version consistency | Identical resource types within a file use the same API version |
-| New resources | Use the latest stable API version |
-| Existing resources | Retain API version unless significant changes warrant upgrade |
+| Guideline           | Details                                                                                       |
+|---------------------|-----------------------------------------------------------------------------------------------|
+| Discover versions   | Use `mcp_bicep_experim_list_az_resource_types_for_provider` and `get_az_resource_type_schema` |
+| Version consistency | Identical resource types within a file use the same API version                               |
+| New resources       | Use the latest stable API version                                                             |
+| Existing resources  | Retain API version unless significant changes warrant upgrade                                 |
 
 ## Best Practices
 
 <!-- <reference-best-practices> -->
 Best practices retrieved via `mcp_bicep_experim_get_bicep_best_practices`:
 
-| Category | Practice |
-| -------- | -------- |
-| Modules | Omit `name` field for `module` statements (auto-generated GUID prevents concurrency issues) |
-| Parameters | Group logically related values into single `param`/`output` with user-defined types |
-| Params Files | Use `.bicepparam` files with variables and expressions instead of `.json` |
-| Resources | Use `parent` property instead of `/` in child resource names |
-| Resources | Add `existing` resources for parents when defining child resources without parent present |
-| Resources | Diagnostic codes `BCP036`, `BCP037`, `BCP081` may indicate hallucinated types/properties |
-| Types | Avoid open types (`array`, `object`); prefer user-defined types |
-| Types | Use typed variables: `var foo string = 'value'` |
-| Syntax | Prefer `.?` with `??` over `!` or verbose ternary: `a.?b ?? c` |
+| Category     | Practice                                                                                    |
+|--------------|---------------------------------------------------------------------------------------------|
+| Modules      | Omit `name` field for `module` statements (auto-generated GUID prevents concurrency issues) |
+| Parameters   | Group logically related values into single `param`/`output` with user-defined types         |
+| Params Files | Use `.bicepparam` files with variables and expressions instead of `.json`                   |
+| Resources    | Use `parent` property instead of `/` in child resource names                                |
+| Resources    | Add `existing` resources for parents when defining child resources without parent present   |
+| Resources    | Diagnostic codes `BCP036`, `BCP037`, `BCP081` may indicate hallucinated types/properties    |
+| Types        | Avoid open types (`array`, `object`); prefer user-defined types                             |
+| Types        | Use typed variables: `var foo string = 'value'`                                             |
+| Syntax       | Prefer `.?` with `??` over `!` or verbose ternary: `a.?b ?? c`                              |
 
 Parameters Files (`.bicepparam`) support variables and expressions:
 
@@ -290,11 +290,11 @@ param location = 'eastus2'
 > [!CAUTION]
 > Experimental features require explicit opt-in via `bicepconfig.json` and may change or be removed in future releases.
 
-| Feature | Config Key | Syntax Example |
-| ------- | ---------- | -------------- |
-| Testing Framework | `testFramework` | `test storageTest 'tests/storage.tests.bicep' = { params: { location: 'eastus' } }` |
-| Assertions | `assertions` | `assert locationValid = location != 'centralus'` |
-| Parameter Validation | `userDefinedConstraints` | `@validate(length(value) >= 3 && length(value) <= 24) param storageName string` |
+| Feature              | Config Key               | Syntax Example                                                                      |
+|----------------------|--------------------------|-------------------------------------------------------------------------------------|
+| Testing Framework    | `testFramework`          | `test storageTest 'tests/storage.tests.bicep' = { params: { location: 'eastus' } }` |
+| Assertions           | `assertions`             | `assert locationValid = location != 'centralus'`                                    |
+| Parameter Validation | `userDefinedConstraints` | `@validate(length(value) >= 3 && length(value) <= 24) param storageName string`     |
 
 Enable features in `bicepconfig.json`: `{ "experimentalFeaturesEnabled": { "featureName": true } }`
 

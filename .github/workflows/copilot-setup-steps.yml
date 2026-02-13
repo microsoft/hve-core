@@ -44,6 +44,18 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: '1.7.10'
+          ACTIONLINT_SHA256: 'f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f'
+        run: |
+          curl -sLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sha256sum -c -
+          tar -xzf "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" actionlint
+          sudo install actionlint /usr/local/bin/actionlint
+          rm actionlint "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          actionlint --version
+
       - name: Install PowerShell modules
         shell: pwsh
         run: |
@@ -58,6 +70,7 @@ jobs:
           python3 --version
           pwsh --version
           shellcheck --version
+          actionlint --version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list

@@ -1,0 +1,1 @@
+../../../.github/instructions/ado-get-build-info.instructions.md

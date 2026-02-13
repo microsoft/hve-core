@@ -65,12 +65,12 @@ Avoid these common patterns that reduce clarity and create clutter.
 
 Do not use em dashes (—) for parenthetical statements, explanations, or dramatic pauses. Use these alternatives instead:
 
-| Instead of Em Dash | Use This    | Example                                          |
-| ------------------- | ----------- | ------------------------------------------------ |
-| Parenthetical aside | Commas      | "The system, when enabled, logs all events."      |
-| Explanation         | Colons      | "One option remains: refactor the module."        |
-| Emphasis            | Periods     | Create a new sentence when emphasizing a point.  |
-| Supplementary info  | Parentheses | Use for truly supplementary information.          |
+| Instead of Em Dash  | Use This    | Example                                         |
+|---------------------|-------------|-------------------------------------------------|
+| Parenthetical aside | Commas      | "The system, when enabled, logs all events."    |
+| Explanation         | Colons      | "One option remains: refactor the module."      |
+| Emphasis            | Periods     | Create a new sentence when emphasizing a point. |
+| Supplementary info  | Parentheses | Use for truly supplementary information.        |
 
 ### Bolded-Prefix List Items
 
@@ -115,7 +115,7 @@ Organize content to help readers find and understand information:
 Use GitHub-flavored markdown alerts for important callouts. Each alert type serves a specific purpose:
 
 | Alert          | Purpose                                                     |
-| -------------- | ----------------------------------------------------------- |
+|----------------|-------------------------------------------------------------|
 | `[!NOTE]`      | Useful information users should know when skimming          |
 | `[!TIP]`       | Helpful advice for doing things better or more easily       |
 | `[!IMPORTANT]` | Key information users need to achieve their goal            |
@@ -144,7 +144,7 @@ Use GitHub-flavored markdown alerts for important callouts. Each alert type serv
 Match pronouns to context and purpose:
 
 | Context                    | Preferred Pronouns       | Example                                                          |
-| -------------------------- | ------------------------ | ---------------------------------------------------------------- |
+|----------------------------|--------------------------|------------------------------------------------------------------|
 | Team/organizational voice  | "we", "our"              | "We recommend using..."                                          |
 | Instructional/tutorial     | "you", "your"            | "You can configure..."                                           |
 | Personal insight/rationale | "I"                      | "I prefer this approach because..."                              |
@@ -164,11 +164,11 @@ Clarity takes priority while balancing brevity:
 
 Adaptability is the hallmark of effective writing style. Shift register based on content purpose:
 
-| Formality Level | Use For                                                       | Characteristics                    |
-| --------------- | ------------------------------------------------------------- | ---------------------------------- |
-| High            | Strategic plans, executive summaries, architecture decisions  | Structured, precise, authoritative |
-| Medium          | Technical documentation, READMEs, contributing guides         | Clear, professional, balanced      |
-| Lower           | Internal notes, casual updates, quick references              | Direct, concise, conversational    |
+| Formality Level | Use For                                                          | Characteristics                    |
+|-----------------|------------------------------------------------------------------|------------------------------------|
+| High            | Strategic plans, executive summaries, architecture decisions     | Structured, precise, authoritative |
+| Medium          | Technical documentation, READMEs, contributing guides            | Clear, professional, balanced      |
+| Lower           | Internal notes, casual updates, quick references                 | Direct, concise, conversational    |
 | Community       | Issue/PR comments, contributor acknowledgments, closure messages | Warm, appreciative, scope-focused  |
 
 Regardless of formality level, maintain professionalism and precision.

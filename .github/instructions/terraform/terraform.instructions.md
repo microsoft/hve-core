@@ -31,14 +31,14 @@ terraform/
 
 Every Terraform configuration follows a consistent file structure:
 
-| File | Purpose |
-|------|---------|
-| `main.tf` | Primary resource definitions and module calls |
-| `variables.tf` | Input variable declarations |
-| `outputs.tf` | Output value declarations |
-| `versions.tf` | Required providers and Terraform version constraints |
-| `backend.tf` | State backend configuration (root modules only) |
-| `locals.tf`, `data.tf` | Local values and data sources (when numerous) |
+| File                   | Purpose                                              |
+|------------------------|------------------------------------------------------|
+| `main.tf`              | Primary resource definitions and module calls        |
+| `variables.tf`         | Input variable declarations                          |
+| `outputs.tf`           | Output value declarations                            |
+| `versions.tf`          | Required providers and Terraform version constraints |
+| `backend.tf`           | State backend configuration (root modules only)      |
+| `locals.tf`, `data.tf` | Local values and data sources (when numerous)        |
 
 Within each file, order content as: terraform/provider blocks, variables, locals, data sources, resources, module calls, outputs.
 

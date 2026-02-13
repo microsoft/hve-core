@@ -15,16 +15,12 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Link-Lang-Check.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
-
     . $script:ScriptPath
 
     $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Linting'
 }
 
 AfterAll {
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 #region Get-GitTextFile Tests
@@ -366,9 +362,6 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
 
     Context 'Script invocation with ExcludePaths' {
         BeforeEach {
-            # Clear HVE_SKIP_MAIN so the script's main block runs during integration tests
-            $env:HVE_SKIP_MAIN = $null
-
             # Create test directory structure
             $script:TestsDir = Join-Path $script:TempDir 'scripts/tests/linting'
             $script:DocsDir = Join-Path $script:TempDir 'docs'
@@ -382,11 +375,6 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
             # Create docs file with en-us link (should be included)
             $docsFile = Join-Path $script:DocsDir 'readme.md'
             'Link: https://docs.microsoft.com/en-us/azure' | Set-Content -Path $docsFile
-        }
-
-        AfterEach {
-            # Restore HVE_SKIP_MAIN for function-only tests
-            $env:HVE_SKIP_MAIN = '1'
         }
 
         It 'Excludes files matching single pattern' {
@@ -500,3 +488,85 @@ Describe 'ExcludePaths Filtering' -Tag 'Integration' {
 }
 
 #endregion
+
+#region Invoke-LinkLanguageCheck Tests
+
+Describe 'Invoke-LinkLanguageCheck' -Tag 'Unit' {
+    BeforeAll {
+        Mock Get-GitTextFile { return @('file1.md', 'file2.md') }
+        Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Leaf' }
+    }
+
+    Context 'No links found' {
+        BeforeAll {
+            Mock Find-LinksInFile { return @() }
+        }
+
+        It 'Outputs empty JSON array when -Fix is not set' {
+            $result = Invoke-LinkLanguageCheck
+            $result | Should -Be '[]'
+        }
+
+        It 'Outputs no-links message when -Fix is set' {
+            $result = Invoke-LinkLanguageCheck -Fix
+            $result | Should -Be "No URLs containing 'en-us' were found."
+        }
+    }
+
+    Context 'Links found with -Fix' {
+        BeforeAll {
+            $script:mockLinks = @(
+                @{ File = 'file1.md'; LineNumber = 5; OriginalUrl = 'https://learn.microsoft.com/en-us/docs'; FixedUrl = 'https://learn.microsoft.com/docs' }
+            )
+            Mock Find-LinksInFile { return $script:mockLinks }
+            Mock Repair-AllLink { return 1 }
+        }
+
+        It 'Calls Repair-AllLink and reports fix count' {
+            $result = Invoke-LinkLanguageCheck -Fix
+            $result | Should -BeLike 'Fixed * URLs in 1 files*'
+            Should -Invoke Repair-AllLink -Times 1
+        }
+    }
+
+    Context 'Links found without -Fix' {
+        BeforeAll {
+            $script:mockLinks = @(
+                @{ File = 'file1.md'; LineNumber = 5; OriginalUrl = 'https://learn.microsoft.com/en-us/docs'; FixedUrl = 'https://learn.microsoft.com/docs' }
+            )
+            Mock Find-LinksInFile { return $script:mockLinks }
+            Mock ConvertTo-JsonOutput { return @(@{ File = 'file1.md'; Line = 5 }) }
+        }
+
+        It 'Outputs JSON via ConvertTo-JsonOutput' {
+            $result = Invoke-LinkLanguageCheck
+            $result | Should -Not -BeNullOrEmpty
+            Should -Invoke ConvertTo-JsonOutput -Times 1
+        }
+    }
+
+    Context 'ExcludePaths filtering' {
+        BeforeAll {
+            Mock Get-GitTextFile { return @('src/file.md', 'node_modules/pkg/file.md', 'build/out.md') }
+            Mock Find-LinksInFile { return @() }
+        }
+
+        It 'Excludes files matching exclusion patterns' {
+            Invoke-LinkLanguageCheck -ExcludePaths @('node_modules/**', 'build/**')
+            Should -Invoke Find-LinksInFile -Times 1
+        }
+    }
+
+    Context 'Non-file paths are skipped' {
+        BeforeAll {
+            Mock Get-GitTextFile { return @('not-a-file') }
+            Mock Test-Path { return $false } -ParameterFilter { $PathType -eq 'Leaf' }
+            Mock Find-LinksInFile { return @() }
+        }
+
+        It 'Does not call Find-LinksInFile for non-files' {
+            Invoke-LinkLanguageCheck
+            Should -Invoke Find-LinksInFile -Times 0
+        }
+    }
+}

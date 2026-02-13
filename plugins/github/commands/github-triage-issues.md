@@ -1,0 +1,1 @@
+../../../.github/prompts/github-triage-issues.prompt.md

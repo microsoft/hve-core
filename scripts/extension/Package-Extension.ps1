@@ -808,9 +808,8 @@ function Invoke-PackageExtension {
 #endregion Orchestration Functions
 
 #region Main Execution
-try {
-    # Only execute main logic when run directly, not when dot-sourced
-    if ($MyInvocation.InvocationName -ne '.') {
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
         $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
         $ExtensionDir = Join-Path $RepoRoot "extension"
@@ -824,15 +823,15 @@ try {
             -PreRelease:$PreRelease
 
         if (-not $result.Success) {
-            Write-Error $result.ErrorMessage
+            Write-Error -ErrorAction Continue $result.ErrorMessage
             exit 1
         }
         exit 0
     }
+    catch {
+        Write-Error -ErrorAction Continue "Package-Extension failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
-catch {
-    Write-Error "Package Extension failed: $($_.Exception.Message)"
-    Write-CIAnnotation -Message $_.Exception.Message -Level Error
-    exit 1
-}
-#endregion
+#endregion Main Execution

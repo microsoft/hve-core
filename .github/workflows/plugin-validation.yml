@@ -1,0 +1,54 @@
+name: Plugin Validation
+
+on:
+    workflow_call:
+        inputs:
+            soft-fail:
+                description: "Whether to continue on validation errors"
+                required: false
+                type: boolean
+                default: false
+
+permissions:
+    contents: read
+
+jobs:
+    validate:
+        name: Validate Plugins
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Install PowerShell-Yaml
+              shell: pwsh
+              run: |
+                  if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+                    Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+                  }
+
+            - name: Validate collections
+              run: npm run plugin:validate
+
+            - name: Check plugin freshness
+              run: |
+                  npm run plugin:generate
+                  if ! git diff --quiet plugins/; then
+                    echo "::error::Plugins out of date. Run 'npm run plugin:generate' and commit."
+                    if [ "${{ inputs.soft-fail }}" != "true" ]; then
+                      exit 1
+                    fi
+                  fi

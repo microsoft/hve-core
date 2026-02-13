@@ -1,0 +1,1 @@
+../../../.github/instructions/ado-wit-discovery.instructions.md

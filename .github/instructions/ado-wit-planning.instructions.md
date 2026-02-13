@@ -382,12 +382,12 @@ Based on the analysis, classify the relationship using the Similarity Categories
 
 ### Similarity Categories
 
-| Category | Meaning | Action |
-|----------|---------|--------|
-| Match | Same work item; creating both would duplicate effort | Update existing item |
-| Similar | Related enough that consolidation may be appropriate | Review with user before deciding |
-| Distinct | Different items with minimal overlap | Create new item |
-| Uncertain | Insufficient information or conflicting signals | Request user guidance |
+| Category  | Meaning                                              | Action                           |
+|-----------|------------------------------------------------------|----------------------------------|
+| Match     | Same work item; creating both would duplicate effort | Update existing item             |
+| Similar   | Related enough that consolidation may be appropriate | Review with user before deciding |
+| Distinct  | Different items with minimal overlap                 | Create new item                  |
+| Uncertain | Insufficient information or conflicting signals      | Request user guidance            |
 
 ### Human Review Triggers
 

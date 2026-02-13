@@ -1,0 +1,1 @@
+../../../.github/instructions/python-script.instructions.md

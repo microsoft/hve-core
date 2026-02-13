@@ -10,18 +10,18 @@ Discover GitHub issues through three paths: user-centric queries, artifact-drive
 
 ## Scope
 
-**Discovery path selection**:
+Discovery path selection:
 
 * User-centric (Path A): User requests their issues, assigned work, or milestone progress without referencing artifacts
 * Artifact-driven (Path B): Documents, PRDs, or requirements provided for translation into issues
 * Search-based (Path C): User provides search terms directly without artifacts or assignment context
 
-**Output location**: `.copilot-tracking/github-issues/discovery/<scope-name>/` where `<scope-name>` is a descriptive kebab-case slug derived from the discovery context (for example, `v2-features` or `security-audit`).
+Output location: `.copilot-tracking/github-issues/discovery/<scope-name>/` where `<scope-name>` is a descriptive kebab-case slug derived from the discovery context (for example, `v2-features` or `security-audit`).
 
 ## Deliverables
 
 | File                   | Path A | Path B | Path C |
-| ---------------------- | ------ | ------ | ------ |
+|------------------------|--------|--------|--------|
 | *planning-log.md*      | Yes    | Yes    | Yes    |
 | *issue-analysis.md*    | No     | Yes    | No     |
 | *issues-plan.md*       | No     | Yes    | No     |
@@ -32,7 +32,7 @@ Paths A and C produce a conversational summary with counts and relevant issue li
 
 ## Tooling
 
-**User-centric discovery (Path A)**:
+User-centric discovery (Path A):
 
 * `mcp_github_get_me`: Retrieve authenticated user details for assignee-based queries
 * `mcp_github_search_issues`: Search with `assignee:` qualifier scoped to `repo:{owner}/{repo}`
@@ -40,7 +40,7 @@ Paths A and C produce a conversational summary with counts and relevant issue li
 * `mcp_github_issue_read`: Hydrate results with `method: 'get'` for full details
   * When `includeSubIssues` is true, also call with `method: 'get_sub_issues'`
 
-**Artifact-driven discovery (Path B)**:
+Artifact-driven discovery (Path B):
 
 * `read_file`, `grep_search`: Read and parse source documents
 * `mcp_github_get_me`: Verify access to the target repository
@@ -48,12 +48,12 @@ Paths A and C produce a conversational summary with counts and relevant issue li
 * `mcp_github_issue_read`: Hydrate results and fetch sub-issues when enabled
 * `mcp_github_list_issue_types`: Retrieve valid issue types when the organization supports them
 
-**Search-based discovery (Path C)**:
+Search-based discovery (Path C):
 
 * `mcp_github_search_issues`: Execute user-provided terms scoped to `repo:{owner}/{repo}`
 * `mcp_github_issue_read`: Hydrate results with `method: 'get'` for full details
 
-**Workspace utilities**: `list_dir`, `read_file`, `semantic_search` for artifact location and context gathering.
+Workspace utilities: `list_dir`, `read_file`, `semantic_search` for artifact location and context gathering.
 
 ## Required Phases
 
@@ -111,7 +111,7 @@ Execution:
 Map document types and content patterns to issue attributes.
 
 | Document Type | Content Pattern           | Suggested Label   | Issue Type  |
-| ------------- | ------------------------- | ----------------- | ----------- |
+|---------------|---------------------------|-------------------|-------------|
 | PRD           | Feature requirement       | `feature`         | Feature     |
 | PRD           | User story                | `feature`         | User story  |
 | BRD           | Business enhancement      | `enhancement`     | Enhancement |
@@ -148,12 +148,12 @@ Apply to artifact-driven discovery (Path B) only.
 
 #### Similarity-Based Actions
 
-| Category  | Action                                                              |
-| --------- | ------------------------------------------------------------------- |
-| Match     | Link candidate to existing issue; plan an Update if fields diverge  |
-| Similar   | Flag for user review with a comparison summary                      |
-| Distinct  | Plan as a new issue                                                 |
-| Uncertain | Request user guidance before proceeding                             |
+| Category  | Action                                                             |
+|-----------|--------------------------------------------------------------------|
+| Match     | Link candidate to existing issue; plan an Update if fields diverge |
+| Similar   | Flag for user review with a comparison summary                     |
+| Distinct  | Plan as a new issue                                                |
+| Uncertain | Request user guidance before proceeding                            |
 
 #### Hierarchy Grouping
 
@@ -163,13 +163,13 @@ Issue title conventions:
 
 * Feature and enhancement titles follow conventional commit format (for example, `feat(scope): description`).
 * Assign labels per the Label Taxonomy Reference in *github-backlog-planning.instructions.md*.
-* Assign milestones per the Milestone Conventions in *github-backlog-planning.instructions.md*.
+* Assign milestones per the Milestone Discovery Protocol in *github-backlog-planning.instructions.md*.
 
 #### New Issue Construction
 
 * Populate acceptance criteria as markdown checkbox lists when extracted from documents.
-* Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in *github-backlog-planning.instructions.md*.
-* Include source references (document path and section) in issue body content.
+* Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in #file:./github-backlog-planning.instructions.md.
+* Include source references (document path and section) in issue body content only when the referenced path is committed to the repository. When referencing other planned issues, use `{{TEMP-N}}` placeholders (resolved to actual issue numbers during execution) or descriptive phrases. Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md before composing any GitHub-bound content.
 
 #### Existing Issue Handling
 
@@ -207,18 +207,19 @@ Additional triggers are defined in the Human Review Triggers section of *github-
 
 These sections in *github-backlog-planning.instructions.md* inform discovery operations:
 
-| Section                         | Used In         | Purpose                                              |
-| ------------------------------- | --------------- | ---------------------------------------------------- |
-| Search Protocol                 | Phase 1, Path B | Keyword group construction and query composition     |
-| Similarity Assessment Framework | Phase 1, Path B | Classifying candidate-to-existing issue pairs        |
-| Planning File Templates         | Phases 1-3      | Structure for all output files                       |
-| Temporary ID Mapping            | Phase 2         | `{{TEMP-N}}` placeholders for new issues             |
-| Three-Tier Autonomy Model       | Phase 3         | Confirmation gates during handoff review             |
-| State Persistence Protocol      | All phases      | Context recovery after summarization                 |
-| Issue Field Matrix              | Phase 2         | Required and optional fields per operation type      |
-| Milestone Conventions           | Phase 2         | EVEN/ODD versioning for milestone assignment         |
-| Label Taxonomy Reference        | Phase 2         | Label selection and title pattern mapping            |
-| Human Review Triggers           | Phase 3         | Additional conditions for pausing execution          |
+| Section                         | Used In         | Purpose                                                |
+|---------------------------------|-----------------|--------------------------------------------------------|
+| Search Protocol                 | Phase 1, Path B | Keyword group construction and query composition       |
+| Similarity Assessment Framework | Phase 1, Path B | Classifying candidate-to-existing issue pairs          |
+| Planning File Templates         | Phases 1-3      | Structure for all output files                         |
+| Content Sanitization Guards     | Phase 2         | Strip local paths and planning IDs from GitHub content |
+| Temporary ID Mapping            | Phase 2         | `{{TEMP-N}}` placeholders for new issues               |
+| Three-Tier Autonomy Model       | Phase 3         | Confirmation gates during handoff review               |
+| State Persistence Protocol      | All phases      | Context recovery after summarization                   |
+| Issue Field Matrix              | Phase 2         | Required and optional fields per operation type        |
+| Milestone Discovery Protocol    | Phase 2         | Role-based milestone classification for assignment     |
+| Label Taxonomy Reference        | Phase 2         | Label selection and title pattern mapping              |
+| Human Review Triggers           | Phase 3         | Additional conditions for pausing execution            |
 
 ---
 

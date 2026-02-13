@@ -1,0 +1,1 @@
+../../../.github/prompts/github-discover-issues.prompt.md

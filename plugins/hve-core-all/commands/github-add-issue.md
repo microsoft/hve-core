@@ -1,0 +1,1 @@
+../../../.github/prompts/github-add-issue.prompt.md

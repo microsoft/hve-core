@@ -33,11 +33,11 @@ Project folder organization scales with complexity. Keep all files at root when 
 
 ### Target Framework
 
-| Target | TFM | Use Case |
-|--------|-----|----------|
-| Cross-platform | `net10.0` | Console apps, libraries, web APIs |
-| Windows-specific | `net10.0-windows` | WinForms, WPF |
-| Android/iOS/macOS | `net10.0-{platform}` | Mobile and desktop |
+| Target            | TFM                  | Use Case                          |
+|-------------------|----------------------|-----------------------------------|
+| Cross-platform    | `net10.0`            | Console apps, libraries, web APIs |
+| Windows-specific  | `net10.0-windows`    | WinForms, WPF                     |
+| Android/iOS/macOS | `net10.0-{platform}` | Mobile and desktop                |
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -53,10 +53,10 @@ Omit explicit `LangVersion` as .NET 10 defaults to C# 14. Avoid `LangVersion=lat
 
 ### Implicit Usings
 
-| SDK | Implicit Namespaces |
-|-----|---------------------|
-| `Microsoft.NET.Sdk` | `System`, `System.Collections.Generic`, `System.IO`, `System.Linq`, `System.Threading.Tasks` |
-| `Microsoft.NET.Sdk.Web` | Base plus `Microsoft.AspNetCore.*`, `Microsoft.Extensions.*` |
+| SDK                     | Implicit Namespaces                                                                          |
+|-------------------------|----------------------------------------------------------------------------------------------|
+| `Microsoft.NET.Sdk`     | `System`, `System.Collections.Generic`, `System.IO`, `System.Linq`, `System.Threading.Tasks` |
+| `Microsoft.NET.Sdk.Web` | Base plus `Microsoft.AspNetCore.*`, `Microsoft.Extensions.*`                                 |
 
 Add project-wide global usings:
 
@@ -87,14 +87,14 @@ Reuse existing package versions when adding packages already present in the solu
 
 ### Naming
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Classes/Files | `PascalCase` | `UserService.cs` |
-| Interfaces | `IPascalCase` | `IRepository` |
-| Methods/Properties | `PascalCase` | `ProcessAsync` |
-| Fields | `camelCase` | `_logger`, `isActive` |
-| Base classes | `PascalCaseBase` | `WidgetBase` |
-| Type parameters | `TName` | `TEntity` |
+| Element            | Convention       | Example               |
+|--------------------|------------------|-----------------------|
+| Classes/Files      | `PascalCase`     | `UserService.cs`      |
+| Interfaces         | `IPascalCase`    | `IRepository`         |
+| Methods/Properties | `PascalCase`     | `ProcessAsync`        |
+| Fields             | `camelCase`      | `_logger`, `isActive` |
+| Base classes       | `PascalCaseBase` | `WidgetBase`          |
+| Type parameters    | `TName`          | `TEntity`             |
 
 ### Class Structure
 
