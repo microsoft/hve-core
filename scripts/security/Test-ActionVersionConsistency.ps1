@@ -357,6 +357,7 @@ function Invoke-ActionVersionConsistency {
     .SYNOPSIS
         Orchestrates the version consistency analysis.
     #>
+    [OutputType([int])]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
