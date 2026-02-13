@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
@@ -56,8 +57,6 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
-
-$script:SkipMain = $env:HVE_SKIP_MAIN -eq '1'
 
 function Get-GitTextFile {
     <#
@@ -281,9 +280,14 @@ function ConvertTo-JsonOutput {
     return $jsonData
 }
 
-#region Main Execution
-if (-not $script:SkipMain) {
-    try {
+function Invoke-LinkLanguageCheck {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [switch]$Fix,
+        [string[]]$ExcludePaths = @()
+    )
+
     if ($Verbose) {
         Write-Information "Getting list of git-tracked text files..." -InformationAction Continue
     }
@@ -373,12 +377,18 @@ if (-not $script:SkipMain) {
             Write-Output "No URLs containing 'en-us' were found."
         }
     }
+}
+
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-LinkLanguageCheck -Fix:$Fix -ExcludePaths $ExcludePaths
         exit 0
     }
     catch {
-        Write-Error -ErrorAction Continue "Link Lang Check failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message "Link Lang Check failed: $($_.Exception.Message)" -Level Error
+        Write-Error -ErrorAction Continue "Link-Lang-Check failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }
 }
-#endregion
+#endregion Main Execution

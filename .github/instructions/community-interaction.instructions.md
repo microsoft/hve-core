@@ -32,19 +32,19 @@ Pronoun conventions for community interactions:
 
 Select tone characteristics based on the scenario category. This matrix guides template authoring and agent response generation.
 
-| Scenario Category  | Primary Tone           | Secondary Tone                 | Emoji Use                      | Response Length          |
-| ------------------ | ---------------------- | ------------------------------ | ------------------------------ | ------------------------ |
-| Welcoming/thanking | Warm, genuine          | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences            |
-| Celebrating        | Warm, celebratory      | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences            |
-| Closing (scope)    | Respectful, direct     | Scope-focused, door-open       | None                           | 2-3 sentences            |
-| Closing (completed)| Warm, confirming       | Specific, closure-giving       | Permitted (brief)              | 2-3 sentences            |
-| Closing (inactive) | Neutral, informational | Reopening-friendly             | None                           | 2 sentences              |
-| Declining PRs      | Appreciative, honest   | Criteria-focused, constructive | None                           | 3-4 sentences            |
-| Requesting info    | Constructive, specific | Actionable, time-bounded       | None                           | 3-4 sentences with list  |
-| Redirecting        | Helpful, brief         | Clear next steps               | None                           | 2 sentences              |
-| De-escalating      | Calm, empathetic       | Boundary-setting, process      | None                           | 2-3 sentences            |
-| Security           | Urgent, reassuring     | Process-focused, confidential  | None                           | 2-3 sentences            |
-| Onboarding         | Encouraging, supportive| Mentoring, context-providing   | Permitted (brief)              | 3-4 sentences            |
+| Scenario Category   | Primary Tone            | Secondary Tone                 | Emoji Use                      | Response Length         |
+|---------------------|-------------------------|--------------------------------|--------------------------------|-------------------------|
+| Welcoming/thanking  | Warm, genuine           | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences           |
+| Celebrating         | Warm, celebratory       | Specific, encouraging          | Permitted (brief, celebratory) | 2-3 sentences           |
+| Closing (scope)     | Respectful, direct      | Scope-focused, door-open       | None                           | 2-3 sentences           |
+| Closing (completed) | Warm, confirming        | Specific, closure-giving       | Permitted (brief)              | 2-3 sentences           |
+| Closing (inactive)  | Neutral, informational  | Reopening-friendly             | None                           | 2 sentences             |
+| Declining PRs       | Appreciative, honest    | Criteria-focused, constructive | None                           | 3-4 sentences           |
+| Requesting info     | Constructive, specific  | Actionable, time-bounded       | None                           | 3-4 sentences with list |
+| Redirecting         | Helpful, brief          | Clear next steps               | None                           | 2 sentences             |
+| De-escalating       | Calm, empathetic        | Boundary-setting, process      | None                           | 2-3 sentences           |
+| Security            | Urgent, reassuring      | Process-focused, confidential  | None                           | 2-3 sentences           |
+| Onboarding          | Encouraging, supportive | Mentoring, context-providing   | Permitted (brief)              | 3-4 sentences           |
 
 ## Scenario Catalog
 
@@ -196,7 +196,7 @@ Triggered when a PR does not meet the project's contribution guidelines and cann
 
 > Thank you for taking the time to submit this PR, @{{contributor}}. We appreciate the effort.
 >
-> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](CONTRIBUTING.md) for the full requirements.
+> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full requirements.
 >
 > You're welcome to revise and resubmit. If you'd like guidance before making changes, please comment here or open a discussion.
 
@@ -323,7 +323,7 @@ Agents should involve human maintainers when:
 * Contributor disputes involve technical direction decisions that need maintainer consensus.
 * The agent cannot determine the appropriate response or scenario template.
 
-Escalation follows the role hierarchy defined in [GOVERNANCE.md](GOVERNANCE.md): Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for behavioral standards.
+Escalation follows the role hierarchy defined in [GOVERNANCE.md](../../GOVERNANCE.md): Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) for behavioral standards.
 
 ## Integration Instructions
 

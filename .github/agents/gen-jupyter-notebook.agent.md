@@ -81,15 +81,15 @@ fig.show()
 
 Plot type guidance:
 
-| Goal | Function | Notes |
-|------|----------|-------|
-| Distribution (numeric) | `px.histogram` with `marginal='box'` | Use `nbins` heuristic (sqrt(n)) |
-| Distribution (categorical) | `px.bar` on value_counts | Top-N if high cardinality |
-| Relationship (2 numeric) | `px.scatter` with `trendline='ols'` | Sample if over 50k rows |
-| Correlation overview | `px.imshow` with `text_auto=True` | Diverging scale, zmin=-1, zmax=1 |
-| Temporal trend | `px.line` with `markers=True` | Add rolling mean in separate trace |
-| Conditional distribution | `px.histogram` with `color` or `facet_col` | Keep facet count under 12 |
-| Energy or metric heatmap | `px.imshow` | Provide units in colorbar title |
+| Goal                       | Function                                   | Notes                              |
+|----------------------------|--------------------------------------------|------------------------------------|
+| Distribution (numeric)     | `px.histogram` with `marginal='box'`       | Use `nbins` heuristic (sqrt(n))    |
+| Distribution (categorical) | `px.bar` on value_counts                   | Top-N if high cardinality          |
+| Relationship (2 numeric)   | `px.scatter` with `trendline='ols'`        | Sample if over 50k rows            |
+| Correlation overview       | `px.imshow` with `text_auto=True`          | Diverging scale, zmin=-1, zmax=1   |
+| Temporal trend             | `px.line` with `markers=True`              | Add rolling mean in separate trace |
+| Conditional distribution   | `px.histogram` with `color` or `facet_col` | Keep facet count under 12          |
+| Energy or metric heatmap   | `px.imshow`                                | Provide units in colorbar title    |
 
 Faceting: Prefer `facet_col` with `facet_col_wrap` for comparisons across categories.
 

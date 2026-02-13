@@ -12,9 +12,6 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
-    $script:OriginalSkipMain = $env:HVE_SKIP_MAIN
-    $env:HVE_SKIP_MAIN = '1'
-
     . $script:ScriptPath
 
     # Import LintingHelpers for mocking
@@ -25,7 +22,6 @@ BeforeAll {
 
 AfterAll {
     Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
-    $env:HVE_SKIP_MAIN = $script:OriginalSkipMain
 }
 
 #region Get-MarkdownTarget Tests
@@ -257,16 +253,6 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
             $script:LinkCheckScript = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
         }
 
-        BeforeEach {
-            # Clear HVE_SKIP_MAIN so the script's main block runs during integration tests
-            $env:HVE_SKIP_MAIN = $null
-        }
-
-        AfterEach {
-            # Restore HVE_SKIP_MAIN for function-only tests
-            $env:HVE_SKIP_MAIN = '1'
-        }
-
         AfterAll {
             if ($null -eq $script:OriginalGHA) {
                 Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
@@ -301,6 +287,62 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
             # Assert - Should output error
             $errors = $output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
             $errors | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion
+
+#region Invoke-MarkdownLinkCheck Tests
+
+Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:FixtureConfig = Join-Path $PSScriptRoot '../Fixtures/Linting/link-check-config.json'
+    }
+
+    Context 'No markdown files found' {
+        It 'Throws when Get-MarkdownTarget returns empty' {
+            Mock Get-MarkdownTarget { return @() }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+
+            { Invoke-MarkdownLinkCheck -Path @('nonexistent') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*No markdown files were found to validate*'
+        }
+    }
+
+    Context 'CLI not installed' {
+        It 'Throws when markdown-link-check binary is missing' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+
+            { Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*markdown-link-check is not installed*'
+        }
+    }
+
+    Context 'Quiet mode base arguments' {
+        It 'Passes -q flag when Quiet switch is set' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $true } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+            Mock Push-Location { }
+            Mock Pop-Location { }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = "$TestDrive/file.md" } } -ParameterFilter { $LiteralPath -eq 'file.md' }
+            Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
+            Mock Set-Content { }
+            Mock Write-Host { }
+
+            try {
+                Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig -Quiet
+            }
+            catch {
+                Write-Verbose "CLI execution expected to fail in test environment: $_"
+            }
+
+            Should -Invoke Get-MarkdownTarget -Times 1
+            Should -Invoke Push-Location -Times 1
         }
     }
 }

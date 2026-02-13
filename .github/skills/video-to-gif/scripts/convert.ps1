@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -102,6 +103,8 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$SkipPalette
 )
+
+#region Functions
 
 function Test-FFmpegAvailable {
     $ffmpegPath = Get-Command -Name 'ffmpeg' -ErrorAction SilentlyContinue
@@ -326,113 +329,169 @@ function Invoke-TwoPassConversion {
     }
 }
 
-# Main execution
-if (-not (Test-FFmpegAvailable)) {
-    exit 1
-}
+function Invoke-VideoConversion {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $true, Position = 0)]
+        [string]$InputPath,
 
-# Search for input file
-$resolvedInput = $null
-if (Test-Path -Path $InputPath -PathType Leaf) {
-    $resolvedInput = (Resolve-Path -Path $InputPath).Path
-}
-else {
-    $resolvedInput = Find-VideoFile -Filename $InputPath
-    if ($resolvedInput) {
-        Write-Host "Found: $resolvedInput"
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 30)]
+        [int]$Fps = 10,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(100, 3840)]
+        [int]$Width = 1280,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('sierra2_4a', 'floyd_steinberg', 'bayer', 'none')]
+        [string]$Dither = 'sierra2_4a',
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('hable', 'reinhard', 'mobius', 'bt2390')]
+        [string]$Tonemap = 'hable',
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(0, [int]::MaxValue)]
+        [int]$Loop = 0,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(0, [double]::MaxValue)]
+        [double]$Start,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(0.1, [double]::MaxValue)]
+        [double]$Duration,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$SkipPalette
+    )
+
+    if (-not (Test-FFmpegAvailable)) {
+        throw "FFmpeg is not available"
+    }
+
+    # Search for input file
+    $resolvedInput = $null
+    if (Test-Path -Path $InputPath -PathType Leaf) {
+        $resolvedInput = (Resolve-Path -Path $InputPath).Path
     }
     else {
-        $searchLocations = @(
-            "current directory"
-            "workspace root"
-        )
-        if ($IsMacOS) {
-            $searchLocations += @("~/Movies", "~/Downloads", "~/Desktop")
+        $resolvedInput = Find-VideoFile -Filename $InputPath
+        if ($resolvedInput) {
+            Write-Host "Found: $resolvedInput"
         }
         else {
-            $searchLocations += @("~/Videos", "~/Downloads", "~/Desktop")
+            $searchLocations = @(
+                "current directory"
+                "workspace root"
+            )
+            if ($IsMacOS) {
+                $searchLocations += @("~/Movies", "~/Downloads", "~/Desktop")
+            }
+            else {
+                $searchLocations += @("~/Videos", "~/Downloads", "~/Desktop")
+            }
+            throw "Input file not found: $InputPath`nSearched: $($searchLocations -join ', ')"
         }
-        Write-Error "Input file not found: $InputPath`nSearched: $($searchLocations -join ', ')"
+    }
+
+    # Set default output path if not specified
+    if ([string]::IsNullOrEmpty($OutputPath)) {
+        $inputItem = Get-Item -Path $resolvedInput
+        $OutputPath = Join-Path -Path $inputItem.DirectoryName -ChildPath "$($inputItem.BaseName).gif"
+    }
+
+    # Detect HDR content
+    $isHDR = Test-HDRContent -FilePath $resolvedInput
+
+    # Build base filter chain
+    $baseFilter = "fps=$Fps,scale=${Width}:-1:flags=lanczos"
+
+    # Add HDR tonemapping if detected
+    if ($isHDR) {
+        $hdrFilter = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=${Tonemap}:desat=0,zscale=t=iec61966-2-1:m=bt709:r=full,format=rgb24"
+        $baseFilter = "$hdrFilter,$baseFilter"
+    }
+
+    # Build time arguments
+    $timeArgs = @()
+    if ($PSBoundParameters.ContainsKey('Start')) {
+        $timeArgs += $Start
+    }
+    else {
+        $timeArgs += -1  # Sentinel value indicating no start time
+    }
+    if ($PSBoundParameters.ContainsKey('Duration')) {
+        $timeArgs += $Duration
+    }
+
+    Write-Host "Converting: $resolvedInput"
+    Write-Host "Output:     $OutputPath"
+    Write-Host "Settings:   $Fps FPS, ${Width}px width, $Dither dithering, loop=$Loop"
+
+    if ($PSBoundParameters.ContainsKey('Start') -or $PSBoundParameters.ContainsKey('Duration')) {
+        $startDisplay = if ($PSBoundParameters.ContainsKey('Start')) { "${Start}s" } else { "0s" }
+        $durationDisplay = if ($PSBoundParameters.ContainsKey('Duration')) { "${Duration}s" } else { "full" }
+        Write-Host "Time range: start=$startDisplay, duration=$durationDisplay"
+    }
+
+    if ($isHDR) {
+        Write-Host "HDR:        Detected, applying $Tonemap tonemapping"
+    }
+
+    if ($SkipPalette) {
+        Write-Host "Mode:       Single-pass (faster, lower quality)"
+        Write-Host ""
+
+        $success = Invoke-SinglePassConversion `
+            -SourcePath $resolvedInput `
+            -DestinationPath $OutputPath `
+            -LoopCount $Loop `
+            -BaseFilter $baseFilter `
+            -TimeArgs $timeArgs
+    }
+    else {
+        Write-Host "Mode:       Two-pass palette optimization"
+        Write-Host ""
+
+        $success = Invoke-TwoPassConversion `
+            -SourcePath $resolvedInput `
+            -DestinationPath $OutputPath `
+            -DitherAlgorithm $Dither `
+            -LoopCount $Loop `
+            -BaseFilter $baseFilter `
+            -TimeArgs $timeArgs
+    }
+
+    if ($success -and (Test-Path -Path $OutputPath)) {
+        $outputFile = Get-Item -Path $OutputPath
+        $formattedSize = Format-FileSize -Bytes $outputFile.Length
+        Write-Host ""
+        Write-Host "Conversion complete: $OutputPath ($formattedSize)" -ForegroundColor Green
+    }
+    else {
+        throw "Conversion failed. Output file was not created."
+    }
+}
+
+#endregion Functions
+
+#region Main Execution
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-VideoConversion @PSBoundParameters
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Video conversion failed: $($_.Exception.Message)"
         exit 1
     }
 }
 
-# Set default output path if not specified
-if ([string]::IsNullOrEmpty($OutputPath)) {
-    $inputItem = Get-Item -Path $resolvedInput
-    $OutputPath = Join-Path -Path $inputItem.DirectoryName -ChildPath "$($inputItem.BaseName).gif"
-}
-
-# Detect HDR content
-$isHDR = Test-HDRContent -FilePath $resolvedInput
-
-# Build base filter chain
-$baseFilter = "fps=$Fps,scale=${Width}:-1:flags=lanczos"
-
-# Add HDR tonemapping if detected
-# Convert HDR to SDR using selected tonemapping algorithm, then explicitly convert to sRGB for accurate GIF colors
-if ($isHDR) {
-    $hdrFilter = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=${Tonemap}:desat=0,zscale=t=iec61966-2-1:m=bt709:r=full,format=rgb24"
-    $baseFilter = "$hdrFilter,$baseFilter"
-}
-
-# Build time arguments
-$timeArgs = @()
-if ($PSBoundParameters.ContainsKey('Start')) {
-    $timeArgs += $Start
-}
-else {
-    $timeArgs += -1  # Sentinel value indicating no start time
-}
-if ($PSBoundParameters.ContainsKey('Duration')) {
-    $timeArgs += $Duration
-}
-
-Write-Host "Converting: $resolvedInput"
-Write-Host "Output:     $OutputPath"
-Write-Host "Settings:   $Fps FPS, ${Width}px width, $Dither dithering, loop=$Loop"
-
-if ($PSBoundParameters.ContainsKey('Start') -or $PSBoundParameters.ContainsKey('Duration')) {
-    $startDisplay = if ($PSBoundParameters.ContainsKey('Start')) { "${Start}s" } else { "0s" }
-    $durationDisplay = if ($PSBoundParameters.ContainsKey('Duration')) { "${Duration}s" } else { "full" }
-    Write-Host "Time range: start=$startDisplay, duration=$durationDisplay"
-}
-
-if ($isHDR) {
-    Write-Host "HDR:        Detected, applying $Tonemap tonemapping"
-}
-
-if ($SkipPalette) {
-    Write-Host "Mode:       Single-pass (faster, lower quality)"
-    Write-Host ""
-
-    $success = Invoke-SinglePassConversion `
-        -SourcePath $resolvedInput `
-        -DestinationPath $OutputPath `
-        -LoopCount $Loop `
-        -BaseFilter $baseFilter `
-        -TimeArgs $timeArgs
-}
-else {
-    Write-Host "Mode:       Two-pass palette optimization"
-    Write-Host ""
-
-    $success = Invoke-TwoPassConversion `
-        -SourcePath $resolvedInput `
-        -DestinationPath $OutputPath `
-        -DitherAlgorithm $Dither `
-        -LoopCount $Loop `
-        -BaseFilter $baseFilter `
-        -TimeArgs $timeArgs
-}
-
-if ($success -and (Test-Path -Path $OutputPath)) {
-    $outputFile = Get-Item -Path $OutputPath
-    $formattedSize = Format-FileSize -Bytes $outputFile.Length
-    Write-Host ""
-    Write-Host "Conversion complete: $OutputPath ($formattedSize)" -ForegroundColor Green
-}
-else {
-    Write-Error "Conversion failed. Output file was not created."
-    exit 1
-}
+#endregion Main Execution

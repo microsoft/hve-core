@@ -73,7 +73,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **Prompts** (this directory): Coaching and educational guidance for learning
 - **[Instructions](../instructions/README.md)**: Systematic implementation and automation
-- **[Agents](../README.md)**: Specialized AI assistance with enhanced capabilities
+- **[Agents](../../docs/contributing/custom-agents.md)**: Specialized AI assistance with enhanced capabilities
 
 ## Quick Start
 
@@ -94,7 +94,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 - **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
 - **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
-- **[Agents](../README.md)** - Specialized AI assistance with enhanced capabilities
+- **[Agents](../../docs/contributing/custom-agents.md)** - Specialized AI assistance with enhanced capabilities
 
 ---
 

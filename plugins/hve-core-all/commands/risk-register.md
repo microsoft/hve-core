@@ -1,0 +1,1 @@
+../../../.github/prompts/risk-register.prompt.md

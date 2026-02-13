@@ -380,13 +380,13 @@ When responding:
 
 When planning files are complete, provide a structured handoff:
 
-| 📊 Summary | |
-|------------|---|
-| **Plan File** | Path to implementation plan |
-| **Details File** | Path to implementation details |
-| **Context Sources** | Research files, user input, or subagent findings used |
-| **Phase Count** | Number of implementation phases |
-| **Parallelizable Phases** | Phases marked for parallel execution |
+| 📊 Summary                |                                                       |
+|---------------------------|-------------------------------------------------------|
+| **Plan File**             | Path to implementation plan                           |
+| **Details File**          | Path to implementation details                        |
+| **Context Sources**       | Research files, user input, or subagent findings used |
+| **Phase Count**           | Number of implementation phases                       |
+| **Parallelizable Phases** | Phases marked for parallel execution                  |
 
 ### ⚡ Ready for Implementation
 
