@@ -109,24 +109,13 @@ items:
 
 Choose collections based on who uses the skill's utilities:
 
-| Skill Type           | Recommended Collections               |
-|----------------------|---------------------------------------|
-| Media processing     | `hve-core-all`                        |
-| Documentation tools  | `hve-core-all`, `technical-writer`    |
-| Data processing      | `hve-core-all`, `developer`           |
-| Infrastructure tools | `hve-core-all`, `devops`, `architect` |
-| Code generation      | `hve-core-all`, `developer`           |
-
-### Tags for Skills
-
-Common tags for skills:
-
-| Tag       | Use For                        |
-|-----------|--------------------------------|
-| `media`   | Image, video, audio processing |
-| `tooling` | General development utilities  |
-| `data`    | Data transformation            |
-| `testing` | Test automation utilities      |
+| Skill Type           | Recommended Collections                          |
+|----------------------|--------------------------------------------------|
+| Media processing     | `hve-core-all`                                   |
+| Documentation tools  | `hve-core-all`, `prompt-engineering`             |
+| Data processing      | `hve-core-all`, `data-science`                   |
+| Infrastructure tools | `hve-core-all`, `coding-standards`               |
+| Code generation      | `hve-core-all`, `coding-standards`               |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 

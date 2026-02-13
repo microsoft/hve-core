@@ -133,28 +133,12 @@ Choose collections based on who invokes or benefits from the workflow:
 
 | Prompt Type             | Recommended Collections                      |
 |-------------------------|----------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `developer`                  |
-| ADO work item workflows | `hve-core-all`, `tpm`, `devops`              |
-| GitHub issue workflows  | `hve-core-all`, `developer`                  |
-| RPI workflow prompts    | `hve-core-all` plus all relevant collections |
-| Documentation workflows | `hve-core-all`, `technical-writer`           |
-| Architecture prompts    | `hve-core-all`, `architect`                  |
-
-### Tags for Prompts
-
-Common tags for prompts:
-
-| Tag                  | Use For                          |
-|----------------------|----------------------------------|
-| `rpi`                | Research-Plan-Implement workflow |
-| `git`                | Git operations                   |
-| `github`             | GitHub-specific workflows        |
-| `ado`                | Azure DevOps workflows           |
-| `planning`           | Planning and estimation          |
-| `implementation`     | Code implementation              |
-| `review`             | Review processes                 |
-| `documentation`      | Documentation generation         |
-| `prompt-engineering` | Prompt building and analysis     |
+| Git/PR workflows        | `hve-core-all`, `git`                        |
+| ADO work item workflows | `hve-core-all`, `ado`, `project-planning`    |
+| GitHub issue workflows  | `hve-core-all`, `github`                     |
+| RPI workflow prompts    | `hve-core-all`, `rpi`                        |
+| Documentation workflows | `hve-core-all`, `prompt-engineering`         |
+| Architecture prompts    | `hve-core-all`, `project-planning`           |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 

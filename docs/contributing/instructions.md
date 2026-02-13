@@ -152,25 +152,12 @@ Choose collections based on who uses the technology or pattern:
 
 | Instruction Type        | Recommended Collections                           |
 |-------------------------|---------------------------------------------------|
-| Language standards      | `hve-core-all`, `developer`                       |
-| Infrastructure (IaC)    | `hve-core-all`, `architect`, `devops`             |
-| Documentation standards | `hve-core-all`, `technical-writer`                |
+| Language standards      | `hve-core-all`, `coding-standards`                |
+| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
+| Documentation standards | `hve-core-all`, `prompt-engineering`              |
 | Workflow instructions   | `hve-core-all` plus relevant workflow collections |
-| Test standards          | `hve-core-all`, `developer`                       |
-| ADO integration         | `hve-core-all`, `tpm`, `devops`                   |
-
-### Tags for Instructions
-
-Common tags for instructions:
-
-| Tag              | Use For                          |
-|------------------|----------------------------------|
-| `language`       | Programming language standards   |
-| `infrastructure` | IaC tools (Terraform, Bicep)     |
-| `documentation`  | Writing and formatting standards |
-| `testing`        | Test code conventions            |
-| `ado`            | Azure DevOps integration         |
-| `git`            | Git workflow patterns            |
+| Test standards          | `hve-core-all`, `coding-standards`                |
+| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
