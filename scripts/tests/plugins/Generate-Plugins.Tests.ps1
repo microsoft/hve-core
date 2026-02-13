@@ -228,7 +228,6 @@ display:
     }
 
     It 'Supports DryRun mode' {
-        $dryRunDir = Join-Path $script:tempDir 'plugins/dryrun-test'
         $result = Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -DryRun -Channel 'PreRelease'
         $result.Success | Should -BeTrue
     }
