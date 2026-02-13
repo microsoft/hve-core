@@ -65,6 +65,243 @@ Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Pure Functions
 
+#region Package Generation Functions
+
+function Get-CollectionDisplayName {
+    <#
+    .SYNOPSIS
+        Resolves a display name from a collection manifest.
+    .DESCRIPTION
+        Returns the displayName field if set, derives one from the name field,
+        or falls back to a default value.
+    .PARAMETER CollectionManifest
+        Parsed collection manifest hashtable.
+    .PARAMETER DefaultValue
+        Fallback display name when the manifest provides neither displayName nor name.
+    .OUTPUTS
+        [string] Resolved display name.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DefaultValue
+    )
+
+    if ($CollectionManifest.ContainsKey('displayName') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.displayName)) {
+        return [string]$CollectionManifest.displayName
+    }
+
+    if ($CollectionManifest.ContainsKey('name') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.name)) {
+        return "HVE Core - $($CollectionManifest.name)"
+    }
+
+    return $DefaultValue
+}
+
+function Copy-TemplateWithOverrides {
+    <#
+    .SYNOPSIS
+        Clones a template object and applies field overrides.
+    .DESCRIPTION
+        Copies all properties from Template, replacing any whose key appears in
+        Overrides. Additional override keys not in the template are appended.
+    .PARAMETER Template
+        Source PSCustomObject to clone.
+    .PARAMETER Overrides
+        Hashtable of field values to override or add.
+    .OUTPUTS
+        [pscustomobject] New object with overrides applied.
+    #>
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [pscustomobject]$Template,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Overrides
+    )
+
+    $output = [ordered]@{}
+
+    foreach ($propertyName in $Template.PSObject.Properties.Name) {
+        if ($Overrides.ContainsKey($propertyName)) {
+            $output[$propertyName] = $Overrides[$propertyName]
+        }
+        else {
+            $output[$propertyName] = $Template.$propertyName
+        }
+    }
+
+    foreach ($propertyName in $Overrides.Keys | Sort-Object) {
+        if (-not $output.Contains($propertyName)) {
+            $output[$propertyName] = $Overrides[$propertyName]
+        }
+    }
+
+    return [pscustomobject]$output
+}
+
+function Set-JsonFile {
+    <#
+    .SYNOPSIS
+        Writes an object to a JSON file with UTF-8 encoding.
+    .DESCRIPTION
+        Serializes Content to JSON and writes to Path, creating parent
+        directories as needed.
+    .PARAMETER Path
+        Destination file path.
+    .PARAMETER Content
+        Object to serialize.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [object]$Content
+    )
+
+    $parent = Split-Path -Path $Path -Parent
+    if (-not (Test-Path -Path $parent)) {
+        New-Item -Path $parent -ItemType Directory -Force | Out-Null
+    }
+
+    $json = $Content | ConvertTo-Json -Depth 30
+    Set-Content -Path $Path -Value $json -Encoding utf8NoBOM
+}
+
+function Remove-StaleGeneratedFiles {
+    <#
+    .SYNOPSIS
+        Removes generated persona package files that are no longer expected.
+    .DESCRIPTION
+        Scans extension/ for package.*.json files and removes any not in the
+        expected set, keeping the directory clean of orphaned persona templates.
+    .PARAMETER RepoRoot
+        Repository root path.
+    .PARAMETER ExpectedFiles
+        Array of absolute paths that should be retained.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [string[]]$ExpectedFiles
+    )
+
+    $expected = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($file in $ExpectedFiles) {
+        $null = $expected.Add([System.IO.Path]::GetFullPath($file))
+    }
+
+    $extensionDir = Join-Path $RepoRoot 'extension'
+    Get-ChildItem -Path $extensionDir -Filter 'package.*.json' -File | ForEach-Object {
+        $fullPath = [System.IO.Path]::GetFullPath($_.FullName)
+        if (-not $expected.Contains($fullPath)) {
+            Remove-Item -Path $_.FullName -Force
+        }
+    }
+}
+
+function Invoke-ExtensionCollectionsGeneration {
+    <#
+    .SYNOPSIS
+        Generates persona package files from root collection manifests.
+    .DESCRIPTION
+        Reads the package template and each collections/*.collection.yml file,
+        producing extension/package.json (for hve-core-all) and
+        extension/package.{id}.json for every other collection. Stale persona
+        files are removed.
+    .PARAMETER RepoRoot
+        Repository root path containing collections/ and extension/templates/.
+    .OUTPUTS
+        [string[]] Array of generated file paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $collectionsDir = Join-Path $RepoRoot 'collections'
+    $templatesDir = Join-Path $RepoRoot 'extension/templates'
+
+    $packageTemplatePath = Join-Path $templatesDir 'package.template.json'
+
+    if (-not (Test-Path $packageTemplatePath)) {
+        throw "Package template not found: $packageTemplatePath"
+    }
+
+    if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+        throw "Required module 'PowerShell-Yaml' is not installed."
+    }
+
+    Import-Module PowerShell-Yaml -ErrorAction Stop
+
+    $packageTemplate = Get-Content -Path $packageTemplatePath -Raw | ConvertFrom-Json
+
+    $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File | Sort-Object Name
+    if ($collectionFiles.Count -eq 0) {
+        throw "No root collection files found in $collectionsDir"
+    }
+
+    $expectedFiles = @()
+
+    foreach ($collectionFile in $collectionFiles) {
+        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        if ($collection -isnot [hashtable]) {
+            throw "Collection manifest must be a hashtable: $($collectionFile.FullName)"
+        }
+
+        $collectionId = [string]$collection.id
+        if ([string]::IsNullOrWhiteSpace($collectionId)) {
+            throw "Collection id is required: $($collectionFile.FullName)"
+        }
+
+        $collectionDescription = if ($collection.ContainsKey('description')) { [string]$collection.description } else { [string]$packageTemplate.description }
+
+        $extensionName = if ($collectionId -eq 'hve-core-all') { [string]$packageTemplate.name } else { "hve-$collectionId" }
+        $extensionDisplayName = if ($collectionId -eq 'hve-core-all') {
+            [string]$packageTemplate.displayName
+        }
+        else {
+            Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName)
+        }
+
+        $packageTemplateOutput = Copy-TemplateWithOverrides -Template $packageTemplate -Overrides @{
+            name        = $extensionName
+            displayName = $extensionDisplayName
+            description = $collectionDescription
+        }
+
+        $packagePath = if ($collectionId -eq 'hve-core-all') {
+            Join-Path $RepoRoot 'extension/package.json'
+        }
+        else {
+            Join-Path $RepoRoot "extension/package.$collectionId.json"
+        }
+
+        Set-JsonFile -Path $packagePath -Content $packageTemplateOutput
+        $expectedFiles += $packagePath
+    }
+
+    Remove-StaleGeneratedFiles -RepoRoot $RepoRoot -ExpectedFiles $expectedFiles
+
+    return $expectedFiles
+}
+
+#endregion Package Generation Functions
+
 function Get-AllowedMaturities {
     <#
     .SYNOPSIS
@@ -1112,7 +1349,18 @@ function Invoke-PrepareExtension {
     $GitHubDir = Join-Path $RepoRoot ".github"
     $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
 
-    # Validate required paths exist
+    # Generate persona package files from root collection manifests.
+    # This ensures extension/package.json and extension/package.*.json exist
+    # with the correct version from the template before any reads occur.
+    try {
+        $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot
+        Write-Host "Generated $($generated.Count) persona package file(s)" -ForegroundColor Green
+    }
+    catch {
+        return New-PrepareResult -Success $false -ErrorMessage "Package generation failed: $($_.Exception.Message)"
+    }
+
+    # Validate required paths exist (package.json now guaranteed by generation)
     $pathValidation = Test-PathsExist -ExtensionDir $ExtensionDirectory `
         -PackageJsonPath $PackageJsonPath `
         -GitHubDir $GitHubDir

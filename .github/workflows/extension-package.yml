@@ -144,11 +144,6 @@ jobs:
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
 
-      - name: Generate persona package templates
-        shell: pwsh
-        run: |
-          ./scripts/extension/Generate-ExtensionCollections.ps1
-
       - name: Download changelog artifact
         if: inputs.use-changelog
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0

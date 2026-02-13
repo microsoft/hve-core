@@ -6,6 +6,231 @@ BeforeAll {
     . $PSScriptRoot/../../extension/Prepare-Extension.ps1
 }
 
+#region Package Generation Function Tests
+
+Describe 'Get-CollectionDisplayName' {
+    It 'Returns displayName when present' {
+        $manifest = @{ displayName = 'My Display Name'; name = 'fallback' }
+        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
+        $result | Should -Be 'My Display Name'
+    }
+
+    It 'Derives display name from name when displayName absent' {
+        $manifest = @{ name = 'Git Workflow' }
+        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
+        $result | Should -Be 'HVE Core - Git Workflow'
+    }
+
+    It 'Returns default when both displayName and name absent' {
+        $manifest = @{ id = 'test' }
+        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'Fallback'
+        $result | Should -Be 'Fallback'
+    }
+
+    It 'Ignores whitespace-only displayName' {
+        $manifest = @{ displayName = '   '; name = 'valid' }
+        $result = Get-CollectionDisplayName -CollectionManifest $manifest -DefaultValue 'default'
+        $result | Should -Be 'HVE Core - valid'
+    }
+}
+
+Describe 'Copy-TemplateWithOverrides' {
+    It 'Overrides existing properties' {
+        $template = [PSCustomObject]@{ name = 'original'; version = '1.0.0' }
+        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ name = 'overridden' }
+        $result.name | Should -Be 'overridden'
+        $result.version | Should -Be '1.0.0'
+    }
+
+    It 'Preserves template property order' {
+        $template = [PSCustomObject]@{ a = '1'; b = '2'; c = '3' }
+        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ b = 'new' }
+        $names = @($result.PSObject.Properties.Name)
+        $names[0] | Should -Be 'a'
+        $names[1] | Should -Be 'b'
+        $names[2] | Should -Be 'c'
+    }
+
+    It 'Appends new override keys not in template' {
+        $template = [PSCustomObject]@{ name = 'ext' }
+        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{ name = 'ext'; extra = 'value' }
+        $result.extra | Should -Be 'value'
+    }
+
+    It 'Returns PSCustomObject' {
+        $template = [PSCustomObject]@{ name = 'ext' }
+        $result = Copy-TemplateWithOverrides -Template $template -Overrides @{}
+        $result | Should -BeOfType [PSCustomObject]
+    }
+}
+
+Describe 'Set-JsonFile' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Creates file with JSON content' {
+        $path = Join-Path $script:tempDir 'test.json'
+        Set-JsonFile -Path $path -Content @{ name = 'test'; version = '1.0.0' }
+        Test-Path $path | Should -BeTrue
+        $content = Get-Content -Path $path -Raw | ConvertFrom-Json
+        $content.name | Should -Be 'test'
+    }
+
+    It 'Creates parent directories when missing' {
+        $path = Join-Path $script:tempDir 'nested/deep/test.json'
+        Set-JsonFile -Path $path -Content @{ key = 'value' }
+        Test-Path $path | Should -BeTrue
+    }
+}
+
+Describe 'Remove-StaleGeneratedFiles' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:extDir = Join-Path $script:tempDir 'extension'
+        New-Item -ItemType Directory -Path $script:extDir -Force | Out-Null
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Removes stale package.*.json files not in expected set' {
+        $keepFile = Join-Path $script:extDir 'package.rpi.json'
+        $staleFile = Join-Path $script:extDir 'package.obsolete.json'
+        '{}' | Set-Content -Path $keepFile
+        '{}' | Set-Content -Path $staleFile
+
+        Remove-StaleGeneratedFiles -RepoRoot $script:tempDir -ExpectedFiles @($keepFile)
+
+        Test-Path $keepFile | Should -BeTrue
+        Test-Path $staleFile | Should -BeFalse
+    }
+
+    It 'Does not remove non-persona files' {
+        $regularFile = Join-Path $script:extDir 'README.md'
+        '# Test' | Set-Content -Path $regularFile
+
+        Remove-StaleGeneratedFiles -RepoRoot $script:tempDir -ExpectedFiles @()
+
+        Test-Path $regularFile | Should -BeTrue
+    }
+}
+
+Describe 'Invoke-ExtensionCollectionsGeneration' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+
+        # Set up minimal repo structure
+        $collectionsDir = Join-Path $script:tempDir 'collections'
+        $templatesDir = Join-Path $script:tempDir 'extension/templates'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $templatesDir -Force | Out-Null
+
+        # Package template
+        @{
+            name        = 'hve-core'
+            displayName = 'HVE Core'
+            version     = '2.0.0'
+            description = 'Default description'
+            publisher   = 'test-pub'
+            engines     = @{ vscode = '^1.80.0' }
+            contributes = @{}
+        } | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $templatesDir 'package.template.json')
+
+        # hve-core-all collection
+        @"
+id: hve-core-all
+name: hve-core
+displayName: HVE Core
+description: All artifacts
+"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+        # rpi collection
+        @"
+id: rpi
+name: RPI Workflow
+displayName: HVE Core - RPI Workflow
+description: RPI workflow agents
+"@ | Set-Content -Path (Join-Path $collectionsDir 'rpi.collection.yml')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Generates package.json for hve-core-all' {
+        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
+        $pkgPath = Join-Path $script:tempDir 'extension/package.json'
+        Test-Path $pkgPath | Should -BeTrue
+        $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+        $pkg.name | Should -Be 'hve-core'
+        $pkg.version | Should -Be '2.0.0'
+    }
+
+    It 'Generates persona package file for non-default collection' {
+        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
+        $pkgPath = Join-Path $script:tempDir 'extension/package.rpi.json'
+        Test-Path $pkgPath | Should -BeTrue
+        $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+        $pkg.name | Should -Be 'hve-rpi'
+        $pkg.displayName | Should -Be 'HVE Core - RPI Workflow'
+    }
+
+    It 'Returns array of generated file paths' {
+        $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
+        $result.Count | Should -Be 2
+    }
+
+    It 'Propagates version from template to all generated files' {
+        $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
+        foreach ($file in $result) {
+            $pkg = Get-Content $file -Raw | ConvertFrom-Json
+            $pkg.version | Should -Be '2.0.0'
+        }
+    }
+
+    It 'Removes stale persona files not matching current collections' {
+        $staleFile = Join-Path $script:tempDir 'extension/package.obsolete.json'
+        '{}' | Set-Content -Path $staleFile
+
+        Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
+
+        Test-Path $staleFile | Should -BeFalse
+    }
+
+    It 'Throws when package template is missing' {
+        $badRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path (Join-Path $badRoot 'collections') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $badRoot 'extension/templates') -Force | Out-Null
+        @"
+id: test
+"@ | Set-Content -Path (Join-Path $badRoot 'collections/test.collection.yml')
+
+        { Invoke-ExtensionCollectionsGeneration -RepoRoot $badRoot } | Should -Throw '*Package template not found*'
+
+        Remove-Item -Path $badRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Throws when no collection files exist' {
+        $emptyRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'collections') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'extension/templates') -Force | Out-Null
+        @{ name = 'test'; version = '1.0.0' } | ConvertTo-Json | Set-Content -Path (Join-Path $emptyRoot 'extension/templates/package.template.json')
+
+        { Invoke-ExtensionCollectionsGeneration -RepoRoot $emptyRoot } | Should -Throw '*No root collection files found*'
+
+        Remove-Item -Path $emptyRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+#endregion Package Generation Function Tests
+
 Describe 'Get-AllowedMaturities' {
     It 'Returns only stable for Stable channel' {
         $result = Get-AllowedMaturities -Channel 'Stable'
@@ -691,6 +916,31 @@ Describe 'Invoke-PrepareExtension' {
 }
 '@ | Set-Content -Path (Join-Path $script:extDir 'package.json')
 
+        # Create package template for generation
+        $script:templatesDir = Join-Path $script:extDir 'templates'
+        New-Item -ItemType Directory -Path $script:templatesDir -Force | Out-Null
+        @'
+{
+    "name": "hve-core",
+    "displayName": "HVE Core",
+    "version": "1.2.3",
+    "description": "Test extension",
+    "publisher": "test-pub",
+    "engines": { "vscode": "^1.80.0" },
+    "contributes": {}
+}
+'@ | Set-Content -Path (Join-Path $script:templatesDir 'package.template.json')
+
+        # Create collections directory with a minimal hve-core-all collection
+        $script:collectionsDir = Join-Path $script:tempDir 'collections'
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+        @"
+id: hve-core-all
+name: hve-core
+displayName: HVE Core
+description: Test extension
+"@ | Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml')
+
         # Create .github structure
         $script:ghDir = Join-Path $script:tempDir '.github'
         $script:agentsDir = Join-Path $script:ghDir 'agents'
@@ -753,7 +1003,7 @@ applyTo: "**/*.ps1"
             -Channel 'Stable'
 
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Required paths not found'
+        $result.ErrorMessage | Should -Not -BeNullOrEmpty
     }
 
     It 'Respects channel filtering' {
@@ -886,64 +1136,47 @@ items:
         Test-Path (Join-Path $script:extDir 'CHANGELOG.md') | Should -BeTrue
     }
 
-    It 'Fails when package.json has invalid JSON' {
-        $badJsonDir = Join-Path $TestDrive 'bad-json-ext'
-        New-Item -ItemType Directory -Path $badJsonDir -Force | Out-Null
-        '{ invalid json }' | Set-Content -Path (Join-Path $badJsonDir 'package.json')
-
-        # Create .github structure for this test
-        $badGhDir = Join-Path (Split-Path $badJsonDir -Parent) '.github'
-        New-Item -ItemType Directory -Path (Join-Path $badGhDir 'agents') -Force | Out-Null
+    It 'Fails when package template is missing' {
+        $badRoot = Join-Path $TestDrive 'bad-template-root'
+        $badExtDir = Join-Path $badRoot 'extension'
+        New-Item -ItemType Directory -Path $badExtDir -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $badRoot 'collections') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $badRoot '.github/agents') -Force | Out-Null
+        @"
+id: test
+"@ | Set-Content -Path (Join-Path $badRoot 'collections/test.collection.yml')
 
         $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $badJsonDir `
-            -RepoRoot (Split-Path $badJsonDir -Parent) `
+            -ExtensionDirectory $badExtDir `
+            -RepoRoot $badRoot `
             -Channel 'Stable'
 
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Failed to parse package.json'
+        $result.ErrorMessage | Should -Match 'Package generation failed'
     }
 
-    It 'Fails when package.json missing version field' {
-        $noVersionDir = Join-Path $TestDrive 'no-version-ext'
-        New-Item -ItemType Directory -Path $noVersionDir -Force | Out-Null
-        '{"name": "test"}' | Set-Content -Path (Join-Path $noVersionDir 'package.json')
-
-        # Create .github structure for this test
-        $noVersionGhDir = Join-Path (Split-Path $noVersionDir -Parent) '.github'
-        New-Item -ItemType Directory -Path (Join-Path $noVersionGhDir 'agents') -Force | Out-Null
+    It 'Fails when no collection YAML files exist' {
+        $emptyRoot = Join-Path $TestDrive 'empty-collections-root'
+        $emptyExtDir = Join-Path $emptyRoot 'extension'
+        New-Item -ItemType Directory -Path $emptyExtDir -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'collections') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'extension/templates') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $emptyRoot '.github/agents') -Force | Out-Null
+        @{ name = 'test'; version = '1.0.0' } | ConvertTo-Json | Set-Content -Path (Join-Path $emptyRoot 'extension/templates/package.template.json')
 
         $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $noVersionDir `
-            -RepoRoot (Split-Path $noVersionDir -Parent) `
+            -ExtensionDirectory $emptyExtDir `
+            -RepoRoot $emptyRoot `
             -Channel 'Stable'
 
         $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match "does not contain a 'version' field"
-    }
-
-    It 'Fails when version format is invalid' {
-        $badVersionDir = Join-Path $TestDrive 'bad-version-ext'
-        New-Item -ItemType Directory -Path $badVersionDir -Force | Out-Null
-        '{"name": "test", "version": "invalid"}' | Set-Content -Path (Join-Path $badVersionDir 'package.json')
-
-        # Create .github structure for this test
-        $badVersionGhDir = Join-Path (Split-Path $badVersionDir -Parent) '.github'
-        New-Item -ItemType Directory -Path (Join-Path $badVersionGhDir 'agents') -Force | Out-Null
-
-        $result = Invoke-PrepareExtension `
-            -ExtensionDirectory $badVersionDir `
-            -RepoRoot (Split-Path $badVersionDir -Parent) `
-            -Channel 'Stable'
-
-        $result.Success | Should -BeFalse
-        $result.ErrorMessage | Should -Match 'Invalid version format'
+        $result.ErrorMessage | Should -Match 'Package generation failed'
     }
 
     Context 'Persona template copy' {
         BeforeAll {
-            # Developer collection manifest
-            $script:devCollectionPath = Join-Path $script:tempDir 'developer.collection.yml'
+            # Developer collection manifest (in collections/ for generation)
+            $script:devCollectionYaml = Join-Path $script:collectionsDir 'developer.collection.yml'
             @"
 id: developer
 name: hve-developer
@@ -951,7 +1184,8 @@ displayName: HVE Core - Developer Edition
 description: Developer edition
 personas:
   - developer
-"@ | Set-Content -Path $script:devCollectionPath
+"@ | Set-Content -Path $script:devCollectionYaml
+            $script:devCollectionPath = $script:devCollectionYaml
 
             # hve-core-all collection manifest (default)
             $script:allCollectionPath = Join-Path $script:tempDir 'hve-core-all.collection.yml'
@@ -975,23 +1209,10 @@ personas:
   - nonexistent
 "@ | Set-Content -Path $script:missingCollectionPath
 
-            # Persona template for developer collection
-            @'
-{
-    "name": "hve-developer",
-    "version": "1.2.3",
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:extDir 'package.developer.json')
-
-        }
-
-        BeforeEach {
-            $script:originalPackageJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw
         }
 
         AfterEach {
-            $script:originalPackageJson | Set-Content -Path (Join-Path $script:extDir 'package.json')
+            # Clean up backup files left by persona template copy
             $bakPath = Join-Path $script:extDir 'package.json.bak'
             if (Test-Path $bakPath) {
                 Remove-Item -Path $bakPath -Force
@@ -1006,8 +1227,9 @@ personas:
                 -DryRun
 
             $result.Success | Should -BeTrue
-            $currentContent = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw
-            $currentContent | Should -Be $script:originalPackageJson
+            # package.json should contain the generated hve-core-all content (not a persona template)
+            $currentJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $currentJson.name | Should -Be 'hve-core'
             Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
         }
 
@@ -1059,15 +1281,16 @@ personas:
             $result.Success | Should -BeTrue
             $bakPath = Join-Path $script:extDir 'package.json.bak'
             Test-Path $bakPath | Should -BeTrue
-            $bakContent = Get-Content -Path $bakPath -Raw
-            $bakContent | Should -Be $script:originalPackageJson
+            # Backup should contain the hve-core-all (canonical) generated content
+            $bakJson = Get-Content -Path $bakPath -Raw | ConvertFrom-Json
+            $bakJson.name | Should -Be 'hve-core'
         }
     }
 
     Context 'Collection maturity gating' {
         BeforeAll {
-            # Deprecated collection manifest
-            $script:deprecatedCollectionPath = Join-Path $script:tempDir 'deprecated.collection.yml'
+            # Deprecated collection in collections/ directory for generation
+            $script:deprecatedCollectionPath = Join-Path $script:collectionsDir 'deprecated-coll.collection.yml'
             @"
 id: deprecated-coll
 name: deprecated-ext
@@ -1078,8 +1301,8 @@ personas:
 maturity: deprecated
 "@ | Set-Content -Path $script:deprecatedCollectionPath
 
-            # Experimental collection manifest
-            $script:experimentalCollectionPath = Join-Path $script:tempDir 'experimental.collection.yml'
+            # Experimental collection in collections/ directory for generation
+            $script:experimentalCollectionPath = Join-Path $script:collectionsDir 'experimental-coll.collection.yml'
             @"
 id: experimental-coll
 name: experimental-ext
@@ -1089,15 +1312,6 @@ personas:
   - hve-core-all
 maturity: experimental
 "@ | Set-Content -Path $script:experimentalCollectionPath
-
-            # Persona template for experimental collection
-            @'
-{
-    "name": "experimental-ext",
-    "version": "1.2.3",
-    "contributes": {}
-}
-'@ | Set-Content -Path (Join-Path $script:extDir 'package.experimental-coll.json')
         }
 
         It 'Returns early success for deprecated collection on Stable channel' {
