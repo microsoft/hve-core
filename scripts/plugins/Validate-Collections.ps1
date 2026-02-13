@@ -242,6 +242,11 @@ function Invoke-CollectionValidation {
             }
             $effectiveMaturity = Resolve-ItemMaturity -Maturity $itemMaturity
 
+            # Repo-specific path exclusion
+            if ($itemPath -match '^\.github/.*/hve-core/') {
+                $fileErrors += "repo-specific path not allowed in collections: $itemPath (artifacts under .github/**/hve-core/ are excluded from distribution)"
+            }
+
             # Path existence
             if (-not (Test-Path -Path $absolutePath)) {
                 $fileErrors += "path not found: $itemPath"

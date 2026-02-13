@@ -196,6 +196,12 @@ function Get-ArtifactFiles {
             $suffix = $Matches['suffix'].ToLowerInvariant()
             $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+
+            # Exclude repo-specific artifacts under .github/**/hve-core/
+            if ($relativePath -match '^\.github/.*/hve-core/') {
+                continue
+            }
+
             $items += @{ path = $relativePath; kind = $kind }
         }
     }
