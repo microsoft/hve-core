@@ -64,7 +64,6 @@ jobs:
 
   release-please:
     name: Release Please
-    if: "${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}"
     needs:
       - spell-check
       - markdown-lint
