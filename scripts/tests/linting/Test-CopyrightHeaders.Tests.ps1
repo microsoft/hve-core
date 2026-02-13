@@ -16,14 +16,21 @@
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Test-CopyrightHeaders.ps1'
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/CopyrightHeaders'
+    $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
+
+    # Import modules for mocking
+    Import-Module $script:CIHelpersPath -Force
 
     # Create test fixtures directory
     if (-not (Test-Path $script:FixturesPath)) {
         New-Item -ItemType Directory -Path $script:FixturesPath -Force | Out-Null
     }
+
+    . $script:ScriptPath
 }
 
 AfterAll {
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
     # Cleanup test fixtures
     if (Test-Path $script:FixturesPath) {
         Remove-Item -Path $script:FixturesPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -115,7 +122,7 @@ Write-Host "Hello World"
 
     It 'Detects valid headers in file' {
         $outputPath = Join-Path $script:FixturesPath 'results.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('valid.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('valid.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $validFile = $results.results | Where-Object { $_.file -like '*valid.ps1' }
@@ -137,7 +144,7 @@ Write-Host "Hello World"
         Set-Content -Path (Join-Path $script:FixturesPath 'valid-with-requires.ps1') -Value $validWithRequiresContent
 
         $outputPath = Join-Path $script:FixturesPath 'results-requires.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('valid-with-requires.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('valid-with-requires.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $validFile = $results.results | Where-Object { $_.file -like '*valid-with-requires.ps1' }
@@ -167,7 +174,7 @@ Write-Host "Hello World"
         Set-Content -Path (Join-Path $script:FixturesPath 'missing-copyright.ps1') -Value $content
 
         $outputPath = Join-Path $script:FixturesPath 'results-missing-copyright.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('missing-copyright.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('missing-copyright.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $file = $results.results | Where-Object { $_.file -like '*missing-copyright.ps1' }
@@ -187,7 +194,7 @@ Write-Host "Hello World"
         Set-Content -Path (Join-Path $script:FixturesPath 'missing-spdx.ps1') -Value $content
 
         $outputPath = Join-Path $script:FixturesPath 'results-missing-spdx.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('missing-spdx.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('missing-spdx.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $file = $results.results | Where-Object { $_.file -like '*missing-spdx.ps1' }
@@ -206,7 +213,7 @@ Write-Host "Hello World"
         Set-Content -Path (Join-Path $script:FixturesPath 'missing-both.ps1') -Value $content
 
         $outputPath = Join-Path $script:FixturesPath 'results-missing-both.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('missing-both.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('missing-both.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $file = $results.results | Where-Object { $_.file -like '*missing-both.ps1' }
@@ -243,7 +250,7 @@ Write-Host "Headers too late"
         Set-Content -Path (Join-Path $script:FixturesPath 'headers-too-late.ps1') -Value $content
 
         $outputPath = Join-Path $script:FixturesPath 'results-headers-too-late.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('headers-too-late.ps1') -OutputPath $outputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('headers-too-late.ps1') -OutputPath $outputPath
 
         $results = Get-Content $outputPath | ConvertFrom-Json
         $file = $results.results | Where-Object { $_.file -like '*headers-too-late.ps1' }
@@ -261,26 +268,25 @@ Write-Host "Headers too late"
 
 Describe 'Test-CopyrightHeaders Parameters' -Tag 'Unit' {
     It 'Accepts Path parameter' {
-        { & $script:ScriptPath -Path $script:FixturesPath -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
+        { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
     }
 
     It 'Accepts FileExtensions parameter' {
-        { & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('*.ps1') -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
+        { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('*.ps1') -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
     }
 
     It 'Accepts ExcludePaths parameter' {
-        { & $script:ScriptPath -Path $script:FixturesPath -ExcludePaths @('node_modules') -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
+        { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -ExcludePaths @('node_modules') -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
     }
 
-    It 'Returns exit code 1 with FailOnMissing when files missing headers' {
+    It 'Throws with FailOnMissing when files missing headers' {
         $content = @"
 #!/usr/bin/env pwsh
 Write-Host "No headers"
 "@
         Set-Content -Path (Join-Path $script:FixturesPath 'no-headers.ps1') -Value $content
 
-        $null = & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('no-headers.ps1') -OutputPath (Join-Path $script:FixturesPath 'fail-test.json') -FailOnMissing 2>&1
-        $LASTEXITCODE | Should -Be 1
+        { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('no-headers.ps1') -OutputPath (Join-Path $script:FixturesPath 'fail-test.json') -FailOnMissing } | Should -Throw '*missing required headers*'
     }
 }
 
@@ -303,7 +309,7 @@ Write-Host "Test"
         Set-Content -Path (Join-Path $script:FixturesPath 'output-test.ps1') -Value $content
 
         $script:OutputPath = Join-Path $script:FixturesPath 'output-format.json'
-        & $script:ScriptPath -Path $script:FixturesPath -FileExtensions @('output-test.ps1') -OutputPath $script:OutputPath
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('output-test.ps1') -OutputPath $script:OutputPath
     }
 
     It 'Outputs valid JSON' {

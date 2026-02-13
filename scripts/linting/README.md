@@ -499,45 +499,67 @@ param(
     [switch]$ChangedFilesOnly
 )
 
-# Import shared helpers
-$scriptPath = $PSScriptRoot
-Import-Module "$scriptPath/Modules/LintingHelpers.psm1" -Force
-Import-Module "$scriptPath/../lib/Modules/CIHelpers.psm1" -Force
+$ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'Modules/LintingHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
-# Main validation logic
-Write-Host "🔍 Running MyValidator..."
+#region Functions
 
-if ($ChangedFilesOnly) {
-    $files = Get-ChangedFilesFromGit -FileExtension '.ext'
-} else {
-    $files = Get-FilesRecursive -Path (Get-Location) -Pattern '*.ext'
+function Invoke-MyValidatorCore {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [switch]$ChangedFilesOnly
+    )
+
+    Write-Host "🔍 Running MyValidator..."
+
+    if ($ChangedFilesOnly) {
+        $files = Get-ChangedFilesFromGit -FileExtension '.ext'
+    }
+    else {
+        $files = Get-FilesRecursive -Path (Get-Location) -Pattern '*.ext'
+    }
+
+    if ($files.Count -eq 0) {
+        Write-Host "✅ No files to validate"
+        return
+    }
+
+    # Perform validation
+    $issues = @()
+    foreach ($file in $files) {
+        # Validation logic here
+        if ($issue) {
+            $issues += $issue
+            Write-CIAnnotation -Level 'Error' -Message 'Issue found' -File $file
+        }
+    }
+
+    Write-CIStepSummary -Content "## Validation Results`n`nFound $($issues.Count) issues"
+
+    if ($issues.Count -gt 0) {
+        throw "Found $($issues.Count) issues"
+    }
+
+    Write-Host "✅ All files validated successfully"
 }
 
-if ($files.Count -eq 0) {
-    Write-Host "✅ No files to validate"
-    exit 0
-}
+#endregion Functions
 
-# Perform validation
-$issues = @()
-foreach ($file in $files) {
-    # Validation logic here
-    if ($issue) {
-        $issues += $issue
-        Write-CIAnnotation -Level 'Error' -Message 'Issue found' -File $file
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-MyValidatorCore @PSBoundParameters
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Invoke-MyValidator failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
     }
 }
-
-# Export results
-Write-CIStepSummary -Content "## Validation Results`n`nFound $($issues.Count) issues"
-
-if ($issues.Count -gt 0) {
-    Write-Host "❌ Found $($issues.Count) issues"
-    exit 1
-}
-
-Write-Host "✅ All files validated successfully"
-exit 0
+#endregion Main Execution
 ```
 
 ## Contributing

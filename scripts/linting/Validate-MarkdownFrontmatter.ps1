@@ -19,6 +19,7 @@ using namespace System.Collections.Generic
 # (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
 using module .\Modules\FrontmatterValidation.psm1
 
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$Paths = @('.'),
@@ -31,7 +32,8 @@ param(
         'scripts/tests/Fixtures/**',
         'extension/README.md',
         'pr.md',
-        '.github/PULL_REQUEST_TEMPLATE.md'
+        '.github/PULL_REQUEST_TEMPLATE.md',
+        'plugins/**'
     ),
 
     [Parameter(Mandatory = $false)]
@@ -641,8 +643,8 @@ All frontmatter fields are valid and properly formatted. Great job! 🎉
 }
 
 #region Main Execution
-try {
-    if ($MyInvocation.InvocationName -ne '.') {
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
         if ($ChangedFilesOnly) {
             $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
         }
@@ -654,7 +656,6 @@ try {
         }
 
         # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
-        # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
         if ($result -is [System.Array]) {
             $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
         }
@@ -665,8 +666,7 @@ try {
             exit 0
         }
 
-        # Validate result object before calling GetExitCode to prevent method invocation errors
-        # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
+        # Validate result object before calling GetExitCode
         if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
             $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
             Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
@@ -682,10 +682,10 @@ try {
             exit 0
         }
     }
+    catch {
+        Write-Error -ErrorAction Continue "Validate-MarkdownFrontmatter failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
-catch {
-    Write-Error -ErrorAction Continue "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
-    Write-CIAnnotation -Message "Validate Markdown Frontmatter failed: $($_.Exception.Message)" -Level Error
-    exit 1
-}
-#endregion
+#endregion Main Execution

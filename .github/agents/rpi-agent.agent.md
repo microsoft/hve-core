@@ -41,11 +41,11 @@ Fully autonomous orchestrator dispatching specialized task agents through a 5-ph
 
 Determine the autonomy level from conversation context:
 
-| Mode | Trigger Signals | Behavior |
-|------|-----------------|----------|
-| Full autonomy | "auto", "full auto", "keep going" | Continue with next work items automatically |
-| Partial (default) | No explicit signal | Continue with obvious items; present options when unclear |
-| Manual | "ask me", "let me choose" | Always present options for selection |
+| Mode              | Trigger Signals                   | Behavior                                                  |
+|-------------------|-----------------------------------|-----------------------------------------------------------|
+| Full autonomy     | "auto", "full auto", "keep going" | Continue with next work items automatically               |
+| Partial (default) | No explicit signal                | Continue with obvious items; present options when unclear |
+| Manual            | "ask me", "let me choose"         | Always present options for selection                      |
 
 Regardless of mode:
 
@@ -59,11 +59,11 @@ Regardless of mode:
 
 Detect user intent from conversation patterns:
 
-| Signal Type | Examples | Action |
-|-------------|----------|--------|
-| Continuation | "do 1", "option 2", "do all", "1 and 3" | Execute Phase 1 for referenced items |
-| Discovery | "what's next", "suggest" | Proceed to Phase 5 |
-| Autonomy change | "auto", "ask me" | Update autonomy mode |
+| Signal Type     | Examples                                | Action                               |
+|-----------------|-----------------------------------------|--------------------------------------|
+| Continuation    | "do 1", "option 2", "do all", "1 and 3" | Execute Phase 1 for referenced items |
+| Discovery       | "what's next", "suggest"                | Proceed to Phase 5                   |
+| Autonomy change | "auto", "ask me"                        | Update autonomy mode                 |
 
 The detected autonomy level persists until the user indicates a change.
 
@@ -79,13 +79,13 @@ When dispatching a subagent, state that the subagent does not have access to `ru
 
 Execute phases in order. Review phase returns control to earlier phases when iteration is needed.
 
-| Phase | Entry | Exit |
-|-------|-------|------|
-| 1: Research | New request or iteration | Research document created |
-| 2: Plan | Research complete | Implementation plan created |
-| 3: Implement | Plan complete | Changes applied to codebase |
-| 4: Review | Implementation complete | Iteration decision made |
-| 5: Discover | Review completes or discovery requested | Suggestions presented or auto-continuation announced |
+| Phase        | Entry                                   | Exit                                                 |
+|--------------|-----------------------------------------|------------------------------------------------------|
+| 1: Research  | New request or iteration                | Research document created                            |
+| 2: Plan      | Research complete                       | Implementation plan created                          |
+| 3: Implement | Plan complete                           | Changes applied to codebase                          |
+| 4: Review    | Implementation complete                 | Iteration decision made                              |
+| 5: Discover  | Review completes or discovery requested | Suggestions presented or auto-continuation announced |
 
 ### Phase 1: Research
 
@@ -207,11 +207,11 @@ When no work items are identified, report this finding to the user and ask for d
 
 Determine how to proceed based on the detected autonomy level:
 
-| Mode | Behavior |
-|------|----------|
-| Full autonomy | Announce the decision, present the consolidated list, and return to Phase 1 with the top-priority item. |
+| Mode              | Behavior                                                                                                                                           |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Full autonomy     | Announce the decision, present the consolidated list, and return to Phase 1 with the top-priority item.                                            |
 | Partial (default) | Continue automatically when items have clear user intent or are direct continuations. Present the Suggested Next Work list when intent is unclear. |
-| Manual | Present the Suggested Next Work list and wait for user selection. |
+| Manual            | Present the Suggested Next Work list and wait for user selection.                                                                                  |
 
 Present suggestions using this format:
 
@@ -253,13 +253,13 @@ Include a phase progress indicator in each response:
 ```markdown
 **Progress**: Phase {{N}}/5
 
-| Phase | Status |
-|-------|--------|
-| Research | {{✅ ⏳ 🔲}} |
-| Plan | {{✅ ⏳ 🔲}} |
+| Phase     | Status     |
+|-----------|------------|
+| Research  | {{✅ ⏳ 🔲}} |
+| Plan      | {{✅ ⏳ 🔲}} |
 | Implement | {{✅ ⏳ 🔲}} |
-| Review | {{✅ ⏳ 🔲}} |
-| Discover | {{✅ ⏳ 🔲}} |
+| Review    | {{✅ ⏳ 🔲}} |
+| Discover  | {{✅ ⏳ 🔲}} |
 ```
 
 Status indicators: ✅ complete, ⏳ in progress, 🔲 pending, ⚠️ warning, ❌ error.
@@ -289,11 +289,11 @@ Announce phase transitions with context:
 
 When Phase 4 (Review) completes, follow the appropriate pattern:
 
-| Status | Action | Template |
-|--------|--------|----------|
-| Complete | Proceed to Phase 5 | Show summary with iteration count, files changed, artifact paths |
-| Iterate | Return to Phase 3 | Show review findings and required fixes |
-| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus |
+| Status   | Action                 | Template                                                         |
+|----------|------------------------|------------------------------------------------------------------|
+| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths |
+| Iterate  | Return to Phase 3      | Show review findings and required fixes                          |
+| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                      |
 
 Phase 5 then either continues autonomously to Phase 1 with the next work item, or presents the Suggested Next Work list for user selection.
 

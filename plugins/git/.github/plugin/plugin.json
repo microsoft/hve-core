@@ -1,0 +1,5 @@
+{
+  "name": "git",
+  "description": "Git commit messages, merges, setup, and pull request prompts",
+  "version": "1.0.0"
+}

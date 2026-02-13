@@ -23,6 +23,7 @@ scripts/
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
+├── plugins/         Copilot CLI plugin generation and validation
 ├── security/        Security scanning and SHA pinning scripts
 └── tests/           Pester test organization
 ```
@@ -117,11 +118,49 @@ All scripts automatically detect GitHub Actions environment and provide appropri
 When adding new scripts:
 
 1. Follow PowerShell best practices (PSScriptAnalyzer compliant)
-2. Support `-Verbose` and `-Debug` parameters
-3. Add GitHub Actions integration using `LintingHelpers` module functions
-4. Include inline help with `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, and `.EXAMPLE`
-5. Document in relevant README files
-6. Test locally before creating PR
+2. Include the entry point guard pattern (see below)
+3. Support `-Verbose` and `-Debug` parameters
+4. Add GitHub Actions integration using `LintingHelpers` module functions
+5. Include inline help with `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, and `.EXAMPLE`
+6. Document in relevant README files
+7. Test locally before creating PR
+
+### Entry Point Guard Pattern
+
+All production scripts use a dot-source guard that enables Pester tests to import functions without executing main logic. Extract main logic into an `Invoke-*` orchestrator function and wrap direct execution in a guard block:
+
+```powershell
+#region Functions
+
+function Invoke-ScriptMain {
+    [CmdletBinding()]
+    param( <# script params #> )
+    # Main logic here
+}
+
+#endregion Functions
+
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-ScriptMain @PSBoundParameters
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "ScriptName failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
+}
+#endregion Main Execution
+```
+
+Key rules:
+
+* The `if` guard wraps `try`/`catch` (not the reverse)
+* Name the orchestrator `Invoke-*` matching the script noun
+* Use `#region Functions` and `#region Main Execution` markers
+* See [Generate-PrReference.ps1](dev-tools/Generate-PrReference.ps1) for a canonical example
 
 ## Related Documentation
 
