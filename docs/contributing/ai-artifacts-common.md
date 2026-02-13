@@ -122,18 +122,18 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection           | Tags                                                              |
-|----------------------|-------------------------------------------------------------------|
-| `hve-core-all`       | `hve`, `complete`, `bundle`                                       |
-| `ado`                | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`    |
-| `coding-standards`   | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv` |
+| Collection           | Tags                                                                          |
+|----------------------|-------------------------------------------------------------------------------|
+| `hve-core-all`       | `hve`, `complete`, `bundle`                                                   |
+| `ado`                | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                |
+| `coding-standards`   | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`    |
 | `data-science`       | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science` |
-| `git`                | `git`, `commits`, `merge`, `pull-request`                         |
-| `github`             | `github`, `issues`, `backlog`, `triage`, `sprint`                 |
-| `project-planning`   | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning` |
-| `prompt-engineering`  | `prompts`, `agents`, `authoring`, `refactoring`                   |
-| `rpi`                | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review` |
-| `security-planning`  | `security`, `incident-response`, `risk`, `planning`               |
+| `git`                | `git`, `commits`, `merge`, `pull-request`                                     |
+| `github`             | `github`, `issues`, `backlog`, `triage`, `sprint`                             |
+| `project-planning`   | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`  |
+| `prompt-engineering` | `prompts`, `agents`, `authoring`, `refactoring`                               |
+| `rpi`                | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`         |
+| `security-planning`  | `security`, `incident-response`, `risk`, `planning`                           |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
@@ -180,18 +180,18 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 
 ### Defined Collections
 
-| Collection               | Identifier           | Description                                                                    |
-|--------------------------|----------------------|--------------------------------------------------------------------------------|
-| **All**                  | `hve-core-all`       | Full bundle of all stable HVE Core agents, prompts, instructions, and skills   |
-| **Azure DevOps**         | `ado`                | Azure DevOps work item management, build monitoring, and pull request creation |
-| **Coding Standards**     | `coding-standards`   | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform |
-| **Data Science**         | `data-science`       | Data specification generation, Jupyter notebooks, and Streamlit dashboards     |
-| **Git Workflow**         | `git`                | Git commit messages, merges, setup, and pull request prompts                   |
-| **GitHub Backlog**       | `github`             | GitHub issue discovery, triage, sprint planning, and backlog execution         |
-| **Project Planning**     | `project-planning`   | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations          |
-| **Prompt Engineering**   | `prompt-engineering`  | Tools for analyzing, building, and refactoring prompts, agents, and instructions |
-| **RPI Workflow**         | `rpi`                | Research, Plan, Implement, Review workflow agents and prompts                  |
-| **Security Planning**    | `security-planning`  | Security plan creation, incident response, and risk assessment                 |
+| Collection             | Identifier           | Description                                                                      |
+|------------------------|----------------------|----------------------------------------------------------------------------------|
+| **All**                | `hve-core-all`       | Full bundle of all stable HVE Core agents, prompts, instructions, and skills     |
+| **Azure DevOps**       | `ado`                | Azure DevOps work item management, build monitoring, and pull request creation   |
+| **Coding Standards**   | `coding-standards`   | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform |
+| **Data Science**       | `data-science`       | Data specification generation, Jupyter notebooks, and Streamlit dashboards       |
+| **Git Workflow**       | `git`                | Git commit messages, merges, setup, and pull request prompts                     |
+| **GitHub Backlog**     | `github`             | GitHub issue discovery, triage, sprint planning, and backlog execution           |
+| **Project Planning**   | `project-planning`   | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations            |
+| **Prompt Engineering** | `prompt-engineering` | Tools for analyzing, building, and refactoring prompts, agents, and instructions |
+| **RPI Workflow**       | `rpi`                | Research, Plan, Implement, Review workflow agents and prompts                    |
+| **Security Planning**  | `security-planning`  | Security plan creation, incident response, and risk assessment                   |
 
 ### Collection Assignment Guidelines
 

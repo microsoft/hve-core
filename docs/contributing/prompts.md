@@ -131,14 +131,14 @@ items:
 
 Choose collections based on who invokes or benefits from the workflow:
 
-| Prompt Type             | Recommended Collections                      |
-|-------------------------|----------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `git`                        |
-| ADO work item workflows | `hve-core-all`, `ado`, `project-planning`    |
-| GitHub issue workflows  | `hve-core-all`, `github`                     |
-| RPI workflow prompts    | `hve-core-all`, `rpi`                        |
-| Documentation workflows | `hve-core-all`, `prompt-engineering`         |
-| Architecture prompts    | `hve-core-all`, `project-planning`           |
+| Prompt Type             | Recommended Collections                   |
+|-------------------------|-------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `git`                     |
+| ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
+| GitHub issue workflows  | `hve-core-all`, `github`                  |
+| RPI workflow prompts    | `hve-core-all`, `rpi`                     |
+| Documentation workflows | `hve-core-all`, `prompt-engineering`      |
+| Architecture prompts    | `hve-core-all`, `project-planning`        |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
