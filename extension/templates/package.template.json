@@ -5,7 +5,7 @@
     "workspace",
     "ui"
   ],
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
   "publisher": "ise-hve-essentials",
   "repository": {
