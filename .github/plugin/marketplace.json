@@ -2,7 +2,7 @@
   "name": "hve-core",
   "metadata": {
     "description": "HVE Core",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "pluginRoot": "./plugins"
   },
   "owner": {
@@ -13,61 +13,61 @@
       "name": "ado",
       "source": "./plugins/ado",
       "description": "Azure DevOps work item management, build monitoring, and pull request creation",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "coding-standards",
       "source": "./plugins/coding-standards",
       "description": "Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform projects",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "data-science",
       "source": "./plugins/data-science",
       "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "git",
       "source": "./plugins/git",
       "description": "Git commit messages, merges, setup, and pull request prompts",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "github",
       "source": "./plugins/github",
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "hve-core-all",
       "source": "./plugins/hve-core-all",
       "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "project-planning",
       "source": "./plugins/project-planning",
       "description": "PRDs, BRDs, ADRs, architecture diagrams, and documentation operations",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "prompt-engineering",
       "source": "./plugins/prompt-engineering",
       "description": "Tools for analyzing, building, and refactoring prompts, agents, and instructions",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "rpi",
       "source": "./plugins/rpi",
       "description": "Research, Plan, Implement, Review workflow agents and prompts for task-driven development",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     {
       "name": "security-planning",
       "source": "./plugins/security-planning",
       "description": "Security plan creation, incident response, and risk assessment",
-      "version": "2.2.0"
+      "version": "2.3.0"
     }
   ]
 }
