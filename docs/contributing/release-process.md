@@ -138,7 +138,7 @@ The VS Code extension is published to two channels with different stability expe
 
 ### Maturity Levels
 
-Each prompt, instruction, and agent has a `maturity` value in the AI Artifacts Registry (`.github/ai-artifacts-registry.json`):
+Each prompt, instruction, agent, and skill can set `maturity` in `collections/*.collection.yml` under `items[]`:
 
 | Level          | Description                                     | Included In         |
 |----------------|-------------------------------------------------|---------------------|
@@ -160,11 +160,11 @@ stateDiagram-v2
 
 ### Contributor Guidelines
 
-* **New contributions**: Set `stable` in registry entry unless explicitly targeting early adopters
-* **Experimental work**: Set `experimental` in registry entry for proof-of-concept or rapidly evolving artifacts
-* **Preview promotions**: Set `preview` in registry entry when core functionality is complete
-* **Stable promotions**: Set `stable` in registry entry after production validation
-* **Deprecation**: Set `deprecated` in registry entry before removal to provide transition time
+* **New contributions**: Set `stable` on collection items unless explicitly targeting early adopters
+* **Experimental work**: Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts
+* **Preview promotions**: Set `preview` on collection items when core functionality is complete
+* **Stable promotions**: Set `stable` on collection items after production validation
+* **Deprecation**: Set `deprecated` on collection items before removal to provide transition time
 
 ---
 

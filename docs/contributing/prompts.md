@@ -112,20 +112,19 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
-## Registry Entry Requirements
+## Collection Entry Requirements
 
-All prompts must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+All prompts must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
 
-### Adding Your Prompt to the Registry
+### Adding Your Prompt to a Collection
 
-After creating your prompt file, add an entry to the `prompts` section of the registry:
+After creating your prompt file, add an `items[]` entry in each target collection manifest:
 
-```json
-"my-prompt": {
-    "maturity": "stable",
-    "personas": ["hve-core-all", "developer"],
-    "tags": ["workflow", "automation"]
-}
+```yaml
+items:
+  - path: .github/prompts/my-prompt.prompt.md
+    kind: prompt
+    maturity: stable
 ```
 
 ### Selecting Personas for Prompts
@@ -157,7 +156,7 @@ Common tags for prompts:
 | `documentation`      | Documentation generation         |
 | `prompt-engineering` | Prompt building and analysis     |
 
-For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## Prompt Content Structure Standards
 
@@ -464,7 +463,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity set in registry (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] Maturity set in collection item (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined

@@ -80,7 +80,7 @@ Instructions answer the question "what standards apply to this context?" and ens
 
 #### Repo-Specific Instructions
 
-Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be registered as AI artifacts. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. The build system and registry validation automatically exclude this subdirectory from artifact discovery and orphan detection.
+Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be included in collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Collection manifests intentionally exclude this subdirectory from artifact selection and package composition.
 
 > [!IMPORTANT]
 > The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or persona collections.
@@ -123,7 +123,7 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
 
-Maturity is tracked in the artifact registry, not in skill frontmatter. See [Artifact Registry](#artifact-registry) for details.
+Maturity is tracked in `collections/*.collection.yml`, not in skill frontmatter. See [Collection Manifests](#collection-manifests) for details.
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -201,23 +201,22 @@ Skills provide self-contained utilities through the `SKILL.md` file:
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
-## Artifact Registry
+## Collection Manifests
 
-The artifact registry (`.github/ai-artifacts-registry.json`) serves as the central metadata store for all AI artifacts. It enables persona-based distribution, maturity filtering, and dependency resolution without polluting individual artifact frontmatter.
+Collection manifests in `collections/*.collection.yml` serve as the source of truth for artifact selection and maturity. They drive packaging for extension collections and contributor workflows without adding maturity metadata to artifact frontmatter.
 
-### Registry Architecture
+### Collection Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     AI Artifacts Registry                            │
-│  .github/ai-artifacts-registry.json                                  │
-│  ┌─────────────────┬─────────────────┬─────────────────┐            │
-│  │ Agents          │ Prompts         │ Instructions    │            │
-│  │ - maturity      │ - maturity      │ - maturity      │            │
-│  │ - personas[]    │ - personas[]    │ - personas[]    │            │
-│  │ - tags[]        │ - tags[]        │ - tags[]        │            │
-│  │ - requires{}    │                 │                 │            │
-│  └─────────────────┴─────────────────┴─────────────────┘            │
+│                     Collection Manifests                             │
+│  collections/*.collection.yml                                        │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │ items[]                                                     │     │
+│  │ - path                                                      │     │
+│  │ - kind                                                      │     │
+│  │ - maturity (optional, defaults to stable)                  │     │
+│  └─────────────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -226,41 +225,34 @@ The artifact registry (`.github/ai-artifacts-registry.json`) serves as the centr
 │  ┌─────────────────┐    ┌─────────────────┐                         │
 │  │ Collection      │    │ Prepare-        │                         │
 │  │ Manifests       │───▶│ Extension.ps1   │                         │
-│  │ *.collection.json    │ -Collection     │                         │
+│  │ *.collection.yml     │ -Collection     │                         │
 │  └─────────────────┘    └─────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Registry Entry Structure
+### Collection Item Structure
 
-Each artifact entry contains metadata for filtering and dependency resolution:
+Each collection item defines inclusion metadata for artifact selection and release channel filtering:
 
-```json
-{
-    "artifact-name": {
-        "maturity": "stable",
-        "personas": ["hve-core-all", "developer"],
-        "tags": ["rpi", "workflow"],
-        "requires": {
-            "agents": ["dependency-agent"],
-            "prompts": ["dependency-prompt"],
-            "instructions": ["dependency-instructions"],
-            "skills": []
-        }
-    }
-}
+```yaml
+items:
+    - path: .github/agents/rpi-agent.agent.md
+        kind: agent
+        maturity: stable
+    - path: .github/prompts/task-plan.prompt.md
+        kind: prompt
+        maturity: preview
 ```
 
-| Field      | Purpose                                         |
-|------------|-------------------------------------------------|
-| `maturity` | Controls extension channel inclusion            |
-| `personas` | Determines collection membership                |
-| `tags`     | Categorization for organization and discovery   |
-| `requires` | Declares dependencies for complete installation |
+| Field      | Purpose                                                           |
+|------------|-------------------------------------------------------------------|
+| `path`     | Repository-relative path to the artifact source                   |
+| `kind`     | Artifact type (`agent`, `prompt`, `instruction`, `skill`, `hook`) |
+| `maturity` | Optional release channel gating value (`stable` default)          |
 
 ### Persona Model
 
-Personas represent user roles that consume artifacts. The registry defines these personas:
+Personas represent user roles that consume artifacts. Collection manifests select artifacts for those personas.
 
 | Persona       | Identifier     | Target Users        |
 |---------------|----------------|---------------------|
@@ -288,7 +280,7 @@ The build system resolves collections by:
 
 1. Reading the collection manifest to identify target personas
 2. Checking collection-level maturity against the target release channel
-3. Filtering registry entries by persona membership
+3. Filtering collection items by path/kind membership
 4. Including the `hve-core-all` persona artifacts as the base
 5. Adding persona-specific artifacts
 6. Resolving dependencies for included artifacts
@@ -335,7 +327,7 @@ The extension scans these directories at startup:
 * `.github/instructions/` for technology standards (excluding `hve-core/` subdirectory)
 * `.github/skills/` for utility packages
 
-Artifact inclusion is controlled by the registry. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
+Artifact inclusion is controlled by `collections/*.collection.yml`. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|

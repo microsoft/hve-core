@@ -90,20 +90,19 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 ---
 ```
 
-## Registry Entry Requirements
+## Collection Entry Requirements
 
-All skills must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution and persona filtering.
+All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
 
-### Adding Your Skill to the Registry
+### Adding Your Skill to a Collection
 
-After creating your skill package, add an entry to the `skills` section of the registry:
+After creating your skill package, add an `items[]` entry in each target collection manifest:
 
-```json
-"my-skill": {
-    "maturity": "stable",
-    "personas": ["hve-core-all", "developer"],
-    "tags": ["tooling", "media"]
-}
+```yaml
+items:
+  - path: .github/skills/my-skill
+    kind: skill
+    maturity: stable
 ```
 
 ### Selecting Personas for Skills
@@ -129,7 +128,7 @@ Common tags for skills:
 | `data`    | Data transformation            |
 | `testing` | Test automation utilities      |
 
-For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## SKILL.md Content Structure
 

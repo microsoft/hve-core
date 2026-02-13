@@ -85,77 +85,68 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
 
-## Artifact Registry
+## Collection Manifests
 
-All AI artifacts are registered in `.github/ai-artifacts-registry.json`, a centralized metadata file that controls distribution, persona filtering, and dependency resolution without polluting individual artifact frontmatter.
+Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and maturity.
 
-### Registry Purpose
+### Collection Purpose
 
-The registry serves three primary functions:
+Collection manifests serve three primary functions:
 
-1. **Maturity filtering**: Controls which extension channel (stable vs pre-release) includes each artifact
-2. **Persona filtering**: Determines which artifacts appear in role-specific collection packages
-3. **Dependency resolution**: Declares explicit dependencies between artifacts for complete installation
+1. **Selection**: Determine which artifacts are included in each collection via `items[]`
+2. **Maturity filtering**: Control channel inclusion with `items[].maturity` (defaults to `stable`)
+3. **Packaging inputs**: Provide canonical manifest data used by build and distribution flows
 
-### Registry Structure
+### Collection Structure
 
-The registry contains four top-level sections:
+Each manifest contains top-level collection metadata and an `items` array:
 
-```json
-{
-    "$schema": "../scripts/linting/schemas/ai-artifacts-registry.schema.json",
-    "version": "1.0",
-    "personas": { /* persona definitions */ },
-    "agents": { /* agent entries */ },
-    "prompts": { /* prompt entries */ },
-    "instructions": { /* instruction entries */ },
-    "skills": { /* skill entries */ }
-}
+```yaml
+id: coding-standards
+name: Coding Standards
+description: Language-specific coding instructions
+items:
+  - path: .github/instructions/python-script.instructions.md
+    kind: instruction
+    maturity: stable
+  - path: .github/prompts/task-plan.prompt.md
+    kind: prompt
+    maturity: preview
 ```
 
-### Artifact Entry Format
+### Collection Item Format
 
-Each artifact entry follows this structure:
+Each `items[]` entry follows this structure:
 
-```json
-"artifact-name": {
-    "maturity": "stable",
-    "personas": ["hve-core-all", "developer"],
-    "tags": ["rpi", "planning"],
-    "requires": {
-        "agents": [],
-        "prompts": ["task-plan"],
-        "instructions": ["commit-message"],
-        "skills": []
-    }
-}
+```yaml
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
 ```
 
-| Field      | Required | Description                                          |
-|------------|----------|------------------------------------------------------|
-| `maturity` | Yes      | Release readiness level                              |
-| `personas` | Yes      | Array of persona identifiers for collection building |
-| `tags`     | Yes      | Categorization tags for organization and search      |
-| `requires` | No       | Dependency declarations for complete installation    |
+| Field      | Required | Description                                                                    |
+|------------|----------|--------------------------------------------------------------------------------|
+| `path`     | Yes      | Repository-relative path to the artifact source                                |
+| `kind`     | Yes      | Artifact type (`agent`, `prompt`, `instruction`, `skill`, or `hook`)           |
+| `maturity` | No       | Release readiness level; when omitted, effective maturity defaults to `stable` |
 
-### Adding Artifacts to the Registry
+### Adding Artifacts to a Collection
 
 When contributing a new artifact:
 
 1. Create the artifact file in the appropriate directory
-2. Add an entry to the registry under the correct section (`agents`, `prompts`, `instructions`, or `skills`)
-3. Set appropriate `maturity`, `personas`, and `tags` values
-4. Declare any dependencies in `requires` if the artifact depends on other artifacts
-5. Run `npm run lint:registry` to validate the registry entry
+2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
+3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
+4. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
 
 ### Repo-Specific Instructions Exclusion
 
-Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to the registry. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository. They are excluded from:
+Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository. They are excluded from:
 
-* The AI artifacts registry
+* Collection manifests
 * Extension packaging and distribution
 * Persona collection builds
-* Orphan detection in registry validation
+* Artifact selection for published bundles
 
 If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/` or a technology-specific subdirectory (e.g., `csharp/`, `bash/`).
 
@@ -210,7 +201,7 @@ When in doubt, include `hve-core-all` to ensure the artifact appears in the full
 
 ## Dependency Declarations
 
-Some artifacts require other artifacts to function correctly. The `requires` field in registry entries declares these dependencies explicitly.
+Some artifacts require other artifacts to function correctly. Dependency behavior is resolved during packaging.
 
 ### Dependency Types
 
@@ -291,7 +282,7 @@ When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
 
 ### Default for New Contributions
 
-New artifact registry entries **SHOULD** use `maturity: stable` unless:
+New collection items **SHOULD** use `maturity: stable` unless:
 
 * The artifact is a proof-of-concept or experimental feature
 * The artifact requires additional testing or feedback before wide release

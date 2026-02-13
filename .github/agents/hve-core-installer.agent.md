@@ -1081,11 +1081,11 @@ User input handling:
 
 ### Persona Selection Sub-Flow
 
-When the user selects option 2, read the artifact registry to present available personas.
+When the user selects option 2, read collection manifests to present available personas.
 
-#### Step 1: Read registry and build persona agent counts
+#### Step 1: Read collections and build persona agent counts
 
-Read `.github/ai-artifacts-registry.json` from the HVE-Core source (at `$hveCoreBasePath`). Parse `personas.definitions` for display names and descriptions. For each agent entry, count stable agents per persona (exclude `experimental` and `deprecated` maturity).
+Read `collections/*.collection.yml` from the HVE-Core source (at `$hveCoreBasePath`). Derive persona options from collection `id` and `name`. For each selected collection, count agent items where `kind` equals `agent` and effective item maturity is `stable` (item `maturity` omitted defaults to `stable`; exclude `experimental` and `deprecated`).
 
 #### Step 2: Present persona options
 

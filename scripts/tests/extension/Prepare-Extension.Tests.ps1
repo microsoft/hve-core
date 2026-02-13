@@ -159,12 +159,6 @@ description: "Preview agent"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'preview.agent.md')
 
-        $script:mockRegistry = @{
-            agents = @{
-                'stable' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'preview' = @{ maturity = 'preview'; personas = @('hve-core-all'); tags = @() }
-            }
-        }
     }
 
     AfterAll {
@@ -172,19 +166,19 @@ description: "Preview agent"
     }
 
     It 'Discovers agents matching allowed maturities' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @() -Registry $script:mockRegistry
+        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @()
         $result.DirectoryExists | Should -BeTrue
         $result.Agents.Count | Should -Be 2
     }
 
     It 'Filters agents by maturity' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -ExcludedAgents @() -Registry $script:mockRegistry
-        $result.Agents.Count | Should -Be 1
-        $result.Skipped.Count | Should -Be 1
+        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('preview') -ExcludedAgents @()
+        $result.Agents.Count | Should -Be 0
+        $result.Skipped.Count | Should -Be 2
     }
 
     It 'Excludes specified agents' {
-        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @('stable') -Registry $script:mockRegistry
+        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable', 'preview') -ExcludedAgents @('stable')
         $result.Agents.Count | Should -Be 1
     }
 
@@ -301,42 +295,6 @@ applyTo: "**/*.cs"
     }
 }
 
-Describe 'Get-RegistryData' {
-    BeforeAll {
-        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
-    }
-
-    AfterAll {
-        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-
-    It 'Loads registry from valid path' {
-        $registryFile = Join-Path $script:tempDir 'registry.json'
-        @{ agents = @{ 'test' = @{ maturity = 'stable' } } } | ConvertTo-Json -Depth 5 | Set-Content -Path $registryFile
-
-        $result = Get-RegistryData -RegistryPath $registryFile
-        $result | Should -Not -BeNullOrEmpty
-    }
-
-    It 'Throws when path does not exist' {
-        $nonexistent = Join-Path $script:tempDir 'nonexistent.json'
-        { Get-RegistryData -RegistryPath $nonexistent } | Should -Throw '*not found*'
-    }
-
-    It 'Returns hashtable with expected keys' {
-        $registryFile = Join-Path $script:tempDir 'registry2.json'
-        @{
-            agents = @{ 'a' = @{ maturity = 'stable' } }
-            prompts = @{ 'p' = @{ maturity = 'stable' } }
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path $registryFile
-
-        $result = Get-RegistryData -RegistryPath $registryFile
-        $result.Keys | Should -Contain 'agents'
-        $result.Keys | Should -Contain 'prompts'
-    }
-}
-
 Describe 'Get-DiscoveredSkills' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
@@ -358,11 +316,6 @@ description: "Test skill"
         $emptySkillDir = Join-Path $script:skillsDir 'empty-skill'
         New-Item -ItemType Directory -Path $emptySkillDir -Force | Out-Null
 
-        $script:mockRegistry = @{
-            skills = @{
-                'test-skill' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-        }
     }
 
     AfterAll {
@@ -370,7 +323,7 @@ description: "Test skill"
     }
 
     It 'Discovers skills in directory' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeTrue
         $result.Skills.Count | Should -Be 1
         $result.Skills[0].name | Should -Be 'test-skill'
@@ -383,19 +336,14 @@ description: "Test skill"
         $result.Skills | Should -BeNullOrEmpty
     }
 
-    It 'Filters skills by maturity from registry' {
-        $previewRegistry = @{
-            skills = @{
-                'test-skill' = @{ maturity = 'preview'; personas = @('hve-core-all'); tags = @() }
-            }
-        }
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable') -Registry $previewRegistry
+    It 'Filters skills when stable is not an allowed maturity' {
+        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('preview')
         $result.Skills.Count | Should -Be 0
         $result.Skipped.Count | Should -BeGreaterThan 0
     }
 
     It 'Skips directories without SKILL.md' {
-        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
         $skippedNames = $result.Skipped | ForEach-Object { $_.Name }
         $skippedNames | Should -Contain 'empty-skill'
     }
@@ -473,21 +421,6 @@ Describe 'Test-GlobMatch' {
 }
 
 Describe 'Get-CollectionArtifacts' {
-    BeforeAll {
-        $script:registry = @{
-            agents = @{
-                'dev-agent' = @{ maturity = 'stable'; personas = @('developer'); tags = @() }
-                'all-agent' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'preview-dev' = @{ maturity = 'preview'; personas = @('developer'); tags = @() }
-            }
-            prompts = @{
-                'dev-prompt' = @{ maturity = 'stable'; personas = @('developer'); tags = @() }
-            }
-            instructions = @{}
-            skills = @{}
-        }
-    }
-
     It 'Returns artifacts from collection items across supported kinds' {
         $collection = @{
             items = @(
@@ -498,7 +431,7 @@ Describe 'Get-CollectionArtifacts' {
             )
         }
 
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable', 'preview')
+        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable', 'preview')
         $result.Agents | Should -Contain 'dev-agent'
         $result.Prompts | Should -Contain 'dev-prompt'
         $result.Instructions | Should -Contain 'dev/dev'
@@ -513,12 +446,12 @@ Describe 'Get-CollectionArtifacts' {
             )
         }
 
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
+        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
         $result.Agents | Should -Contain 'dev-agent'
         $result.Agents | Should -Not -Contain 'preview-dev'
     }
 
-    It 'Falls back to registry maturity when item maturity is omitted' {
+    It 'Defaults to stable maturity when item maturity is omitted' {
         $collection = @{
             items = @(
                 @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md' },
@@ -526,14 +459,14 @@ Describe 'Get-CollectionArtifacts' {
             )
         }
 
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
+        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
         $result.Agents | Should -Contain 'dev-agent'
-        $result.Agents | Should -Not -Contain 'preview-dev'
+        $result.Agents | Should -Contain 'preview-dev'
     }
 
     It 'Returns empty when collection has no items' {
         $collection = @{ id = 'empty' }
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
+        $result = Get-CollectionArtifacts -Collection $collection -AllowedMaturities @('stable')
         $result.Agents.Count | Should -Be 0
         $result.Prompts.Count | Should -Be 0
         $result.Instructions.Count | Should -Be 0
@@ -600,16 +533,6 @@ handoffs:
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'chain-b.agent.md')
 
-        $script:mockRegistry = @{
-            agents = @{
-                'solo' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'parent' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'child' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'self-ref' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'chain-a' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'chain-b' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-        }
     }
 
     AfterAll {
@@ -617,25 +540,25 @@ handoffs:
     }
 
     It 'Returns seed agents when no handoffs' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('solo') -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Resolve-HandoffDependencies -SeedAgents @('solo') -AgentsDir $script:agentsDir
         $result | Should -Contain 'solo'
         $result.Count | Should -Be 1
     }
 
     It 'Resolves single-level handoff' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('parent') -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Resolve-HandoffDependencies -SeedAgents @('parent') -AgentsDir $script:agentsDir
         $result | Should -Contain 'parent'
         $result | Should -Contain 'child'
     }
 
     It 'Handles self-referential handoffs' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('self-ref') -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Resolve-HandoffDependencies -SeedAgents @('self-ref') -AgentsDir $script:agentsDir
         $result | Should -Contain 'self-ref'
         $result.Count | Should -Be 1
     }
 
     It 'Handles circular handoff chains' {
-        $result = Resolve-HandoffDependencies -SeedAgents @('chain-a') -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -Registry $script:mockRegistry
+        $result = Resolve-HandoffDependencies -SeedAgents @('chain-a') -AgentsDir $script:agentsDir
         $result | Should -Contain 'chain-a'
         $result | Should -Contain 'chain-b'
         $result.Count | Should -Be 2
@@ -644,59 +567,30 @@ handoffs:
 
 Describe 'Resolve-RequiresDependencies' {
     It 'Resolves agent requires to include dependent prompts' {
-        $registry = @{
-            agents = @{
-                'main' = @{
-                    maturity = 'stable'
-                    personas = @('hve-core-all')
-                    requires = @{ prompts = @('dep-prompt') }
-                }
-            }
-            prompts = @{
-                'dep-prompt' = @{ maturity = 'stable'; personas = @('hve-core-all') }
-            }
-        }
-        $result = Resolve-RequiresDependencies -ArtifactNames @{ agents = @('main') } -Registry $registry -AllowedMaturities @('stable')
+        $result = Resolve-RequiresDependencies `
+            -ArtifactNames @{ agents = @('main') } `
+            -AllowedMaturities @('stable') `
+            -CollectionRequires @{ agents = @{ 'main' = @{ prompts = @('dep-prompt') } } } `
+            -CollectionMaturities @{ prompts = @{ 'dep-prompt' = 'stable' } }
         $result.Prompts | Should -Contain 'dep-prompt'
     }
 
     It 'Resolves transitive agent dependencies' {
-        $registry = @{
-            agents = @{
-                'top' = @{
-                    maturity = 'stable'
-                    personas = @('hve-core-all')
-                    requires = @{ agents = @('mid') }
-                }
-                'mid' = @{
-                    maturity = 'stable'
-                    personas = @('hve-core-all')
-                    requires = @{ prompts = @('leaf-prompt') }
-                }
-            }
-            prompts = @{
-                'leaf-prompt' = @{ maturity = 'stable'; personas = @('hve-core-all') }
-            }
-        }
-        $result = Resolve-RequiresDependencies -ArtifactNames @{ agents = @('top') } -Registry $registry -AllowedMaturities @('stable')
+        $result = Resolve-RequiresDependencies `
+            -ArtifactNames @{ agents = @('top') } `
+            -AllowedMaturities @('stable') `
+            -CollectionRequires @{ agents = @{ 'top' = @{ agents = @('mid') }; 'mid' = @{ prompts = @('leaf-prompt') } } } `
+            -CollectionMaturities @{ agents = @{ 'mid' = 'stable' }; prompts = @{ 'leaf-prompt' = 'stable' } }
         $result.Agents | Should -Contain 'mid'
         $result.Prompts | Should -Contain 'leaf-prompt'
     }
 
     It 'Respects maturity filter on dependencies' {
-        $registry = @{
-            agents = @{
-                'main' = @{
-                    maturity = 'stable'
-                    personas = @('hve-core-all')
-                    requires = @{ prompts = @('exp-prompt') }
-                }
-            }
-            prompts = @{
-                'exp-prompt' = @{ maturity = 'experimental'; personas = @('hve-core-all') }
-            }
-        }
-        $result = Resolve-RequiresDependencies -ArtifactNames @{ agents = @('main') } -Registry $registry -AllowedMaturities @('stable')
+        $result = Resolve-RequiresDependencies `
+            -ArtifactNames @{ agents = @('main') } `
+            -AllowedMaturities @('stable') `
+            -CollectionRequires @{ agents = @{ 'main' = @{ prompts = @('exp-prompt') } } } `
+            -CollectionMaturities @{ prompts = @{ 'exp-prompt' = 'experimental' } }
         $result.Prompts | Should -Not -Contain 'exp-prompt'
     }
 }
@@ -815,22 +709,6 @@ applyTo: "**/*.ps1"
 # Instruction
 '@ | Set-Content -Path (Join-Path $script:instrDir 'test.instructions.md')
 
-        # Create mock registry for all Invoke-PrepareExtension tests
-        $registryContent = @{
-            version = "1.0"
-            personas = @{ definitions = @{ 'hve-core-all' = @{ name = 'All'; description = 'All artifacts' } } }
-            agents = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-            prompts = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-            instructions = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-            skills = @{}
-        }
-        $registryContent | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:ghDir 'ai-artifacts-registry.json')
     }
 
     AfterAll {
@@ -870,34 +748,31 @@ description: "Preview agent"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'preview.agent.md')
 
-        # Update registry with preview agent
-        $registryContent = @{
-            version = "1.0"
-            personas = @{ definitions = @{ 'hve-core-all' = @{ name = 'All'; description = 'All artifacts' } } }
-            agents = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'preview' = @{ maturity = 'preview'; personas = @('hve-core-all'); tags = @() }
-            }
-            prompts = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-            instructions = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-            }
-            skills = @{}
-        }
-        $registryContent | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:ghDir 'ai-artifacts-registry.json')
+        $collectionPath = Join-Path $script:tempDir 'channel-filter.collection.json'
+        @{
+            id          = 'hve-core-all'
+            name        = 'hve-core-all'
+            displayName = 'HVE Core - All'
+            description = 'Channel filtering test'
+            personas    = @('hve-core-all')
+            items       = @(
+                @{ kind = 'agent'; path = '.github/agents/test.agent.md'; maturity = 'stable' },
+                @{ kind = 'agent'; path = '.github/agents/preview.agent.md'; maturity = 'preview' }
+            )
+        } | ConvertTo-Json -Depth 8 | Set-Content -Path $collectionPath
 
         $stableResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
             -RepoRoot $script:tempDir `
             -Channel 'Stable' `
+            -Collection $collectionPath `
             -DryRun
 
         $preReleaseResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
             -RepoRoot $script:tempDir `
             -Channel 'PreRelease' `
+            -Collection $collectionPath `
             -DryRun
 
         $preReleaseResult.AgentCount | Should -BeGreaterThan $stableResult.AgentCount
@@ -919,36 +794,34 @@ applyTo: "**/*.js"
 ---
 '@ | Set-Content -Path (Join-Path $script:instrDir 'preview.instructions.md')
 
-        # Update registry with all artifacts
-        $registryContent = @{
-            version = "1.0"
-            personas = @{ definitions = @{ 'hve-core-all' = @{ name = 'All'; description = 'All artifacts' } } }
-            agents = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'preview' = @{ maturity = 'preview'; personas = @('hve-core-all'); tags = @() }
-            }
-            prompts = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'experimental' = @{ maturity = 'experimental'; personas = @('hve-core-all'); tags = @() }
-            }
-            instructions = @{
-                'test' = @{ maturity = 'stable'; personas = @('hve-core-all'); tags = @() }
-                'preview' = @{ maturity = 'preview'; personas = @('hve-core-all'); tags = @() }
-            }
-            skills = @{}
-        }
-        $registryContent | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:ghDir 'ai-artifacts-registry.json')
+        $collectionPath = Join-Path $script:tempDir 'prompt-instruction-filter.collection.json'
+        @{
+            id          = 'hve-core-all'
+            name        = 'hve-core-all'
+            displayName = 'HVE Core - All'
+            description = 'Prompt/instruction filtering test'
+            personas    = @('hve-core-all')
+            items       = @(
+                @{ kind = 'agent'; path = '.github/agents/test.agent.md'; maturity = 'stable' },
+                @{ kind = 'prompt'; path = '.github/prompts/test.prompt.md'; maturity = 'stable' },
+                @{ kind = 'prompt'; path = '.github/prompts/experimental.prompt.md'; maturity = 'experimental' },
+                @{ kind = 'instruction'; path = '.github/instructions/test.instructions.md'; maturity = 'stable' },
+                @{ kind = 'instruction'; path = '.github/instructions/preview.instructions.md'; maturity = 'preview' }
+            )
+        } | ConvertTo-Json -Depth 8 | Set-Content -Path $collectionPath
 
         $stableResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
             -RepoRoot $script:tempDir `
             -Channel 'Stable' `
+            -Collection $collectionPath `
             -DryRun
 
         $preReleaseResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
             -RepoRoot $script:tempDir `
             -Channel 'PreRelease' `
+            -Collection $collectionPath `
             -DryRun
 
         $preReleaseResult.PromptCount | Should -BeGreaterThan $stableResult.PromptCount
@@ -1078,28 +951,6 @@ applyTo: "**/*.js"
 }
 '@ | Set-Content -Path (Join-Path $script:extDir 'package.developer.json')
 
-            # Update registry with developer and nonexistent persona entries
-            $registryContent = @{
-                version  = '1.0'
-                personas = @{
-                    definitions = @{
-                        'hve-core-all' = @{ name = 'All'; description = 'All artifacts' }
-                        'developer'    = @{ name = 'Developer'; description = 'Developer artifacts' }
-                        'nonexistent'  = @{ name = 'Nonexistent'; description = 'Missing template' }
-                    }
-                }
-                agents       = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
-                }
-                prompts      = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
-                }
-                instructions = @{
-                    'test' = @{ maturity = 'stable'; personas = @('hve-core-all', 'developer', 'nonexistent'); tags = @() }
-                }
-                skills       = @{}
-            }
-            $registryContent | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $script:ghDir 'ai-artifacts-registry.json')
         }
 
         BeforeEach {

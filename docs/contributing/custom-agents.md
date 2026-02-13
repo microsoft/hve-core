@@ -200,26 +200,19 @@ author: 'microsoft/hve-core'
 ---
 ```
 
-## Registry Entry Requirements
+## Collection Entry Requirements
 
-All agents must have a corresponding entry in `.github/ai-artifacts-registry.json`. This entry controls distribution, persona filtering, and dependency resolution.
+All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
 
-### Adding Your Agent to the Registry
+### Adding Your Agent to a Collection
 
-After creating your agent file, add an entry to the `agents` section of the registry:
+After creating your agent file, add an `items[]` entry to each target collection:
 
-```json
-"my-new-agent": {
-    "maturity": "stable",
-    "personas": ["hve-core-all", "developer"],
-    "tags": ["workflow", "automation"],
-    "requires": {
-        "agents": [],
-        "prompts": ["related-prompt"],
-        "instructions": ["relevant-instructions"],
-        "skills": []
-    }
-}
+```yaml
+items:
+  - path: .github/agents/my-new-agent.agent.md
+  kind: agent
+  maturity: stable
 ```
 
 ### Selecting Personas for Agents
@@ -237,18 +230,9 @@ Choose personas based on who benefits most from your agent:
 
 ### Declaring Agent Dependencies
 
-If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or generates code that follows specific instructions, declare these in the `requires` field. Handoff targets declared in frontmatter are resolved dynamically during packaging and should not be listed here:
+If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
 
-```json
-"requires": {
-    "agents": ["task-planner"],        // Agents dispatched at runtime via runSubagent
-    "prompts": ["task-plan"],          // Prompts this agent invokes
-    "instructions": ["python-script"], // Instructions for generated code
-    "skills": []                       // Skills this agent executes
-}
-```
-
-For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ### MCP Tool Dependencies
 

@@ -213,7 +213,7 @@ Validation guidelines:
 
 This section defines frontmatter field requirements for prompt engineering artifacts.
 
-Maturity is tracked in `.github/ai-artifacts-registry.json`, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set the maturity value in the artifact's registry entry instead.
+Maturity is tracked in `collections/*.collection.yml` item metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
 
 ### Required Fields
 

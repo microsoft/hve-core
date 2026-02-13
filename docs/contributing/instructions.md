@@ -119,33 +119,31 @@ lastUpdated: '2025-11-19'
 ---
 ```
 
-## Registry Entry Requirements
+## Collection Entry Requirements
 
-All instructions must have a corresponding entry in `.github/ai-artifacts-registry.json`, except for repo-specific instructions placed in `.github/instructions/hve-core/`. This entry controls distribution and persona filtering.
+All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed in `.github/instructions/hve-core/`. Collection entries control distribution and maturity.
 
 > [!NOTE]
-> Instructions in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to the registry. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+> Instructions in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
 
-### Adding Your Instructions to the Registry
+### Adding Your Instructions to a Collection
 
-After creating your instructions file, add an entry to the `instructions` section of the registry:
+After creating your instructions file, add an `items[]` entry in each target collection manifest:
 
-```json
-"my-language": {
-    "maturity": "stable",
-    "personas": ["hve-core-all", "developer"],
-    "tags": ["language"]
-}
+```yaml
+items:
+    - path: .github/instructions/my-language.instructions.md
+        kind: instruction
+        maturity: stable
 ```
 
 For instructions in subdirectories, use the path format:
 
-```json
-"subdirectory/my-instructions": {
-    "maturity": "stable",
-    "personas": ["hve-core-all"],
-    "tags": ["category"]
-}
+```yaml
+items:
+    - path: .github/instructions/subdirectory/my-instructions.instructions.md
+        kind: instruction
+        maturity: stable
 ```
 
 ### Selecting Personas for Instructions
@@ -174,7 +172,7 @@ Common tags for instructions:
 | `ado`            | Azure DevOps integration         |
 | `git`            | Git workflow patterns            |
 
-For complete registry documentation, see [AI Artifacts Common Standards - Artifact Registry](ai-artifacts-common.md#artifact-registry).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## Content Structure Standards
 
