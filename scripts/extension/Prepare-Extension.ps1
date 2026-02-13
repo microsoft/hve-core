@@ -156,12 +156,13 @@ function Test-CollectionMaturityEligible {
 function Get-CollectionManifest {
     <#
     .SYNOPSIS
-        Loads a collection manifest JSON file.
+        Loads a collection manifest from a YAML or JSON file.
     .DESCRIPTION
-        Reads and parses a collection manifest JSON file that defines persona-based
-        artifact filtering rules for extension packaging.
+        Reads and parses a collection manifest file that defines persona-based
+        artifact filtering rules for extension packaging. Supports both YAML
+        (.yml/.yaml) and JSON (.json) formats.
     .PARAMETER CollectionPath
-        Path to the collection manifest JSON file.
+        Path to the collection manifest file (YAML or JSON).
     .OUTPUTS
         [hashtable] Parsed collection manifest with id, name, displayName, description, personas, and optional include/exclude.
     #>
@@ -175,6 +176,12 @@ function Get-CollectionManifest {
 
     if (-not (Test-Path $CollectionPath)) {
         throw "Collection manifest not found: $CollectionPath"
+    }
+
+    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
+    if ($extension -in @('.yml', '.yaml')) {
+        $content = Get-Content -Path $CollectionPath -Raw
+        return ConvertFrom-Yaml -Yaml $content
     }
 
     $content = Get-Content -Path $CollectionPath -Raw
@@ -1157,13 +1164,15 @@ function Invoke-PrepareExtension {
 
         $artifactCollectionManifest = $collectionManifest
         if (-not $artifactCollectionManifest.ContainsKey('items') -or @($artifactCollectionManifest.items).Count -eq 0) {
+            # When the manifest lacks items (e.g., a generated JSON template),
+            # resolve from the root YAML collection by ID.
             $rootCollectionPath = Join-Path $RepoRoot "collections/$($collectionManifest.id).collection.yml"
             if (Test-Path $rootCollectionPath) {
                 $artifactCollectionManifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $rootCollectionPath -Raw)
-                Write-Host "Using root collection metadata: $rootCollectionPath"
+                Write-Host "Using root collection for items: $rootCollectionPath"
             }
             else {
-                Write-Warning "No root collection metadata found for '$($collectionManifest.id)' at $rootCollectionPath"
+                Write-Warning "No root collection found for '$($collectionManifest.id)' at $rootCollectionPath"
             }
         }
 

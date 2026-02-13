@@ -54,11 +54,6 @@ jobs:
         run: |
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
 
-      - name: Generate extension collections and package templates
-        shell: pwsh
-        run: |
-          ./scripts/extension/Generate-ExtensionCollections.ps1
-
       - name: Resolve effective version
         id: read-version
         shell: bash
@@ -66,7 +61,7 @@ jobs:
           version="${{ inputs.version }}"
           dev_patch="${{ inputs.dev-patch-number }}"
           if [ -z "$version" ]; then
-            version=$(jq -r .version extension/package.json)
+            version=$(jq -r .version extension/templates/package.template.json)
           fi
           if [ -n "$dev_patch" ]; then
             version="${version}-dev.${dev_patch}"
@@ -75,43 +70,50 @@ jobs:
 
       - name: Discover collection manifests
         id: discover
-        shell: bash
+        shell: pwsh
         run: |
-          collections_dir="extension/collections"
-          channel="${{ inputs.channel }}"
-          if [ -z "$channel" ]; then
-            channel="Stable"
-          fi
+          Import-Module PowerShell-Yaml -ErrorAction Stop
 
-          if [ ! -d "$collections_dir" ]; then
-            echo "::error::Collections directory not found: $collections_dir"
+          $collectionsDir = 'collections'
+          $channel = '${{ inputs.channel }}'.Trim()
+          if (-not $channel) { $channel = 'Stable' }
+
+          if (-not (Test-Path $collectionsDir)) {
+            Write-Error "Collections directory not found: $collectionsDir"
             exit 1
-          fi
+          }
 
-          # Build JSON array of collection manifests, filtering by maturity
-          matrix_json=$(find "$collections_dir" -name '*.collection.json' -type f | sort | while IFS= read -r file; do
-            id=$(jq -r '.id' "$file")
-            name=$(jq -r '.name' "$file")
-            maturity=$(jq -r '.maturity // "stable"' "$file")
+          $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File | Sort-Object Name
+          $matrixItems = @()
 
-            # Skip deprecated collections for all channels
-            if [ "$maturity" = "deprecated" ]; then
-              echo "::notice::Skipping deprecated collection: $id" >&2
+          foreach ($file in $collectionFiles) {
+            $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $file.FullName -Raw)
+            $id = [string]$manifest.id
+            $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
+            $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
+
+            if ($maturity -eq 'deprecated') {
+              Write-Host "::notice::Skipping deprecated collection: $id"
               continue
-            fi
+            }
 
-            # Skip experimental collections for Stable channel
-            if [ "$channel" = "Stable" ] && [ "$maturity" = "experimental" ]; then
-              echo "::notice::Skipping experimental collection '$id' for Stable channel" >&2
+            if ($channel -eq 'Stable' -and $maturity -eq 'experimental') {
+              Write-Host "::notice::Skipping experimental collection '$id' for Stable channel"
               continue
-            fi
+            }
 
-            echo "{\"id\":\"$id\",\"name\":\"$name\",\"manifest\":\"$file\",\"maturity\":\"$maturity\"}"
-          done | jq -s '{include: .}')
+            $matrixItems += @{
+              id       = $id
+              name     = $name
+              manifest = $file.FullName -replace '\\', '/'
+              maturity = $maturity
+            }
+          }
 
-          echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
-          echo "Discovered collections:"
-          echo "$matrix_json" | jq .
+          $matrixJson = @{ include = $matrixItems } | ConvertTo-Json -Depth 5 -Compress
+          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Discovered collections:"
+          $matrixJson | ConvertFrom-Json | ConvertTo-Json -Depth 5
 
   package:
     name: Package ${{ matrix.id }}
@@ -141,6 +143,11 @@ jobs:
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Generate persona package templates
+        shell: pwsh
+        run: |
+          ./scripts/extension/Generate-ExtensionCollections.ps1
 
       - name: Download changelog artifact
         if: inputs.use-changelog

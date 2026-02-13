@@ -34,7 +34,7 @@ When you merge a PR to `main`:
 The Release PR is not a branch cut or deployment. It is a staging mechanism containing only version metadata changes:
 
 * Updated `package.json` version
-* Updated `extension/package.json` version
+* Updated `extension/templates/package.template.json` version
 * Updated `CHANGELOG.md`
 
 Your actual code changes are already on `main` from your feature PRs. The Release PR accumulates version and changelog updates until you are ready to release.

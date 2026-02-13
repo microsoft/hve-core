@@ -200,7 +200,7 @@ flowchart LR
 
 ### Collection-Based Packaging
 
-Collection manifests in `extension/collections/*.collection.json` define persona-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
+Collection manifests in `collections/*.collection.yml` define persona-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
 
 | Collection     | Maturity     | Included In        |
 |----------------|--------------|--------------------|

@@ -5,11 +5,10 @@
 
 <#
 .SYNOPSIS
-    Generates extension collection manifests and package templates from root collections.
+    Generates persona package templates from root collections.
 
 .DESCRIPTION
     Reads root collection manifests from collections/*.collection.yml and generates:
-    - extension/collections/*.collection.json
     - extension/package.{collection-id}.json (plus canonical extension/package.json for hve-core-all)
 
     Generated output is deterministic for identical input files.
@@ -27,21 +26,6 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
-
-function Get-CollectionMaturity {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [hashtable]$CollectionManifest
-    )
-
-    if ($CollectionManifest.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.maturity)) {
-        return [string]$CollectionManifest.maturity
-    }
-
-    return 'stable'
-}
 
 function Get-CollectionDisplayName {
     [CmdletBinding()]
@@ -130,16 +114,6 @@ function Remove-StaleGeneratedFiles {
         $null = $expected.Add([System.IO.Path]::GetFullPath($file))
     }
 
-    $collectionsDir = Join-Path $RepoRoot 'extension/collections'
-    if (Test-Path $collectionsDir) {
-        Get-ChildItem -Path $collectionsDir -Filter '*.collection.json' -File | ForEach-Object {
-            $fullPath = [System.IO.Path]::GetFullPath($_.FullName)
-            if (-not $expected.Contains($fullPath)) {
-                Remove-Item -Path $_.FullName -Force
-            }
-        }
-    }
-
     $extensionDir = Join-Path $RepoRoot 'extension'
     Get-ChildItem -Path $extensionDir -Filter 'package.*.json' -File | ForEach-Object {
         $fullPath = [System.IO.Path]::GetFullPath($_.FullName)
@@ -158,7 +132,6 @@ function Get-GenerationHashes {
     )
 
     $patterns = @(
-        (Join-Path $OutputRoot 'extension/collections/*.collection.json'),
         (Join-Path $OutputRoot 'extension/package.json'),
         (Join-Path $OutputRoot 'extension/package.*.json')
     )
@@ -192,15 +165,10 @@ function Invoke-ExtensionCollectionsGeneration {
     )
 
     $collectionsDir = Join-Path $RepoRoot 'collections'
-    $extensionCollectionsDir = Join-Path $RepoRoot 'extension/collections'
     $templatesDir = Join-Path $RepoRoot 'extension/templates'
 
-    $collectionTemplatePath = Join-Path $templatesDir 'collection.template.json'
     $packageTemplatePath = Join-Path $templatesDir 'package.template.json'
 
-    if (-not (Test-Path $collectionTemplatePath)) {
-        throw "Collection template not found: $collectionTemplatePath"
-    }
     if (-not (Test-Path $packageTemplatePath)) {
         throw "Package template not found: $packageTemplatePath"
     }
@@ -211,15 +179,12 @@ function Invoke-ExtensionCollectionsGeneration {
 
     Import-Module PowerShell-Yaml -ErrorAction Stop
 
-    $collectionTemplate = Get-Content -Path $collectionTemplatePath -Raw | ConvertFrom-Json
     $packageTemplate = Get-Content -Path $packageTemplatePath -Raw | ConvertFrom-Json
 
     $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File | Sort-Object Name
     if ($collectionFiles.Count -eq 0) {
         throw "No root collection files found in $collectionsDir"
     }
-
-    New-Item -Path $extensionCollectionsDir -ItemType Directory -Force | Out-Null
 
     $expectedFiles = @()
 
@@ -235,7 +200,6 @@ function Invoke-ExtensionCollectionsGeneration {
         }
 
         $collectionDescription = if ($collection.ContainsKey('description')) { [string]$collection.description } else { [string]$packageTemplate.description }
-        $collectionMaturity = Get-CollectionMaturity -CollectionManifest $collection
 
         $extensionName = if ($collectionId -eq 'hve-core-all') { [string]$packageTemplate.name } else { "hve-$collectionId" }
         $extensionDisplayName = if ($collectionId -eq 'hve-core-all') {
@@ -244,18 +208,6 @@ function Invoke-ExtensionCollectionsGeneration {
         else {
             Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName)
         }
-
-        $collectionManifest = Copy-TemplateWithOverrides -Template $collectionTemplate -Overrides @{
-            id          = $collectionId
-            name        = $extensionName
-            displayName = $extensionDisplayName
-            description = $collectionDescription
-            maturity    = $collectionMaturity
-        }
-
-        $collectionManifestPath = Join-Path $extensionCollectionsDir "$collectionId.collection.json"
-        Set-JsonFile -Path $collectionManifestPath -Content $collectionManifest
-        $expectedFiles += $collectionManifestPath
 
         $packageTemplateOutput = Copy-TemplateWithOverrides -Template $packageTemplate -Overrides @{
             name        = $extensionName

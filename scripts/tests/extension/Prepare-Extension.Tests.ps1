@@ -359,10 +359,26 @@ Describe 'Get-CollectionManifest' {
         Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    It 'Loads collection manifest from valid path' {
+    It 'Loads collection manifest from valid YAML path' {
+        $manifestFile = Join-Path $script:tempDir 'test.collection.yml'
+        @"
+id: test
+name: test-ext
+displayName: Test Extension
+description: Test
+personas:
+  - hve-core-all
+"@ | Set-Content -Path $manifestFile
+
+        $result = Get-CollectionManifest -CollectionPath $manifestFile
+        $result | Should -Not -BeNullOrEmpty
+        $result.id | Should -Be 'test'
+    }
+
+    It 'Loads collection manifest from valid JSON path' {
         $manifestFile = Join-Path $script:tempDir 'test.collection.json'
         @{
-            '$schema' = '../schemas/collection.schema.json'
+            '\$schema' = '../schemas/collection.schema.json'
             id = 'test'
             name = 'test-ext'
             displayName = 'Test Extension'
@@ -381,15 +397,15 @@ Describe 'Get-CollectionManifest' {
     }
 
     It 'Returns hashtable with expected keys' {
-        $manifestFile = Join-Path $script:tempDir 'keys.collection.json'
-        @{
-            '$schema' = '../schemas/collection.schema.json'
-            id = 'keys'
-            name = 'keys-ext'
-            displayName = 'Keys'
-            description = 'Keys test'
-            personas = @('developer')
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path $manifestFile
+        $manifestFile = Join-Path $script:tempDir 'keys.collection.yml'
+        @"
+id: keys
+name: keys-ext
+displayName: Keys
+description: Keys test
+personas:
+  - developer
+"@ | Set-Content -Path $manifestFile
 
         $result = Get-CollectionManifest -CollectionPath $manifestFile
         $result.Keys | Should -Contain 'id'
@@ -748,18 +764,22 @@ description: "Preview agent"
 ---
 '@ | Set-Content -Path (Join-Path $script:agentsDir 'preview.agent.md')
 
-        $collectionPath = Join-Path $script:tempDir 'channel-filter.collection.json'
-        @{
-            id          = 'hve-core-all'
-            name        = 'hve-core-all'
-            displayName = 'HVE Core - All'
-            description = 'Channel filtering test'
-            personas    = @('hve-core-all')
-            items       = @(
-                @{ kind = 'agent'; path = '.github/agents/test.agent.md'; maturity = 'stable' },
-                @{ kind = 'agent'; path = '.github/agents/preview.agent.md'; maturity = 'preview' }
-            )
-        } | ConvertTo-Json -Depth 8 | Set-Content -Path $collectionPath
+        $collectionPath = Join-Path $script:tempDir 'channel-filter.collection.yml'
+        @"
+id: hve-core-all
+name: hve-core-all
+displayName: HVE Core - All
+description: Channel filtering test
+personas:
+  - hve-core-all
+items:
+  - kind: agent
+    path: .github/agents/test.agent.md
+    maturity: stable
+  - kind: agent
+    path: .github/agents/preview.agent.md
+    maturity: preview
+"@ | Set-Content -Path $collectionPath
 
         $stableResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
@@ -794,21 +814,31 @@ applyTo: "**/*.js"
 ---
 '@ | Set-Content -Path (Join-Path $script:instrDir 'preview.instructions.md')
 
-        $collectionPath = Join-Path $script:tempDir 'prompt-instruction-filter.collection.json'
-        @{
-            id          = 'hve-core-all'
-            name        = 'hve-core-all'
-            displayName = 'HVE Core - All'
-            description = 'Prompt/instruction filtering test'
-            personas    = @('hve-core-all')
-            items       = @(
-                @{ kind = 'agent'; path = '.github/agents/test.agent.md'; maturity = 'stable' },
-                @{ kind = 'prompt'; path = '.github/prompts/test.prompt.md'; maturity = 'stable' },
-                @{ kind = 'prompt'; path = '.github/prompts/experimental.prompt.md'; maturity = 'experimental' },
-                @{ kind = 'instruction'; path = '.github/instructions/test.instructions.md'; maturity = 'stable' },
-                @{ kind = 'instruction'; path = '.github/instructions/preview.instructions.md'; maturity = 'preview' }
-            )
-        } | ConvertTo-Json -Depth 8 | Set-Content -Path $collectionPath
+        $collectionPath = Join-Path $script:tempDir 'prompt-instruction-filter.collection.yml'
+        @"
+id: hve-core-all
+name: hve-core-all
+displayName: HVE Core - All
+description: Prompt/instruction filtering test
+personas:
+  - hve-core-all
+items:
+  - kind: agent
+    path: .github/agents/test.agent.md
+    maturity: stable
+  - kind: prompt
+    path: .github/prompts/test.prompt.md
+    maturity: stable
+  - kind: prompt
+    path: .github/prompts/experimental.prompt.md
+    maturity: experimental
+  - kind: instruction
+    path: .github/instructions/test.instructions.md
+    maturity: stable
+  - kind: instruction
+    path: .github/instructions/preview.instructions.md
+    maturity: preview
+"@ | Set-Content -Path $collectionPath
 
         $stableResult = Invoke-PrepareExtension `
             -ExtensionDirectory $script:extDir `
@@ -913,34 +943,37 @@ applyTo: "**/*.js"
     Context 'Persona template copy' {
         BeforeAll {
             # Developer collection manifest
-            $script:devCollectionPath = Join-Path $script:tempDir 'developer.collection.json'
-            @{
-                id          = 'developer'
-                name        = 'hve-developer'
-                displayName = 'HVE Core - Developer Edition'
-                description = 'Developer edition'
-                personas    = @('developer')
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:devCollectionPath
+            $script:devCollectionPath = Join-Path $script:tempDir 'developer.collection.yml'
+            @"
+id: developer
+name: hve-developer
+displayName: HVE Core - Developer Edition
+description: Developer edition
+personas:
+  - developer
+"@ | Set-Content -Path $script:devCollectionPath
 
             # hve-core-all collection manifest (default)
-            $script:allCollectionPath = Join-Path $script:tempDir 'hve-core-all.collection.json'
-            @{
-                id          = 'hve-core-all'
-                name        = 'hve-core-all'
-                displayName = 'HVE Core - All'
-                description = 'All artifacts'
-                personas    = @('hve-core-all')
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:allCollectionPath
+            $script:allCollectionPath = Join-Path $script:tempDir 'hve-core-all.collection.yml'
+            @"
+id: hve-core-all
+name: hve-core-all
+displayName: HVE Core - All
+description: All artifacts
+personas:
+  - hve-core-all
+"@ | Set-Content -Path $script:allCollectionPath
 
             # Collection manifest referencing a missing template
-            $script:missingCollectionPath = Join-Path $script:tempDir 'nonexistent.collection.json'
-            @{
-                id          = 'nonexistent'
-                name        = 'nonexistent'
-                displayName = 'Nonexistent'
-                description = 'Missing template'
-                personas    = @('nonexistent')
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:missingCollectionPath
+            $script:missingCollectionPath = Join-Path $script:tempDir 'nonexistent.collection.yml'
+            @"
+id: nonexistent
+name: nonexistent
+displayName: Nonexistent
+description: Missing template
+personas:
+  - nonexistent
+"@ | Set-Content -Path $script:missingCollectionPath
 
             # Persona template for developer collection
             @'
@@ -1034,26 +1067,28 @@ applyTo: "**/*.js"
     Context 'Collection maturity gating' {
         BeforeAll {
             # Deprecated collection manifest
-            $script:deprecatedCollectionPath = Join-Path $script:tempDir 'deprecated.collection.json'
-            @{
-                id          = 'deprecated-coll'
-                name        = 'deprecated-ext'
-                displayName = 'Deprecated Collection'
-                description = 'Deprecated collection for testing'
-                personas    = @('hve-core-all')
-                maturity    = 'deprecated'
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:deprecatedCollectionPath
+            $script:deprecatedCollectionPath = Join-Path $script:tempDir 'deprecated.collection.yml'
+            @"
+id: deprecated-coll
+name: deprecated-ext
+displayName: Deprecated Collection
+description: Deprecated collection for testing
+personas:
+  - hve-core-all
+maturity: deprecated
+"@ | Set-Content -Path $script:deprecatedCollectionPath
 
             # Experimental collection manifest
-            $script:experimentalCollectionPath = Join-Path $script:tempDir 'experimental.collection.json'
-            @{
-                id          = 'experimental-coll'
-                name        = 'experimental-ext'
-                displayName = 'Experimental Collection'
-                description = 'Experimental collection for testing'
-                personas    = @('hve-core-all')
-                maturity    = 'experimental'
-            } | ConvertTo-Json -Depth 5 | Set-Content -Path $script:experimentalCollectionPath
+            $script:experimentalCollectionPath = Join-Path $script:tempDir 'experimental.collection.yml'
+            @"
+id: experimental-coll
+name: experimental-ext
+displayName: Experimental Collection
+description: Experimental collection for testing
+personas:
+  - hve-core-all
+maturity: experimental
+"@ | Set-Content -Path $script:experimentalCollectionPath
 
             # Persona template for experimental collection
             @'

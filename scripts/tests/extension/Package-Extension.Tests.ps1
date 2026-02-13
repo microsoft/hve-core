@@ -938,16 +938,22 @@ Describe 'Get-PersonaReadmePath' {
     }
 
     It 'Returns null for hve-core-all collection' {
-        $collectionPath = Join-Path $script:testDir 'collection.json'
-        @{ id = 'hve-core-all'; name = 'all' } | ConvertTo-Json | Set-Content $collectionPath
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: hve-core-all
+name: all
+"@ | Set-Content $collectionPath
 
         $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
     }
 
     It 'Returns persona README path when file exists' {
-        $collectionPath = Join-Path $script:testDir 'collection.json'
-        @{ id = 'developer'; name = 'dev' } | ConvertTo-Json | Set-Content $collectionPath
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: developer
+name: dev
+"@ | Set-Content $collectionPath
 
         $personaReadme = Join-Path $script:extDir 'README.developer.md'
         Set-Content -Path $personaReadme -Value '# Developer README'
@@ -957,8 +963,11 @@ Describe 'Get-PersonaReadmePath' {
     }
 
     It 'Returns null when persona README file does not exist' {
-        $collectionPath = Join-Path $script:testDir 'collection.json'
-        @{ id = 'security'; name = 'sec' } | ConvertTo-Json | Set-Content $collectionPath
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: security
+name: sec
+"@ | Set-Content $collectionPath
 
         $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
@@ -1182,8 +1191,14 @@ Describe 'Invoke-PackageExtension - Collection mode' {
         Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
         Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
 
-        $collectionPath = Join-Path $script:testRoot 'collection.json'
-        @{ id = 'developer'; name = 'dev'; displayName = 'Developer'; personas = @('developer') } | ConvertTo-Json | Set-Content $collectionPath
+        $collectionPath = Join-Path $script:testRoot 'collection.yml'
+        @"
+id: developer
+name: dev
+displayName: Developer
+personas:
+  - developer
+"@ | Set-Content $collectionPath
 
         $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
         Set-Content -Path $vsixPath -Value 'fake-vsix'
@@ -1196,8 +1211,14 @@ Describe 'Invoke-PackageExtension - Collection mode' {
         Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
         Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
 
-        $collectionPath = Join-Path $script:testRoot 'collection.json'
-        @{ id = 'developer'; name = 'dev'; displayName = 'Developer'; personas = @('developer') } | ConvertTo-Json | Set-Content $collectionPath
+        $collectionPath = Join-Path $script:testRoot 'collection.yml'
+        @"
+id: developer
+name: dev
+displayName: Developer
+personas:
+  - developer
+"@ | Set-Content $collectionPath
 
         # Create persona README in extension directory
         Set-Content -Path (Join-Path $script:extDir 'README.developer.md') -Value '# Developer Persona'

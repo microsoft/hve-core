@@ -21,12 +21,7 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "extension/package.json",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "json",
-          "path": "extension/package.developer.json",
+          "path": "extension/templates/package.template.json",
           "jsonpath": "$.version"
         }
       ]

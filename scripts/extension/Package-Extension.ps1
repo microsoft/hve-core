@@ -28,7 +28,7 @@
     Uses vsce --pre-release flag which marks the extension for the pre-release track.
 
 .PARAMETER Collection
-    Optional. Path to a collection manifest JSON file. When specified, only
+    Optional. Path to a collection manifest file (YAML or JSON). When specified, only
     collection-filtered artifacts are copied and the output filename uses the
     collection ID.
 
@@ -260,9 +260,10 @@ function Get-PersonaReadmePath {
     .DESCRIPTION
         Maps a collection manifest to its persona-specific README file. Returns
         null when the collection is the full package (hve-core-all) or when no
-        matching persona README exists on disk.
+        matching persona README exists on disk. Supports both YAML and JSON
+        manifest formats.
     .PARAMETER CollectionPath
-        Path to the collection manifest JSON file.
+        Path to the collection manifest file (YAML or JSON).
     .PARAMETER ExtensionDirectory
         Path to the extension directory containing README files.
     .OUTPUTS
@@ -278,7 +279,13 @@ function Get-PersonaReadmePath {
         [string]$ExtensionDirectory
     )
 
-    $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
+    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
+    if ($extension -in @('.yml', '.yaml')) {
+        $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $CollectionPath -Raw)
+    }
+    else {
+        $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
+    }
     $collectionId = $manifest.id
 
     # Full package uses the default README.md
@@ -763,7 +770,7 @@ function Invoke-PackageExtension {
     .PARAMETER PreRelease
         Switch to mark the package as a pre-release version.
     .PARAMETER Collection
-        Optional path to a collection manifest JSON file. When specified, only
+        Optional path to a collection manifest file (YAML or JSON). When specified, only
         collection-filtered artifacts are copied and the output filename uses the
         collection ID.
     .PARAMETER DryRun
