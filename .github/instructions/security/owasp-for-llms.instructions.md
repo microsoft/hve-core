@@ -1,5 +1,6 @@
 ---
 description: "When generating, reviewing, or refactoring code that interacts with Large Language Models (LLMs), read and follow these OWASP Top 10 for LLM Applications (2025) secure coding guidelines to protect against prompt injection, data leakage, and LLM-specific vulnerabilities. Apply these instructions to any LLM integration, agent framework, RAG pipeline, or AI-powered feature. Provide clear and concise security feedback and points of improvement."
+applyTo: '**/*'
 maturity: experimental
 ---
 
