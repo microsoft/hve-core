@@ -390,8 +390,8 @@ function Invoke-ActionVersionConsistency {
     Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
     Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
 
-    # Export report
-    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions
+    # Export report (pipe to Out-Host to prevent pipeline pollution of return value)
+    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions | Out-Host
 
     # Determine exit code
     $exitCode = 0
