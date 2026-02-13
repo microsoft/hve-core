@@ -134,7 +134,7 @@ Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and e
 | Copilot instructions       | `.*\.instructions\.md$`  | N/A                       | N/A                       |
 | Copilot prompt             | `.*\.prompt\.md$`        | N/A                       | N/A                       |
 | Copilot agent              | `.*\.agent\.md$`         | N/A                       | N/A                       |
-| Copilot skill              | `.*/SKILL\.md$`           | N/A                       | N/A                       |
+| Copilot skill              | `.*/SKILL\.md$`          | N/A                       | N/A                       |
 | Script or automation       | `.*\.(ps1\|sh\|py)$`     | N/A                       | N/A                       |
 
 Priority rules:
