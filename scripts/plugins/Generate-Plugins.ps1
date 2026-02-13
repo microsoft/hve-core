@@ -196,6 +196,10 @@ function Invoke-PluginGeneration {
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $pluginsDir = Join-Path -Path $RepoRoot -ChildPath 'plugins'
 
+    # Read repo version from package.json for plugin manifests
+    $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
+    $repoVersion = (Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json).version
+
     # Auto-update hve-core-all collection with discovered artifacts
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
@@ -253,6 +257,7 @@ function Invoke-PluginGeneration {
         $result = Write-PluginDirectory -Collection $filteredCollection `
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
+            -Version $repoVersion `
             -DryRun:$DryRun
 
         $itemCount = $filteredCollection.items.Count
@@ -264,6 +269,12 @@ function Invoke-PluginGeneration {
 
         Write-Host "  $id ($itemCount items)" -ForegroundColor Green
     }
+
+    # Generate marketplace.json from all collections
+    Write-MarketplaceManifest `
+        -RepoRoot $RepoRoot `
+        -Collections $allCollections `
+        -DryRun:$DryRun
 
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"

@@ -465,13 +465,16 @@ function New-PluginManifestContent {
 
     .DESCRIPTION
     Creates a hashtable representing the plugin manifest with name,
-    description, and a default version of 1.0.0.
+    description, and version sourced from the repository package.json.
 
     .PARAMETER CollectionId
     The collection identifier used as the plugin name.
 
     .PARAMETER Description
     A short description of the plugin.
+
+    .PARAMETER Version
+    Semantic version string from the repository package.json.
 
     .OUTPUTS
     [hashtable] Plugin manifest with name, description, and version keys.
@@ -483,13 +486,16 @@ function New-PluginManifestContent {
         [string]$CollectionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$Description
+        [string]$Description,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version
     )
 
     return [ordered]@{
         name        = $CollectionId
         description = $Description
-        version     = '1.0.0'
+        version     = $Version
     }
 }
 
@@ -568,6 +574,146 @@ function New-PluginReadmeContent {
     [void]$sb.AppendLine()
 
     return $sb.ToString()
+}
+
+function New-MarketplaceManifestContent {
+    <#
+    .SYNOPSIS
+    Generates marketplace.json content as a hashtable.
+
+    .DESCRIPTION
+    Creates a hashtable representing the marketplace manifest with repository
+    metadata, owner information, and plugin entries. Matches the schema used
+    by github/awesome-copilot.
+
+    .PARAMETER RepoName
+    Repository name used as the marketplace name.
+
+    .PARAMETER Description
+    Short description of the repository.
+
+    .PARAMETER Version
+    Semantic version string from package.json.
+
+    .PARAMETER OwnerName
+    Organization or individual owning the repository.
+
+    .PARAMETER Plugins
+    Array of ordered hashtables with name, description, and version keys
+    from New-PluginManifestContent.
+
+    .OUTPUTS
+    [hashtable] Marketplace manifest with name, metadata, owner, and plugins keys.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OwnerName,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [array]$Plugins
+    )
+
+    $pluginEntries = @()
+    foreach ($plugin in $Plugins) {
+        $pluginEntries += [ordered]@{
+            name        = $plugin.name
+            source      = "./plugins/$($plugin.name)"
+            description = $plugin.description
+            version     = $plugin.version
+        }
+    }
+
+    return [ordered]@{
+        name     = $RepoName
+        metadata = [ordered]@{
+            description = $Description
+            version     = $Version
+            pluginRoot  = './plugins'
+        }
+        owner    = [ordered]@{
+            name = $OwnerName
+        }
+        plugins  = $pluginEntries
+    }
+}
+
+function Write-MarketplaceManifest {
+    <#
+    .SYNOPSIS
+    Writes the marketplace.json file to .github/plugin/.
+
+    .DESCRIPTION
+    Assembles plugin metadata from generated collections and writes the
+    marketplace manifest to .github/plugin/marketplace.json. Creates the
+    directory when it does not exist.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root directory.
+
+    .PARAMETER Collections
+    Array of collection manifest hashtables with id and description.
+
+    .PARAMETER DryRun
+    When specified, logs the action without writing to disk.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [array]$Collections,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
+    $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
+
+    $plugins = @()
+    foreach ($collection in ($Collections | Sort-Object { $_.id })) {
+        $plugins += New-PluginManifestContent `
+            -CollectionId $collection.id `
+            -Description $collection.description `
+            -Version $packageJson.version
+    }
+
+    $manifest = New-MarketplaceManifestContent `
+        -RepoName $packageJson.name `
+        -Description $packageJson.description `
+        -Version $packageJson.version `
+        -OwnerName $packageJson.author `
+        -Plugins $plugins
+
+    $outputDir = Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
+    $outputPath = Join-Path -Path $outputDir -ChildPath 'marketplace.json'
+
+    if ($DryRun) {
+        Write-Host "  [DRY RUN] Would write marketplace.json at $outputPath" -ForegroundColor Yellow
+        return
+    }
+
+    if (-not (Test-Path -Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+
+    $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8 -NoNewline
+    Write-Host "  Marketplace manifest: $outputPath" -ForegroundColor Green
 }
 
 function New-GenerateResult {
@@ -670,6 +816,9 @@ function Write-PluginDirectory {
     .PARAMETER RepoRoot
     Absolute path to the repository root.
 
+    .PARAMETER Version
+    Semantic version string from the repository package.json.
+
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
 
@@ -688,6 +837,9 @@ function Write-PluginDirectory {
 
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
@@ -783,7 +935,7 @@ function Write-PluginDirectory {
     # Generate plugin.json
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
-    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description
+    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description -Version $Version
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write plugin.json at $manifestPath"
@@ -816,18 +968,20 @@ function Write-PluginDirectory {
 }
 
 Export-ModuleMember -Function @(
+    'Get-AllCollections',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
-    'Get-AllCollections',
     'Get-CollectionManifest',
     'Get-PluginItemName',
     'Get-PluginSubdirectory',
     'New-GenerateResult',
+    'New-MarketplaceManifestContent',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
     'New-RelativeSymlink',
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
     'Update-HveCoreAllCollection',
+    'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )
