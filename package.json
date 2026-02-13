@@ -34,6 +34,7 @@
     "markdownlint-cli2": "^0.20.0"
   },
   "overrides": {
+    "markdown-it": "14.1.1",
     "undici": "7.18.2"
   },
   "repository": {
