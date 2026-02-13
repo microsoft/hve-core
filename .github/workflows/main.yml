@@ -101,7 +101,7 @@ jobs:
       # be edited or have assets uploaded (HTTP 422). Delete the
       # immutable release and recreate as a mutable draft so downstream
       # jobs can upload assets. The tag persists across the delete/create
-      # cycle. The publish-release job converts the draft back to published.
+      # cycle. The publish-release job deletes the draft and recreates as published.
       - name: Recreate release as draft for asset upload
         if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
@@ -110,8 +110,9 @@ jobs:
           TAG="${{ steps.release.outputs.tag_name }}"
           REPO="${{ github.repository }}"
           # Capture release metadata before deletion
-          gh release view "$TAG" --json body -q '.body' -R "$REPO" > /tmp/release-body.md
-          NAME=$(gh release view "$TAG" --json name -q '.name' -R "$REPO")
+          RELEASE_JSON=$(gh release view "$TAG" --json name,body -R "$REPO")
+          NAME=$(echo "$RELEASE_JSON" | jq -r '.name')
+          echo "$RELEASE_JSON" | jq -r '.body' > /tmp/release-body.md
           # Delete immutable published release; tag is preserved
           gh release delete "$TAG" --yes -R "$REPO"
           # Recreate as mutable draft for asset upload
@@ -213,4 +214,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release edit "${{ needs.release-please.outputs.tag_name }}" --draft=false -R "${{ github.repository }}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          # Capture draft release metadata
+          RELEASE_JSON=$(gh release view "$TAG" --json name,body -R "$REPO")
+          NAME=$(echo "$RELEASE_JSON" | jq -r '.name')
+          echo "$RELEASE_JSON" | jq -r '.body' > /tmp/release-body.md
+          # Delete mutable draft; recreate as published
+          gh release delete "$TAG" --yes -R "$REPO"
+          gh release create "$TAG" --verify-tag \
+            --title "$NAME" --notes-file /tmp/release-body.md -R "$REPO"
