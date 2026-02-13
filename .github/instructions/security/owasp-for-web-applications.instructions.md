@@ -190,9 +190,9 @@ Apply least privilege for viewing/exporting logs. Separate operator vs auditor r
 
 ### 10. A10: Server-Side Request Forgery (SSRF)
 
-#### Allow-List Enforcement
+#### Allowlist Enforcement
 
-Only permit outbound requests to an explicit allow-list of hostnames and CIDR ranges. Deny internal metadata endpoints (e.g., `169.254.169.254`).
+Only permit outbound requests to an explicit allowlist of hostnames and CIDR ranges. Deny internal metadata endpoints (e.g., `169.254.169.254`).
 
 #### Robust URL Validation
 
