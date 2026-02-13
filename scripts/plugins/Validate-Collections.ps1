@@ -88,6 +88,66 @@ function Test-KindSuffix {
     return ''
 }
 
+function Resolve-ItemMaturity {
+    <#
+    .SYNOPSIS
+        Resolves an item's effective maturity value.
+
+    .DESCRIPTION
+        Returns 'stable' when maturity is omitted; otherwise returns the
+        provided maturity string.
+
+    .PARAMETER Maturity
+        Optional maturity string from collection item metadata.
+
+    .OUTPUTS
+        [string] Effective maturity value.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [AllowNull()]
+        [string]$Maturity
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Maturity)) {
+        return 'stable'
+    }
+
+    return $Maturity
+}
+
+function Get-CollectionItemKey {
+    <#
+    .SYNOPSIS
+        Builds a stable uniqueness key for collection items.
+
+    .DESCRIPTION
+        Uses kind and path to identify the same artifact across collections.
+
+    .PARAMETER Kind
+        Artifact kind.
+
+    .PARAMETER ItemPath
+        Artifact path.
+
+    .OUTPUTS
+        [string] Composite key.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ItemPath
+    )
+
+    return "$Kind|$ItemPath"
+}
+
 #endregion Validation Helpers
 
 #region Orchestration
@@ -130,6 +190,9 @@ function Invoke-CollectionValidation {
     $errorCount = 0
     $seenIds = @{}
     $validatedCount = 0
+    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated')
+    $canonicalCollectionId = 'hve-core-all'
+    $itemOccurrences = @{}
 
     foreach ($file in $collectionFiles) {
         $manifest = Get-CollectionManifest -CollectionPath $file.FullName
@@ -173,6 +236,16 @@ function Invoke-CollectionValidation {
             $itemPath = $item.path
             $kind = $item.kind
             $absolutePath = Join-Path -Path $RepoRoot -ChildPath $itemPath
+            $itemMaturity = $null
+            if ($item.ContainsKey('maturity')) {
+                $itemMaturity = [string]$item.maturity
+            }
+            $effectiveMaturity = Resolve-ItemMaturity -Maturity $itemMaturity
+
+            # Repo-specific path exclusion
+            if ($itemPath -match '^\.github/.*/hve-core/') {
+                $fileErrors += "repo-specific path not allowed in collections: $itemPath (artifacts under .github/**/hve-core/ are excluded from distribution)"
+            }
 
             # Path existence
             if (-not (Test-Path -Path $absolutePath)) {
@@ -188,6 +261,25 @@ function Invoke-CollectionValidation {
             }
             else {
                 $fileErrors += "item missing 'kind': $itemPath"
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($itemMaturity) -and ($allowedMaturities -notcontains $itemMaturity)) {
+                $fileErrors += "invalid maturity '$itemMaturity' for item '$itemPath' (allowed: $($allowedMaturities -join ', '))"
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($itemPath) -and -not [string]::IsNullOrWhiteSpace($kind)) {
+                $itemKey = Get-CollectionItemKey -Kind $kind -ItemPath $itemPath
+                if (-not $itemOccurrences.ContainsKey($itemKey)) {
+                    $itemOccurrences[$itemKey] = @()
+                }
+
+                $itemOccurrences[$itemKey] += @{
+                    CollectionId = $id
+                    CollectionFile = $file.Name
+                    Kind = $kind
+                    Path = $itemPath
+                    Maturity = $effectiveMaturity
+                }
             }
 
             # Informational log for instruction items
@@ -208,6 +300,33 @@ function Invoke-CollectionValidation {
         }
 
         $validatedCount++
+    }
+
+    foreach ($itemKey in $itemOccurrences.Keys) {
+        $occurrences = $itemOccurrences[$itemKey]
+        if ($occurrences.Count -le 1) {
+            continue
+        }
+
+        $canonicalMatches = @($occurrences | Where-Object { $_.CollectionId -eq $canonicalCollectionId })
+        if ($canonicalMatches.Count -eq 0) {
+            $sharedCollections = ($occurrences | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
+            Write-Host "  FAIL shared item '$itemKey' exists in collections [$sharedCollections] but has no canonical entry in '$canonicalCollectionId'" -ForegroundColor Red
+            $errorCount++
+            continue
+        }
+
+        $canonical = $canonicalMatches[0]
+        foreach ($occurrence in $occurrences) {
+            if ($occurrence.CollectionId -eq $canonicalCollectionId) {
+                continue
+            }
+
+            if ($occurrence.Maturity -ne $canonical.Maturity) {
+                Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+                $errorCount++
+            }
+        }
     }
 
     Write-Host ''

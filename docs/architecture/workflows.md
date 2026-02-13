@@ -88,12 +88,12 @@ flowchart LR
         LLC[link-lang-check]
         MLC[markdown-link-check]
     end
-    
+
     subgraph "Analysis"
         PSA[psscriptanalyzer]
         PT[pester-tests]
     end
-    
+
     subgraph "Security"
         DPC[dependency-pinning-check]
         NA[npm-audit]
@@ -136,20 +136,20 @@ flowchart LR
     style RP fill:#f9f,stroke:#333
 ```
 
-The release-please job includes a commit-message guard that skips execution when the head commit message starts with `chore(main): release`. This prevents an infinite loop where release-please-generated merge commits would re-trigger the release workflow.
+Release-please v4 handles `chore`-type commits natively. They are not releasable and do not produce spurious release PRs, so no commit-message guard is needed.
 
 ### Main Branch Jobs
 
-| Job                       | Purpose                        | Dependencies                                     |
-|---------------------------|--------------------------------|--------------------------------------------------|
-| spell-check               | Post-merge spelling validation | None                                             |
-| markdown-lint             | Post-merge markdown validation | None                                             |
-| table-format              | Post-merge table validation    | None                                             |
-| dependency-pinning-scan   | Security pinning check         | None                                             |
-| pester-tests              | PowerShell unit tests          | None                                             |
-| release-please            | Automated release management   | All validation jobs (skipped on release commits) |
-| extension-package-release | Build release VSIX             | release-please (conditional)                     |
-| attest-and-upload         | Sign and upload VSIX           | extension-package-release                        |
+| Job                       | Purpose                        | Dependencies                 |
+|---------------------------|--------------------------------|------------------------------|
+| spell-check               | Post-merge spelling validation | None                         |
+| markdown-lint             | Post-merge markdown validation | None                         |
+| table-format              | Post-merge table validation    | None                         |
+| dependency-pinning-scan   | Security pinning check         | None                         |
+| pester-tests              | PowerShell unit tests          | None                         |
+| release-please            | Automated release management   | All validation jobs          |
+| extension-package-release | Build release VSIX             | release-please (conditional) |
+| attest-and-upload         | Sign and upload VSIX           | extension-package-release    |
 
 When release-please creates a release, the `extension-package-release` job builds the VSIX with the correct version, and `attest-and-upload` signs it with Sigstore attestation before uploading to the GitHub Release.
 
@@ -177,23 +177,41 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `extension-publish.yml` workflow handles VS Code extension marketplace publishing through manual dispatch.
+The `extension-publish.yml` and `extension-publish-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per collection.
 
 ```mermaid
 flowchart LR
-    PC[prepare-changelog] --> PKG[package]
-    NV[normalize-version] --> PKG
-    PKG --> PUB[publish]
+    PC[prepare-changelog] --> DC[discover-collections]
+    NV[normalize-version] --> DC
+    DC --> PKG["package (matrix)"]
+    PKG --> PUB["publish (matrix)"]
 ```
 
 ### Publishing Jobs
 
-| Job               | Purpose                                  |
-|-------------------|------------------------------------------|
-| prepare-changelog | Extract release notes from CHANGELOG.md  |
-| normalize-version | Ensure version consistency               |
-| package           | Build VSIX using `extension-package.yml` |
-| publish           | Upload to VS Code Marketplace via vsce   |
+| Job                  | Purpose                                                     |
+|----------------------|-------------------------------------------------------------|
+| prepare-changelog    | Extract release notes from CHANGELOG.md                     |
+| normalize-version    | Ensure version consistency                                  |
+| validate-version     | Enforce ODD minor version for pre-release channel           |
+| discover-collections | Scan collection manifests, filter by maturity and channel   |
+| package (matrix)     | Build one VSIX per collection using `extension-package.yml` |
+| publish (matrix)     | Upload each VSIX to VS Code Marketplace via OIDC + vsce     |
+
+### Collection-Based Packaging
+
+Collection manifests in `collections/*.collection.yml` define collection-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
+
+| Collection     | Maturity     | Included In        |
+|----------------|--------------|--------------------|
+| `hve-core-all` | Stable       | Stable, PreRelease |
+| `developer`    | Experimental | PreRelease only    |
+
+Maturity filtering rules:
+
+* **Deprecated** collections are always excluded.
+* **Experimental** collections are excluded from Stable channel builds.
+* **Stable** collections are included in all channel builds.
 
 ### Version Channels
 

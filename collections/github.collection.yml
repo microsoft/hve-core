@@ -11,6 +11,7 @@ items:
   # Agents
   - path: .github/agents/github-backlog-manager.agent.md
     kind: agent
+    maturity: experimental
   # RPI agents
   - path: .github/agents/rpi-agent.agent.md
     kind: agent
@@ -30,14 +31,19 @@ items:
   # Prompts
   - path: .github/prompts/github-add-issue.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/github-discover-issues.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/github-triage-issues.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/github-execute-backlog.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/github-sprint-plan.prompt.md
     kind: prompt
+    maturity: experimental
   # RPI prompts
   - path: .github/prompts/rpi.prompt.md
     kind: prompt
@@ -71,13 +77,18 @@ items:
   # Bundle-specific instructions
   - path: .github/instructions/github-backlog-discovery.instructions.md
     kind: instruction
+    maturity: experimental
   - path: .github/instructions/github-backlog-planning.instructions.md
     kind: instruction
+    maturity: experimental
   - path: .github/instructions/github-backlog-triage.instructions.md
     kind: instruction
+    maturity: experimental
   - path: .github/instructions/github-backlog-update.instructions.md
     kind: instruction
+    maturity: experimental
   - path: .github/instructions/community-interaction.instructions.md
     kind: instruction
+    maturity: experimental
 display:
   ordering: manual

@@ -4,44 +4,126 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Full version to use (e.g., 1.0.0 or empty to use package.json)'
+        description: "Full version to use (e.g., 1.0.0 or empty to use package.json)"
         required: false
         type: string
-        default: ''
+        default: ""
       dev-patch-number:
-        description: 'Dev patch number to append (creates version like 1.0.0-dev.123)'
+        description: "Dev patch number to append (creates version like 1.0.0-dev.123)"
         required: false
         type: string
-        default: ''
+        default: ""
       use-changelog:
-        description: 'Whether to download and use changelog artifact'
+        description: "Whether to download and use changelog artifact"
         required: false
         type: boolean
         default: false
       channel:
-        description: 'Release channel (Stable or PreRelease) controlling agent maturity filtering'
+        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
         required: false
         type: string
-        default: 'Stable'
+        default: "Stable"
     outputs:
       version:
-        description: 'Version that was packaged'
-        value: ${{ jobs.package.outputs.version }}
-      vsix-file:
-        description: 'Path to the packaged VSIX file'
-        value: ${{ jobs.package.outputs.vsix-file }}
+        description: "Version that was packaged"
+        value: ${{ jobs.discover-collections.outputs.version }}
+      collections-matrix:
+        description: "JSON matrix of collections that were actually packaged (filtered by channel and maturity)"
+        value: ${{ jobs.discover-collections.outputs.matrix }}
 
 permissions:
   contents: read
 
 jobs:
-  package:
+  discover-collections:
+    name: Discover Collection Manifests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
-      version: ${{ steps.package.outputs.version }}
-      vsix-file: ${{ steps.package.outputs.vsix-file }}
+      matrix: ${{ steps.discover.outputs.matrix }}
+      version: ${{ steps.read-version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup PowerShell modules
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Resolve effective version
+        id: read-version
+        shell: bash
+        run: |
+          version="${{ inputs.version }}"
+          dev_patch="${{ inputs.dev-patch-number }}"
+          if [ -z "$version" ]; then
+            version=$(jq -r .version extension/templates/package.template.json)
+          fi
+          if [ -n "$dev_patch" ]; then
+            version="${version}-dev.${dev_patch}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Discover collection manifests
+        id: discover
+        shell: pwsh
+        run: |
+          Import-Module PowerShell-Yaml -ErrorAction Stop
+
+          $collectionsDir = 'collections'
+          $channel = '${{ inputs.channel }}'.Trim()
+          if (-not $channel) { $channel = 'Stable' }
+
+          if (-not (Test-Path $collectionsDir)) {
+            Write-Error "Collections directory not found: $collectionsDir"
+            exit 1
+          }
+
+          $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File | Sort-Object Name
+          $matrixItems = @()
+
+          foreach ($file in $collectionFiles) {
+            $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $file.FullName -Raw)
+            $id = [string]$manifest.id
+            $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
+            $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
+
+            if ($maturity -eq 'deprecated') {
+              Write-Host "::notice::Skipping deprecated collection: $id"
+              continue
+            }
+
+            if ($channel -eq 'Stable' -and $maturity -eq 'experimental') {
+              Write-Host "::notice::Skipping experimental collection '$id' for Stable channel"
+              continue
+            }
+
+            $matrixItems += @{
+              id       = $id
+              name     = $name
+              manifest = $file.FullName -replace '\\', '/'
+              maturity = $maturity
+            }
+          }
+
+          $matrixJson = @{ include = $matrixItems } | ConvertTo-Json -Depth 5 -Compress
+          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Discovered collections:"
+          $matrixJson | ConvertFrom-Json | ConvertTo-Json -Depth 5
+
+  package:
+    name: Package ${{ matrix.id }}
+    needs: discover-collections
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
@@ -51,7 +133,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install -g @vscode/vsce@3.7.1
@@ -76,9 +158,10 @@ jobs:
         run: |
           $channel = "${{ inputs.channel }}".Trim()
           if (-not $channel) { $channel = 'Stable' }
-          
-          Write-Host "🔧 Preparing extension for $channel channel..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel
+          $collection = "${{ matrix.manifest }}"
+
+          Write-Host "🔧 Preparing extension for $channel channel (collection: ${{ matrix.id }})..."
+          ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -Collection $collection
 
       - name: Package extension
         id: package
@@ -86,28 +169,31 @@ jobs:
         run: |
           $version = "${{ inputs.version }}".Trim()
           $devPatch = "${{ inputs.dev-patch-number }}".Trim()
-          
-          Write-Host "📦 Packaging extension..."
-          
-          $arguments = @{}
-          
+          $collection = "${{ matrix.manifest }}"
+
+          Write-Host "📦 Packaging extension (collection: ${{ matrix.id }})..."
+
+          $arguments = @{
+            Collection = $collection
+          }
+
           if ($version) {
             $arguments['Version'] = $version
           }
-          
+
           if ($devPatch) {
             $arguments['DevPatchNumber'] = $devPatch
           }
-          
+
           if (Test-Path "./CHANGELOG.md") {
             $arguments['ChangelogPath'] = "./CHANGELOG.md"
           }
-          
+
           ./scripts/extension/Package-Extension.ps1 @arguments
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
-          name: extension-vsix
+          name: extension-vsix-${{ matrix.id }}
           path: extension/*.vsix
           retention-days: 30

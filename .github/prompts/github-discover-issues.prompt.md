@@ -2,7 +2,6 @@
 description: 'Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review'
 agent: 'github-backlog-manager'
 argument-hint: "documents=... [milestone=...] [searchTerms=...]"
-maturity: experimental
 ---
 
 # Discover GitHub Issues

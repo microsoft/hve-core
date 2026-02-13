@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2025-12-19
+ms.date: 2026-02-10
 ms.topic: reference
 ---
 
@@ -15,7 +15,7 @@ extension/
 ├── .github/              # Temporarily copied during packaging (removed after)
 ├── docs/templates/       # Temporarily copied during packaging (removed after)
 ├── scripts/dev-tools/    # Temporarily copied during packaging (removed after)
-├── package.json          # Extension manifest with VS Code configuration
+├── package.json          # Generated extension manifest (gitignored, created by Prepare-Extension.ps1)\n├── templates/            # Source templates for package generation
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
 ├── LICENSE               # Copy of root LICENSE
@@ -59,6 +59,60 @@ The extension is automatically packaged and published through GitHub Actions:
 | `.github/workflows/extension-package.yml` | Reusable workflow | Packages extension with flexible versioning |
 | `.github/workflows/extension-publish.yml` | Release/manual    | Publishes to VS Code Marketplace            |
 | `.github/workflows/main.yml`              | Push to main      | Includes extension packaging in CI          |
+
+## Packaging Pipeline Overview
+
+Extension packaging is a two-step process: **Prepare** discovers and filters artifacts into `package.json`, then **Package** copies files, runs `vsce`, and cleans up.
+
+```mermaid
+flowchart LR
+    subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
+        P1[Load Collection Manifests] --> P2[Discover Artifacts]
+        P2 --> P3["Filter by Maturity<br/>+ Collection"]
+        P3 --> P4[Resolve Dependencies]
+        P4 --> P5[Write package.json]
+    end
+
+    subgraph Package["Step 2 · Package-Extension.ps1"]
+        K1[Resolve Version] --> K2["Copy Assets<br/>to extension/"]
+        K2 --> K3[vsce package]
+        K3 --> K4[Cleanup & Restore]
+    end
+
+    Prepare --> Package --> VSIX[".vsix"]
+```
+
+### Artifact Discovery and Resolution
+
+The prepare step generates collection package files from `collections/*.collection.yml` manifests, discovers all artifact files on disk, filters them by maturity and collection membership, and resolves transitive handoff and requires dependencies to pull in all needed artifacts.
+
+```mermaid
+flowchart TB
+    CM["Collection Manifests<br/>collections/*.collection.yml"] -->|Get-CollectionManifest| INPUTS
+    CH[Channel: Stable / PreRelease] -->|Get-AllowedMaturities| INPUTS
+
+    INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
+
+    DISC --> AG["Agents<br/>.github/agents/*.agent.md"]
+    DISC --> PR["Prompts<br/>.github/prompts/*.prompt.md"]
+    DISC --> IN["Instructions<br/>.github/instructions/*.instructions.md"]
+    DISC --> SK["Skills<br/>.github/skills/*/SKILL.md"]
+
+    AG -->|Filter by maturity| FM[Maturity-Filtered Set]
+    PR -->|Filter by maturity| FM
+    IN -->|"Filter by maturity<br/>+ exclude hve-core/"| FM
+    SK -->|Filter by maturity| FM
+
+    FM --> CF{"Collection<br/>specified?"}
+    CF -->|No| FINAL[Final Artifact Set]
+    CF -->|Yes| PA["Filter by collection + globs<br/>Get-CollectionArtifacts"]
+    PA --> HD["Resolve Handoff Closure<br/>BFS through agent frontmatter"]
+    HD --> RD["Resolve Requires Dependencies<br/>BFS through collection item requires"]
+    RD --> INT["Intersect with<br/>discovered artifacts"]
+    INT --> FINAL
+
+    FINAL --> UPD["Update package.json contributes<br/>chatAgents · chatPromptFiles<br/>chatInstructions · chatSkills"]
+```
 
 ## Packaging the Extension
 
@@ -121,11 +175,36 @@ The packaging script automatically:
 
 * Uses version from `package.json` (or specified version)
 * Optionally appends dev patch number for pre-release builds
-* Copies required `.github` directory
-* Copies `scripts/dev-tools` directory (developer utilities)
+* Copies required directories into `extension/` (or only filtered artifacts in collection mode)
 * Packages the extension using `vsce`
-* Cleans up temporary files
-* Restores original `package.json` version if temporarily modified
+* Cleans up temporary files and restores all modified files
+
+```mermaid
+flowchart TB
+    PKG["package.json"] -->|"Read & validate"| VER[Resolve Version]
+    VER --> TMPVER{"Version<br/>changed?"}
+    TMPVER -->|Yes| WRITE["Temporarily update<br/>package.json version"]
+    TMPVER -->|No| PREP
+    WRITE --> PREP[Prepare Extension Directory]
+
+    PREP --> MODE{"Collection<br/>mode?"}
+    MODE -->|"Full (default)"| FULL["Copy entire .github/<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/<br/>+ .github/skills/"]
+    MODE -->|Collection| COLL["Copy only artifacts listed<br/>in package.json contributes<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/"]
+
+    FULL --> RDM{"Collection<br/>README?"}
+    COLL --> RDM
+    RDM -->|Yes| SWAP["Swap README.md<br/>with README.{id}.md"]
+    RDM -->|No| VSCE
+    SWAP --> VSCE
+
+    VSCE["vsce package --no-dependencies"] --> VSIX[".vsix output"]
+
+    VSIX --> CLEAN["Finally: Cleanup"]
+    CLEAN --> R1["Restore package.json.bak"]
+    CLEAN --> R2["Restore README.md.bak"]
+    CLEAN --> R3["Remove .github/ docs/ scripts/"]
+    CLEAN --> R4["Restore original version"]
+```
 
 ### Manual Packaging (Legacy)
 
@@ -138,7 +217,7 @@ rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && cp -r ../scr
 
 ## Publishing the Extension
 
-**Important:** Update version in `extension/package.json` before publishing.
+**Important:** Versions are managed by `release-please` via `extension/templates/package.template.json`. The `Prepare-Extension.ps1` script generates all collection package files with the correct version before preparing the extension.
 
 **Setup Personal Access Token (one-time):**
 
@@ -190,11 +269,11 @@ code --install-extension hve-core-*.vsix
 
 ## Version Management
 
-### Update Version in `package.json`
+### How Versions Are Managed
 
-1. Manually update version in `extension/package.json`
-2. Run `scripts/extension/Prepare-Extension.ps1` to update agents/prompts/instructions
-3. Run `scripts/extension/Package-Extension.ps1` to create the `.vsix` file
+The version source of truth is `extension/templates/package.template.json`. The `release-please` automation updates this file's `version` field on releases. `Prepare-Extension.ps1` generates all `extension/package.json` and `extension/package.*.json` files from the template before performing artifact discovery.
+
+Generated package files are ephemeral build artifacts (gitignored). They are created and consumed by `Prepare-Extension.ps1` and `Package-Extension.ps1` at build time.
 
 ### Development Builds
 
@@ -260,7 +339,7 @@ The workflow validates the version is ODD before proceeding.
 
 ### Agent Maturity Filtering
 
-When packaging, agents are filtered by their `maturity` frontmatter field:
+When packaging, artifacts are filtered by their `maturity` field in `collections/*.collection.yml` item entries:
 
 | Channel    | Included Maturity Levels            |
 |------------|-------------------------------------|
@@ -269,11 +348,219 @@ When packaging, agents are filtered by their `maturity` frontmatter field:
 
 See [Agent Maturity Levels](../docs/contributing/ai-artifacts-common.md#maturity-field-requirements) for contributor guidance on setting maturity levels.
 
+## Collection-Based Packaging
+
+The extension supports building collection-specific packages from a single codebase.
+
+### Available Collections
+
+Collection manifests are defined in root `collections/` as YAML files:
+
+| Collection | Manifest                      | Description                            |
+|------------|-------------------------------|----------------------------------------|
+| Full       | `hve-core-all.collection.yml` | All artifacts regardless of collection |
+| Developer  | `developer.collection.yml`    | Software engineering focused artifacts |
+
+### Collection Package Files
+
+All collection package files (`extension/package.json`, `extension/package.*.json`) are generated by `Prepare-Extension.ps1` from the source template and root collection YAML metadata. These files are gitignored build artifacts.
+
+| Generated File      | Source Collection             | Purpose                     |
+|---------------------|-------------------------------|-----------------------------|
+| `package.json`      | `hve-core-all.collection.yml` | Full bundle manifest        |
+| `package.{id}.json` | `{id}.collection.yml`         | Collection edition metadata |
+
+When building a non-default collection, `Prepare-Extension.ps1`:
+
+1. Backs up `package.json` to `package.json.bak`
+2. Copies the collection template (`package.{id}.json`) over `package.json`
+3. Generates `contributes` into the copied file
+4. Serializes the result as `package.json`
+
+After packaging, `Package-Extension.ps1` restores the canonical `package.json` from backup in its `finally` block.
+
+#### Version Synchronization
+
+`release-please` manages the version in `extension/templates/package.template.json`. The `Prepare-Extension.ps1` script generates all collection package files with the propagated version. No manual version updates are needed.
+
+### Building Collection Packages
+
+To build a specific collection package:
+
+```bash
+# Build the full collection (default, no template copy)
+pwsh ./scripts/extension/Prepare-Extension.ps1
+pwsh ./scripts/extension/Package-Extension.ps1
+
+# Build a collection-specific package (copies collection template)
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml
+pwsh ./scripts/extension/Package-Extension.ps1 -Collection collections/developer.collection.yml
+```
+
+When `-Collection` targets a collection other than `hve-core-all`, the prepare script copies the collection template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
+
+### Inner Dev Loop
+
+For rapid iteration without running the full build pipeline:
+
+```bash
+# 1. Prepare the extension (generates package files and discovers artifacts)
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml
+
+# 2. Inspect the result
+cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
+
+# 3. Regenerate clean package files with a fresh prepare
+pwsh ./scripts/extension/Prepare-Extension.ps1
+```
+
+Generated package files are gitignored. Each `Prepare-Extension.ps1` invocation regenerates them from the template.
+
+### Collection Resolution
+
+When building a collection, the system applies a multi-stage filter pipeline: collection matching, maturity gating, optional glob patterns, and two rounds of dependency resolution.
+
+```mermaid
+flowchart TB
+    CI["Collection Item<br/>path · kind · maturity · requires"] --> PF{"Collection match?<br/>empty items = universal"}
+    CM["Collection Manifest<br/>items array"] --> PF
+    CH["Channel<br/>Stable / PreRelease"] --> MF
+
+    PF -->|Yes| MF{"Maturity<br/>allowed?"}
+    PF -->|No| EXCLUDE[Excluded]
+
+    MF -->|Yes| GLOB{"Passes include/exclude<br/>glob filter?"}
+    MF -->|No| EXCLUDE
+
+    GLOB -->|Yes| SEED[Seed Artifact]
+    GLOB -->|No| EXCLUDE
+
+    SEED --> HANDOFF["Resolve Handoff Closure<br/>BFS through agent frontmatter<br/>handoff targets bypass maturity filter"]
+    HANDOFF --> REQUIRES["Resolve Requires Dependencies<br/>BFS through collection item requires blocks<br/>across agents · prompts · instructions · skills"]
+    REQUIRES --> FINAL[Final Collection Artifact Set]
+```
+
+Key behaviors:
+
+* Artifacts with an empty `items` array are universal and included in every collection
+* Handoff targets bypass maturity filtering by design (an agent must be able to hand off to its declared targets)
+* The `requires` block in collection items supports transitive resolution: if agent A requires agent B, and B requires instruction C, all three are included
+* Optional `include` and `exclude` glob arrays in the collection manifest provide fine-grained control per artifact type
+
+### Testing Collection Builds Locally
+
+To verify artifact inclusion before publishing:
+
+```bash
+# 1. Prepare with collection filtering
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml -Verbose
+
+# 2. Check package.json for included artifacts
+cat extension/package.json | jq '.contributes.chatAgents'
+
+# 3. Validate collection metadata
+npm run lint:collections-metadata
+
+# 4. Build the package (dry run)
+pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
+```
+
+### Troubleshooting Collection Builds
+
+**Missing artifacts in collection:**
+
+1. Verify the artifact has an `items[]` entry in the relevant `collections/*.collection.yml` manifest
+2. Check the collection manifest includes the artifact with the correct `kind` and `path`
+3. Run `npm run lint:collections-metadata` to validate collection consistency
+
+**Dependency not included:**
+
+1. Check the parent artifact's `requires` field in the collection item
+2. Ensure dependent artifacts exist and have valid collection entries
+3. Dependencies are included regardless of collection filter
+
+**Validation errors:**
+
+```bash
+# Run full collection metadata validation
+npm run lint:collections-metadata
+
+# Validate YAML syntax of collection manifests
+npm run lint:yaml
+```
+
+### Collection Manifest Schema
+
+Collection manifests are YAML files in `collections/` following this structure:
+
+```yaml
+id: developer
+name: hve-developer
+displayName: "HVE Core - Developer Edition"
+description: "AI-powered coding agents curated for software engineers"
+maturity: stable
+items:
+  - kind: agent
+    path: .github/agents/my-agent.agent.md
+    maturity: stable
+```
+
+| Field         | Required | Description                                                                                           |
+|---------------|----------|-------------------------------------------------------------------------------------------------------|
+| `id`          | Yes      | Unique identifier for the collection                                                                  |
+| `name`        | Yes      | Extension package name                                                                                |
+| `displayName` | Yes      | Marketplace display name                                                                              |
+| `description` | Yes      | Marketplace description text                                                                          |
+| `maturity`    | No       | Release channel eligibility (`stable`, `preview`, `experimental`, `deprecated`). Defaults to `stable` |
+| `items`       | Yes      | Array of collection identifiers to include                                                            |
+
+#### Collection Maturity and Channel Eligibility
+
+The `maturity` field controls which release channels include the collection:
+
+| Collection Maturity | PreRelease Channel | Stable Channel |
+|---------------------|--------------------|----------------|
+| `stable`            | Yes                | Yes            |
+| `preview`           | Yes                | Yes            |
+| `experimental`      | Yes                | No             |
+| `deprecated`        | No                 | No             |
+
+Collection-level maturity is independent of artifact-level maturity. A `stable` collection can contain `preview` artifacts, which are filtered by the existing artifact-level channel logic. The collection maturity gates the entire package, while artifact maturity gates individual files within it.
+
+Omitting the `maturity` field defaults to `stable`, maintaining backward compatibility with existing manifests.
+
+### Adding New Collections
+
+To create a new collection:
+
+1. Create a new collection manifest in `collections/`:
+
+    ```yaml
+    id: my-collection
+    name: hve-my-collection
+    displayName: "HVE Core - My Collection Edition"
+    description: "Description of artifacts included for this collection"
+    maturity: experimental
+    items:
+      - kind: agent
+        path: .github/agents/my-agent.agent.md
+        maturity: experimental
+    ```
+
+2. Add artifact entries to the `items` array in the manifest
+3. Set `kind`, `path`, and optionally `maturity` for each item
+4. Test the build locally with `-Collection collections/my-collection.collection.yml`
+5. Submit PR with the new collection manifest
+
+> [!TIP]
+> New collections should start with `"maturity": "experimental"` until validated. Change to `"stable"` when the collection is ready for production.
+
 ## Notes
 
 * The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
 * Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
+* Repo-specific instructions under `.github/instructions/hve-core/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository
 

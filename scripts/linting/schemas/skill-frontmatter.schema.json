@@ -4,7 +4,7 @@
   "title": "Skill File Frontmatter Schema",
   "description": "Frontmatter schema for SKILL.md files in skill directories",
   "type": "object",
-  "required": ["name", "description", "maturity"],
+  "required": ["name", "description"],
   "properties": {
     "name": {
       "type": "string",
@@ -16,11 +16,6 @@
       "type": "string",
       "minLength": 1,
       "description": "Brief description of the skill"
-    },
-    "maturity": {
-      "type": "string",
-      "enum": ["stable", "preview", "experimental", "deprecated"],
-      "description": "Maturity level of the skill"
     }
   },
   "additionalProperties": false

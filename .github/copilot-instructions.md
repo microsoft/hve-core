@@ -90,6 +90,9 @@ All tracking files use markdown format with frontmatter and follow patterns from
 
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
+* Files under the root `plugins/` directory are generated outputs and are not edited directly.
+* Regenerate plugin outputs using `npm run plugin:generate`; markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
+* Artifacts under `.github/**/hve-core/` are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->

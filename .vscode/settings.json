@@ -4,6 +4,7 @@
   "[markdown]": {
     "editor.defaultFormatter": "davidanson.vscode-markdownlint"
   },
+  "search.followSymlinks": false,
   "markdown.mermaid.theme": "default",
   "chat.instructionsFilesLocations": {
     ".github/instructions/**/*.instructions.md": true,

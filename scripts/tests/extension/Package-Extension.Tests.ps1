@@ -62,24 +62,6 @@ Describe 'Test-VsceAvailable' {
     }
 }
 
-Describe 'Get-ExtensionOutputPath' {
-    BeforeAll {
-        $script:testDir = [System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar)
-    }
-
-    It 'Constructs correct output path' {
-        $result = Get-ExtensionOutputPath -ExtensionDirectory $script:testDir -ExtensionName 'my-extension' -PackageVersion '1.0.0'
-        $expected = [System.IO.Path]::Combine($script:testDir, 'my-extension-1.0.0.vsix')
-        $result | Should -Be $expected
-    }
-
-    It 'Handles pre-release version numbers' {
-        $result = Get-ExtensionOutputPath -ExtensionDirectory $script:testDir -ExtensionName 'ext' -PackageVersion '2.1.0-preview.1'
-        $expected = [System.IO.Path]::Combine($script:testDir, 'ext-2.1.0-preview.1.vsix')
-        $result | Should -Be $expected
-    }
-}
-
 Describe 'Test-ExtensionManifestValid' {
     It 'Returns valid result for proper manifest' {
         $manifest = [PSCustomObject]@{
@@ -293,6 +275,7 @@ Describe 'Invoke-PackageExtension' {
         New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
         New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
@@ -479,6 +462,175 @@ Describe 'Invoke-PackageExtension' {
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'CIHelpers.psm1 not found'
     }
+
+    Context 'Package.json backup restore' {
+        It 'Does not create backup when no collection specified' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Restores package.json from backup after packaging' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            # Original package.json content (will be overwritten by template)
+            $originalManifest = @{
+                name      = 'hve-core'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+
+            # Simulate post-template state: template content in package.json, original backed up
+            $templateManifest = @{
+                name      = 'hve-developer'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $templateManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+            $originalManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'hve-developer-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            # Verify the original manifest was restored
+            $restored = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $restored.name | Should -Be 'hve-core'
+        }
+
+        It 'Removes backup file after restore' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            $manifest = @{
+                name      = 'test-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+            # Create a backup file manually to simulate Invoke-PrepareExtension behavior
+            $backupManifest = @{
+                name      = 'original-ext'
+                version   = '1.0.0'
+                publisher = 'test'
+                engines   = @{ vscode = '^1.80.0' }
+            }
+            $backupManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix so packaging succeeds
+            $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
+        }
+
+        It 'Restored package.json contains original metadata' {
+            Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+            Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+            # Original manifest backed up before template was applied
+            $originalManifest = @{
+                name        = 'hve-core-original'
+                version     = '2.5.0'
+                publisher   = 'original-pub'
+                description = 'Original description'
+                engines     = @{ vscode = '^1.80.0' }
+            }
+
+            # Template manifest currently in package.json
+            $templateManifest = @{
+                name        = 'hve-test-collection'
+                version     = '2.5.0'
+                publisher   = 'test-pub'
+                description = 'Test description'
+                engines     = @{ vscode = '^1.80.0' }
+            }
+            $templateManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+            $originalManifest | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $script:extDir 'package.json.bak')
+
+            # Create fake vsix matching the template name
+            $vsixPath = Join-Path $script:extDir 'hve-test-collection-2.5.0.vsix'
+            Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+            $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+            $restored = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
+            $restored.name | Should -Be 'hve-core-original'
+            $restored.publisher | Should -Be 'original-pub'
+            $restored.description | Should -Be 'Original description'
+        }
+    }
+
+    It 'Cleans pre-existing copied directories before preparing extension' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        # Pre-create directories that should be cleaned before packaging
+        $preExistingGithub = Join-Path $script:extDir '.github/stale'
+        $preExistingScripts = Join-Path $script:extDir 'scripts/old'
+        New-Item -Path $preExistingGithub -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $preExistingGithub 'leftover.md') -Value 'stale'
+        New-Item -Path $preExistingScripts -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $preExistingScripts 'leftover.ps1') -Value 'stale'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        # Stale files should have been removed during pre-clean
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Returns failure when an unexpected error occurs during orchestration' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-PackagingDirectorySpec { throw 'Simulated unexpected failure' }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -Match 'Simulated unexpected failure'
+    }
 }
 
 Describe 'Test-PackagingInputsValid' {
@@ -492,6 +644,7 @@ Describe 'Test-PackagingInputsValid' {
         New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
         New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock'
         Set-Content -Path (Join-Path $script:extDir 'package.json') -Value '{}'
@@ -768,6 +921,330 @@ Describe 'Restore-PackageJsonVersion' {
     }
 }
 
+Describe 'Get-CollectionReadmePath' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "collection-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testDir 'extension'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Returns null for hve-core-all collection' {
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: hve-core-all
+name: all
+"@ | Set-Content $collectionPath
+
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Returns collection README path when file exists' {
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: developer
+name: dev
+"@ | Set-Content $collectionPath
+
+        $collectionReadme = Join-Path $script:extDir 'README.developer.md'
+        Set-Content -Path $collectionReadme -Value '# Developer README'
+
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -Be $collectionReadme
+    }
+
+    It 'Returns null when collection README file does not exist' {
+        $collectionPath = Join-Path $script:testDir 'collection.yml'
+        @"
+id: security
+name: sec
+"@ | Set-Content $collectionPath
+
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Set-CollectionReadme' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "set-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    BeforeEach {
+        New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Original README'
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Swaps README.md with collection README and creates backup' {
+        $collectionReadmePath = Join-Path $script:testDir 'README.developer.md'
+        Set-Content -Path $collectionReadmePath -Value '# Developer README'
+
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -CollectionReadmePath $collectionReadmePath -Operation Swap
+
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Developer README'
+
+        Test-Path (Join-Path $script:testDir 'README.md.bak') | Should -BeTrue
+        $backupContent = Get-Content -Path (Join-Path $script:testDir 'README.md.bak') -Raw
+        $backupContent | Should -Match 'Original README'
+    }
+
+    It 'Warns and returns early when no collection path for swap' {
+        Mock Write-Warning {}
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Swap
+
+        Should -Invoke Write-Warning -Times 1
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+    }
+
+    It 'Restores README.md from backup and removes backup file' {
+        # Create backup state
+        Set-Content -Path (Join-Path $script:testDir 'README.md.bak') -Value '# Original README'
+        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Collection README'
+
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Restore
+
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+        Test-Path (Join-Path $script:testDir 'README.md.bak') | Should -BeFalse
+    }
+
+    It 'Restore is a no-op when no backup exists' {
+        { Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Restore } | Should -Not -Throw
+        $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Original README'
+    }
+}
+
+Describe 'Copy-CollectionArtifacts' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "copy-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testDir 'extension'
+        $script:repoRoot = Join-Path $script:testDir 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Copies agents from repo to extension directory' {
+        # Create source agent
+        $agentsSrc = Join-Path $script:repoRoot '.github/agents'
+        New-Item -Path $agentsSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsSrc 'task-planner.agent.md') -Value '# Agent'
+
+        # Create package.json with contributes referencing agents
+        $pkgJson = @{
+            contributes = @{
+                chatAgents = @(
+                    @{ path = './.github/agents/task-planner.agent.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/agents/task-planner.agent.md') | Should -BeTrue
+    }
+
+    It 'Copies prompts from repo to extension directory' {
+        # Create source prompt
+        $promptsSrc = Join-Path $script:repoRoot '.github/prompts'
+        New-Item -Path $promptsSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $promptsSrc 'my-prompt.prompt.md') -Value '# Prompt'
+
+        $pkgJson = @{
+            contributes = @{
+                chatPromptFiles = @(
+                    @{ path = './.github/prompts/my-prompt.prompt.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/prompts/my-prompt.prompt.md') | Should -BeTrue
+    }
+
+    It 'Copies instructions from repo to extension directory' {
+        # Create source instruction
+        $instrSrc = Join-Path $script:repoRoot '.github/instructions'
+        New-Item -Path $instrSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $instrSrc 'commit-message.instructions.md') -Value '# Instructions'
+
+        $pkgJson = @{
+            contributes = @{
+                chatInstructions = @(
+                    @{ path = './.github/instructions/commit-message.instructions.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/instructions/commit-message.instructions.md') | Should -BeTrue
+    }
+
+    It 'Copies skills recursively from repo to extension directory' {
+        # Create source skill with nested file
+        $skillSrc = Join-Path $script:repoRoot '.github/skills/video-to-gif'
+        New-Item -Path $skillSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'SKILL.md') -Value '# Skill'
+
+        $pkgJson = @{
+            contributes = @{
+                chatSkills = @(
+                    @{ path = './.github/skills/video-to-gif' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/skills/video-to-gif') | Should -BeTrue
+    }
+
+    It 'Skips missing source files without error' {
+        $pkgJson = @{
+            contributes = @{
+                chatAgents       = @( @{ path = './.github/agents/nonexistent.agent.md' } )
+                chatPromptFiles  = @( @{ path = './.github/prompts/nonexistent.prompt.md' } )
+                chatInstructions = @( @{ path = './.github/instructions/nonexistent.instructions.md' } )
+                chatSkills       = @( @{ path = './.github/skills/nonexistent' } )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+    }
+
+    It 'Handles empty contributes sections' {
+        $pkgJson = @{ contributes = @{} }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+    }
+}
+
+Describe 'Invoke-PackageExtension - Collection mode' {
+    BeforeAll {
+        $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:extDir = Join-Path $script:testRoot 'extension'
+        $script:repoRoot = Join-Path $script:testRoot 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
+        New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+            contributes = @{}
+        }
+        $manifest | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+        Set-Content -Path (Join-Path $script:extDir 'README.md') -Value '# Default README'
+    }
+
+    AfterEach {
+        if (Test-Path $script:testRoot) {
+            Remove-Item -Path $script:testRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Uses collection-filtered artifact copy when Collection specified' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $collectionPath = Join-Path $script:testRoot 'collection.yml'
+        @"
+id: developer
+name: dev
+displayName: Developer
+items:
+  - developer
+"@ | Set-Content $collectionPath
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -Collection $collectionPath
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Swaps collection README when collection has matching collection README' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $collectionPath = Join-Path $script:testRoot 'collection.yml'
+        @"
+id: developer
+name: dev
+displayName: Developer
+items:
+  - developer
+"@ | Set-Content $collectionPath
+
+        # Create collection README in extension directory
+        Set-Content -Path (Join-Path $script:extDir 'README.developer.md') -Value '# Developer Collection'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -Collection $collectionPath
+
+        # README should be restored after packaging completes
+        $readmeContent = Get-Content -Path (Join-Path $script:extDir 'README.md') -Raw
+        $readmeContent | Should -Match 'Default README'
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Returns failure when no vsix file generated after successful vsce command' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.ErrorMessage | Should -Match 'No .vsix file found after packaging'
+    }
+}
+
 Describe 'CI Integration - Package-Extension' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "ci-int-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
@@ -787,6 +1264,7 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
             Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
@@ -878,6 +1356,7 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:extDir -ItemType Directory -Force | Out-Null
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
+            New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
             Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'

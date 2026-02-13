@@ -1,6 +1,5 @@
 ---
 description: "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
-maturity: stable
 tools: ['runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'think', 'todos']
 ---
 

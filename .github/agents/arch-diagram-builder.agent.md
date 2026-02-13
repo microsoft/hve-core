@@ -1,6 +1,5 @@
 ---
 description: Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core
-maturity: stable
 ---
 
 # Architecture Diagram Builder Agent

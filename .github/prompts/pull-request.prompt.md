@@ -1,7 +1,6 @@
 ---
 description: 'Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai'
 agent: agent
-maturity: stable
 ---
 
 # Pull Request (PR) Generation Instructions
@@ -135,11 +134,12 @@ Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and e
 | Copilot instructions       | `.*\.instructions\.md$`  | N/A                       | N/A                       |
 | Copilot prompt             | `.*\.prompt\.md$`        | N/A                       | N/A                       |
 | Copilot agent              | `.*\.agent\.md$`         | N/A                       | N/A                       |
+| Copilot skill              | `.*/SKILL\.md$`          | N/A                       | N/A                       |
 | Script or automation       | `.*\.(ps1\|sh\|py)$`     | N/A                       | N/A                       |
 
 Priority rules:
 
-* AI artifact patterns (`.instructions.md`, `.prompt.md`, `.agent.md`) take precedence over documentation updates.
+* AI artifact patterns (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) take precedence over documentation updates.
 * Any breaking change in commits marks the PR as breaking.
 * Multiple change types can be selected.
 
@@ -160,14 +160,11 @@ Deduplicate issue numbers and preserve the action prefix from the first occurren
 
 #### GHCP Maturity Detection
 
-After detecting GHCP files from Change Type Detection, analyze frontmatter for maturity levels:
+After detecting GHCP files from Change Type Detection, look up maturity levels from collection manifest item metadata:
 
-1. For each file matching `.instructions.md`, `.prompt.md`, or `.agent.md` patterns:
-   * Extract file content from `<full_diff>` section (look for `+++ b/...` paths)
-   * Parse YAML frontmatter between `---` delimiters in the added content
-   * Read `maturity` field value (default: `stable` if not present)
+1. For each file matching `.instructions.md`, `.prompt.md`, `.agent.md`, or `SKILL.md` patterns, find matching entries in `collections/*.collection.yml`, read each item's optional `maturity`, use `stable` when omitted, and when the same file appears in multiple collections use the highest-risk effective value in this order: `deprecated`, `experimental`, `preview`, `stable`.
 
-2. Categorize files by maturity:
+1. Categorize files by maturity:
 
    | Maturity Level | Risk Level  | Indicator                 | Action                          |
    |----------------|-------------|---------------------------|---------------------------------|
@@ -176,7 +173,7 @@ After detecting GHCP files from Change Type Detection, analyze frontmatter for m
    | experimental   | ⚠️ High     | May have breaking changes | Add warning banner              |
    | deprecated     | 🚫 Critical | Scheduled for removal     | Add deprecation notice          |
 
-3. If non-stable GHCP files detected, generate "GHCP Artifact Maturity" section in `pr.md`
+1. If non-stable GHCP files are detected, generate a "GHCP Artifact Maturity" section in `pr.md`.
 
 #### GHCP Maturity Output
 
@@ -211,6 +208,7 @@ Always include when any GHCP files are detected:
 |--------------------------|--------------|-----------------|------------------|
 | `new-feature.prompt.md`  | Prompt       | ⚠️ experimental | Pre-release only |
 | `helper.agent.md`        | Agent        | 🔶 preview      | Pre-release only |
+| `video-to-gif/SKILL.md`  | Skill        | ✅ stable        | All builds       |
 | `coding.instructions.md` | Instructions | ✅ stable        | All builds       |
 ```
 

@@ -1,7 +1,6 @@
 ---
 agent: 'agent'
 description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
-maturity: stable
 ---
 
 # Stage, Generate, and Commit

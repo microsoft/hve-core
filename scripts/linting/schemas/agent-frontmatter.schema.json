@@ -15,12 +15,6 @@
       "type": "string",
       "description": "The name of the custom agent. If not specified, the file name is used"
     },
-    "maturity": {
-      "type": "string",
-      "enum": ["stable", "preview", "experimental", "deprecated"],
-      "default": "stable",
-      "description": "Maturity level affecting visibility in stable vs pre-release builds. Stable appears in all builds; preview/experimental only in pre-release."
-    },
     "argument-hint": {
       "type": "string",
       "description": "Optional hint text shown in the chat input field to guide users on how to interact with the custom agent"

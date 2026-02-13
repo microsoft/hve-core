@@ -1,6 +1,6 @@
 ---
 description: 'Deprecated: replaced by github-backlog-manager.agent.md for GitHub issue and backlog management'
-maturity: deprecated
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'github/*']
 ---
 
 # GitHub Issue Manager

@@ -5,6 +5,7 @@
 !.github/prompts/**
 !.github/instructions/**
 !.github/agents/**
+!.github/skills/**
 !docs/templates/**
 !scripts/dev-tools/**
 !scripts/lib/Modules/CIHelpers.psm1
@@ -12,3 +13,9 @@
 !README.md
 !LICENSE
 !CHANGELOG.md
+
+# Exclude collection-specific READMEs (only the canonical README.md ships)
+README.*.md
+
+# Exclude collection-specific package templates (only the canonical package.json ships)
+package.*.json

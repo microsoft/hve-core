@@ -27,6 +27,14 @@
     Optional. When specified, packages the extension for VS Code Marketplace pre-release channel.
     Uses vsce --pre-release flag which marks the extension for the pre-release track.
 
+.PARAMETER Collection
+    Optional. Path to a collection manifest file (YAML or JSON). When specified, only
+    collection-filtered artifacts are copied and the output filename uses the
+    collection ID.
+
+.PARAMETER DryRun
+    Optional. Validates packaging orchestration without invoking vsce.
+
 .EXAMPLE
     ./Package-Extension.ps1
     # Packages using version from package.json
@@ -68,7 +76,14 @@ param(
     [string]$ChangelogPath = "",
 
     [Parameter(Mandatory = $false)]
-    [switch]$PreRelease
+    [switch]$PreRelease,
+
+    [Parameter(Mandatory = $false)]
+    [string]$Collection = "",
+
+    [Parameter(Mandatory = $false)]
+    [Alias('dry-run')]
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'
@@ -111,36 +126,6 @@ function Test-VsceAvailable {
         CommandType = $null
         Command     = $null
     }
-}
-
-function Get-ExtensionOutputPath {
-    <#
-    .SYNOPSIS
-        Constructs the expected .vsix output path from extension directory and version.
-    .PARAMETER ExtensionDirectory
-        The path to the extension directory.
-    .PARAMETER ExtensionName
-        The name of the extension (from package.json).
-    .PARAMETER PackageVersion
-        The version string to use in the filename.
-    .OUTPUTS
-        String path to the expected .vsix file.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionDirectory,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ExtensionName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$PackageVersion
-    )
-
-    $vsixFileName = "$ExtensionName-$PackageVersion.vsix"
-    return Join-Path $ExtensionDirectory $vsixFileName
 }
 
 function Test-ExtensionManifestValid {
@@ -266,6 +251,54 @@ function New-PackagingResult {
         Version      = $Version
         ErrorMessage = $ErrorMessage
     }
+}
+
+function Get-CollectionReadmePath {
+    <#
+    .SYNOPSIS
+        Resolves the collection-specific README path from a collection manifest.
+    .DESCRIPTION
+        Maps a collection manifest to its collection-specific README file. Returns
+        null when the collection is the full package (hve-core-all) or when no
+        matching collection README exists on disk. Supports both YAML and JSON
+        manifest formats.
+    .PARAMETER CollectionPath
+        Path to the collection manifest file (YAML or JSON).
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory containing README files.
+    .OUTPUTS
+        String path to the collection README, or $null if not applicable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory
+    )
+
+    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
+    if ($extension -in @('.yml', '.yaml')) {
+        $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $CollectionPath -Raw)
+    }
+    else {
+        $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
+    }
+    $collectionId = $manifest.id
+
+    # Full package uses the default README.md
+    if ($collectionId -eq 'hve-core-all') {
+        return $null
+    }
+
+    $collectionReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
+    if (Test-Path $collectionReadmePath) {
+        return $collectionReadmePath
+    }
+
+    return $null
 }
 
 function Get-ResolvedPackageVersion {
@@ -444,6 +477,145 @@ function Get-PackagingDirectorySpec {
 
 #region I/O Functions
 
+function Copy-CollectionArtifacts {
+    <#
+    .SYNOPSIS
+        Copies only collection-filtered artifacts to the extension directory.
+    .DESCRIPTION
+        Reads the prepared package.json to determine which artifacts were selected
+        by collection filtering, then copies only those files instead of the entire
+        .github directory.
+    .PARAMETER RepoRoot
+        Absolute path to the repository root.
+    .PARAMETER ExtensionDirectory
+        Absolute path to the extension directory.
+    .PARAMETER PrepareResult
+        Result hashtable from Invoke-PrepareExtension. Reserved for future collection metadata handling.
+    #>
+    [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'PrepareResult', Justification = 'Reserved for future collection metadata handling')]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$PrepareResult
+    )
+
+    $preparedPkgJson = Get-Content -Path (Join-Path $ExtensionDirectory "package.json") -Raw | ConvertFrom-Json
+
+    # Copy filtered agents
+    if ($preparedPkgJson.contributes.chatAgents) {
+        $agentsDestDir = Join-Path $ExtensionDirectory ".github/agents"
+        New-Item -Path $agentsDestDir -ItemType Directory -Force | Out-Null
+        foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
+            $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
+            if (-not (Test-Path $srcPath)) {
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatAgents in package.json)"
+                continue
+            }
+            Copy-Item -Path $srcPath -Destination $agentsDestDir -Force
+        }
+    }
+
+    # Copy filtered prompts
+    if ($preparedPkgJson.contributes.chatPromptFiles) {
+        foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
+            $srcPath = Join-Path $RepoRoot ($prompt.path -replace '^\.[\\/]', '')
+            if (-not (Test-Path $srcPath)) {
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatPromptFiles in package.json)"
+                continue
+            }
+            $destPath = Join-Path $ExtensionDirectory ($prompt.path -replace '^\.[\\/]', '')
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $srcPath -Destination $destPath -Force
+        }
+    }
+
+    # Copy filtered instructions
+    if ($preparedPkgJson.contributes.chatInstructions) {
+        foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
+            $srcPath = Join-Path $RepoRoot ($instr.path -replace '^\.[\\/]', '')
+            if (-not (Test-Path $srcPath)) {
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatInstructions in package.json)"
+                continue
+            }
+            $destPath = Join-Path $ExtensionDirectory ($instr.path -replace '^\.[\\/]', '')
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $srcPath -Destination $destPath -Force
+        }
+    }
+
+    # Copy filtered skills
+    if ($preparedPkgJson.contributes.chatSkills) {
+        foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
+            $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
+            if (-not (Test-Path $srcPath)) {
+                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatSkills in package.json)"
+                continue
+            }
+            $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
+        }
+    }
+}
+
+function Set-CollectionReadme {
+    <#
+    .SYNOPSIS
+        Swaps or restores the collection-specific README for extension packaging.
+    .DESCRIPTION
+        In swap mode, backs up the original README.md and copies the collection
+        README in its place. In restore mode, copies the backup back and removes it.
+    .PARAMETER ExtensionDirectory
+        Path to the extension directory.
+    .PARAMETER CollectionReadmePath
+        Path to the collection-specific README file. Required for Swap operation.
+    .PARAMETER Operation
+        Either 'Swap' to replace README.md with collection content, or 'Restore'
+        to revert README.md from backup.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [string]$CollectionReadmePath = "",
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Swap', 'Restore')]
+        [string]$Operation
+    )
+
+    $readmePath = Join-Path $ExtensionDirectory "README.md"
+    $backupPath = Join-Path $ExtensionDirectory "README.md.bak"
+
+    if ($Operation -eq 'Swap') {
+        if (-not $CollectionReadmePath -or $CollectionReadmePath -eq "") {
+            Write-Warning "No collection README path provided for swap operation"
+            return
+        }
+        Copy-Item -Path $readmePath -Destination $backupPath -Force
+        Copy-Item -Path $CollectionReadmePath -Destination $readmePath -Force
+        Write-Host "   Swapped README.md with $(Split-Path $CollectionReadmePath -Leaf)" -ForegroundColor Green
+    }
+    elseif ($Operation -eq 'Restore') {
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $readmePath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored original README.md" -ForegroundColor Green
+        }
+    }
+}
+
 function Invoke-VsceCommand {
     <#
     .SYNOPSIS
@@ -597,6 +769,12 @@ function Invoke-PackageExtension {
         Optional path to changelog file to include in package.
     .PARAMETER PreRelease
         Switch to mark the package as a pre-release version.
+    .PARAMETER Collection
+        Optional path to a collection manifest file (YAML or JSON). When specified, only
+        collection-filtered artifacts are copied and the output filename uses the
+        collection ID.
+    .PARAMETER DryRun
+        When specified, validates packaging orchestration without invoking vsce.
     .OUTPUTS
         Hashtable with Success, OutputPath, Version, and ErrorMessage properties.
     #>
@@ -621,7 +799,13 @@ function Invoke-PackageExtension {
         [string]$ChangelogPath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch]$PreRelease
+        [switch]$PreRelease,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Collection = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
     )
 
     $dirsToClean = @(".github", "docs", "scripts")
@@ -713,24 +897,71 @@ function Invoke-PackageExtension {
 
         # Get and execute copy specifications
         $copySpecs = Get-PackagingDirectorySpec -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory
-        foreach ($spec in $copySpecs) {
-            $specName = Split-Path $spec.Source -Leaf
-            Write-Host "   Copying $specName..." -ForegroundColor Gray
 
-            if ($spec.IsFile) {
-                $parentDir = Split-Path $spec.Destination -Parent
-                New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
-            } else {
-                $parentDir = Split-Path $spec.Destination -Parent
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+        if ($Collection -and $Collection -ne "") {
+            # Collection mode: copy only filtered artifacts for .github content
+            Write-Host "   Using collection-filtered artifact copy..." -ForegroundColor Gray
+
+            # Copy non-.github specs normally
+            foreach ($spec in $copySpecs) {
+                if ($spec.Source -like "*/.github*" -or $spec.Source -like "*\.github*") {
+                    continue
                 }
-                Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                $specName = Split-Path $spec.Source -Leaf
+                Write-Host "   Copying $specName..." -ForegroundColor Gray
+
+                if ($spec.IsFile) {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
+                } else {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    if (-not (Test-Path $parentDir)) {
+                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    }
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                }
+            }
+
+            # Copy collection-specific artifacts
+            Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -PrepareResult @{}
+        } else {
+            # Full mode: copy everything as before
+            foreach ($spec in $copySpecs) {
+                $specName = Split-Path $spec.Source -Leaf
+                Write-Host "   Copying $specName..." -ForegroundColor Gray
+
+                if ($spec.IsFile) {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
+                } else {
+                    $parentDir = Split-Path $spec.Destination -Parent
+                    if (-not (Test-Path $parentDir)) {
+                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
+                    }
+                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                }
             }
         }
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
+
+        # Swap collection README if collection specifies one
+        if ($Collection -and $Collection -ne "") {
+            $collectionReadmePath = Get-CollectionReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
+            if ($collectionReadmePath) {
+                Write-Host ""
+                Write-Host "📄 Applying collection README..." -ForegroundColor Yellow
+                Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -CollectionReadmePath $collectionReadmePath -Operation Swap
+            }
+        }
+
+        if ($DryRun) {
+            Write-Host ""
+            Write-Host "🧪 Dry-run complete: packaging orchestration validated without VSIX creation." -ForegroundColor Yellow
+            return New-PackagingResult -Success $true -Version $packageVersion
+        }
 
         # Check vsce availability using pure function
         $vsceAvailability = Test-VsceAvailable
@@ -791,6 +1022,20 @@ function Invoke-PackageExtension {
         return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
     }
     finally {
+        # Restore canonical package.json from collection template backup
+        $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
+        if (Test-Path $backupPath) {
+            Copy-Item -Path $backupPath -Destination $PackageJsonPath -Force
+            Remove-Item -Path $backupPath -Force
+            Write-Host "   Restored canonical package.json from backup" -ForegroundColor Green
+
+            # Re-read restored package.json for downstream restore steps
+            $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
+        }
+
+        # Restore collection README if it was swapped
+        Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
+
         # Cleanup copied directories using I/O function
         Write-Host ""
         Write-Host "🧹 Cleaning up..." -ForegroundColor Yellow
@@ -820,7 +1065,9 @@ if ($MyInvocation.InvocationName -ne '.') {
             -Version $Version `
             -DevPatchNumber $DevPatchNumber `
             -ChangelogPath $ChangelogPath `
-            -PreRelease:$PreRelease
+            -PreRelease:$PreRelease `
+            -Collection $Collection `
+            -DryRun:$DryRun
 
         if (-not $result.Success) {
             Write-Error -ErrorAction Continue $result.ErrorMessage

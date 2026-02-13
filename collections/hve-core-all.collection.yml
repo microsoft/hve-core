@@ -24,6 +24,9 @@ items:
   kind: agent
 - path: .github/agents/github-backlog-manager.agent.md
   kind: agent
+  maturity: experimental
+- path: .github/agents/github-issue-manager.agent.md
+  kind: agent
 - path: .github/agents/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/memory.agent.md
@@ -72,14 +75,19 @@ items:
   kind: prompt
 - path: .github/prompts/github-add-issue.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/github-discover-issues.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/github-execute-backlog.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/github-sprint-plan.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/github-triage-issues.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/incident-response.prompt.md
   kind: prompt
 - path: .github/prompts/prompt-analyze.prompt.md
@@ -120,6 +128,7 @@ items:
   kind: instruction
 - path: .github/instructions/community-interaction.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/csharp/csharp-tests.instructions.md
   kind: instruction
 - path: .github/instructions/csharp/csharp.instructions.md
@@ -128,15 +137,17 @@ items:
   kind: instruction
 - path: .github/instructions/github-backlog-discovery.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/github-backlog-planning.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/github-backlog-triage.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/github-backlog-update.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/hve-core-location.instructions.md
-  kind: instruction
-- path: .github/instructions/hve-core/workflows.instructions.md
   kind: instruction
 - path: .github/instructions/markdown.instructions.md
   kind: instruction

@@ -1,7 +1,6 @@
 ---
 description: "Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core"
 name: incident-response
-maturity: stable
 argument-hint: "[incident-description] [severity={1|2|3|4}] [phase={triage|diagnose|mitigate|rca}]"
 ---
 

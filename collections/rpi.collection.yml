@@ -12,11 +12,6 @@ items:
   # Agents
   - path: .github/agents/rpi-agent.agent.md
     kind: agent
-    usage: |
-      recommended
-
-      Orchestrator agent for the full RPI lifecycle. Routes to specialized
-      agents based on the current workflow phase.
   - path: .github/agents/task-researcher.agent.md
     kind: agent
   - path: .github/agents/task-planner.agent.md
@@ -27,11 +22,6 @@ items:
     kind: agent
   - path: .github/agents/memory.agent.md
     kind: agent
-    usage: |
-      optional
-
-      Persistent memory agent for saving and loading context checkpoints
-      across workflow phases.
   # Prompt Engineering agents
   - path: .github/agents/prompt-builder.agent.md
     kind: agent

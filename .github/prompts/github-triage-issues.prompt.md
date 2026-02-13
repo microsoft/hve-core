@@ -1,7 +1,6 @@
 ---
 description: 'Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection'
 agent: 'github-backlog-manager'
-maturity: experimental
 ---
 
 # Triage GitHub Issues

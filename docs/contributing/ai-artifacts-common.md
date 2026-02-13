@@ -85,9 +85,216 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
 
+## Collection Manifests
+
+Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and maturity.
+
+### Collection Purpose
+
+Collection manifests serve three primary functions:
+
+1. **Selection**: Determine which artifacts are included in each collection via `items[]`
+2. **Maturity filtering**: Control channel inclusion with `items[].maturity` (defaults to `stable`)
+3. **Packaging inputs**: Provide canonical manifest data used by build and distribution flows
+
+### Collection Structure
+
+Each manifest contains top-level collection metadata and an `items` array:
+
+```yaml
+id: coding-standards
+name: Coding Standards
+description: Language-specific coding instructions
+tags:
+  - coding-standards
+  - bash
+  - python
+items:
+  - path: .github/instructions/python-script.instructions.md
+    kind: instruction
+    maturity: stable
+  - path: .github/prompts/task-plan.prompt.md
+    kind: prompt
+    maturity: preview
+```
+
+### Collection Tags
+
+Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
+
+| Collection           | Tags                                                                          |
+|----------------------|-------------------------------------------------------------------------------|
+| `hve-core-all`       | `hve`, `complete`, `bundle`                                                   |
+| `ado`                | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                |
+| `coding-standards`   | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`    |
+| `data-science`       | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science` |
+| `git`                | `git`, `commits`, `merge`, `pull-request`                                     |
+| `github`             | `github`, `issues`, `backlog`, `triage`, `sprint`                             |
+| `project-planning`   | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`  |
+| `prompt-engineering` | `prompts`, `agents`, `authoring`, `refactoring`                               |
+| `rpi`                | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`         |
+| `security-planning`  | `security`, `incident-response`, `risk`, `planning`                           |
+
+When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
+
+### Collection Item Format
+
+Each `items[]` entry follows this structure:
+
+```yaml
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
+```
+
+| Field      | Required | Description                                                                    |
+|------------|----------|--------------------------------------------------------------------------------|
+| `path`     | Yes      | Repository-relative path to the artifact source                                |
+| `kind`     | Yes      | Artifact type (`agent`, `prompt`, `instruction`, `skill`, or `hook`)           |
+| `maturity` | No       | Release readiness level; when omitted, effective maturity defaults to `stable` |
+
+### Adding Artifacts to a Collection
+
+When contributing a new artifact:
+
+1. Create the artifact file in the appropriate directory
+2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
+3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
+4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
+5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
+
+### Repo-Specific Instructions Exclusion
+
+Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository. They are excluded from:
+
+* Collection manifests
+* Extension packaging and distribution
+* Collection builds
+* Artifact selection for published bundles
+
+If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/` or a technology-specific subdirectory (e.g., `csharp/`, `bash/`).
+
+## Collection Taxonomy
+
+Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
+
+### Defined Collections
+
+| Collection             | Identifier           | Description                                                                      |
+|------------------------|----------------------|----------------------------------------------------------------------------------|
+| **All**                | `hve-core-all`       | Full bundle of all stable HVE Core agents, prompts, instructions, and skills     |
+| **Azure DevOps**       | `ado`                | Azure DevOps work item management, build monitoring, and pull request creation   |
+| **Coding Standards**   | `coding-standards`   | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform |
+| **Data Science**       | `data-science`       | Data specification generation, Jupyter notebooks, and Streamlit dashboards       |
+| **Git Workflow**       | `git`                | Git commit messages, merges, setup, and pull request prompts                     |
+| **GitHub Backlog**     | `github`             | GitHub issue discovery, triage, sprint planning, and backlog execution           |
+| **Project Planning**   | `project-planning`   | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations            |
+| **Prompt Engineering** | `prompt-engineering` | Tools for analyzing, building, and refactoring prompts, agents, and instructions |
+| **RPI Workflow**       | `rpi`                | Research, Plan, Implement, Review workflow agents and prompts                    |
+| **Security Planning**  | `security-planning`  | Security plan creation, incident response, and risk assessment                   |
+
+### Collection Assignment Guidelines
+
+When assigning collections to artifacts:
+
+* **Universal artifacts** should include `hve-core-all` plus any role-specific collections that particularly benefit
+* **Role-specific artifacts** should include only the relevant collections (omit `hve-core-all` for highly specialized artifacts)
+* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant collections
+
+**Example collection assignments:**
+
+Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
+
+```yaml
+# In collections/hve-core-all.collection.yml - Universal
+- path: .github/instructions/markdown.instructions.md
+  kind: instruction
+
+# In collections/coding-standards.collection.yml - Coding standards
+- path: .github/instructions/markdown.instructions.md
+  kind: instruction
+
+# In collections/rpi.collection.yml - Core workflow
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
+```
+
+### Selecting Collections for New Artifacts
+
+Answer these questions when determining collection assignments:
+
+1. **Who is the primary user?** Identify the main role that benefits from this artifact
+2. **Who else benefits?** Consider secondary roles that may find value
+3. **Is it foundational?** Core workflow artifacts should include multiple collections
+4. **Is it specialized?** Domain-specific artifacts may target fewer collections
+
+When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
+
+## Dependency Declarations
+
+Some artifacts require other artifacts to function correctly. Dependency behavior is resolved during packaging.
+
+### Dependency Types
+
+| Type           | Purpose                                                                          |
+|----------------|----------------------------------------------------------------------------------|
+| `agents`       | Agents this artifact dispatches at runtime via `runSubagent` (excludes handoffs) |
+| `prompts`      | Prompts this artifact invokes or references                                      |
+| `instructions` | Instructions this artifact relies on for code generation                         |
+| `skills`       | Skills this artifact executes for specialized tasks                              |
+
+> **Note**: Frontmatter `handoffs` (UI buttons that suggest next agents) are resolved dynamically during packaging and MUST NOT be listed in `requires.agents`. Only agents invoked programmatically through `runSubagent` belong here.
+
+### Handoff vs Requires Maturity Filtering
+
+Handoff targets and `requires` dependencies follow different maturity rules during extension packaging:
+
+| Mechanism  | Maturity Filtered | Reason                                                                    |
+|------------|-------------------|---------------------------------------------------------------------------|
+| `requires` | Yes               | Runtime dependencies are excluded when their maturity exceeds the channel |
+| `handoffs` | No                | UI buttons must resolve to a valid agent or the button is broken          |
+
+During extension packaging (`scripts/extension/Prepare-Extension.ps1`), the `Resolve-HandoffDependencies` function encounters a handoff target whose maturity falls outside the allowed set and still includes that agent in the package. The maturity check only gates whether the target's own handoffs are traversed further. This ensures that a stable agent handing off to a preview agent produces a functional UI button in both stable and pre-release channels.
+
+The companion function `Resolve-RequiresDependencies` in the same script applies strict maturity filtering: dependencies whose maturity level is outside the allowed set are excluded entirely.
+
+### Declaring Dependencies
+
+Add the `requires` field to collection items in `collections/*.collection.yml`:
+
+```yaml
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
+  requires:
+    agents:
+      - task-researcher
+      - task-planner
+      - task-implementor
+      - task-reviewer
+    prompts:
+      - task-research
+      - task-plan
+      - task-implement
+      - task-review
+```
+
+### Dependency Resolution
+
+Dependency resolution currently operates at **build time** during extension packaging. The `Resolve-RequiresDependencies` function in `Prepare-Extension.ps1` walks `requires` blocks to compute the transitive closure of all dependent artifacts across types (agents, prompts, instructions, skills). Similarly, `Resolve-HandoffDependencies` performs BFS traversal of agent handoff declarations to ensure all reachable agents are included in the package.
+
+For clone-based installations, the installer agent supports **agent-only collection filtering** in Phase 7. Full installer-side dependency resolution (automatically including required prompts, instructions, and skills based on the dependency graph) is planned for a future release.
+
+### Dependency Best Practices
+
+* **Declare all runtime dependencies**: List every artifact your artifact references
+* **Prefer explicit over implicit**: Document dependencies even if currently co-located
+* **Keep dependencies minimal**: Avoid unnecessary coupling between artifacts
+* **Test with minimal installs**: Verify your artifact works with only declared dependencies
+
 ## Maturity Field Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** include a `maturity` field in frontmatter.
+Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
 
 ### Purpose
 
@@ -105,22 +312,25 @@ The maturity field controls which extension channel includes the artifact:
 | `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
 | `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
 
+When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
+
 ### Default for New Contributions
 
-New artifacts **SHOULD** use `maturity: stable` unless:
+New collection items **SHOULD** use `maturity: stable` unless:
 
 * The artifact is a proof-of-concept or experimental feature
 * The artifact requires additional testing or feedback before wide release
 * The contributor explicitly intends to target early adopters
 
-### Example
+### Setting Maturity
+
+Add or update the maturity value on each collection item in `collections/*.collection.yml`:
 
 ```yaml
----
-description: 'Specialized agent for security analysis'
-maturity: 'stable'
-tools: ['codebase', 'search']
----
+items:
+  - path: .github/agents/example.agent.md
+    kind: agent
+    maturity: stable
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
