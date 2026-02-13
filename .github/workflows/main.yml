@@ -96,17 +96,27 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Bridge: release-please creates a published release so it can
-      # anchor version calculations in the same run. Convert to draft
-      # immediately so assets can be uploaded to a mutable release.
-      # The publish-release job converts back to published after upload.
-      - name: Convert release to draft for asset upload
+      # Bridge: release-please creates a published (immutable) release,
+      # ensuring version anchoring succeeds. Published releases cannot
+      # be edited or have assets uploaded (HTTP 422). Delete the
+      # immutable release and recreate as a mutable draft so downstream
+      # jobs can upload assets. The tag persists across the delete/create
+      # cycle. The publish-release job converts the draft back to published.
+      - name: Recreate release as draft for asset upload
         if: ${{ steps.release.outputs.release_created == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          gh release edit "${{ steps.release.outputs.tag_name }}" \
-            --draft=true -R "${{ github.repository }}"
+          TAG="${{ steps.release.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          # Capture release metadata before deletion
+          gh release view "$TAG" --json body -q '.body' -R "$REPO" > /tmp/release-body.md
+          NAME=$(gh release view "$TAG" --json name -q '.name' -R "$REPO")
+          # Delete immutable published release; tag is preserved
+          gh release delete "$TAG" --yes -R "$REPO"
+          # Recreate as mutable draft for asset upload
+          gh release create "$TAG" --draft --verify-tag \
+            --title "$NAME" --notes-file /tmp/release-body.md -R "$REPO"
 
   extension-package-release:
     name: Package VS Code Extensions (Release)
