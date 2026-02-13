@@ -253,21 +253,21 @@ function New-PackagingResult {
     }
 }
 
-function Get-PersonaReadmePath {
+function Get-CollectionReadmePath {
     <#
     .SYNOPSIS
-        Resolves the persona-specific README path from a collection manifest.
+        Resolves the collection-specific README path from a collection manifest.
     .DESCRIPTION
-        Maps a collection manifest to its persona-specific README file. Returns
+        Maps a collection manifest to its collection-specific README file. Returns
         null when the collection is the full package (hve-core-all) or when no
-        matching persona README exists on disk. Supports both YAML and JSON
+        matching collection README exists on disk. Supports both YAML and JSON
         manifest formats.
     .PARAMETER CollectionPath
         Path to the collection manifest file (YAML or JSON).
     .PARAMETER ExtensionDirectory
         Path to the extension directory containing README files.
     .OUTPUTS
-        String path to the persona README, or $null if not applicable.
+        String path to the collection README, or $null if not applicable.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -293,9 +293,9 @@ function Get-PersonaReadmePath {
         return $null
     }
 
-    $personaReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
-    if (Test-Path $personaReadmePath) {
-        return $personaReadmePath
+    $collectionReadmePath = Join-Path $ExtensionDirectory "README.$collectionId.md"
+    if (Test-Path $collectionReadmePath) {
+        return $collectionReadmePath
     }
 
     return $null
@@ -567,19 +567,19 @@ function Copy-CollectionArtifacts {
     }
 }
 
-function Set-PersonaReadme {
+function Set-CollectionReadme {
     <#
     .SYNOPSIS
-        Swaps or restores the persona-specific README for collection packaging.
+        Swaps or restores the collection-specific README for extension packaging.
     .DESCRIPTION
-        In swap mode, backs up the original README.md and copies the persona
+        In swap mode, backs up the original README.md and copies the collection
         README in its place. In restore mode, copies the backup back and removes it.
     .PARAMETER ExtensionDirectory
         Path to the extension directory.
-    .PARAMETER PersonaReadmePath
-        Path to the persona-specific README file. Required for Swap operation.
+    .PARAMETER CollectionReadmePath
+        Path to the collection-specific README file. Required for Swap operation.
     .PARAMETER Operation
-        Either 'Swap' to replace README.md with persona content, or 'Restore'
+        Either 'Swap' to replace README.md with collection content, or 'Restore'
         to revert README.md from backup.
     #>
     [CmdletBinding()]
@@ -588,7 +588,7 @@ function Set-PersonaReadme {
         [string]$ExtensionDirectory,
 
         [Parameter(Mandatory = $false)]
-        [string]$PersonaReadmePath = "",
+        [string]$CollectionReadmePath = "",
 
         [Parameter(Mandatory = $true)]
         [ValidateSet('Swap', 'Restore')]
@@ -599,13 +599,13 @@ function Set-PersonaReadme {
     $backupPath = Join-Path $ExtensionDirectory "README.md.bak"
 
     if ($Operation -eq 'Swap') {
-        if (-not $PersonaReadmePath -or $PersonaReadmePath -eq "") {
-            Write-Warning "No persona README path provided for swap operation"
+        if (-not $CollectionReadmePath -or $CollectionReadmePath -eq "") {
+            Write-Warning "No collection README path provided for swap operation"
             return
         }
         Copy-Item -Path $readmePath -Destination $backupPath -Force
-        Copy-Item -Path $PersonaReadmePath -Destination $readmePath -Force
-        Write-Host "   Swapped README.md with $(Split-Path $PersonaReadmePath -Leaf)" -ForegroundColor Green
+        Copy-Item -Path $CollectionReadmePath -Destination $readmePath -Force
+        Write-Host "   Swapped README.md with $(Split-Path $CollectionReadmePath -Leaf)" -ForegroundColor Green
     }
     elseif ($Operation -eq 'Restore') {
         if (Test-Path $backupPath) {
@@ -947,13 +947,13 @@ function Invoke-PackageExtension {
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
 
-        # Swap persona README if collection specifies one
+        # Swap collection README if collection specifies one
         if ($Collection -and $Collection -ne "") {
-            $personaReadmePath = Get-PersonaReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
-            if ($personaReadmePath) {
+            $collectionReadmePath = Get-CollectionReadmePath -CollectionPath $Collection -ExtensionDirectory $ExtensionDirectory
+            if ($collectionReadmePath) {
                 Write-Host ""
-                Write-Host "📄 Applying persona README..." -ForegroundColor Yellow
-                Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -PersonaReadmePath $personaReadmePath -Operation Swap
+                Write-Host "📄 Applying collection README..." -ForegroundColor Yellow
+                Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -CollectionReadmePath $collectionReadmePath -Operation Swap
             }
         }
 
@@ -1022,7 +1022,7 @@ function Invoke-PackageExtension {
         return New-PackagingResult -Success $false -ErrorMessage $_.Exception.Message
     }
     finally {
-        # Restore canonical package.json from persona template backup
+        # Restore canonical package.json from collection template backup
         $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
         if (Test-Path $backupPath) {
             Copy-Item -Path $backupPath -Destination $PackageJsonPath -Force
@@ -1033,8 +1033,8 @@ function Invoke-PackageExtension {
             $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
         }
 
-        # Restore persona README if it was swapped
-        Set-PersonaReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
+        # Restore collection README if it was swapped
+        Set-CollectionReadme -ExtensionDirectory $ExtensionDirectory -Operation Restore
 
         # Cleanup copied directories using I/O function
         Write-Host ""

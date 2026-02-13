@@ -145,57 +145,57 @@ Instructions placed in `.github/instructions/hve-core/` are repo-specific and MU
 
 * Collection manifests
 * Extension packaging and distribution
-* Persona collection builds
+* Collection builds
 * Artifact selection for published bundles
 
 If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/` or a technology-specific subdirectory (e.g., `csharp/`, `bash/`).
 
-## Persona Taxonomy
+## Collection Taxonomy
 
-Personas represent user roles that consume HVE-Core artifacts. The persona system enables role-specific artifact collections without fragmenting the codebase.
+Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
 
-### Defined Personas
+### Defined Collections
 
-| Persona       | Identifier     | Description                     |
+| Collection    | Identifier     | Description                     |
 |---------------|----------------|---------------------------------|
 | **All**       | `hve-core-all` | Full release with all artifacts |
 | **Developer** | `developer`    | Software engineers writing code |
 
-### Persona Assignment Guidelines
+### Collection Assignment Guidelines
 
-When assigning personas to artifacts:
+When assigning collections to artifacts:
 
-* **Universal artifacts** should include `hve-core-all` plus any role-specific personas that particularly benefit
-* **Role-specific artifacts** should include only the relevant personas (omit `hve-core-all` for highly specialized artifacts)
-* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant personas
+* **Universal artifacts** should include `hve-core-all` plus any role-specific collections that particularly benefit
+* **Role-specific artifacts** should include only the relevant collections (omit `hve-core-all` for highly specialized artifacts)
+* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant collections
 
-**Example persona assignments:**
+**Example collection assignments:**
 
 ```json
 // Universal - available in all collections
 "markdown": {
-    "personas": ["hve-core-all", "developer"]
+    "collections": ["hve-core-all", "developer"]
 }
 
 // Developer-focused - targeted distribution
 "csharp/csharp": {
-    "personas": ["hve-core-all", "developer"]
+    "collections": ["hve-core-all", "developer"]
 }
 
 // Core workflow - broadly applicable
 "rpi-agent": {
-    "personas": ["hve-core-all", "developer"]
+    "collections": ["hve-core-all", "developer"]
 }
 ```
 
-### Selecting Personas for New Artifacts
+### Selecting Collections for New Artifacts
 
-Answer these questions when determining persona assignments:
+Answer these questions when determining collection assignments:
 
 1. **Who is the primary user?** Identify the main role that benefits from this artifact
 2. **Who else benefits?** Consider secondary roles that may find value
-3. **Is it foundational?** Core workflow artifacts should include multiple personas
-4. **Is it specialized?** Domain-specific artifacts may target fewer personas
+3. **Is it foundational?** Core workflow artifacts should include multiple collections
+4. **Is it specialized?** Domain-specific artifacts may target fewer collections
 
 When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
 
@@ -234,7 +234,7 @@ Add the `requires` field to artifacts that depend on others:
 ```json
 "rpi-agent": {
     "maturity": "stable",
-    "personas": ["hve-core-all"],
+    "collections": ["hve-core-all"],
     "tags": ["rpi", "orchestration"],
     "requires": {
         "agents": ["task-researcher", "task-planner", "task-implementor", "task-reviewer"],
@@ -249,7 +249,7 @@ Add the `requires` field to artifacts that depend on others:
 
 Dependency resolution currently operates at **build time** during extension packaging. The `Resolve-RequiresDependencies` function in `Prepare-Extension.ps1` walks `requires` blocks to compute the transitive closure of all dependent artifacts across types (agents, prompts, instructions, skills). Similarly, `Resolve-HandoffDependencies` performs BFS traversal of agent handoff declarations to ensure all reachable agents are included in the package.
 
-For clone-based installations, the installer agent supports **agent-only persona filtering** in Phase 7. Full installer-side dependency resolution (automatically including required prompts, instructions, and skills based on the dependency graph) is planned for a future release.
+For clone-based installations, the installer agent supports **agent-only collection filtering** in Phase 7. Full installer-side dependency resolution (automatically including required prompts, instructions, and skills based on the dependency graph) is planned for a future release.
 
 ### Dependency Best Practices
 

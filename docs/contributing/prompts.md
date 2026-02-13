@@ -127,18 +127,18 @@ items:
     maturity: stable
 ```
 
-### Selecting Personas for Prompts
+### Selecting Collections for Prompts
 
-Choose personas based on who invokes or benefits from the workflow:
+Choose collections based on who invokes or benefits from the workflow:
 
-| Prompt Type             | Recommended Personas                      |
-|-------------------------|-------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `developer`               |
-| ADO work item workflows | `hve-core-all`, `tpm`, `devops`           |
-| GitHub issue workflows  | `hve-core-all`, `developer`               |
-| RPI workflow prompts    | `hve-core-all` plus all relevant personas |
-| Documentation workflows | `hve-core-all`, `technical-writer`        |
-| Architecture prompts    | `hve-core-all`, `architect`               |
+| Prompt Type             | Recommended Collections                      |
+|-------------------------|----------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `developer`                  |
+| ADO work item workflows | `hve-core-all`, `tpm`, `devops`              |
+| GitHub issue workflows  | `hve-core-all`, `developer`                  |
+| RPI workflow prompts    | `hve-core-all` plus all relevant collections |
+| Documentation workflows | `hve-core-all`, `technical-writer`           |
+| Architecture prompts    | `hve-core-all`, `architect`                  |
 
 ### Tags for Prompts
 

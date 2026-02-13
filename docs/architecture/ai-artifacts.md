@@ -83,7 +83,7 @@ Instructions answer the question "what standards apply to this context?" and ens
 Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be included in collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Collection manifests intentionally exclude this subdirectory from artifact selection and package composition.
 
 > [!IMPORTANT]
-> The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or persona collections.
+> The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or collections.
 
 ### Skills
 
@@ -250,20 +250,20 @@ items:
 | `kind`     | Artifact type (`agent`, `prompt`, `instruction`, `skill`, `hook`) |
 | `maturity` | Optional release channel gating value (`stable` default)          |
 
-### Persona Model
+### Collection Model
 
-Personas represent user roles that consume artifacts. Collection manifests select artifacts for those personas.
+Collections represent role-targeted artifact packages. Collection manifests select artifacts for those roles.
 
-| Persona       | Identifier     | Target Users        |
+| Collection    | Identifier     | Target Users        |
 |---------------|----------------|---------------------|
 | **All**       | `hve-core-all` | Universal inclusion |
 | **Developer** | `developer`    | Software engineers  |
 
-Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific personas for targeted distribution.
+Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific collections for targeted distribution.
 
 ### Collection Build System
 
-Collections define persona-filtered artifact packages. Each collection manifest specifies which personas to include and controls release channel eligibility through a `maturity` field:
+Collections define role-filtered artifact packages. Each collection manifest specifies which artifacts to include and controls release channel eligibility through a `maturity` field:
 
 ```json
 {
@@ -272,17 +272,17 @@ Collections define persona-filtered artifact packages. Each collection manifest 
     "displayName": "HVE Core - Developer Edition",
     "description": "AI-powered coding agents curated for software engineers",
     "maturity": "stable",
-    "personas": ["developer"]
+    "items": ["developer"]
 }
 ```
 
 The build system resolves collections by:
 
-1. Reading the collection manifest to identify target personas
+1. Reading the collection manifest to identify target artifacts
 2. Checking collection-level maturity against the target release channel
 3. Filtering collection items by path/kind membership
-4. Including the `hve-core-all` persona artifacts as the base
-5. Adding persona-specific artifacts
+4. Including the `hve-core-all` collection artifacts as the base
+5. Adding collection-specific artifacts
 6. Resolving dependencies for included artifacts
 
 #### Collection Maturity
@@ -312,7 +312,7 @@ graph TD
     A --> G[rpi.prompt]
 ```
 
-When installing `rpi-agent`, all dependent agents and prompts are automatically included regardless of persona filter.
+When installing `rpi-agent`, all dependent agents and prompts are automatically included regardless of collection filter.
 
 ## Extension Integration
 

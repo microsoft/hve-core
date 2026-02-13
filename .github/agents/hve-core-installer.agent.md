@@ -1065,7 +1065,7 @@ Copying agents enables local customization and offline use.
 
 Options:
   [1] Install RPI Core only (recommended)
-  [2] Install by persona collection
+  [2] Install by collection
   [3] Skip agent installation
 
 Your choice? (1/2/3)
@@ -1075,56 +1075,56 @@ Your choice? (1/2/3)
 User input handling:
 
 * "1", "rpi", "rpi core", "core" → Copy RPI Core bundle only
-* "2", "persona", "collection", "by persona" → Proceed to Persona Selection sub-flow
+* "2", "collection", "by collection" → Proceed to Collection Selection sub-flow
 * "3", "skip", "none", "no" → Skip to success report
 * Unclear response → Ask for clarification
 
-### Persona Selection Sub-Flow
+### Collection Selection Sub-Flow
 
-When the user selects option 2, read collection manifests to present available personas.
+When the user selects option 2, read collection manifests to present available collections.
 
-#### Step 1: Read collections and build persona agent counts
+#### Step 1: Read collections and build collection agent counts
 
-Read `collections/*.collection.yml` from the HVE-Core source (at `$hveCoreBasePath`). Derive persona options from collection `id` and `name`. For each selected collection, count agent items where `kind` equals `agent` and effective item maturity is `stable` (item `maturity` omitted defaults to `stable`; exclude `experimental` and `deprecated`).
+Read `collections/*.collection.yml` from the HVE-Core source (at `$hveCoreBasePath`). Derive collection options from collection `id` and `name`. For each selected collection, count agent items where `kind` equals `agent` and effective item maturity is `stable` (item `maturity` omitted defaults to `stable`; exclude `experimental` and `deprecated`).
 
-#### Step 2: Present persona options
+#### Step 2: Present collection options
 
-<!-- <persona-selection-prompt> -->
+<!-- <collection-selection-prompt> -->
 ```text
-🎭 Persona Collection Selection
+🎭 Collection Selection
 
-Choose one or more personas to install agents tailored to your role, more to come in the future.
+Choose one or more collections to install agents tailored to your role, more to come in the future.
 
-| # | Persona   | Agents | Description                     |
-|---|-----------|--------|---------------------------------|
-| 1 | Developer | [N]    | Software engineers writing code |
+| # | Collection | Agents | Description                     |
+|---|------------|--------|---------------------------------|
+| 1 | Developer  | [N]    | Software engineers writing code |
 
-Enter persona number(s) separated by commas (e.g., "1"):
+Enter collection number(s) separated by commas (e.g., "1"):
 ```
-<!-- </persona-selection-prompt> -->
+<!-- </collection-selection-prompt> -->
 
-Agent counts `[N]` include agents matching the persona with `stable` maturity.
+Agent counts `[N]` include agents matching the collection with `stable` maturity.
 
 User input handling:
 
-* Single number (e.g., "1") → Select that persona
-* Multiple numbers (e.g., "1, 3") → Combine agent sets from selected personas
-* Persona name (e.g., "developer") → Match by identifier
+* Single number (e.g., "1") → Select that collection
+* Multiple numbers (e.g., "1, 3") → Combine agent sets from selected collections
+* Collection name (e.g., "developer") → Match by identifier
 * Unclear response → Ask for clarification
 
 #### Step 3: Build filtered agent list
 
-For each selected persona identifier:
+For each selected collection identifier:
 
 1. Iterate through `agents` in the registry
-2. Include agents where `maturity` is `stable` AND `personas` array contains the selected persona identifier
-3. Deduplicate across multiple selected personas
+2. Include agents where `maturity` is `stable` AND the collection's items list contains the agent
+3. Deduplicate across multiple selected collections
 
 #### Step 4: Present filtered agents for confirmation
 
-<!-- <persona-confirmation-prompt> -->
+<!-- <collection-confirmation-prompt> -->
 ```text
-📋 Agents for [Persona Name(s)]
+📋 Agents for [Collection Name(s)]
 
 The following [N] agents will be copied:
 
@@ -1134,7 +1134,7 @@ The following [N] agents will be copied:
 
 Proceed with installation? (yes/no)
 ```
-<!-- </persona-confirmation-prompt> -->
+<!-- </collection-confirmation-prompt> -->
 
 User input handling:
 
@@ -1143,20 +1143,20 @@ User input handling:
 * Unclear response → Ask for clarification
 
 > [!NOTE]
-> Persona filtering applies to agents only. Copying of related prompts, instructions, and skills based on persona is planned for a future release.
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
 
 ### Agent Bundle Definitions
 
-| Bundle         | Agents                                                                    |
-|----------------|---------------------------------------------------------------------------|
-| `rpi-core`     | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
-| `persona:<id>` | Stable agents matching the persona                                        |
+| Bundle            | Agents                                                                    |
+|-------------------|---------------------------------------------------------------------------|
+| `rpi-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
+| `collection:<id>` | Stable agents matching the collection                                     |
 
 ### Collision Detection
 
 Before copying, check for existing agent files with matching names. Generate a script for the user's shell that:
 
-1. Builds list of source files based on selection (`rpi-core` = 5 files, `persona` = filtered `.agent.md` files)
+1. Builds list of source files based on selection (`rpi-core` = 5 files, `collection` = filtered `.agent.md` files)
 2. Copies files with `.agent.md` extension
 3. Checks target directory (`.github/agents/`) for each name
 4. Reports collisions or clean state
@@ -1172,8 +1172,8 @@ $targetDir = ".github/agents"
 $filesToCopy = switch ($selection) {
     "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "task-reviewer.agent.md", "rpi-agent.agent.md") }
     default {
-        # Persona-based: $selection contains filtered agent names from registry
-        $personaAgents
+        # Collection-based: $selection contains filtered agent names from registry
+        $collectionAgents
     }
 }
 
@@ -1256,7 +1256,7 @@ $manifest = @{
     source = "microsoft/hve-core"
     version = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
     installed = (Get-Date -Format "o")
-    collection = $collectionId  # "rpi-core" or persona id(s) e.g. "developer" or "developer,devops"
+    collection = $collectionId  # "rpi-core" or collection id(s) e.g. "developer" or "developer,devops"
     files = @{}; skip = @()
 }
 

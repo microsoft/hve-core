@@ -563,17 +563,17 @@ Describe 'Invoke-PackageExtension' {
 
             # Template manifest currently in package.json
             $templateManifest = @{
-                name        = 'hve-persona'
+                name        = 'hve-test-collection'
                 version     = '2.5.0'
-                publisher   = 'persona-pub'
-                description = 'Persona description'
+                publisher   = 'test-pub'
+                description = 'Test description'
                 engines     = @{ vscode = '^1.80.0' }
             }
             $templateManifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
             $originalManifest | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $script:extDir 'package.json.bak')
 
             # Create fake vsix matching the template name
-            $vsixPath = Join-Path $script:extDir 'hve-persona-2.5.0.vsix'
+            $vsixPath = Join-Path $script:extDir 'hve-test-collection-2.5.0.vsix'
             Set-Content -Path $vsixPath -Value 'fake-vsix'
 
             $null = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
@@ -921,9 +921,9 @@ Describe 'Restore-PackageJsonVersion' {
     }
 }
 
-Describe 'Get-PersonaReadmePath' {
+Describe 'Get-CollectionReadmePath' {
     BeforeAll {
-        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "persona-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "collection-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testDir 'extension'
     }
 
@@ -944,37 +944,37 @@ id: hve-core-all
 name: all
 "@ | Set-Content $collectionPath
 
-        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
     }
 
-    It 'Returns persona README path when file exists' {
+    It 'Returns collection README path when file exists' {
         $collectionPath = Join-Path $script:testDir 'collection.yml'
         @"
 id: developer
 name: dev
 "@ | Set-Content $collectionPath
 
-        $personaReadme = Join-Path $script:extDir 'README.developer.md'
-        Set-Content -Path $personaReadme -Value '# Developer README'
+        $collectionReadme = Join-Path $script:extDir 'README.developer.md'
+        Set-Content -Path $collectionReadme -Value '# Developer README'
 
-        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
-        $result | Should -Be $personaReadme
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -Be $collectionReadme
     }
 
-    It 'Returns null when persona README file does not exist' {
+    It 'Returns null when collection README file does not exist' {
         $collectionPath = Join-Path $script:testDir 'collection.yml'
         @"
 id: security
 name: sec
 "@ | Set-Content $collectionPath
 
-        $result = Get-PersonaReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
     }
 }
 
-Describe 'Set-PersonaReadme' {
+Describe 'Set-CollectionReadme' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "set-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
@@ -990,11 +990,11 @@ Describe 'Set-PersonaReadme' {
         }
     }
 
-    It 'Swaps README.md with persona README and creates backup' {
-        $personaPath = Join-Path $script:testDir 'README.developer.md'
-        Set-Content -Path $personaPath -Value '# Developer README'
+    It 'Swaps README.md with collection README and creates backup' {
+        $collectionReadmePath = Join-Path $script:testDir 'README.developer.md'
+        Set-Content -Path $collectionReadmePath -Value '# Developer README'
 
-        Set-PersonaReadme -ExtensionDirectory $script:testDir -PersonaReadmePath $personaPath -Operation Swap
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -CollectionReadmePath $collectionReadmePath -Operation Swap
 
         $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
         $readmeContent | Should -Match 'Developer README'
@@ -1004,9 +1004,9 @@ Describe 'Set-PersonaReadme' {
         $backupContent | Should -Match 'Original README'
     }
 
-    It 'Warns and returns early when no persona path for swap' {
+    It 'Warns and returns early when no collection path for swap' {
         Mock Write-Warning {}
-        Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Swap
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Swap
 
         Should -Invoke Write-Warning -Times 1
         $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
@@ -1016,9 +1016,9 @@ Describe 'Set-PersonaReadme' {
     It 'Restores README.md from backup and removes backup file' {
         # Create backup state
         Set-Content -Path (Join-Path $script:testDir 'README.md.bak') -Value '# Original README'
-        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Persona README'
+        Set-Content -Path (Join-Path $script:testDir 'README.md') -Value '# Collection README'
 
-        Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Restore
+        Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Restore
 
         $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
         $readmeContent | Should -Match 'Original README'
@@ -1026,7 +1026,7 @@ Describe 'Set-PersonaReadme' {
     }
 
     It 'Restore is a no-op when no backup exists' {
-        { Set-PersonaReadme -ExtensionDirectory $script:testDir -Operation Restore } | Should -Not -Throw
+        { Set-CollectionReadme -ExtensionDirectory $script:testDir -Operation Restore } | Should -Not -Throw
         $readmeContent = Get-Content -Path (Join-Path $script:testDir 'README.md') -Raw
         $readmeContent | Should -Match 'Original README'
     }
@@ -1196,7 +1196,7 @@ Describe 'Invoke-PackageExtension - Collection mode' {
 id: developer
 name: dev
 displayName: Developer
-personas:
+items:
   - developer
 "@ | Set-Content $collectionPath
 
@@ -1207,7 +1207,7 @@ personas:
         $result | Should -BeOfType [hashtable]
     }
 
-    It 'Swaps persona README when collection has matching persona README' {
+    It 'Swaps collection README when collection has matching collection README' {
         Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
         Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
 
@@ -1216,12 +1216,12 @@ personas:
 id: developer
 name: dev
 displayName: Developer
-personas:
+items:
   - developer
 "@ | Set-Content $collectionPath
 
-        # Create persona README in extension directory
-        Set-Content -Path (Join-Path $script:extDir 'README.developer.md') -Value '# Developer Persona'
+        # Create collection README in extension directory
+        Set-Content -Path (Join-Path $script:extDir 'README.developer.md') -Value '# Developer Collection'
 
         $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
         Set-Content -Path $vsixPath -Value 'fake-vsix'

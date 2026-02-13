@@ -87,7 +87,7 @@ Answer these questions to find your recommended installation method:
 
 ## Collection Packages
 
-HVE-Core supports persona-based artifact collections tailored to specific roles:
+HVE-Core supports role-based artifact collections tailored to specific roles:
 
 | Collection    | Extension Name  | Registry ID    | Maturity     | Description                          |
 |---------------|-----------------|----------------|--------------|--------------------------------------|
@@ -101,18 +101,18 @@ HVE-Core supports persona-based artifact collections tailored to specific roles:
 
 The VS Code Marketplace extension installs the **full collection** containing all stable artifacts. This is the recommended approach for most users.
 
-### Clone Methods (Persona Filtering)
+### Clone Methods (Collection Filtering)
 
-Clone-based installation methods support persona-based agent filtering through the installer agent:
+Clone-based installation methods support collection-based agent filtering through the installer agent:
 
 1. Clone the repository using your preferred method
 2. Run the `hve-core-installer` agent
 3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
 
-The installer reads persona assignments from the artifact registry and copies only the agents assigned to your selected persona. Agents marked for all personas are always included.
+The installer reads collection assignments from the artifact registry and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
 
 > [!NOTE]
-> Persona filtering applies to agents only. Copying of related prompts, instructions, and skills based on persona is planned for a future release.
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
 
 ### Quick Decision Tree
 

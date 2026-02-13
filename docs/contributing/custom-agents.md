@@ -215,11 +215,11 @@ items:
   maturity: stable
 ```
 
-### Selecting Personas for Agents
+### Selecting Collections for Agents
 
-Choose personas based on who benefits most from your agent:
+Choose collections based on who benefits most from your agent:
 
-| Agent Type           | Recommended Personas                  |
+| Agent Type           | Recommended Collections               |
 |----------------------|---------------------------------------|
 | Task workflow agents | `hve-core-all`, `developer`, `tpm`    |
 | Architecture agents  | `hve-core-all`, `architect`, `devops` |

@@ -179,10 +179,10 @@ function Set-JsonFile {
 function Remove-StaleGeneratedFiles {
     <#
     .SYNOPSIS
-        Removes generated persona package files that are no longer expected.
+        Removes generated collection package files that are no longer expected.
     .DESCRIPTION
         Scans extension/ for package.*.json files and removes any not in the
-        expected set, keeping the directory clean of orphaned persona templates.
+        expected set, keeping the directory clean of orphaned collection templates.
     .PARAMETER RepoRoot
         Repository root path.
     .PARAMETER ExpectedFiles
@@ -215,11 +215,11 @@ function Remove-StaleGeneratedFiles {
 function Invoke-ExtensionCollectionsGeneration {
     <#
     .SYNOPSIS
-        Generates persona package files from root collection manifests.
+        Generates collection package files from root collection manifests.
     .DESCRIPTION
         Reads the package template and each collections/*.collection.yml file,
         producing extension/package.json (for hve-core-all) and
-        extension/package.{id}.json for every other collection. Stale persona
+        extension/package.{id}.json for every other collection. Stale collection
         files are removed.
     .PARAMETER RepoRoot
         Repository root path containing collections/ and extension/templates/.
@@ -297,7 +297,7 @@ function Invoke-ExtensionCollectionsGeneration {
 
     Remove-StaleGeneratedFiles -RepoRoot $RepoRoot -ExpectedFiles $expectedFiles
 
-    # Generate README files for each persona collection
+    # Generate README files for each collection
     $readmeTemplatePath = Join-Path $templatesDir 'README.template.md'
     foreach ($collectionFile in $collectionFiles) {
         $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
@@ -587,13 +587,13 @@ function Get-CollectionManifest {
     .SYNOPSIS
         Loads a collection manifest from a YAML or JSON file.
     .DESCRIPTION
-        Reads and parses a collection manifest file that defines persona-based
+        Reads and parses a collection manifest file that defines collection-based
         artifact filtering rules for extension packaging. Supports both YAML
         (.yml/.yaml) and JSON (.json) formats.
     .PARAMETER CollectionPath
         Path to the collection manifest file (YAML or JSON).
     .OUTPUTS
-        [hashtable] Parsed collection manifest with id, name, displayName, description, personas, and optional include/exclude.
+        [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -1410,14 +1410,14 @@ function New-PrepareResult {
 function Test-TemplateConsistency {
     <#
     .SYNOPSIS
-        Validates persona template metadata against its collection manifest.
+        Validates collection template metadata against its collection manifest.
     .DESCRIPTION
-        Compares name, displayName, and description fields between a persona
+        Compares name, displayName, and description fields between a collection
         package template (e.g. package.developer.json) and the corresponding
         collection manifest. Emits warnings for divergences and returns a list
         of mismatches.
     .PARAMETER TemplatePath
-        Path to the persona package template JSON file.
+        Path to the collection package template JSON file.
     .PARAMETER CollectionManifest
         Parsed collection manifest hashtable with name, displayName, description.
     .OUTPUTS
@@ -1541,12 +1541,12 @@ function Invoke-PrepareExtension {
     $GitHubDir = Join-Path $RepoRoot ".github"
     $PackageJsonPath = Join-Path $ExtensionDirectory "package.json"
 
-    # Generate persona package files from root collection manifests.
+    # Generate collection package files from root collection manifests.
     # This ensures extension/package.json and extension/package.*.json exist
     # with the correct version from the template before any reads occur.
     try {
         $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot
-        Write-Host "Generated $($generated.Count) persona package file(s)" -ForegroundColor Green
+        Write-Host "Generated $($generated.Count) collection package file(s)" -ForegroundColor Green
     }
     catch {
         return New-PrepareResult -Success $false -ErrorMessage "Package generation failed: $($_.Exception.Message)"
@@ -1752,12 +1752,12 @@ function Invoke-PrepareExtension {
         Write-Host "Skills after filter: $($chatSkills.Count)"
     }
 
-    # Apply persona template when building a non-default collection
+    # Apply collection template when building a non-default collection
     if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core-all') {
         $collectionId = $collectionManifest.id
         $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
         if (-not (Test-Path $templatePath)) {
-            return New-PrepareResult -Success $false -ErrorMessage "Persona template not found: $templatePath"
+            return New-PrepareResult -Success $false -ErrorMessage "Collection template not found: $templatePath"
         }
 
         # Validate template consistency against collection manifest
@@ -1774,12 +1774,12 @@ function Invoke-PrepareExtension {
         $backupPath = Join-Path $ExtensionDirectory "package.json.bak"
         Copy-Item -Path $PackageJsonPath -Destination $backupPath -Force
 
-        # Copy persona template over package.json
+        # Copy collection template over package.json
         Copy-Item -Path $templatePath -Destination $PackageJsonPath -Force
 
         # Re-read template as the working package.json
         $packageJson = Get-Content -Path $PackageJsonPath -Raw | ConvertFrom-Json
-        Write-Host "Applied persona template: package.$collectionId.json" -ForegroundColor Green
+        Write-Host "Applied collection template: package.$collectionId.json" -ForegroundColor Green
     }
 
     # Update package.json with generated contributes

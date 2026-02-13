@@ -105,11 +105,11 @@ items:
     maturity: stable
 ```
 
-### Selecting Personas for Skills
+### Selecting Collections for Skills
 
-Choose personas based on who uses the skill's utilities:
+Choose collections based on who uses the skill's utilities:
 
-| Skill Type           | Recommended Personas                  |
+| Skill Type           | Recommended Collections               |
 |----------------------|---------------------------------------|
 | Media processing     | `hve-core-all`                        |
 | Documentation tools  | `hve-core-all`, `technical-writer`    |

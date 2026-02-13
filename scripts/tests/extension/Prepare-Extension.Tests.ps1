@@ -112,7 +112,7 @@ Describe 'Remove-StaleGeneratedFiles' {
         Test-Path $staleFile | Should -BeFalse
     }
 
-    It 'Does not remove non-persona files' {
+    It 'Does not remove non-collection files' {
         $regularFile = Join-Path $script:extDir 'README.md'
         '# Test' | Set-Content -Path $regularFile
 
@@ -173,7 +173,7 @@ description: RPI workflow agents
         $pkg.version | Should -Be '2.0.0'
     }
 
-    It 'Generates persona package file for non-default collection' {
+    It 'Generates collection package file for non-default collection' {
         $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
         $pkgPath = Join-Path $script:tempDir 'extension/package.rpi.json'
         Test-Path $pkgPath | Should -BeTrue
@@ -195,7 +195,7 @@ description: RPI workflow agents
         }
     }
 
-    It 'Removes stale persona files not matching current collections' {
+    It 'Removes stale collection files not matching current collections' {
         $staleFile = Join-Path $script:tempDir 'extension/package.obsolete.json'
         '{}' | Set-Content -Path $staleFile
 
@@ -359,16 +359,16 @@ description: "My skill description"
         $content | Should -Match '\*\*my-skill\*\*.*My skill description'
     }
 
-    It 'Includes Full Edition link for persona collections' {
+    It 'Includes Full Edition link for non-default collections' {
         $collection = @{
-            id          = 'persona'
-            name        = 'Persona'
-            description = 'Persona test'
+            id          = 'test-edition'
+            name        = 'Test Edition'
+            description = 'Test edition test'
             items       = @()
         }
-        $mdPath = Join-Path $script:tempDir 'persona.collection.md'
-        'Persona body.' | Set-Content -Path $mdPath
-        $outPath = Join-Path $script:tempDir 'README.persona.md'
+        $mdPath = Join-Path $script:tempDir 'test-edition.collection.md'
+        'Test edition body.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.test-edition.md'
 
         New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
 
@@ -779,7 +779,7 @@ id: test
 name: test-ext
 displayName: Test Extension
 description: Test
-personas:
+items:
   - hve-core-all
 "@ | Set-Content -Path $manifestFile
 
@@ -791,12 +791,12 @@ personas:
     It 'Loads collection manifest from valid JSON path' {
         $manifestFile = Join-Path $script:tempDir 'test.collection.json'
         @{
-            '\$schema' = '../schemas/collection.schema.json'
+            '\$schema' = '../schemas/collection-manifest.schema.json'
             id = 'test'
             name = 'test-ext'
             displayName = 'Test Extension'
             description = 'Test'
-            personas = @('hve-core-all')
+            items = @('hve-core-all')
         } | ConvertTo-Json -Depth 5 | Set-Content -Path $manifestFile
 
         $result = Get-CollectionManifest -CollectionPath $manifestFile
@@ -816,14 +816,14 @@ id: keys
 name: keys-ext
 displayName: Keys
 description: Keys test
-personas:
+items:
   - developer
 "@ | Set-Content -Path $manifestFile
 
         $result = Get-CollectionManifest -CollectionPath $manifestFile
         $result.Keys | Should -Contain 'id'
         $result.Keys | Should -Contain 'name'
-        $result.Keys | Should -Contain 'personas'
+        $result.Keys | Should -Contain 'items'
     }
 }
 
@@ -1208,8 +1208,6 @@ id: hve-core-all
 name: hve-core-all
 displayName: HVE Core - All
 description: Channel filtering test
-personas:
-  - hve-core-all
 items:
   - kind: agent
     path: .github/agents/test.agent.md
@@ -1258,8 +1256,6 @@ id: hve-core-all
 name: hve-core-all
 displayName: HVE Core - All
 description: Prompt/instruction filtering test
-personas:
-  - hve-core-all
 items:
   - kind: agent
     path: .github/agents/test.agent.md
@@ -1361,7 +1357,7 @@ id: test
         $result.ErrorMessage | Should -Match 'Package generation failed'
     }
 
-    Context 'Persona template copy' {
+    Context 'Collection template copy' {
         BeforeAll {
             # Developer collection manifest (in collections/ for generation)
             $script:devCollectionYaml = Join-Path $script:collectionsDir 'developer.collection.yml'
@@ -1370,8 +1366,6 @@ id: developer
 name: hve-developer
 displayName: HVE Core - Developer Edition
 description: Developer edition
-personas:
-  - developer
 "@ | Set-Content -Path $script:devCollectionYaml
             $script:devCollectionPath = $script:devCollectionYaml
 
@@ -1382,8 +1376,6 @@ id: hve-core-all
 name: hve-core-all
 displayName: HVE Core - All
 description: All artifacts
-personas:
-  - hve-core-all
 "@ | Set-Content -Path $script:allCollectionPath
 
             # Collection manifest referencing a missing template
@@ -1393,14 +1385,12 @@ id: nonexistent
 name: nonexistent
 displayName: Nonexistent
 description: Missing template
-personas:
-  - nonexistent
 "@ | Set-Content -Path $script:missingCollectionPath
 
         }
 
         AfterEach {
-            # Clean up backup files left by persona template copy
+            # Clean up backup files left by collection template copy
             $bakPath = Join-Path $script:extDir 'package.json.bak'
             if (Test-Path $bakPath) {
                 Remove-Item -Path $bakPath -Force
@@ -1415,7 +1405,7 @@ personas:
                 -DryRun
 
             $result.Success | Should -BeTrue
-            # package.json should contain the generated hve-core-all content (not a persona template)
+            # package.json should contain the generated hve-core-all content (not a collection template)
             $currentJson = Get-Content -Path (Join-Path $script:extDir 'package.json') -Raw | ConvertFrom-Json
             $currentJson.name | Should -Be 'hve-core'
             Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
@@ -1433,7 +1423,7 @@ personas:
             Test-Path (Join-Path $script:extDir 'package.json.bak') | Should -BeFalse
         }
 
-        It 'Returns error when persona template file missing' {
+        It 'Returns error when collection template file missing' {
             $result = Invoke-PrepareExtension `
                 -ExtensionDirectory $script:extDir `
                 -RepoRoot $script:tempDir `
@@ -1442,7 +1432,7 @@ personas:
                 -DryRun
 
             $result.Success | Should -BeFalse
-            $result.ErrorMessage | Should -Match 'Persona template not found'
+            $result.ErrorMessage | Should -Match 'Collection template not found'
         }
 
         It 'Copies template to package.json for non-default collection' {
@@ -1484,8 +1474,6 @@ id: deprecated-coll
 name: deprecated-ext
 displayName: Deprecated Collection
 description: Deprecated collection for testing
-personas:
-  - hve-core-all
 maturity: deprecated
 "@ | Set-Content -Path $script:deprecatedCollectionPath
 
@@ -1496,8 +1484,6 @@ id: experimental-coll
 name: experimental-ext
 displayName: Experimental Collection
 description: Experimental collection for testing
-personas:
-  - hve-core-all
 maturity: experimental
 "@ | Set-Content -Path $script:experimentalCollectionPath
         }

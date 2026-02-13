@@ -43,7 +43,7 @@ All instruction files **MUST** be placed in:
 ```
 
 > [!IMPORTANT]
-> The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or persona collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
+> The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
 
 **Examples**:
 
@@ -146,18 +146,18 @@ items:
         maturity: stable
 ```
 
-### Selecting Personas for Instructions
+### Selecting Collections for Instructions
 
-Choose personas based on who uses the technology or pattern:
+Choose collections based on who uses the technology or pattern:
 
-| Instruction Type        | Recommended Personas                           |
-|-------------------------|------------------------------------------------|
-| Language standards      | `hve-core-all`, `developer`                    |
-| Infrastructure (IaC)    | `hve-core-all`, `architect`, `devops`          |
-| Documentation standards | `hve-core-all`, `technical-writer`             |
-| Workflow instructions   | `hve-core-all` plus relevant workflow personas |
-| Test standards          | `hve-core-all`, `developer`                    |
-| ADO integration         | `hve-core-all`, `tpm`, `devops`                |
+| Instruction Type        | Recommended Collections                           |
+|-------------------------|---------------------------------------------------|
+| Language standards      | `hve-core-all`, `developer`                       |
+| Infrastructure (IaC)    | `hve-core-all`, `architect`, `devops`             |
+| Documentation standards | `hve-core-all`, `technical-writer`                |
+| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
+| Test standards          | `hve-core-all`, `developer`                       |
+| ADO integration         | `hve-core-all`, `tpm`, `devops`                   |
 
 ### Tags for Instructions
 
