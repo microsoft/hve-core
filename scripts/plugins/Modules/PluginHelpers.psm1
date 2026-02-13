@@ -756,6 +756,30 @@ function Write-PluginDirectory {
         New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
     }
 
+    # Symlink shared resource directories (unconditional, all plugins)
+    $sharedDirs = @(
+        @{ Source = 'docs/templates';    Destination = 'docs/templates' }
+        @{ Source = 'scripts/dev-tools'; Destination = 'scripts/dev-tools' }
+        @{ Source = 'scripts/lib';       Destination = 'scripts/lib' }
+    )
+
+    foreach ($dir in $sharedDirs) {
+        $sourcePath = Join-Path -Path $RepoRoot -ChildPath $dir.Source
+        $destPath = Join-Path -Path $pluginRoot -ChildPath $dir.Destination
+
+        if (-not (Test-Path -Path $sourcePath)) {
+            Write-Warning "Shared directory not found: $sourcePath"
+            continue
+        }
+
+        if ($DryRun) {
+            Write-Verbose "DryRun: Would create shared directory symlink $destPath -> $sourcePath"
+            continue
+        }
+
+        New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
+    }
+
     # Generate plugin.json
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
