@@ -1,0 +1,1 @@
+../../../.github/prompts/git-merge.prompt.md

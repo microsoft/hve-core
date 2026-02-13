@@ -1,6 +1,6 @@
 id: rpi
 name: RPI Workflow
-description: Research, Plan, Implement, Review workflow agents and prompts for task-driven development
+description: Research, Plan, Implement, Review workflow with Git commit, merge, setup, and pull request prompts
 tags:
   - workflow
   - rpi
@@ -8,6 +8,10 @@ tags:
   - research
   - implementation
   - review
+  - git
+  - commits
+  - merge
+  - pull-request
 items:
   # Agents
   - path: .github/agents/rpi-agent.agent.md
@@ -21,6 +25,8 @@ items:
   - path: .github/agents/task-reviewer.agent.md
     kind: agent
   - path: .github/agents/memory.agent.md
+    kind: agent
+  - path: .github/agents/pr-review.agent.md
     kind: agent
   # Prompt Engineering agents
   - path: .github/agents/prompt-builder.agent.md
@@ -38,6 +44,17 @@ items:
     kind: prompt
   - path: .github/prompts/checkpoint.prompt.md
     kind: prompt
+  # Git prompts
+  - path: .github/prompts/git-commit-message.prompt.md
+    kind: prompt
+  - path: .github/prompts/git-commit.prompt.md
+    kind: prompt
+  - path: .github/prompts/git-merge.prompt.md
+    kind: prompt
+  - path: .github/prompts/git-setup.prompt.md
+    kind: prompt
+  - path: .github/prompts/pull-request.prompt.md
+    kind: prompt
   # Prompt Engineering prompts
   - path: .github/prompts/prompt-analyze.prompt.md
     kind: prompt
@@ -54,6 +71,9 @@ items:
     kind: instruction
   # Prompt Engineering instructions
   - path: .github/instructions/prompt-builder.instructions.md
+    kind: instruction
+  # Git instructions
+  - path: .github/instructions/git-merge.instructions.md
     kind: instruction
 display:
   ordering: manual
