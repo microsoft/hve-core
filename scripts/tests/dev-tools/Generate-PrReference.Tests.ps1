@@ -4,6 +4,11 @@
 
 BeforeAll {
     . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
+
+}
+
+AfterAll {
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-GitAvailability' {

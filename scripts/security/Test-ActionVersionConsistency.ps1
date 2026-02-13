@@ -352,11 +352,13 @@ function Export-ConsistencyReport {
     }
 }
 
-#region Main Execution
-
-function Invoke-ActionVersionConsistencyCheck {
+function Invoke-ActionVersionConsistency {
+    <#
+    .SYNOPSIS
+        Orchestrates the version consistency analysis.
+    #>
+    [OutputType([int])]
     [CmdletBinding()]
-    [OutputType([void])]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = '.github/workflows',
@@ -378,6 +380,7 @@ function Invoke-ActionVersionConsistencyCheck {
     Write-ConsistencyLog 'Starting GitHub Actions version consistency analysis...' -Level Info
     Write-ConsistencyLog "Scanning path: $Path" -Level Info
 
+    # Scan for violations
     $result = Get-ActionVersionViolations -WorkflowPath $Path
 
     $violations = $result.Violations
@@ -388,33 +391,34 @@ function Invoke-ActionVersionConsistencyCheck {
     Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
     Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
 
-    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions
+    # Export report (pipe to Out-Host to prevent pipeline pollution of return value)
+    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions | Out-Host
 
-    $failed = $false
+    # Determine exit code
+    $exitCode = 0
 
     if ($FailOnMismatch -and $mismatchCount -gt 0) {
         Write-ConsistencyLog "Failing due to $mismatchCount version mismatch(es) (-FailOnMismatch enabled)" -Level Error
-        $failed = $true
+        $exitCode = 1
     }
 
     if ($FailOnMissingComment -and $missingCount -gt 0) {
         Write-ConsistencyLog "Failing due to $missingCount missing version comment(s) (-FailOnMissingComment enabled)" -Level Error
-        $failed = $true
+        $exitCode = 1
     }
 
-    if ($failed) {
-        throw 'Version consistency violations detected'
-    }
-
-    if ($violations.Count -eq 0) {
+    if ($exitCode -eq 0 -and $violations.Count -eq 0) {
         Write-ConsistencyLog 'All SHA-pinned actions have consistent version comments!' -Level Success
     }
+
+    return $exitCode
 }
 
+#region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-ActionVersionConsistencyCheck -Path $Path -Format $Format -OutputPath $OutputPath -FailOnMismatch:$FailOnMismatch -FailOnMissingComment:$FailOnMissingComment
-        exit 0
+        $exitCode = Invoke-ActionVersionConsistency @PSBoundParameters
+        exit $exitCode
     }
     catch {
         Write-Error -ErrorAction Continue "Test-ActionVersionConsistency failed: $($_.Exception.Message)"
@@ -422,5 +426,4 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 1
     }
 }
-
 #endregion Main Execution

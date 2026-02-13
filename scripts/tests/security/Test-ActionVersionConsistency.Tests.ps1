@@ -27,6 +27,7 @@ BeforeAll {
 
 AfterAll {
     Restore-CIEnvironment
+    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Write-ConsistencyLog' -Tag 'Unit' {
