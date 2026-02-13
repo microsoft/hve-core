@@ -421,6 +421,8 @@ extension/CHANGELOG.md
 extension/package.json
 extension/package.*.json
 extension/package.json.bak
+extension/README.md
+extension/README.*.md
 !extension/templates/package.template.json
 
 # Windows Installer files from build outputs

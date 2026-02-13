@@ -229,6 +229,194 @@ id: test
     }
 }
 
+Describe 'New-CollectionReadme' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
+
+        # Resolve the real template from the repo
+        $script:repoRoot = (Get-Item "$PSScriptRoot/../../..").FullName
+        $script:templatePath = Join-Path $script:repoRoot 'extension/templates/README.template.md'
+
+        # Create mock artifact files with frontmatter descriptions
+        $agentsDir = Join-Path $script:tempDir '.github/agents'
+        $promptsDir = Join-Path $script:tempDir '.github/prompts'
+        $instrDir = Join-Path $script:tempDir '.github/instructions'
+        $skillsDir = Join-Path $script:tempDir '.github/skills/my-skill'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
+
+        @"
+---
+description: "Alpha agent description"
+---
+# Alpha
+"@ | Set-Content -Path (Join-Path $agentsDir 'alpha.agent.md')
+
+        @"
+---
+description: "Zebra agent description"
+---
+# Zebra
+"@ | Set-Content -Path (Join-Path $agentsDir 'zebra.agent.md')
+
+        @"
+---
+description: "My prompt description"
+---
+# Prompt
+"@ | Set-Content -Path (Join-Path $promptsDir 'my-prompt.prompt.md')
+
+        @"
+---
+description: "My instruction description"
+applyTo: "**/*.ps1"
+---
+# Instruction
+"@ | Set-Content -Path (Join-Path $instrDir 'my-instr.instructions.md')
+
+        @"
+---
+name: my-skill
+description: "My skill description"
+---
+# Skill
+"@ | Set-Content -Path (Join-Path $skillsDir 'SKILL.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Generates README with title and description from collection manifest' {
+        $collection = @{
+            id          = 'test-coll'
+            name        = 'Test Collection'
+            description = 'A test collection for unit testing'
+            items       = @()
+        }
+        $mdPath = Join-Path $script:tempDir 'test.collection.md'
+        'Body content goes here.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.test-coll.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Match '# HVE Core - Test Collection'
+        $content | Should -Match '> A test collection for unit testing'
+        $content | Should -Match 'Body content goes here'
+    }
+
+    It 'Uses HVE Core as title for hve-core-all collection' {
+        $collection = @{
+            id          = 'hve-core-all'
+            name        = 'HVE Core All'
+            description = 'Full bundle'
+            items       = @()
+        }
+        $mdPath = Join-Path $script:tempDir 'all.collection.md'
+        'All artifacts.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Match '# HVE Core'
+        $content | Should -Not -Match '# HVE Core All'
+    }
+
+    It 'Generates sorted artifact tables with descriptions grouped by kind' {
+        $collection = @{
+            id    = 'multi'
+            name  = 'Multi'
+            description = 'Multi-artifact test'
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/zebra.agent.md' },
+                @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' },
+                @{ kind = 'prompt'; path = '.github/prompts/my-prompt.prompt.md' },
+                @{ kind = 'instruction'; path = '.github/instructions/my-instr.instructions.md' },
+                @{ kind = 'skill'; path = '.github/skills/my-skill/' }
+            )
+        }
+        $mdPath = Join-Path $script:tempDir 'multi.collection.md'
+        'Test body.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.multi.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Match '### Chat Agents'
+        $content | Should -Match '\| Name \| Description \|'
+        $content | Should -Match '\*\*alpha\*\*.*Alpha agent description'
+        $content | Should -Match '\*\*zebra\*\*.*Zebra agent description'
+        $content | Should -Match '### Prompts'
+        $content | Should -Match '\*\*my-prompt\*\*.*My prompt description'
+        $content | Should -Match '### Instructions'
+        $content | Should -Match '\*\*my-instr\*\*.*My instruction description'
+        $content | Should -Match '### Skills'
+        $content | Should -Match '\*\*my-skill\*\*.*My skill description'
+    }
+
+    It 'Includes Full Edition link for persona collections' {
+        $collection = @{
+            id          = 'persona'
+            name        = 'Persona'
+            description = 'Persona test'
+            items       = @()
+        }
+        $mdPath = Join-Path $script:tempDir 'persona.collection.md'
+        'Persona body.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.persona.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Match '## Full Edition'
+        $content | Should -Match 'HVE Core.*extension'
+    }
+
+    It 'Excludes Full Edition link for hve-core-all' {
+        $collection = @{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Full bundle'
+            items       = @()
+        }
+        $mdPath = Join-Path $script:tempDir 'all2.collection.md'
+        'All body.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.all2.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Not -Match '## Full Edition'
+    }
+
+    It 'Includes common footer sections' {
+        $collection = @{
+            id          = 'footer-test'
+            name        = 'Footer'
+            description = 'Footer test'
+            items       = @()
+        }
+        $mdPath = Join-Path $script:tempDir 'footer.collection.md'
+        'Footer body.' | Set-Content -Path $mdPath
+        $outPath = Join-Path $script:tempDir 'README.footer.md'
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+        $content = Get-Content -Path $outPath -Raw
+        $content | Should -Match '## Getting Started'
+        $content | Should -Match '## Pre-release Channel'
+        $content | Should -Match '## Requirements'
+        $content | Should -Match '## License'
+        $content | Should -Match '## Support'
+        $content | Should -Match 'Microsoft ISE HVE Essentials'
+    }
+}
+
 #endregion Package Generation Function Tests
 
 Describe 'Get-AllowedMaturities' {

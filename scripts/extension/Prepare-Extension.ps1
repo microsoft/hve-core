@@ -297,7 +297,199 @@ function Invoke-ExtensionCollectionsGeneration {
 
     Remove-StaleGeneratedFiles -RepoRoot $RepoRoot -ExpectedFiles $expectedFiles
 
+    # Generate README files for each persona collection
+    $readmeTemplatePath = Join-Path $templatesDir 'README.template.md'
+    foreach ($collectionFile in $collectionFiles) {
+        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collectionId = [string]$collection.id
+
+        $collectionMdPath = Join-Path $collectionsDir "$collectionId.collection.md"
+        if (-not (Test-Path $collectionMdPath)) {
+            continue
+        }
+
+        $readmePath = if ($collectionId -eq 'hve-core-all') {
+            Join-Path $RepoRoot 'extension/README.md'
+        }
+        else {
+            Join-Path $RepoRoot "extension/README.$collectionId.md"
+        }
+
+        New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath
+    }
+
     return $expectedFiles
+}
+
+function Get-ArtifactDescription {
+    <#
+    .SYNOPSIS
+        Reads the description from an artifact file's YAML frontmatter.
+    .DESCRIPTION
+        Parses the YAML frontmatter block at the top of a markdown file and
+        returns the description field value. Returns an empty string when the
+        file is missing, has no frontmatter, or lacks a description field.
+        Strips the common " - Brought to you by microsoft/hve-core" suffix.
+    .PARAMETER FilePath
+        Absolute path to the artifact markdown file.
+    .OUTPUTS
+        [string] Description text, or empty string if unavailable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path $FilePath)) {
+        return ''
+    }
+
+    $content = Get-Content -Path $FilePath -Raw
+    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+        $yamlBlock = $Matches[1]
+        try {
+            $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
+            if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
+                $desc = [string]$frontmatter.description
+                # Strip the common branding suffix
+                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
+                return $desc.Trim()
+            }
+        }
+        catch {
+            Write-Verbose "Failed to parse frontmatter from $FilePath`: $_"
+        }
+    }
+
+    return ''
+}
+
+function New-CollectionReadme {
+    <#
+    .SYNOPSIS
+        Generates a README.md for an extension collection from a template.
+    .DESCRIPTION
+        Reads a README template and replaces placeholder tokens with collection
+        metadata, hand-authored body content, and auto-generated artifact tables
+        with descriptions read from each artifact's YAML frontmatter.
+        Tokens: {{DISPLAY_NAME}}, {{DESCRIPTION}}, {{BODY}}, {{ARTIFACTS}},
+        {{FULL_EDITION}}.
+    .PARAMETER Collection
+        Parsed collection manifest hashtable.
+    .PARAMETER CollectionMdPath
+        Path to the collection markdown body file.
+    .PARAMETER TemplatePath
+        Path to the README template file containing placeholder tokens.
+    .PARAMETER RepoRoot
+        Repository root path for resolving artifact file paths.
+    .PARAMETER OutputPath
+        Destination path for the generated README.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Collection,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionMdPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$TemplatePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath
+    )
+
+    $collectionId = [string]$Collection.id
+    $displayName = if ($collectionId -eq 'hve-core-all') {
+        'HVE Core'
+    }
+    else {
+        Get-CollectionDisplayName -CollectionManifest $Collection -DefaultValue "HVE Core - $collectionId"
+    }
+    $description = if ($Collection.ContainsKey('description')) { [string]$Collection.description } else { '' }
+
+    $bodyContent = (Get-Content -Path $CollectionMdPath -Raw).Trim()
+
+    # Collect artifacts with descriptions grouped by kind
+    $agents = @()
+    $prompts = @()
+    $instructions = @()
+    $skills = @()
+
+    if ($Collection.ContainsKey('items')) {
+        foreach ($item in $Collection.items) {
+            if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                continue
+            }
+            $kind = [string]$item.kind
+            $path = [string]$item.path
+            $artifactName = Get-CollectionArtifactKey -Kind $kind -Path $path
+
+            # Resolve full file path for frontmatter reading
+            $resolvedPath = Join-Path $RepoRoot ($path -replace '^\./', '')
+            if ($kind -eq 'skill') {
+                $resolvedPath = Join-Path $resolvedPath 'SKILL.md'
+            }
+            $artifactDesc = Get-ArtifactDescription -FilePath $resolvedPath
+
+            $entry = @{ Name = $artifactName; Description = $artifactDesc }
+            switch ($kind) {
+                'agent' { $agents += $entry }
+                'prompt' { $prompts += $entry }
+                'instruction' { $instructions += $entry }
+                'skill' { $skills += $entry }
+            }
+        }
+    }
+
+    # Build markdown tables for each artifact kind
+    $artifactSections = [System.Text.StringBuilder]::new()
+
+    foreach ($section in @(
+        @{ Title = 'Chat Agents'; Items = $agents },
+        @{ Title = 'Prompts'; Items = $prompts },
+        @{ Title = 'Instructions'; Items = $instructions },
+        @{ Title = 'Skills'; Items = $skills }
+    )) {
+        if ($section.Items.Count -eq 0) { continue }
+
+        $null = $artifactSections.AppendLine("### $($section.Title)")
+        $null = $artifactSections.AppendLine()
+        $null = $artifactSections.AppendLine('| Name | Description |')
+        $null = $artifactSections.AppendLine('|------|-------------|')
+        foreach ($entry in ($section.Items | Sort-Object { $_.Name })) {
+            $null = $artifactSections.AppendLine("| **$($entry.Name)** | $($entry.Description) |")
+        }
+        $null = $artifactSections.AppendLine()
+    }
+
+    $fullEdition = if ($collectionId -ne 'hve-core-all') {
+        "## Full Edition`n`nLooking for more agents covering additional domains? Check out the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
+    }
+    else {
+        ''
+    }
+
+    # Read template and replace tokens
+    $template = Get-Content -Path $TemplatePath -Raw
+    $readmeContent = $template `
+        -replace '\{\{DISPLAY_NAME\}\}', $displayName `
+        -replace '\{\{DESCRIPTION\}\}', $description `
+        -replace '\{\{BODY\}\}', $bodyContent `
+        -replace '\{\{ARTIFACTS\}\}', $artifactSections.ToString().TrimEnd() `
+        -replace '\{\{FULL_EDITION\}\}', $fullEdition
+
+    # Clean up blank lines left by empty token replacements
+    $readmeContent = $readmeContent -replace '(\r?\n){3,}', "`n`n"
+    $readmeContent = $readmeContent.TrimEnd() + "`n"
+
+    Set-Content -Path $OutputPath -Value $readmeContent -Encoding utf8NoBOM -NoNewline
 }
 
 #endregion Package Generation Functions
