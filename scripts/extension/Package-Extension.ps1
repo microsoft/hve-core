@@ -32,6 +32,9 @@
     collection-filtered artifacts are copied and the output filename uses the
     collection ID.
 
+.PARAMETER DryRun
+    Optional. Validates packaging orchestration without invoking vsce.
+
 .EXAMPLE
     ./Package-Extension.ps1
     # Packages using version from package.json
@@ -76,7 +79,11 @@ param(
     [switch]$PreRelease,
 
     [Parameter(Mandatory = $false)]
-    [string]$Collection = ""
+    [string]$Collection = "",
+
+    [Parameter(Mandatory = $false)]
+    [Alias('dry-run')]
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Stop'
@@ -759,6 +766,8 @@ function Invoke-PackageExtension {
         Optional path to a collection manifest JSON file. When specified, only
         collection-filtered artifacts are copied and the output filename uses the
         collection ID.
+    .PARAMETER DryRun
+        When specified, validates packaging orchestration without invoking vsce.
     .OUTPUTS
         Hashtable with Success, OutputPath, Version, and ErrorMessage properties.
     #>
@@ -786,7 +795,10 @@ function Invoke-PackageExtension {
         [switch]$PreRelease,
 
         [Parameter(Mandatory = $false)]
-        [string]$Collection = ""
+        [string]$Collection = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
     )
 
     $dirsToClean = @(".github", "docs", "scripts")
@@ -938,6 +950,12 @@ function Invoke-PackageExtension {
             }
         }
 
+        if ($DryRun) {
+            Write-Host ""
+            Write-Host "🧪 Dry-run complete: packaging orchestration validated without VSIX creation." -ForegroundColor Yellow
+            return New-PackagingResult -Success $true -Version $packageVersion
+        }
+
         # Check vsce availability using pure function
         $vsceAvailability = Test-VsceAvailable
         if (-not $vsceAvailability.IsAvailable) {
@@ -1041,7 +1059,8 @@ if ($MyInvocation.InvocationName -ne '.') {
             -DevPatchNumber $DevPatchNumber `
             -ChangelogPath $ChangelogPath `
             -PreRelease:$PreRelease `
-            -Collection $Collection
+            -Collection $Collection `
+            -DryRun:$DryRun
 
         if (-not $result.Success) {
             Write-Error -ErrorAction Continue $result.ErrorMessage

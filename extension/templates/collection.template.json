@@ -1,0 +1,8 @@
+{
+  "$schema": "../../scripts/linting/schemas/collection.schema.json",
+  "id": "",
+  "name": "",
+  "displayName": "",
+  "description": "",
+  "maturity": "stable"
+}

@@ -24,6 +24,8 @@ items:
   kind: agent
 - path: .github/agents/github-backlog-manager.agent.md
   kind: agent
+- path: .github/agents/github-issue-manager.agent.md
+  kind: agent
 - path: .github/agents/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/memory.agent.md

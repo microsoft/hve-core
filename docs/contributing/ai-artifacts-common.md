@@ -269,7 +269,7 @@ For clone-based installations, the installer agent supports **agent-only persona
 
 ## Maturity Field Requirements
 
-Maturity is defined in `.github/ai-artifacts-registry.json` and MUST NOT appear in artifact frontmatter.
+Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
 
 ### Purpose
 
@@ -287,6 +287,8 @@ The maturity field controls which extension channel includes the artifact:
 | `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
 | `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
 
+When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
+
 ### Default for New Contributions
 
 New artifact registry entries **SHOULD** use `maturity: stable` unless:
@@ -297,14 +299,13 @@ New artifact registry entries **SHOULD** use `maturity: stable` unless:
 
 ### Setting Maturity
 
-Add or update the maturity value in the artifact's registry entry in `.github/ai-artifacts-registry.json`:
+Add or update the maturity value on each collection item in `collections/*.collection.yml`:
 
-```json
-"my-artifact": {
-    "maturity": "stable",
-    "personas": ["hve-core-all"],
-    "tags": ["category"]
-}
+```yaml
+items:
+  - path: .github/agents/example.agent.md
+    kind: agent
+    maturity: stable
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).

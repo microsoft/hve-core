@@ -241,20 +241,94 @@ function Test-GlobMatch {
     return $false
 }
 
+function Get-CollectionArtifactKey {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    switch ($Kind) {
+        'agent' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
+        }
+        'prompt' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
+        }
+        'instruction' {
+            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
+        }
+        'skill' {
+            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
+        }
+        default {
+            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
+                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
+            }
+
+            if ($Path -like '*.md') {
+                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
+            }
+
+            return [System.IO.Path]::GetFileName($Path)
+        }
+    }
+}
+
+function Get-CollectionArtifactMaturity {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionItem,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Registry = @{}
+    )
+
+    if ($CollectionItem.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionItem.maturity)) {
+        return [string]$CollectionItem.maturity
+    }
+
+    if (-not $CollectionItem.ContainsKey('kind') -or -not $CollectionItem.ContainsKey('path')) {
+        return 'stable'
+    }
+
+    $kind = [string]$CollectionItem.kind
+    $path = [string]$CollectionItem.path
+    if ([string]::IsNullOrWhiteSpace($kind) -or [string]::IsNullOrWhiteSpace($path)) {
+        return 'stable'
+    }
+
+    $registryType = "${kind}s"
+    if ($Registry.Count -gt 0 -and $Registry.ContainsKey($registryType)) {
+        $artifactKey = Get-CollectionArtifactKey -Kind $kind -Path $path
+        if ($Registry[$registryType].ContainsKey($artifactKey) -and $Registry[$registryType][$artifactKey].ContainsKey('maturity')) {
+            return [string]$Registry[$registryType][$artifactKey].maturity
+        }
+    }
+
+    return 'stable'
+}
+
 function Get-CollectionArtifacts {
     <#
     .SYNOPSIS
-        Filters registry artifacts by collection persona, maturity, and glob patterns.
+        Filters collection artifacts by collection item metadata and channel maturity.
     .DESCRIPTION
-        Applies collection-level filtering to the artifact registry, returning artifact
-        names that match the collection's persona requirements, allowed maturities,
-        and optional include/exclude glob patterns.
-    .PARAMETER Registry
-        AI artifacts registry hashtable.
+        Applies collection-level filtering to manifest items, returning artifact
+        names that match allowed maturities. Item-level maturity is preferred;
+        registry maturity is used as temporary fallback when item maturity is omitted.
     .PARAMETER Collection
-        Collection manifest hashtable with personas and optional include/exclude.
+        Collection manifest hashtable with items.
     .PARAMETER AllowedMaturities
         Array of maturity levels to include.
+    .PARAMETER Registry
+        AI artifacts registry hashtable used as fallback for omitted item maturity.
     .OUTPUTS
         [hashtable] With Agents, Prompts, Instructions, Skills arrays of matching artifact names.
     #>
@@ -262,13 +336,13 @@ function Get-CollectionArtifacts {
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
-        [hashtable]$Registry,
-
-        [Parameter(Mandatory = $true)]
         [hashtable]$Collection,
 
         [Parameter(Mandatory = $true)]
-        [string[]]$AllowedMaturities
+        [string[]]$AllowedMaturities,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Registry = @{}
     )
 
     $result = @{
@@ -278,53 +352,29 @@ function Get-CollectionArtifacts {
         Skills       = @()
     }
 
-    $collectionPersonas = $Collection.personas
+    if (-not $Collection.ContainsKey('items') -or @($Collection.items).Count -eq 0) {
+        return $result
+    }
 
-    foreach ($type in @('agents', 'prompts', 'instructions', 'skills')) {
-        if (-not $Registry.ContainsKey($type)) { continue }
-
-        $includePatterns = @()
-        $excludePatterns = @()
-        if ($Collection.ContainsKey('include') -and $Collection.include.ContainsKey($type)) {
-            $includePatterns = $Collection.include[$type]
-        }
-        if ($Collection.ContainsKey('exclude') -and $Collection.exclude.ContainsKey($type)) {
-            $excludePatterns = $Collection.exclude[$type]
+    foreach ($item in $Collection.items) {
+        if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+            continue
         }
 
-        foreach ($name in $Registry[$type].Keys) {
-            $entry = $Registry[$type][$name]
+        $kind = [string]$item.kind
+        $path = [string]$item.path
 
-            # Persona filter: artifact must belong to at least one collection persona
-            # Empty personas array means universal (all personas)
-            $personaMatch = $false
-            if (@($entry.personas).Count -eq 0) {
-                $personaMatch = $true
-            } else {
-                foreach ($persona in $entry.personas) {
-                    if ($collectionPersonas -contains $persona) {
-                        $personaMatch = $true
-                        break
-                    }
-                }
-            }
-            if (-not $personaMatch) { continue }
+        $maturity = Get-CollectionArtifactMaturity -CollectionItem $item -Registry $Registry
+        if ($AllowedMaturities -notcontains $maturity) {
+            continue
+        }
 
-            # Maturity filter
-            if ($AllowedMaturities -notcontains $entry.maturity) { continue }
-
-            # Include glob filter (if specified)
-            if ($includePatterns.Count -gt 0 -and -not (Test-GlobMatch -Name $name -Patterns $includePatterns)) {
-                continue
-            }
-
-            # Exclude glob filter
-            if ($excludePatterns.Count -gt 0 -and (Test-GlobMatch -Name $name -Patterns $excludePatterns)) {
-                continue
-            }
-
-            $capitalType = @{ agents = 'Agents'; prompts = 'Prompts'; instructions = 'Instructions'; skills = 'Skills' }[$type]
-            $result[$capitalType] += $name
+        $artifactKey = Get-CollectionArtifactKey -Kind $kind -Path $path
+        switch ($kind) {
+            'agent' { $result.Agents += $artifactKey }
+            'prompt' { $result.Prompts += $artifactKey }
+            'instruction' { $result.Instructions += $artifactKey }
+            'skill' { $result.Skills += $artifactKey }
         }
     }
 
@@ -438,6 +488,9 @@ function Resolve-RequiresDependencies {
         AI artifacts registry hashtable.
     .PARAMETER AllowedMaturities
         Array of maturity levels to include.
+    .PARAMETER CollectionMaturities
+        Optional per-type maturity map keyed by artifact name. Used as
+        primary maturity source before registry lookup.
     .OUTPUTS
         [hashtable] With Agents, Prompts, Instructions, Skills arrays containing resolved names.
     #>
@@ -451,7 +504,10 @@ function Resolve-RequiresDependencies {
         [hashtable]$Registry,
 
         [Parameter(Mandatory = $true)]
-        [string[]]$AllowedMaturities
+        [string[]]$AllowedMaturities,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$CollectionMaturities = @{}
     )
 
     $resolved = @{
@@ -502,11 +558,16 @@ function Resolve-RequiresDependencies {
             $capitalType = $typeMap[$type]
 
             foreach ($dep in $requires[$type]) {
-                # Check maturity of dependency
-                if ($Registry.ContainsKey($type) -and $Registry[$type].ContainsKey($dep)) {
-                    $depMaturity = $Registry[$type][$dep].maturity
-                    if ($AllowedMaturities -notcontains $depMaturity) { continue }
+                # Check maturity of dependency (collection metadata preferred, registry fallback)
+                $depMaturity = 'stable'
+                if ($CollectionMaturities.ContainsKey($type) -and $CollectionMaturities[$type].ContainsKey($dep)) {
+                    $depMaturity = $CollectionMaturities[$type][$dep]
                 }
+                elseif ($Registry.ContainsKey($type) -and $Registry[$type].ContainsKey($dep) -and $Registry[$type][$dep].ContainsKey('maturity')) {
+                    $depMaturity = $Registry[$type][$dep].maturity
+                }
+
+                if ($AllowedMaturities -notcontains $depMaturity) { continue }
 
                 if ($resolved[$capitalType].Add($dep)) {
                     if ($type -eq 'agents') {
@@ -1208,10 +1269,23 @@ function Invoke-PrepareExtension {
     # Load collection manifest if specified
     $collectionManifest = $null
     $collectionArtifactNames = $null
+    $collectionMaturities = @{}
 
     if ($Collection -and $Collection -ne "") {
         $collectionManifest = Get-CollectionManifest -CollectionPath $Collection
         Write-Host "Collection: $($collectionManifest.displayName) ($($collectionManifest.id))"
+
+        $artifactCollectionManifest = $collectionManifest
+        if (-not $artifactCollectionManifest.ContainsKey('items') -or @($artifactCollectionManifest.items).Count -eq 0) {
+            $rootCollectionPath = Join-Path $RepoRoot "collections/$($collectionManifest.id).collection.yml"
+            if (Test-Path $rootCollectionPath) {
+                $artifactCollectionManifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $rootCollectionPath -Raw)
+                Write-Host "Using root collection metadata: $rootCollectionPath"
+            }
+            else {
+                Write-Warning "No root collection metadata found for '$($collectionManifest.id)' at $rootCollectionPath"
+            }
+        }
 
         # Check collection-level maturity eligibility
         $collectionEligibility = Test-CollectionMaturityEligible -CollectionManifest $collectionManifest -Channel $Channel
@@ -1223,8 +1297,27 @@ function Invoke-PrepareExtension {
         $collectionMaturity = if ($collectionManifest.ContainsKey('maturity')) { $collectionManifest['maturity'] } else { 'stable' }
         Write-Host "Collection maturity: $collectionMaturity"
 
-        # Get persona-filtered artifact names
-        $collectionArtifactNames = Get-CollectionArtifacts -Registry $registry -Collection $collectionManifest -AllowedMaturities $allowedMaturities
+        # Build collection maturity map and channel-filtered artifact names
+        $collectionMaturities = @{}
+
+        if ($artifactCollectionManifest.ContainsKey('items')) {
+            foreach ($item in $artifactCollectionManifest.items) {
+                if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                    continue
+                }
+
+                $itemKind = [string]$item.kind
+                $itemPath = [string]$item.path
+                $artifactKey = Get-CollectionArtifactKey -Kind $itemKind -Path $itemPath
+                $effectiveMaturity = Get-CollectionArtifactMaturity -CollectionItem $item -Registry $registry
+                if (-not $collectionMaturities.ContainsKey("${itemKind}s") -or $null -eq $collectionMaturities["${itemKind}s"]) {
+                    $collectionMaturities["${itemKind}s"] = @{}
+                }
+                $collectionMaturities["${itemKind}s"][$artifactKey] = $effectiveMaturity
+            }
+        }
+
+        $collectionArtifactNames = Get-CollectionArtifacts -Registry $registry -Collection $artifactCollectionManifest -AllowedMaturities $allowedMaturities
 
         # Resolve handoff dependencies (agents only)
         $agentsDir = Join-Path $GitHubDir "agents"
@@ -1237,7 +1330,7 @@ function Invoke-PrepareExtension {
             prompts      = $collectionArtifactNames.Prompts
             instructions = $collectionArtifactNames.Instructions
             skills       = $collectionArtifactNames.Skills
-        } -Registry $registry -AllowedMaturities $allowedMaturities
+        } -Registry $registry -AllowedMaturities $allowedMaturities -CollectionMaturities $collectionMaturities
 
         $collectionArtifactNames = @{
             Agents       = $resolvedNames.Agents
@@ -1247,9 +1340,16 @@ function Invoke-PrepareExtension {
         }
     }
 
-    # Discover agents
+    # Discover artifacts
+    $discoveryAllowedMaturities = if ($null -ne $collectionArtifactNames) {
+        @('stable', 'preview', 'experimental', 'deprecated')
+    }
+    else {
+        $allowedMaturities
+    }
+
     $agentsDir = Join-Path $GitHubDir "agents"
-    $agentResult = Get-DiscoveredAgents -AgentsDir $agentsDir -AllowedMaturities $allowedMaturities -ExcludedAgents @() -Registry $registry
+    $agentResult = Get-DiscoveredAgents -AgentsDir $agentsDir -AllowedMaturities $discoveryAllowedMaturities -ExcludedAgents @() -Registry $registry
     $chatAgents = $agentResult.Agents
     $excludedAgents = $agentResult.Skipped
 
@@ -1261,7 +1361,7 @@ function Invoke-PrepareExtension {
 
     # Discover prompts
     $promptsDir = Join-Path $GitHubDir "prompts"
-    $promptResult = Get-DiscoveredPrompts -PromptsDir $promptsDir -GitHubDir $GitHubDir -AllowedMaturities $allowedMaturities -Registry $registry
+    $promptResult = Get-DiscoveredPrompts -PromptsDir $promptsDir -GitHubDir $GitHubDir -AllowedMaturities $discoveryAllowedMaturities -Registry $registry
     $chatPrompts = $promptResult.Prompts
     $excludedPrompts = $promptResult.Skipped
 
@@ -1273,7 +1373,7 @@ function Invoke-PrepareExtension {
 
     # Discover instructions
     $instructionsDir = Join-Path $GitHubDir "instructions"
-    $instructionResult = Get-DiscoveredInstructions -InstructionsDir $instructionsDir -GitHubDir $GitHubDir -AllowedMaturities $allowedMaturities -Registry $registry
+    $instructionResult = Get-DiscoveredInstructions -InstructionsDir $instructionsDir -GitHubDir $GitHubDir -AllowedMaturities $discoveryAllowedMaturities -Registry $registry
     $chatInstructions = $instructionResult.Instructions
     $excludedInstructions = $instructionResult.Skipped
 
@@ -1285,7 +1385,7 @@ function Invoke-PrepareExtension {
 
     # Discover skills
     $skillsDir = Join-Path $GitHubDir "skills"
-    $skillResult = Get-DiscoveredSkills -SkillsDir $skillsDir -AllowedMaturities $allowedMaturities -Registry $registry
+    $skillResult = Get-DiscoveredSkills -SkillsDir $skillsDir -AllowedMaturities $discoveryAllowedMaturities -Registry $registry
     $chatSkills = $skillResult.Skills
     $excludedSkills = $skillResult.Skipped
 
