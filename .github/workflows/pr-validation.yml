@@ -89,15 +89,6 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
-  artifact-registry-validation:
-    name: Artifact Registry Validation
-    uses: ./.github/workflows/artifact-registry-validation.yml
-    permissions:
-      contents: read
-    with:
-      soft-fail: false
-      warnings-as-errors: true
-
   plugin-validation:
     name: Plugin Validation
     uses: ./.github/workflows/plugin-validation.yml

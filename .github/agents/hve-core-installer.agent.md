@@ -1095,9 +1095,9 @@ Read `.github/ai-artifacts-registry.json` from the HVE-Core source (at `$hveCore
 
 Choose one or more personas to install agents tailored to your role, more to come in the future.
 
-| # | Persona            | Agents | Description                      |
-|---|--------------------|--------|----------------------------------|
-| 1 | Developer          | [N]    | Software engineers writing code  |
+| # | Persona   | Agents | Description                     |
+|---|-----------|--------|---------------------------------|
+| 1 | Developer | [N]    | Software engineers writing code |
 
 Enter persona number(s) separated by commas (e.g., "1"):
 ```
@@ -1147,10 +1147,10 @@ User input handling:
 
 ### Agent Bundle Definitions
 
-| Bundle | Agents |
-| ------ | ------ |
-| `rpi-core` | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
-| `persona:<id>` | Stable agents matching the persona |
+| Bundle         | Agents                                                                    |
+|----------------|---------------------------------------------------------------------------|
+| `rpi-core`     | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
+| `persona:<id>` | Stable agents matching the persona                                        |
 
 ### Collision Detection
 

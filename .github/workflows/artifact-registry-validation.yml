@@ -1,15 +1,27 @@
-name: Artifact Registry Validation
+name: Artifact Registry Validation (Fallback)
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       soft-fail:
-        description: 'Whether to continue on registry validation errors'
+        description: "Whether to continue on registry validation errors"
         required: false
         type: boolean
         default: false
       warnings-as-errors:
-        description: 'Treat warnings as errors'
+        description: "Treat warnings as errors"
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: "Whether to continue on registry validation errors"
+        required: false
+        type: boolean
+        default: false
+      warnings-as-errors:
+        description: "Treat warnings as errors"
         required: false
         type: boolean
         default: true
@@ -19,7 +31,7 @@ permissions:
 
 jobs:
   artifact-registry-validation:
-    name: Validate Artifact Registry
+    name: Validate Artifact Registry (Fallback)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,6 +50,7 @@ jobs:
         id: validate
         shell: pwsh
         run: |
+          Write-Warning 'Artifact registry validation is deprecated and retained as fallback only.'
           $params = @{}
 
           if ('${{ inputs.warnings-as-errors }}' -eq 'true') {

@@ -4,31 +4,31 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Full version to use (e.g., 1.0.0 or empty to use package.json)'
+        description: "Full version to use (e.g., 1.0.0 or empty to use package.json)"
         required: false
         type: string
-        default: ''
+        default: ""
       dev-patch-number:
-        description: 'Dev patch number to append (creates version like 1.0.0-dev.123)'
+        description: "Dev patch number to append (creates version like 1.0.0-dev.123)"
         required: false
         type: string
-        default: ''
+        default: ""
       use-changelog:
-        description: 'Whether to download and use changelog artifact'
+        description: "Whether to download and use changelog artifact"
         required: false
         type: boolean
         default: false
       channel:
-        description: 'Release channel (Stable or PreRelease) controlling agent maturity filtering'
+        description: "Release channel (Stable or PreRelease) controlling agent maturity filtering"
         required: false
         type: string
-        default: 'Stable'
+        default: "Stable"
     outputs:
       version:
-        description: 'Version that was packaged'
+        description: "Version that was packaged"
         value: ${{ jobs.discover-collections.outputs.version }}
       collections-matrix:
-        description: 'JSON matrix of collections that were actually packaged (filtered by channel and maturity)'
+        description: "JSON matrix of collections that were actually packaged (filtered by channel and maturity)"
         value: ${{ jobs.discover-collections.outputs.matrix }}
 
 permissions:
@@ -48,6 +48,16 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
+
+      - name: Setup PowerShell modules
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Generate extension collections and package templates
+        shell: pwsh
+        run: |
+          ./scripts/extension/Generate-ExtensionCollections.ps1
 
       - name: Resolve effective version
         id: read-version
@@ -121,7 +131,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install -g @vscode/vsce@3.7.1
