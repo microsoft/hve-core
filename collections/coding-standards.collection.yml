@@ -26,6 +26,10 @@ items:
   # Prompt Engineering agents
   - path: .github/agents/prompt-builder.agent.md
     kind: agent
+  # Security agents
+  - path: .github/agents/security-champion.agent.md
+    kind: agent
+    maturity: experimental
   # RPI prompts
   - path: .github/prompts/rpi.prompt.md
     kind: prompt
@@ -64,6 +68,13 @@ items:
     kind: instruction
   - path: .github/instructions/uv-projects.instructions.md
     kind: instruction
+  # Security instructions
+  - path: .github/instructions/security/owasp-for-llms.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security/owasp-for-web-applications.instructions.md
+    kind: instruction
+    maturity: experimental
   # Common instructions
   - path: .github/instructions/writing-style.instructions.md
     kind: instruction
