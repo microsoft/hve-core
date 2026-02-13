@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.1](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.0...hve-core-v2.3.1) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **build:** remove draft flag that prevents release tag creation ([#533](https://github.com/microsoft/hve-core/issues/533)) ([c8de0aa](https://github.com/microsoft/hve-core/commit/c8de0aa65a313dd10001cdfdf1308115d5bd7cfc))
+* **workflows:** correct JSON output formatting in plugin discovery step ([#531](https://github.com/microsoft/hve-core/issues/531)) ([910fb8b](https://github.com/microsoft/hve-core/commit/910fb8b55cff89dd14eec07b99c3ffeff76f071c))
+
 ## [2.3.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.2.0...hve-core-v2.3.0) (2026-02-13)
 
 
