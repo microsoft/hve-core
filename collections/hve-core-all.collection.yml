@@ -25,9 +25,6 @@ items:
 - path: .github/agents/github-backlog-manager.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/github-issue-manager.agent.md
-  kind: agent
-  maturity: deprecated
 - path: .github/agents/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/memory.agent.md
