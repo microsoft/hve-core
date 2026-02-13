@@ -112,12 +112,12 @@ Review the execution results. If new issues were discovered during the process, 
 
 Planning files move through three states during the pipeline:
 
-| State         | Location                                          | Created By      | Consumed By |
-|---------------|---------------------------------------------------|-----------------| ------------|
-| Analysis      | `discovery/<scope>/issue-analysis.md`             | Discovery       | Triage      |
-| Triage Plan   | `triage/<YYYY-MM-DD>/handoff-logs.md`             | Triage          | Execution   |
-| Sprint Plan   | `sprint/<milestone-kebab>/handoff-logs.md`        | Sprint Planning | Execution   |
-| Execution Log | `execution/<YYYY-MM-DD>/execution-log.md`         | Execution       | User review |
+| State         | Location                                   | Created By      | Consumed By |
+|---------------|--------------------------------------------|-----------------|-------------|
+| Analysis      | `discovery/<scope>/issue-analysis.md`      | Discovery       | Triage      |
+| Triage Plan   | `triage/<YYYY-MM-DD>/handoff-logs.md`      | Triage          | Execution   |
+| Sprint Plan   | `sprint/<milestone-kebab>/handoff-logs.md` | Sprint Planning | Execution   |
+| Execution Log | `execution/<YYYY-MM-DD>/execution-log.md`  | Execution       | User review |
 
 Files are created once and updated in place. The execution workflow marks checkboxes in handoff files as it processes each operation, providing a built-in audit trail.
 
