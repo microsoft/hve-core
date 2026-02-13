@@ -119,6 +119,7 @@ Research findings are preserved in files, not chat history. Clean context lets e
 * [Task Reviewer Guide](task-reviewer.md) - Validate implementations
 * [Using Them Together](using-together.md) - Complete workflow example
 * [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available agents
+* [Agent Systems Catalog](../agents/README.md) - Browse all agent families beyond RPI
 
 ---
 

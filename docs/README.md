@@ -6,7 +6,7 @@ ms.date: 2026-01-22
 ms.topic: overview
 ---
 
-HVE Core is an enterprise-ready prompt engineering framework for GitHub Copilot. It provides 18 specialized agents, 18 reusable prompts, 17+ instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
+HVE Core is an enterprise-ready prompt engineering framework for GitHub Copilot. It provides 22 specialized agents, 27 reusable prompts, 17+ instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
 
 ## Audience
 
@@ -28,6 +28,18 @@ The Getting Started guide walks through installation, configuration, and running
 * [First Workflow](getting-started/first-workflow.md) - End-to-end example with RPI agents
 
 **[Getting Started Guide →](getting-started/README.md)**
+
+## Agent Systems
+
+**Time to complete**: 10-15 minutes
+
+hve-core provides 22 specialized agents organized into 9 functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
+
+* [RPI Orchestration](rpi/README.md) separates complex tasks into research, planning, implementation, and review phases
+* [GitHub Backlog Manager](agents/github-backlog/README.md) automates issue discovery, triage, sprint planning, and execution across GitHub repositories
+* Additional systems documented in the [Agent Catalog](agents/README.md)
+
+**[Browse the Agent Catalog →](agents/README.md)**
 
 ## RPI Methodology
 

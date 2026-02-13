@@ -234,6 +234,7 @@ The extension provides these contribution points:
 
 ## Related Documentation
 
+* [Agent Systems Catalog](../agents/README.md) - Overview of all agent systems with workflow documentation
 * [AI Artifacts Common Standards](../contributing/ai-artifacts-common.md) - Quality requirements for all artifacts
 * [Contributing Prompts](../contributing/prompts.md) - Prompt file specifications
 * [Contributing Agents](../contributing/custom-agents.md) - Agent file specifications
