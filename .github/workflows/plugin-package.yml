@@ -37,7 +37,7 @@ jobs:
                   matrix_json=$(find collections -name '*.collection.yml' -type f | sort | while IFS= read -r file; do
                     id=$(basename "$file" .collection.yml)
                     echo "{\"id\":\"$id\"}"
-                  done | jq -s '{include: .}')
+                  done | jq -sc '{include: .}')
 
                   echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
                   echo "Discovered plugin collections:"
