@@ -171,21 +171,20 @@ When assigning collections to artifacts:
 
 **Example collection assignments:**
 
-```json
-// Universal - available in all collections
-"markdown": {
-    "collections": ["hve-core-all", "developer"]
-}
+Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
 
-// Developer-focused - targeted distribution
-"csharp/csharp": {
-    "collections": ["hve-core-all", "developer"]
-}
+```yaml
+# In collections/hve-core-all.collection.yml - Universal
+- path: .github/instructions/markdown.instructions.md
+  kind: instruction
 
-// Core workflow - broadly applicable
-"rpi-agent": {
-    "collections": ["hve-core-all", "developer"]
-}
+# In collections/developer.collection.yml - Developer-focused
+- path: .github/instructions/markdown.instructions.md
+  kind: instruction
+
+# In collections/rpi.collection.yml - Core workflow
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
 ```
 
 ### Selecting Collections for New Artifacts
@@ -229,20 +228,23 @@ The companion function `Resolve-RequiresDependencies` in the same script applies
 
 ### Declaring Dependencies
 
-Add the `requires` field to artifacts that depend on others:
+Add the `requires` field to collection items in `collections/*.collection.yml`:
 
-```json
-"rpi-agent": {
-    "maturity": "stable",
-    "collections": ["hve-core-all"],
-    "tags": ["rpi", "orchestration"],
-    "requires": {
-        "agents": ["task-researcher", "task-planner", "task-implementor", "task-reviewer"],
-        "prompts": ["task-research", "task-plan", "task-implement", "task-review"],
-        "instructions": [],
-        "skills": []
-    }
-}
+```yaml
+- path: .github/agents/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
+  requires:
+    agents:
+      - task-researcher
+      - task-planner
+      - task-implementor
+      - task-reviewer
+    prompts:
+      - task-research
+      - task-plan
+      - task-implement
+      - task-review
 ```
 
 ### Dependency Resolution

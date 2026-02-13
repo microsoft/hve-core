@@ -1116,8 +1116,8 @@ User input handling:
 
 For each selected collection identifier:
 
-1. Iterate through `agents` in the registry
-2. Include agents where `maturity` is `stable` AND the collection's items list contains the agent
+1. Iterate through `items` in the collection manifest
+2. Include items where `kind` is `agent` AND `maturity` is `stable`
 3. Deduplicate across multiple selected collections
 
 #### Step 4: Present filtered agents for confirmation
@@ -1172,7 +1172,7 @@ $targetDir = ".github/agents"
 $filesToCopy = switch ($selection) {
     "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "task-reviewer.agent.md", "rpi-agent.agent.md") }
     default {
-        # Collection-based: $selection contains filtered agent names from registry
+        # Collection-based: $selection contains filtered agent names from collection manifest
         $collectionAgents
     }
 }

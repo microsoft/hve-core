@@ -89,7 +89,7 @@ Answer these questions to find your recommended installation method:
 
 HVE-Core supports role-based artifact collections tailored to specific roles:
 
-| Collection    | Extension Name  | Registry ID    | Maturity     | Description                          |
+| Collection    | Extension Name  | Collection ID  | Maturity     | Description                          |
 |---------------|-----------------|----------------|--------------|--------------------------------------|
 | **Full**      | `hve-core`      | `hve-core-all` | Stable       | All artifacts (recommended for most) |
 | **Developer** | `hve-developer` | `developer`    | Experimental | Software engineering focus           |
@@ -109,7 +109,7 @@ Clone-based installation methods support collection-based agent filtering throug
 2. Run the `hve-core-installer` agent
 3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
 
-The installer reads collection assignments from the artifact registry and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
+The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
 
 > [!NOTE]
 > Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.

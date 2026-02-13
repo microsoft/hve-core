@@ -67,7 +67,7 @@ Extension packaging is a two-step process: **Prepare** discovers and filters art
 ```mermaid
 flowchart LR
     subgraph Prepare["Step 1 · Prepare-Extension.ps1"]
-        P1[Load Registry] --> P2[Discover Artifacts]
+        P1[Load Collection Manifests] --> P2[Discover Artifacts]
         P2 --> P3["Filter by Maturity<br/>+ Collection"]
         P3 --> P4[Resolve Dependencies]
         P4 --> P5[Write package.json]
@@ -84,13 +84,12 @@ flowchart LR
 
 ### Artifact Discovery and Resolution
 
-The prepare step discovers all artifact files on disk, filters them through the registry, and optionally narrows the set to a specific collection. Dependency resolution ensures transitive handoff and requires references pull in all needed artifacts.
+The prepare step generates collection package files from `collections/*.collection.yml` manifests, discovers all artifact files on disk, filters them by maturity and collection membership, and resolves transitive handoff and requires dependencies to pull in all needed artifacts.
 
 ```mermaid
 flowchart TB
-    REG[ai-artifacts-registry.json] -->|Get-RegistryData| INPUTS
+    CM["Collection Manifests<br/>collections/*.collection.yml"] -->|Get-CollectionManifest| INPUTS
     CH[Channel: Stable / PreRelease] -->|Get-AllowedMaturities| INPUTS
-    CM["Collection Manifest<br/>optional"] -->|Get-CollectionManifest| INPUTS
 
     INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
 
@@ -108,7 +107,7 @@ flowchart TB
     CF -->|No| FINAL[Final Artifact Set]
     CF -->|Yes| PA["Filter by collection + globs<br/>Get-CollectionArtifacts"]
     PA --> HD["Resolve Handoff Closure<br/>BFS through agent frontmatter"]
-    HD --> RD["Resolve Requires Dependencies<br/>BFS through registry requires"]
+    HD --> RD["Resolve Requires Dependencies<br/>BFS through collection item requires"]
     RD --> INT["Intersect with<br/>discovered artifacts"]
     INT --> FINAL
 
@@ -340,7 +339,7 @@ The workflow validates the version is ODD before proceeding.
 
 ### Agent Maturity Filtering
 
-When packaging, artifacts are filtered by their `maturity` field in `.github/ai-artifacts-registry.json`:
+When packaging, artifacts are filtered by their `maturity` field in `collections/*.collection.yml` item entries:
 
 | Channel    | Included Maturity Levels            |
 |------------|-------------------------------------|
@@ -423,7 +422,7 @@ When building a collection, the system applies a multi-stage filter pipeline: co
 
 ```mermaid
 flowchart TB
-    REG["Registry Entry<br/>items · maturity · requires"] --> PF{"Collection match?<br/>empty items = universal"}
+    CI["Collection Item<br/>path · kind · maturity · requires"] --> PF{"Collection match?<br/>empty items = universal"}
     CM["Collection Manifest<br/>items array"] --> PF
     CH["Channel<br/>Stable / PreRelease"] --> MF
 
@@ -437,7 +436,7 @@ flowchart TB
     GLOB -->|No| EXCLUDE
 
     SEED --> HANDOFF["Resolve Handoff Closure<br/>BFS through agent frontmatter<br/>handoff targets bypass maturity filter"]
-    HANDOFF --> REQUIRES["Resolve Requires Dependencies<br/>BFS through registry requires blocks<br/>across agents · prompts · instructions · skills"]
+    HANDOFF --> REQUIRES["Resolve Requires Dependencies<br/>BFS through collection item requires blocks<br/>across agents · prompts · instructions · skills"]
     REQUIRES --> FINAL[Final Collection Artifact Set]
 ```
 
@@ -445,7 +444,7 @@ Key behaviors:
 
 * Artifacts with an empty `items` array are universal and included in every collection
 * Handoff targets bypass maturity filtering by design (an agent must be able to hand off to its declared targets)
-* The `requires` block supports transitive resolution: if agent A requires agent B, and B requires instruction C, all three are included
+* The `requires` block in collection items supports transitive resolution: if agent A requires agent B, and B requires instruction C, all three are included
 * Optional `include` and `exclude` glob arrays in the collection manifest provide fine-grained control per artifact type
 
 ### Testing Collection Builds Locally
@@ -459,8 +458,8 @@ pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer
 # 2. Check package.json for included artifacts
 cat extension/package.json | jq '.contributes.chatAgents'
 
-# 3. Validate the registry
-npm run lint:registry
+# 3. Validate collection metadata
+npm run lint:collections-metadata
 
 # 4. Build the package (dry run)
 pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
@@ -470,24 +469,24 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
 
 **Missing artifacts in collection:**
 
-1. Verify the artifact has a registry entry in `.github/ai-artifacts-registry.json`
-2. Check the `items` array includes the collection's identifier or `hve-core-all`
-3. Run `npm run lint:registry` to validate registry consistency
+1. Verify the artifact has an `items[]` entry in the relevant `collections/*.collection.yml` manifest
+2. Check the collection manifest includes the artifact with the correct `kind` and `path`
+3. Run `npm run lint:collections-metadata` to validate collection consistency
 
 **Dependency not included:**
 
-1. Check the parent artifact's `requires` field in the registry
-2. Ensure dependent artifacts exist and have valid registry entries
+1. Check the parent artifact's `requires` field in the collection item
+2. Ensure dependent artifacts exist and have valid collection entries
 3. Dependencies are included regardless of collection filter
 
 **Validation errors:**
 
 ```bash
-# Run full registry validation
-npm run lint:registry
+# Run full collection metadata validation
+npm run lint:collections-metadata
 
-# Check for orphaned artifacts (in registry but no file)
-npm run lint:registry -- --verbose
+# Validate YAML syntax of collection manifests
+npm run lint:yaml
 ```
 
 ### Collection Manifest Schema
@@ -548,8 +547,8 @@ To create a new collection:
         maturity: experimental
     ```
 
-2. Add the collection to the registry's `items` section
-3. Tag relevant artifacts with the new collection in the registry
+2. Add artifact entries to the `items` array in the manifest
+3. Set `kind`, `path`, and optionally `maturity` for each item
 4. Test the build locally with `-Collection collections/my-collection.collection.yml`
 5. Submit PR with the new collection manifest
 
