@@ -1320,9 +1320,11 @@ function Invoke-PrepareExtension {
         $collectionArtifactNames = Get-CollectionArtifacts -Registry $registry -Collection $artifactCollectionManifest -AllowedMaturities $allowedMaturities
 
         # Resolve handoff dependencies (agents only)
-        $agentsDir = Join-Path $GitHubDir "agents"
-        $expandedAgents = Resolve-HandoffDependencies -SeedAgents $collectionArtifactNames.Agents -AgentsDir $agentsDir -AllowedMaturities $allowedMaturities -Registry $registry
-        $collectionArtifactNames.Agents = $expandedAgents
+        if (@($collectionArtifactNames.Agents).Count -gt 0) {
+            $agentsDir = Join-Path $GitHubDir "agents"
+            $expandedAgents = Resolve-HandoffDependencies -SeedAgents $collectionArtifactNames.Agents -AgentsDir $agentsDir -AllowedMaturities $allowedMaturities -Registry $registry
+            $collectionArtifactNames.Agents = $expandedAgents
+        }
 
         # Resolve requires dependencies
         $resolvedNames = Resolve-RequiresDependencies -ArtifactNames @{

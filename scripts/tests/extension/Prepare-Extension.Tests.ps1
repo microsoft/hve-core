@@ -488,37 +488,56 @@ Describe 'Get-CollectionArtifacts' {
         }
     }
 
-    It 'Filters by persona' {
-        $collection = @{ personas = @('developer') }
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable', 'preview')
-        $result.Agents | Should -Contain 'dev-agent'
-        $result.Agents | Should -Not -Contain 'all-agent'
-    }
-
-    It 'Applies include patterns' {
+    It 'Returns artifacts from collection items across supported kinds' {
         $collection = @{
-            personas = @('developer')
-            include = @{ agents = @('dev-*') }
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md' },
+                @{ kind = 'prompt'; path = '.github/prompts/dev-prompt.prompt.md' },
+                @{ kind = 'instruction'; path = '.github/instructions/dev/dev.instructions.md' },
+                @{ kind = 'skill'; path = '.github/skills/video-to-gif/' }
+            )
         }
+
         $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable', 'preview')
         $result.Agents | Should -Contain 'dev-agent'
+        $result.Prompts | Should -Contain 'dev-prompt'
+        $result.Instructions | Should -Contain 'dev/dev'
+        $result.Skills | Should -Contain 'video-to-gif'
     }
 
-    It 'Applies exclude patterns' {
+    It 'Uses item maturity when provided' {
         $collection = @{
-            personas = @('developer')
-            exclude = @{ agents = @('preview-*') }
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md'; maturity = 'stable' },
+                @{ kind = 'agent'; path = '.github/agents/preview-dev.agent.md'; maturity = 'preview' }
+            )
         }
-        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable', 'preview')
-        $result.Agents | Should -Contain 'dev-agent'
-        $result.Agents | Should -Not -Contain 'preview-dev'
-    }
 
-    It 'Respects maturity filter' {
-        $collection = @{ personas = @('developer') }
         $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
         $result.Agents | Should -Contain 'dev-agent'
         $result.Agents | Should -Not -Contain 'preview-dev'
+    }
+
+    It 'Falls back to registry maturity when item maturity is omitted' {
+        $collection = @{
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/dev-agent.agent.md' },
+                @{ kind = 'agent'; path = '.github/agents/preview-dev.agent.md' }
+            )
+        }
+
+        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
+        $result.Agents | Should -Contain 'dev-agent'
+        $result.Agents | Should -Not -Contain 'preview-dev'
+    }
+
+    It 'Returns empty when collection has no items' {
+        $collection = @{ id = 'empty' }
+        $result = Get-CollectionArtifacts -Registry $script:registry -Collection $collection -AllowedMaturities @('stable')
+        $result.Agents.Count | Should -Be 0
+        $result.Prompts.Count | Should -Be 0
+        $result.Instructions.Count | Should -Be 0
+        $result.Skills.Count | Should -Be 0
     }
 }
 
@@ -1240,7 +1259,7 @@ applyTo: "**/*.js"
                 -DryRun
 
             $result.Success | Should -BeTrue
-            $result.AgentCount | Should -BeGreaterThan 0
+            $result.ErrorMessage | Should -Be ''
         }
     }
 }
