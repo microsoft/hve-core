@@ -72,7 +72,7 @@ Flag duplicates with confidence scores and suggest labels using the
 standard taxonomy.
 ```
 
-Review the handoff file at `.copilot-tracking/github-issues/triage/<YYYY-MM-DD>/handoff-logs.md`. Adjust any label suggestions or duplicate flags before continuing.
+Review the triage plan at `.copilot-tracking/github-issues/triage/<YYYY-MM-DD>/triage-plan.md`. Adjust any label suggestions or duplicate flags before continuing.
 
 ### Step 3: Clear and Plan
 
@@ -112,12 +112,12 @@ Review the execution results. If new issues were discovered during the process, 
 
 Planning files move through three states during the pipeline:
 
-| State         | Location                                   | Created By      | Consumed By |
-|---------------|--------------------------------------------|-----------------|-------------|
-| Analysis      | `discovery/<scope>/issue-analysis.md`      | Discovery       | Triage      |
-| Triage Plan   | `triage/<YYYY-MM-DD>/handoff-logs.md`      | Triage          | Execution   |
-| Sprint Plan   | `sprint/<milestone-kebab>/handoff-logs.md` | Sprint Planning | Execution   |
-| Execution Log | `execution/<YYYY-MM-DD>/execution-log.md`  | Execution       | User review |
+| State         | Location                                  | Created By      | Consumed By |
+|---------------|-------------------------------------------|-----------------|-------------|
+| Analysis      | `discovery/<scope>/issue-analysis.md`     | Discovery       | Triage      |
+| Triage Plan   | `triage/<YYYY-MM-DD>/triage-plan.md`      | Triage          | Execution   |
+| Sprint Plan   | `sprint/<milestone-kebab>/handoff.md`     | Sprint Planning | Execution   |
+| Execution Log | `<planning-type>/<scope>/handoff-logs.md` | Execution       | User review |
 
 Files are created once and updated in place. The execution workflow marks checkboxes in handoff files as it processes each operation, providing a built-in audit trail.
 
@@ -136,9 +136,9 @@ Each pass produces independent output files scoped by date and target, so previo
 | Workflow        | Input            | Output                                | Key File            |
 |-----------------|------------------|---------------------------------------|---------------------|
 | Discovery       | Repository scope | Issue inventory and recommendations   | `issue-analysis.md` |
-| Triage          | Discovery output | Label suggestions and duplicate flags | `handoff-logs.md`   |
-| Sprint Planning | Triage output    | Milestone assignments and sequencing  | `handoff-logs.md`   |
-| Execution       | Handoff files    | Applied changes and operation log     | `execution-log.md`  |
+| Triage          | Discovery output | Label suggestions and duplicate flags | `triage-plan.md`    |
+| Sprint Planning | Triage output    | Milestone assignments and sequencing  | `handoff.md`        |
+| Execution       | Handoff files    | Applied changes and operation log     | `handoff-logs.md`   |
 
 ## Quick Reference
 

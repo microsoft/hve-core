@@ -39,10 +39,10 @@ The execution workflow uses checkbox-based progress tracking in handoff files:
 ```markdown
 ## Pending Operations
 
-- [x] #42 - Add label: priority: high (applied)
+- [x] #42 - Add label: bug (applied)
 - [x] #42 - Assign milestone: v2.1 (applied)
 - [ ] #57 - Close as duplicate of #42 (skipped - unchecked)
-- [x] #63 - Add label: area: docs (applied)
+- [x] #63 - Add label: documentation (applied)
 ```
 
 Each line represents one atomic operation. The workflow processes checked items sequentially, validating current issue state before each change. If an issue has been modified since triage (new labels added, milestone changed, issue closed), the workflow flags the conflict and skips that operation rather than overwriting recent changes.
@@ -61,12 +61,11 @@ This log supports recovery when execution is interrupted. Re-running execution o
 ## Output Artifacts
 
 ```text
-.copilot-tracking/github-issues/execution/<YYYY-MM-DD>/
-├── handoff-logs.md       # Updated with completion checkboxes
-└── execution-log.md      # Operation results and audit trail
+.copilot-tracking/github-issues/<planning-type>/<scope-name>/
+└── handoff-logs.md    # Per-operation processing status (created next to consumed handoff)
 ```
 
-The handoff file is updated in place as operations complete. The execution log is append-only, preserving the full history of changes across multiple execution runs.
+The consumed handoff file is updated in place as operations complete, marking checkboxes for processed items. The handoff log records per-operation results with processing status, supporting recovery when execution is interrupted.
 
 ## How to Use
 
@@ -87,7 +86,7 @@ Attach or reference the handoff file when starting an execution conversation. Th
 ## Example Prompt
 
 ```text
-Execute the triage handoff at .copilot-tracking/github-issues/triage/2026-02-10/handoff-logs.md.
+Execute the triage handoff at .copilot-tracking/github-issues/triage/2026-02-10/triage-plan.md.
 Skip any operations on issues that have been updated in the last 24 hours.
 ```
 

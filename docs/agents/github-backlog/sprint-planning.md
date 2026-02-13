@@ -26,7 +26,7 @@ The Sprint Planning workflow organizes triaged issues into milestones, sequences
 1. Reads triage output to understand issue classification and priority levels
 2. Discovers existing milestones or recommends new ones based on issue patterns
 3. Maps issues to milestones considering priority, dependencies, and grouping
-4. Sequences work within each milestone based on priority labels and blocking relationships
+4. Sequences work within each milestone based on priority assessment and blocking relationships
 5. Produces a sprint plan with milestone assignments and a handoff file for execution
 
 > [!NOTE]
@@ -51,7 +51,7 @@ This process ensures sprint plans build on existing repository structure rather 
 .copilot-tracking/github-issues/sprint/<milestone-kebab>/
 ├── sprint-analysis.md    # Milestone mapping and capacity review
 ├── sprint-plan.md        # Recommended assignments and sequencing
-└── handoff-logs.md       # Execution-ready handoff with checkboxes
+└── handoff.md            # Execution-ready handoff with checkboxes
 ```
 
 The sprint plan includes reasoning for each milestone assignment, making it possible to adjust recommendations before execution applies them.

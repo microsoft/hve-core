@@ -11,14 +11,14 @@ keywords:
 estimated_reading_time: 5
 ---
 
-hve-core organizes 22 specialized agents into 9 functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
+hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
 | Group                     | Agents   | Complexity  | Documentation                               |
 |---------------------------|----------|-------------|---------------------------------------------|
 | RPI Orchestration         | 5        | High        | [RPI Documentation](../rpi/README.md)       |
 | GitHub Backlog Management | 1 active | Very High   | [Backlog Manager](github-backlog/README.md) |
 | ADO Integration           | 1        | Medium-High | Planned                                     |
-| Document Builders         | 5        | Medium-High | Planned                                     |
+| Document Builders         | 4        | Medium-High | Planned                                     |
 | Data Pipeline             | 4        | Medium      | Planned                                     |
 | DevOps Quality            | 2        | High        | Planned                                     |
 | Meta/Engineering          | 1        | High        | Planned                                     |
@@ -39,7 +39,7 @@ Bridges Azure DevOps work items with local Copilot workflows. The ADO integratio
 
 ## Document Builders
 
-Five specialized agents for creating structured documents. Includes builders for Architecture Decision Records, Business Requirements Documents, Product Requirements Documents, Root Cause Analyses, and security plans.
+Four specialized agents for creating structured documents. Includes builders for Architecture Decision Records, Business Requirements Documents, Product Requirements Documents, and security plans.
 
 ## Data Pipeline
 
@@ -59,7 +59,7 @@ Manages cloud infrastructure provisioning and configuration. Handles Bicep and T
 
 ## Utility
 
-General-purpose agents for common development tasks. Includes video-to-GIF conversion and other media utilities.
+General-purpose agents for common development tasks such as file organization, content transformation, and small automation helpers.
 
 ---
 

@@ -35,15 +35,14 @@ The Triage workflow classifies issues discovered in the previous phase, recommen
 
 ## Label Taxonomy
 
-The triage workflow uses a structured label taxonomy organized into five categories:
+The triage workflow uses a structured label taxonomy organized into four categories:
 
-| Category   | Labels                                            | Purpose                       |
-|------------|---------------------------------------------------|-------------------------------|
-| Type       | bug, enhancement, documentation, question         | Classifies the nature of work |
-| Priority   | priority: critical, priority: high, priority: low | Sets urgency level            |
-| Status     | needs-triage, in-progress, blocked                | Tracks lifecycle state        |
-| Area       | area: agents, area: docs, area: scripts           | Maps to repository components |
-| Management | duplicate, wontfix, good first issue              | Controls issue disposition    |
+| Category  | Labels                                                          | Purpose                            |
+|-----------|-----------------------------------------------------------------|------------------------------------|
+| Type      | bug, feature, enhancement, documentation, maintenance, security | Classifies the nature of work      |
+| Lifecycle | needs-triage, duplicate, wontfix, breaking-change               | Controls issue disposition         |
+| Scope     | agents, prompts, instructions, infrastructure                   | Maps to repository components      |
+| Community | good-first-issue, help-wanted, question                         | Contributor engagement and support |
 
 Each issue receives one label per category where applicable. The triage workflow explains its reasoning for each suggested label, allowing you to adjust before execution.
 
@@ -62,12 +61,11 @@ When confidence exceeds the threshold, the workflow links the duplicate pair in 
 
 ```text
 .copilot-tracking/github-issues/triage/<YYYY-MM-DD>/
-├── triage-analysis.md    # Label suggestions and duplicate findings
-├── triage-plan.md        # Recommended operations (label, close, link)
-└── handoff-logs.md       # Execution-ready handoff with checkboxes
+├── planning-log.md    # Progress tracking and analysis results
+└── triage-plan.md     # Label suggestions, duplicate findings, and recommended operations
 ```
 
-The handoff file uses checkbox syntax so the execution workflow can track which recommendations have been applied. Review and modify the handoff before passing it to execution.
+The triage plan includes reasoning for each classification, making it possible to adjust recommendations before execution applies them.
 
 ## How to Use
 
