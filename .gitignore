@@ -449,3 +449,7 @@ pr-reference.xml
 .mcp/*-local.json
 .mcp/*.local.json
 .mcp/.env
+
+# devcontainer
+/.gitconfig.global
+/.gitconfig.local

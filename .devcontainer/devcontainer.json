@@ -1,16 +1,30 @@
 {
   "name": "HVE Core - Markdown Editing",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  // Rename the mount to /workspace for a predictable workspace paths in our scripts.
+  // The source path might also contain special characters, so it needs escaped double quotes.
+  "workspaceMount": "\"source=${localWorkspaceFolder}\",target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    // Put GitHub local user data in a volume
+    {
+      "type": "volume",
+      "source": "${devcontainerId}-userconfig",
+      "target": "/home/vscode/.config"
+    },
+    // Put node modules into volume for better performance
+    {
+      "type": "volume",
+      "source": "${devcontainerId}-nodemodules",
+      "target": "/workspace/node_modules"
+    }
+  ],
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
     },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
-    },
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/azure-cli:1": {},
     "ghcr.io/devcontainers/features/powershell:1": {}
   },
   "customizations": {
@@ -23,9 +37,21 @@
         "bierner.markdown-mermaid",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "github.vscode-pull-request-github"
-      ]
+      ],
+      "settings": {
+        // Prevent extensions from stealing focus, see microsoft/vscode#205225
+        "workbench.view.showQuietly": {
+          "workbench.panel.output": true
+        }
+      }
     }
   },
+  // This is to ensure support for config includes is properly handled, see microsoft/vscode-remote-release#2084
+  "initializeCommand": {
+    "extractGitGlobals": "(git config -l --global --include || true) > .gitconfig.global",
+    "extractGitLocals": "(git config -l --local --include || true) > .gitconfig.local"
+  },
+  "postAttachCommand": "/bin/bash .devcontainer/scripts/post-attach.sh",
   "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "remoteUser": "vscode"
