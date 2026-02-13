@@ -50,7 +50,7 @@ if ($CodeCoverage.IsPresent) {
 
     # Resolve coverage paths explicitly - Join-Path with wildcards returns literal paths without file system expansion in Pester configuration
     $scriptRoot = Split-Path $PSScriptRoot -Parent
-    $coverageDirs = @('linting', 'security', 'dev-tools', 'lib', 'extension')
+    $coverageDirs = @('linting', 'security', 'dev-tools', 'lib', 'extension', 'plugins')
 
     $coveragePaths = $coverageDirs | ForEach-Object {
         Get-ChildItem -Path (Join-Path $scriptRoot $_) -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
