@@ -1,6 +1,5 @@
 ---
 description: 'Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai'
-maturity: stable
 ---
 
 # ADR Creation Coach

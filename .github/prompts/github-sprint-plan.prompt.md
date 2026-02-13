@@ -2,7 +2,6 @@
 description: 'Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog'
 agent: 'github-backlog-manager'
 argument-hint: "milestone=... [documents=...] [sprintGoal=...] [capacity=...] [autonomy={full|partial|manual}]"
-maturity: experimental
 ---
 
 # Plan GitHub Sprint

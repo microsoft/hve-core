@@ -1,0 +1,24 @@
+{
+  "name": "hve-core",
+  "displayName": "HVE Core",
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
+  "version": "2.2.0",
+  "description": "AI-powered chat agents, prompts, and instructions for hybrid virtual environments",
+  "publisher": "ise-hve-essentials",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/hve-core.git"
+  },
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": [
+    "Chat"
+  ],
+  "contributes": {},
+  "author": "Microsoft",
+  "license": "MIT"
+}

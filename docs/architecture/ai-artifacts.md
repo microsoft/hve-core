@@ -2,7 +2,7 @@
 title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 author: Microsoft
-ms.date: 2026-01-22
+ms.date: 2026-02-10
 ms.topic: concept
 ---
 
@@ -21,16 +21,13 @@ Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent 
 * Define single-session workflows with clear inputs and outputs
 * Accept user inputs through `${input:varName}` template syntax
 * Delegate to agents via `agent:` frontmatter references
-* Specify invocation context through `mode:` field values
 
 **Frontmatter structure:**
 
 ```yaml
 ---
 description: 'Protocol for creating ADO pull requests'
-mode: 'workflow'
 agent: 'task-planner'
-maturity: 'stable'
 ---
 ```
 
@@ -54,7 +51,6 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
 handoffs: ['task-implementor', 'task-researcher']
-maturity: 'stable'
 ---
 ```
 
@@ -77,11 +73,17 @@ Instructions (`.instructions.md`) encode technology-specific standards and conve
 ---
 description: 'Python scripting standards with type hints'
 applyTo: '**/*.py, **/*.ipynb'
-maturity: 'stable'
 ---
 ```
 
 Instructions answer the question "what standards apply to this context?" and ensure consistent code quality.
+
+#### Repo-Specific Instructions
+
+Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be included in collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Collection manifests intentionally exclude this subdirectory from artifact selection and package composition.
+
+> [!IMPORTANT]
+> The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or collections.
 
 ### Skills
 
@@ -92,7 +94,6 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 * Provide self-contained utility packages with documentation and scripts
 * Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
 * Execute actual operations rather than providing guidance
-* Declare maturity level controlling extension channel inclusion
 
 **Directory structure:**
 
@@ -112,7 +113,6 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion with FFmpeg optimization'
-maturity: stable
 ---
 ```
 
@@ -122,7 +122,8 @@ maturity: stable
 |---------------|---------------------------------------------------------|
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
-| `maturity`    | `stable`, `preview`, `experimental`, or `deprecated`    |
+
+Maturity is tracked in `collections/*.collection.yml`, not in skill frontmatter. See [Collection Manifests](#collection-manifests) for details.
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -200,6 +201,119 @@ Skills provide self-contained utilities through the `SKILL.md` file:
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
+## Collection Manifests
+
+Collection manifests in `collections/*.collection.yml` serve as the source of truth for artifact selection and maturity. They drive packaging for extension collections and contributor workflows without adding maturity metadata to artifact frontmatter.
+
+### Collection Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Collection Manifests                             │
+│  collections/*.collection.yml                                        │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │ items[]                                                     │     │
+│  │ - path                                                      │     │
+│  │ - kind                                                      │     │
+│  │ - maturity (optional, defaults to stable)                  │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Build System                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                         │
+│  │ Collection      │    │ Prepare-        │                         │
+│  │ Manifests       │───▶│ Extension.ps1   │                         │
+│  │ *.collection.yml     │ -Collection     │                         │
+│  └─────────────────┘    └─────────────────┘                         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Collection Item Structure
+
+Each collection item defines inclusion metadata for artifact selection and release channel filtering:
+
+```yaml
+items:
+    - path: .github/agents/rpi-agent.agent.md
+        kind: agent
+        maturity: stable
+    - path: .github/prompts/task-plan.prompt.md
+        kind: prompt
+        maturity: preview
+```
+
+| Field      | Purpose                                                           |
+|------------|-------------------------------------------------------------------|
+| `path`     | Repository-relative path to the artifact source                   |
+| `kind`     | Artifact type (`agent`, `prompt`, `instruction`, `skill`, `hook`) |
+| `maturity` | Optional release channel gating value (`stable` default)          |
+
+### Collection Model
+
+Collections represent role-targeted artifact packages. Collection manifests select artifacts for those roles.
+
+| Collection    | Identifier     | Target Users        |
+|---------------|----------------|---------------------|
+| **All**       | `hve-core-all` | Universal inclusion |
+| **Developer** | `developer`    | Software engineers  |
+
+Artifacts assigned to `hve-core-all` appear in the full collection and may also include role-specific collections for targeted distribution.
+
+### Collection Build System
+
+Collections define role-filtered artifact packages. Each collection manifest specifies which artifacts to include and controls release channel eligibility through a `maturity` field:
+
+```json
+{
+    "id": "developer",
+    "name": "hve-developer",
+    "displayName": "HVE Core - Developer Edition",
+    "description": "AI-powered coding agents curated for software engineers",
+    "maturity": "stable",
+    "items": ["developer"]
+}
+```
+
+The build system resolves collections by:
+
+1. Reading the collection manifest to identify target artifacts
+2. Checking collection-level maturity against the target release channel
+3. Filtering collection items by path/kind membership
+4. Including the `hve-core-all` collection artifacts as the base
+5. Adding collection-specific artifacts
+6. Resolving dependencies for included artifacts
+
+#### Collection Maturity
+
+Collections carry their own maturity level, independent of artifact-level maturity. This controls whether the entire collection is built for a given release channel:
+
+| Collection Maturity | PreRelease Channel | Stable Channel |
+|---------------------|--------------------|----------------|
+| `stable`            | Included           | Included       |
+| `preview`           | Included           | Included       |
+| `experimental`      | Included           | Excluded       |
+| `deprecated`        | Excluded           | Excluded       |
+
+New collections should start as `experimental` until validated, then transition to `stable` by changing a single field. The `maturity` field is optional and defaults to `stable` when omitted.
+
+### Dependency Resolution
+
+Agents may declare dependencies on other artifacts through the `requires` field. The dependency resolver ensures complete artifact graphs are installed:
+
+```mermaid
+graph TD
+    A[rpi-agent] --> B[task-researcher]
+    A --> C[task-planner]
+    A --> D[task-implementor]
+    A --> E[task-reviewer]
+    A --> F[checkpoint.prompt]
+    A --> G[rpi.prompt]
+```
+
+When installing `rpi-agent`, all dependent agents and prompts are automatically included regardless of collection filter.
+
 ## Extension Integration
 
 The VS Code extension discovers and activates AI artifacts through contribution points.
@@ -210,10 +324,10 @@ The extension scans these directories at startup:
 
 * `.github/prompts/` for workflow entry points
 * `.github/agents/` for specialized behaviors
-* `.github/instructions/` for technology standards
+* `.github/instructions/` for technology standards (excluding `hve-core/` subdirectory)
 * `.github/skills/` for utility packages
 
-Each artifact's `maturity:` field controls channel inclusion:
+Artifact inclusion is controlled by `collections/*.collection.yml`. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|
@@ -221,6 +335,19 @@ Each artifact's `maturity:` field controls channel inclusion:
 | `preview`      | Excluded       | Included            |
 | `experimental` | Excluded       | Included            |
 | `deprecated`   | Excluded       | Excluded            |
+
+The maturity table above applies to individual artifacts. Collections also carry a `maturity` field that gates the entire package at the channel level (see [Collection Maturity](#collection-maturity)).
+
+### Collection Packages
+
+Multiple extension packages can be built from the same codebase:
+
+| Collection | Extension ID                       | Contents                    |
+|------------|------------------------------------|-----------------------------|
+| Full       | `ise-hve-essentials.hve-core`      | All stable artifacts        |
+| Developer  | `ise-hve-essentials.hve-developer` | Developer-focused artifacts |
+
+Users install the collection matching their role for a curated experience.
 
 ### Activation Context
 

@@ -2,7 +2,6 @@
 description: 'Invoke doc-ops agent for documentation quality assurance and updates'
 agent: 'doc-ops'
 argument-hint: '[scope=all|docs|root|scripts] [validate-only={true|false}]'
-maturity: stable
 ---
 
 # Documentation Update

@@ -1,6 +1,5 @@
 ---
 description: 'Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting'
-maturity: stable
 ---
 
 # Streamlit Dashboard Testing

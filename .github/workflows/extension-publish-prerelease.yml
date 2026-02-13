@@ -50,60 +50,24 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
-    name: Package Pre-Release Extension
+    name: Package Pre-Release Extensions
     needs: validate-version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.package.outputs.version }}
-      vsix-file: ${{ steps.package.outputs.vsix-file }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
-        with:
-          node-version: '20'
-
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
-
-      - name: Setup PowerShell
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
-
-      - name: Prepare extension resources
-        id: prepare
-        shell: pwsh
-        run: |
-          Write-Host "🔧 Preparing extension for PreRelease channel..."
-          ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease
-
-      - name: Package pre-release extension
-        id: package
-        shell: pwsh
-        run: |
-          $version = "${{ needs.validate-version.outputs.version }}"
-          Write-Host "📦 Packaging pre-release extension v$version..."
-          ./scripts/extension/Package-Extension.ps1 -Version $version -PreRelease
-
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
-        with:
-          name: extension-vsix-prerelease
-          path: extension/*.vsix
-          retention-days: 30
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.validate-version.outputs.version }}
+      channel: PreRelease
+    permissions:
+      contents: read
 
   publish:
-    name: Publish Pre-Release to Marketplace
-    needs: [validate-version, package]
+    name: Publish ${{ matrix.id }}
+    needs: [package]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     environment: marketplace
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package.outputs.collections-matrix) }}
     permissions:
       contents: read
       id-token: write
@@ -131,25 +95,32 @@ jobs:
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: extension-vsix-prerelease
-          path: ./extension
+          name: extension-vsix-${{ matrix.id }}
+          path: ./dist
 
       - name: Publish pre-release to VS Code Marketplace
+        id: publish
         run: |
-          VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-          echo "📦 Publishing pre-release: $VSIX_FILE"
+          VSIX_FILE=$(find dist -name '*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
+            exit 1
+          fi
+          VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
+          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 Publishing pre-release ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
           vsce publish --packagePath "$VSIX_FILE" --pre-release --azure-credential
 
       - name: Summary
         run: |
           {
-            echo "## 🚀 Pre-Release Extension Published"
+            echo "## 🚀 Pre-Release Extension Published: ${{ matrix.name }}"
             echo ""
-            echo "**Version:** ${{ needs.validate-version.outputs.version }}"
+            echo "**Collection:** ${{ matrix.id }}"
+            echo "**Version:** ${{ steps.publish.outputs.version }}"
             echo "**Channel:** Pre-Release (ODD minor)"
-            echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}"
             echo ""
             echo "Users can install via **Switch to Pre-Release Version** in VS Code."
             echo ""
-            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)"
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${{ matrix.name }})"
           } >> "$GITHUB_STEP_SUMMARY"

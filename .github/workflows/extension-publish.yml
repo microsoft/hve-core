@@ -74,7 +74,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
-    name: Package Extension
+    name: Package Extensions
     needs: [prepare-changelog, normalize-version]
     uses: ./.github/workflows/extension-package.yml
     with:
@@ -84,11 +84,14 @@ jobs:
       contents: read
 
   publish:
-    name: Publish to Marketplace
-    needs: [prepare-changelog, package]
+    name: Publish ${{ matrix.id }}
+    needs: [package]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     environment: marketplace
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package.outputs.collections-matrix) }}
     permissions:
       contents: read
       id-token: write
@@ -116,22 +119,30 @@ jobs:
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: extension-vsix
-          path: ./extension
+          name: extension-vsix-${{ matrix.id }}
+          path: ./dist
 
       - name: Publish to VS Code Marketplace
+        id: publish
         run: |
-          VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-          echo "📦 Publishing: $VSIX_FILE"
+          VSIX_FILE=$(find dist -name '*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
+            exit 1
+          fi
+          # Extract version from VSIX filename to avoid depending on matrix job output
+          VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
+          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 Publishing ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
           vsce publish --packagePath "$VSIX_FILE" --azure-credential
 
       - name: Summary
         run: |
           {
-            echo "## 🎉 Extension Published Successfully"
+            echo "## 🎉 Extension Published: ${{ matrix.name }}"
             echo ""
-            echo "**Version:** ${{ needs.package.outputs.version }}"
-            echo "**VSIX File:** ${{ needs.package.outputs.vsix-file }}"
+            echo "**Collection:** ${{ matrix.id }}"
+            echo "**Version:** ${{ steps.publish.outputs.version }}"
             echo ""
-            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)"
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${{ matrix.name }})"
           } >> "$GITHUB_STEP_SUMMARY"

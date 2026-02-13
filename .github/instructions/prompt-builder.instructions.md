@@ -1,7 +1,6 @@
 ---
 description: 'Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core'
 applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
-maturity: stable
 ---
 
 # Prompt Builder Instructions
@@ -205,7 +204,6 @@ Validation guidelines:
 
 * Include `name` frontmatter matching the skill directory name (required).
 * Include `description` frontmatter (required).
-* Include `maturity` frontmatter (required).
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Document prerequisites for each supported platform.
 * Keep *SKILL.md* under 500 lines; move detailed reference material to `references/`.
@@ -215,14 +213,13 @@ Validation guidelines:
 
 This section defines frontmatter field requirements for prompt engineering artifacts.
 
+Maturity is tracked in `collections/*.collection.yml` item metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
+
 ### Required Fields
 
 All prompt engineering artifacts include these frontmatter fields:
 
 * `description:` - Brief description of the artifact's purpose.
-* `maturity:` - Lifecycle stage: `experimental`, `preview`, `stable`, or `deprecated`.
-
-Note: VS Code shows a validation warning for the `maturity:` field as it's not in VS Code's schema. This is expected; the field is required by the HVE-Core codebase for artifact lifecycle tracking. Ignore VS Code validation warnings for the `maturity:` attribute.
 
 ### Optional Fields
 

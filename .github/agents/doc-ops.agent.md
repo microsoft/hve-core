@@ -1,6 +1,5 @@
 ---
 description: 'Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 
 # Documentation Operations Agent

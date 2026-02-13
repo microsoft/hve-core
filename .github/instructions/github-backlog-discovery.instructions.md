@@ -1,7 +1,6 @@
 ---
 description: 'Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery'
 applyTo: '**/.copilot-tracking/github-issues/discovery/**'
-maturity: experimental
 ---
 
 # GitHub Backlog Discovery

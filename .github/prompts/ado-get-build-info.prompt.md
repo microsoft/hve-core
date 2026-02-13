@@ -1,6 +1,5 @@
 ---
 description: "Retrieve Azure DevOps build information for a Pull Request or specific Build Number."
-maturity: stable
 ---
 
 # ADO Build Info & Log Extraction (Targeted or Latest PR Build)

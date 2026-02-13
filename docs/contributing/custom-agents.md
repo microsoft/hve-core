@@ -125,17 +125,6 @@ Agent files **MUST**:
 * **Style**: Sentence case with proper punctuation
 * **Example**: `'Validates contributed content for quality and compliance with hve-core standards'`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this agent
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New agents should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
 
 **`tools`** (array of strings)
@@ -210,6 +199,40 @@ version: '1.0.0'
 author: 'microsoft/hve-core'
 ---
 ```
+
+## Collection Entry Requirements
+
+All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
+
+### Adding Your Agent to a Collection
+
+After creating your agent file, add an `items[]` entry to each target collection:
+
+```yaml
+items:
+  - path: .github/agents/my-new-agent.agent.md
+  kind: agent
+  maturity: stable
+```
+
+### Selecting Collections for Agents
+
+Choose collections based on who benefits most from your agent:
+
+| Agent Type           | Recommended Collections                   |
+|----------------------|-------------------------------------------|
+| Task workflow agents | `hve-core-all`, `rpi`                     |
+| Architecture agents  | `hve-core-all`, `project-planning`        |
+| Documentation agents | `hve-core-all`, `prompt-engineering`      |
+| Data science agents  | `hve-core-all`, `data-science`            |
+| ADO/work item agents | `hve-core-all`, `ado`, `project-planning` |
+| Code review agents   | `hve-core-all`, `coding-standards`        |
+
+### Declaring Agent Dependencies
+
+If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ### MCP Tool Dependencies
 

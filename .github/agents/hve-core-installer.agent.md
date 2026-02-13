@@ -1,6 +1,5 @@
 ---
 description: 'Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core'
-maturity: stable
 tools: ['vscode/newWorkspace', 'vscode/runCommand', 'execute/runInTerminal', 'read', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'todo']
 ---
 # HVE-Core Installer Agent
@@ -1065,8 +1064,8 @@ Copying agents enables local customization and offline use.
   • github-backlog-manager (GitHub)
 
 Options:
-  [1] Install all agents (recommended)
-  [2] Install RPI Core only
+  [1] Install RPI Core only (recommended)
+  [2] Install by collection
   [3] Skip agent installation
 
 Your choice? (1/2/3)
@@ -1075,23 +1074,89 @@ Your choice? (1/2/3)
 
 User input handling:
 
-* "1", "all", "install all" → Copy all agents
-* "2", "rpi", "rpi core", "core" → Copy RPI Core bundle only
+* "1", "rpi", "rpi core", "core" → Copy RPI Core bundle only
+* "2", "collection", "by collection" → Proceed to Collection Selection sub-flow
 * "3", "skip", "none", "no" → Skip to success report
 * Unclear response → Ask for clarification
 
+### Collection Selection Sub-Flow
+
+When the user selects option 2, read collection manifests to present available collections.
+
+#### Step 1: Read collections and build collection agent counts
+
+Read `collections/*.collection.yml` from the HVE-Core source (at `$hveCoreBasePath`). Derive collection options from collection `id` and `name`. For each selected collection, count agent items where `kind` equals `agent` and effective item maturity is `stable` (item `maturity` omitted defaults to `stable`; exclude `experimental` and `deprecated`).
+
+#### Step 2: Present collection options
+
+<!-- <collection-selection-prompt> -->
+```text
+🎭 Collection Selection
+
+Choose one or more collections to install agents tailored to your role, more to come in the future.
+
+| # | Collection | Agents | Description                     |
+|---|------------|--------|---------------------------------|
+| 1 | Developer  | [N]    | Software engineers writing code |
+
+Enter collection number(s) separated by commas (e.g., "1"):
+```
+<!-- </collection-selection-prompt> -->
+
+Agent counts `[N]` include agents matching the collection with `stable` maturity.
+
+User input handling:
+
+* Single number (e.g., "1") → Select that collection
+* Multiple numbers (e.g., "1, 3") → Combine agent sets from selected collections
+* Collection name (e.g., "developer") → Match by identifier
+* Unclear response → Ask for clarification
+
+#### Step 3: Build filtered agent list
+
+For each selected collection identifier:
+
+1. Iterate through `items` in the collection manifest
+2. Include items where `kind` is `agent` AND `maturity` is `stable`
+3. Deduplicate across multiple selected collections
+
+#### Step 4: Present filtered agents for confirmation
+
+<!-- <collection-confirmation-prompt> -->
+```text
+📋 Agents for [Collection Name(s)]
+
+The following [N] agents will be copied:
+
+  • [agent-name-1] - tags: [tag-1, tag-2]
+  • [agent-name-2] - tags: [tag-1, tag-2]
+  ...
+
+Proceed with installation? (yes/no)
+```
+<!-- </collection-confirmation-prompt> -->
+
+User input handling:
+
+* "yes", "y" → Proceed with copy using filtered agent list
+* "no", "n" → Return to Checkpoint 6 for re-selection
+* Unclear response → Ask for clarification
+
+> [!NOTE]
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
+
 ### Agent Bundle Definitions
 
-| Bundle     | Agents                                                     |
-|------------|------------------------------------------------------------|
-| `rpi-core` | task-researcher, task-planner, task-implementor, rpi-agent |
-| `all`      | All 20 agents (see prompt for full list)                   |
+| Bundle            | Agents                                                                    |
+|-------------------|---------------------------------------------------------------------------|
+| `rpi-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
+| `collection:<id>` | Stable agents matching the collection                                     |
 
 ### Collision Detection
 
 Before copying, check for existing agent files with matching names. Generate a script for the user's shell that:
 
-1. Builds list of source files based on selection (`rpi-core` = 4 files, `all` = all `.agent.md` files)
+1. Builds list of source files based on selection (`rpi-core` = 5 files, `collection` = filtered `.agent.md` files)
 2. Copies files with `.agent.md` extension
 3. Checks target directory (`.github/agents/`) for each name
 4. Reports collisions or clean state
@@ -1105,8 +1170,11 @@ $targetDir = ".github/agents"
 
 # Get files to copy based on selection
 $filesToCopy = switch ($selection) {
-    "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "rpi-agent.agent.md") }
-    "all" { Get-ChildItem "$sourceDir/*.agent.md" | ForEach-Object { $_.Name } }
+    "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "task-reviewer.agent.md", "rpi-agent.agent.md") }
+    default {
+        # Collection-based: $selection contains filtered agent names from collection manifest
+        $collectionAgents
+    }
 }
 
 # Check for collisions
@@ -1125,7 +1193,7 @@ if ($collisions.Count -gt 0) {
 ```
 <!-- </collision-detection-reference> -->
 
-Bash adaptation: Use `case/esac` for selection, `find ... -name '*.agent.md' -exec basename {} \;` for `all` (portable across GNU/BSD), `test -f` for existence.
+Bash adaptation: Use `case/esac` for selection, `test -f` for existence checks.
 
 ### Collision Resolution Prompt
 
@@ -1188,6 +1256,7 @@ $manifest = @{
     source = "microsoft/hve-core"
     version = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
     installed = (Get-Date -Format "o")
+    collection = $collectionId  # "rpi-core" or collection id(s) e.g. "developer" or "developer,devops"
     files = @{}; skip = @()
 }
 
@@ -1264,6 +1333,7 @@ if (Test-Path $manifestPath) {
     Write-Host "INSTALLED_VERSION=$($manifest.version)"
     Write-Host "SOURCE_VERSION=$sourceVersion"
     Write-Host "VERSION_CHANGED=$($sourceVersion -ne $manifest.version)"
+    Write-Host "INSTALLED_COLLECTION=$($manifest.collection ?? 'rpi-core')"
 } else {
     Write-Host "UPGRADE_MODE=false"
 }

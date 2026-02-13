@@ -36,9 +36,14 @@ All instruction files **MUST** be placed in:
 ├── language-name.instructions.md        # Language-specific
 ├── framework-name.instructions.md       # Framework-specific
 ├── workflow-name.instructions.md        # Workflow-specific
-└── subfolder/
-        └── specialized.instructions.md      # Organized by domain
+├── subfolder/
+│       └── specialized.instructions.md  # Organized by domain
+└── hve-core/
+        └── repo-only.instructions.md    # Repo-specific (NOT distributed)
 ```
+
+> [!IMPORTANT]
+> The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
 
 **Examples**:
 
@@ -84,17 +89,6 @@ Instruction files **MUST**:
   * Directory scope: `**/src/**/*.sh`
   * Specific paths: `**/.copilot-tracking/pr/new/**`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this instruction
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New instructions should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
 
 **`version`** (string)
@@ -119,12 +113,53 @@ Instruction files **MUST**:
 ---
 description: 'Required instructions for Python script implementation with type hints, docstrings, and error handling'
 applyTo: '**/*.py, **/*.ipynb'
-maturity: 'stable'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Collection Entry Requirements
+
+All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed in `.github/instructions/hve-core/`. Collection entries control distribution and maturity.
+
+> [!NOTE]
+> Instructions in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+
+### Adding Your Instructions to a Collection
+
+After creating your instructions file, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+    - path: .github/instructions/my-language.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+For instructions in subdirectories, use the path format:
+
+```yaml
+items:
+    - path: .github/instructions/subdirectory/my-instructions.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+### Selecting Collections for Instructions
+
+Choose collections based on who uses the technology or pattern:
+
+| Instruction Type        | Recommended Collections                           |
+|-------------------------|---------------------------------------------------|
+| Language standards      | `hve-core-all`, `coding-standards`                |
+| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
+| Documentation standards | `hve-core-all`, `prompt-engineering`              |
+| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
+| Test standards          | `hve-core-all`, `coding-standards`                |
+| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## Content Structure Standards
 

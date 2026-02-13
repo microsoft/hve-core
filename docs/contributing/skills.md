@@ -81,20 +81,43 @@ All skill files **MUST** be placed in:
 * **Format**: Single sentence ending with attribution
 * **Example**: `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this skill
-* **Valid values**: `stable`, `preview`, `experimental`, `deprecated`
-
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
-maturity: stable
 ---
 ```
+
+## Collection Entry Requirements
+
+All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+
+### Adding Your Skill to a Collection
+
+After creating your skill package, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+  - path: .github/skills/my-skill
+    kind: skill
+    maturity: stable
+```
+
+### Selecting Collections for Skills
+
+Choose collections based on who uses the skill's utilities:
+
+| Skill Type           | Recommended Collections              |
+|----------------------|--------------------------------------|
+| Media processing     | `hve-core-all`                       |
+| Documentation tools  | `hve-core-all`, `prompt-engineering` |
+| Data processing      | `hve-core-all`, `data-science`       |
+| Infrastructure tools | `hve-core-all`, `coding-standards`   |
+| Code generation      | `hve-core-all`, `coding-standards`   |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## SKILL.md Content Structure
 
@@ -260,7 +283,6 @@ Before submitting your skill, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `name` field present and matches directory name
 * [ ] `description` field present and descriptive
-* [ ] `maturity` field present with valid value
 
 ### Scripts
 

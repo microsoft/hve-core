@@ -44,6 +44,11 @@
           "usage": {
             "type": "string",
             "description": "Optional usage guidance for the item."
+          },
+          "maturity": {
+            "type": "string",
+            "enum": ["stable", "preview", "experimental", "deprecated"],
+            "description": "Optional release maturity for this item. Defaults to stable when omitted."
           }
         },
         "additionalProperties": false

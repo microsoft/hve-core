@@ -1,7 +1,6 @@
 ---
 description: "Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core"
 agent: 'task-planner'
-maturity: stable
 ---
 
 # Implementation Plan

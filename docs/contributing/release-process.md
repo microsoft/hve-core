@@ -34,7 +34,7 @@ When you merge a PR to `main`:
 The Release PR is not a branch cut or deployment. It is a staging mechanism containing only version metadata changes:
 
 * Updated `package.json` version
-* Updated `extension/package.json` version
+* Updated `extension/templates/package.template.json` version
 * Updated `CHANGELOG.md`
 
 Your actual code changes are already on `main` from your feature PRs. The Release PR accumulates version and changelog updates until you are ready to release.
@@ -138,7 +138,7 @@ The VS Code extension is published to two channels with different stability expe
 
 ### Maturity Levels
 
-Each prompt, instruction, and agent declares a `maturity` field in its frontmatter:
+Each prompt, instruction, agent, and skill can set `maturity` in `collections/*.collection.yml` under `items[]`:
 
 | Level          | Description                                     | Included In         |
 |----------------|-------------------------------------------------|---------------------|
@@ -160,11 +160,11 @@ stateDiagram-v2
 
 ### Contributor Guidelines
 
-* **New contributions**: Default to `maturity: stable` unless explicitly targeting early adopters
-* **Experimental work**: Use `maturity: experimental` for proof-of-concept or rapidly evolving artifacts
-* **Preview promotions**: Move to `maturity: preview` when core functionality is complete
-* **Stable promotions**: Move to `maturity: stable` after production validation
-* **Deprecation**: Set `maturity: deprecated` before removal to provide transition time
+* **New contributions**: Set `stable` on collection items unless explicitly targeting early adopters
+* **Experimental work**: Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts
+* **Preview promotions**: Set `preview` on collection items when core functionality is complete
+* **Stable promotions**: Set `stable` on collection items after production validation
+* **Deprecation**: Set `deprecated` on collection items before removal to provide transition time
 
 ---
 

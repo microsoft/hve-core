@@ -47,7 +47,7 @@ function Get-ArtifactFrontmatter {
 
     .DESCRIPTION
     Parses the YAML frontmatter block delimited by --- markers at the start
-    of a markdown file. Returns a hashtable with description and maturity keys.
+    of a markdown file. Returns a hashtable with description.
 
     .PARAMETER FilePath
     Path to the markdown file to parse.
@@ -56,7 +56,7 @@ function Get-ArtifactFrontmatter {
     Default description if none found in frontmatter.
 
     .OUTPUTS
-    [hashtable] With description and maturity keys.
+    [hashtable] With description key.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -70,7 +70,6 @@ function Get-ArtifactFrontmatter {
 
     $content = Get-Content -Path $FilePath -Raw
     $description = ''
-    $maturity = 'stable'
 
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
@@ -78,9 +77,6 @@ function Get-ArtifactFrontmatter {
             $data = ConvertFrom-Yaml -Yaml $yamlContent
             if ($data.ContainsKey('description')) {
                 $description = $data.description
-            }
-            if ($data.ContainsKey('maturity')) {
-                $maturity = $data.maturity
             }
         }
         catch {
@@ -90,8 +86,38 @@ function Get-ArtifactFrontmatter {
 
     return @{
         description = if ($description) { $description } else { $FallbackDescription }
-        maturity    = $maturity
     }
+}
+
+function Resolve-CollectionItemMaturity {
+    <#
+    .SYNOPSIS
+    Resolves effective maturity from collection item metadata.
+
+    .DESCRIPTION
+    Returns stable when maturity is omitted; otherwise returns the provided
+    maturity string.
+
+    .PARAMETER Maturity
+    Optional maturity value from a collection item.
+
+    .OUTPUTS
+    [string] Effective maturity value.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Maturity)) {
+        return 'stable'
+    }
+
+    return $Maturity
 }
 
 function Get-AllCollections {
@@ -153,33 +179,30 @@ function Get-ArtifactFiles {
 
     $items = @()
 
-    # Agents
-    $agentsDir = Join-Path -Path $RepoRoot -ChildPath '.github/agents'
-    if (Test-Path -Path $agentsDir) {
-        $agentFiles = Get-ChildItem -Path $agentsDir -Filter '*.agent.md' -File
-        foreach ($file in $agentFiles) {
-            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
-            $items += @{ path = $relativePath; kind = 'agent' }
+    # Prompt-engineering artifacts discovered by .<kind>.md suffix under .github/
+    # Keep explicit suffix mapping only where naming differs from manifest kind values.
+    $gitHubDir = Join-Path -Path $RepoRoot -ChildPath '.github'
+    if (Test-Path -Path $gitHubDir) {
+        $suffixToKind = @{
+            instructions = 'instruction'
         }
-    }
 
-    # Prompts
-    $promptsDir = Join-Path -Path $RepoRoot -ChildPath '.github/prompts'
-    if (Test-Path -Path $promptsDir) {
-        $promptFiles = Get-ChildItem -Path $promptsDir -Filter '*.prompt.md' -File
-        foreach ($file in $promptFiles) {
-            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
-            $items += @{ path = $relativePath; kind = 'prompt' }
-        }
-    }
+        $artifactFiles = Get-ChildItem -Path $gitHubDir -Filter '*.*.md' -File -Recurse
+        foreach ($file in $artifactFiles) {
+            if ($file.Name -notmatch '\.(?<suffix>[^.]+)\.md$') {
+                continue
+            }
 
-    # Instructions (recursive for subfolders)
-    $instructionsDir = Join-Path -Path $RepoRoot -ChildPath '.github/instructions'
-    if (Test-Path -Path $instructionsDir) {
-        $instructionFiles = Get-ChildItem -Path $instructionsDir -Filter '*.instructions.md' -File -Recurse
-        foreach ($file in $instructionFiles) {
+            $suffix = $Matches['suffix'].ToLowerInvariant()
+            $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
-            $items += @{ path = $relativePath; kind = 'instruction' }
+
+            # Exclude repo-specific artifacts under .github/**/hve-core/
+            if ($relativePath -match '^\.github/.*/hve-core/') {
+                continue
+            }
+
+            $items += @{ path = $relativePath; kind = $kind }
         }
     }
 
@@ -202,20 +225,14 @@ function Get-ArtifactFiles {
 function Test-ArtifactDeprecated {
     <#
     .SYNOPSIS
-    Checks whether an artifact has maturity: deprecated in its frontmatter.
+    Checks whether an artifact has maturity deprecated in collection metadata.
 
     .DESCRIPTION
-    Reads the frontmatter of the artifact file (or SKILL.md for skills) and
-    returns $true when the maturity field equals deprecated.
+    Reads maturity from the provided collection item metadata value and
+    returns $true when the effective value equals deprecated.
 
-    .PARAMETER ItemPath
-    Repo-relative path to the artifact.
-
-    .PARAMETER Kind
-    The artifact kind: agent, prompt, instruction, or skill.
-
-    .PARAMETER RepoRoot
-    Absolute path to the repository root.
+    .PARAMETER Maturity
+    Optional maturity value from collection item metadata.
 
     .OUTPUTS
     [bool] True when the artifact is deprecated.
@@ -223,30 +240,13 @@ function Test-ArtifactDeprecated {
     [CmdletBinding()]
     [OutputType([bool])]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$ItemPath,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
-        [string]$Kind,
-
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity
     )
 
-    if ($Kind -eq 'skill') {
-        $filePath = Join-Path -Path $RepoRoot -ChildPath $ItemPath -AdditionalChildPath 'SKILL.md'
-    }
-    else {
-        $filePath = Join-Path -Path $RepoRoot -ChildPath $ItemPath
-    }
-
-    if (-not (Test-Path -Path $filePath)) {
-        return $false
-    }
-
-    $frontmatter = Get-ArtifactFrontmatter -FilePath $filePath
-    return ($frontmatter.maturity -eq 'deprecated')
+    return ((Resolve-CollectionItemMaturity -Maturity $Maturity) -eq 'deprecated')
 }
 
 function Update-HveCoreAllCollection {
@@ -288,29 +288,55 @@ function Update-HveCoreAllCollection {
     # Discover all artifacts
     $allItems = Get-ArtifactFiles -RepoRoot $RepoRoot
 
-    # Filter deprecated
+    # Filter deprecated based on existing collection item maturity metadata
+    $existingItemMaturities = @{}
+    foreach ($existingItem in $existing.items) {
+        $existingKey = "$($existingItem.kind)|$($existingItem.path)"
+        $existingItemMaturities[$existingKey] = Resolve-CollectionItemMaturity -Maturity $existingItem.maturity
+    }
+
     $deprecatedCount = 0
     $filteredItems = @()
     foreach ($item in $allItems) {
-        if (Test-ArtifactDeprecated -ItemPath $item.path -Kind $item.kind -RepoRoot $RepoRoot) {
+        $itemKey = "$($item.kind)|$($item.path)"
+        $itemMaturity = 'stable'
+        if ($existingItemMaturities.ContainsKey($itemKey)) {
+            $itemMaturity = $existingItemMaturities[$itemKey]
+        }
+
+        if (Test-ArtifactDeprecated -Maturity $itemMaturity) {
             $deprecatedCount++
             Write-Verbose "Excluding deprecated: $($item.path)"
             continue
         }
-        $filteredItems += $item
+
+        $filteredItems += @{
+            path     = $item.path
+            kind     = $item.kind
+            maturity = $itemMaturity
+        }
     }
 
-    # Sort: by kind order (agent, prompt, instruction, skill), then by path
+    # Sort: known kinds first, then any additional kinds, then by path
     $kindOrder = @{ 'agent' = 0; 'prompt' = 1; 'instruction' = 2; 'skill' = 3 }
-    $sortedItems = $filteredItems | Sort-Object { $kindOrder[$_.kind] }, { $_.path }
+    $sortedItems = $filteredItems | Sort-Object `
+        { if ($kindOrder.ContainsKey($_.kind)) { $kindOrder[$_.kind] } else { 100 } }, `
+        { $_.kind }, `
+        { $_.path }
 
     # Build new items array as ordered hashtables for clean YAML output
     $newItems = @()
     foreach ($item in $sortedItems) {
-        $newItems += [ordered]@{
+        $newItem = [ordered]@{
             path = $item.path
             kind = $item.kind
         }
+
+        if ((Resolve-CollectionItemMaturity -Maturity $item.maturity) -ne 'stable') {
+            $newItem['maturity'] = $item.maturity
+        }
+
+        $newItems += $newItem
     }
 
     # Compute diff
@@ -439,13 +465,16 @@ function New-PluginManifestContent {
 
     .DESCRIPTION
     Creates a hashtable representing the plugin manifest with name,
-    description, and a default version of 1.0.0.
+    description, and version sourced from the repository package.json.
 
     .PARAMETER CollectionId
     The collection identifier used as the plugin name.
 
     .PARAMETER Description
     A short description of the plugin.
+
+    .PARAMETER Version
+    Semantic version string from the repository package.json.
 
     .OUTPUTS
     [hashtable] Plugin manifest with name, description, and version keys.
@@ -457,13 +486,16 @@ function New-PluginManifestContent {
         [string]$CollectionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$Description
+        [string]$Description,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version
     )
 
     return [ordered]@{
         name        = $CollectionId
         description = $Description
-        version     = '1.0.0'
+        version     = $Version
     }
 }
 
@@ -542,6 +574,146 @@ function New-PluginReadmeContent {
     [void]$sb.AppendLine()
 
     return $sb.ToString()
+}
+
+function New-MarketplaceManifestContent {
+    <#
+    .SYNOPSIS
+    Generates marketplace.json content as a hashtable.
+
+    .DESCRIPTION
+    Creates a hashtable representing the marketplace manifest with repository
+    metadata, owner information, and plugin entries. Matches the schema used
+    by github/awesome-copilot.
+
+    .PARAMETER RepoName
+    Repository name used as the marketplace name.
+
+    .PARAMETER Description
+    Short description of the repository.
+
+    .PARAMETER Version
+    Semantic version string from package.json.
+
+    .PARAMETER OwnerName
+    Organization or individual owning the repository.
+
+    .PARAMETER Plugins
+    Array of ordered hashtables with name, description, and version keys
+    from New-PluginManifestContent.
+
+    .OUTPUTS
+    [hashtable] Marketplace manifest with name, metadata, owner, and plugins keys.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OwnerName,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [array]$Plugins
+    )
+
+    $pluginEntries = @()
+    foreach ($plugin in $Plugins) {
+        $pluginEntries += [ordered]@{
+            name        = $plugin.name
+            source      = "./plugins/$($plugin.name)"
+            description = $plugin.description
+            version     = $plugin.version
+        }
+    }
+
+    return [ordered]@{
+        name     = $RepoName
+        metadata = [ordered]@{
+            description = $Description
+            version     = $Version
+            pluginRoot  = './plugins'
+        }
+        owner    = [ordered]@{
+            name = $OwnerName
+        }
+        plugins  = $pluginEntries
+    }
+}
+
+function Write-MarketplaceManifest {
+    <#
+    .SYNOPSIS
+    Writes the marketplace.json file to .github/plugin/.
+
+    .DESCRIPTION
+    Assembles plugin metadata from generated collections and writes the
+    marketplace manifest to .github/plugin/marketplace.json. Creates the
+    directory when it does not exist.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root directory.
+
+    .PARAMETER Collections
+    Array of collection manifest hashtables with id and description.
+
+    .PARAMETER DryRun
+    When specified, logs the action without writing to disk.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [array]$Collections,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
+    $packageJson = Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json
+
+    $plugins = @()
+    foreach ($collection in ($Collections | Sort-Object { $_.id })) {
+        $plugins += New-PluginManifestContent `
+            -CollectionId $collection.id `
+            -Description $collection.description `
+            -Version $packageJson.version
+    }
+
+    $manifest = New-MarketplaceManifestContent `
+        -RepoName $packageJson.name `
+        -Description $packageJson.description `
+        -Version $packageJson.version `
+        -OwnerName $packageJson.author `
+        -Plugins $plugins
+
+    $outputDir = Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
+    $outputPath = Join-Path -Path $outputDir -ChildPath 'marketplace.json'
+
+    if ($DryRun) {
+        Write-Host "  [DRY RUN] Would write marketplace.json at $outputPath" -ForegroundColor Yellow
+        return
+    }
+
+    if (-not (Test-Path -Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+
+    $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8 -NoNewline
+    Write-Host "  Marketplace manifest: $outputPath" -ForegroundColor Green
 }
 
 function New-GenerateResult {
@@ -644,6 +816,9 @@ function Write-PluginDirectory {
     .PARAMETER RepoRoot
     Absolute path to the repository root.
 
+    .PARAMETER Version
+    Semantic version string from the repository package.json.
+
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
 
@@ -662,6 +837,9 @@ function Write-PluginDirectory {
 
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
@@ -730,10 +908,34 @@ function Write-PluginDirectory {
         New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
     }
 
+    # Symlink shared resource directories (unconditional, all plugins)
+    $sharedDirs = @(
+        @{ Source = 'docs/templates';    Destination = 'docs/templates' }
+        @{ Source = 'scripts/dev-tools'; Destination = 'scripts/dev-tools' }
+        @{ Source = 'scripts/lib';       Destination = 'scripts/lib' }
+    )
+
+    foreach ($dir in $sharedDirs) {
+        $sourcePath = Join-Path -Path $RepoRoot -ChildPath $dir.Source
+        $destPath = Join-Path -Path $pluginRoot -ChildPath $dir.Destination
+
+        if (-not (Test-Path -Path $sourcePath)) {
+            Write-Warning "Shared directory not found: $sourcePath"
+            continue
+        }
+
+        if ($DryRun) {
+            Write-Verbose "DryRun: Would create shared directory symlink $destPath -> $sourcePath"
+            continue
+        }
+
+        New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
+    }
+
     # Generate plugin.json
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
-    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description
+    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description -Version $Version
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write plugin.json at $manifestPath"
@@ -766,17 +968,20 @@ function Write-PluginDirectory {
 }
 
 Export-ModuleMember -Function @(
+    'Get-AllCollections',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
-    'Get-AllCollections',
     'Get-CollectionManifest',
     'Get-PluginItemName',
     'Get-PluginSubdirectory',
     'New-GenerateResult',
+    'New-MarketplaceManifestContent',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
     'New-RelativeSymlink',
+    'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
     'Update-HveCoreAllCollection',
+    'Write-MarketplaceManifest',
     'Write-PluginDirectory'
 )

@@ -1,7 +1,6 @@
 ---
 description: 'Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations'
 applyTo: '**/.copilot-tracking/github-issues/**/handoff-logs.md'
-maturity: experimental
 ---
 
 # GitHub Backlog Update Instructions

@@ -1,7 +1,6 @@
 ---
 description: 'Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence'
 applyTo: '**/.copilot-tracking/github-issues/**'
-maturity: experimental
 ---
 
 # GitHub Backlog Planning File Instructions
