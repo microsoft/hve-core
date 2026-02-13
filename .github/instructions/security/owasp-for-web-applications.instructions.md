@@ -1,6 +1,7 @@
 ---
 description: "Comprehensive secure coding instructions for all languages and frameworks, based on OWASP Top 10 and industry best practices. Give clear and concise feedback and points of improvement."
 maturity: experimental
+applyTo: '**/*'
 ---
 
 # Secure Coding and OWASP Guidelines
