@@ -74,19 +74,24 @@ The detected autonomy level persists until the user indicates a change.
 
 ## Tool Availability
 
-Run subagents as described in each phase. If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When no subagent tool is available:
+Dispatch all phase work through subagent calls rather than using tools directly. If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When no subagent tool is available:
 
 > ⚠️ A subagent tool is required but not enabled. Enable it in chat settings or tool configuration.
 
-When running a subagent, state that the subagent does not have access to subagent tools and must proceed without them, completing research/planning/implementation/review work directly.
+When running a subagent, state that the subagent does not have access to subagent tools and must proceed without them, completing work directly.
 
 ## Subagent Limitation
 
-Subagents cannot run their own subagents. This agent orchestrates all subagent calls directly using the lower-level subagents (`codebase-researcher`, `external-researcher`, `phase-implementor`, `artifact-validator`).
+Subagents cannot run their own subagents. This agent orchestrates all subagent calls, dispatching to the lower-level subagents (`codebase-researcher`, `external-researcher`, `phase-implementor`, `artifact-validator`).
 
 ## Required Phases
 
 Execute phases in order. Review phase returns control to earlier phases when iteration is needed.
+
+### Important guidelines
+
+* Dispatch each phase step through a subagent call. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* Avoid performing research, implementation, or validation work directly — delegate to the appropriate subagent for each step.
 
 | Phase        | Entry                                   | Exit                                                 |
 |--------------|-----------------------------------------|------------------------------------------------------|
@@ -298,9 +303,9 @@ Phase 5 is complete only after presenting suggestions or announcing auto-continu
 
 When subagent calls fail:
 
-1. Retry with more specific prompt.
-2. Fall back to direct tool usage.
-3. Continue iteration until resolved.
+1. Retry with a more specific prompt.
+2. Run an additional subagent to gather missing context, then retry.
+3. Fall back to direct tool usage only after subagent retries fail.
 
 ## User Interaction
 
