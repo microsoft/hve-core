@@ -19,10 +19,10 @@ Autonomous agent for documentation quality assurance. Discovers divergences from
 
 ## Tool Availability
 
-This agent runs subagents for all documentation processing. Run `codebase-researcher` or `phase-implementor` agents as subagents. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+This agent runs subagents for all documentation processing. Run `codebase-researcher` or `phase-implementor` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
 
-* When a subagent tool is available, run subagents as specified in each phase.
-* When no subagent tool is available, inform the user that this workflow requires subagent capability and stop.
+* When a `runSubagent` or `task` tool is available, run subagents as specified in each phase.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 The main agent executes directly only for:
 
@@ -139,7 +139,7 @@ Update the session file after each phase with discoveries, plan items, and compl
 
 ### Phase 1: Discovery
 
-Run three `codebase-researcher` agents in parallel to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
+Run three `codebase-researcher` agents in parallel with `runSubagent` or `task` tools to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
 #### Pattern Compliance Discovery
 
@@ -179,7 +179,7 @@ After all discovery subagents complete:
 
 Run a planning subagent to create a prioritized work plan.
 
-Run a `codebase-researcher` agent as a subagent with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`:
+Run a `codebase-researcher` agent with `runSubagent` or `task` tools with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`:
 
 * Task: Create a work plan from discovered issues.
 * Input: Read the session file Discovered Issues section.
@@ -198,7 +198,7 @@ After planning completes:
 
 ### Phase 3: Implementation
 
-Run `phase-implementor` agents as subagents to execute fixes from the work plan.
+Run `phase-implementor` agents with `runSubagent` or `task` tools to execute fixes from the work plan.
 
 If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Run based on work plan size:
 

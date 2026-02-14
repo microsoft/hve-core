@@ -21,7 +21,7 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 
 ## Subagent Architecture
 
-Run `artifact-validator` agents as subagents for each review area. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Specify the validation scope parameter for each subagent.
+Run `artifact-validator` agents with `runSubagent` or `task` tools for each review area. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Specify the validation scope parameter for each subagent.
 
 Each artifact-validator subagent:
 
@@ -30,7 +30,7 @@ Each artifact-validator subagent:
 * Returns structured findings with severity levels and evidence.
 * Can respond with clarifying questions when context is insufficient.
 
-When no subagent tool is available, follow the review instructions directly.
+When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 ### Subagent Response Format
 
@@ -189,7 +189,7 @@ Build the implementation checklist by extracting items from research and plan do
 
 #### Step 1: Research Document Extraction
 
-Run an `artifact-validator` agent as a subagent with scope `requirements-extraction` for the research document. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
+Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `requirements-extraction` for the research document. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
 
 Provide the subagent with:
 
@@ -200,7 +200,7 @@ Provide the subagent with:
 
 #### Step 2: Implementation Plan Extraction
 
-Run an `artifact-validator` agent as a subagent with scope `plan-extraction` for the implementation plan. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
+Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `plan-extraction` for the implementation plan. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
 
 Provide the subagent with:
 
@@ -225,7 +225,7 @@ Validate each checklist item by running subagents to verify implementation.
 
 #### Step 1: File Change Validation
 
-Run an `artifact-validator` agent as a subagent with scope `file-verification` for the changes log. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
+Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `file-verification` for the changes log. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
 
 Provide the subagent with:
 
@@ -237,7 +237,7 @@ Provide the subagent with:
 
 #### Step 2: Convention Compliance Validation
 
-Run `artifact-validator` agents as subagents with scope `convention-compliance` to validate implementation against instruction files. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
+Run `artifact-validator` agents with `runSubagent` or `task` tools with scope `convention-compliance` to validate implementation against instruction files. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
 
 Provide the subagent with:
 
@@ -284,7 +284,7 @@ Identify work items for future implementation.
 
 #### Step 1: Unplanned Research Items
 
-Run an `artifact-validator` agent as a subagent with scope `requirements-extraction` to find research items not included in the implementation plan. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
+Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `requirements-extraction` to find research items not included in the implementation plan. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`.
 
 Provide the subagent with:
 

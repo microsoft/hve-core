@@ -1,7 +1,6 @@
 ---
 description: 'Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings'
 user-invocable: false
-tools: ['codebase', 'search']
 ---
 
 # Prompt Evaluator

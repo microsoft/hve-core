@@ -1,7 +1,6 @@
 ---
 description: 'Searches workspace for code patterns, conventions, implementations, and issues using codebase exploration tools'
 user-invocable: false
-tools: ['codebase', 'search', 'editFiles']
 ---
 
 # Codebase Researcher

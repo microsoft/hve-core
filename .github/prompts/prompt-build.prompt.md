@@ -6,8 +6,6 @@ argument-hint: "file=... [requirements=...]"
 
 # Prompt Build
 
-This prompt delegates to the *prompt-builder* agent, which provides the phase-based protocol for authoring prompt engineering artifacts. The steps below prepare inputs and track progress while the mode handles research, authoring, and validation phases.
-
 ## Inputs
 
 * ${input:file}: (Optional) Target file for the existing or new prompt instructions file. Defaults to the current open file or attached file.
@@ -15,18 +13,11 @@ This prompt delegates to the *prompt-builder* agent, which provides the phase-ba
 
 ## Required Steps
 
-* Prioritize thoroughness and accuracy throughout the workflow.
-* Analyze the user request and conversation context to determine the operation and requirements.
-* Avoid reading prompt instructions files, relying on subagents to read and modify them unless validation or required instructions call for direct access.
-* Run subagents for all research including reading and discovering related files and folders. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When no subagent tool is available, follow the subagent instructions directly or stop if the work requires subagent capability.
-* Follow all of the below steps and follow all instructions from the Required Phases section.
-* Avoid overly verbose instructions and examples.
-* Refactor instructions and examples continually.
+Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching subagents for research, authoring, and validation work.
 
 ### Step 1: Interpret User Request
 
-* Work with the user as needed to interpret their request accurately.
-* Update the conversation and keep track of requirements as they're identified.
+Work with the user as needed to interpret their request accurately. Update the conversation and keep track of requirements as they are identified.
 
 When no explicit requirements are provided, infer the operation:
 
@@ -36,17 +27,10 @@ When no explicit requirements are provided, infer the operation:
 
 ### Step 2: Iterate the Protocol
 
-Pass all identified requirements to the prompt-builder mode's protocol phases. Continue iterating until:
+Pass all identified requirements to the mode's protocol phases. Continue iterating until:
 
 1. All requirements are addressed.
 2. Prompt Quality Criteria from the mode's instructions pass for all related prompt instructions files.
-
-When running subagents for research or editing tasks:
-
-* Run the appropriate subagent (`codebase-researcher`, `external-researcher`, `prompt-tester`, `prompt-evaluator`). If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file.
-* Specify which instructions files or agents the subagent follows.
-* Provide a structured response format or target file for subagent output.
-* Allow subagents to respond with clarifying questions rather than guessing.
 
 ### Step 3: Report Outcomes
 
@@ -56,10 +40,6 @@ After protocol completion, summarize the session:
 * Requirements addressed and any deferred items.
 * Validation results from Prompt Quality Criteria.
 
-## Required Phases
-
-* Follow the prompt-builder agent Required Phases in order. Use the agent to manage phase transitions and validation criteria.
-
 ---
 
-Proceed with the user's request following the Required Steps.
+Follow the Required Phases from the mode instructions, dispatching subagents for all phase work, and proceed with the user's request.

@@ -1,11 +1,10 @@
 ---
 description: "Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core"
+agent: 'prompt-builder'
 argument-hint: "file=..."
 ---
 
 # Prompt Analyze
-
-This prompt evaluates prompt engineering artifacts against the Prompt Quality Criteria defined in the prompt-builder protocol. The analyzer runs subagents to understand the target prompt's intent and validate it against all quality requirements, then reports findings without modifying the target file.
 
 ## Inputs
 
@@ -13,48 +12,15 @@ This prompt evaluates prompt engineering artifacts against the Prompt Quality Cr
 
 ## Required Steps
 
-Follow each step in order. Read the prompt-builder instructions at `.github/instructions/prompt-builder.instructions.md` before beginning analysis.
+Act as an agent orchestrator. Follow the mode instructions to run Phase 1 (Baseline) testing and evaluation against the target file. Do not modify the target file. Compile findings into a structured analysis report for the user.
 
-### Step 1: Load Target and Instructions
+### Step 1: Run Baseline Testing and Evaluation
 
-Read the target file at `${input:file}` along with the prompt-builder instructions to establish the evaluation baseline:
+Execute only the mode's Phase 1 (Baseline) instructions to test and evaluate the target file at `${input:file}`. Do not proceed to Phase 2 or later phases. The mode dispatches `prompt-tester` and `prompt-evaluator` subagents for this work.
 
-* Capture the full content of the target file for analysis.
-* Identify the file type from the extension to determine applicable validation rules.
-* Note the frontmatter fields present and their values.
+### Step 2: Format Analysis Report
 
-### Step 2: Run Execution Analysis Subagent
-
-Run a `prompt-tester` agent as a subagent to analyze what the target prompt does. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-tester.agent.md`. When no subagent tool is available, perform this analysis directly.
-
-Provide the subagent with these instructions:
-
-* Read the target file content and identify its purpose.
-* Determine the intended workflow: single-session, conversational, or autonomous.
-* Catalog the main capabilities and features the prompt provides.
-* Identify any protocols, phases, or steps defined in the file.
-* Note input variables and their purposes.
-* Return a structured summary covering purpose, workflow type, capabilities, and structure.
-
-### Step 3: Run Evaluation Subagent
-
-Run a `prompt-evaluator` agent as a subagent to validate the target against all Prompt Quality Criteria. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-evaluator.agent.md`. When no subagent tool is available, perform this evaluation directly.
-
-Provide the subagent with these instructions:
-
-* Read the prompt-builder instructions at `.github/instructions/prompt-builder.instructions.md`.
-* Read the writing-style instructions at `.github/instructions/writing-style.instructions.md`.
-* Evaluate the target file against each item in the Prompt Quality Criteria checklist.
-* Check writing style compliance against the Prompt Writing Style section.
-* Validate key criteria: clarity, consistency, alignment, coherence, calibration, correctness.
-* Verify few-shot examples are in fenced code blocks and match instructions exactly.
-* Confirm file structure follows the appropriate file type guidelines.
-* Validate protocol patterns if protocols are present.
-* Return findings as a list with severity (critical, major, minor), category (research gap, implementation issue), description, and suggested fix.
-
-### Step 4: Format Analysis Report
-
-Compile results from both subagents into a structured report with these sections:
+Compile the evaluation results into this report structure:
 
 Purpose and Capabilities:
 
@@ -73,7 +39,7 @@ Quality Assessment:
 * Summarize which Prompt Quality Criteria passed and which failed.
 * Note any patterns of concern across multiple criteria.
 
-### Step 5: Deliver Verdict
+### Step 3: Deliver Verdict
 
 When issues are found:
 
@@ -89,4 +55,4 @@ When no issues are found:
 
 ---
 
-Proceed with analysis of the target file following the Required Steps.
+Follow the mode's Phase 1 (Baseline) instructions, dispatching subagents for testing and evaluation, then report findings to the user without modifying the target file.

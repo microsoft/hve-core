@@ -1,7 +1,6 @@
 ---
 description: 'Retrieves external documentation, SDK references, API patterns, and code samples from official sources'
 user-invocable: false
-tools: ['fetch', 'githubRepo', 'context7/*', 'microsoft-docs/*']
 ---
 
 # External Researcher

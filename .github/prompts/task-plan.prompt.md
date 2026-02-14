@@ -7,49 +7,27 @@ agent: 'task-planner'
 
 ## Inputs
 
-* ${input:chat:true}: (Optional, defaults to true) Include conversation context for planning analysis
-* ${input:research}: (Optional) Research file path from user prompt, open file, or conversation
+* ${input:chat:true}: (Optional, defaults to true) Include conversation context for planning analysis.
+* ${input:research}: (Optional) Research file path from user prompt, open file, or conversation.
 
 ## Required Steps
 
-* Prioritize thoroughness and accuracy throughout planning.
-* Run additional research subagents when uncertain about any detail.
-* When remaining unclear after research, return findings to the parent agent for escalation.
-* Refactor the plan documents as needed when discovering new details.
-* Ensure the plan documents are complete and accurate.
-* Repeat steps as needed to achieve thoroughness and accuracy.
+Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching subagents for context gathering and research work.
 
 ### Step 1: Gather Context
 
 Collect context from available sources:
 
-* Use ${input:research} when provided; otherwise check `.copilot-tracking/research/` for relevant files.
+* Use `${input:research}` when provided; otherwise check `.copilot-tracking/research/` for relevant files.
 * Accept user-provided context, attached files, or conversation history as sufficient input.
-* Run `codebase-researcher` agents as subagents when additional codebase analysis is needed. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
-### Step 2: Analyze and Scope
+### Step 2: Build and Return Plan
 
-Extract objectives, requirements, and scope from gathered context:
+Follow the mode's planning phases to create the implementation plan and details files. Summarize planning outcomes:
 
-* Identify files and folders requiring modification or creation.
-* Reference applicable instruction files and codebase conventions.
-* Prefer idiomatic changes; propose pattern-based approaches when one-off changes would introduce inconsistency.
-
-### Step 3: Build Plan
-
-Create implementation plan and implementation details files:
-
-* Add details and file targets as they are identified.
-* Revise steps when new information changes the approach.
-* Include phase-level validation and a final validation phase.
-
-### Step 4: Return Results
-
-Summarize planning outcomes:
-
-* List implementation plan files created and their locations.
-* Note any scope items deferred for future planning.
+* Implementation plan files created and their locations.
+* Scope items deferred for future planning.
 
 ---
 
-Build the task implementation plan following the Required Steps.
+Follow the Required Phases from the mode instructions, dispatching subagents for all phase work, and build the task implementation plan.

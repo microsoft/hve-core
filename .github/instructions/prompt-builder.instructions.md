@@ -418,9 +418,9 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 
 Tool invocation:
 
-* Run the named agent as a subagent. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* Run the named agent with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
 * Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
-* When no subagent tool is available, follow the subagent instructions directly or stop if subagent capability is required for the work.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 * Subagents cannot run their own subagents. Only the parent agent orchestrates all subagent calls.
 
 Task specification:

@@ -7,54 +7,35 @@ agent: 'task-implementor'
 
 ## Inputs
 
-* ${input:plan}: (Optional) Implementation plan file, determined from the conversation, prompt, or attached files
-* ${input:phaseStop:false}: (Optional, defaults to false) Stop after each phase for user review
-* ${input:stepStop:false}: (Optional, defaults to false) Stop after each step for user review
+* ${input:plan}: (Optional) Implementation plan file, determined from the conversation, prompt, or attached files.
+* ${input:phaseStop:false}: (Optional, defaults to false) Stop after each phase for user review.
+* ${input:stepStop:false}: (Optional, defaults to false) Stop after each step for user review.
 
 ## Required Steps
 
-* Prioritize thoroughness and accuracy throughout implementation.
-* Run additional research subagents when uncertain about any detail.
-* When remaining unclear after research, return findings to the parent agent for escalation.
-* Update the changes document when discovering new details.
-* Ensure the changes document is complete and accurate.
-* Repeat steps as needed to achieve thoroughness and accuracy.
+Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching `phase-implementor` subagents for each plan phase and `codebase-researcher` subagents for inline research.
 
 ### Step 1: Locate Implementation Plan
 
 Find the implementation plan using this priority:
 
-1. Use ${input:plan} when provided.
+1. Use `${input:plan}` when provided.
 2. Check the currently open file for plan, details, or changes content.
 3. Extract plan reference from an open changes log.
 4. Select the most recent file in `.copilot-tracking/plans/`.
 
-Run a `codebase-researcher` agent as a subagent for file discovery when the plan location is unclear. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`. The subagent returns the plan file path and associated details/changes paths.
+### Step 2: Execute Implementation
 
-### Step 2: Determine Resume Point
+Follow the mode's phases to execute the plan. Apply stop controls: pause after each phase when `${input:phaseStop}` is true; pause after each step when `${input:stepStop}` is true.
 
-Inspect the implementation plan for completion status:
+### Step 3: Report Progress
 
-* Identify checked checkboxes (`[x]`) as completed steps.
-* Read the changes log to understand current implementation state.
-* Resume from the first uncompleted phase or step.
+Summarize implementation progress:
 
-### Step 3: Execute Implementation
-
-Invoke task-implementor mode with the located plan:
-
-* Follow stop controls: pause after each phase when ${input:phaseStop} is true; pause after each step when ${input:stepStop} is true.
-* Run `codebase-researcher` agents as subagents for inline research when context is missing. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`. Subagents return findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
-* Update the changes log as steps complete.
-
-### Step 4: Report Progress
-
-Summarize implementation progress, without leaving off important details:
-
-* List phases and steps completed in this session.
-* Note any blockers or clarification requests.
-* Provide the next resumption point when pausing.
+* Phases and steps completed in this session.
+* Blockers or clarification requests.
+* Next resumption point when pausing.
 
 ---
 
-Invoke task-implementor mode and proceed with the Required Steps.
+Follow the Required Phases from the mode instructions, dispatching subagents for all phase work, and proceed with implementation.

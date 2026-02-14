@@ -6,8 +6,6 @@ agent: 'prompt-builder'
 
 # Prompt Refactor
 
-This prompt extends the prompt-build workflow with a focus on refactoring and cleanup operations. The protocol iterates through research, authoring, and validation phases until the target file passes all Prompt Quality Criteria.
-
 ## Inputs
 
 * ${input:file}: (Required) Target prompt file to refactor. Accepts `.prompt.md`, `.agent.md`, or `.instructions.md` files.
@@ -15,58 +13,34 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ## Required Steps
 
-* Prioritize thoroughness and accuracy throughout this workflow.
-* Follow the prompt-build protocol phases while applying these refactoring-specific requirements.
-* Avoid overly verbose instructions and examples.
-* Refactor instructions and examples continually.
-* Repeat steps and phases as needed to be thorough and accurate.
-
-### Step 1: Baseline Assessment
-
-Run a `prompt-evaluator` agent as a subagent to evaluate the current state of the target file. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-evaluator.agent.md`:
-
-* Read the target file at `${input:file}` and the prompt-builder instructions.
-* Identify quality issues, outdated patterns, and areas for compression.
-* Catalog any schema, API, SDK, or tool call references that require verification.
-* Return findings with severity and category for each issue.
-
-### Step 2: Research and Verification
-
-Run an `external-researcher` agent as a subagent to verify external references. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`:
-
-* Identify all schema, API, SDK, or tool call instructions in the target file.
-* Use official documentation tools to verify accuracy and currency.
-* Search official repositories for current patterns and conventions.
-* Return a verification report with corrections needed.
-
-### Step 3: Refactor and Compress
-
-Apply the prompt-build protocol's Phase 3 (Build) with these refactoring requirements:
+Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching subagents for all phase work. Apply these refactoring-specific requirements throughout the protocol:
 
 * Remove or condense redundant instructions while preserving intent.
 * Replace verbose examples with concise instruction lines where examples are not essential.
 * Update outdated prompting patterns to follow current Prompt Writing Style.
 * Correct any schema, API, SDK, or tool call instructions based on research findings.
-* Fix and improve templates to match current file type guidelines.
 
-### Step 4: Validate and Iterate
+### Step 1: Baseline and Research
 
-Apply the prompt-build protocol's Phase 4 (Validate) requirements:
+Follow the mode's Phase 1 (Baseline) and Phase 2 (Research) to evaluate the current state and verify external references in the target file at `${input:file}`.
 
-* Run `prompt-tester` and `prompt-evaluator` agents as subagents to test the refactored file. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from the corresponding `.github/agents/` file.
-* Evaluate against all Prompt Quality Criteria.
-* Return to Step 3 when issues are found.
-* Continue iteration until all criteria pass.
+### Step 2: Refactor
 
-### Step 5: Report Outcomes
+Follow the mode's Phase 3 (Build) to apply compression and cleanup changes along with any user-provided `${input:requirements}`.
+
+### Step 3: Validate and Iterate
+
+Follow the mode's Phase 4 (Validate) and Phase 5 (Iterate) until all Prompt Quality Criteria pass.
+
+### Step 4: Report Outcomes
 
 After validation passes, summarize the refactoring session:
 
-* List changes made with file paths.
-* Summarize instructions removed, compressed, or updated.
-* Report schema, API, or tool call corrections applied.
-* Confirm Prompt Quality Criteria validation results.
+* Changes made with file paths.
+* Instructions removed, compressed, or updated.
+* Schema, API, or tool call corrections applied.
+* Prompt Quality Criteria validation results.
 
 ---
 
-Proceed with refactoring the target file following the Required Steps.
+Follow the Required Phases from the mode instructions, dispatching subagents for all phase work, and proceed with refactoring the target file.

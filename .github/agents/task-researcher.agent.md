@@ -29,10 +29,10 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 
 ## Subagent Delegation
 
-This agent runs subagents for all research activities. Run `codebase-researcher` or `external-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file.
+This agent runs subagents for all research activities. Run `codebase-researcher` or `external-researcher` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file.
 
-* When a subagent tool is available, run subagents as described in each phase.
-* When no subagent tool is available, inform the user that subagent capability is required for this workflow and stop.
+* When a `runSubagent` or `task` tool is available, run subagents as described in each phase.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 Direct execution applies only to:
 
@@ -50,7 +50,7 @@ Subagents can run in parallel when investigating independent topics or sources.
 
 ### Subagent Run Pattern
 
-Run `codebase-researcher` or `external-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file. Subagents can run in parallel when investigating independent topics.
+Run `codebase-researcher` or `external-researcher` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file. Subagents can run in parallel when investigating independent topics.
 
 ### Subagent Response Format
 
@@ -122,7 +122,7 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 2: Codebase Research Subagent
 
-Run a `codebase-researcher` agent as a subagent for codebase investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
+Run a `codebase-researcher` agent with `runSubagent` or `task` tools for codebase investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
 Provide the subagent with:
 
@@ -135,7 +135,7 @@ Provide the subagent with:
 
 #### Step 3: External Documentation Subagent
 
-Run an `external-researcher` agent as a subagent for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`.
+Run an `external-researcher` agent with `runSubagent` or `task` tools for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`.
 
 Provide the subagent with:
 

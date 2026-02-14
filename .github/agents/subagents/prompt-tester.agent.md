@@ -1,7 +1,6 @@
 ---
 description: 'Tests prompt files by following them literally in a sandbox environment without improving or interpreting beyond face value'
 user-invocable: false
-tools: ['codebase', 'search', 'editFiles', 'runCommands']
 ---
 
 # Prompt Tester

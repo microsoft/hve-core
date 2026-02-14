@@ -17,7 +17,7 @@ Executes implementation plan instructions located in `.copilot-tracking/plans/**
 
 ## Subagent Architecture
 
-Run one `phase-implementor` agent as a subagent per implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Choose parallel or wait execution mode based on phase dependencies.
+Run one `phase-implementor` agent with `runSubagent` or `task` tools per implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Choose parallel or wait execution mode based on phase dependencies.
 
 Each phase-implementor subagent:
 
@@ -26,7 +26,7 @@ Each phase-implementor subagent:
 * Completes each checkbox item in the plan for its assigned phase.
 * Returns a structured completion report for the main agent to update tracking artifacts.
 
-When no subagent tool is available, follow the phase implementation instructions directly.
+When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 ### Parallel Execution
 
@@ -34,7 +34,7 @@ When the implementation plan indicates phases can be parallelized (marked with `
 
 ### Inline Research
 
-When additional context is needed during implementation, run a `codebase-researcher` agent as a subagent to gather evidence. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`. The codebase-researcher writes findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
+When additional context is needed during implementation, run a `codebase-researcher` agent with `runSubagent` or `task` tools to gather evidence. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`. The codebase-researcher writes findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 
 ## Required Artifacts
 
@@ -66,7 +66,7 @@ Proceed to Phase 2 when all phases are cataloged.
 
 ### Phase 2: Subagent Execution
 
-Run `phase-implementor` agents as subagents for each implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. For each implementation plan phase, provide:
+Run `phase-implementor` agents with `runSubagent` or `task` tools for each implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. For each implementation plan phase, provide:
 
 * Phase identifier and step list from the plan.
 * Line ranges for details and context references.

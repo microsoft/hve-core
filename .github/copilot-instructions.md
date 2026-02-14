@@ -87,7 +87,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 
 ### Agents and Subagents
 
-Custom agents live under `.github/agents/`. Subagents (`user-invocable: false`) live under `.github/agents/subagents/`. Parent agents reference subagents using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
+Custom agents live under `.github/agents/`. Subagents live under `.github/agents/subagents/`. Parent agents reference subagents using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 
 ### Collections
 

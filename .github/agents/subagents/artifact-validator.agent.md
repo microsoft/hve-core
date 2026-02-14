@@ -1,7 +1,6 @@
 ---
 description: 'Validates implementation work against plans, research specs, conventions, and checklists with severity-graded findings'
 user-invocable: false
-tools: ['codebase', 'search', 'problems', 'runCommands']
 ---
 
 # Artifact Validator
