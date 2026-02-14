@@ -122,7 +122,7 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 2: Codebase Research Subagent
 
-Run a `codebase-researcher` agent as a subagent for codebase investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
+Run a `codebase-researcher` agent as a subagent for codebase investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
 Provide the subagent with:
 
@@ -135,7 +135,7 @@ Provide the subagent with:
 
 #### Step 3: External Documentation Subagent
 
-Run an `external-researcher` agent as a subagent for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/external-researcher.agent.md`.
+Run an `external-researcher` agent as a subagent for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`.
 
 Provide the subagent with:
 

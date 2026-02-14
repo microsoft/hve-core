@@ -15,3 +15,12 @@ Git workflow prompts for:
 - **Merge Operations** — Handle merges, rebases, and conflict resolution workflows
 - **Repository Setup** — Initialize repositories with recommended configuration
 - **Pull Requests** — Create and manage pull requests with linked context
+
+Supporting subagents included:
+
+- **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
+- **External Researcher** — Retrieves external documentation, SDK references, and code samples
+- **Phase Implementor** — Executes single implementation phases with change tracking
+- **Artifact Validator** — Validates implementation work against plans and conventions
+- **Prompt Tester** — Tests prompt files by following them literally in a sandbox
+- **Prompt Evaluator** — Evaluates prompt execution results against quality criteria

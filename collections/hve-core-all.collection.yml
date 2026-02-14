@@ -41,6 +41,18 @@ items:
   kind: agent
 - path: .github/agents/security-plan-creator.agent.md
   kind: agent
+- path: .github/agents/subagents/artifact-validator.agent.md
+  kind: agent
+- path: .github/agents/subagents/codebase-researcher.agent.md
+  kind: agent
+- path: .github/agents/subagents/external-researcher.agent.md
+  kind: agent
+- path: .github/agents/subagents/phase-implementor.agent.md
+  kind: agent
+- path: .github/agents/subagents/prompt-evaluator.agent.md
+  kind: agent
+- path: .github/agents/subagents/prompt-tester.agent.md
+  kind: agent
 - path: .github/agents/task-implementor.agent.md
   kind: agent
 - path: .github/agents/task-planner.agent.md
@@ -164,5 +176,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
