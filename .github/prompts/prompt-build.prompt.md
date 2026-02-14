@@ -21,7 +21,7 @@ This prompt delegates to the *prompt-builder* agent, which provides the phase-ba
 * Analyze the user request and conversation context to determine the operation and requirements.
 * Avoid reading prompt instructions files, relying on subagents to read and modify them unless validation or required instructions call for direct access.
 * Leverage subagents for all research including reading and discovering related files and folders.
-* Use the runSubagent tool when dispatching subagents. When the tool is unavailable, follow the subagent instructions directly or stop if the task requires runSubagent.
+* Use the task tool (preferred) or the `runSubagent` tool when dispatching subagents. When neither is available, follow the subagent instructions directly or stop if the task requires subagent dispatch.
 * Follow all of the below steps and follow all instructions from the Required Phases section.
 * Avoid overly verbose instructions and examples.
 * Refactor instructions and examples continually.
@@ -46,7 +46,7 @@ Pass all identified requirements to the prompt-builder mode's protocol phases. C
 
 When dispatching subagents for research or editing tasks:
 
-* Use the runSubagent tool to dispatch each subagent. When it is unavailable, follow the subagent instructions directly or stop if the task requires runSubagent.
+* Use the task tool to dispatch the appropriate subagent agent (`codebase-researcher`, `external-researcher`, `prompt-tester`, `prompt-evaluator`). When the task tool is unavailable, use the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
 * Specify which instructions files or agents the subagent follows.
 * Provide a structured response format or target file for subagent output.
 * Allow subagents to respond with clarifying questions rather than guessing.

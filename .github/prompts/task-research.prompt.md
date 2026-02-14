@@ -12,10 +12,10 @@ agent: 'task-researcher'
 
 ## Tool Availability
 
-This workflow dispatches subagents for all research activities using the runSubagent tool.
+This workflow dispatches subagents for all research activities. Prefer the task tool for subagent dispatch when available, specifying the agent type (`codebase-researcher` or `external-researcher`) and execution mode. Fall back to the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
 
-* When runSubagent is available, proceed with subagent dispatch as described in each step.
-* When runSubagent is unavailable, inform the user that subagent dispatch is required for this workflow and stop.
+* When the task tool or runSubagent is available, proceed with subagent dispatch as described in each step.
+* When neither is available, inform the user that subagent dispatch is required for this workflow and stop.
 
 ## Required Steps
 
@@ -44,18 +44,25 @@ Check `.copilot-tracking/research/` for existing files matching `{{YYYY-MM-DD}}-
 
 ### Step 3: Dispatch Research Subagents
 
-Use the runSubagent tool to dispatch subagents for all research activities. Subagents can run in parallel when investigating independent topics.
+Dispatch `codebase-researcher` and `external-researcher` agents for all research activities. Use the task tool (preferred) or `runSubagent` to dispatch. Subagents can run in parallel when investigating independent topics using parallel execution mode.
 
 #### Subagent Instructions
 
-Provide each subagent with the following:
+For `codebase-researcher` agents (workspace investigation):
 
 * Read and follow `.github/instructions/` files relevant to the research topic.
-* Reference the task-researcher agent for research patterns and tool usage.
 * Assign a specific research question or investigation target.
-* Use semantic_search, grep_search, file reads, and external documentation tools.
+* Search the workspace for patterns, implementations, and conventions.
 * Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 * Include source references, file paths with line numbers, and evidence.
+
+For `external-researcher` agents (external documentation):
+
+* Assign documentation targets (SDKs, APIs, URLs).
+* Use your MCP tools for external documentation, SDK, API, and code sample research.
+* Use your HTTP and GitHub tools to search official repositories for patterns and examples.
+* Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
+* Include source URLs and documentation excerpts.
 
 #### Subagent Response Format
 

@@ -31,7 +31,7 @@ Find the implementation plan using this priority:
 3. Extract plan reference from an open changes log.
 4. Select the most recent file in `.copilot-tracking/plans/`.
 
-Dispatch a subagent via `runSubagent` for file discovery when the plan location is unclear. The subagent returns the plan file path and associated details/changes paths.
+Dispatch a `codebase-researcher` agent using the task tool (preferred) or `runSubagent` for file discovery when the plan location is unclear. The subagent returns the plan file path and associated details/changes paths.
 
 ### Step 2: Determine Resume Point
 
@@ -46,7 +46,7 @@ Inspect the implementation plan for completion status:
 Invoke task-implementor mode with the located plan:
 
 * Follow stop controls: pause after each phase when ${input:phaseStop} is true; pause after each step when ${input:stepStop} is true.
-* Dispatch subagents for inline research when context is missing. Subagents return findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
+* Dispatch `codebase-researcher` agents for inline research when context is missing using the task tool (preferred) or `runSubagent`. Subagents return findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 * Update the changes log as steps complete.
 
 ### Step 4: Report Progress

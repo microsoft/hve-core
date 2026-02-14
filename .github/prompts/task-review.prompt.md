@@ -15,10 +15,10 @@ agent: 'task-reviewer'
 
 ## Tool Availability
 
-This workflow dispatches subagents for all validation activities using the runSubagent tool.
+This workflow dispatches subagents for all validation activities. Prefer the task tool for subagent dispatch when available, specifying the agent type (`artifact-validator` or `codebase-researcher`) and execution mode. Fall back to the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
 
-* When runSubagent is available, proceed with subagent dispatch as described in each step.
-* When runSubagent is unavailable, inform the user that subagent dispatch is required for this workflow and stop.
+* When the task tool or runSubagent is available, proceed with subagent dispatch as described in each step.
+* When neither is available, inform the user that subagent dispatch is required for this workflow and stop.
 
 ## Required Steps
 
@@ -54,7 +54,7 @@ For each changes log identified:
 * Check the plan file for research references in the **Context Summary** section.
 * Build a complete set of related artifacts (research, plan, details, changes).
 
-Dispatch a subagent via `runSubagent` for artifact discovery when file locations are unclear. The subagent returns paths to all related artifacts.
+Dispatch a `codebase-researcher` agent using the task tool (preferred) or `runSubagent` for artifact discovery when file locations are unclear. The subagent returns paths to all related artifacts.
 
 ### Step 3: Create or Update Review Log
 
@@ -69,8 +69,8 @@ Create a new review log in `.copilot-tracking/reviews/` or update an existing on
 Invoke task-reviewer mode to validate the implementation:
 
 * Extract checklist items from research and plan documents.
-* Dispatch validation subagents for file changes, convention compliance, and command execution.
-* Dispatch additional research subagents when context is insufficient.
+* Dispatch `artifact-validator` agents for file changes, convention compliance, and command execution using the task tool (preferred) or `runSubagent`.
+* Dispatch additional `codebase-researcher` agents when context is insufficient.
 * Update the review log continuously as validation progresses.
 
 ### Step 5: Report Findings

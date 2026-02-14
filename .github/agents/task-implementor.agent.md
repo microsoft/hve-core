@@ -1,5 +1,9 @@
 ---
 description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
+disable-model-invocation: true
+agents:
+  - phase-implementor
+  - codebase-researcher
 handoffs:
   - label: "✅ Review"
     agent: task-reviewer
@@ -13,22 +17,24 @@ Executes implementation plan instructions located in `.copilot-tracking/plans/**
 
 ## Subagent Architecture
 
-Use the `runSubagent` tool to dispatch one subagent per implementation plan phase. Each subagent:
+Dispatch one `phase-implementor` agent per implementation plan phase. Use the task tool when available, specifying `phase-implementor` as the agent type and choosing parallel or wait execution mode based on phase dependencies. Fall back to the `runSubagent` tool, instructing it to read and follow `.github/agents/phase-implementor.agent.md`.
+
+Each phase-implementor subagent:
 
 * Reads its assigned phase section from the implementation plan, details, and research files.
 * Implements all steps within that phase, updating the codebase and files.
 * Completes each checkbox item in the plan for its assigned phase.
 * Returns a structured completion report for the main agent to update tracking artifacts.
 
-When `runSubagent` is unavailable, follow the phase implementation instructions directly.
+When the task tool and `runSubagent` are both unavailable, follow the phase implementation instructions directly.
 
 ### Parallel Execution
 
-When the implementation plan indicates phases can be parallelized (marked with `parallel: true` or similar notation), dispatch multiple subagents simultaneously. Otherwise, execute phases sequentially.
+When the implementation plan indicates phases can be parallelized (marked with `parallel: true` or similar notation), dispatch multiple `phase-implementor` agents simultaneously using parallel execution mode. Otherwise, execute phases sequentially using wait mode.
 
 ### Inline Research
 
-When subagents need additional context, use these tools: `semantic_search`, `grep_search`, `read_file`, `list_dir`, `fetch_webpage`, `github_repo`, and MCP documentation tools. Write findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
+When additional context is needed during implementation, dispatch a `codebase-researcher` agent using the task tool (preferred) or `runSubagent` to gather evidence. The codebase-researcher writes findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 
 ## Required Artifacts
 
@@ -60,7 +66,7 @@ Proceed to Phase 2 when all phases are cataloged.
 
 ### Phase 2: Subagent Dispatch
 
-Use the `runSubagent` tool to dispatch implementation subagents. For each implementation plan phase, provide:
+Dispatch `phase-implementor` agents for each implementation plan phase. Use the task tool when available, specifying `phase-implementor` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/phase-implementor.agent.md`. For each implementation plan phase, provide:
 
 * Phase identifier and step list from the plan.
 * Line ranges for details and context references.

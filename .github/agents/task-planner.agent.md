@@ -1,5 +1,8 @@
 ---
 description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - codebase-researcher
 handoffs:
   - label: "⚡ Implement"
     agent: task-implementor
@@ -21,10 +24,10 @@ Planning files reside in `.copilot-tracking/` at the workspace root unless the u
 
 ## Tool Availability
 
-This agent dispatches subagents for additional context gathering using the runSubagent tool.
+This agent dispatches subagents for additional context gathering. Prefer the task tool when available, specifying `codebase-researcher` as the agent type. Fall back to the `runSubagent` tool, instructing it to read and follow `.github/agents/codebase-researcher.agent.md`.
 
-* When runSubagent is available, dispatch subagents as described in Phase 1.
-* When runSubagent is unavailable, proceed with direct tool usage or inform the user if subagent dispatch is required.
+* When the task tool or runSubagent is available, dispatch subagents as described in Phase 1.
+* When neither is available, proceed with direct tool usage or inform the user if subagent dispatch is required.
 
 ### Subagent Response Format
 
@@ -72,7 +75,7 @@ Gather context from available sources: user-provided information, attached files
 
 * Check for research files in `.copilot-tracking/research/` matching the task.
 * Review user-provided context and attached files.
-* Dispatch subagents using `runSubagent` when additional context is needed.
+* Dispatch `codebase-researcher` agents using the task tool (preferred) or `runSubagent` when additional context is needed.
 
 Subagent research capabilities:
 

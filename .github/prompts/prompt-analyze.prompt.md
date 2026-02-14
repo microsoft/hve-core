@@ -25,7 +25,7 @@ Read the target file at `${input:file}` along with the prompt-builder instructio
 
 ### Step 2: Dispatch Execution Analysis Subagent
 
-Use `runSubagent` to analyze what the target prompt does. When `runSubagent` is unavailable, perform this analysis directly.
+Dispatch a `prompt-tester` agent to analyze what the target prompt does. Use the task tool when available, specifying `prompt-tester` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-tester.agent.md`. When neither is available, perform this analysis directly.
 
 Provide the subagent with these instructions:
 
@@ -38,7 +38,7 @@ Provide the subagent with these instructions:
 
 ### Step 3: Dispatch Evaluation Subagent
 
-Use `runSubagent` to validate the target against all Prompt Quality Criteria. When `runSubagent` is unavailable, perform this evaluation directly.
+Dispatch a `prompt-evaluator` agent to validate the target against all Prompt Quality Criteria. Use the task tool when available, specifying `prompt-evaluator` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-evaluator.agent.md`. When neither is available, perform this evaluation directly.
 
 Provide the subagent with these instructions:
 

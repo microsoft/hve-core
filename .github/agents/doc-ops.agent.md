@@ -1,5 +1,9 @@
 ---
 description: 'Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - codebase-researcher
+  - phase-implementor
 ---
 
 # Documentation Operations Agent
@@ -15,10 +19,10 @@ Autonomous agent for documentation quality assurance. Discovers divergences from
 
 ## Tool Availability
 
-This agent requires the runSubagent tool for all documentation processing.
+This agent dispatches subagents for all documentation processing. Prefer the task tool for subagent dispatch when available, specifying the agent type (`codebase-researcher` or `phase-implementor`) and execution mode. Fall back to the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
 
-* When runSubagent is available, dispatch subagents as specified in each phase.
-* When runSubagent is unavailable, inform the user that this workflow requires subagent capability and stop.
+* When the task tool or runSubagent is available, dispatch subagents as specified in each phase.
+* When neither is available, inform the user that this workflow requires subagent capability and stop.
 
 The main agent executes directly only for:
 
@@ -135,13 +139,11 @@ Update the session file after each phase with discoveries, plan items, and compl
 
 ### Phase 1: Discovery
 
-Dispatch three subagents to discover issues across all capabilities.
-
-Use the runSubagent tool to dispatch each discovery subagent. Each subagent focuses on one capability and reports all findings.
+Dispatch three `codebase-researcher` agents in parallel to discover issues across all capabilities. Use the task tool when available, specifying `codebase-researcher` as the agent type and parallel execution mode. Fall back to `runSubagent`, instructing each to read and follow `.github/agents/codebase-researcher.agent.md`.
 
 #### Pattern Compliance Discovery
 
-Dispatch a subagent with:
+Dispatch a `codebase-researcher` agent with:
 
 * Task: Scan all in-scope files for divergences from writing-style.instructions.md and markdown.instructions.md.
 * Instructions to read: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).
@@ -151,7 +153,7 @@ Dispatch a subagent with:
 
 #### Accuracy Checking Discovery
 
-Dispatch a subagent with:
+Dispatch a `codebase-researcher` agent with:
 
 * Task: Compare documentation claims against actual implementation.
 * Focus areas: Script parameter documentation in scripts/, file structure descriptions in docs/, example commands and their expected behavior.
@@ -160,7 +162,7 @@ Dispatch a subagent with:
 
 #### Missing Documentation Discovery
 
-Dispatch a subagent with:
+Dispatch a `codebase-researcher` agent with:
 
 * Task: Identify undocumented functionality.
 * Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), .github/skills/ (skills without adequate documentation).
@@ -177,7 +179,7 @@ After all discovery subagents complete:
 
 Dispatch a planning subagent to create a prioritized work plan.
 
-Use the runSubagent tool with:
+Use the task tool with `codebase-researcher` agent (preferred) or `runSubagent` with inline instructions:
 
 * Task: Create a work plan from discovered issues.
 * Input: Read the session file Discovered Issues section.
@@ -196,14 +198,14 @@ After planning completes:
 
 ### Phase 3: Implementation
 
-Dispatch implementation subagents to execute fixes from the work plan.
+Dispatch `phase-implementor` agents to execute fixes from the work plan.
 
-Use the runSubagent tool to dispatch subagents based on work plan size:
+Use the task tool when available, specifying `phase-implementor` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/phase-implementor.agent.md`. Dispatch based on work plan size:
 
-* For small plans (fewer than 10 items): One subagent processes all items.
-* For larger plans: Dispatch subagents by capability category (pattern compliance, accuracy, documentation creation).
+* For small plans (fewer than 10 items): One `phase-implementor` agent processes all items.
+* For larger plans: Dispatch `phase-implementor` agents by capability category (pattern compliance, accuracy, documentation creation).
 
-Each implementation subagent receives:
+Each `phase-implementor` agent receives:
 
 * Task: Execute assigned work items from the plan.
 * Instructions to follow: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).

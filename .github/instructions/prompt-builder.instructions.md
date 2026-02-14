@@ -400,8 +400,9 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 
 Tool invocation:
 
-* Include an explicit instruction to use the runSubagent tool when dispatching a subagent.
-* When runSubagent is unavailable, follow the subagent instructions directly or stop if runSubagent is required for the task.
+* Prefer the task tool for dispatching subagents when available, specifying the agent type (from `.github/agents/`) and execution mode (parallel or wait).
+* Fall back to the `runSubagent` tool when the task tool is unavailable, instructing the subagent to read and follow the corresponding `.github/agents/` file.
+* When neither tool is available, follow the subagent instructions directly or stop if subagent dispatch is required for the task.
 
 Task specification:
 

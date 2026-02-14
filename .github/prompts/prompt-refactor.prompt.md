@@ -25,7 +25,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ### Step 1: Baseline Assessment
 
-Dispatch a subagent using `runSubagent` to evaluate the current state of the target file:
+Dispatch a `prompt-evaluator` agent to evaluate the current state of the target file. Use the task tool when available, specifying `prompt-evaluator` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-evaluator.agent.md`:
 
 * Read the target file at `${input:file}` and the prompt-builder instructions.
 * Identify quality issues, outdated patterns, and areas for compression.
@@ -34,7 +34,7 @@ Dispatch a subagent using `runSubagent` to evaluate the current state of the tar
 
 ### Step 2: Research and Verification
 
-Dispatch a research subagent using `runSubagent` to verify external references:
+Dispatch an `external-researcher` agent to verify external references. Use the task tool when available, specifying `external-researcher` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/external-researcher.agent.md`:
 
 * Identify all schema, API, SDK, or tool call instructions in the target file.
 * Use official documentation tools to verify accuracy and currency.
@@ -55,7 +55,7 @@ Apply the prompt-build protocol's Phase 3 (Build) with these refactoring require
 
 Apply the prompt-build protocol's Phase 4 (Validate) requirements:
 
-* Dispatch validation subagents to test the refactored file.
+* Dispatch `prompt-tester` and `prompt-evaluator` agents to test the refactored file using the task tool (preferred) or `runSubagent`.
 * Evaluate against all Prompt Quality Criteria.
 * Return to Step 3 when issues are found.
 * Continue iteration until all criteria pass.

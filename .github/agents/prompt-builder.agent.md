@@ -1,5 +1,11 @@
 ---
 description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - prompt-tester
+  - prompt-evaluator
+  - codebase-researcher
+  - external-researcher
 handoffs:
   - label: "💡 Update/Create"
     agent: prompt-builder
@@ -29,7 +35,7 @@ Contains the phases for the prompt engineering workflow. Execute phases in order
 
 ### Important guidelines to always follow
 
-* Be sure to use the runSubagent tool when the Phase or Step explicitly states, use the runSubagent tool.
+* Prefer the task tool for dispatching subagents when available, specifying the agent type and execution mode. Fall back to the `runSubagent` tool when the task tool is unavailable, instructing the subagent to read and follow the corresponding `.github/agents/` file.
 * For all Phases, avoid reading in the prompt file(s) and instead have the subagents read the prompt file(s).
 
 ### Phase 1: Baseline
@@ -38,7 +44,7 @@ This phase applies when the user points to an existing prompt, agent, or instruc
 
 #### Step 1: Baseline Testing Subagent
 
-Use the runSubagent tool to dispatch a subagent that tests the existing prompt file. The subagent follows the Prompt Tester Instructions section.
+Dispatch a `prompt-tester` agent to test the existing prompt file, followed by a `prompt-evaluator` agent to evaluate the results. Use the task tool when available. Fall back to `runSubagent`, instructing each to read and follow `.github/agents/prompt-tester.agent.md` or `.github/agents/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -64,23 +70,22 @@ Actions:
 
 #### Research Subagent
 
-Use the runSubagent tool to dispatch a subagent that researches context for the prompt engineering task. The subagent gathers information from the codebase, documentation, and existing patterns to inform prompt creation or improvement.
+Dispatch a `codebase-researcher` agent and/or `external-researcher` agent for research tasks. Use the task tool when available. Fall back to `runSubagent`, instructing the subagent to read and follow `.github/agents/codebase-researcher.agent.md` or `.github/agents/external-researcher.agent.md` respectively.
 
 Subagent instructions:
 
 * Assign the research output folder using the naming convention from the Sandbox Environment section with a `-research` suffix.
 * Create a *research-log.md* file in the research folder to document findings.
 * Include the list of research targets and research questions to investigate.
-* Locate relevant files using semantic_search and grep_search.
-* Retrieve official documentation using microsoft-docs tools.
-* Search official repositories for patterns using github_repo.
-* Fetch external resources when needed.
+* Locate relevant files using your workspace search and file reading tools.
+* Use your MCP and HTTP tools for official documentation and external resources.
+* Search official repositories for patterns and examples using your GitHub tools.
 * Document findings in the research log with source file paths or URLs, relevant code excerpts, patterns identified, and answers to each research question.
 * Return a summary confirming the research log file path and key findings.
 
 ### Phase 3: Build
 
-Use the runSubagent tool to dispatch a subagent that implements changes to the prompt engineering artifact. The subagent follows the Prompt Authoring Requirements from the instructions file.
+Dispatch a subagent to implement changes to the prompt engineering artifact. Use the task tool when available with wait execution mode. Fall back to `runSubagent`. The subagent follows the Prompt Authoring Requirements from the instructions file.
 
 Subagent instructions:
 
@@ -101,7 +106,7 @@ This phase tests the created or modified artifact in a sandbox environment.
 
 #### Step 1: Validation Testing Subagent
 
-Use the runSubagent tool to dispatch a subagent that validates the prompt file. The subagent follows the Prompt Tester Instructions section.
+Dispatch a `prompt-tester` agent to validate the prompt file, followed by a `prompt-evaluator` agent. Use the task tool when available. Fall back to `runSubagent`, instructing each to read and follow `.github/agents/prompt-tester.agent.md` or `.github/agents/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -179,7 +184,7 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 
 ### Execution Subagent
 
-Use the runSubagent tool to dispatch a subagent that tests the prompt by following it literally. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
+Dispatch a `prompt-tester` agent to test the prompt by following it literally. Use the task tool when available, specifying `prompt-tester` as the agent type and wait execution mode. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-tester.agent.md`. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
 
 Subagent instructions:
 
@@ -194,7 +199,7 @@ Subagent instructions:
 
 ### Evaluation Subagent
 
-Use the runSubagent tool to dispatch a subagent that evaluates the results of the execution. The subagent assesses whether the prompt achieved its goals and identifies any issues.
+Dispatch a `prompt-evaluator` agent to evaluate the results of the execution. Use the task tool when available, specifying `prompt-evaluator` as the agent type and wait execution mode. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-evaluator.agent.md`. The subagent assesses whether the prompt achieved its goals and identifies any issues.
 
 Subagent instructions:
 
