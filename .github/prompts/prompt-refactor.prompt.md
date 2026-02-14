@@ -15,9 +15,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ## Required Steps
 
-**Important requirements**:
-
-* **Important**, always be thorough and accurate.
+* Prioritize thoroughness and accuracy throughout this workflow.
 * Follow the prompt-build protocol phases while applying these refactoring-specific requirements.
 * Avoid overly verbose instructions and examples.
 * Refactor instructions and examples continually.
