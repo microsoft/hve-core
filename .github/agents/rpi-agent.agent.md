@@ -116,9 +116,9 @@ Run one or more `codebase-researcher` agents with `runSubagent` or `task` tools 
 
 Iterate and run multiple codebase-researcher agents in parallel until all information is collected. Update the primary research document with findings from the subagents.
 
-#### Step 3: External Documentation
+#### Step 3: External Research
 
-When the research involves SDKs, APIs, or external services, run one or more `external-researcher` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`. Provide each with:
+When the research involves external research, fetching web pages, github, or mcp tools, run one or more `external-researcher` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`. Provide each with:
 
 * Documentation targets (SDK names, API endpoints, library identifiers).
 * Research questions to answer with external documentation.
