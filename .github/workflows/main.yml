@@ -95,12 +95,20 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # On release commits, skip PR creation to prevent bogus PRs
+          # from draft release lazy tag timing. Release commits have zero
+          # unreleased changes so skipping loses nothing. The tag is
+          # created in the next step, ensuring subsequent runs find it.
+          skip-github-pull-request: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main)') }}
 
       # Workaround: release-please with "draft": true uses lazy tag
-      # creation — the git tag is not materialized until the release is
+      # creation. The git tag is not materialized until the release is
       # published. Without the tag, release-please cannot find the draft
-      # on subsequent runs, breaking version anchoring. Create the tag
-      # explicitly via API. Replace with "force-tag-creation": true in
+      # on subsequent runs, breaking version anchoring and causing bogus
+      # major-version PRs. The skip-github-pull-request conditional above
+      # prevents PR creation on release commits (zero unreleased changes),
+      # and this step creates the tag so subsequent runs find the release.
+      # Replace both workarounds with "force-tag-creation": true in
       # release-please-config.json once release-please-action ships a
       # version that includes googleapis/release-please#2627.
       - name: Create git tag for draft release

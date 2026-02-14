@@ -269,6 +269,37 @@ All workflows MUST pass the following validation checks:
     fi
 ```
 
+## YAML Expression Quoting
+
+GitHub Actions expression single quotes (`'...'`) inside `${{ }}` are NOT YAML quotes. The YAML parser treats them as literal characters in a plain scalar. If the expression text contains a colon followed by whitespace (`:`&nbsp;), the YAML parser interprets it as a mapping value indicator and fails with `mapping values are not allowed in this context`.
+
+**Problem pattern:**
+
+```yaml
+# FAILS: ': release' contains colon-space, YAML parser chokes
+with:
+  my-input: ${{ startsWith(value, 'prefix: release') }}
+```
+
+**Acceptable solutions (in preference order):**
+
+1. **Shorten the literal to avoid colon-space.** Use a prefix that does not contain a colon followed by whitespace when the specificity tradeoff is acceptable.
+
+    ```yaml
+    with:
+      my-input: ${{ startsWith(value, 'prefix') }}
+    ```
+
+2. **Double-quote the entire expression.** This makes the value a YAML quoted scalar, preventing the parser from interpreting internal colon-space as structure. Add a comment explaining why quotes are required.
+
+    ```yaml
+    with:
+      # Quotes required: expression literal contains ': ' which breaks YAML plain scalars
+      my-input: "${{ startsWith(value, 'prefix: release') }}"
+    ```
+
+Avoid `format()` workarounds or environment variable indirection when the simpler options above apply.
+
 ## Enforcement Statement
 
 The following scripts enforce compliance:
