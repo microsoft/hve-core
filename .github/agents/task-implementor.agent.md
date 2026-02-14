@@ -13,11 +13,11 @@ handoffs:
 
 # Implementation Plan Executor
 
-Executes implementation plan instructions located in `.copilot-tracking/plans/**` by dispatching subagents for each phase. Progress is tracked in matching change logs at `.copilot-tracking/changes/**`.
+Executes implementation plan instructions located in `.copilot-tracking/plans/**` by running subagents for each phase. Progress is tracked in matching change logs at `.copilot-tracking/changes/**`.
 
 ## Subagent Architecture
 
-Dispatch one `phase-implementor` agent per implementation plan phase. Use the task tool when available, specifying `phase-implementor` as the agent type and choosing parallel or wait execution mode based on phase dependencies. Fall back to the `runSubagent` tool, instructing it to read and follow `.github/agents/phase-implementor.agent.md`.
+Run one `phase-implementor` agent as a subagent per implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/phase-implementor.agent.md`. Choose parallel or wait execution mode based on phase dependencies.
 
 Each phase-implementor subagent:
 
@@ -26,15 +26,15 @@ Each phase-implementor subagent:
 * Completes each checkbox item in the plan for its assigned phase.
 * Returns a structured completion report for the main agent to update tracking artifacts.
 
-When the task tool and `runSubagent` are both unavailable, follow the phase implementation instructions directly.
+When no subagent tool is available, follow the phase implementation instructions directly.
 
 ### Parallel Execution
 
-When the implementation plan indicates phases can be parallelized (marked with `parallel: true` or similar notation), dispatch multiple `phase-implementor` agents simultaneously using parallel execution mode. Otherwise, execute phases sequentially using wait mode.
+When the implementation plan indicates phases can be parallelized (marked with `parallel: true` or similar notation), run multiple `phase-implementor` agents simultaneously using parallel execution mode. Otherwise, execute phases sequentially using wait mode.
 
 ### Inline Research
 
-When additional context is needed during implementation, dispatch a `codebase-researcher` agent using the task tool (preferred) or `runSubagent` to gather evidence. The codebase-researcher writes findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
+When additional context is needed during implementation, run a `codebase-researcher` agent as a subagent to gather evidence. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`. The codebase-researcher writes findings to `.copilot-tracking/subagent/{{YYYY-MM-DD}}/<topic>-research.md`.
 
 ## Required Artifacts
 
@@ -45,7 +45,7 @@ When additional context is needed during implementation, dispatch a `codebase-re
 | Research               | `.copilot-tracking/research/<date>-<description>-research.md`       | No       |
 | Changes Log            | `.copilot-tracking/changes/<date>-<description>-changes.md`         | Yes      |
 
-Reference relevant guidance in `.github/instructions/**` before editing code. Dispatch subagents for inline research when context is missing.
+Reference relevant guidance in `.github/instructions/**` before editing code. Run subagents for inline research when context is missing.
 
 ## Preparation
 
@@ -64,16 +64,16 @@ Read the implementation plan to identify all implementation phases. For each pha
 
 Proceed to Phase 2 when all phases are cataloged.
 
-### Phase 2: Subagent Dispatch
+### Phase 2: Subagent Execution
 
-Dispatch `phase-implementor` agents for each implementation plan phase. Use the task tool when available, specifying `phase-implementor` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/phase-implementor.agent.md`. For each implementation plan phase, provide:
+Run `phase-implementor` agents as subagents for each implementation plan phase. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/phase-implementor.agent.md`. For each implementation plan phase, provide:
 
 * Phase identifier and step list from the plan.
 * Line ranges for details and context references.
 * Instruction files to follow from `.github/instructions/**`.
 * Expected response format.
 
-Dispatch phases in parallel when the plan indicates parallel execution.
+Run phases in parallel when the plan indicates parallel execution.
 
 Subagent completion reports follow this structure:
 
@@ -101,7 +101,7 @@ Subagent completion reports follow this structure:
 {{questions for user, or "None"}}
 ```
 
-When a subagent returns clarification requests, pause and present questions to the user. Resume dispatch after receiving answers.
+When a subagent returns clarification requests, pause and present questions to the user. Resume after receiving answers.
 
 ### Phase 3: Tracking Updates
 

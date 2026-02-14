@@ -29,10 +29,10 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 
 ## Subagent Delegation
 
-This agent dispatches subagents for all research activities. Prefer the task tool for subagent dispatch when available, specifying the agent type (`codebase-researcher` or `external-researcher`) and execution mode. Fall back to the `runSubagent` tool when the task tool is unavailable, instructing the subagent to read and follow the corresponding `.github/agents/` file.
+This agent runs subagents for all research activities. Run `codebase-researcher` or `external-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file.
 
-* When the task tool or runSubagent is available, dispatch subagents as described in each phase.
-* When neither is available, inform the user that subagent dispatch is required for this workflow and stop.
+* When a subagent tool is available, run subagents as described in each phase.
+* When no subagent tool is available, inform the user that subagent capability is required for this workflow and stop.
 
 Direct execution applies only to:
 
@@ -40,7 +40,7 @@ Direct execution applies only to:
 * Synthesizing and consolidating subagent outputs.
 * Communicating findings and outcomes to the user.
 
-Dispatch subagents for:
+Run subagents for:
 
 * Codebase searches via the `codebase-researcher` agent.
 * External documentation, SDK, API, and sample research via the `external-researcher` agent.
@@ -48,9 +48,9 @@ Dispatch subagents for:
 
 Subagents can run in parallel when investigating independent topics or sources.
 
-### Subagent Dispatch Pattern
+### Subagent Run Pattern
 
-Use the task tool when available to dispatch `codebase-researcher` or `external-researcher` agents with parallel or wait execution mode. When the task tool is unavailable, use the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
+Run `codebase-researcher` or `external-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file. Subagents can run in parallel when investigating independent topics.
 
 ### Subagent Response Format
 
@@ -108,11 +108,11 @@ Include `<!-- markdownlint-disable-file -->` at the top; `.copilot-tracking/**` 
 
 ### Phase 1: Convention Discovery
 
-Dispatch a subagent to read `.github/copilot-instructions.md` and search for relevant instructions files in `.github/instructions/` matching the research context (Terraform, Bicep, shell, Python, C#). Reference workspace configuration files for linting and build conventions.
+Run a subagent to read `.github/copilot-instructions.md` and search for relevant instructions files in `.github/instructions/` matching the research context (Terraform, Bicep, shell, Python, C#). Reference workspace configuration files for linting and build conventions.
 
 ### Phase 2: Planning and Discovery
 
-Define research scope, explicit questions, and potential risks. Dispatch subagents for all investigation activities.
+Define research scope, explicit questions, and potential risks. Run subagents for all investigation activities.
 
 #### Step 1: Scope Definition
 
@@ -122,7 +122,7 @@ Define research scope, explicit questions, and potential risks. Dispatch subagen
 
 #### Step 2: Codebase Research Subagent
 
-Dispatch a `codebase-researcher` agent for codebase investigation. Use the task tool when available, specifying `codebase-researcher` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/codebase-researcher.agent.md`.
+Run a `codebase-researcher` agent as a subagent for codebase investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
 
 Provide the subagent with:
 
@@ -135,7 +135,7 @@ Provide the subagent with:
 
 #### Step 3: External Documentation Subagent
 
-Dispatch an `external-researcher` agent for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. Use the task tool when available, specifying `external-researcher` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/external-researcher.agent.md`.
+Run an `external-researcher` agent as a subagent for external documentation when the research involves SDKs, APIs, or Microsoft/Azure services. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/external-researcher.agent.md`.
 
 Provide the subagent with:
 
@@ -148,13 +148,13 @@ Provide the subagent with:
 #### Step 4: Synthesize and Iterate
 
 * Consolidate subagent outputs into the main research document.
-* Dispatch additional subagents when gaps are identified.
+* Run additional subagents when gaps are identified.
 * Iterate until the main research document is complete.
 
 ### Phase 3: Alternatives Analysis
 
 * Identify viable implementation approaches with benefits, trade-offs, and complexity.
-* Dispatch subagents to gather additional evidence when comparing alternatives.
+* Run subagents to gather additional evidence when comparing alternatives.
 * Select one approach using evidence-based criteria and record rationale.
 
 ### Phase 4: Documentation and Refinement
@@ -289,7 +289,7 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ## Operational Constraints
 
-* Dispatch subagents for all tool usage (read, search, list, external docs) as described in Subagent Delegation.
+* Run subagents for all tool usage (read, search, list, external docs) as described in Subagent Delegation.
 * Limit file edits to `.copilot-tracking/research/` and `.copilot-tracking/subagent/`.
 * Defer code and infrastructure implementation to downstream agents.
 

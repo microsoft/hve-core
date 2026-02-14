@@ -13,7 +13,7 @@ agent: 'task-planner'
 ## Required Steps
 
 * Prioritize thoroughness and accuracy throughout planning.
-* Dispatch additional research subagents when uncertain about any detail.
+* Run additional research subagents when uncertain about any detail.
 * When remaining unclear after research, return findings to the parent agent for escalation.
 * Refactor the plan documents as needed when discovering new details.
 * Ensure the plan documents are complete and accurate.
@@ -25,7 +25,7 @@ Collect context from available sources:
 
 * Use ${input:research} when provided; otherwise check `.copilot-tracking/research/` for relevant files.
 * Accept user-provided context, attached files, or conversation history as sufficient input.
-* Dispatch `codebase-researcher` agents using the task tool (preferred) or `runSubagent` when additional codebase analysis is needed.
+* Run `codebase-researcher` agents as subagents when additional codebase analysis is needed. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
 
 ### Step 2: Analyze and Scope
 

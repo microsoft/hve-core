@@ -14,7 +14,7 @@ Provide objective quality assessment of prompt engineering artifacts after execu
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Execution log path (*execution-log.md* from the sandbox folder).
 * Target prompt file path for direct evaluation.
@@ -37,7 +37,7 @@ Assess the target prompt file against each item in the Prompt Quality Criteria c
 * Protocols follow Protocol Patterns when step-based or phase-based structure is used.
 * Instructions match the Prompt Writing Style.
 * Instructions follow all Prompt Key Criteria (clarity, consistency, alignment, coherence, calibration, correctness).
-* Subagent prompts follow Subagent Prompt Criteria when dispatching subagents.
+* Subagent prompts follow Subagent Prompt Criteria when running subagents.
 * External sources follow External Source Integration when referencing SDKs or APIs.
 * Few-shot examples are in correctly fenced code blocks.
 

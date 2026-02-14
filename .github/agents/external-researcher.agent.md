@@ -14,7 +14,7 @@ Research external documentation sources to answer specific questions about SDKs,
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Documentation targets (SDK names, API endpoints, service names, library identifiers).
 * Research questions to answer with external documentation.
@@ -37,7 +37,7 @@ Query each relevant source using the tools available:
 
 * Use your MCP tools for external documentation, SDK, API, and code sample research.
 * Use your HTTP and GitHub tools to search official repositories for patterns, examples, and implementation references.
-* Retrieve specific URLs or documentation pages when referenced by the dispatching agent.
+* Retrieve specific URLs or documentation pages when referenced by the parent agent.
 
 ### Step 3: Document Findings
 

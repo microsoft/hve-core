@@ -14,7 +14,7 @@ Investigate the workspace to answer specific research questions. This agent hand
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Research question or investigation target.
 * Search scope (specific directories, file patterns, or full workspace).
@@ -25,7 +25,7 @@ Receive these from the dispatching agent:
 
 ### Step 1: Load Context
 
-Read any instruction files specified by the dispatching agent. Understand the research question and search scope.
+Read any instruction files specified by the parent agent. Understand the research question and search scope.
 
 ### Step 2: Investigate
 
@@ -64,4 +64,4 @@ Return findings using this structure:
 * {{question_for_parent_agent}}
 ```
 
-Respond with clarifying questions when the research question is ambiguous or when additional context from the dispatching agent would improve results.
+Respond with clarifying questions when the research question is ambiguous or when additional context from the parent agent would improve results.

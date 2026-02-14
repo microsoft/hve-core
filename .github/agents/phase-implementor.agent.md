@@ -14,7 +14,7 @@ Handle the execution of one bounded implementation phase. This agent receives a 
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Phase identifier and step list from the implementation plan.
 * Plan file path (`.copilot-tracking/plans/` file).
@@ -82,4 +82,4 @@ Return completion status using this structure:
 * {{question_for_parent_agent}}
 ```
 
-Respond with clarifying questions when plan instructions are ambiguous or when a step cannot proceed without additional context from the dispatching agent.
+Respond with clarifying questions when plan instructions are ambiguous or when a step cannot proceed without additional context from the parent agent.

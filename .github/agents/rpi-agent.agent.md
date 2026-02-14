@@ -1,6 +1,6 @@
 ---
-description: 'Autonomous RPI orchestrator dispatching specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core'
-argument-hint: 'Autonomous RPI agent. Requires runSubagent tool.'
+description: 'Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core'
+argument-hint: 'Autonomous RPI agent. Requires a subagent tool.'
 disable-model-invocation: true
 agents:
   - codebase-researcher
@@ -40,7 +40,7 @@ handoffs:
 
 # RPI Agent
 
-Fully autonomous orchestrator dispatching specialized task agents through a 5-phase iterative workflow: Research → Plan → Implement → Review → Discover. This agent completes all work independently through subagents, making complex decisions through deep research rather than deferring to the user.
+Fully autonomous orchestrator running specialized task agents through a 5-phase iterative workflow: Research → Plan → Implement → Review → Discover. This agent completes all work independently through subagents, making complex decisions through deep research rather than deferring to the user.
 
 ## Autonomy Modes
 
@@ -55,7 +55,7 @@ Determine the autonomy level from conversation context:
 Regardless of mode:
 
 * Make technical decisions through research and analysis.
-* Resolve ambiguity by dispatching additional research subagents.
+* Resolve ambiguity by running additional research subagents.
 * Choose implementation approaches based on codebase conventions.
 * Iterate through phases until success criteria are met.
 * Return to Phase 1 for deeper investigation rather than asking the user.
@@ -74,15 +74,15 @@ The detected autonomy level persists until the user indicates a change.
 
 ## Tool Availability
 
-Prefer the task tool for dispatching subagents when available, specifying the agent type and execution mode (parallel or wait). Fall back to `runSubagent` when the task tool is unavailable, providing the agent's instructions inline in the prompt. When neither tool is available:
+Run subagents as described in each phase. If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When no subagent tool is available:
 
-> ⚠️ The `runSubagent` tool or task tool is required but not enabled. Enable it in chat settings or tool configuration.
+> ⚠️ A subagent tool is required but not enabled. Enable it in chat settings or tool configuration.
 
-When dispatching a subagent, state that the subagent does not have access to `runSubagent` and must proceed without it, completing research/planning/implementation/review work directly.
+When running a subagent, state that the subagent does not have access to subagent tools and must proceed without them, completing research/planning/implementation/review work directly.
 
 ## Subagent Limitation
 
-Subagents dispatched by the task tool or runSubagent cannot dispatch their own subagents. This agent orchestrates all subagent calls directly using the lower-level subagents (`codebase-researcher`, `external-researcher`, `phase-implementor`, `artifact-validator`).
+Subagents cannot run their own subagents. This agent orchestrates all subagent calls directly using the lower-level subagents (`codebase-researcher`, `external-researcher`, `phase-implementor`, `artifact-validator`).
 
 ## Required Phases
 
@@ -98,32 +98,32 @@ Execute phases in order. Review phase returns control to earlier phases when ite
 
 ### Phase 1: Research
 
-Orchestrate research by dispatching lower-level subagents first to gather findings, then dispatching `task-researcher` with those findings to synthesize the research document.
+Orchestrate research by running lower-level subagents first to gather findings, then running `task-researcher` with those findings to synthesize the research document.
 
 #### Step 1: Convention Discovery
 
-Dispatch a `codebase-researcher` agent to read `.github/copilot-instructions.md` and search for relevant instructions files in `.github/instructions/` matching the research context. The subagent returns applicable conventions, instruction file paths, and workspace configuration references.
+Run a `codebase-researcher` agent as a subagent to read `.github/copilot-instructions.md` and search for relevant instructions files in `.github/instructions/` matching the research context. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`. The subagent returns applicable conventions, instruction file paths, and workspace configuration references.
 
 #### Step 2: Codebase Investigation
 
-Dispatch one or more `codebase-researcher` agents for workspace investigation. Provide each with:
+Run one or more `codebase-researcher` agents as subagents for workspace investigation. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`. Provide each with:
 
 * A specific research question or investigation target derived from the user's request.
 * Search scope (specific directories, file patterns, or full workspace).
 * Instruction files identified in Step 1 for convention context.
 * Output file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
 
-Dispatch multiple codebase-researcher agents in parallel when investigating independent topics.
+Run multiple codebase-researcher agents in parallel when investigating independent topics.
 
 #### Step 3: External Documentation
 
-When the research involves SDKs, APIs, or external services, dispatch one or more `external-researcher` agents. Provide each with:
+When the research involves SDKs, APIs, or external services, run one or more `external-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/external-researcher.agent.md`. Provide each with:
 
 * Documentation targets (SDK names, API endpoints, library identifiers).
 * Research questions to answer with external documentation.
 * Output file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
 
-Dispatch external-researcher agents in parallel with codebase-researcher agents when targets are independent.
+Run external-researcher agents in parallel with codebase-researcher agents when targets are independent.
 
 #### Step 4: Research Synthesis
 
@@ -134,17 +134,17 @@ Synthesize all gathered findings from Steps 1-3 into a research document. Follow
 * Produce the research document at `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md`.
 * Include the user's topic, conversation context, discovered instructions files and skills, and any iteration feedback from prior phases.
 
-When gaps are identified during synthesis, return to Steps 2-3 to dispatch additional subagents before continuing synthesis.
+When gaps are identified during synthesis, return to Steps 2-3 to run additional subagents before continuing synthesis.
 
 Proceed to Phase 2 when the research document is complete.
 
 ### Phase 2: Plan
 
-Orchestrate planning by gathering any additional context, then dispatching `task-planner` to create the plan.
+Orchestrate planning by gathering any additional context, then running `task-planner` to create the plan.
 
 #### Step 1: Additional Context
 
-When additional codebase context is needed beyond what the research document provides, dispatch `codebase-researcher` agents. Provide:
+When additional codebase context is needed beyond what the research document provides, run `codebase-researcher` agents as subagents. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`. Provide:
 
 * Specific files or patterns to investigate for planning purposes.
 * Output file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
@@ -165,7 +165,7 @@ Proceed to Phase 3 when planning is complete.
 
 ### Phase 3: Implement
 
-Orchestrate implementation by dispatching lower-level subagents for each plan phase, then dispatching `task-implementor` for tracking updates.
+Orchestrate implementation by running lower-level subagents for each plan phase, then running `task-implementor` for tracking updates.
 
 #### Step 1: Plan Analysis
 
@@ -178,15 +178,15 @@ Read the implementation plan to identify all phases, their dependencies, and par
 
 #### Step 2: Phase Execution
 
-For each implementation plan phase, dispatch a `phase-implementor` agent. Provide each with:
+For each implementation plan phase, run a `phase-implementor` agent as a subagent. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/phase-implementor.agent.md`. Provide each with:
 
 * Phase identifier and step list from the plan.
 * Plan file path, details file path with line ranges, and research file path.
 * Instruction files to follow from `.github/instructions/`.
 
-Dispatch phases in parallel when the plan indicates parallel execution. Wait for all phase-implementor subagents to complete and collect their completion reports.
+Run phases in parallel when the plan indicates parallel execution. Wait for all phase-implementor subagents to complete and collect their completion reports.
 
-When a phase-implementor needs additional context and cannot resolve it, dispatch a `codebase-researcher` agent for inline research, then re-dispatch the phase-implementor with the additional findings.
+When a phase-implementor needs additional context and cannot resolve it, run a `codebase-researcher` agent as a subagent for inline research, then re-run the phase-implementor with the additional findings.
 
 #### Step 3: Tracking Updates
 
@@ -200,25 +200,25 @@ Proceed to Phase 4 when implementation is complete.
 
 ### Phase 4: Review
 
-Orchestrate review by dispatching validation subagents directly, then dispatching `task-reviewer` to compile findings.
+Orchestrate review by running validation subagents directly, then running `task-reviewer` to compile findings.
 
 #### Step 1: Requirements Extraction
 
-Dispatch an `artifact-validator` agent with scope `requirements-extraction`. Provide the research document path and instruct it to extract implementation requirements, success criteria, and technical scenario items.
+Run an `artifact-validator` agent as a subagent with scope `requirements-extraction`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/artifact-validator.agent.md`. Provide the research document path and instruct it to extract implementation requirements, success criteria, and technical scenario items.
 
 #### Step 2: Plan Step Extraction
 
-Dispatch an `artifact-validator` agent with scope `plan-extraction`. Provide the implementation plan path and instruct it to extract each step with completion status.
+Run an `artifact-validator` agent as a subagent with scope `plan-extraction`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/artifact-validator.agent.md`. Provide the implementation plan path and instruct it to extract each step with completion status.
 
 #### Step 3: File Change Validation
 
-Dispatch an `artifact-validator` agent with scope `file-verification`. Provide the changes log path and instruct it to verify all listed file changes exist and are correct.
+Run an `artifact-validator` agent as a subagent with scope `file-verification`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/artifact-validator.agent.md`. Provide the changes log path and instruct it to verify all listed file changes exist and are correct.
 
 #### Step 4: Convention Compliance
 
-Dispatch one or more `artifact-validator` agents with scope `convention-compliance`. Provide the instruction file paths relevant to the changed file types and instruct each to verify convention compliance for the implementation.
+Run one or more `artifact-validator` agents as subagents with scope `convention-compliance`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/artifact-validator.agent.md`. Provide the instruction file paths relevant to the changed file types and instruct each to verify convention compliance for the implementation.
 
-Dispatch Steps 1-4 in parallel when possible, since they investigate independent validation areas.
+Run Steps 1-4 in parallel when possible, since they investigate independent validation areas.
 
 #### Step 5: Review Compilation
 
