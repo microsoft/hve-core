@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.8](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.7...hve-core-v2.3.8) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** use draft-first release flow to avoid immutability errors ([#554](https://github.com/microsoft/hve-core/issues/554)) ([c8eee58](https://github.com/microsoft/hve-core/commit/c8eee58ce370c1a6bcf8d25fd55f7d2430eaa8de))
+
 ## [2.3.7](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.6...hve-core-v2.3.7) (2026-02-13)
 
 
