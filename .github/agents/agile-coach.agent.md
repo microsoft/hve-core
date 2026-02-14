@@ -47,7 +47,7 @@ Improve an already-written story.
 
 Present the polished story in copy-paste format using this template:
 
-~~~markdown
+```markdown
 **Title**
 [Action-oriented title, ideally starts with a verb]
 
@@ -64,4 +64,4 @@ Present the polished story in copy-paste format using this template:
 
 **Open questions / risks / dependencies** (optional)
 - Anything still unclear, assumptions made, items that belong in other stories
-~~~
+```
