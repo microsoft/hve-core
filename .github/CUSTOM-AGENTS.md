@@ -55,6 +55,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **adr-creation**          | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                    |
 | **security-plan-creator** | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling              |
 | **doc-ops**               | Documentation operations and maintenance                           | Does not modify source code                   |
+| **meeting-analyst**       | Analyzes meeting transcripts to extract product requirements via work-iq-mcp | Experimental; requires work-iq-mcp EULA       |
 
 ### Utility Agents
 
@@ -219,6 +220,17 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 * Apply structured documentation updates aligned with repository standards
 
 **Critical:** Operates strictly on documentation files and does not modify application or source code
+
+### meeting-analyst
+
+**Creates:** Transcript analysis documents and session state:
+
+* `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md` (structured requirements extracted from meeting transcripts)
+* `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript.state.json` (session state for resume capability)
+
+**Workflow:** Discover → Extract → Synthesize → Handoff
+
+**Critical:** Experimental. Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
 
 ### memory
 
