@@ -10,22 +10,13 @@ agent: 'task-researcher'
 * ${input:chat:true}: (Optional, defaults to true) Include conversation context for research analysis
 * ${input:topic}: (Required) Primary topic or focus area, from user prompt or inferred from conversation
 
-## Tool Availability
-
-This workflow dispatches subagents for all research activities. Prefer the task tool for subagent dispatch when available, specifying the agent type (`codebase-researcher` or `external-researcher`) and execution mode. Fall back to the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
-
-* When the task tool or runSubagent is available, proceed with subagent dispatch as described in each step.
-* When neither is available, inform the user that subagent dispatch is required for this workflow and stop.
-
 ## Required Steps
 
-**Important requirements**, repeat to yourself these important requirements:
-
-* **Important**, always be thorough and accurate.
+* Prioritize thoroughness and accuracy throughout research.
 * Avoid making the research document overly verbose when not required.
-* Make sure the research document is complete and provides evidence.
-* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
-* Repeat steps and phases as needed to be thorough and accurate.
+* Ensure the research document is complete and provides evidence.
+* Dispatch additional research subagents when uncertain about any finding.
+* Repeat steps as needed to achieve thoroughness and accuracy.
 
 ### Step 1: Define Research Scope
 

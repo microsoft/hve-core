@@ -7,20 +7,18 @@ agent: 'task-implementor'
 
 ## Inputs
 
-* ${input:plan}: (Optional) Implementation plan file, could be determined come from the conversation or prompt
+* ${input:plan}: (Optional) Implementation plan file, determined from the conversation, prompt, or attached files
 * ${input:phaseStop:false}: (Optional, defaults to false) Stop after each phase for user review
 * ${input:stepStop:false}: (Optional, defaults to false) Stop after each step for user review
 
 ## Required Steps
 
-**Important requirements**, repeat to yourself these important requirements:
-
-* **Important**, always be thorough and accurate.
-* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
-* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
-* Update the changes document whenever discovering or identifying new details.
-* Make sure the changes document is complete and accurate.
-* Repeat steps and phases as needed to be thorough and accurate.
+* Prioritize thoroughness and accuracy throughout implementation.
+* Dispatch additional research subagents when uncertain about any detail.
+* When remaining unclear after research, return findings to the parent agent for escalation.
+* Update the changes document when discovering new details.
+* Ensure the changes document is complete and accurate.
+* Repeat steps as needed to achieve thoroughness and accuracy.
 
 ### Step 1: Locate Implementation Plan
 

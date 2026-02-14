@@ -12,14 +12,12 @@ agent: 'task-planner'
 
 ## Required Steps
 
-**Important requirements**, repeat to yourself these important requirements:
-
-* **Important**, always be thorough and accurate.
-* Whenever unsure about anything then have runSubagent collect more research with any of the tools that you have available.
-* When remaining unclear after research, return findings to the parent agent for escalation to deeper research.
-* Refactor the plan documents as needed whenever discovering or identifying new details.
-* Make sure the plan documents are complete and accurate.
-* Repeat steps and phases as needed to be thorough and accurate.
+* Prioritize thoroughness and accuracy throughout planning.
+* Dispatch additional research subagents when uncertain about any detail.
+* When remaining unclear after research, return findings to the parent agent for escalation.
+* Refactor the plan documents as needed when discovering new details.
+* Ensure the plan documents are complete and accurate.
+* Repeat steps as needed to achieve thoroughness and accuracy.
 
 ### Step 1: Gather Context
 

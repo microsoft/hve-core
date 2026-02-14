@@ -13,22 +13,13 @@ agent: 'task-reviewer'
 * ${input:research}: (Optional) Research file path
 * ${input:scope}: (Optional) Time-based scope such as "today", "this week", or "since last review"
 
-## Tool Availability
-
-This workflow dispatches subagents for all validation activities. Prefer the task tool for subagent dispatch when available, specifying the agent type (`artifact-validator` or `codebase-researcher`) and execution mode. Fall back to the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
-
-* When the task tool or runSubagent is available, proceed with subagent dispatch as described in each step.
-* When neither is available, inform the user that subagent dispatch is required for this workflow and stop.
-
 ## Required Steps
 
-**Important requirements**, repeat to yourself these important requirements:
-
-* **Important**, always be thorough and precise.
+* Prioritize thoroughness and accuracy throughout review.
 * Subagents investigate thoroughly and return evidence for all findings.
 * When context is insufficient, dispatch additional research subagents rather than asking the user.
 * Update the review log continuously as validation progresses.
-* Repeat validation steps as needed to be thorough and accurate.
+* Repeat validation steps as needed to achieve thoroughness and accuracy.
 
 ### Step 1: Determine Review Scope
 

@@ -251,12 +251,12 @@ Review the conversation history and locate related artifacts:
 
 Using the gathered context, reason through each of these categories to identify candidate work items:
 
-* **Continuation**: What logically follows from the work just completed? What next features or steps does the completed work enable or imply?
-* **Missing features (related)**: What features are still missing that relate directly to the completed work? What gaps exist in the area that was just modified?
-* **Missing features (general)**: Based on discovered artifacts and code files in the codebase, what features should the codebase include that are not yet present?
-* **Refactoring (completed work)**: What refactoring should be done to improve, clean up, or optimize the work that was just completed?
-* **Refactoring (idiomatic fit)**: What refactoring would help the completed or upcoming work fit better into idiomatic and codebase-standard patterns?
-* **New patterns**: What new patterns, conventions, or structural improvements should be introduced based on what was learned during this session?
+* What logically follows from the work just completed? What next features or steps does the completed work enable or imply?
+* What features are still missing that relate directly to the completed work? What gaps exist in the area that was just modified?
+* Based on discovered artifacts and code files in the codebase, what features should the codebase include that are not yet present?
+* What refactoring should be done to improve, clean up, or optimize the work that was just completed?
+* What refactoring would help the completed or upcoming work fit better into idiomatic and codebase-standard patterns?
+* What new patterns, conventions, or structural improvements should be introduced based on what was learned during this session?
 
 Explore the workspace to gather evidence for each category. Read relevant files, search for related code, and examine directory structures to substantiate each candidate.
 

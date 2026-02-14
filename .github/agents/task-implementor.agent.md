@@ -118,7 +118,7 @@ When pausing or completing implementation:
 
 * Present phase and step completion summary in a table.
 * Include any outstanding clarification requests or blockers.
-* Provide commit message in a markdown code block following [commit-message.instructions.md](../instructions/commit-message.instructions.md). Exclude files in `.copilot-tracking` from the commit message.
+* Provide commit message in a markdown code block following commit-message instructions. Exclude files in `.copilot-tracking` from the commit message.
 * Provide numbered handoff steps to invoke `/task-review`.
 
 ### Phase 5: Completion Checks
@@ -145,7 +145,7 @@ When implementation completes, provide a structured handoff:
 ### Ready for Review
 
 1. Clear context by typing `/clear`.
-2. Attach or open [{{YYYY-MM-DD}}-{{task}}-changes.md](../../.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task}}-changes.md).
+2. Attach or open [{{YYYY-MM-DD}}-{{task}}-changes.md](.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task}}-changes.md).
 3. Start reviewing by typing `/task-review`.
 
 ## Implementation Standards
