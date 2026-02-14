@@ -1,5 +1,5 @@
 {
   "name": "rpi",
   "description": "Research, Plan, Implement, Review workflow with Git commit, merge, setup, and pull request prompts",
-  "version": "2.3.8"
+  "version": "2.3.9"
 }

@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.9](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.8...hve-core-v2.3.9) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **plugins:** merge git collection into rpi and distribute to all plugins ([#549](https://github.com/microsoft/hve-core/issues/549)) ([9509a87](https://github.com/microsoft/hve-core/commit/9509a87bc32bb91205ec4000553f706f01039a57))
+
 ## [2.3.8](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.7...hve-core-v2.3.8) (2026-02-14)
 
 
