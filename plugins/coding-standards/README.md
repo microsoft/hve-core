@@ -11,16 +11,22 @@ copilot plugin install coding-standards@hve-core
 
 ## Agents
 
-| Agent            | Description                                                                                                                                                       |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| rpi-agent        | Autonomous RPI orchestrator dispatching task-* agents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core       |
-| task-researcher  | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                |
-| task-planner     | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                        |
-| task-implementor | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                           |
-| task-reviewer    | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                |
-| memory           | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                     |
-| pr-review        | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                     |
-| prompt-builder   | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core |
+| Agent               | Description                                                                                                                                                       |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-agent           | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core   |
+| task-researcher     | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                |
+| task-planner        | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                        |
+| task-implementor    | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                           |
+| task-reviewer       | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                |
+| memory              | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                     |
+| pr-review           | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                     |
+| prompt-builder      | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core |
+| artifact-validator  | Validates implementation work against plans, research specs, conventions, and checklists with severity-graded findings                                            |
+| codebase-researcher | Searches workspace for code patterns, conventions, implementations, and issues using codebase exploration tools                                                   |
+| external-researcher | Retrieves external documentation, SDK references, API patterns, and code samples from official sources                                                            |
+| phase-implementor   | Executes a single implementation phase from a plan with full codebase access and change tracking                                                                  |
+| prompt-evaluator    | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings                                                                  |
+| prompt-tester       | Tests prompt files by following them literally in a sandbox environment without improving or interpreting beyond face value                                       |
 
 ## Commands
 

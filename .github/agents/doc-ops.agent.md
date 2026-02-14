@@ -139,7 +139,7 @@ Update the session file after each phase with discoveries, plan items, and compl
 
 ### Phase 1: Discovery
 
-Run three `codebase-researcher` agents in parallel to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
+Run three `codebase-researcher` agents in parallel to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
 #### Pattern Compliance Discovery
 
@@ -179,7 +179,7 @@ After all discovery subagents complete:
 
 Run a planning subagent to create a prioritized work plan.
 
-Run a `codebase-researcher` agent as a subagent with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`:
+Run a `codebase-researcher` agent as a subagent with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`:
 
 * Task: Create a work plan from discovered issues.
 * Input: Read the session file Discovered Issues section.
@@ -200,7 +200,7 @@ After planning completes:
 
 Run `phase-implementor` agents as subagents to execute fixes from the work plan.
 
-If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/phase-implementor.agent.md`. Run based on work plan size:
+If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Run based on work plan size:
 
 * For small plans (fewer than 10 items): One `phase-implementor` agent processes all items.
 * For larger plans: Run `phase-implementor` agents by capability category (pattern compliance, accuracy, documentation creation).

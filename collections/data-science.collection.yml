@@ -36,6 +36,19 @@ items:
   # Prompt Engineering agents
   - path: .github/agents/prompt-builder.agent.md
     kind: agent
+  # Subagents
+  - path: .github/agents/subagents/artifact-validator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/codebase-researcher.agent.md
+    kind: agent
+  - path: .github/agents/subagents/external-researcher.agent.md
+    kind: agent
+  - path: .github/agents/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/subagents/prompt-evaluator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/prompt-tester.agent.md
+    kind: agent
   # RPI prompts
   - path: .github/prompts/rpi.prompt.md
     kind: prompt

@@ -1,0 +1,1 @@
+../../../.github/agents/subagents/artifact-validator.agent.md

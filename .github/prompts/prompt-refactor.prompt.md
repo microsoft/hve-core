@@ -23,7 +23,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ### Step 1: Baseline Assessment
 
-Run a `prompt-evaluator` agent as a subagent to evaluate the current state of the target file. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-evaluator.agent.md`:
+Run a `prompt-evaluator` agent as a subagent to evaluate the current state of the target file. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-evaluator.agent.md`:
 
 * Read the target file at `${input:file}` and the prompt-builder instructions.
 * Identify quality issues, outdated patterns, and areas for compression.
@@ -32,7 +32,7 @@ Run a `prompt-evaluator` agent as a subagent to evaluate the current state of th
 
 ### Step 2: Research and Verification
 
-Run an `external-researcher` agent as a subagent to verify external references. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/external-researcher.agent.md`:
+Run an `external-researcher` agent as a subagent to verify external references. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/external-researcher.agent.md`:
 
 * Identify all schema, API, SDK, or tool call instructions in the target file.
 * Use official documentation tools to verify accuracy and currency.

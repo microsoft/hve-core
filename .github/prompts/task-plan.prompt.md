@@ -25,7 +25,7 @@ Collect context from available sources:
 
 * Use ${input:research} when provided; otherwise check `.copilot-tracking/research/` for relevant files.
 * Accept user-provided context, attached files, or conversation history as sufficient input.
-* Run `codebase-researcher` agents as subagents when additional codebase analysis is needed. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
+* Run `codebase-researcher` agents as subagents when additional codebase analysis is needed. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md`.
 
 ### Step 2: Analyze and Scope
 

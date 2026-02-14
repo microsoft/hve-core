@@ -44,7 +44,7 @@ This phase applies when the user points to an existing prompt, agent, or instruc
 
 #### Step 1: Baseline Testing Subagent
 
-Run a `prompt-tester` agent as a subagent to test the existing prompt file, followed by a `prompt-evaluator` agent to evaluate the results. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/prompt-tester.agent.md` or `.github/agents/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
+Run a `prompt-tester` agent as a subagent to test the existing prompt file, followed by a `prompt-evaluator` agent to evaluate the results. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/prompt-tester.agent.md` or `.github/agents/**/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -70,7 +70,7 @@ Actions:
 
 #### Research Subagent
 
-Run a `codebase-researcher` agent and/or `external-researcher` agent as subagents for research tasks. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from `.github/agents/codebase-researcher.agent.md` or `.github/agents/external-researcher.agent.md` respectively.
+Run a `codebase-researcher` agent and/or `external-researcher` agent as subagents for research tasks. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from `.github/agents/**/codebase-researcher.agent.md` or `.github/agents/**/external-researcher.agent.md` respectively.
 
 Subagent instructions:
 
@@ -106,7 +106,7 @@ This phase tests the created or modified artifact in a sandbox environment.
 
 #### Step 1: Validation Testing Subagent
 
-Run a `prompt-tester` agent as a subagent to validate the prompt file, followed by a `prompt-evaluator` agent. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/prompt-tester.agent.md` or `.github/agents/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
+Run a `prompt-tester` agent as a subagent to validate the prompt file, followed by a `prompt-evaluator` agent. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/prompt-tester.agent.md` or `.github/agents/**/prompt-evaluator.agent.md` respectively. The subagent follows the Prompt Tester Instructions section.
 
 Subagent instructions:
 
@@ -184,7 +184,7 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 
 ### Execution Subagent
 
-Run a `prompt-tester` agent as a subagent to test the prompt by following it literally. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-tester.agent.md`. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
+Run a `prompt-tester` agent as a subagent to test the prompt by following it literally. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-tester.agent.md`. The subagent executes the prompt exactly as written without improving or interpreting it beyond face value.
 
 Subagent instructions:
 
@@ -199,7 +199,7 @@ Subagent instructions:
 
 ### Evaluation Subagent
 
-Run a `prompt-evaluator` agent as a subagent to evaluate the results of the execution. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-evaluator.agent.md`. The subagent assesses whether the prompt achieved its goals and identifies any issues.
+Run a `prompt-evaluator` agent as a subagent to evaluate the results of the execution. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/prompt-evaluator.agent.md`. The subagent assesses whether the prompt achieved its goals and identifies any issues.
 
 Subagent instructions:
 

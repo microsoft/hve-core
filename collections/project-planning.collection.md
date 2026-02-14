@@ -7,3 +7,12 @@ This collection includes agents for:
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
 - **Architecture Diagrams** — Generate ASCII-art architecture diagrams from descriptions
 - **Documentation Operations** — Maintain and update existing documentation
+
+Supporting subagents included:
+
+- **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
+- **External Researcher** — Retrieves external documentation, SDK references, and code samples
+- **Phase Implementor** — Executes single implementation phases with change tracking
+- **Artifact Validator** — Validates implementation work against plans and conventions
+- **Prompt Tester** — Tests prompt files by following them literally in a sandbox
+- **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
