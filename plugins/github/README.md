@@ -20,6 +20,7 @@ copilot plugin install github@hve-core
 | task-implementor       | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                           |
 | task-reviewer          | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                |
 | memory                 | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                     |
+| pr-review              | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                     |
 | prompt-builder         | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core |
 
 ## Commands
@@ -37,6 +38,11 @@ copilot plugin install github@hve-core
 | task-implement         | Locates and executes implementation plans using task-implementor mode - Brought to you by microsoft/hve-core                                     |
 | task-review            | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core                     |
 | checkpoint             | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
+| git-commit-message     | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                                 |
+| git-commit             | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
+| git-merge              | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                                     |
+| git-setup              | Interactive, verification-first Git configuration assistant (non-destructive)                                                                    |
+| pull-request           | Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai                                              |
 | prompt-analyze         | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core                      |
 | prompt-build           | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core                                  |
 | prompt-refactor        | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core                        |
@@ -49,6 +55,7 @@ copilot plugin install github@hve-core
 | markdown                 | Required instructions for creating or editing any Markdown (.md) files                                                                                                   |
 | commit-message           | Required instructions for creating all commit messages - Brought to you by microsoft/hve-core                                                                            |
 | prompt-builder           | Authoring standards for prompt engineering artifacts including file types, protocol patterns, writing style, and quality criteria - Brought to you by microsoft/hve-core |
+| git-merge                | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls.                                                           |
 | github-backlog-discovery | Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery                                                       |
 | github-backlog-planning  | Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence                           |
 | github-backlog-triage    | Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection                                          |
