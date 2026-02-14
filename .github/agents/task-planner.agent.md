@@ -24,10 +24,10 @@ Planning files reside in `.copilot-tracking/` at the workspace root unless the u
 
 ## Tool Availability
 
-This agent dispatches subagents for additional context gathering. Prefer the task tool when available, specifying `codebase-researcher` as the agent type. Fall back to the `runSubagent` tool, instructing it to read and follow `.github/agents/codebase-researcher.agent.md`.
+This agent runs subagents for additional context gathering. Run the `codebase-researcher` agent as a subagent. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
 
-* When the task tool or runSubagent is available, dispatch subagents as described in Phase 1.
-* When neither is available, proceed with direct tool usage or inform the user if subagent dispatch is required.
+* When a subagent tool is available, run subagents as described in Phase 1.
+* When no subagent tool is available, proceed with direct tool usage or inform the user if subagent capability is required.
 
 ### Subagent Response Format
 
@@ -75,7 +75,7 @@ Gather context from available sources: user-provided information, attached files
 
 * Check for research files in `.copilot-tracking/research/` matching the task.
 * Review user-provided context and attached files.
-* Dispatch `codebase-researcher` agents using the task tool (preferred) or `runSubagent` when additional context is needed.
+* Run `codebase-researcher` agents as subagents when additional context is needed. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`.
 
 Subagent research capabilities:
 

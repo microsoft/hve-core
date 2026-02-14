@@ -14,7 +14,7 @@ Provide thorough validation of completed implementation work. This agent extract
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Validation scope: one of `requirements-extraction`, `plan-extraction`, `file-verification`, `convention-compliance`, or `full-review`.
 * Artifact paths:
@@ -28,7 +28,7 @@ Receive these from the dispatching agent:
 
 ### Step 1: Determine Validation Scope
 
-Read the validation scope from the dispatching agent. Load the relevant artifacts for the assigned scope.
+Read the validation scope from the parent agent. Load the relevant artifacts for the assigned scope.
 
 ### Step 2: Execute Validation
 

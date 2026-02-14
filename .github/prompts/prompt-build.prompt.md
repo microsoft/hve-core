@@ -18,8 +18,7 @@ This prompt delegates to the *prompt-builder* agent, which provides the phase-ba
 * Prioritize thoroughness and accuracy throughout the workflow.
 * Analyze the user request and conversation context to determine the operation and requirements.
 * Avoid reading prompt instructions files, relying on subagents to read and modify them unless validation or required instructions call for direct access.
-* Leverage subagents for all research including reading and discovering related files and folders.
-* Use the task tool (preferred) or the `runSubagent` tool when dispatching subagents. When neither is available, follow the subagent instructions directly or stop if the task requires subagent dispatch.
+* Run subagents for all research including reading and discovering related files and folders. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When no subagent tool is available, follow the subagent instructions directly or stop if the work requires subagent capability.
 * Follow all of the below steps and follow all instructions from the Required Phases section.
 * Avoid overly verbose instructions and examples.
 * Refactor instructions and examples continually.
@@ -42,9 +41,9 @@ Pass all identified requirements to the prompt-builder mode's protocol phases. C
 1. All requirements are addressed.
 2. Prompt Quality Criteria from the mode's instructions pass for all related prompt instructions files.
 
-When dispatching subagents for research or editing tasks:
+When running subagents for research or editing tasks:
 
-* Use the task tool to dispatch the appropriate subagent agent (`codebase-researcher`, `external-researcher`, `prompt-tester`, `prompt-evaluator`). When the task tool is unavailable, use the `runSubagent` tool, instructing the subagent to read and follow the corresponding `.github/agents/` file.
+* Run the appropriate subagent (`codebase-researcher`, `external-researcher`, `prompt-tester`, `prompt-evaluator`). If using the `runSubagent` tool then include instructions to read and follow all instructions from the corresponding `.github/agents/` file.
 * Specify which instructions files or agents the subagent follows.
 * Provide a structured response format or target file for subagent output.
 * Allow subagents to respond with clarifying questions rather than guessing.

@@ -5,7 +5,7 @@ argument-hint: "file=..."
 
 # Prompt Analyze
 
-This prompt evaluates prompt engineering artifacts against the Prompt Quality Criteria defined in the prompt-builder protocol. The analyzer dispatches subagents to understand the target prompt's intent and validate it against all quality requirements, then reports findings without modifying the target file.
+This prompt evaluates prompt engineering artifacts against the Prompt Quality Criteria defined in the prompt-builder protocol. The analyzer runs subagents to understand the target prompt's intent and validate it against all quality requirements, then reports findings without modifying the target file.
 
 ## Inputs
 
@@ -23,9 +23,9 @@ Read the target file at `${input:file}` along with the prompt-builder instructio
 * Identify the file type from the extension to determine applicable validation rules.
 * Note the frontmatter fields present and their values.
 
-### Step 2: Dispatch Execution Analysis Subagent
+### Step 2: Run Execution Analysis Subagent
 
-Dispatch a `prompt-tester` agent to analyze what the target prompt does. Use the task tool when available, specifying `prompt-tester` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-tester.agent.md`. When neither is available, perform this analysis directly.
+Run a `prompt-tester` agent as a subagent to analyze what the target prompt does. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-tester.agent.md`. When no subagent tool is available, perform this analysis directly.
 
 Provide the subagent with these instructions:
 
@@ -36,9 +36,9 @@ Provide the subagent with these instructions:
 * Note input variables and their purposes.
 * Return a structured summary covering purpose, workflow type, capabilities, and structure.
 
-### Step 3: Dispatch Evaluation Subagent
+### Step 3: Run Evaluation Subagent
 
-Dispatch a `prompt-evaluator` agent to validate the target against all Prompt Quality Criteria. Use the task tool when available, specifying `prompt-evaluator` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-evaluator.agent.md`. When neither is available, perform this evaluation directly.
+Run a `prompt-evaluator` agent as a subagent to validate the target against all Prompt Quality Criteria. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-evaluator.agent.md`. When no subagent tool is available, perform this evaluation directly.
 
 Provide the subagent with these instructions:
 

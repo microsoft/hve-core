@@ -86,7 +86,7 @@ Autonomous agents execute tasks with minimal user interaction:
 * Executes autonomously after receiving initial instructions.
 * Frontmatter defines available `tools` and optional `handoffs` to other agents.
 * Typically completes a bounded task and reports results.
-* May dispatch subagents for parallelizable work.
+* May run subagents for parallelizable work.
 
 Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
 
@@ -400,9 +400,8 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 
 Tool invocation:
 
-* Prefer the task tool for dispatching subagents when available, specifying the agent type (from `.github/agents/`) and execution mode (parallel or wait).
-* Fall back to the `runSubagent` tool when the task tool is unavailable, instructing the subagent to read and follow the corresponding `.github/agents/` file.
-* When neither tool is available, follow the subagent instructions directly or stop if subagent dispatch is required for the task.
+* Run the named agent as a subagent. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* When no subagent tool is available, follow the subagent instructions directly or stop if subagent capability is required for the work.
 
 Task specification:
 
@@ -431,7 +430,7 @@ Every item applies to the entire file. Validation fails if any item is not satis
 * [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
 * [ ] Instructions match the Prompt Writing Style.
 * [ ] Instructions follow all Prompt Key Criteria.
-* [ ] Subagent prompts follow Subagent Prompt Criteria when dispatching subagents.
+* [ ] Subagent prompts follow Subagent Prompt Criteria when running subagents.
 * [ ] External sources follow External Source Integration when referencing SDKs or APIs.
 * [ ] Few-shot examples are in correctly fenced code blocks and match the instructions exactly.
 * [ ] The user's request and requirements are implemented completely.

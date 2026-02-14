@@ -15,7 +15,7 @@ agent: 'task-researcher'
 * Prioritize thoroughness and accuracy throughout research.
 * Avoid making the research document overly verbose when not required.
 * Ensure the research document is complete and provides evidence.
-* Dispatch additional research subagents when uncertain about any finding.
+* Run additional research subagents when uncertain about any finding.
 * Repeat steps as needed to achieve thoroughness and accuracy.
 
 ### Step 1: Define Research Scope
@@ -33,9 +33,9 @@ Check `.copilot-tracking/research/` for existing files matching `{{YYYY-MM-DD}}-
 * Extend an existing document when relevant to the topic.
 * Create a new document at `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md` otherwise.
 
-### Step 3: Dispatch Research Subagents
+### Step 3: Run Research Subagents
 
-Dispatch `codebase-researcher` and `external-researcher` agents for all research activities. Use the task tool (preferred) or `runSubagent` to dispatch. Subagents can run in parallel when investigating independent topics using parallel execution mode.
+Run `codebase-researcher` and `external-researcher` agents as subagents for all research activities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from the corresponding `.github/agents/` file. Subagents can run in parallel when investigating independent topics.
 
 #### Subagent Instructions
 
@@ -85,7 +85,7 @@ Consolidate subagent outputs into the main research document:
 * Add objectives to **Task Implementation Requests**.
 * Record leads in **Potential Next Research**.
 * Remove or revise content when new findings contradict earlier assumptions.
-* Dispatch additional subagents when gaps are identified.
+* Run additional subagents when gaps are identified.
 
 ### Step 5: Return Findings
 

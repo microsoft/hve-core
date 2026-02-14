@@ -23,7 +23,7 @@ This prompt extends the prompt-build workflow with a focus on refactoring and cl
 
 ### Step 1: Baseline Assessment
 
-Dispatch a `prompt-evaluator` agent to evaluate the current state of the target file. Use the task tool when available, specifying `prompt-evaluator` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/prompt-evaluator.agent.md`:
+Run a `prompt-evaluator` agent as a subagent to evaluate the current state of the target file. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/prompt-evaluator.agent.md`:
 
 * Read the target file at `${input:file}` and the prompt-builder instructions.
 * Identify quality issues, outdated patterns, and areas for compression.
@@ -32,7 +32,7 @@ Dispatch a `prompt-evaluator` agent to evaluate the current state of the target 
 
 ### Step 2: Research and Verification
 
-Dispatch an `external-researcher` agent to verify external references. Use the task tool when available, specifying `external-researcher` as the agent type. Fall back to `runSubagent`, instructing it to read and follow `.github/agents/external-researcher.agent.md`:
+Run an `external-researcher` agent as a subagent to verify external references. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/external-researcher.agent.md`:
 
 * Identify all schema, API, SDK, or tool call instructions in the target file.
 * Use official documentation tools to verify accuracy and currency.
@@ -53,7 +53,7 @@ Apply the prompt-build protocol's Phase 3 (Build) with these refactoring require
 
 Apply the prompt-build protocol's Phase 4 (Validate) requirements:
 
-* Dispatch `prompt-tester` and `prompt-evaluator` agents to test the refactored file using the task tool (preferred) or `runSubagent`.
+* Run `prompt-tester` and `prompt-evaluator` agents as subagents to test the refactored file. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from the corresponding `.github/agents/` file.
 * Evaluate against all Prompt Quality Criteria.
 * Return to Step 3 when issues are found.
 * Continue iteration until all criteria pass.

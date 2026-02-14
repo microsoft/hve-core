@@ -17,7 +17,7 @@ agent: 'task-reviewer'
 
 * Prioritize thoroughness and accuracy throughout review.
 * Subagents investigate thoroughly and return evidence for all findings.
-* When context is insufficient, dispatch additional research subagents rather than asking the user.
+* When context is insufficient, run additional research subagents rather than asking the user.
 * Update the review log continuously as validation progresses.
 * Repeat validation steps as needed to achieve thoroughness and accuracy.
 
@@ -45,7 +45,7 @@ For each changes log identified:
 * Check the plan file for research references in the **Context Summary** section.
 * Build a complete set of related artifacts (research, plan, details, changes).
 
-Dispatch a `codebase-researcher` agent using the task tool (preferred) or `runSubagent` for artifact discovery when file locations are unclear. The subagent returns paths to all related artifacts.
+Run a `codebase-researcher` agent as a subagent for artifact discovery when file locations are unclear. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/codebase-researcher.agent.md`. The subagent returns paths to all related artifacts.
 
 ### Step 3: Create or Update Review Log
 
@@ -60,8 +60,8 @@ Create a new review log in `.copilot-tracking/reviews/` or update an existing on
 Invoke task-reviewer mode to validate the implementation:
 
 * Extract checklist items from research and plan documents.
-* Dispatch `artifact-validator` agents for file changes, convention compliance, and command execution using the task tool (preferred) or `runSubagent`.
-* Dispatch additional `codebase-researcher` agents when context is insufficient.
+* Run `artifact-validator` agents as subagents for file changes, convention compliance, and command execution. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/artifact-validator.agent.md`.
+* Run additional `codebase-researcher` agents as subagents when context is insufficient.
 * Update the review log continuously as validation progresses.
 
 ### Step 5: Report Findings

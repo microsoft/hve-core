@@ -14,7 +14,7 @@ Provide objective testing of prompt engineering artifacts by executing them as a
 
 ## Inputs
 
-Receive these from the dispatching agent:
+Receive these from the parent agent:
 
 * Target prompt file path to test.
 * Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}` naming.
