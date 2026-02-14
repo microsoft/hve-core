@@ -74,15 +74,9 @@ The detected autonomy level persists until the user indicates a change.
 
 ## Tool Availability
 
-Dispatch all phase work through subagent calls rather than using tools directly. If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When neither `runSubagent` nor `task` tools are available:
+Run all phase work through subagent tools. If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file. When neither `runSubagent` nor `task` tools are available:
 
 > ⚠️ The `runSubagent` or `task` tool is required but not enabled. Enable one of these tools in chat settings or tool configuration.
-
-When running a subagent, state that the subagent does not have access to subagent tools and must proceed without them, completing work directly.
-
-## Subagent Limitation
-
-Subagents cannot run their own subagents. This agent orchestrates all subagent calls, dispatching to the lower-level subagents (`codebase-researcher`, `external-researcher`, `phase-implementor`, `artifact-validator`).
 
 ## Required Phases
 
@@ -90,8 +84,8 @@ Execute phases in order. Review phase returns control to earlier phases when ite
 
 ### Important guidelines
 
-* Dispatch each phase step with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
-* Avoid performing research, implementation, or validation work directly — delegate to the appropriate subagent for each step.
+* Run each phase step with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* Avoid performing research, implementation, or validation work directly — delegate to the appropriate subagent tool for each step.
 
 | Phase        | Entry                                   | Exit                                                 |
 |--------------|-----------------------------------------|------------------------------------------------------|
@@ -103,7 +97,9 @@ Execute phases in order. Review phase returns control to earlier phases when ite
 
 ### Phase 1: Research
 
-Orchestrate research by running lower-level subagents first to gather findings, then running `task-researcher` with those findings to synthesize the research document.
+* Orchestrate research by running subagents to gather findings and iterate on research
+* Follow research document instructions from `.github/agents/task-researcher.agent.md` to update and iterate on a primary research document needed for task planning.
+* The primary research document should be made to `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md`.
 
 #### Step 1: Convention Discovery
 
@@ -118,7 +114,7 @@ Run one or more `codebase-researcher` agents with `runSubagent` or `task` tools 
 * Instruction files identified in Step 1 for convention context.
 * Output file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
 
-Run multiple codebase-researcher agents in parallel when investigating independent topics.
+Iterate and run multiple codebase-researcher agents in parallel until all information is collected. Update the primary research document with findings from the subagents.
 
 #### Step 3: External Documentation
 
@@ -128,20 +124,15 @@ When the research involves SDKs, APIs, or external services, run one or more `ex
 * Research questions to answer with external documentation.
 * Output file path in `.copilot-tracking/subagent/{{YYYY-MM-DD}}/`.
 
-Run external-researcher agents in parallel with codebase-researcher agents when targets are independent.
+Iterate and run multiple external-researcher agents and codebase-researcher agents in parallel until all information is collected. Update the primary research document with findings from the subagents.
 
-#### Step 4: Research Synthesis
+#### Step 4: Research Document Refinement and Further Iteration
 
-Synthesize all gathered findings from Steps 1-3 into a research document. Follow `.github/agents/task-researcher.agent.md` for document structure, templates, and quality standards.
-
-* Read all subagent output files from Steps 1-3.
-* Consolidate findings, evaluate alternatives, and select a recommended approach.
-* Produce the research document at `.copilot-tracking/research/{{YYYY-MM-DD}}-<topic>-research.md`.
+* Review and refine the research document, cleaning it up as needed with findings from subagents.
 * Include the user's topic, conversation context, discovered instructions files and skills, and any iteration feedback from prior phases.
+* When gaps are identified during refinement, repeat steps in this phase and continue iterating on the research document.
 
-When gaps are identified during synthesis, return to Steps 2-3 to run additional subagents before continuing synthesis.
-
-Proceed to Phase 2 when the research document is complete.
+Proceed to Phase 2 when the research document is accurate, thorough, and complete.
 
 ### Phase 2: Plan
 
