@@ -9,11 +9,9 @@ Executes a single implementation phase from a plan. Reads the assigned phase fro
 
 ## Purpose
 
-Handle the execution of one bounded implementation phase. This agent receives a specific phase assignment from a parent orchestrator, implements all steps within that phase, runs validation when specified, and reports results. Multiple instances can run in parallel for independent phases.
+Handle the execution of one bounded implementation phase. This agent implements all steps within a specific phase assignment, runs validation when specified, and reports results. Multiple instances can run in parallel for independent phases.
 
 ## Inputs
-
-Receive these from the parent agent:
 
 * Phase identifier and step list from the implementation plan.
 * Plan file path (`.copilot-tracking/plans/` file).
@@ -78,7 +76,7 @@ Return completion status using this structure:
 
 ### Clarifying Questions (if any)
 
-* {{question_for_parent_agent}}
+* {{question}}
 ```
 
-Respond with clarifying questions when plan instructions are ambiguous or when a step cannot proceed without additional context from the parent agent.
+Respond with clarifying questions when plan instructions are ambiguous or when a step cannot proceed without additional context.

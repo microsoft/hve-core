@@ -13,21 +13,18 @@ Provide thorough validation of completed implementation work. This agent extract
 
 ## Inputs
 
-Receive these from the parent agent:
-
 * Validation scope: one of `requirements-extraction`, `plan-extraction`, `file-verification`, `convention-compliance`, or `full-review`.
-* Artifact paths:
-  * Research document path (for requirements extraction).
-  * Implementation plan path (for plan step extraction).
-  * Changes log path (for file change verification).
-  * Instruction file paths (for convention compliance).
+* Research document path (for requirements extraction).
+* Implementation plan path (for plan step extraction).
+* Changes log path (for file change verification).
+* Instruction file paths (for convention compliance).
 * Review log path when updating an existing review.
 
 ## Required Steps
 
 ### Step 1: Determine Validation Scope
 
-Read the validation scope from the parent agent. Load the relevant artifacts for the assigned scope.
+Read the assigned validation scope. Load the relevant artifacts for the assigned scope.
 
 ### Step 2: Execute Validation
 
@@ -94,7 +91,7 @@ Return findings using this structure:
 
 ### Clarifying Questions (if any)
 
-* {{question_for_parent_agent}}
+* {{question}}
 ```
 
 Severity levels:

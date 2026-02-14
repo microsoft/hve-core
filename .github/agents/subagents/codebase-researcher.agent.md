@@ -13,8 +13,6 @@ Investigate the workspace to answer specific research questions. This agent hand
 
 ## Inputs
 
-Receive these from the parent agent:
-
 * Research question or investigation target.
 * Search scope (specific directories, file patterns, or full workspace).
 * Instruction files to read and follow for convention context.
@@ -24,7 +22,7 @@ Receive these from the parent agent:
 
 ### Step 1: Load Context
 
-Read any instruction files specified by the parent agent. Understand the research question and search scope.
+Read any specified instruction files. Understand the research question and search scope.
 
 ### Step 2: Investigate
 
@@ -41,6 +39,8 @@ Include for each finding:
 * File path with line numbers.
 * Code excerpts or pattern descriptions.
 * Relevance to the research question.
+
+Repeat Steps as needed until the research question has been thoroughly investigated and findings are complete.
 
 ## Response Format
 
@@ -60,7 +60,7 @@ Return findings using this structure:
 
 ### Clarifying Questions (if any)
 
-* {{question_for_parent_agent}}
+* {{question}}
 ```
 
-Respond with clarifying questions when the research question is ambiguous or when additional context from the parent agent would improve results.
+Respond with clarifying questions when the research question is ambiguous or when additional context would improve results.

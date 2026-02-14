@@ -13,8 +13,6 @@ Provide objective quality assessment of prompt engineering artifacts after execu
 
 ## Inputs
 
-Receive these from the parent agent:
-
 * Execution log path (*execution-log.md* from the sandbox folder).
 * Target prompt file path for direct evaluation.
 * Instructions file path (`.github/instructions/prompt-builder.instructions.md`).
@@ -76,7 +74,7 @@ Return findings using this structure:
 
 ### Clarifying Questions (if any)
 
-* {{question_for_parent_agent}}
+* {{question}}
 ```
 
 Severity levels:

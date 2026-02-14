@@ -23,6 +23,7 @@ Research external sources to answer specific questions or topics requiring fetch
 Determine which tools and sources apply based on the research targets.
 
 Including but not limited to:
+
 * MCP tools related to the topic, e.g., microsoft docs, context7, etc.
 * Fetch web page tools for HTTP searching for references, documentations, samples, examples, etc.
 * Github repo tools for searching references, documentation, samples, examples, etc.
