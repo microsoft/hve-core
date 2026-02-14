@@ -90,6 +90,21 @@ Autonomous agents execute tasks with minimal user interaction:
 
 Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
 
+#### Subagents
+
+Subagents are agent files that execute specialized tasks on behalf of parent agents.
+
+Characteristics:
+
+* Optionally include `user-invocable: false` frontmatter to hide the subagent from the user and prevent direct invocation.
+* Frontmatter includes `tools:` listing the tools available to the subagent.
+* Typically live under `.github/agents/subagents/` to separate them from user-facing agents.
+* Parent agents declare subagent dependencies in their `agents:` frontmatter.
+* Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
+* Cannot run their own subagents; only the parent agent orchestrates subagent calls.
+
+Subagents follow the same authoring standards as other agent files. Include a Response Format section defining the structured output the subagent returns to its parent.
+
 ### Instructions Files
 
 *Extension*: `.instructions.md`
@@ -168,14 +183,14 @@ Contains static resources:
 
 Skill files include these sections in order:
 
-1. **Title (H1)**: Clear heading matching skill purpose.
-2. **Overview**: Brief explanation of what the skill does.
-3. **Prerequisites**: Platform-specific installation requirements.
-4. **Quick Start**: Basic usage with default settings.
-5. **Parameters Reference**: Table documenting all options with defaults.
-6. **Script Reference**: Usage examples for bash and PowerShell.
-7. **Troubleshooting**: Common issues and solutions.
-8. **Attribution Footer**: Standard footer with attribution.
+1. Title (H1) — Clear heading matching skill purpose.
+2. Overview — Brief explanation of what the skill does.
+3. Prerequisites — Platform-specific installation requirements.
+4. Quick Start — Basic usage with default settings.
+5. Parameters Reference — Table documenting all options with defaults.
+6. Script Reference — Usage examples for bash and PowerShell.
+7. Troubleshooting — Common issues and solutions.
+8. Attribution Footer — Standard footer with attribution.
 
 ### Progressive Disclosure
 
@@ -227,8 +242,11 @@ Optional fields vary by file type:
 
 * `name:` - Skill identifier (required for skill files only). Must match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns (required for instructions files only).
-* `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
+* `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
+* `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (target agent name), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
+* `agents:` - List of subagent dependencies for parent agents. Each entry is the subagent name without path or extension (for example, `codebase-researcher`). Required when the agent runs subagents.
+* `user-invocable:` - Boolean. Set to `false` to hide the agent from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker.
+* `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files.
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Model specification.
@@ -401,7 +419,9 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 Tool invocation:
 
 * Run the named agent as a subagent. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * When no subagent tool is available, follow the subagent instructions directly or stop if subagent capability is required for the work.
+* Subagents cannot run their own subagents. Only the parent agent orchestrates all subagent calls.
 
 Task specification:
 
@@ -409,6 +429,7 @@ Task specification:
 * Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
 * Indicate the types of tasks the subagent completes.
 * Provide the subagent a step-based protocol when multiple steps are needed.
+* State that the subagent does not have access to subagent tools and must proceed without them, completing work directly.
 
 Response format:
 
