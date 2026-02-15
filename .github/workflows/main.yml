@@ -79,7 +79,7 @@ jobs:
       minor: ${{ steps.release.outputs.minor }}
       patch: ${{ steps.release.outputs.patch }}
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -95,6 +95,29 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Workaround: release-please with "draft": true uses lazy tag
+      # creation — the git tag is not materialized until the release is
+      # published. Without the tag, release-please cannot find the draft
+      # on subsequent runs, breaking version anchoring. Create the tag
+      # explicitly via API. Replace with "force-tag-creation": true in
+      # release-please-config.json once release-please-action ships a
+      # version that includes googleapis/release-please#2627.
+      - name: Create git tag for draft release
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          TAG="${{ steps.release.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
+            gh api "/repos/$REPO/git/refs" \
+              -f "ref=refs/tags/$TAG" \
+              -f "sha=${{ github.sha }}"
+            echo "Created git tag $TAG -> ${{ github.sha }}"
+          else
+            echo "Git tag $TAG already exists"
+          fi
 
   extension-package-release:
     name: Package VS Code Extensions (Release)
@@ -191,4 +214,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release edit "${{ needs.release-please.outputs.tag_name }}" --draft=false -R "${{ github.repository }}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          # Promote draft to published. The release becomes immutable
+          # after publish with all assets already attached.
+          gh release edit "$TAG" --draft=false -R "$REPO"

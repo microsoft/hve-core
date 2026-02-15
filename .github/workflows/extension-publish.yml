@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (leave empty to use package.json version)'
+        description: 'Version to publish (leave empty to auto-detect from latest release)'
         required: false
         type: string
         default: ''
@@ -63,14 +63,25 @@ jobs:
     steps:
       - name: Normalize version string
         id: normalize
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event_name }}" == "release" ]; then
             VERSION="${{ github.event.release.tag_name }}"
           else
             VERSION="${{ inputs.version }}"
           fi
-          # Strip leading 'v' if present
+          # Strip leading 'v' and component prefix if present
           VERSION="${VERSION#v}"
+          VERSION="${VERSION#hve-core-v}"
+
+          # Auto-detect from latest release tag when no version specified
+          if [ -z "$VERSION" ]; then
+            TAG=$(gh release view --json tagName -q '.tagName' -R "${{ github.repository }}")
+            VERSION="${TAG#hve-core-v}"
+            echo "📦 Auto-detected version from latest release: $VERSION"
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:

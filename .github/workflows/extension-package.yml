@@ -169,12 +169,18 @@ jobs:
         run: |
           $version = "${{ inputs.version }}".Trim()
           $devPatch = "${{ inputs.dev-patch-number }}".Trim()
+          $channel = "${{ inputs.channel }}".Trim()
+          if (-not $channel) { $channel = 'Stable' }
           $collection = "${{ matrix.manifest }}"
 
-          Write-Host "📦 Packaging extension (collection: ${{ matrix.id }})..."
+          Write-Host "📦 Packaging extension for $channel channel (collection: ${{ matrix.id }})..."
 
           $arguments = @{
             Collection = $collection
+          }
+
+          if ($channel -ieq 'PreRelease') {
+            $arguments['PreRelease'] = $true
           }
 
           if ($version) {

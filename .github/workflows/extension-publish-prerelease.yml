@@ -4,9 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'ODD minor version (e.g., 1.1.0, 1.3.0). Must use ODD minor number.'
-        required: true
+        description: 'ODD minor version (e.g., 1.1.0). Leave empty to auto-detect from latest release.'
+        required: false
         type: string
+        default: ''
       dry-run:
         description: 'Dry run (package only, do not publish)'
         required: false
@@ -25,27 +26,47 @@ jobs:
     steps:
       - name: Validate ODD minor version
         id: validate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ inputs.version }}"
           # Strip leading 'v' if present
           VERSION="${VERSION#v}"
-          
+
+          # Auto-detect from latest release tag when no version specified
+          if [ -z "$VERSION" ]; then
+            TAG=$(gh release view --json tagName -q '.tagName' -R "${{ github.repository }}")
+            VERSION="${TAG#hve-core-v}"
+
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+            # Derive ODD minor: if even, bump minor by 1 and reset patch
+            if (( MINOR % 2 == 0 )); then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            fi
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "📦 Auto-derived pre-release version from latest release: $VERSION"
+          fi
+
           # Validate format
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 1.1.0)"
             exit 1
           fi
-          
+
           # Extract minor version
           MINOR=$(echo "$VERSION" | cut -d. -f2)
-          
+
           # Check if ODD (pre-release channel uses ODD minor versions)
           if (( MINOR % 2 == 0 )); then
             echo "::error::Pre-release requires ODD minor version. Got: $VERSION (minor=$MINOR is EVEN)"
             echo "::error::Use version like 1.1.0, 1.3.0, 2.1.0 for pre-release channel"
             exit 1
           fi
-          
+
           echo "✅ Valid pre-release version: $VERSION (minor=$MINOR is ODD)"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 

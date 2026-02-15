@@ -12,6 +12,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.9](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.8...hve-core-v2.3.9) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **plugins:** merge git collection into rpi and distribute to all plugins ([#549](https://github.com/microsoft/hve-core/issues/549)) ([9509a87](https://github.com/microsoft/hve-core/commit/9509a87bc32bb91205ec4000553f706f01039a57))
+
+## [2.3.8](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.7...hve-core-v2.3.8) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** use draft-first release flow to avoid immutability errors ([#554](https://github.com/microsoft/hve-core/issues/554)) ([c8eee58](https://github.com/microsoft/hve-core/commit/c8eee58ce370c1a6bcf8d25fd55f7d2430eaa8de))
+
+## [2.3.7](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.6...hve-core-v2.3.7) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** delete and recreate draft release to publish ([#552](https://github.com/microsoft/hve-core/issues/552)) ([e3d6fca](https://github.com/microsoft/hve-core/commit/e3d6fca6e1f683f2913b28449ebbacec4f040ce3))
+
+## [2.3.6](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.5...hve-core-v2.3.6) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** delete and recreate immutable release as draft ([#550](https://github.com/microsoft/hve-core/issues/550)) ([75217da](https://github.com/microsoft/hve-core/commit/75217da01caa3aa57d313d149a065f207e28209c))
+
+## [2.3.5](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.4...hve-core-v2.3.5) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** replace draft release config with post-creation draft conversion ([#545](https://github.com/microsoft/hve-core/issues/545)) ([2311d04](https://github.com/microsoft/hve-core/commit/2311d04297ab1a607d03163e54dd278146254fdf))
+
+## [2.3.4](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.3...hve-core-v2.3.4) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** package pre-release VSIX artifacts correctly ([#544](https://github.com/microsoft/hve-core/issues/544)) ([f5f6887](https://github.com/microsoft/hve-core/commit/f5f6887a546f49a6bbb3877e61cab671ce0c92e6))
+
+## [2.3.3](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.2...hve-core-v2.3.3) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** add manual tag creation for draft releases until release-please-action updates ([#538](https://github.com/microsoft/hve-core/issues/538)) ([4a6ef2c](https://github.com/microsoft/hve-core/commit/4a6ef2c3ed691b26d4fd35f2086758d861c33cdb))
+
+## [2.3.2](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.1...hve-core-v2.3.2) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **settings:** ensure draft flag is set for release configuration ([#536](https://github.com/microsoft/hve-core/issues/536)) ([9e98c68](https://github.com/microsoft/hve-core/commit/9e98c688a15e769b15b2a28f8ea283dfe3cbe795))
+
+## [2.3.1](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.0...hve-core-v2.3.1) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **build:** remove draft flag that prevents release tag creation ([#533](https://github.com/microsoft/hve-core/issues/533)) ([c8de0aa](https://github.com/microsoft/hve-core/commit/c8de0aa65a313dd10001cdfdf1308115d5bd7cfc))
+* **workflows:** correct JSON output formatting in plugin discovery step ([#531](https://github.com/microsoft/hve-core/issues/531)) ([910fb8b](https://github.com/microsoft/hve-core/commit/910fb8b55cff89dd14eec07b99c3ffeff76f071c))
+
 ## [2.3.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.2.0...hve-core-v2.3.0) (2026-02-13)
 
 

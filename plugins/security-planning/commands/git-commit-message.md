@@ -1,0 +1,1 @@
+../../../.github/prompts/git-commit-message.prompt.md
