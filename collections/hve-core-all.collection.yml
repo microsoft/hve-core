@@ -10,6 +10,8 @@ items:
   kind: agent
 - path: .github/agents/adr-creation.agent.md
   kind: agent
+- path: .github/agents/agile-coach.agent.md
+  kind: agent
 - path: .github/agents/arch-diagram-builder.agent.md
   kind: agent
 - path: .github/agents/brd-builder.agent.md
@@ -180,5 +182,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
