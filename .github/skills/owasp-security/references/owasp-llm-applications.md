@@ -1,12 +1,9 @@
 ---
-description: "When generating, reviewing, or refactoring code that interacts with Large Language Models (LLMs), read and follow these OWASP Top 10 for LLM Applications (2025) secure coding guidelines to protect against prompt injection, data leakage, and LLM-specific vulnerabilities. Apply these instructions to any LLM integration, agent framework, RAG pipeline, or AI-powered feature. Provide clear and concise security feedback and points of improvement."
-applyTo: '**/*'
-maturity: experimental
+title: OWASP Top 10 for LLM Applications (2025)
+description: Secure coding reference for LLM integrations, agent frameworks, RAG pipelines, and AI-powered features with code examples
 ---
 
-# OWASP Top 10 for LLM Applications - Secure Coding Guidelines
-
-## Instructions
+## LLM Application Security Guidelines
 
 When working with Large Language Model (LLM) applications, ensure all code generated, reviewed, or refactored is secure by default with specific attention to LLM-unique vulnerabilities. Operate with a security-first mindset that recognizes LLMs introduce an entirely new class of risks beyond traditional application security. When in doubt, choose the more secure option and explain the reasoning.
 
@@ -38,13 +35,13 @@ Separate system instructions from user content using clear delimiters. Do not co
 
 <!-- <example-prompt-injection-defense> -->
 ```python
-# ✅ GOOD: Structured prompt with clear boundaries
+# GOOD: Structured prompt with clear boundaries
 system_prompt = "You are a customer service assistant. Only answer questions about product features."
 user_input = sanitize_input(request.user_message)  # Remove injection attempts
 response = llm.generate(system=system_prompt, user=user_input)
 validated_response = validate_output_schema(response)  # Ensure format compliance
 
-# ❌ BAD: Direct concatenation with no validation
+# BAD: Direct concatenation with no validation
 prompt = f"Answer this: {request.user_message}"  # Vulnerable to injection
 response = llm.generate(prompt)  # No output validation
 ```
@@ -78,13 +75,13 @@ When executing LLM-generated code (which should be avoided when possible), use s
 
 <!-- <example-sensitive-info-disclosure> -->
 ```typescript
-// ✅ GOOD: Sanitized context with PII detection
+// GOOD: Sanitized context with PII detection
 const sanitizedContext = await piiDetector.redact(userDocument);
 const prompt = `Summarize this document: ${sanitizedContext}`;
 const response = await llm.complete(prompt);
 const safeOutput = encodeForContext(response, 'html');
 
-// ❌ BAD: Direct exposure of sensitive data
+// BAD: Direct exposure of sensitive data
 const prompt = `Analyze this customer: Name: ${customer.name}, SSN: ${customer.ssn}, Income: ${customer.income}`;
 // System prompt leaks: "You have access to database: postgres://admin:password@..."
 ```
@@ -114,13 +111,13 @@ Maintain a comprehensive Software Bill of Materials (SBOM) for all AI/ML depende
 
 <!-- <example-supply-chain-verification> -->
 ```python
-# ✅ GOOD: Verified model loading with integrity checks
+# GOOD: Verified model loading with integrity checks
 model_hash = verify_model_signature(model_path, expected_signature)
 if model_hash != TRUSTED_MODEL_HASH:
     raise SecurityError("Model integrity verification failed")
 model = load_model(model_path)
 
-# ❌ BAD: Loading unverified models
+# BAD: Loading unverified models
 model = load_model_from_url(untrusted_url)  # No verification
 ```
 <!-- </example-supply-chain-verification> -->
@@ -153,14 +150,14 @@ Before incorporating data into training or fine-tuning sets, apply content valid
 
 <!-- <example-data-poisoning-defense> -->
 ```python
-# ✅ GOOD: Validated data pipeline with provenance
+# GOOD: Validated data pipeline with provenance
 training_data = load_dataset(source="trusted_repository")
 validated_data = data_validator.scan_for_poisoning(training_data)
 provenance_log.record(source, validation_result, timestamp)
 if validated_data.risk_score > THRESHOLD:
     raise SecurityError("Data poisoning detected")
 
-# ❌ BAD: Unvalidated data ingestion
+# BAD: Unvalidated data ingestion
 training_data = scrape_web_content(urls)  # No validation
 model.fine_tune(training_data)  # Poisoned data risk
 ```
@@ -196,10 +193,10 @@ User prompts can influence LLM outputs, effectively giving users indirect access
 
 Apply strict context-appropriate encoding based on where LLM output will be used:
 
-- HTML context: use HTML entity encoding to prevent XSS
-- SQL context: use parameterized queries, never concatenate LLM output into SQL
-- Shell context: use proper escaping or avoid shell execution entirely
-- JavaScript context: JSON encode and validate
+* HTML context: use HTML entity encoding to prevent XSS
+* SQL context: use parameterized queries, never concatenate LLM output into SQL
+* Shell context: use proper escaping or avoid shell execution entirely
+* JavaScript context: JSON encode and validate
 
 #### Direct Execution Risks
 
@@ -207,13 +204,13 @@ Avoid executing LLM-generated code, commands, or queries without thorough valida
 
 <!-- <example-output-handling> -->
 ```javascript
-// ✅ GOOD: Validated and encoded output
+// GOOD: Validated and encoded output
 const llmResponse = await llm.generate(userPrompt);
 const validatedResponse = outputValidator.validate(llmResponse, expectedSchema);
 const safeHtml = DOMPurify.sanitize(validatedResponse.html);
 const escapedText = escapeHtml(validatedResponse.text);
 
-// ❌ BAD: Direct execution of LLM output
+// BAD: Direct execution of LLM output
 const llmCode = await llm.generate("Write a function to...");
 eval(llmCode);  // Critical vulnerability: arbitrary code execution
 
@@ -250,7 +247,7 @@ Extensions and functions should operate with minimal privileges. Do not connect 
 
 <!-- <example-excessive-agency> -->
 ```python
-# ✅ GOOD: Minimal permissions with explicit allowlist
+# GOOD: Minimal permissions with explicit allowlist
 allowed_functions = ["search_knowledge_base", "format_response"]  # Limited scope
 agent = LLMAgent(
     functions=allowed_functions,
@@ -258,7 +255,7 @@ agent = LLMAgent(
     require_approval=True  # Human-in-the-loop for actions
 )
 
-# ❌ BAD: Excessive permissions and functionality
+# BAD: Excessive permissions and functionality
 agent = LLMAgent(
     functions=all_system_functions,  # Everything exposed
     permissions=AdminPermissions(),  # Full access
@@ -295,20 +292,20 @@ Do not rely on system prompts to enforce security controls. Authorization checks
 
 <!-- <example-system-prompt-leakage> -->
 ```python
-# ✅ GOOD: Security controls outside LLM
+# GOOD: Security controls outside LLM
 def process_request(user_id, request):
     # Deterministic authorization check - NOT in prompt
     if not has_permission(user_id, request.resource):
         raise AuthorizationError("Access denied")
-    
+
     # System prompt contains no secrets
     system_prompt = "You are a helpful assistant. Answer user questions about public documentation."
     response = llm.generate(system=system_prompt, user=request.message)
     return validate_output(response)
 
-# ❌ BAD: Security in system prompt (bypassable)
+# BAD: Security in system prompt (bypassable)
 system_prompt = f"""
-You are a banking assistant. 
+You are a banking assistant.
 Database password: {DB_PASSWORD}  # CRITICAL: Secret exposure
 API Key: {API_KEY}
 Only allow transactions under $1000.  # Security rule in prompt - bypassable
@@ -345,7 +342,7 @@ Implement fine-grained access controls at the vector database level. When retrie
 
 <!-- <example-vector-embedding-security> -->
 ```python
-# ✅ GOOD: Permission-aware retrieval
+# GOOD: Permission-aware retrieval
 def retrieve_context(query, user_id):
     query_embedding = embed(query)
     # Filter by user permissions BEFORE retrieval
@@ -356,7 +353,7 @@ def retrieve_context(query, user_id):
     )
     return results
 
-# ❌ BAD: No access control on retrieval
+# BAD: No access control on retrieval
 def retrieve_context(query):
     query_embedding = embed(query)
     results = vector_db.search(query_embedding)  # Returns everything
@@ -405,26 +402,26 @@ For critical applications, implement automated fact-checking that validates key 
 
 <!-- <example-misinformation-defense> -->
 ```python
-# ✅ GOOD: RAG with verification
+# GOOD: RAG with verification
 def generate_response(query):
     # Retrieve from curated knowledge base
     authoritative_docs = retrieve_verified_documents(query)
-    
+
     # Ground response in retrieved facts
     response = llm.generate(
         system="Base your answer ONLY on the provided documents.",
         context=authoritative_docs,
         user=query
     )
-    
+
     # Verify critical facts
     verification_result = fact_checker.verify(response, authoritative_docs)
     if verification_result.confidence < 0.8:
         return "I don't have reliable information about this."
-    
+
     return add_uncertainty_indicators(response)
 
-# ❌ BAD: No grounding or verification
+# BAD: No grounding or verification
 def generate_response(query):
     response = llm.generate(query)  # Pure generation - high hallucination risk
     return response  # No fact checking or uncertainty communication
@@ -463,14 +460,14 @@ Apply strict rate limits at multiple levels: per user, per IP address, per API k
 
 <!-- <example-unbounded-consumption> -->
 ```python
-# ✅ GOOD: Multi-layered rate limiting
+# GOOD: Multi-layered rate limiting
 @rate_limit(requests_per_minute=10, tokens_per_hour=100000)
 @timeout(seconds=30)
 def llm_endpoint(request):
     # Input size validation
     if len(request.message) > MAX_INPUT_SIZE:
         raise ValidationError("Input exceeds maximum size")
-    
+
     # Output size control
     response = llm.generate(
         request.message,
@@ -479,7 +476,7 @@ def llm_endpoint(request):
     )
     return response
 
-# ❌ BAD: No resource controls
+# BAD: No resource controls
 def llm_endpoint(request):
     # No rate limiting, input validation, or timeouts
     response = llm.generate(request.message)  # Unbounded
@@ -561,9 +558,9 @@ Design LLM applications assuming some users will actively attempt to bypass cont
 
 LLM vulnerabilities complement, not replace, traditional security concerns:
 
-- All traditional application security practices (secure authentication, encryption, access control, etc.) remain critical for LLM applications
-- LLM01 (Prompt Injection) is as critical for AI applications as SQL injection (OWASP A03) is for traditional web applications
-- Combine LLM-specific and traditional security controls for comprehensive protection
-- Use application-layer security (authentication, authorization) alongside LLM-layer security (input validation, output handling, RAG controls)
+* All traditional application security practices (secure authentication, encryption, access control, etc.) remain critical for LLM applications
+* LLM01 (Prompt Injection) is as critical for AI applications as SQL injection (OWASP A03) is for traditional web applications
+* Combine LLM-specific and traditional security controls for comprehensive protection
+* Use application-layer security (authentication, authorization) alongside LLM-layer security (input validation, output handling, RAG controls)
 
 Working with LLMs requires accepting their non-deterministic nature while implementing deterministic security controls around them. Security is enforced by the application, not delegated to the model.

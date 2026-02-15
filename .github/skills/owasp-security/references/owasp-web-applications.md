@@ -1,12 +1,9 @@
 ---
-description: "Comprehensive secure coding instructions for all languages and frameworks, based on OWASP Top 10 and industry best practices. Give clear and concise feedback and points of improvement."
-maturity: experimental
-applyTo: '**/*'
+title: OWASP Top 10 for Web Applications
+description: Comprehensive secure coding reference based on OWASP Top 10 and industry best practices with code examples
 ---
 
-# Secure Coding and OWASP Guidelines
-
-## Instructions
+## Secure Coding and OWASP Guidelines
 
 Ensure all code generated, reviewed, or refactored is secure by default. Operate with a security-first mindset. When in doubt, choose the more secure option and explain the reasoning.
 
@@ -50,13 +47,13 @@ Do not hardcode secrets (API keys, passwords, connection strings). Generate code
 
 ```javascript
 // GOOD: Load from environment or secret store
-const apiKey = process.env.API_KEY; 
+const apiKey = process.env.API_KEY;
 // TODO: Ensure API_KEY is securely configured in your environment.
 ```
 
 ```python
 # BAD: Hardcoded secret
-api_key = "sk_this_is_a_very_bad_idea_12345" 
+api_key = "sk_this_is_a_very_bad_idea_12345"
 ```
 
 ### 3. A03: Injection

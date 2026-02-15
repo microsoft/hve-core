@@ -39,6 +39,9 @@ items:
   kind: agent
 - path: .github/agents/rpi-agent.agent.md
   kind: agent
+- path: .github/agents/security-champion.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security-plan-creator.agent.md
   kind: agent
 - path: .github/agents/task-implementor.agent.md
@@ -161,6 +164,9 @@ items:
   kind: instruction
 - path: .github/instructions/writing-style.instructions.md
   kind: instruction
+- path: .github/skills/owasp-security
+  kind: skill
+  maturity: experimental
 - path: .github/skills/video-to-gif
   kind: skill
 display:

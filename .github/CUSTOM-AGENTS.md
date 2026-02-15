@@ -250,20 +250,21 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Scan code → Identify vulnerabilities → Suggest mitigations → Reference SDL/OWASP guidance
 
-**Core Frameworks:**
+**Security References:**
 
-* OWASP Top 10 for web application security
-* OWASP Top 10 for LLM Applications (2025) for AI/ML security
-* Microsoft Security Development Lifecycle (SDL) practices
+* Reads from `.github/skills/owasp-security/` on demand based on review context
+* OWASP Top 10 web reference for server-side and API code
+* OWASP Top 10 for LLM Applications (2025) reference for AI/ML integrations
+* Quick-reference checklists in `SKILL.md` for rapid assessment
 
 **Areas Covered:**
 
-* Design: Threat modeling, architecture patterns, Zero Trust, trust boundaries
-* Code: Input validation, authentication, secrets management, supply chain
-* Build/Deploy: CI/CD security, code signing, container configuration
-* Runtime: Security monitoring, incident response, platform baselines
+* Design: Threat modeling, architecture patterns, Zero Trust, trust boundaries, cryptography standards
+* Code: Input validation, injection prevention, authentication, secrets management, supply chain, output encoding
+* Build/Deploy: CI/CD security, code signing, container configuration, security headers
+* Runtime: Security monitoring, incident response, rate limiting, platform baselines, audit trails
 
-**Critical:** Advisory-only. Provides security guidance and vulnerability analysis. Hands off to security-plan-creator for comprehensive plans or task-researcher for deeper investigation.
+**Critical:** Advisory-only. References OWASP categories (A01-A10, LLM01-LLM10) and SDL practice numbers in findings. Hands off to security-plan-creator for comprehensive plans or task-researcher for deeper investigation.
 
 ### gen-jupyter-notebook
 

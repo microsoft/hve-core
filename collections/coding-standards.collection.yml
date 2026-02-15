@@ -84,12 +84,9 @@ items:
     kind: instruction
   - path: .github/instructions/uv-projects.instructions.md
     kind: instruction
-  # Security instructions
-  - path: .github/instructions/security/owasp-for-llms.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/owasp-for-web-applications.instructions.md
-    kind: instruction
+  # Security skill
+  - path: .github/skills/owasp-security
+    kind: skill
     maturity: experimental
   # Common instructions
   - path: .github/instructions/writing-style.instructions.md
