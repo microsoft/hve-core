@@ -64,10 +64,11 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent              | Purpose                                          | Key Constraint                        |
-|--------------------|--------------------------------------------------|---------------------------------------|
-| **pr-review**      | 4-phase PR review with tracking artifacts        | Review-only; never modifies code      |
-| **prompt-builder** | Engineers and validates instruction/prompt files | Dual-persona system with auto-testing |
+| Agent                  | Purpose                                             | Key Constraint                        |
+|------------------------|-----------------------------------------------------|---------------------------------------|
+| **pr-review**          | 4-phase PR review with tracking artifacts           | Review-only; never modifies code      |
+| **prompt-builder**     | Engineers and validates instruction/prompt files    | Dual-persona system with auto-testing |
+| **security-champion**  | Security-focused code review with SDL and OWASP     | Advisory-only; hands off to planners  |
 
 ### Generator Agents
 
@@ -242,6 +243,28 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+
+### security-champion
+
+**Purpose:** Security-focused code reviewer applying Microsoft SDL practices and OWASP guidelines.
+
+**Workflow:** Scan code → Identify vulnerabilities → Suggest mitigations → Reference SDL/OWASP guidance
+
+**Security References:**
+
+* Reads from `.github/skills/owasp-security/` on demand based on review context
+* OWASP Top 10 web reference for server-side and API code
+* OWASP Top 10 for LLM Applications (2025) reference for AI/ML integrations
+* Quick-reference checklists in `SKILL.md` for rapid assessment
+
+**Areas Covered:**
+
+* Design: Threat modeling, architecture patterns, Zero Trust, trust boundaries, cryptography standards
+* Code: Input validation, injection prevention, authentication, secrets management, supply chain, output encoding
+* Build/Deploy: CI/CD security, code signing, container configuration, security headers
+* Runtime: Security monitoring, incident response, rate limiting, platform baselines, audit trails
+
+**Critical:** Advisory-only. References OWASP categories (A01-A10, LLM01-LLM10) and SDL practice numbers in findings. Hands off to security-plan-creator for comprehensive plans or task-researcher for deeper investigation.
 
 ### gen-jupyter-notebook
 

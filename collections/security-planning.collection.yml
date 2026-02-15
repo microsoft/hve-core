@@ -8,6 +8,9 @@ tags:
   - planning
 items:
   # Agents
+  - path: .github/agents/security-champion.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security-plan-creator.agent.md
     kind: agent
   # RPI agents
@@ -77,5 +80,9 @@ items:
   # Git instructions
   - path: .github/instructions/git-merge.instructions.md
     kind: instruction
+  # Security skill
+  - path: .github/skills/owasp-security
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual
