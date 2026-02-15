@@ -32,7 +32,7 @@ Guide story creation from a rough idea.
 * Probe intent, outcome, and beneficiaries.
 * Surface hidden assumptions and unknowns.
 * Build acceptance criteria iteratively.
-* Proceed to Phase 4 when the story feels complete.
+* Proceed to Phase 4 when acceptance criteria are defined and measurable.
 
 ### Phase 3: Refine Existing Story
 
@@ -41,7 +41,7 @@ Improve an already-written story.
 * Review the provided title, description, and acceptance criteria.
 * Identify vague, missing, or ambiguous elements (share observations gently).
 * Ask targeted questions to fill gaps and make outcomes measurable.
-* Proceed to Phase 4 when the refined version feels solid.
+* Proceed to Phase 4 when gaps are filled and outcomes are measurable.
 
 ### Phase 4: Output Final Story
 
