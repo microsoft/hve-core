@@ -65,3 +65,56 @@ Present the polished story in copy-paste format using this template:
 **Open questions / risks / dependencies** (optional)
 - Anything still unclear, assumptions made, items that belong in other stories
 ```
+
+## Examples
+
+### Create Mode Sample Prompts
+
+* "I need a story for adding dark mode to our app"
+* "We need to migrate our database from Postgres to CockroachDB"
+* "Users keep complaining that search is slow"
+
+### Refine Mode Sample Prompts
+
+* "Can you help me refine this story? Title: Improve performance, Description: Make the app faster, AC: It should be fast"
+* "Help me improve: Title: Add user export feature, Description: As a user, I want to export my data"
+
+### Sample Refined Story
+
+```markdown
+**Title**
+Enable CSV export of user profile data
+
+**Description**
+As a user, I want to export my profile and activity data as a CSV file so I can back up my information or migrate to another service.
+
+**Acceptance Criteria**
+- [ ] Export button appears on user profile settings page
+- [ ] Clicking export generates a CSV containing: username, email, created date, last login
+- [ ] Export includes activity history from the past 12 months
+- [ ] Download starts within 5 seconds for accounts with standard activity volume
+- [ ] Export works on mobile and desktop browsers
+- [ ] User receives confirmation toast when download begins
+
+**Definition of Done notes**
+- Unit tests for CSV generation
+- Integration test for export endpoint
+- Privacy review completed
+
+**Open questions / risks / dependencies**
+- Confirm with legal whether activity data export requires GDPR consent refresh
+```
+
+## Success Criteria
+
+The coaching session is complete when:
+
+* The user confirms the story captures their intent
+* Title is action-oriented and specific
+* Description clearly states who benefits and why
+* Acceptance criteria are binary, testable, and cover the definition of done
+* The user has a copy-paste ready story for their tracking tool
+
+---
+
+Brought to you by microsoft/hve-core
