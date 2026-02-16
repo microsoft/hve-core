@@ -9,7 +9,7 @@ Authoring standards for prompt engineering artifacts govern how prompt, agent, i
 
 ## File Types
 
-This section defines file type selection criteria, authoring patterns, and validation checks.
+This section defines file type selection criteria, authoring patterns, and validation checks. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
 
 ### Prompt Files
 
@@ -21,11 +21,11 @@ Characteristics:
 
 * Single invocation completes the workflow.
 * Frontmatter includes `agent: agent-name` to delegate to an agent. Quote the value only when the agent name contains spaces.
-* Activation lines are optional. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
+* Activation lines are optional and apply only to prompt files; agent files and instructions files do not include them. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
 * When the full contents are not required, refer to the file by path or to the relevant section.
 * Example: `#file:path/to/file.md` pulls in the full file contents at that location.
-* Input variables use `${input:variableName}` or `${input:variableName:defaultValue}` syntax.
+* Input variables are supported; see the Input Variables section for syntax.
 
 *Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `prompt-refactor.prompt.md`, `git-commit-message.prompt.md`).
 
@@ -33,11 +33,9 @@ Consider adding sequential steps when the prompt involves multiple distinct acti
 
 #### Agent Delegation
 
-Prompts that set `agent:` to a custom agent inherit the agent's protocol, including its phases, steps, and subagent orchestration. Avoid adding Required Phases, Required Steps, or Required Protocol sections that duplicate or conflict with the parent agent's protocol. Instead, reference specific phases or sections from the parent agent when the prompt customizes or limits the agent's behavior (for example, "Follow Phase 1 only" or "Skip Phase 2"). A Required Protocol section remains appropriate when it adds execution meta-rules not defined by the parent agent, such as iteration constraints or scope boundaries.
+Prompts that set `agent:` to a custom agent inherit the agent's protocol, including its phases, steps, and subagent orchestration. Avoid adding Required Phases, Required Steps, or Required Protocol sections that duplicate or conflict with the parent agent's protocol. Instead, reference specific phases or sections from the parent agent when the prompt customizes or limits the agent's behavior (for example, "Follow Phase 1 only" or "Skip Phase 2"). Use a Required Protocol section to add execution meta-rules not defined by the parent agent, such as iteration constraints, scope boundaries, or phase sequencing. Reserve Required Steps for prompt files that define their own workflow independent of the delegated agent's protocol.
 
 Prompts extending agent behavior focus on what differs from the default: scoped inputs, additional requirements, or workflow restrictions.
-
-When a prompt restricts or sequences an agent's existing phases, use a Required Protocol section to define those execution meta-rules. Reserve Required Steps for prompt files that define their own workflow independent of the delegated agent's protocol. For example, a prompt that limits an agent to Phase 1 and adds post-processing uses Required Protocol because it governs how the agent's existing phases execute. A prompt that defines its own multi-step workflow unrelated to any agent protocol uses Required Steps.
 
 ```markdown
 ---
@@ -61,7 +59,7 @@ argument-hint: "[promptFiles=...] [requirements=...]"
 
 #### Requirements Sections
 
-Requirements sections are optional. Use them to extend user-provided requirements, guide the agent toward specific objectives, or narrow the agent's default scope. Requirements sections provide context the agent uses alongside the user's conversation rather than substituting for the agent's own protocol. Avoid restating behavior the parent agent already defines.
+Requirements sections are optional. Use them to extend user-provided requirements, guide the agent toward specific objectives, or narrow the agent's default scope. Requirements sections provide context the agent uses alongside the user's conversation rather than substituting for the agent's own protocol.
 
 #### Input Variables
 
@@ -94,11 +92,12 @@ The `argument-hint` frontmatter field shows users expected inputs in the VS Code
 argument-hint: "topic=... [chat={true|false}]"
 ```
 
+Typical section order for prompt files: H1 title, Inputs, Requirements or Protocol, activation line (if needed).
+
 Validation guidelines:
 
-* When steps are used, follow the Step-Based Protocols section for structure. Prompts delegating to custom agents omit protocol sections that duplicate the agent's workflow.
+* When steps are used, follow the Step-Based Protocols section for structure.
 * Document input variables in an Inputs section when present.
-* Include an activation line when the prompt's workflow start point is not obvious. Omit for agent-delegating prompts with clear protocol inheritance.
 
 ### Agent Files
 
@@ -108,13 +107,14 @@ Purpose: Agent files support both conversational workflows (multi-turn interacti
 
 *Naming*: Use lowercase kebab-case matching the agent's role (for example, `task-planner.agent.md`, `prompt-builder.agent.md`). The `name:` frontmatter field matches the filename without extension.
 
+Frontmatter defines available `tools` and optional `handoffs` to other agents.
+
 #### Conversational Agents
 
 Conversational agents guide users through multi-turn interactions:
 
 * Users guide the conversation through different activities or stages.
 * State persists across conversation turns via planning files when needed.
-* Frontmatter defines available `tools` and optional `handoffs` to other agents.
 * Typically represents a domain expert or specialized assistant role.
 
 Consider adding phases when the workflow involves distinct stages that users move between interactively. Simple conversational assistants that respond to varied requests do not need protocol structure. Follow the Phase-Based Protocols section for phase structure guidelines.
@@ -124,7 +124,6 @@ Consider adding phases when the workflow involves distinct stages that users mov
 Autonomous agents execute tasks with minimal user interaction:
 
 * Executes autonomously after receiving initial instructions.
-* Frontmatter defines available `tools` and optional `handoffs` to other agents.
 * Typically completes a bounded task and reports results.
 * May run subagents for parallelizable work.
 
@@ -138,51 +137,44 @@ Subagents are agent files that execute specialized tasks on behalf of parent age
 
 Characteristics:
 
-* Optionally include `user-invocable: false` frontmatter to hide the subagent from the user and prevent direct invocation.
+* Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
 * Typically live under `.github/agents/subagents/` to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Cannot run their own subagents; only the parent agent orchestrates subagent calls.
 
+Create subagents when a parent agent needs to parallelize work or delegate a specialized, repeatable task. When the workflow is linear and does not benefit from isolated execution, keep the logic within the parent agent or use a prompt file.
+
 Subagents follow the same authoring standards as other agent files. Include a Response Format section defining the structured output the subagent returns to its parent.
 
 #### Subagent Structural Template
 
-All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents:
-
-1. H1 Title matching the agent name.
-2. Opening line restating the purpose from the frontmatter description.
-3. Purpose section with bulleted objectives defining what the subagent provides.
-4. Inputs section listing required and optional inputs with bullet formatting.
-5. Intermediate output section (named per context, such as *Execution Log*, *Evaluation Log*, or *Research Document*) defining the progressive output artifact.
-6. Required Steps section with a pre-requisite step followed by numbered steps.
-7. Required Protocol section defining execution meta-rules. Include when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit for simpler subagents where the Required Steps section is self-contained.
-8. Response Format section defining the structured return to the parent agent.
+All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents. Include a Required Protocol section when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit it for simpler subagents where the Required Steps section is self-contained. For instance, a research-only subagent that reads files and writes findings needs no Required Protocol because its steps are self-contained.
 
 ```markdown
-# Agent Name
+# Agent Name                    <!-- H1 matching the agent name -->
 
-Brief restatement of purpose from frontmatter description.
+Restate purpose from frontmatter description.
 
-## Purpose
+## Purpose                      <!-- Bulleted objectives -->
 
 * First objective.
 * Second objective.
 
-## Inputs
+## Inputs                       <!-- Required and optional inputs -->
 
 * Required input with description.
 * (Optional) Optional input with description.
 
-## Output Artifact Name
+## Output Artifact Name         <!-- Named per context: Execution Log, etc. -->
 
 Create and update the artifact progressively documenting:
 
 * Findings and decisions.
 * Evidence and references.
 
-## Required Steps
+## Required Steps               <!-- Pre-requisite + numbered steps -->
 
 ### Pre-requisite: Setup
 
@@ -195,13 +187,13 @@ Create and update the artifact progressively documenting:
 1. Execute the primary task.
 2. Update the output artifact progressively.
 
-## Required Protocol
+## Required Protocol            <!-- Omit if Required Steps are self-contained -->
 
 1. Follow all Required Steps.
 2. Repeat as needed to ensure completeness.
 3. Finalize the output artifact.
 
-## Response Format
+## Response Format              <!-- Structured return to parent agent -->
 
 Return structured findings including:
 
@@ -261,44 +253,18 @@ Skill directory structure:
 ```text
 .github/skills/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
-├── scripts/                    # Executable scripts (optional)
+├── scripts/                    # Self-contained executables (optional)
 │   ├── <action>.sh             # Bash script for macOS/Linux
-│   └── <action>.ps1            # PowerShell script for Windows
-├── references/                 # Additional documentation (optional)
+│   └── <action>.ps1            # PowerShell for Windows; provide both for cross-platform
+├── references/                 # Agents load on demand; keep files focused (optional)
 │   └── REFERENCE.md            # Detailed technical reference
-├── assets/                     # Static resources (optional)
+├── assets/                     # Templates, images, data files (optional)
 │   └── templates/              # Document or configuration templates
 └── examples/
     └── README.md               # Usage examples (recommended)
 ```
 
-### Optional Directories
-
-#### scripts/
-
-Contains executable code that agents run to perform tasks:
-
-* Scripts are self-contained or clearly document dependencies.
-* Include helpful error messages and handle edge cases gracefully.
-* Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
-
-#### references/
-
-Contains additional documentation that agents read when needed:
-
-* *REFERENCE.md* for detailed technical reference material.
-* Domain-specific files such as `finance.md` or `legal.md`.
-* Keep individual reference files focused; agents load these on demand.
-
-#### assets/
-
-Contains static resources:
-
-* Templates for documents or configuration files.
-* Images such as diagrams or examples.
-* Data files such as lookup tables or schemas.
-
-#### Skill Content Structure
+### Skill Content Structure
 
 Skill files include these sections in order:
 
@@ -336,8 +302,7 @@ Keep file references one level deep from *SKILL.md*. Avoid deeply nested referen
 
 Validation guidelines:
 
-* Include `name` frontmatter matching the skill directory name (required for skills and agents).
-* Include `description` frontmatter (required).
+* Frontmatter follows the Frontmatter Requirements section, including `name` and `description` fields.
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Document prerequisites for each supported platform.
 * Keep *SKILL.md* focused; move detailed reference material to `references/`.
@@ -367,7 +332,7 @@ Maturity is tracked in `collections/*.collection.yml` item metadata, not in fron
 
 All prompt engineering artifacts include this frontmatter field:
 
-* `description:` - Brief description of the artifact's purpose. Required for all file types.
+* `description:` - Brief description of the artifact's purpose. Required for all file types. Write descriptions as concise sentence fragments or single sentences. Keep under 120 characters when possible. Descriptions appear in tool pickers and search results, so front-load the most important information.
 
 ### Conditionally Required Fields
 
@@ -375,6 +340,7 @@ These fields are required depending on the file type:
 
 * `name:` - Artifact identifier. Required for agent files and skill files. For agents, use lowercase kebab-case matching the filename without extension. For skills, match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns defining which files trigger the instructions. Required for instructions files only.
+* `agents:` - List of subagent dependencies. Required for parent agents that run subagents. Each entry is the subagent name without path or extension (for example, `codebase-researcher`).
 
 ### Optional Fields
 
@@ -382,7 +348,6 @@ Optional fields available by file type:
 
 * `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (target agent name), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
-* `agents:` - List of subagent dependencies for parent agents. Each entry is the subagent name without path or extension (for example, `codebase-researcher`). Required when the agent runs subagents.
 * `user-invocable:` - Boolean. Set to `false` to hide the agent from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker.
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files.
@@ -447,6 +412,8 @@ applyTo: '**'
 
 Protocol patterns apply to prompt and agent files. Skill files follow their own content structure defined in the Skill Content Structure section rather than step-based or phase-based protocols.
 
+Give each step or phase an accurate summary that indicates the grouping of prompt instructions it contains.
+
 ### Step-Based Protocols
 
 Step-based protocols define groupings of sequential prompt instructions that execute in order. Add this structure when the workflow benefits from explicit ordering of distinct actions.
@@ -459,11 +426,8 @@ Structure guidelines:
 Step conventions:
 
 * Format steps as `### Step N: Short Summary` within the Required Steps section.
-* Give each step an accurate short summary that indicates the grouping of prompt instructions.
 * Include prompt instructions to follow while implementing the step.
 * Steps can repeat or move to a previous step based on instructions.
-
-Activation line: Optionally end the prompt file with a horizontal rule (`---`) followed by an instruction to begin. Include an activation line when it is unclear how to start the workflow, such as prompts using a generic agent or prompts without an `agent:` field. Omit the activation line for prompts delegating to custom agents where the workflow start is clear. Activation lines apply only to prompt files; agent files and instructions files do not include them.
 
 ```markdown
 ## Required Steps
@@ -497,7 +461,6 @@ Structure guidelines:
 Phase conventions:
 
 * Format phases as `### Phase N: Short Summary` within the Required Phases section.
-* Give each phase an accurate short summary that indicates the grouping of prompt instructions.
 * Announce phase transitions and summarize outcomes when completing phases.
 * Include instructions on when to complete the phase and move onto the next phase.
 * Completing the phase can be signaled from the user or from some ending condition.
@@ -549,7 +512,7 @@ Orchestrates executing and evaluating prompt files iteratively.
 
 ### Shared Protocol Placement
 
-Protocols can be shared across multiple files by placing the protocol into a `{{name}}.instructions.md` file. Use `#file:` only when the full contents of the protocol file are needed; otherwise, refer to the file by path or to the relevant section.
+Protocols can be shared across multiple files by placing the protocol into a `{{name}}.instructions.md` file. Follow the `#file:` usage guidance from the Prompt Files section when referencing shared protocol files.
 
 ### Required Protocol
 
@@ -607,22 +570,17 @@ Agents that manage testing or validation use sandbox folders to isolate side eff
 
 Prompt instructions have the following characteristics:
 
-* Guide the model on what to do, rather than command it.
 * Written with proper grammar and formatting.
-
-Additional characteristics:
-
 * Use protocol-based structure with descriptive language when phases or ordered steps are needed.
 * Use `*` bulleted lists for groupings and `1.` ordered lists for sequential instruction steps.
 * Use **bold** only for human readability when drawing attention to a key concept.
 * Use *italics* only for human readability when introducing new concepts, file names, or technical terms.
 * Lines of prose content serve as prompt instructions. Blank lines, horizontal rules, code blocks, and section headers are structural elements rather than instructions.
-* Follow standard markdown conventions and instructions for the codebase.
 * Bulleted and ordered lists can appear without a title instruction when the section heading already provides context.
 
 ### Voice in Different Contexts
 
-Prompt instructions and general guidance use a guidance style: describe what to do without commanding. Subagent action steps naturally use imperative voice ("Create the sandbox folder", "Read the target prompt", "Follow all Required Steps") because they define direct actions for autonomous execution. Both styles are appropriate in their respective contexts.
+Guidance voice is the default for prompt instructions and general guidance. Imperative voice applies to subagent action steps and direct autonomous execution. Both styles are appropriate in their respective contexts.
 
 ### User-Facing Responses
 
@@ -645,28 +603,17 @@ When instructions describe how to respond to users in conversation:
 See the [official documentation](https://docs.example.com/guide) for details.
 ```
 
-Prefer guidance style over command style:
-
-```markdown
-<!-- Avoid command style -->
-You must search the folder and you will collect all conventions.
-
-<!-- Use guidance style -->
-Search the folder and collect conventions into the research document.
-```
-
 ### Patterns to Avoid
 
 The following patterns provide limited value as prompt instructions:
 
 * ALL CAPS directives and emphasis markers.
-* Second-person commands with modal verbs (will, must, shall). For example, "You will" or "You must."
 * Condition-heavy and overly branching instructions. Prefer providing a phase-based or step-based protocol framework.
 * List items where each item has a bolded title line. For example, `* **Line item** - Avoid adding line items like this`.
 * Forcing prompt instruction lists to have three or more items when fewer suffice.
-* XML-style groupings of prompt instructions. Use markdown sections for grouping related prompt instructions instead. This prohibition targets structural organization of instruction content, not XML comments used as section extraction markers or annotation labels by codebase tooling.
+* Avoid using XML tags to organize prompt instruction content. XML comments used by codebase tooling for section extraction are unrelated to this prohibition.
 
-## Prompt Key Criteria
+## Prompt Design Principles
 
 Successful prompts demonstrate these qualities:
 
@@ -685,7 +632,7 @@ Tool invocation:
 
 * Run the named agent with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
 * Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
-* Subagents cannot run their own subagents. Only the parent agent orchestrates all subagent calls.
+* Subagents do not run their own subagents (see the Subagents section).
 
 Task specification:
 
@@ -706,22 +653,11 @@ Execution patterns:
 * Prompt instructions can loop and call the subagent multiple times until the task completes.
 * Multiple subagents can run in parallel when work allows (for example, document researcher collects from documents while GitHub researcher collects from repositories).
 
-Sandbox isolation:
+Environment and output:
 
-* Direct test and execution subagents to create and modify files only within an assigned sandbox folder.
-* Specify the sandbox root path and naming convention in the subagent invocation.
-* State that side effects outside the sandbox are not permitted.
-
-Intermediate file specification:
-
-* Define the progressive output artifact the subagent creates (execution log, evaluation log, research document, tracking file).
-* Specify the file path pattern and the content types documented.
-* Instruct the subagent to update the artifact progressively rather than writing it once at the end.
-
-Cross-run continuity:
-
-* Provide prior sandbox run paths or prior output artifacts when iterating on a previous baseline.
-* Instruct the subagent to compare outputs across runs when evaluating incremental changes.
+* Direct test and execution subagents to follow the Sandbox Environment guidelines.
+* Define progressive output artifacts following the Intermediate Output Files pattern.
+* Use cross-run continuity as described in Sandbox Environment when iterating.
 
 Input specification:
 
@@ -734,20 +670,6 @@ Progressive feedback loops:
 * Collect findings from completed subagent runs and feed them into subsequent invocations.
 * Read subagent output artifacts progressively and integrate findings into parent-level documents.
 
-## Prompt Quality Criteria
-
-Every item applies to the entire file. Validation fails if any item is not satisfied. Mark items as N/A when the criteria do not apply to the artifact type (for example, subagent criteria do not apply to instructions files).
-
-* [ ] File structure follows the File Types guidelines for the artifact type.
-* [ ] Frontmatter includes required fields and follows Frontmatter Requirements.
-* [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
-* [ ] Instructions match the Prompt Writing Style.
-* [ ] Instructions follow all Prompt Key Criteria.
-* [ ] Subagent prompts follow Subagent Prompt Criteria when running subagents.
-* [ ] External sources follow External Source Integration when referencing SDKs or APIs.
-* [ ] Few-shot examples are in correctly fenced code blocks and match the instructions exactly.
-* [ ] The user's request and requirements are implemented completely.
-
 ## External Source Integration
 
 When referencing SDKs, APIs, tools, frameworks, etc., for prompt instructions:
@@ -758,3 +680,17 @@ When referencing SDKs, APIs, tools, frameworks, etc., for prompt instructions:
 * Use MCP tools such as `context7` and `microsoft-docs` to retrieve current references and documentation when available. These Model Context Protocol integrations provide access to up-to-date library documentation and official Microsoft content.
 * Use fetch webpage and github repo tools as research sources for external patterns and examples when available.
 * Instruct researcher subagents to gather external documentation when the parent agent needs SDKs, APIs, tools, frameworks, etc., context.
+
+## Prompt Quality Criteria
+
+Every item applies to the entire file. Validation fails if any item is not satisfied. Mark items as N/A when the criteria do not apply to the artifact type (for example, subagent criteria do not apply to instructions files).
+
+* [ ] File structure follows the File Types guidelines for the artifact type.
+* [ ] Frontmatter includes required fields and follows Frontmatter Requirements.
+* [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
+* [ ] Instructions match the Prompt Writing Style.
+* [ ] Instructions follow all Prompt Design Principles.
+* [ ] Subagent prompts follow Subagent Prompt Criteria when running subagents.
+* [ ] External sources follow External Source Integration when referencing SDKs or APIs.
+* [ ] Few-shot examples are in correctly fenced code blocks and match the instructions exactly.
+* [ ] The user's request and requirements are implemented completely.
