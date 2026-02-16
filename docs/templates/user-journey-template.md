@@ -29,71 +29,71 @@ When {{situation}}, I want to {{motivation}}, so I can {{desiredOutcome}}.
 
 ### Current Solution
 
-| Aspect              | Details                  |
-|---------------------|--------------------------|
-| Current approach    | {{currentApproach}}      |
-| Primary pain points | {{painPoints}}           |
-| Time or cost impact | {{costImpact}}           |
-| Workarounds in use  | {{existingWorkarounds}}  |
+| Aspect              | Details                 |
+|---------------------|-------------------------|
+| Current approach    | {{currentApproach}}     |
+| Primary pain points | {{painPoints}}          |
+| Time or cost impact | {{costImpact}}          |
+| Workarounds in use  | {{existingWorkarounds}} |
 
 ### Success Criteria
 
-| Metric              | Baseline         | Target           | Measurement Method   |
-|---------------------|------------------|------------------|----------------------|
-| {{metric1}}         | {{baseline1}}    | {{target1}}      | {{method1}}          |
-| {{metric2}}         | {{baseline2}}    | {{target2}}      | {{method2}}          |
+| Metric      | Baseline      | Target      | Measurement Method |
+|-------------|---------------|-------------|--------------------|
+| {{metric1}} | {{baseline1}} | {{target1}} | {{method1}}        |
+| {{metric2}} | {{baseline2}} | {{target2}} | {{method2}}        |
 
 ## User Persona
 
-| Attribute         | Details               |
-|-------------------|-----------------------|
-| Role              | {{userRole}}          |
-| Goal              | {{userGoal}}          |
-| Context           | {{usageContext}}      |
-| Skill level       | {{skillLevel}}        |
-| Primary device    | {{primaryDevice}}     |
-| Accessibility     | {{accessibilityNeeds}} |
+| Attribute      | Details                |
+|----------------|------------------------|
+| Role           | {{userRole}}           |
+| Goal           | {{userGoal}}           |
+| Context        | {{usageContext}}       |
+| Skill level    | {{skillLevel}}         |
+| Primary device | {{primaryDevice}}      |
+| Accessibility  | {{accessibilityNeeds}} |
 
 ## Journey Stages
 
 ### Stage 1: {{stageName}}
 
-| Dimension    | Details                        |
-|--------------|--------------------------------|
-| Doing        | {{whatUserIsDoing}}            |
-| Thinking     | {{whatUserIsThinking}}         |
-| Feeling      | {{emotionalState}}             |
-| Pain points  | {{painPointsAtThisStage}}      |
-| Opportunity  | {{designOpportunity}}          |
+| Dimension   | Details                   |
+|-------------|---------------------------|
+| Doing       | {{whatUserIsDoing}}       |
+| Thinking    | {{whatUserIsThinking}}    |
+| Feeling     | {{emotionalState}}        |
+| Pain points | {{painPointsAtThisStage}} |
+| Opportunity | {{designOpportunity}}     |
 
 ### Stage 2: {{stageName}}
 
-| Dimension    | Details                        |
-|--------------|--------------------------------|
-| Doing        | {{whatUserIsDoing}}            |
-| Thinking     | {{whatUserIsThinking}}         |
-| Feeling      | {{emotionalState}}             |
-| Pain points  | {{painPointsAtThisStage}}      |
-| Opportunity  | {{designOpportunity}}          |
+| Dimension   | Details                   |
+|-------------|---------------------------|
+| Doing       | {{whatUserIsDoing}}       |
+| Thinking    | {{whatUserIsThinking}}    |
+| Feeling     | {{emotionalState}}        |
+| Pain points | {{painPointsAtThisStage}} |
+| Opportunity | {{designOpportunity}}     |
 
 ### Stage 3: {{stageName}}
 
-| Dimension    | Details                        |
-|--------------|--------------------------------|
-| Doing        | {{whatUserIsDoing}}            |
-| Thinking     | {{whatUserIsThinking}}         |
-| Feeling      | {{emotionalState}}             |
-| Pain points  | {{painPointsAtThisStage}}      |
-| Opportunity  | {{designOpportunity}}          |
+| Dimension   | Details                   |
+|-------------|---------------------------|
+| Doing       | {{whatUserIsDoing}}       |
+| Thinking    | {{whatUserIsThinking}}    |
+| Feeling     | {{emotionalState}}        |
+| Pain points | {{painPointsAtThisStage}} |
+| Opportunity | {{designOpportunity}}     |
 
 ### Stage 4: Outcome
 
-| Dimension         | Details                        |
-|-------------------|--------------------------------|
-| Doing             | {{whatUserIsDoing}}            |
-| Thinking          | {{whatUserIsThinking}}         |
-| Feeling           | {{emotionalState}}             |
-| Success signals   | {{howUserKnowsTheySucceeded}} |
+| Dimension          | Details                       |
+|--------------------|-------------------------------|
+| Doing              | {{whatUserIsDoing}}           |
+| Thinking           | {{whatUserIsThinking}}        |
+| Feeling            | {{emotionalState}}            |
+| Success signals    | {{howUserKnowsTheySucceeded}} |
 | Remaining friction | {{anyRemainingFriction}}      |
 
 ## Accessibility Requirements
@@ -119,27 +119,27 @@ When {{situation}}, I want to {{motivation}}, so I can {{desiredOutcome}}.
 
 ### Key Interactions
 
-| Screen or Step      | Primary Action          | Expected Outcome        |
-|---------------------|-------------------------|-------------------------|
-| {{screen1}}         | {{action1}}             | {{outcome1}}            |
-| {{screen2}}         | {{action2}}             | {{outcome2}}            |
+| Screen or Step | Primary Action | Expected Outcome |
+|----------------|----------------|------------------|
+| {{screen1}}    | {{action1}}    | {{outcome1}}     |
+| {{screen2}}    | {{action2}}    | {{outcome2}}     |
 
 ### Exit Points
 
-| Exit Type   | Condition               | Recovery Path            |
-|-------------|-------------------------|--------------------------|
-| Success     | {{successCondition}}    | {{successNextStep}}      |
-| Partial     | {{partialCondition}}    | {{partialRecovery}}      |
-| Blocked     | {{blockedCondition}}    | {{blockedRecovery}}      |
+| Exit Type | Condition            | Recovery Path       |
+|-----------|----------------------|---------------------|
+| Success   | {{successCondition}} | {{successNextStep}} |
+| Partial   | {{partialCondition}} | {{partialRecovery}} |
+| Blocked   | {{blockedCondition}} | {{blockedRecovery}} |
 
 ## Open Questions
 
-| ID   | Question             | Owner            | Status           |
-|------|----------------------|------------------|------------------|
-| Q1   | {{question1}}        | {{owner1}}       | {{status1}}      |
-| Q2   | {{question2}}        | {{owner2}}       | {{status2}}      |
+| ID | Question      | Owner      | Status      |
+|----|---------------|------------|-------------|
+| Q1 | {{question1}} | {{owner1}} | {{status1}} |
+| Q2 | {{question2}} | {{owner2}} | {{status2}} |
 ````
 
 ---
 
-Brought to you by microsoft/hve-core
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
