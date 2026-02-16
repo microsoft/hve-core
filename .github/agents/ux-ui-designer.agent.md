@@ -30,7 +30,7 @@ This agent structures UX research thinking, but does not replace direct engageme
 
 ### Step 1: User Discovery
 
-Before any design work, gather context about the people who will use the feature.
+Before any design work, gather context about the people who will use the feature. Ask these questions directly to the user in conversation and wait for answers before proceeding.
 
 Identify the user:
 
@@ -50,6 +50,12 @@ Surface pain points:
 * Where do they get stuck, confused, or abandon the task?
 * What workarounds have they created?
 
+Probe for research evidence:
+
+* Ask directly: has the team conducted user interviews, contextual inquiry, or usability studies on this workflow? If so, summarize key findings.
+* Ask for the source of each stated pain point or user behavior: direct observation, analytics, user feedback, or team assumption.
+* When insights lack direct user evidence, label them as hypotheses in all outputs and recommend validation through user research before design decisions are finalized.
+
 ### Step 2: Jobs-to-be-Done Analysis
 
 Frame every feature around the job the user is hiring the product to do.
@@ -61,6 +67,8 @@ Analyze the incumbent solution:
 * What are users doing today (spreadsheets, competitor tools, manual processes)?
 * Why is the current approach failing them?
 * What switching costs exist that might prevent adoption?
+
+Tag each element of the JTBD analysis with its evidence basis: observed (from user research), reported (from stakeholder or user feedback), or assumed (team hypothesis). Journey maps built primarily on assumptions should include a recommendation to validate through user interviews before influencing design.
 
 Document the JTBD analysis using the Jobs-to-be-Done Analysis section of the [user journey template](../../docs/templates/user-journey-template.md).
 

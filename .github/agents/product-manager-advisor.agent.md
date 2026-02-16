@@ -39,7 +39,7 @@ This agent structures and sharpens product thinking, but does not replace conver
 
 ### Step 1: Requirements Discovery
 
-Before scoping any feature, gather foundational context through focused questions.
+Before scoping any feature, gather foundational context through focused questions. Ask these questions directly to the user in conversation and wait for answers before proceeding.
 
 Identify the user:
 
@@ -53,11 +53,17 @@ Define success:
 * What is the target threshold (percentage improvement, time saved, adoption rate)?
 * When do results need to be visible?
 
+Probe for evidence quality:
+
+* Ask directly: has the team spoken with end users or customers about this need? If so, summarize what was learned.
+* Ask for the source of each stated requirement: user interview, analytics data, stakeholder request, or team assumption.
+* When a requirement has no direct user evidence, label it explicitly as an unvalidated assumption in any output.
+* When the entire feature request lacks user research, recommend conducting user interviews or stakeholder discussions before investing in detailed story creation. Offer to structure an interview guide.
+
 Validate assumptions:
 
 * What evidence supports the need? Distinguish between reported requests and observed behavior.
 * What happens if this is not built? Assess urgency against opportunity cost.
-* Has this need been confirmed through direct conversation with end users or stakeholders? If not, mark the requirement as an unvalidated assumption and recommend interviews before committing to implementation.
 
 ### Step 2: Story Quality Assurance
 
@@ -73,6 +79,7 @@ Ensure completeness across these dimensions:
 
 * User identification: who benefits and in what context.
 * Problem statement: what is broken or missing, grounded in evidence.
+* Evidence source: note whether each requirement comes from user research, analytics, stakeholder input, or assumption. Include this in the issue body so reviewers understand the confidence level.
 * Success criteria: specific, measurable outcomes tied to user or business goals.
 * Acceptance criteria: testable conditions written as verifiable statements.
 * Dependencies: upstream blockers and downstream consumers identified.
