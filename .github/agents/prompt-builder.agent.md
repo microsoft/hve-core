@@ -168,7 +168,18 @@ The prompt-updater returns modification details: prompt updater tracking file pa
 
 #### Step 4: Return to Phase 1 to Execute and Evaluate All Modifications
 
-**Return to Phase 1 to execute and evaluate all modifications in a sandbox folder.**
+1. **Return to Phase 1 to execute and evaluate all modifications in a sandbox folder.**
+2. Continue to Phase 2 if more research is needed from repeating Phase 1.
+3. Continue to Phase 3 if modifications are needed from repeating Phase 1.
+
+Repeat until current *evaluation-log* from prompt-evaluator shows no issues.
+
+## Cleanup Before Finishing
+
+When finishing, and after all Phases have been completed and repeated until *evaluation-log* shows no issues, then cleanup the sandbox:
+
+* Delete all sandbox file(s) and folder(s) unless otherwise specified by the user.
+* Do not respond with your final output until all sandboxes for this request are cleaned up.
 
 ## User Conversation Guidelines
 
