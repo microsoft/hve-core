@@ -32,17 +32,17 @@ Analyze the system under review before selecting which frameworks to apply.
 
 Determine system type:
 
-* Traditional web application: focus on cloud patterns and operational excellence
-* AI or agent-based system: focus on AI-specific well-architected pillars and model lifecycle
-* Data pipeline: focus on data integrity, processing patterns, and throughput
-* Microservices: focus on service boundaries, distributed patterns, and resilience
+* For traditional web applications, focus on cloud patterns and operational excellence.
+* For AI or agent-based systems, focus on AI-specific well-architected pillars and the model lifecycle.
+* For data pipelines, focus on data integrity, processing patterns, and throughput.
+* For microservices architectures, focus on service boundaries, distributed patterns, and resilience.
 
 Determine architectural complexity:
 
-* Small scale (under 1K users): prioritize security fundamentals and simplicity
-* Growth scale (1K to 100K users): add performance optimization and caching concerns
-* Enterprise scale (over 100K users): apply full well-architected framework review
-* AI-heavy workloads: add model security and governance considerations
+* For small-scale systems (under 1K users), prioritize security fundamentals and simplicity.
+* For growth-scale systems (1K to 100K users), add performance optimization and caching concerns.
+* For enterprise-scale systems (over 100K users), apply a full well-architected framework review.
+* For AI-heavy workloads, add model security and governance considerations.
 
 Identify primary concerns and create a review plan that targets 2-3 of the most relevant framework areas. Avoid analysis paralysis by scoping the review to what matters for this specific system.
 
@@ -50,19 +50,19 @@ Identify primary concerns and create a review plan that targets 2-3 of the most 
 
 Collect the following constraints before proceeding with the architecture review.
 
-Scale constraints:
+#### Scale Constraints
 
 * Expected users or requests per day and growth trajectory
 * Peak load patterns and burst capacity requirements
 * Data volume and retention requirements
 
-Team constraints:
+#### Team Constraints
 
 * Team size and technology expertise
 * Operational maturity and on-call capabilities
 * Existing technology investments to leverage
 
-Budget constraints:
+#### Budget Constraints
 
 * Infrastructure budget range and cost sensitivity
 * Build versus buy preferences
@@ -72,34 +72,34 @@ Budget constraints:
 
 Apply the Microsoft Well-Architected Framework pillars relevant to the system type identified in Step 1. For AI and agent-based systems, include AI-specific considerations within each pillar.
 
-Reliability considerations:
+#### Reliability
 
 * Primary model failures trigger graceful degradation to fallback models.
 * Non-deterministic outputs are validated against expected ranges and formats.
 * Agent orchestration failures are isolated to prevent cascading failures.
 * Data dependency failures are handled with circuit breakers and retry logic.
 
-Security considerations:
+#### Security
 
 * All inputs to AI models are validated and sanitized.
 * Least privilege access applies to agent tool permissions and data access.
 * Model endpoints and training data are protected with appropriate access controls.
 * For comprehensive security architecture reviews, delegate to the `security-plan-creator` agent.
 
-Cost optimization considerations:
+#### Cost Optimization
 
 * Model selection matches the complexity required by each task.
 * Compute resources scale with demand rather than fixed provisioning.
 * Caching strategies reduce redundant model invocations.
 * Data transfer and storage costs are evaluated against retention policies.
 
-Operational excellence considerations:
+#### Operational Excellence
 
 * Model performance and drift are monitored with alerting thresholds.
 * Deployment pipelines support model versioning and rollback.
 * Observability covers both infrastructure metrics and model-specific telemetry.
 
-Performance efficiency considerations:
+#### Performance Efficiency
 
 * Model latency budgets are defined for each user-facing interaction.
 * Horizontal scaling strategies account for stateful components.
@@ -109,26 +109,26 @@ Performance efficiency considerations:
 
 Evaluate architectural options by mapping system requirements to solution patterns. Present trade-offs as structured comparisons rather than prescriptive recommendations.
 
-Database selection criteria:
+#### Database Selection
 
-* High write volume with simple queries favors document databases
-* Complex queries with transactional integrity favors relational databases
-* High read volume with infrequent writes favors read replicas with caching layers
-* Real-time update requirements favor WebSocket or server-sent event architectures
+* High write volume with simple queries favors document databases.
+* Complex queries with transactional integrity favors relational databases.
+* High read volume with infrequent writes favors read replicas with caching layers.
+* Real-time update requirements favor WebSocket or server-sent event architectures.
 
-AI architecture selection criteria:
+#### AI Architecture Selection
 
-* Single-model inference favors managed AI services
-* Multi-agent coordination favors event-driven orchestration
-* Knowledge-grounded responses favor vector database integration
-* Real-time AI interactions favor streaming with response caching
+* Single-model inference favors managed AI services.
+* Multi-agent coordination favors event-driven orchestration.
+* Knowledge-grounded responses favor vector database integration.
+* Real-time AI interactions favor streaming with response caching.
 
-Deployment model selection criteria:
+#### Deployment Model Selection
 
-* Single-service applications favor monolithic deployments for operational simplicity
-* Multiple independent services favor microservice decomposition
-* AI and ML workloads favor separated compute with GPU-optimized infrastructure
-* High-compliance environments favor private cloud or air-gapped deployments
+* Single-service applications favor monolithic deployments for operational simplicity.
+* Multiple independent services favor microservice decomposition.
+* AI and ML workloads favor separated compute with GPU-optimized infrastructure.
+* High-compliance environments favor private cloud or air-gapped deployments.
 
 For each trade-off, document the decision drivers, options considered, and rationale for the recommendation.
 
@@ -136,7 +136,7 @@ For each trade-off, document the decision drivers, options considered, and ratio
 
 Create an Architecture Decision Record for each significant architectural choice. Use the ADR template at `docs/templates/adr-template-solutions.md` as the structural foundation.
 
-ADR creation criteria — document decisions when they involve:
+ADR creation criteria: document decisions when they involve:
 
 * Database or storage technology choices
 * API architecture and communication patterns
@@ -144,7 +144,7 @@ ADR creation criteria — document decisions when they involve:
 * Major technology adoptions or replacements
 * Security architecture decisions affecting system boundaries
 
-Save ADRs to `docs/architecture/ADR-[number]-[title].md` with sequential numbering (ADR-001, ADR-002). Each ADR captures the decision context, options evaluated, chosen approach, and consequences.
+Save ADRs under `docs/decisions/` using ISO date-prefixed filenames (`YYYY-MM-DD-short-title.md`). If `docs/decisions/` is unavailable, use `docs/architecture/decisions/` with the same naming pattern. Each ADR captures the decision context, options evaluated, chosen approach, and consequences.
 
 For detailed, interactive ADR development with Socratic coaching, use the ADR Creation handoff to delegate to the `adr-creation` agent.
 

@@ -48,14 +48,14 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Documentation and Planning Agents
 
-| Agent                     | Purpose                                                            | Key Constraint                                |
-|---------------------------|--------------------------------------------------------------------|-----------------------------------------------|
-| **prd-builder**           | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions |
-| **brd-builder**           | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus          |
-| **adr-creation**                    | Interactive ADR coaching with guided discovery                                             | Socratic coaching approach                    |
-| **system-architecture-reviewer**    | Reviews system designs for trade-offs, well-architected alignment, and ADR creation        | Scoped review; delegates security to security-plan-creator |
-| **security-plan-creator**           | Creates comprehensive cloud security plans from blueprints                                 | Blueprint-driven threat modeling              |
-| **doc-ops**               | Documentation operations and maintenance                           | Does not modify source code                   |
+| Agent                              | Purpose                                                            | Key Constraint                                |
+|------------------------------------|--------------------------------------------------------------------|-----------------------------------------------|
+| **adr-creation**                   | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                    |
+| **brd-builder**                    | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus          |
+| **doc-ops**                        | Documentation operations and maintenance                           | Does not modify source code                   |
+| **prd-builder**                    | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions |
+| **security-plan-creator**          | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling              |
+| **system-architecture-reviewer**   | Reviews system designs for trade-offs and ADR alignment             | Scoped review; delegates security concerns    |
 
 ### Utility Agents
 

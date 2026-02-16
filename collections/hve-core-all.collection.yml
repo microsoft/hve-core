@@ -41,6 +41,8 @@ items:
   kind: agent
 - path: .github/agents/security-plan-creator.agent.md
   kind: agent
+- path: .github/agents/system-architecture-reviewer.agent.md
+  kind: agent
 - path: .github/agents/task-implementor.agent.md
   kind: agent
 - path: .github/agents/task-planner.agent.md
