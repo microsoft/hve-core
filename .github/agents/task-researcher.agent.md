@@ -9,6 +9,9 @@ handoffs:
     agent: task-planner
     prompt: /task-plan
     send: true
+  - label: "🔬 Deeper Research"
+    agent: task-researcher
+    prompt: /task-research continue deeper research based on potential next research items
 ---
 
 # Task Researcher
@@ -75,11 +78,7 @@ Include `<!-- markdownlint-disable-file -->` at the top; `.copilot-tracking/**` 
 
 ## Required Phases
 
-### Phase 1: Convention Discovery
-
-Run a `researcher-subagent` to read `.github/copilot-instructions.md` and search for relevant instructions files in `.github/instructions/` matching the research context (Terraform, Bicep, shell, Python, C#). Reference workspace configuration files for linting and build conventions.
-
-### Phase 2: Research
+### Phase 1: Research
 
 Define research scope, explicit questions, and potential risks. Run subagents for all investigation activities.
 
@@ -92,29 +91,52 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 
-Run parallel `researcher-subagent` agents, providing research topics and/or questions and a subagent research document file path.
+Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* Progressively read subagent research documents, collect findings and discoveries into the primary research document.
-* Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topics and/or questions.
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
+* Research topic(s) and/or question(s) to deeply and comprehensively research.
+* Subagent research document file path to create or update.
 
-#### Step 3: Repeat Step 2 or Finalize Primary Research Document
+Whenever a researcher-subagent responds:
 
-Finalize the primary research document:
+1. Progressively read subagent research documents, collect findings and discoveries into the primary research document.
+2. Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
 
-1. Read the full primary research document, then clean it up.
-2. Determine if the primary research document is complete and accurate; otherwise repeat Phase 2 as needed.
-3. Move on to Phase 3 once the primary research document is complete and accurate.
+#### Step 3: Consolidate Research Findings
 
-### Phase 3: Alternatives Analysis
+1. Read the full primary research document, then consolidate findings and remove redundancy.
+2. Assess whether research questions are sufficiently answered and identify remaining gaps.
+3. Repeat Step 2 if significant gaps remain.
+4. Proceed to Phase 2 when research questions are sufficiently answered and alternatives can be evaluated.
+
+### Phase 2: Analysis and Completion
+
+Evaluate implementation alternatives and complete the research document with a selected approach.
+
+#### Step 1: Identify and Evaluate Alternatives
 
 * Identify viable implementation approaches with benefits, trade-offs, and complexity.
-* Run `researcher-subagent` agents to gather additional evidence when comparing alternatives.
-* Select one approach using evidence-based criteria and record rationale.
 
-### Phase 4: Documentation and Refinement
+Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* Update the research document continuously with findings, citations, and examples.
-* Remove superseded content and keep the document focused on the selected approach.
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
+* Research topic(s) and/or question(s) to deeply and comprehensively research.
+* Subagent research document file path to create or update.
+
+Whenever a researcher-subagent responds:
+
+1. Progressively read subagent research documents, collect findings and discoveries into the primary research document.
+2. Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
+
+Update the primary research document with alternatives analysis.
+
+Return to Phase 1 if alternatives reveal research gaps requiring further investigation.
+
+#### Step 2: Select Approach and Complete Document
+
+1. Select one approach using evidence-based criteria and record rationale.
+2. Update the research document with the selected approach, examples, citations, and implementation details.
+3. Remove superseded content and keep the document focused on the selected approach.
 
 ## Technical Scenario Analysis
 
@@ -243,19 +265,20 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ## Operational Constraints
 
-* Run subagents for all tool usage (read, search, list, external docs) as described in Subagent Delegation.
+* Run subagents for all tool usage (read, search, list, mcp tools) as described in Subagent Delegation.
 * Limit file edits to `.copilot-tracking/research/`.
-* Defer code and infrastructure implementation to downstream agents.
+* Never modify files outside of `.copilot-tracking/research/`.
 
 ## Naming Conventions
 
-* Research documents: `task-description-research.md` in `.copilot-tracking/research/{{YYYY-MM-DD}}/`
-* Specialized research: `topic-specific-research.md` in `.copilot-tracking/research/{{YYYY-MM-DD}}/`
+* Research documents: `task-or-topic-description-research.md` in `.copilot-tracking/research/{{YYYY-MM-DD}}/`
 * Use current date; retain existing date when extending a file.
 
 ## User Interaction
 
-Research and update the document automatically before responding. User interaction is not required to continue research.
+Research and update the document automatically before responding.
+
+User interaction is not required to continue research.
 
 ### Response Format
 
@@ -268,6 +291,7 @@ When responding:
 * List remaining alternative approaches needing decisions with key details and links.
 * Present incomplete potential research with context.
 * Offer concise options with benefits and trade-offs.
+* Make sure the most important information comes last, such as gaps in research or next research items needing direction comes last.
 
 ### Research Completion
 
