@@ -31,12 +31,12 @@ GitHub Codespaces requires a specific installation approach because traditional 
 
 ## Why Other Methods Don't Work in Codespaces
 
-| Feature                    | Local Devcontainer  | GitHub Codespaces               |
-|----------------------------|---------------------|--|---------------------------------|
-| `${localWorkspaceFolder}`  | ✅ Resolves to host  | ❌ Not available                 |
-| Bind mounts to host        | ✅ Full support      | ❌ No host access                |
-| Persistent storage         | Host filesystem     | `/workspaces` only              |
-| User settings modification | ✅ Via file system   | ❌ Only via Settings Sync[^1]   |
+| Feature                    | Local Devcontainer | GitHub Codespaces            |
+|----------------------------|--------------------|------------------------------|
+| `${localWorkspaceFolder}`  | ✅ Resolves to host | ❌ Not available              |
+| Bind mounts to host        | ✅ Full support     | ❌ No host access             |
+| Persistent storage         | Host filesystem    | `/workspaces` only           |
+| User settings modification | ✅ Via file system  | ❌ Only via Settings Sync[^1] |
 
 [^1]: User-level settings require Settings Sync. Workspace/container-level settings can still be configured via `devcontainer.json` using `customizations.vscode.settings`.
 
