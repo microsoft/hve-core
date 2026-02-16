@@ -11,21 +11,22 @@ copilot plugin install project-planning@hve-core
 
 ## Agents
 
-| Agent                | Description                                                                                                                                                                                                |
-|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| doc-ops              | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                          |
-| adr-creation         | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
-| arch-diagram-builder | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
-| brd-builder          | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
-| prd-builder          | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
-| rpi-agent            | Autonomous RPI orchestrator dispatching task-* agents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                                |
-| task-researcher      | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
-| task-planner         | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
-| task-implementor     | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                                    |
-| task-reviewer        | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
-| memory               | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                              |
-| pr-review            | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                              |
-| prompt-builder       | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                          |
+| Agent                        | Description                                                                                                                                                                                                |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| doc-ops                      | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                          |
+| adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
+| arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
+| brd-builder                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
+| prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
+| system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
+| rpi-agent                    | Autonomous RPI orchestrator dispatching task-* agents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                                |
+| task-researcher              | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
+| task-planner                 | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
+| task-implementor             | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                                    |
+| task-reviewer                | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
+| memory                       | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                              |
+| pr-review                    | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                              |
+| prompt-builder               | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                          |
 
 ## Commands
 
