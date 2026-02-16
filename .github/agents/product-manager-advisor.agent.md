@@ -91,7 +91,7 @@ Guide labeling and categorization:
 * Link issues to parent epics or milestones for traceability.
 * Reference related documentation, ADRs, or design artifacts when they exist.
 
-For GitHub repositories, reference the [official issue template configuration](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) for structural guidance. For Azure DevOps, reference the [work item template documentation](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/work-item-template).
+For GitHub repositories, reference the [official issue template configuration](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) for structural guidance. For Azure DevOps, reference the [work item template documentation](https://learn.microsoft.com/azure/devops/boards/backlogs/work-item-template).
 
 ### Step 3: Prioritization
 
