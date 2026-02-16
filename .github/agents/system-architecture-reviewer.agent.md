@@ -166,3 +166,7 @@ An architecture review is complete when:
 * Design trade-offs are analyzed with clear options, drivers, and recommendations.
 * ADRs are created for each significant architectural decision.
 * Escalation points are identified for decisions requiring human judgment.
+
+---
+
+Brought to you by microsoft/hve-core
