@@ -200,6 +200,30 @@ scripts/extract.py
 
 Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
 
+### Skill Invocation from Callers
+
+When prompts, agents, or instructions need a skill's capability, describe the task intent rather than referencing script paths directly. Copilot matches the task description against each skill's `description` frontmatter and loads the skill on-demand via progressive disclosure.
+
+Avoid hardcoded script paths, platform detection logic, or extension fallback code in caller files. Skills handle these concerns internally through their SKILL.md instructions and scripts.
+
+For explicit invocation, reference the slash command `/skill-name` in usage documentation.
+
+Semantic invocation pattern:
+
+```markdown
+<!-- Direct script reference (avoid) -->
+Run `./scripts/dev-tools/pr-ref-gen.sh --base-branch origin/main` to generate the PR reference.
+
+<!-- Semantic skill invocation (preferred) -->
+Generate the PR reference XML file comparing the current branch against origin/main.
+```
+
+When a caller describes a task that semantically matches a skill's `description`, Copilot follows this loading sequence:
+
+1. Level 1 (Discovery): Matches the task description against skill frontmatter `name` and `description` fields (~100 tokens per skill).
+2. Level 2 (Instructions): Loads the full SKILL.md body into context with script usage instructions (<5000 tokens recommended).
+3. Level 3 (Resources): Accesses scripts, examples, and references in the skill directory on-demand during execution.
+
 Validation guidelines:
 
 * Include `name` frontmatter matching the skill directory name (required).
@@ -230,7 +254,9 @@ Optional fields vary by file type:
 * `tools:` - Tool restrictions for agents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations for agents. Use `agent:` for the target reference.
 * `agent:` - Agent delegation for prompt files.
-* `argument-hint:` - Hint text for prompt picker display.
+* `argument-hint:` - Hint text displayed in the VS Code prompt picker showing expected inputs. Applies to prompts and skills.
+* `user-invokable:` - Controls slash command menu visibility for skills. Defaults to `true`. Set `false` for background-only skills.
+* `disable-model-invocation:` - Controls automatic semantic loading for skills. Defaults to `false`. Set `true` to require manual `/skill-name` invocation only.
 * `model:` - Model specification.
 
 ### Tool Availability

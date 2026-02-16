@@ -90,6 +90,54 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 ---
 ```
 
+### Optional Fields
+
+**`user-invokable`** (boolean, optional)
+
+* **Purpose**: Controls visibility in the VS Code slash command menu
+* **Default**: `true`
+* **When true**: Skill appears in the `/` menu for manual invocation via `/skill-name`
+* **When false**: Skill does not appear in the `/` menu; loaded only by semantic matching or explicit `#file:` reference
+* **Use case**: Set `false` for background skills that support other workflows without direct user invocation
+
+**`disable-model-invocation`** (boolean, optional)
+
+* **Purpose**: Controls whether Copilot automatically loads the skill via semantic matching
+* **Default**: `false`
+* **When false**: Copilot loads the skill automatically when the task description semantically matches the `description` field
+* **When true**: Skill is only loaded via manual `/skill-name` slash command invocation
+* **Use case**: Set `true` for skills with high token cost or niche applicability that should not load automatically
+
+**`argument-hint`** (string, optional)
+
+* **Purpose**: Displays expected inputs in the VS Code prompt picker
+* **Format**: Brief text with required arguments first, then optional arguments
+* **Conventions**: Use `[]` for positional arguments, `key=value` for named parameters, `{option1|option2}` for enumerations, `...` for free-form text
+* **Example**: `"input=video.mp4 [--fps={5|10|15|24}] [--width=1280]"`
+
+### Invocation Control Matrix
+
+| `user-invokable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method           |
+|------------------|----------------------------|----------|------------------|-----------------------------|
+| `true` (default) | `false` (default)          | Yes      | Yes              | Automatic + manual          |
+| `true`           | `true`                     | Yes      | No               | Manual `/skill-name` only   |
+| `false`          | `false`                    | No       | Yes              | Automatic only              |
+| `false`          | `true`                     | No       | No               | Only via `#file:` reference |
+
+### Frontmatter Example with Optional Fields
+
+```yaml
+---
+name: pr-reference
+description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
+user-invokable: true
+disable-model-invocation: false
+argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
+---
+```
+
+This example demonstrates a skill configured for both automatic semantic loading and manual `/pr-reference` invocation, with argument hints displayed in the prompt picker.
+
 ## Collection Entry Requirements
 
 All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
@@ -266,6 +314,38 @@ The `examples/` subdirectory **SHOULD** include:
 * Quality comparison guides
 * Batch processing patterns
 
+## Semantic Skill Loading
+
+VS Code Copilot uses progressive disclosure to load skills efficiently. Understanding this model helps authors write effective `description` fields and helps callers invoke skills correctly.
+
+### How Skills are Discovered
+
+Copilot reads the `name` and `description` fields from all SKILL.md files at startup. This lightweight metadata (~100 tokens per skill) enables relevance matching without loading full skill content.
+
+### How Skills are Loaded
+
+When a user request or caller description semantically matches a skill's `description`:
+
+1. **Level 1 (Discovery)**: Copilot matches the task against `name` and `description` frontmatter (always loaded, ~100 tokens per skill).
+2. **Level 2 (Instructions)**: The full SKILL.md body loads into context with script usage, parameters, and troubleshooting (<5000 tokens recommended).
+3. **Level 3 (Resources)**: Scripts, examples, and references in the skill directory load on-demand during execution.
+
+### Writing Effective Descriptions
+
+The `description` field is the semantic key for automatic loading. Craft descriptions that are:
+
+* Specific enough for accurate matching (include the primary action verb and artifact type)
+* Broad enough to cover all use cases (avoid narrowing to one scenario)
+* Containing searchable terms that callers naturally use
+
+### How Callers Invoke Skills
+
+Prompts, agents, and instructions should describe the task intent rather than referencing script paths. Copilot matches task descriptions against skill `description` fields and loads the skill on-demand.
+
+Avoid hardcoded script paths, platform detection logic, or extension fallback code in caller files.
+
+For explicit invocation, use the `/skill-name` slash command in chat.
+
 ## Validation Checklist
 
 Before submitting your skill, verify:
@@ -283,6 +363,9 @@ Before submitting your skill, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `name` field present and matches directory name
 * [ ] `description` field present and descriptive
+* [ ] Optional: `user-invokable` set appropriately (default `true` works for most skills)
+* [ ] Optional: `disable-model-invocation` set appropriately (default `false` works for most skills)
+* [ ] Optional: `argument-hint` provides useful input guidance if set
 
 ### Scripts
 
@@ -305,8 +388,9 @@ Run these commands before submission:
 
 ```bash
 npm run lint:frontmatter      # Validate SKILL.md frontmatter
+npm run validate:skills       # Validate skill directory structure
 npm run psscriptanalyzer      # Validate PowerShell scripts
-npm run lint                  # Validate markdown formatting
+npm run lint:md                  # Validate markdown formatting
 ```
 
 All checks **MUST** pass before merge.
@@ -317,6 +401,8 @@ All checks **MUST** pass before merge.
 * [Contributing Agents](custom-agents.md) - Agent file guidelines
 * [Contributing Prompts](prompts.md) - Prompt file guidelines
 * [Contributing Instructions](instructions.md) - Instructions file guidelines
+* [Agent Skills Specification](https://agentskills.io/specification) - Core specification for skill structure and metadata
+* [VS Code Copilot Agent Skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills) - VS Code integration, progressive disclosure, and frontmatter controls
 
 ---
 

@@ -59,6 +59,7 @@
     "general-technical"
   ],
   "words": [
+    "agentskills",
     "autobuild",
     "behaviour",
     "Browsable",
@@ -66,6 +67,7 @@
     "edgeai",
     "GHCP",
     "GHSA",
+    "invokable",
     "Kapacitor",
     "kata",
     "katas",

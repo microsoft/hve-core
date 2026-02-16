@@ -66,6 +66,7 @@ Individual validation workflows called by orchestration workflows:
 | `ps-script-analyzer.yml`      | PowerShell static analysis      | `npm run lint:ps`          |
 | `table-format.yml`            | Markdown table formatting       | `npm run format:tables`    |
 | `pester-tests.yml`            | PowerShell unit tests           | `npm run test:ps`          |
+| `skill-validation.yml`        | Skill structure validation      | `npm run validate:skills`  |
 | `dependency-pinning-scan.yml` | GitHub Actions pinning          | N/A (PowerShell direct)    |
 | `sha-staleness-check.yml`     | SHA reference freshness         | N/A (PowerShell direct)    |
 | `codeql-analysis.yml`         | CodeQL security scanning        | N/A (GitHub native)        |
@@ -112,6 +113,7 @@ flowchart LR
 | yaml-lint                | `yaml-lint.yml`               | YAML syntax                    |
 | pester-tests             | `pester-tests.yml`            | PowerShell unit tests          |
 | frontmatter-validation   | `frontmatter-validation.yml`  | AI artifact metadata           |
+| skill-validation         | `skill-validation.yml`        | Skill directory structure      |
 | link-lang-check          | `link-lang-check.yml`         | Link accessibility             |
 | markdown-link-check      | `markdown-link-check.yml`     | Broken links                   |
 | dependency-pinning-check | `dependency-pinning-scan.yml` | Action SHA pinning             |
@@ -235,6 +237,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:ps`          | `Invoke-PSScriptAnalyzer.ps1`      | ps-script-analyzer.yml     |
 | `format:tables`    | `markdown-table-formatter`         | table-format.yml           |
 | `test:ps`          | `Invoke-Pester`                    | pester-tests.yml           |
+| `validate:skills`  | `Validate-SkillStructure.ps1`      | skill-validation.yml       |
 
 ## Related Documentation
 

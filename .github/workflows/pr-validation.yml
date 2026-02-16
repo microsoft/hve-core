@@ -97,6 +97,15 @@ jobs:
     with:
       soft-fail: false
 
+  skill-validation:
+    name: Skill Validation
+    uses: ./.github/workflows/skill-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+
   link-lang-check:
     name: Link Language Check
     uses: ./.github/workflows/link-lang-check.yml

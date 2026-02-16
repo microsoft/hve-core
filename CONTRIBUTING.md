@@ -43,6 +43,7 @@ npm run lint:md          # Run markdownlint
 npm run lint:ps          # Run PowerShell analyzer
 npm run lint:yaml        # Run YAML linter
 npm run lint:frontmatter # Validate markdown frontmatter
+npm run validate:skills  # Validate skill directory structure
 npm run lint:md-links    # Check markdown links
 npm run spell-check      # Run cspell
 npm run format:tables    # Format markdown tables
