@@ -20,24 +20,60 @@ Purpose: Single-session workflows where users invoke a prompt and Copilot execut
 Characteristics:
 
 * Single invocation completes the workflow.
-* Frontmatter includes `agent: 'agent-name'` to delegate to an agent.
-* Content ends with `---` followed by an activation instruction. Activation lines apply only to prompt files; agent and instructions files do not use them.
+* Frontmatter includes `agent: agent-name` to delegate to an agent. Quote the value only when the agent name contains spaces.
+* Activation lines are optional. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
 * When the full contents are not required, refer to the file by path or to the relevant section.
 * Example: `#file:path/to/file.md` pulls in the full file contents at that location.
 * Input variables use `${input:variableName}` or `${input:variableName:defaultValue}` syntax.
 
+*Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `prompt-refactor.prompt.md`, `git-commit-message.prompt.md`).
+
 Consider adding sequential steps when the prompt involves multiple distinct actions that benefit from ordered execution. Simple prompts that accomplish a single task do not need protocol structure.
+
+#### Agent Delegation
+
+Prompts that set `agent:` to a custom agent inherit the agent's protocol, including its phases, steps, and subagent orchestration. Avoid adding Required Phases, Required Steps, or Required Protocol sections that duplicate or conflict with the parent agent's protocol. Instead, reference specific phases or sections from the parent agent when the prompt customizes or limits the agent's behavior (for example, "Follow Phase 1 only" or "Skip Phase 2"). A Required Protocol section remains appropriate when it adds execution meta-rules not defined by the parent agent, such as iteration constraints or scope boundaries.
+
+Prompts extending agent behavior focus on what differs from the default: scoped inputs, additional requirements, or workflow restrictions.
+
+When a prompt restricts or sequences an agent's existing phases, use a Required Protocol section to define those execution meta-rules. Reserve Required Steps for prompt files that define their own workflow independent of the delegated agent's protocol. For example, a prompt that limits an agent to Phase 1 and adds post-processing uses Required Protocol because it governs how the agent's existing phases execute. A prompt that defines its own multi-step workflow unrelated to any agent protocol uses Required Steps.
+
+```markdown
+---
+description: "Refactors prompt files through iterative improvement"
+agent: prompt-builder
+argument-hint: "[promptFiles=...] [requirements=...]"
+---
+
+# Prompt Refactor
+
+## Inputs
+
+* ${input:promptFiles}: (Optional) Existing target prompt file(s). Defaults to the current open file.
+* ${input:requirements}: (Optional) Additional requirements or objectives.
+
+## Requirements
+
+1. Refactor promptFiles with a focus on cleaning up, consolidating, and removing confusing or duplicate instructions.
+2. Consider any additional requirements provided by the user.
+```
+
+#### Requirements Sections
+
+Requirements sections are optional. Use them to extend user-provided requirements, guide the agent toward specific objectives, or narrow the agent's default scope. Requirements sections provide context the agent uses alongside the user's conversation rather than substituting for the agent's own protocol. Avoid restating behavior the parent agent already defines.
 
 #### Input Variables
 
-Input variables allow prompts to accept user-provided values or use defaults:
+Input variables allow prompts to accept user-provided values or use defaults. The recommended pattern is:
+
+`* ${input:varName:defaultValue}: (Optional/Required) Description text.`
 
 * `${input:topic}` is a required input, inferred from user prompt, attached files, or conversation.
 * `${input:chat:true}` is an optional input with default value `true`.
 * `${input:baseBranch:origin/main}` is an optional input defaulting to `origin/main`.
 
-An Inputs section documents available input variables:
+An Inputs section documents available variables for user awareness. Prompts without input variables do not need an Inputs section.
 
 ```markdown
 ## Inputs
@@ -60,14 +96,17 @@ argument-hint: "topic=... [chat={true|false}]"
 
 Validation guidelines:
 
-* When steps are used, follow the Step-Based Protocols section for structure.
+* When steps are used, follow the Step-Based Protocols section for structure. Prompts delegating to custom agents omit protocol sections that duplicate the agent's workflow.
 * Document input variables in an Inputs section when present.
+* Include an activation line when the prompt's workflow start point is not obvious. Omit for agent-delegating prompts with clear protocol inheritance.
 
 ### Agent Files
 
 *Extension*: `.agent.md`
 
 Purpose: Agent files support both conversational workflows (multi-turn interactions with a specialized assistant) and autonomous workflows (task execution with minimal user interaction).
+
+*Naming*: Use lowercase kebab-case matching the agent's role (for example, `task-planner.agent.md`, `prompt-builder.agent.md`). The `name:` frontmatter field matches the filename without extension.
 
 #### Conversational Agents
 
@@ -90,6 +129,8 @@ Autonomous agents execute tasks with minimal user interaction:
 * May run subagents for parallelizable work.
 
 Use autonomous agents when the workflow benefits from task execution rather than conversational back-and-forth.
+
+No frontmatter field distinguishes conversational from autonomous agents. The distinction is conveyed through protocol structure: conversational agents use phase-based protocols for multi-turn interaction, while autonomous agents use step-based protocols for bounded task execution.
 
 #### Subagents
 
@@ -116,7 +157,7 @@ All subagents in the codebase follow a canonical section pattern. Use this templ
 4. Inputs section listing required and optional inputs with bullet formatting.
 5. Intermediate output section (named per context, such as *Execution Log*, *Evaluation Log*, or *Research Document*) defining the progressive output artifact.
 6. Required Steps section with a pre-requisite step followed by numbered steps.
-7. Required Protocol section defining execution meta-rules.
+7. Required Protocol section defining execution meta-rules. Include when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit for simpler subagents where the Required Steps section is self-contained.
 8. Response Format section defining the structured return to the parent agent.
 
 ```markdown
@@ -181,6 +222,8 @@ Characteristics:
 * Frontmatter includes `applyTo` with glob patterns (for example, `**/*.py`).
 * Applied automatically when editing files matching the pattern.
 * Define coding standards, naming conventions, and best practices.
+
+*Naming*: Use lowercase kebab-case matching the domain or technology (for example, `commit-message.instructions.md`, `csharp.instructions.md`). Instructions files may live in subdirectories organized by topic (for example, `csharp/csharp.instructions.md`).
 
 #### Recommended Sections
 
@@ -266,7 +309,7 @@ Skill files include these sections in order:
 5. Parameters Reference: Table documenting all options with defaults.
 6. Script Reference: Usage examples for bash and PowerShell.
 7. Troubleshooting: Common issues and solutions.
-8. Attribution Footer: Standard footer with attribution.
+8. Attribution: Attribution in `description:` frontmatter and standard footer.
 
 ### Progressive Disclosure
 
@@ -300,9 +343,15 @@ Validation guidelines:
 * Keep *SKILL.md* focused; move detailed reference material to `references/`.
 * Additional sections can be added between Parameters Reference and Troubleshooting as needed.
 
-#### Attribution Footer
+#### Attribution
 
-Skill files end with a standard attribution footer. Format the footer as a blockquote:
+Artifacts include attribution as a suffix in the `description:` frontmatter field using the format `- Brought to you by organization/repository-name`:
+
+```yaml
+description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
+```
+
+Skill files also include a standard attribution footer as the last line of body content:
 
 ```markdown
 > Brought to you by organization/repository-name
@@ -414,7 +463,7 @@ Step conventions:
 * Include prompt instructions to follow while implementing the step.
 * Steps can repeat or move to a previous step based on instructions.
 
-Activation line: End the prompt file with a horizontal rule (`---`) followed by an instruction to begin. Activation lines apply only to prompt files; agent files and instructions files do not include them.
+Activation line: Optionally end the prompt file with a horizontal rule (`---`) followed by an instruction to begin. Include an activation line when it is unclear how to start the workflow, such as prompts using a generic agent or prompts without an `agent:` field. Omit the activation line for prompts delegating to custom agents where the workflow start is clear. Activation lines apply only to prompt files; agent files and instructions files do not include them.
 
 ```markdown
 ## Required Steps
@@ -615,7 +664,7 @@ The following patterns provide limited value as prompt instructions:
 * Condition-heavy and overly branching instructions. Prefer providing a phase-based or step-based protocol framework.
 * List items where each item has a bolded title line. For example, `* **Line item** - Avoid adding line items like this`.
 * Forcing prompt instruction lists to have three or more items when fewer suffice.
-* XML-style groupings of prompt instructions. Use markdown sections for grouping related prompt instructions instead.
+* XML-style groupings of prompt instructions. Use markdown sections for grouping related prompt instructions instead. This prohibition targets structural organization of instruction content, not XML comments used as section extraction markers or annotation labels by codebase tooling.
 
 ## Prompt Key Criteria
 
@@ -706,6 +755,6 @@ When referencing SDKs, APIs, tools, frameworks, etc., for prompt instructions:
 * Prefer official repositories with recent activity.
 * Extract only the smallest snippet demonstrating the pattern for few-shot examples.
 * Get official documentation using tools and from the web for accurate prompt instructions and examples.
-* Use MCP tools (context7, microsoft-doc) to retrieve current references and documentation.
-* Use fetch webpage and github repo tools as research sources for external patterns and examples.
+* Use MCP tools such as `context7` and `microsoft-docs` to retrieve current references and documentation when available. These Model Context Protocol integrations provide access to up-to-date library documentation and official Microsoft content.
+* Use fetch webpage and github repo tools as research sources for external patterns and examples when available.
 * Instruct researcher subagents to gather external documentation when the parent agent needs SDKs, APIs, tools, frameworks, etc., context.
