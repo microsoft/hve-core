@@ -52,8 +52,9 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 |---------------------------|--------------------------------------------------------------------|-----------------------------------------------|
 | **prd-builder**           | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions |
 | **brd-builder**           | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus          |
-| **adr-creation**          | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                    |
-| **security-plan-creator** | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling              |
+| **adr-creation**                    | Interactive ADR coaching with guided discovery                                             | Socratic coaching approach                    |
+| **system-architecture-reviewer**    | Reviews system designs for trade-offs, well-architected alignment, and ADR creation        | Scoped review; delegates security to security-plan-creator |
+| **security-plan-creator**           | Creates comprehensive cloud security plans from blueprints                                 | Blueprint-driven threat modeling              |
 | **doc-ops**               | Documentation operations and maintenance                           | Does not modify source code                   |
 
 ### Utility Agents
@@ -205,6 +206,16 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Discovery → Research → Analysis → Documentation
 
 **Critical:** Uses Socratic coaching methods. Guides users through decision-making process. Adapts coaching style to experience level.
+
+### system-architecture-reviewer
+
+**Creates:** Architecture review findings and ADRs:
+
+* `docs/architecture/ADR-[number]-[title].md` (architecture decision records)
+
+**Workflow:** Context Assessment → Constraint Gathering → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
+
+**Critical:** Scopes reviews to 2-3 relevant framework areas based on system type and complexity. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 
