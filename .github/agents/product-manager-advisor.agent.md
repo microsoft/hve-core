@@ -3,19 +3,19 @@ description: 'Product management advisor for requirements discovery, validation,
 handoffs:
   - label: "📄 Build PRD"
     agent: prd-builder
-    prompt: /prd
+    prompt: "Create or refine a Product Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "📋 Build BRD"
     agent: brd-builder
-    prompt: /brd
+    prompt: "Create or refine a Business Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "🔍 Research Topic"
     agent: task-researcher
-    prompt: /research
+    prompt: /task-research
     send: true
   - label: "🎨 UX Review"
     agent: ux-ui-designer
-    prompt: /ux-review
+    prompt: "Run a UX and UI review of the proposed solution and suggest improvements."
     send: true
 ---
 
@@ -140,3 +140,7 @@ Involve a human product owner or stakeholder when:
 * Budget allocation or resource commitment decisions are required.
 * Requirements from different stakeholders conflict and cannot be resolved through data.
 * Legal, compliance, or regulatory implications need expert judgment.
+
+---
+
+Brought to you by microsoft/hve-core

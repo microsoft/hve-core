@@ -3,11 +3,11 @@ description: 'UX research specialist for Jobs-to-be-Done analysis, user journey 
 handoffs:
   - label: "📋 Product Review"
     agent: product-manager-advisor
-    prompt: /pm-review
+    prompt: "Review this work from a product management perspective and identify any scope, risk, or alignment issues."
     send: true
   - label: "🔍 Research Topic"
     agent: task-researcher
-    prompt: /research
+    prompt: /task-research
     send: true
 ---
 
@@ -144,3 +144,7 @@ Involve a human when:
 * Visual design decisions involve brand identity, typography, or iconography.
 * Usability testing with real users is needed to validate assumptions.
 * Design system decisions affect multiple teams or products.
+
+---
+
+Brought to you by microsoft/hve-core
