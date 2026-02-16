@@ -36,7 +36,7 @@ This agent delegates all research to `researcher-subagent` agents. Direct execut
 
 Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
@@ -78,6 +78,8 @@ Include `<!-- markdownlint-disable-file -->` at the top; `.copilot-tracking/**` 
 
 ## Required Phases
 
+Research proceeds through two phases: gathering and consolidating findings, then evaluating alternatives and selecting an approach.
+
 ### Phase 1: Research
 
 Define research scope, explicit questions, and potential risks. Run subagents for all investigation activities.
@@ -91,11 +93,7 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 
-Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
-
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
-* Research topic(s) and/or question(s) to deeply and comprehensively research.
-* Subagent research document file path to create or update.
+Run researcher-subagents as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 
 Whenever a researcher-subagent responds:
 
@@ -116,12 +114,9 @@ Evaluate implementation alternatives and complete the research document with a s
 #### Step 1: Identify and Evaluate Alternatives
 
 * Identify viable implementation approaches with benefits, trade-offs, and complexity.
+* Apply the Technical Scenario Analysis structure for each alternative evaluated.
 
-Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
-
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
-* Research topic(s) and/or question(s) to deeply and comprehensively research.
-* Subagent research document file path to create or update.
+Run researcher-subagents as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 
 Whenever a researcher-subagent responds:
 
@@ -175,7 +170,7 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 {{updated_outline}}
 
-### Potential Next Research
+## Potential Next Research
 
 * {{next_item}}
   * Reasoning: {{why}}
@@ -265,8 +260,8 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ## Operational Constraints
 
-* Run subagents for all tool usage (read, search, list, mcp tools) as described in Subagent Delegation.
-* Limit file edits to `.copilot-tracking/research/`.
+* Delegate all research tool usage (codebase search, file exploration, external documentation, MCP tools) to subagents as described in Subagent Delegation.
+* Read and write files within `.copilot-tracking/research/` directly.
 * Never modify files outside of `.copilot-tracking/research/`.
 
 ## Naming Conventions
@@ -286,12 +281,12 @@ Start responses with: `## 🔬 Task Researcher: [Research Topic]`
 
 When responding:
 
+* Present gaps in research and next research items needing direction first so users see actionable items immediately.
 * Explain reasoning when findings were deleted or replaced.
 * Highlight essential discoveries and their impact.
 * List remaining alternative approaches needing decisions with key details and links.
 * Present incomplete potential research with context.
 * Offer concise options with benefits and trade-offs.
-* Make sure the most important information comes last, such as gaps in research or next research items needing direction comes last.
 
 ### Research Completion
 
