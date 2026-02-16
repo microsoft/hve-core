@@ -1,26 +1,18 @@
 ---
 description: "Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core"
 agent: 'prompt-builder'
-argument-hint: "file=..."
+argument-hint: "[promptFiles=...]"
 ---
 
 # Prompt Analyze
 
 ## Inputs
 
-* ${input:file}: (Required) Target prompt file to analyze. Accepts `.prompt.md`, `.agent.md`, or `.instructions.md` files.
+* (Optional) promptFiles - ${input:promptFiles}: Existing target prompt file(s) for creation or modification. Defaults to the current open file or attached file.
 
-## Required Steps
+## Analysis Report
 
-Act as an agent orchestrator. Follow the mode instructions to run Phase 1 (Baseline) testing and evaluation against the target file. Do not modify the target file. Compile findings into a structured analysis report for the user.
-
-### Step 1: Run Baseline Testing and Evaluation
-
-Execute only the mode's Phase 1 (Baseline) instructions to test and evaluate the target file at `${input:file}`. Do not proceed to Phase 2 or later phases. The mode dispatches `prompt-tester` and `prompt-evaluator` subagents for this work.
-
-### Step 2: Format Analysis Report
-
-Compile the evaluation results into this report structure:
+Compile the *evaluation-log* results into this report structure:
 
 Purpose and Capabilities:
 
@@ -39,8 +31,6 @@ Quality Assessment:
 * Summarize which Prompt Quality Criteria passed and which failed.
 * Note any patterns of concern across multiple criteria.
 
-### Step 3: Deliver Verdict
-
 When issues are found:
 
 * Present the analysis report with all sections.
@@ -53,6 +43,9 @@ When no issues are found:
 * Display: ✅ **Quality Assessment Passed** - This prompt meets all Prompt Quality Criteria.
 * Summarize the criteria validated.
 
----
+## Required Steps
 
-Follow the mode's Phase 1 (Baseline) instructions, dispatching subagents for testing and evaluation, then report findings to the user without modifying the target file.
+1. Follow all instructions from Step 1 and Step 2 in Phase 1: Prompt File(s) Execution and Evaluation to completion.
+2. Do not continue on to other phases past Phase 1.
+3. Read all of and interpret the *evaluation-log* and the response from prompt-evaluator.
+4. Format the Analysis Report for your response to the user.

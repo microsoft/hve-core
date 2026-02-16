@@ -1,6 +1,6 @@
 ---
 description: "Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core"
-argument-hint: "file=..."
+argument-hint: "[promptFiles=...] [requirements=...]"
 agent: 'prompt-builder'
 ---
 
@@ -8,39 +8,14 @@ agent: 'prompt-builder'
 
 ## Inputs
 
-* ${input:file}: (Required) Target prompt file to refactor. Accepts `.prompt.md`, `.agent.md`, or `.instructions.md` files.
-* ${input:requirements}: (Optional) Additional refactoring requirements or focus areas.
+* (Optional) promptFiles - ${input:promptFiles}: Existing target prompt file(s) for creation or modification. Defaults to the current open file or attached file.
+* (Optional) requirements - ${input:requirements}: Additional requirements or objectives.
 
-## Required Steps
+## Prompt File(s) Requirements
 
-Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching subagents for all phase work. Apply these refactoring-specific requirements throughout the protocol:
+1. Refactor the promptFiles with a focus on cleaning up instructions, consolidating instructions, removing confusing instructions, removing duplicate instructions or examples when they are not needed.
+2. If user provided additional requirements in the conversation then be sure to also consider all of their requirements as well.
 
-* Remove or condense redundant instructions while preserving intent.
-* Replace verbose examples with concise instruction lines where examples are not essential.
-* Update outdated prompting patterns to follow current Prompt Writing Style.
-* Correct any schema, API, SDK, or tool call instructions based on research findings.
+## Required Protocol
 
-### Step 1: Baseline and Research
-
-Follow the mode's Phase 1 (Baseline) and Phase 2 (Research) to evaluate the current state and verify external references in the target file at `${input:file}`.
-
-### Step 2: Refactor
-
-Follow the mode's Phase 3 (Build) to apply compression and cleanup changes along with any user-provided `${input:requirements}`.
-
-### Step 3: Validate and Iterate
-
-Follow the mode's Phase 4 (Validate) and Phase 5 (Iterate) until all Prompt Quality Criteria pass.
-
-### Step 4: Report Outcomes
-
-After validation passes, summarize the refactoring session:
-
-* Changes made with file paths.
-* Instructions removed, compressed, or updated.
-* Schema, API, or tool call corrections applied.
-* Prompt Quality Criteria validation results.
-
----
-
-Follow the Required Phases from the mode instructions, dispatching subagents for all phase work, and proceed with refactoring the target file.
+Follow all instructions in Required Phases, iterate and repeat Required Phases until promptFiles or related prompt file(s) meet the requirements.
