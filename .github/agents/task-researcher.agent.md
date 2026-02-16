@@ -2,8 +2,7 @@
 description: 'Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core'
 disable-model-invocation: true
 agents:
-  - codebase-researcher
-  - external-researcher
+  - researcher-subagent
 handoffs:
   - label: "📋 Create Plan"
     agent: task-planner
