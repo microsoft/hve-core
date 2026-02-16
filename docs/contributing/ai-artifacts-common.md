@@ -85,9 +85,9 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
 
-## Collection Manifests
+## Collections
 
-Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and maturity.
+Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and distribution.
 
 ### Collection Purpose
 
@@ -162,15 +162,39 @@ When contributing a new artifact:
 3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
 4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
 5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
+6. Run `npm run plugin:validate` to validate collection manifests
+7. Run `npm run plugin:generate` to regenerate plugin directories
 
 ### Repo-Specific Instructions Exclusion
 
-Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository. They are excluded from:
+Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
 
-* Collection manifests
+#### Exclusion Scope
+
+Artifacts under `.github/**/hve-core/` are excluded from:
+
+* Collection manifests (`collections/*.collection.yml` items)
+* Plugin generation (`plugins/` directory contents)
 * Extension packaging and distribution
-* Collection builds
-* Artifact selection for published bundles
+* Collection builds and bundles
+* Artifact selection for published releases
+
+#### Validation Enforcement
+
+The plugin generation and validation tooling actively enforces this exclusion:
+
+* Collection validation fails if hve-core-specific paths appear in `items[]`
+* Plugin generation skips any hve-core-scoped artifacts
+* Extension packaging filters out these files during build
+
+#### Placement Guidelines
+
+| Scope                      | Location                               | Included in Plugins |
+|----------------------------|----------------------------------------|---------------------|
+| **Repository-specific**    | `.github/instructions/hve-core/`       | ❌ No                |
+| **General-purpose**        | `.github/instructions/`                | ✅ Yes               |
+| **Language/tech-specific** | `.github/instructions/{language}/`     | ✅ Yes               |
+| **Workflow-specific**      | `.github/instructions/` (with applyTo) | ✅ Yes               |
 
 If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/` or a technology-specific subdirectory (e.g., `csharp/`, `bash/`).
 
@@ -230,80 +254,56 @@ Answer these questions when determining collection assignments:
 
 When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
 
-## Dependency Declarations
+## Extension Packaging
 
-Some artifacts require other artifacts to function correctly. Dependency behavior is resolved during packaging.
+Collections are consumed during VS Code Extension packaging to determine which artifacts are included in stable and pre-release extension channels.
 
-### Dependency Types
+### Agent Handoff Dependencies
 
-| Type           | Purpose                                                                          |
-|----------------|----------------------------------------------------------------------------------|
-| `agents`       | Agents this artifact dispatches at runtime via `runSubagent` (excludes handoffs) |
-| `prompts`      | Prompts this artifact invokes or references                                      |
-| `instructions` | Instructions this artifact relies on for code generation                         |
-| `skills`       | Skills this artifact executes for specialized tasks                              |
+During VS Code Extension packaging, agent handoff dependencies are automatically resolved to ensure UI navigation buttons work correctly.
 
-> **Note**: Frontmatter `handoffs` (UI buttons that suggest next agents) are resolved dynamically during packaging and MUST NOT be listed in `requires.agents`. Only agents invoked programmatically through `runSubagent` belong here.
+#### How Handoff Resolution Works
 
-### Handoff vs Requires Maturity Filtering
+The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) includes the `Resolve-HandoffDependencies` function:
 
-Handoff targets and `requires` dependencies follow different maturity rules during extension packaging:
+1. **Seed agents**: Starts with agents listed in the collection manifest
+2. **Parse frontmatter**: Reads the `handoffs` field from each agent's frontmatter
+3. **BFS traversal**: Performs breadth-first search to find all reachable agents through handoff chains
+4. **Include all**: Adds all discovered agents to the extension package
 
-| Mechanism  | Maturity Filtered | Reason                                                                    |
-|------------|-------------------|---------------------------------------------------------------------------|
-| `requires` | Yes               | Runtime dependencies are excluded when their maturity exceeds the channel |
-| `handoffs` | No                | UI buttons must resolve to a valid agent or the button is broken          |
+#### Collection Manifests and Dependencies
 
-During extension packaging (`scripts/extension/Prepare-Extension.ps1`), the `Resolve-HandoffDependencies` function encounters a handoff target whose maturity falls outside the allowed set and still includes that agent in the package. The maturity check only gates whether the target's own handoffs are traversed further. This ensures that a stable agent handing off to a preview agent produces a functional UI button in both stable and pre-release channels.
+**Collection manifests do NOT declare dependencies.** They only specify:
 
-The companion function `Resolve-RequiresDependencies` in the same script applies strict maturity filtering: dependencies whose maturity level is outside the allowed set are excluded entirely.
+* `path`: Repository-relative path to the artifact
+* `kind`: Artifact type (agent, prompt, instruction, skill, hook)
+* `maturity`: Release readiness level (optional, defaults to stable)
 
-### Declaring Dependencies
+Dependencies are resolved through agent frontmatter `handoffs` declarations during extension packaging, not through collection manifest fields.
 
-Add the `requires` field to collection items in `collections/*.collection.yml`:
+#### Creating Artifacts with Dependencies
 
-```yaml
-- path: .github/agents/rpi-agent.agent.md
-  kind: agent
-  maturity: stable
-  requires:
-    agents:
-      - task-researcher
-      - task-planner
-      - task-implementor
-      - task-reviewer
-    prompts:
-      - task-research
-      - task-plan
-      - task-implement
-      - task-review
-```
+When creating artifacts that reference other artifacts:
 
-### Dependency Resolution
+* **Agent handoffs**: Use the `handoffs` frontmatter field in agents to declare UI navigation buttons
+* **Document relationships**: Clearly describe dependencies in artifact documentation
+* **Test in isolation**: Verify your artifact works when only its collection is installed
+* **Keep coupling minimal**: Avoid unnecessary dependencies between artifacts
 
-Dependency resolution currently operates at **build time** during extension packaging. The `Resolve-RequiresDependencies` function in `Prepare-Extension.ps1` walks `requires` blocks to compute the transitive closure of all dependent artifacts across types (agents, prompts, instructions, skills). Similarly, `Resolve-HandoffDependencies` performs BFS traversal of agent handoff declarations to ensure all reachable agents are included in the package.
+For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
 
-For clone-based installations, the installer agent supports **agent-only collection filtering** in Phase 7. Full installer-side dependency resolution (automatically including required prompts, instructions, and skills based on the dependency graph) is planned for a future release.
-
-### Dependency Best Practices
-
-* **Declare all runtime dependencies**: List every artifact your artifact references
-* **Prefer explicit over implicit**: Document dependencies even if currently co-located
-* **Keep dependencies minimal**: Avoid unnecessary coupling between artifacts
-* **Test with minimal installs**: Verify your artifact works with only declared dependencies
-
-## Maturity Field Requirements
+### Maturity Field Requirements
 
 Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
 
-### Purpose
+#### Purpose
 
 The maturity field controls which extension channel includes the artifact:
 
 * **Stable channel**: Only artifacts with `maturity: stable`
 * **Pre-release channel**: Artifacts with `stable`, `preview`, or `experimental` maturity
 
-### Valid Values
+#### Valid Values
 
 | Value          | Description                                 | Stable Channel | Pre-release Channel |
 |----------------|---------------------------------------------|----------------|---------------------|
@@ -314,7 +314,7 @@ The maturity field controls which extension channel includes the artifact:
 
 When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
 
-### Default for New Contributions
+#### Default for New Contributions
 
 New collection items **SHOULD** use `maturity: stable` unless:
 
@@ -322,7 +322,7 @@ New collection items **SHOULD** use `maturity: stable` unless:
 * The artifact requires additional testing or feedback before wide release
 * The contributor explicitly intends to target early adopters
 
-### Setting Maturity
+#### Setting Maturity
 
 Add or update the maturity value on each collection item in `collections/*.collection.yml`:
 
@@ -336,6 +336,90 @@ items:
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
 **Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+
+## Plugin Generation
+
+The `plugins/` directory contains **auto-generated plugin bundles** created from collection manifests for use with GitHub Copilot CLI. These plugin directories are outputs of the build process and **MUST NOT be edited directly**.
+
+### Generation Workflow
+
+When you add an artifact to a collection manifest:
+
+1. **Author artifact**: Create your agent, prompt, instruction, or skill in `.github/`
+2. **Update collection**: Add an `items[]` entry to one or more `collections/*.collection.yml` files
+3. **Validate collections**: Run `npm run plugin:validate` to check manifest correctness
+4. **Generate plugins**: Run `npm run plugin:generate` to regenerate all plugin directories
+5. **Commit both**: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
+
+### Plugin Directory Structure
+
+Each generated plugin directory contains:
+
+* **Symlinked artifacts**: Direct symlinks to source files in `.github/` (preserves single source of truth)
+* **Generated README**: Auto-generated documentation listing all included artifacts
+* **Plugin manifest**: `plugin.json` file for GitHub Copilot CLI plugin system
+* **Marketplace metadata**: Aggregated data for extension distribution
+
+### Critical Rules for Plugin Files
+
+> [!WARNING]
+> Files under `plugins/` are generated outputs and MUST NOT be edited directly.
+
+* **Regenerate after changes**: Always run `npm run plugin:generate` after modifying collection manifests or artifacts
+* **Symlinked files**: Markdown artifacts are symlinked, so edits to plugin files modify source artifacts
+* **Generated files**: README and JSON files are generated fresh on each run
+* **Durable edits**: Direct edits to plugin files will be overwritten or cause conflicts
+* **Source of truth**: Always edit the source artifact in `.github/`, not the plugin copy
+
+### When to Regenerate Plugins
+
+Run `npm run plugin:generate` whenever you:
+
+* Add a new artifact to a collection manifest
+* Remove an artifact from a collection manifest
+* Modify artifact frontmatter (description, dependencies, handoffs)
+* Update artifact file content that affects generated README documentation
+* Change collection manifest metadata (tags, description, name)
+* Update the `hve-core-all` collection (auto-updated during generation)
+
+### Validating Collection Manifests
+
+Before generating plugins, validate collection YAML files to catch errors early:
+
+```bash
+npm run plugin:validate
+```
+
+This command checks:
+
+* **YAML syntax**: Valid YAML structure and formatting
+* **Required fields**: Presence of `id`, `name`, `description`, `items`
+* **Path references**: All artifact paths exist and are accessible
+* **Kind values**: Valid artifact kinds (agent, prompt, instruction, skill, hook)
+* **Maturity values**: Valid maturity levels (stable, preview, experimental, deprecated)
+* **Duplicate paths**: No duplicate artifact entries within a collection
+* **hve-core exclusions**: No repo-specific artifacts from `.github/**/hve-core/`
+
+Always validate before generating plugins:
+
+```bash
+# Recommended workflow
+npm run plugin:validate  # Validate collections first
+npm run plugin:generate  # Then regenerate plugins
+```
+
+Validation errors will prevent successful plugin generation, so fixing validation issues first saves time and prevents incomplete plugin outputs.
+
+### Plugin Generation Reference
+
+For detailed documentation on the plugin generation system, including:
+
+* Generation script implementation details
+* Collection validation rules
+* Plugin directory structure specifications
+* Troubleshooting generation errors
+
+See the [Plugin Scripts README](../../scripts/plugins/README.md).
 
 ## XML-Style Block Standards
 
