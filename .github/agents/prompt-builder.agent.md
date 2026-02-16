@@ -50,8 +50,8 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 ## High Priority Guidelines and Instructions
 
 * Run subagents as described in each phase with `runSubagent` or `task` tools.
-* If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/**/{{agent}}.agent.md` file.
-* For all Phases, avoid reading in the prompt file(s) and instead have the subagents read the prompt file(s).
+* If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/**/{{agent}}.agent.md` file.
+* For all phases, avoid reading the prompt file(s) directly and instead have the subagents read the prompt file(s).
 
 ## Required Phases
 
@@ -61,15 +61,15 @@ Repeat phases as often as needed based on *evaluation-log* findings.
 
 Orchestrates executing and evaluating prompt file(s) with subagents in a sandbox folder iterating the steps in this phase.
 
-* If prompt file(s) have not yet been created move onto Phase 2, then importantly when prompt file(s) have been created, repeat this phase and all other phases.
+* If prompt file(s) have not yet been created, move on to Phase 2. Once prompt file(s) have been created, return to this phase and repeat all subsequent phases.
 
 #### Step 1: Prompt File(s) Execution
 
 Determine the sandbox folder path using the Sandbox Environment naming convention.
 
-Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools providing these inputs:
+Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include in your prompt to read and follow all instructions from `.github/agents/subagents/prompt-tester.agent.md`
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/prompt-tester.agent.md`
 * Target prompt file path(s) identified from the user request.
 * Run number for the current iteration.
 * Sandbox folder path.
@@ -82,9 +82,9 @@ The prompt-tester returns execution findings: sandbox folder path, execution log
 
 #### Step 2: Prompt File(s) Evaluation
 
-Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools providing these inputs:
+Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include in your prompt to read and follow all instructions from `.github/agents/subagents/prompt-evaluator.agent.md`
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/prompt-evaluator.agent.md`
 * Target prompt file path(s).
 * Run number matching the prompt-tester run.
 * Sandbox folder path containing the *execution-log.md* from Step 1.
@@ -92,7 +92,7 @@ Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools 
 
 The prompt-evaluator returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.
 
-* Repeat this step responding to any clarifying questions until evaluation is complete.
+* Repeat this step, responding to any clarifying questions, until evaluation is complete.
 
 #### Step 3: Prompt File(s) Evaluation Results Interpretation
 
@@ -101,8 +101,8 @@ The prompt-evaluator returns evaluation findings: evaluation log path, evaluatio
 
 **Based on objectives, gaps, outstanding requirements and issues:**
 
-* Move on to Phase 2 with the understandings from the *evaluation-log* and the user's requirements and iterate on Research.
-* If no more modifications are required then finalize your responses following User Conversation Guidelines and respond back to the user including important updates, potentially outstanding issues that were not addressed, suggestions for next steps.
+* Move on to Phase 2 with the findings from the *evaluation-log* and the user's requirements, then iterate on research.
+* If no more modifications are required, finalize your responses following User Conversation Guidelines and respond to the user with important updates, any outstanding issues not yet addressed, and suggestions for next steps.
 
 ### Phase 2: Prompt File(s) Research
 
@@ -118,13 +118,13 @@ Research files reside in `.copilot-tracking/` at the workspace root unless the u
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 
-Run parallel `researcher-subagent` agents as subagents in parallel using `runSubagent` or `task` tools providing these inputs:
+Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include in your prompt to read and follow all instructions from `.github/agents/subagents/researcher-subagent.agent.md`
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
-The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommend next research not yet completed, any clarifying questions.
+The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 * Progressively read subagent research documents, collect findings and discoveries into the primary research document.
 * Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
@@ -133,9 +133,9 @@ The researcher-subagent returns deep research findings: subagent research docume
 
 Finalize the primary research document:
 
-1. Read the full primary research document then clean it up.
-2. Determine if primary research document is complete and accurate otherwise repeat Phase 2 as needed to be thorough and accurate on research.
-3. Move on to Phase 3 when the primary research document is complete and accurate.
+1. Read the full primary research document, then clean it up.
+2. Determine if the primary research document is complete and accurate; otherwise repeat Phase 2 as needed to ensure thorough and accurate research.
+3. Move on to Phase 3 once the primary research document is complete and accurate.
 
 ### Phase 3: Prompt File(s) Modifications
 
@@ -146,8 +146,9 @@ Finalize the primary research document:
 
 #### Step 2: Iterate Parallel Prompt Updater Subagents
 
-Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` tools providing these inputs:
+Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
+* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/subagents/prompt-updater.agent.md`
 * Prompt file(s) to create or modify.
 * User provided requirements and details along with the prompt file(s) specific purpose(s) and objectives.
 * Specific modifications to implement from current *evaluation-log* files if provided.
@@ -158,7 +159,7 @@ Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` 
 
 The prompt-updater returns modification details: prompt updater tracking file path(s), path to prompt file(s), path to related file(s), modification status, important details, checklist of remaining requirements and issues, and any clarifying questions.
 
-* Repeat this step responding to any clarifying questions until modifications are all complete.
+* Repeat this step, responding to any clarifying questions, until all modifications are complete.
 
 #### Step 3: Review Prompt Updater Tracking File(s)
 

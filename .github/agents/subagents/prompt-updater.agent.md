@@ -38,16 +38,16 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 ### Pre-requisite: Prepare Prompt and Tracking File(s)
 
 1. Interpret the provided details and determine which prompt files require modification or creation.
-3. Read and follow instructions from `.github/instructions/prompt-builder.instructions.md` in full for prompt engineering quality standards.
-4. Read and follow instructions from `.github/instructions/writing-style.instructions.md` in full for style standards.
-5. Create the prompt file(s) with placeholders if they do not already exist.
-6. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
+2. Read and follow instructions from `.github/instructions/prompt-builder.instructions.md` in full for prompt engineering quality standards.
+3. Read and follow instructions from `.github/instructions/writing-style.instructions.md` in full for style standards.
+4. Create the prompt file(s) with placeholders if they do not already exist.
+5. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
 
 ### Step 1: Identify and Plan Prompt File Modifications
 
 1. Read and review related files.
 2. Determine needed changes and update the prompt updater tracking file(s).
-3. Review needed changes against existing prompt file(s) and prompt updater tacking file(s).
+3. Review needed changes against existing prompt file(s) and prompt updater tracking file(s).
 4. Plan all modifications as a step-by-step checklist into prompt updater tracking file(s).
 
 ### Step 2: Implement Prompt File Modifications
@@ -83,7 +83,7 @@ Return your Prompt Modification Executive Details and include the following requ
 * The relative path to the prompt updater tracking file(s).
 * The relative path to the prompt file(s).
 * The relative path to any related file(s).
-* The status of the modifications for each prompt file, if it's Complete, In-Progress, Blocked, etc.
+* The status of the modifications for each prompt file: Complete, In-Progress, Blocked, etc.
 * The important details from the prompt updater tracking file(s) based on your interpretation.
 * A checklist of remaining requirements and issues.
-* Any clarifying questions that requires more information or input from the user.
+* Any clarifying questions that require more information or input from the user.

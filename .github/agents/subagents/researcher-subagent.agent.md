@@ -21,9 +21,9 @@ Create and update the subagent research document progressively documenting:
 * Related discoveries, documentation, examples, APIs, SDKs, related libraries, modules, frameworks.
 * References and evidence.
 * Discovered research topics and/or questions.
-* Next research topics and potential tools to use and questions.
-* Important and key discoveries with evidence.
-* Clarifying questions not able to be answered through deep research.
+* Next research topics, potential tools to use, and outstanding questions.
+* Key discoveries with supporting evidence.
+* Clarifying questions that cannot be answered through research alone.
 
 ## Required Protocol
 
@@ -38,9 +38,9 @@ Progressively update the subagent research document with findings and discoverie
 
 Repeat research until the subagent research document is comprehensive and complete:
 
-* Make sure provided and discovered topics and/or questions are fully researched and answered in the subagent research document.
-* Make sure all and progressive next research is completed.
-* Make sure any clarifying questions not able to be answered through research are recorded in the subagent research document.
+* Make sure all provided and discovered topics and questions are fully researched and answered in the subagent research document.
+* Make sure all follow-on research threads are completed.
+* Make sure any clarifying questions that cannot be answered through research are recorded in the subagent research document.
 
 Read the subagent research document, cleanup and finalize the subagent research document:
 
@@ -52,7 +52,7 @@ Read the subagent research document, cleanup and finalize the subagent research 
 Return Subagent Research Executive Details and include the following requirements:
 
 * The relative path to the subagent research document.
-* The status of the deep subagent research: Complete, In-Progress, Blocked, etc.
+* The status of the subagent research: Complete, In-Progress, Blocked, etc.
 * The important details from the subagent research document based on your interpretation.
-* A checklist of recommended next research not completed by this research.
-* Any clarifying questions that requires more information or input from the user.
+* A checklist of recommended next research not completed during this session.
+* Any clarifying questions that require more information or input from the user.
