@@ -37,15 +37,15 @@ Build, validate, and optimize working solutions.
 
 ## Space Boundary Transitions
 
-Transitions between spaces represent coaching decision points where the work mode shifts fundamentally. The coach announces these transitions explicitly and verifies readiness before proceeding.
+Transitions between spaces represent coaching decision points where the work mode shifts fundamentally. The coach announces these transitions explicitly and uses readiness checks to highlight risks and options, then proceeds based on an informed team choice.
 
 ### Problem Space to Solution Space (after Method 3)
 
 This is the most critical transition. Moving to solutions without validated problem understanding produces solutions to the wrong problem.
 
-Readiness signals:
+Readiness signals are advisory: the coach uses them to flag risks and discuss tradeoffs with the team rather than blocking progress.
 
-* Method 3 synthesis validation passes on all five dimensions (Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, Team Alignment).
+* Method 3 synthesis review shows strength across the five dimensions (Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, Team Alignment), with any remaining gaps explicitly acknowledged.
 * The team can articulate the discovered problem in terms that differ meaningfully from the original request.
 * Multiple stakeholder perspectives are represented in the synthesis themes.
 * Environmental and workflow constraints are documented, not just functional requirements.
