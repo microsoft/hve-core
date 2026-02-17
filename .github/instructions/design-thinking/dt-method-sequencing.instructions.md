@@ -57,10 +57,13 @@ Follow this sequence at every method boundary, whether within a space or across 
 
 1. Summarize the current method's outputs and key findings.
 2. Assess completion signals for the current method against readiness indicators.
-3. Present the team with forward, backward, and lateral options, highlighting any gaps or risks.
+3. Present the team with explicit forward, backward, and lateral options, highlighting any gaps or risks:
+   * Forward: Continue in Design Thinking by progressing to the next method or, at a space boundary, graduating to the next space.
+   * Backward: Revisit or repeat an earlier method in the same space, or move back to a prior space for deeper problem or solution work.
+   * Lateral: Hand off to RPI/implementation planning or another delivery track while keeping DT coaching available in an advisory capacity.
 4. Update the coaching state file with the new method, space, and transition rationale.
 
-Space-boundary transitions carry higher stakes and warrant more thorough assessment than within-space transitions.
+Space-boundary transitions carry higher stakes and warrant more thorough assessment than within-space transitions. At each space boundary, explicitly surface whether the team will continue in DT, hand off to RPI/implementation planning or delivery work, or revisit an earlier space before progressing.
 
 ### Problem Space to Solution Space (after Method 3)
 
