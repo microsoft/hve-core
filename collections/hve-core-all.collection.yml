@@ -182,5 +182,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
