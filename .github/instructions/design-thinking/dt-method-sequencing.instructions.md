@@ -27,25 +27,25 @@ The Design Thinking process follows nine methods organized into three spaces. Me
 
 Discover and validate the real problem before generating solutions.
 
-1. Scope conversations. Discover real problems behind solution requests. Transform initial requests into understood problem spaces through stakeholder dialogue and constraint discovery.
-2. Design research. Conduct systematic stakeholder research and observation. Gather evidence through interviews, environmental observation, and workflow analysis.
-3. Input synthesis. Recognize patterns and develop themes. Unify research findings into validated themes that ground solution work in evidence.
+1. (Method 1) Scope conversations. Discover real problems behind solution requests. Transform initial requests into understood problem spaces through stakeholder dialogue and constraint discovery.
+2. (Method 2) Design research. Conduct systematic stakeholder research and observation. Gather evidence through interviews, environmental observation, and workflow analysis.
+3. (Method 3) Input synthesis. Recognize patterns and develop themes. Unify research findings into validated themes that ground solution work in evidence.
 
 ### Solution Space (Methods 4-6)
 
 Generate, visualize, and test solution ideas with increasing concreteness.
 
-4. Brainstorming. Conduct divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
-5. User concepts. Perform visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
-6. Lo-fi prototypes. Use scrappy prototypes for constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
+1. (Method 4) Brainstorming. Conduct divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
+2. (Method 5) User concepts. Perform visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
+3. (Method 6) Lo-fi prototypes. Use scrappy prototypes for constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
 
 ### Implementation Space (Methods 7-9)
 
 Build, validate, and optimize working solutions.
 
-7. Hi-fi prototypes. Test technical feasibility. Create stripped-down functional implementations with real data for systematic comparison.
-8. User testing. Perform systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
-9. Iteration at scale. Drive continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
+1. (Method 7) Hi-fi prototypes. Test technical feasibility. Create stripped-down functional implementations with real data for systematic comparison.
+2. (Method 8) User testing. Perform systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
+3. (Method 9) Iteration at scale. Drive continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
 
 ## Space Boundary Transitions
 
