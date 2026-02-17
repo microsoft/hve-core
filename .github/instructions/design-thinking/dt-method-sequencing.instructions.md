@@ -1,6 +1,6 @@
 ---
 description: 'Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching'
-applyTo: '**/.copilot-tracking/dt/**'
+applyTo: '**/.copilot-tracking/design-thinking/**'
 ---
 
 # DT Method Sequencing
