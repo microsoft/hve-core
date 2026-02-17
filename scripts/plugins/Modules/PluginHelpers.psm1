@@ -793,9 +793,22 @@ function New-RelativeSymlink {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    # Remove existing item at destination to avoid conflicts
+    # Remove existing item at destination to avoid conflicts, but avoid
+    # recursively deleting real directories that are not symlinks.
     if (Test-Path -LiteralPath $DestinationPath) {
-        Remove-Item -LiteralPath $DestinationPath -Force -Recurse | Out-Null
+        $destItem = Get-Item -LiteralPath $DestinationPath -Force
+        $isSymlink = $false
+        if ($null -ne $destItem.Attributes -and ($destItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            $isSymlink = $true
+        }
+
+        if ($isSymlink -or -not $destItem.PSIsContainer) {
+            # Safe to remove: symbolic link (file or directory) or regular file
+            Remove-Item -LiteralPath $DestinationPath -Force -Recurse | Out-Null
+        }
+        else {
+            throw "Refusing to remove existing non-symlink directory at '$DestinationPath'. Remove it manually before creating the symbolic link."
+        }
     }
 
     try {
@@ -804,7 +817,7 @@ function New-RelativeSymlink {
     catch {
         # Symlink creation requires admin privileges or Developer Mode on Windows.
         # Fall back to copying the source file or directory.
-        Write-Verbose "Symlink creation failed; falling back to copy for $DestinationPath"
+        Write-Verbose "Symlink creation failed for $DestinationPath`: $($_.Exception.Message). Falling back to copy."
         if (Test-Path -LiteralPath $SourcePath -PathType Container) {
             Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
         }
