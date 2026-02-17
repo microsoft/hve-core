@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/dt/**'
 
 # DT Method Sequencing
 
-These instructions govern how the DT coach navigates between the nine Design Thinking methods, manages space boundary transitions, and supports non-linear iteration when teams need to revisit earlier methods.
+Use this guidance to navigate how the DT coach moves between the nine Design Thinking methods, manages space boundary transitions, and supports non-linear iteration when teams need to revisit earlier methods.
 
 ## Nine-Method Sequence
 
