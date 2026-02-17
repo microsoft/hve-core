@@ -1,5 +1,9 @@
 ---
 description: 'Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - researcher-subagent
+  - phase-implementor
 ---
 
 # Documentation Operations Agent
@@ -9,16 +13,16 @@ Autonomous agent for documentation quality assurance. Discovers divergences from
 ## Core Principles
 
 * Operate autonomously after initial invocation with minimal user interaction.
-* Use runSubagent for all discovery, planning, and implementation work.
+* Use subagents for all discovery, planning, and implementation work.
 * Continue iterating through phases until all issues are resolved.
 * Track all work in `.copilot-tracking/doc-ops/` session files.
 
 ## Tool Availability
 
-This agent requires the runSubagent tool for all documentation processing.
+This agent runs subagents for all documentation processing. Run `researcher-subagent` or `phase-implementor` agents with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
 
-* When runSubagent is available, dispatch subagents as specified in each phase.
-* When runSubagent is unavailable, inform the user that this workflow requires subagent capability and stop.
+* When a `runSubagent` or `task` tool is available, run subagents as specified in each phase.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 The main agent executes directly only for:
 
@@ -61,8 +65,8 @@ Apply scope filtering before any discovery or processing. Subagents receive only
 
 Detect divergences from documentation conventions:
 
-* Compare files against [writing-style.instructions.md](../instructions/writing-style.instructions.md) patterns.
-* Validate structure against [markdown.instructions.md](../instructions/markdown.instructions.md) requirements.
+* Compare files against writing-style instructions patterns.
+* Validate structure against markdown instructions requirements.
 * Check frontmatter fields match schema requirements.
 * Identify prohibited patterns (em dashes, bolded-prefix lists, hedging phrases).
 
@@ -135,23 +139,21 @@ Update the session file after each phase with discoveries, plan items, and compl
 
 ### Phase 1: Discovery
 
-Dispatch three subagents to discover issues across all capabilities.
-
-Use the runSubagent tool to dispatch each discovery subagent. Each subagent focuses on one capability and reports all findings.
+Run three `researcher-subagent` agents in parallel with `runSubagent` or `task` tools to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/researcher-subagent.agent.md`.
 
 #### Pattern Compliance Discovery
 
-Dispatch a subagent with:
+Run a `researcher-subagent` agent with:
 
 * Task: Scan all in-scope files for divergences from writing-style.instructions.md and markdown.instructions.md.
-* Instructions to read: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).
+* Instructions to read: [writing-style.instructions.md](.github/instructions/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/markdown.instructions.md).
 * File scope: All files matching Included Files patterns, excluding Excluded Files patterns.
 * Response format: List each issue with file path, line number, violation type, and suggested fix.
 * Requirement: Indicate whether additional passes are needed and report total issue count.
 
 #### Accuracy Checking Discovery
 
-Dispatch a subagent with:
+Run a `researcher-subagent` agent with:
 
 * Task: Compare documentation claims against actual implementation.
 * Focus areas: Script parameter documentation in scripts/, file structure descriptions in docs/, example commands and their expected behavior.
@@ -160,7 +162,7 @@ Dispatch a subagent with:
 
 #### Missing Documentation Discovery
 
-Dispatch a subagent with:
+Run a `researcher-subagent` agent with:
 
 * Task: Identify undocumented functionality.
 * Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), .github/skills/ (skills without adequate documentation).
@@ -175,9 +177,9 @@ After all discovery subagents complete:
 
 ### Phase 2: Planning
 
-Dispatch a planning subagent to create a prioritized work plan.
+Run a planning subagent to create a prioritized work plan.
 
-Use the runSubagent tool with:
+Run a `researcher-subagent` agent with `runSubagent` or `task` tools with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/researcher-subagent.agent.md`:
 
 * Task: Create a work plan from discovered issues.
 * Input: Read the session file Discovered Issues section.
@@ -196,17 +198,17 @@ After planning completes:
 
 ### Phase 3: Implementation
 
-Dispatch implementation subagents to execute fixes from the work plan.
+Run `phase-implementor` agents with `runSubagent` or `task` tools to execute fixes from the work plan.
 
-Use the runSubagent tool to dispatch subagents based on work plan size:
+If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Run based on work plan size:
 
-* For small plans (fewer than 10 items): One subagent processes all items.
-* For larger plans: Dispatch subagents by capability category (pattern compliance, accuracy, documentation creation).
+* For small plans (fewer than 10 items): One `phase-implementor` agent processes all items.
+* For larger plans: Run `phase-implementor` agents by capability category (pattern compliance, accuracy, documentation creation).
 
-Each implementation subagent receives:
+Each `phase-implementor` agent receives:
 
 * Task: Execute assigned work items from the plan.
-* Instructions to follow: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).
+* Instructions to follow: [writing-style.instructions.md](.github/instructions/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/markdown.instructions.md).
 * Work items: Specific numbered items from the plan.
 * Response format: Report each change with file path, change description, and completion status.
 * Requirement: Report any new issues discovered during implementation and whether additional passes are needed.
@@ -245,7 +247,7 @@ Report final status and close the session.
 
 ## Subagent Specifications
 
-All subagents dispatched via runSubagent follow these specifications.
+All subagents follow these specifications.
 
 ### Discovery Subagent Template
 
@@ -407,4 +409,4 @@ When all phases complete, provide:
 | Validation Status | Passed, Failed with count, or Partial       |
 | Followup Items    | Count requiring manual intervention         |
 
-Suggest a commit message following [commit-message.instructions.md](../instructions/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.
+Suggest a commit message following [commit-message.instructions.md](.github/instructions/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.

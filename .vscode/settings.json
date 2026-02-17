@@ -11,7 +11,8 @@
     ".github/prompts/**/*.prompt.md": true
   },
   "chat.agentFilesLocations": {
-    ".github/agents": true
+    ".github/agents": true,
+    ".github/agents/subagents": true,
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {

@@ -40,7 +40,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 | Agent                | Purpose                                                           | Key Constraint                                 |
 |----------------------|-------------------------------------------------------------------|------------------------------------------------|
-| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks       | Requires `runSubagent` tool enabled            |
+| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks       | Requires a subagent tool enabled               |
 | **task-researcher**  | Produces research documents with evidence-based recommendations   | Research-only; never plans or implements       |
 | **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
@@ -102,7 +102,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Understand → Implement → Verify → Continue or Complete
 
-**Critical:** Requires `runSubagent` tool enabled. Delegates MCP tools, heavy terminal commands, and complex research to subagents. Provides autonomous execution with loop guard for detecting stuck states.
+**Critical:** Requires a subagent tool enabled. Delegates MCP tools, heavy terminal commands, and complex research to subagents. Provides autonomous execution with loop guard for detecting stuck states.
 
 ### task-researcher
 
@@ -113,7 +113,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Deep tool-based research → Document findings → Consolidate to one approach → Hand off to planner
 
-**Critical:** Research-only specialist. Uses `runSubagent` tool. Continuously refines document. Never plans or implements.
+**Critical:** Research-only specialist. Uses subagent tools. Continuously refines document. Never plans or implements.
 
 ### task-planner
 
@@ -132,7 +132,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}-task-changes.md` (chronological log with Added/Modified/Removed sections)
 
-**Workflow:** Analyze plan → Dispatch subagents per phase → Track progress → Validate
+**Workflow:** Analyze plan → Run subagents per phase → Track progress → Validate
 
 **Critical:** Requires completed plan files. Uses subagent architecture for parallel phase execution. Updates tracking artifacts after each phase.
 
@@ -346,7 +346,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 2. Provide your request
 3. Agent autonomously researches, implements, and verifies
 4. Review results; agent continues if more work remains
-5. Requires `runSubagent` tool enabled in settings
+5. Requires a subagent tool enabled in settings
 
 ### Planning a Feature
 
@@ -386,7 +386,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 * **Agent Switching:** Clear context or start a new chat when switching between specialized agents
 * **Research First:** Task planner requires completed research; will automatically invoke researcher if missing
 * **No Implementation:** Task planner and researcher never implement actual project code—they create planning artifacts only
-* **Subagent Requirements:** Several agents require the `runSubagent` tool enabled in Copilot settings
+* **Subagent Requirements:** Several agents require a subagent tool enabled in Copilot settings
 
 ## Tips
 

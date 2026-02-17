@@ -127,6 +127,12 @@ Agent files **MUST**:
 
 ### Optional Fields
 
+**`name`** (string)
+
+* **Purpose**: Custom display name for the agent
+* **Format**: Lowercase kebab-case matching filename without extension
+* **Default**: File name used if not specified
+
 **`tools`** (array of strings)
 
 * **Purpose**: Lists GitHub Copilot tools available to this agent
@@ -152,21 +158,44 @@ Agent files **MUST**:
   * `context7/*` - Library documentation
   * `microsoft-docs/*` - Microsoft documentation
 
-**`mode`** (string enum)
+**`agents`** (array of strings)
 
-* **Purpose**: Defines agent interaction pattern
-* **Valid values**: `agent`, `assistant`, `copilot`
-* **Default**: Auto-detected from usage pattern
+* **Purpose**: Declares subagent dependencies available to this agent
+* **Format**: Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use
+* **Requirement**: When specified, include the `agent` tool in the `tools` property
 
-**`version`** (string)
+**`model`** (string or array of strings)
 
-* **Purpose**: Tracks agent revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
+* **Purpose**: Specifies the AI model for this agent
+* **Format**: Single model name or prioritized list of models (system tries each in order until available)
+* **Default**: Currently selected model in model picker when omitted
 
-**`author`** (string)
+**`user-invocable`** (boolean)
 
-* **Purpose**: Attribution for agent creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+* **Purpose**: Controls whether the agent appears in the agents dropdown
+* **Default**: `true`
+* **Usage**: Set to `false` for agents that are only accessible as subagents
+
+**`disable-model-invocation`** (boolean)
+
+* **Purpose**: Prevents the agent from being invoked as a subagent by other agents
+* **Default**: `false`
+* **Usage**: Set to `true` for agents that run subagents, cause side effects, or should only run when explicitly requested
+
+**`argument-hint`** (string)
+
+* **Purpose**: Hint text shown in the chat input field to guide users
+* **Format**: Brief text with required arguments first, then optional
+
+**`target`** (string enum)
+
+* **Purpose**: Target environment for the custom agent
+* **Valid values**: `vscode`, `github-copilot`
+
+**`mcp-servers`** (array of objects)
+
+* **Purpose**: MCP server configuration for GitHub Copilot agents
+* **Usage**: Only applicable when `target: github-copilot`
 
 **`handoffs`** (array of objects)
 
@@ -177,6 +206,7 @@ Agent files **MUST**:
   * `agent` (string, required): Target agent filename without `.agent.md` extension
   * `prompt` (string, optional): Pre-filled prompt text, can include slash commands
   * `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
+  * `model` (string, optional): Language model override for the handoff execution
 * **Requirements**: VS Code 1.106+ required for handoff support
 * **Example**:
 
@@ -188,15 +218,23 @@ Agent files **MUST**:
       send: true
   ```
 
+### Deprecated Fields
+
+**`infer`** (boolean)
+
+* **Status**: Deprecated. Use `user-invocable` and `disable-model-invocation` instead.
+* **Previous behavior**: `infer: true` (default) made the agent both visible in the picker and available as a subagent. `infer: false` hid it from both.
+
 ### Frontmatter Example
 
 ```yaml
 ---
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
 tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
-mode: 'agent'
-version: '1.0.0'
-author: 'microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - prompt-tester
+  - prompt-evaluator
 ---
 ```
 
@@ -410,7 +448,8 @@ Before submitting your agent, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `description` field present and descriptive (10-200 chars)
 * [ ] `tools` array contains only valid tool names (if present)
-* [ ] `mode` is one of: `agent`, `assistant`, `copilot` (if present)
+* [ ] `agents` array contains valid subagent names (if present)
+* [ ] `user-invocable` and `disable-model-invocation` used correctly (if present)
 * [ ] No trailing whitespace in values
 * [ ] Single newline at EOF
 
