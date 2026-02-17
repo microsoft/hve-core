@@ -182,7 +182,7 @@ function Get-ArtifactFiles {
     # Prompt-engineering artifacts discovered by .<kind>.md suffix under .github/
     # Keep explicit suffix mapping only where naming differs from manifest kind values.
     $gitHubDir = Join-Path -Path $RepoRoot -ChildPath '.github'
-    if (Test-Path -Path $gitHubDir) {
+    if (Test-Path -LiteralPath $gitHubDir) {
         $suffixToKind = @{
             instructions = 'instruction'
         }
@@ -208,11 +208,11 @@ function Get-ArtifactFiles {
 
     # Skills (directories containing SKILL.md)
     $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
-    if (Test-Path -Path $skillsDir) {
+    if (Test-Path -LiteralPath $skillsDir) {
         $skillDirs = Get-ChildItem -Path $skillsDir -Directory
         foreach ($dir in $skillDirs) {
             $skillFile = Join-Path -Path $dir.FullName -ChildPath 'SKILL.md'
-            if (Test-Path -Path $skillFile) {
+            if (Test-Path -LiteralPath $skillFile) {
                 $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
                 $items += @{ path = $relativePath; kind = 'skill' }
             }
@@ -708,7 +708,7 @@ function Write-MarketplaceManifest {
         return
     }
 
-    if (-not (Test-Path -Path $outputDir)) {
+    if (-not (Test-Path -LiteralPath $outputDir)) {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
@@ -789,13 +789,13 @@ function New-RelativeSymlink {
     $destinationDir = Split-Path -Parent $DestinationPath
     $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath)
 
-    if (-not (Test-Path -Path $destinationDir)) {
+    if (-not (Test-Path -LiteralPath $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
     # Remove existing item at destination to avoid conflicts
-    if (Test-Path -Path $DestinationPath) {
-        Remove-Item -Path $DestinationPath -Force -Recurse | Out-Null
+    if (Test-Path -LiteralPath $DestinationPath) {
+        Remove-Item -LiteralPath $DestinationPath -Force -Recurse | Out-Null
     }
 
     try {
@@ -805,11 +805,11 @@ function New-RelativeSymlink {
         # Symlink creation requires admin privileges or Developer Mode on Windows.
         # Fall back to copying the source file or directory.
         Write-Verbose "Symlink creation failed; falling back to copy for $DestinationPath"
-        if (Test-Path -Path $SourcePath -PathType Container) {
-            Copy-Item -Path $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
+        if (Test-Path -LiteralPath $SourcePath -PathType Container) {
+            Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
         }
         else {
-            Copy-Item -Path $SourcePath -Destination $DestinationPath -Force | Out-Null
+            Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force | Out-Null
         }
     }
 }
@@ -894,7 +894,7 @@ function Write-PluginDirectory {
 
             # Read frontmatter from the source file for description
             $fallback = $itemName -replace '\.md$', ''
-            if (Test-Path -Path $sourcePath) {
+            if (Test-Path -LiteralPath $sourcePath) {
                 $frontmatter = Get-ArtifactFrontmatter -FilePath $sourcePath -FallbackDescription $fallback
                 $description = $frontmatter.description
             }
@@ -937,7 +937,7 @@ function Write-PluginDirectory {
         $sourcePath = Join-Path -Path $RepoRoot -ChildPath $dir.Source
         $destPath = Join-Path -Path $pluginRoot -ChildPath $dir.Destination
 
-        if (-not (Test-Path -Path $sourcePath)) {
+        if (-not (Test-Path -LiteralPath $sourcePath)) {
             Write-Warning "Shared directory not found: $sourcePath"
             continue
         }
@@ -959,7 +959,7 @@ function Write-PluginDirectory {
         Write-Verbose "DryRun: Would write plugin.json at $manifestPath"
     }
     else {
-        if (-not (Test-Path -Path $manifestDir)) {
+        if (-not (Test-Path -LiteralPath $manifestDir)) {
             New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
         }
         $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath -Encoding utf8 -NoNewline
