@@ -11,6 +11,37 @@ Scope conversations transform initial customer requests into genuine understandi
 
 Discover and verify the underlying problems of the customer's business and identify high-value problems to solve through nuanced discussion with primary stakeholders.
 
+## Sub-Methods
+
+| Sub-Method               | Focus         | Coaching Behavior                                                                                                                              |
+|--------------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1a: Scope Planning       | Planning      | Help the user identify key stakeholders and define conversation goals. Ask: "Who experiences this problem most directly?"                      |
+| 1b: Scope Execution      | Execution     | Guide stakeholder conversations. Help frame questions that reveal assumptions: "What would change if [stakeholder] described the problem?"     |
+| 1c: Scope Documentation  | Documentation | Capture outputs: stakeholder map, scope boundaries, known vs assumed. Help organize without polishing.                                         |
+
+## Specialized Hats
+
+| Hat                | Role                                                                 | Activation       |
+|--------------------|----------------------------------------------------------------------|------------------|
+| Stakeholder Mapper | Guides identification and relationship mapping of affected parties   | During 1a and 1b |
+| Scope Framer       | Helps articulate boundaries, constraints, and open questions         | During 1b and 1c |
+
+## Artifact Outputs
+
+Outputs stored at `.copilot-tracking/dt/{project-slug}/method-01-scope/`:
+
+* `stakeholder-map.md` captures stakeholder groups, relationships, and influence levels.
+* `scope-boundaries.md` records what is in scope, out of scope, and open questions.
+* `assumptions-log.md` tracks known facts vs assumptions to validate.
+
+## Lo-Fi Quality Enforcement
+
+Method 1 artifacts are explicitly rough:
+
+* Stakeholder maps are bullet lists or simple tables, not polished diagrams.
+* Scope boundaries are conversational, not formal requirements documents.
+* Assumptions are captured as-is, not analyzed or prioritized yet.
+
 ## Frozen vs Fluid Assessment
 
 Every customer engagement begins with classifying the initial request. Classification shapes the entire conversation strategy.
