@@ -52,6 +52,33 @@ Describe 'Write-ConsistencyLog' -Tag 'Unit' {
             { Write-ConsistencyLog -Message 'Default level test' } | Should -Not -Throw
         }
     }
+
+    Context 'CI annotation forwarding' {
+        BeforeAll {
+            Mock Write-CIAnnotation {}
+            Mock Write-Host {}
+        }
+
+        It 'Forwards Warning level to Write-CIAnnotation' {
+            Write-ConsistencyLog -Message 'warn msg' -Level Warning
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Message -eq 'warn msg' -and $Level -eq 'Warning'
+            }
+        }
+
+        It 'Forwards Error level to Write-CIAnnotation' {
+            Write-ConsistencyLog -Message 'err msg' -Level Error
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+                $Message -eq 'err msg' -and $Level -eq 'Error'
+            }
+        }
+
+        It 'Does not forward Info or Success levels to Write-CIAnnotation' {
+            Write-ConsistencyLog -Message 'info msg' -Level Info
+            Write-ConsistencyLog -Message 'success msg' -Level Success
+            Should -Invoke Write-CIAnnotation -Times 0 -Exactly
+        }
+    }
 }
 
 Describe 'Get-ActionVersionViolations' -Tag 'Unit' {
@@ -482,6 +509,191 @@ Describe 'Export-ConsistencyReport' -Tag 'Unit' {
 
             $content = Get-Content $outputFile -Raw | ConvertFrom-Json
             $content.MismatchCount | Should -Be 2
+        }
+    }
+}
+
+Describe 'Invoke-ActionVersionConsistency' -Tag 'Unit' {
+    Context 'CI annotations per violation' {
+        BeforeEach {
+            $script:mockFiles = Initialize-MockCIEnvironment
+        }
+
+        AfterEach {
+            Remove-MockCIFiles -MockFiles $script:mockFiles
+            Restore-CIEnvironment
+        }
+
+        It 'Emits Warning annotation for missing version comment' {
+            $testPath = Join-Path $TestDrive 'annotate-missing'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Warning' -and $null -ne $File } -Times 1 -Exactly
+        }
+
+        It 'Emits Error annotation for version mismatch' {
+            $testPath = Join-Path $TestDrive 'annotate-mismatch'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-a.yml') -Destination $testPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-b.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' } -Times 1 -Exactly
+        }
+
+        It 'Emits no annotations when no violations exist' {
+            $testPath = Join-Path $TestDrive 'annotate-clean'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'consistent-versions.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            Should -Invoke Write-CIAnnotation -Times 0
+        }
+
+        It 'Includes file and line in annotation' {
+            $testPath = Join-Path $TestDrive 'annotate-location'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $File -and $Line -gt 0 }
+        }
+
+        It 'Includes violation type in annotation message' {
+            $testPath = Join-Path $TestDrive 'annotate-message'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Message -match 'MissingVersionComment' }
+        }
+    }
+
+    Context 'CI step summary' {
+        BeforeEach {
+            $script:mockFiles = Initialize-MockCIEnvironment
+        }
+
+        AfterEach {
+            Remove-MockCIFiles -MockFiles $script:mockFiles
+            Restore-CIEnvironment
+        }
+
+        It 'Writes passed status when no violations' {
+            $testPath = Join-Path $TestDrive 'summary-clean'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'consistent-versions.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'Passed'
+        }
+
+        It 'Writes failed status when violations exist' {
+            $testPath = Join-Path $TestDrive 'summary-fail'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'Failed'
+        }
+
+        It 'Includes violation counts in summary table' {
+            $testPath = Join-Path $TestDrive 'summary-counts'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'Missing Comments'
+            $summaryContent | Should -Match 'Version Mismatches'
+        }
+
+        It 'Includes action version consistency heading' {
+            $testPath = Join-Path $TestDrive 'summary-heading'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'consistent-versions.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'Action Version Consistency'
+        }
+
+        It 'Lists individual violation file and action in summary table' {
+            $testPath = Join-Path $TestDrive 'summary-detail'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'actions/checkout'
+            $summaryContent | Should -Match 'MissingVersionComment'
+        }
+
+        It 'Includes violations table header row' {
+            $testPath = Join-Path $TestDrive 'summary-table-header'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match '\| File \| Line \| Type \| Action \| Severity \| Description \|'
+        }
+
+        It 'Lists each violation as a separate row for mixed violation types' {
+            $testPath = Join-Path $TestDrive 'summary-mixed'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-a.yml') -Destination $testPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'version-mismatch-b.yml') -Destination $testPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'missing-version-comment.yml') -Destination $testPath
+
+            Mock Write-CIAnnotation {}
+
+            $null = Invoke-ActionVersionConsistency -Path $testPath -Format Table
+
+            $summaryContent = Get-Content -Path $env:GITHUB_STEP_SUMMARY -Raw
+            $summaryContent | Should -Match 'VersionMismatch'
+            $summaryContent | Should -Match 'MissingVersionComment'
+            # At least 2 data rows (pipe-delimited lines after the header separator)
+            $lines = ($summaryContent -split "`n") | ForEach-Object { $_.TrimEnd("`r") }
+            $dataRows = $lines | Where-Object { $_ -match '^\|.*\|$' -and $_ -notmatch '^\| File' -and $_ -notmatch '^\|[-\s|]+\|$' }
+            $dataRows.Count | Should -BeGreaterOrEqual 2
         }
     }
 }
