@@ -21,10 +21,11 @@ body:
     id: programming-language
     attributes:
       label: Programming Language
-      description: What programming language will this skill's scripts use?
+      description: Primary language for skill logic. All skills require PowerShell scripts for cross-platform support.
       options:
         - PowerShell
         - Python
+        - Other
     validations:
       required: true
   

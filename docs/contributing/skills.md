@@ -310,7 +310,7 @@ Skills may include scripts in any of these supported languages. Each language ha
 
 | Language   | Script Extension | Test Framework | Linter / Analyzer                           | CI Coverage        |
 |------------|------------------|----------------|---------------------------------------------|--------------------|
-| PowerShell | `.ps1`           | Pester 5.x    | PSScriptAnalyzer                            | Full (lint + test) |
+| PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
 | Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Planned            |
 
 ### Requesting New Language Support
