@@ -41,8 +41,6 @@ items:
   kind: agent
 - path: .github/agents/security-plan-creator.agent.md
   kind: agent
-- path: .github/agents/subagents/artifact-validator.agent.md
-  kind: agent
 - path: .github/agents/subagents/implementation-validator.agent.md
   kind: agent
 - path: .github/agents/subagents/phase-implementor.agent.md
@@ -56,6 +54,8 @@ items:
 - path: .github/agents/subagents/prompt-updater.agent.md
   kind: agent
 - path: .github/agents/subagents/researcher-subagent.agent.md
+  kind: agent
+- path: .github/agents/subagents/rpi-validator.agent.md
   kind: agent
 - path: .github/agents/task-implementor.agent.md
   kind: agent
@@ -180,5 +180,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true

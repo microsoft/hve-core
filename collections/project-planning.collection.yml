@@ -40,7 +40,7 @@ items:
   - path: .github/agents/prompt-builder.agent.md
     kind: agent
   # Subagents
-  - path: .github/agents/subagents/artifact-validator.agent.md
+  - path: .github/agents/subagents/rpi-validator.agent.md
     kind: agent
   - path: .github/agents/subagents/implementation-validator.agent.md
     kind: agent

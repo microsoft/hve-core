@@ -22,7 +22,7 @@ copilot plugin install github@hve-core
 | memory | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core |
 | pr-review | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core |
 | prompt-builder | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core |
-| artifact-validator | Validates implementation work against plans, research specs, conventions, and checklists with severity-graded findings - Brought to you by microsoft/hve-core |
+| rpi-validator | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core |
 | implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core |
 | plan-validator | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core |
 | researcher-subagent | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools |
@@ -42,7 +42,7 @@ copilot plugin install github@hve-core
 | rpi | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core |
 | task-research | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core |
 | task-plan | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core |
-| task-implement | Locates and executes implementation plans using task-implementor mode - Brought to you by microsoft/hve-core |
+| task-implement | Locates and executes implementation plans using task-implementor - Brought to you by microsoft/hve-core |
 | task-review | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core |
 | checkpoint | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core |
 | git-commit-message | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch |
