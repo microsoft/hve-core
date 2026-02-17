@@ -563,6 +563,10 @@ function Copy-CollectionArtifacts {
             $destDir = Split-Path $destPath -Parent
             New-Item -Path $destDir -ItemType Directory -Force | Out-Null
             Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
+
+            # Remove co-located test directories from packaged skills
+            Get-ChildItem -Path $destPath -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
+                Remove-Item -Recurse -Force
         }
     }
 }

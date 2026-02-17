@@ -308,6 +308,8 @@ CI reports coverage at an 18% informational baseline; focus on meaningful covera
 | Naming    | `*.Tests.ps1` suffix matching source script name      |
 | Framework | Pester 5.x                                            |
 
+Skill scripts use a different test location. Skill tests are co-located inside each skill directory at `.github/skills/<skill-name>/tests/` rather than mirrored under `scripts/tests/`. See [Skills Guide](./docs/contributing/skills.md#unit-testing-requirements) for details.
+
 Minimal example:
 
 ```powershell

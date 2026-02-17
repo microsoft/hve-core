@@ -17,6 +17,17 @@ body:
     validations:
       required: true
   
+  - type: dropdown
+    id: programming-language
+    attributes:
+      label: Programming Language
+      description: What programming language will this skill's scripts use?
+      options:
+        - PowerShell
+        - Python
+    validations:
+      required: true
+  
   - type: textarea
     id: purpose
     attributes:
