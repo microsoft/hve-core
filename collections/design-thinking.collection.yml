@@ -1,0 +1,92 @@
+id: design-thinking
+name: Design Thinking Coaching
+description: AI-powered Design Thinking coaching system with nine-method curriculum, tiered instruction loading, and DT-to-RPI handoff
+tags:
+  - design-thinking
+  - coaching
+  - methodology
+  - problem-space
+  - solution-space
+  - implementation-space
+items:
+  # Agents
+  # - path: .github/agents/dt-coach.agent.md
+  #   kind: agent
+  # - path: .github/agents/dt-learning-tutor.agent.md
+  #   kind: agent
+  # Prompts
+  # - path: .github/prompts/dt-start-project.prompt.md
+  #   kind: prompt
+  # - path: .github/prompts/dt-resume-coaching.prompt.md
+  #   kind: prompt
+  # - path: .github/prompts/dt-method-next.prompt.md
+  #   kind: prompt
+  # - path: .github/prompts/dt-handoff-problem-space.prompt.md
+  #   kind: prompt
+  # - path: .github/prompts/dt-handoff-solution-space.prompt.md
+  #   kind: prompt
+  # - path: .github/prompts/dt-handoff-implementation-space.prompt.md
+  #   kind: prompt
+  # Ambient-tier instructions
+  - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
+    kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
+  #   kind: instruction
+  # Method-tier instructions (Problem Space)
+  # - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
+  #   kind: instruction
+  # Method-tier instructions (Solution Space)
+  # - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
+  #   kind: instruction
+  # Method-tier instructions (Implementation Space)
+  # - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
+  #   kind: instruction
+  # On-demand deep instructions
+  # - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-04-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-05-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-06-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-method-09-deep.instructions.md
+  #   kind: instruction
+  # Handoff and integration instructions
+  # - path: .github/instructions/design-thinking/dt-handoff-contract.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-image-prompts.instructions.md
+  #   kind: instruction
+  # Industry context templates
+  # - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
+  #   kind: instruction
+  # - path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
+  #   kind: instruction
+display:
+  ordering: manual
