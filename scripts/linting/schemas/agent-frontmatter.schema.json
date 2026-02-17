@@ -2,9 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/hve-core/schemas/agent-frontmatter.schema.json",
   "title": "Agent File Frontmatter Schema",
-  "description": "Frontmatter schema for .agent.md files in VS Code custom agents",
+  "description": "Frontmatter schema for .agent.md files per VS Code custom agent specification",
   "type": "object",
-  "required": ["description"],
+  "required": [
+    "description"
+  ],
   "properties": {
     "description": {
       "type": "string",
@@ -24,15 +26,47 @@
       "items": {
         "type": "string"
       },
-      "description": "A list of tool or tool set names that are available for this custom agent. Can include built-in tools, tool sets, MCP tools, or tools contributed by extensions"
+      "description": "A list of tool or tool set names available for this custom agent. Can include built-in tools, tool sets, MCP tools, or tools contributed by extensions"
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "A list of agent names available as subagents. Use * to allow all agents, or an empty array [] to prevent subagent use"
     },
     "model": {
-      "type": "string",
-      "description": "The AI model to use when running the prompt. If not specified, the currently selected model in model picker is used"
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "description": "The AI model to use. Specify a single model name or a prioritized list of models. If not specified, the currently selected model is used"
+    },
+    "user-invocable": {
+      "type": "boolean",
+      "description": "Controls whether the agent appears in the agents dropdown (default is true). Set to false for subagent-only agents"
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "description": "Prevents the agent from being invoked as a subagent by other agents (default is false)"
+    },
+    "infer": {
+      "type": "boolean",
+      "description": "Deprecated. Use user-invocable and disable-model-invocation instead"
     },
     "target": {
       "type": "string",
-      "enum": ["vscode", "github-copilot"],
+      "enum": [
+        "vscode",
+        "github-copilot"
+      ],
       "description": "The target environment or context for the custom agent"
     },
     "mcp-servers": {
@@ -46,7 +80,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "agent", "prompt"],
+        "required": [
+          "label",
+          "agent"
+        ],
         "properties": {
           "label": {
             "type": "string",
@@ -63,11 +100,15 @@
           "send": {
             "type": "boolean",
             "description": "Optional boolean flag to auto-submit the prompt (default is false)"
+          },
+          "model": {
+            "type": "string",
+            "description": "Optional language model override for handoff execution"
           }
         }
       },
-      "description": "Optional list of suggested next actions or prompts to transition between custom agents. Handoff buttons appear as interactive suggestions after a chat response completes"
+      "description": "Optional list of suggested next actions or prompts to transition between custom agents"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }
