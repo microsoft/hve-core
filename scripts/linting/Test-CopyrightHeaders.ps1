@@ -95,7 +95,6 @@ function Test-FileHeaders {
 
     $result = @{
         file = $FilePath -replace [regex]::Escape($Path), '' -replace '^[\\/]', ''
-        fullPath = $FilePath
         hasCopyright = $false
         hasSpdx = $false
         valid = $false
@@ -263,7 +262,7 @@ function Invoke-CopyrightHeaderCheck {
             $m = @()
             if (-not $_.hasCopyright) { $m += 'copyright' }
             if (-not $_.hasSpdx) { $m += 'SPDX' }
-            "| ``$($_.fullPath)`` | $($m -join ', ') |"
+            "| ``$($_.file)`` | $($m -join ', ') |"
         }) -join "`n"
 
         Write-CIStepSummary -Content @"

@@ -349,7 +349,8 @@ Write-Host "Missing SPDX"
         Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-spdx-only.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann-spdx.json')
 
         Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
-            $Message -like '*SPDX*' -and $Level -eq 'Warning'
+            $Message -like '*SPDX*' -and $Level -eq 'Warning' -and
+            $File -eq ([System.IO.Path]::GetFullPath((Join-Path $script:FixturesPath 'ci-spdx-only.ps1')))
         }
     }
 
