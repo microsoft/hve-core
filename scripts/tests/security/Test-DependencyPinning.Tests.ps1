@@ -883,14 +883,14 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         It 'emits per-violation detail line' {
             Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
             Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*⚠️*' -and $Object -like '*a/b*'
+                $Object -like '*❌*' -and $Object -like '*a/b*'
             }
         }
 
-        It 'emits Write-CIAnnotation with Warning level per violation' {
+        It 'emits Write-CIAnnotation with Error level for High severity violation' {
             Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
             Should -Invoke Write-CIAnnotation -ParameterFilter {
-                $Level -eq 'Warning' -and $File -eq 'f.yml' -and $Line -eq 1
+                $Level -eq 'Error' -and $File -eq 'f.yml' -and $Line -eq 1
             }
         }
     }
