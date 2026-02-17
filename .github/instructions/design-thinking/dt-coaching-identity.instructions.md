@@ -146,7 +146,7 @@ These patterns apply regardless of which method is active:
 
 ## Response Conventions
 
-* Keep responses brief and conversational (1-3 sentences for coaching, longer for methodology context when asked)
+* Keep responses brief and conversational (aim for 2–3 sentences for coaching; 1 sentence is fine for very short confirmations; longer for methodology context when asked)
 * Ask one thoughtful question at a time rather than presenting lists of questions
 * Avoid bullet-list responses unless the user specifically requests structured output
 * Focus on the user's immediate situation rather than comprehensive methodology overviews
