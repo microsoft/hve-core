@@ -101,7 +101,7 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 
 ### Optional Fields
 
-**`user-invokable`** (boolean, optional)
+**`user-invocable`** (boolean, optional)
 
 * **Purpose**: Controls visibility in the VS Code slash command menu
 * **Default**: `true`
@@ -126,7 +126,7 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 
 ### Invocation Control Matrix
 
-| `user-invokable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method           |
+| `user-invocable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method           |
 |------------------|----------------------------|----------|------------------|-----------------------------|
 | `true` (default) | `false` (default)          | Yes      | Yes              | Automatic + manual          |
 | `true`           | `true`                     | Yes      | No               | Manual `/skill-name` only   |
@@ -139,7 +139,7 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 ---
 name: pr-reference
 description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
 ---
@@ -374,7 +374,7 @@ Before submitting your skill, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `name` field present and matches directory name
 * [ ] `description` field present and descriptive
-* [ ] Optional: `user-invokable` set appropriately (default `true` works for most skills)
+* [ ] Optional: `user-invocable` set appropriately (default `true` works for most skills)
 * [ ] Optional: `disable-model-invocation` set appropriately (default `false` works for most skills)
 * [ ] Optional: `argument-hint` provides useful input guidance if set
 

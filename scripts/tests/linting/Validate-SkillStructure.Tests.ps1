@@ -67,6 +67,7 @@ AfterAll {
     }
     Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
     Remove-Module GitMocks -Force -ErrorAction SilentlyContinue
+    Remove-Module LintingHelpers -Force -ErrorAction SilentlyContinue
 }
 
 #region Get-SkillFrontmatter Tests
@@ -133,7 +134,7 @@ description: "A skill with double quotes"
 ---
 name: advanced-skill
 description: An advanced skill
-user-invokable: true
+user-invocable: true
 argument-hint: provide a URL
 ---
 
@@ -146,7 +147,7 @@ argument-hint: provide a URL
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'advanced-skill'
             $result['description'] | Should -BeExactly 'An advanced skill'
-            $result['user-invokable'] | Should -BeExactly 'true'
+            $result['user-invocable'] | Should -BeExactly 'true'
             $result['argument-hint'] | Should -BeExactly 'provide a URL'
         }
 
@@ -155,7 +156,7 @@ argument-hint: provide a URL
 ---
 name: bool-skill
 description: Skill with booleans
-user-invokable: false
+user-invocable: false
 ---
 
 # Bool Skill
@@ -165,8 +166,8 @@ user-invokable: false
 
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
-            $result['user-invokable'] | Should -BeOfType [string]
-            $result['user-invokable'] | Should -BeExactly 'false'
+            $result['user-invocable'] | Should -BeOfType [string]
+            $result['user-invocable'] | Should -BeExactly 'false'
         }
 
     }

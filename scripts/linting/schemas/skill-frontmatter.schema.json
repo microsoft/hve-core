@@ -22,7 +22,7 @@
       "maxLength": 1024,
       "description": "Brief description of the skill"
     },
-    "user-invokable": {
+    "user-invocable": {
       "type": "boolean",
       "default": true,
       "description": "Controls visibility in the VS Code slash command menu. When true, the skill appears in the / menu for manual invocation."
