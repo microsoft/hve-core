@@ -118,7 +118,3 @@ The coaching session is complete when:
 * Description clearly states who benefits and why
 * Acceptance criteria are binary, testable, and cover the definition of done
 * The user has a copy-paste ready story for their tracking tool
-
----
-
-Brought to you by microsoft/hve-core
