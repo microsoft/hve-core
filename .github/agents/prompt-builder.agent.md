@@ -77,7 +77,7 @@ Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools, pr
 * Run number for the current iteration.
 * Sandbox folder path.
 * Purpose, requirements, and expectations from the user's request.
-* Prior sandbox run paths when iterating on a previous baseline.
+* Prior sandbox run paths when iterating on a previous evaluation.
 
 The prompt-tester returns execution findings: sandbox folder path, execution log path, execution status, key observations from literal execution, and any clarifying questions.
 
@@ -91,7 +91,7 @@ Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools,
 * Target prompt file path(s).
 * Run number matching the prompt-tester run.
 * Sandbox folder path containing the *execution-log.md* from Step 1.
-* Prior evaluation log paths when iterating on a previous baseline.
+* Prior evaluation log paths when iterating on a previous evaluation.
 
 The prompt-evaluator returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.
 

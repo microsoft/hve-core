@@ -56,13 +56,13 @@ Subagents can run in parallel when investigating independent topics or executing
 
 ## Required Artifacts
 
-| Artifact               | Path Pattern                                                        | Required |
-|------------------------|---------------------------------------------------------------------|----------|
-| Implementation Plan    | `.copilot-tracking/plans/<date>-<description>-plan.instructions.md` | Yes      |
-| Implementation Details | `.copilot-tracking/details/<date>-<description>-details.md`         | Yes      |
-| Research               | `.copilot-tracking/research/<date>/<description>-research.md`       | No       |
-| Planning Log           | `.copilot-tracking/plans/logs/<date>/<description>-log.md`          | No       |
-| Changes Log            | `.copilot-tracking/changes/<date>-<description>-changes.md`         | Yes      |
+| Artifact               | Path Pattern                                                         | Required |
+|------------------------|----------------------------------------------------------------------|----------|
+| Implementation Plan    | `.copilot-tracking/plans/<date>/<description>-plan.instructions.md`  | Yes      |
+| Implementation Details | `.copilot-tracking/details/<date>/<description>-details.md`          | Yes      |
+| Research               | `.copilot-tracking/research/<date>/<description>-research.md`        | No       |
+| Planning Log           | `.copilot-tracking/plans/logs/<date>/<description>-log.md`           | No       |
+| Changes Log            | `.copilot-tracking/changes/<date>/<description>-changes.md`          | Yes      |
 
 ## Required Phases
 
@@ -73,11 +73,12 @@ Read the implementation plan to catalog all phases, their dependencies, and exec
 #### Pre-requisite: Identify Implementation Plan
 
 1. Identify the implementation plan from the user's request, attached files, or the most recent plan file in `.copilot-tracking/plans/`.
-2. Derive related artifact paths using the shared `{{YYYY-MM-DD}}-{{task-description}}` prefix from the plan filename:
-   * Implementation details: `.copilot-tracking/details/{{YYYY-MM-DD}}-{{task-description}}-details.md`
+2. Derive related artifact paths by extracting the date (`{{YYYY-MM-DD}}`) from the plan file's parent directory and the task description (`{{task-description}}`) from the plan filename (minus the `-plan.instructions.md` suffix):
+   * Implementation plan: `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task-description}}-plan.instructions.md`
+   * Implementation details: `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task-description}}-details.md`
    * Research document: `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task-description}}-research.md`
    * Planning log: `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task-description}}-log.md`
-   * Changes log: `.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task-description}}-changes.md`
+   * Changes log: `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task-description}}-changes.md`
 3. Verify the implementation plan and details files exist. Inform the user and halt when required artifacts are missing.
 4. Create the changes log using the Changes Log Format when it does not exist.
 
@@ -208,7 +209,7 @@ When implementation completes or pauses, provide the structured handoff:
 
 Review the implementation results:
 
-1. Review [changes log](.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task}}-changes.md) for all modifications.
+1. Review [changes log](.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task}}-changes.md) for all modifications.
 2. Review [planning log](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md) for discrepancies and follow-on work.
 3. Choose your next action:
    * Plan additional work by typing `/task-plan`.
@@ -224,7 +225,7 @@ When resuming implementation work, assess existing artifacts in `.copilot-tracki
 
 Keep the changes file chronological. Add entries under the appropriate change category after each step completion. Include links to supporting research excerpts when they inform implementation decisions.
 
-Changes file naming: `{{YYYY-MM-DD}}-{{task-description}}-changes.md` in `.copilot-tracking/changes/`. Begin each file with `<!-- markdownlint-disable-file -->`.
+Changes file naming: `{{task-description}}-changes.md` in `.copilot-tracking/changes/{{YYYY-MM-DD}}/`. Begin each file with `<!-- markdownlint-disable-file -->`.
 
 Changes file structure:
 

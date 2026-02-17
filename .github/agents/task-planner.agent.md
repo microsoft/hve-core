@@ -60,8 +60,8 @@ Subagents can run in parallel when investigating independent topics or validatin
 
 Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
 
-* `.copilot-tracking/plans/` - Implementation plans (`{{YYYY-MM-DD}}-task-description-plan.instructions.md`)
-* `.copilot-tracking/details/` - Implementation details (`{{YYYY-MM-DD}}-task-description-details.md`)
+* `.copilot-tracking/plans/` - Implementation plans (`{{YYYY-MM-DD}}/task-description-plan.instructions.md`)
+* `.copilot-tracking/details/` - Implementation details (`{{YYYY-MM-DD}}/task-description-details.md`)
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/` - Primary research documents (`task-description-research.md`)
 * `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/` - Planning logs (`{{task-description}}-log.md`)
 * `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` - Subagent research outputs (`topic-research.md`)
@@ -253,7 +253,7 @@ Present the completion using the Response Format and Planning Completion pattern
 
 ### Implementation Plan File
 
-Stored in `.copilot-tracking/plans/` with `-plan.instructions.md` suffix.
+Stored in `.copilot-tracking/plans/{{YYYY-MM-DD}}/` with `-plan.instructions.md` suffix.
 
 Contents:
 
@@ -268,7 +268,7 @@ Contents:
 
 ### Implementation Details File
 
-Stored in `.copilot-tracking/details/` with `-details.md` suffix.
+Stored in `.copilot-tracking/details/{{YYYY-MM-DD}}/` with `-details.md` suffix.
 
 Contents:
 
@@ -287,7 +287,7 @@ Templates use `{{relative_path}}` as `../..` for file references.
 
 ```markdown
 ---
-applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task_description}}-changes.md'
+applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.md'
 ---
 <!-- markdownlint-disable-file -->
 # Implementation Plan: {{task_name}}
@@ -328,9 +328,9 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task_description}}-changes.
 <!-- parallelizable: true -->
 
 * [ ] Step 1.1: {{specific_action_1_1}}
-  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
+  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
 * [ ] Step 1.2: {{specific_action_1_2}}
-  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
+  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
 * [ ] Step 1.3: Validate phase changes
   * Run lint and build commands for modified files
   * Skip if validation conflicts with parallel phases
@@ -340,7 +340,7 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}-{{task_description}}-changes.
 <!-- parallelizable: {{true_or_false}} -->
 
 * [ ] Step 2.1: {{specific_action_2_1}}
-  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}-{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
+  * Details: .copilot-tracking/details/{{YYYY-MM-DD}}/{{task_description}}-details.md (Lines {{line_start}}-{{line_end}})
 
 ### [ ] Implementation Phase N: Validation
 
@@ -565,8 +565,8 @@ Planning files meet these standards:
 
 ## Naming Conventions
 
-* Implementation plans: `{{YYYY-MM-DD}}-task-description-plan.instructions.md` in `.copilot-tracking/plans/`
-* Implementation details: `{{YYYY-MM-DD}}-task-description-details.md` in `.copilot-tracking/details/`
+* Implementation plans: `task-description-plan.instructions.md` in `.copilot-tracking/plans/{{YYYY-MM-DD}}/`
+* Implementation details: `task-description-details.md` in `.copilot-tracking/details/{{YYYY-MM-DD}}/`
 * Planning logs: `{{task-description}}-log.md` in `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/`
 * Research documents: `task-description-research.md` in `.copilot-tracking/research/{{YYYY-MM-DD}}/`
 * Use current date; retain existing date when extending a file.
@@ -621,7 +621,7 @@ When planning files are complete, provide the structured handoff:
 ### ⚡ Ready for Implementation
 
 1. Clear your context by typing `/clear`.
-2. Attach or open [{{YYYY-MM-DD}}-{{task}}-plan.instructions.md](.copilot-tracking/plans/{{YYYY-MM-DD}}-{{task}}-plan.instructions.md).
+2. Attach or open [{{task}}-plan.instructions.md](.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task}}-plan.instructions.md).
 3. Review the [Planning Log](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md) for discrepancies and implementation path context.
 4. Start implementation by typing `/task-implement`.
 
