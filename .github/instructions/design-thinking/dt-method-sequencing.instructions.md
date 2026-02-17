@@ -39,6 +39,17 @@ Build, validate, and optimize working solutions.
 
 Transitions between spaces represent coaching decision points where the work mode shifts fundamentally. The coach announces these transitions explicitly and uses readiness checks to highlight risks and options, then proceeds based on an informed team choice.
 
+### Transition Protocol
+
+Follow this sequence at every method boundary, whether within a space or across spaces:
+
+1. Summarize the current method's outputs and key findings.
+2. Assess completion signals for the current method against readiness indicators.
+3. Present the team with forward, backward, and lateral options, highlighting any gaps or risks.
+4. Update the coaching state file with the new method, space, and transition rationale.
+
+Space-boundary transitions carry higher stakes and warrant more thorough assessment than within-space transitions.
+
 ### Problem Space to Solution Space (after Method 3)
 
 This is the most critical transition. Moving to solutions without validated problem understanding produces solutions to the wrong problem.
@@ -102,6 +113,20 @@ When a user engages the DT coach, determine the appropriate method through asses
 2. Check the coaching state file for current method and progress markers.
 3. If no state exists, start with Method 1 (Scope Conversations) unless the user demonstrates completed prior work.
 4. If state exists, resume from the recorded method and step.
+
+### Coaching State Schema
+
+The coaching state file tracks progress across sessions. Store it alongside DT tracking artifacts and update it at every method transition.
+
+Required fields:
+
+* `current_method`: integer 1-9 indicating the active method.
+* `dt_space`: one of `problem`, `solution`, or `implementation`.
+* `methods_completed`: list of method numbers the team has finished.
+* `current_phase`: free-text label for the step within the current method (e.g., "interview planning", "theme clustering").
+* `transition_log`: list of entries recording each transition with the source method, target method, rationale, and date.
+
+The coach updates the state file whenever the team moves forward, backward, or laterally between methods.
 
 ### Routing Signals
 
