@@ -292,6 +292,178 @@ Write-Host "No headers"
 
 #endregion
 
+#region CI Annotation Tests
+
+Describe 'Test-CopyrightHeaders CI Annotations' -Tag 'Unit' {
+    BeforeAll {
+        if (-not (Test-Path $script:FixturesPath)) {
+            New-Item -ItemType Directory -Path $script:FixturesPath -Force | Out-Null
+        }
+    }
+
+    BeforeEach {
+        Mock Write-CIAnnotation {}
+        Mock Write-CIStepSummary {}
+    }
+
+    It 'Calls Write-CIAnnotation for each failing file' {
+        $missingBoth = @"
+#!/usr/bin/env pwsh
+Write-Host "No headers"
+"@
+        $missingSpdx = @"
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+Write-Host "Missing SPDX"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-missing1.ps1') -Value $missingBoth
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-missing2.ps1') -Value $missingSpdx
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-missing1.ps1', 'ci-missing2.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann.json')
+
+        Should -Invoke Write-CIAnnotation -Times 2 -Exactly
+    }
+
+    It 'Does not call Write-CIAnnotation for passing files' {
+        $valid = @"
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+Write-Host "Valid"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-valid.ps1') -Value $valid
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-valid.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann-valid.json')
+
+        Should -Invoke Write-CIAnnotation -Times 0 -Exactly
+    }
+
+    It 'Annotation message includes missing header types' {
+        $missingSpdx = @"
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+Write-Host "Missing SPDX"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-spdx-only.ps1') -Value $missingSpdx
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-spdx-only.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann-spdx.json')
+
+        Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+            $Message -like '*SPDX*' -and $Level -eq 'Warning' -and
+            $File -eq ([System.IO.Path]::GetFullPath((Join-Path $script:FixturesPath 'ci-spdx-only.ps1')))
+        }
+    }
+
+    It 'Annotation message lists both header types when both missing' {
+        $missingBoth = @"
+#!/usr/bin/env pwsh
+Write-Host "No headers"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-both-missing.ps1') -Value $missingBoth
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-both-missing.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann-both.json')
+
+        Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+            $Message -like '*copyright*' -and $Message -like '*SPDX*' -and $Level -eq 'Warning'
+        }
+    }
+
+    It 'Annotation uses Warning level' {
+        $missing = @"
+#!/usr/bin/env pwsh
+Write-Host "No headers"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-warn.ps1') -Value $missing
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-warn.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-ann-warn.json')
+
+        Should -Invoke Write-CIAnnotation -Times 1 -Exactly -ParameterFilter {
+            $Level -eq 'Warning' -and $Line -eq 1
+        }
+    }
+}
+
+#endregion
+
+#region CI Step Summary Tests
+
+Describe 'Test-CopyrightHeaders Step Summary' -Tag 'Unit' {
+    BeforeAll {
+        if (-not (Test-Path $script:FixturesPath)) {
+            New-Item -ItemType Directory -Path $script:FixturesPath -Force | Out-Null
+        }
+    }
+
+    BeforeEach {
+        Mock Write-CIAnnotation {}
+        Mock Write-CIStepSummary {}
+    }
+
+    It 'Calls Write-CIStepSummary when all files pass' {
+        $valid = @"
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+Write-Host "Valid"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-sum-valid.ps1') -Value $valid
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-sum-valid.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-sum-valid.json')
+
+        Should -Invoke Write-CIStepSummary -Times 2 -Exactly
+        Should -Invoke Write-CIStepSummary -Times 1 -Exactly -ParameterFilter {
+            $Content -like '*Passed*'
+        }
+    }
+
+    It 'Calls Write-CIStepSummary with failure table when files fail' {
+        $missing = @"
+#!/usr/bin/env pwsh
+Write-Host "No headers"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-sum-fail.ps1') -Value $missing
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-sum-fail.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-sum-fail.json')
+
+        Should -Invoke Write-CIStepSummary -Times 2 -Exactly
+        Should -Invoke Write-CIStepSummary -Times 1 -Exactly -ParameterFilter {
+            $Content -like '*Failed*' -and $Content -like '*Missing Headers*'
+        }
+    }
+
+    It 'Summary contains compliance metrics' {
+        $missing = @"
+#!/usr/bin/env pwsh
+Write-Host "No headers"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-sum-metrics.ps1') -Value $missing
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-sum-metrics.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-sum-metrics.json')
+
+        Should -Invoke Write-CIStepSummary -Times 1 -Exactly -ParameterFilter {
+            $Content -like '*Total Files*' -and $Content -like '*Compliance*'
+        }
+    }
+
+    It 'Summary header always emitted' {
+        $valid = @"
+#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+Write-Host "Valid"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'ci-sum-header.ps1') -Value $valid
+
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('ci-sum-header.ps1') -OutputPath (Join-Path $script:FixturesPath 'ci-sum-header.json')
+
+        Should -Invoke Write-CIStepSummary -Times 1 -Exactly -ParameterFilter {
+            $Content -like '*Copyright Header Validation*'
+        }
+    }
+}
+
+#endregion
+
 #region Output Format Tests
 
 Describe 'Test-CopyrightHeaders Output Format' -Tag 'Unit' {
