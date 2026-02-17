@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -11,6 +11,11 @@ BeforeAll {
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
     $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+
+    # CI helper mocks — suppress console output and enable assertions
+    Mock Write-Host {}
+    Mock Write-CIAnnotation {}
+    Mock Write-CIStepSummary {}
 }
 
 Describe 'Test-SHAPinning' -Tag 'Unit' {
@@ -793,6 +798,20 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         It 'Logs success message without throwing' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: } | Should -Not -Throw
         }
+
+        It 'emits success Write-Host message when no violations' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*✅*' -and $Object -like '*SHA-pinned*'
+            }
+        }
+
+        It 'does not emit Write-CIAnnotation warnings when no violations' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+            Should -Not -Invoke Write-CIAnnotation -ParameterFilter {
+                $Level -eq 'Warning'
+            }
+        }
     }
 
     Context 'Violations below threshold with -FailOnUnpinned' {
@@ -821,6 +840,58 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
         It 'Does not throw in soft-fail mode' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
+        }
+    }
+
+    Context 'CI output for violations in soft-fail mode' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.CurrentRef = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 50.0
+                    TotalDependencies    = 2
+                    UnpinnedDependencies = 1
+                    Violations           = @()
+                }
+            }
+            Mock Export-ComplianceReport {}
+            Mock Export-CICDArtifact {}
+        }
+
+        It 'emits summary header with violation count' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*unpinned*'
+            }
+        }
+
+        It 'emits file header with file icon' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*📄*'
+            }
+        }
+
+        It 'emits per-violation detail line' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*⚠️*' -and $Object -like '*a/b*'
+            }
+        }
+
+        It 'emits Write-CIAnnotation with Warning level per violation' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-CIAnnotation -ParameterFilter {
+                $Level -eq 'Warning' -and $File -eq 'f.yml' -and $Line -eq 1
+            }
         }
     }
 
