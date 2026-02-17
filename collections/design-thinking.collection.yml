@@ -1,0 +1,14 @@
+id: design-thinking
+name: Design Thinking
+description: Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
+tags:
+  - design-thinking
+  - coaching
+  - methodology
+  - ux
+items:
+  # Instructions
+  - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
+    kind: instruction
+display:
+  ordering: alpha
