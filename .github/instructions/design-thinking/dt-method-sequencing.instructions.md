@@ -11,6 +11,18 @@ Use this guidance to navigate how the DT coach moves between the nine Design Thi
 
 The Design Thinking process follows nine methods organized into three spaces. Methods within a space build on each other sequentially. Space transitions represent significant shifts in work mode and output expectations.
 
+| Space          | # | Method              |
+|----------------|---|---------------------|
+| Problem        | 1 | Scope Conversations |
+| Problem        | 2 | Design Research     |
+| Problem        | 3 | Input Synthesis     |
+| Solution       | 4 | Brainstorming       |
+| Solution       | 5 | User Concepts       |
+| Solution       | 6 | Lo-Fi Prototypes    |
+| Implementation | 7 | Hi-Fi Prototypes    |
+| Implementation | 8 | User Testing        |
+| Implementation | 9 | Iteration at Scale  |
+
 ### Problem Space (Methods 1-3)
 
 Discover and validate the real problem before generating solutions.
