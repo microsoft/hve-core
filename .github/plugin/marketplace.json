@@ -28,6 +28,12 @@
       "version": "2.3.10"
     },
     {
+      "name": "design-thinking",
+      "source": "./plugins/design-thinking",
+      "description": "AI-powered Design Thinking coaching system with nine-method curriculum, tiered instruction loading, and DT-to-RPI handoff",
+      "version": "2.3.10"
+    },
+    {
       "name": "github",
       "source": "./plugins/github",
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
