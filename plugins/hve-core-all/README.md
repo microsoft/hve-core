@@ -30,14 +30,15 @@ copilot plugin install hve-core-all@hve-core
 | prompt-builder | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core |
 | rpi-agent | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core |
 | security-plan-creator | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core |
-| artifact-validator | Validates implementation work against plans, research specs, conventions, and checklists with severity-graded findings |
-| phase-implementor | Executes a single implementation phase from a plan with full codebase access and change tracking |
-| plan-validator | Validates implementation plans against research documents for completeness and accuracy - Brought to you by microsoft/hve-core |
+| artifact-validator | Validates implementation work against plans, research specs, conventions, and checklists with severity-graded findings - Brought to you by microsoft/hve-core |
+| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core |
+| phase-implementor | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core |
+| plan-validator | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core |
 | prompt-evaluator | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance |
 | prompt-tester | Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value |
 | prompt-updater | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research |
 | researcher-subagent | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools |
-| task-implementor | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records |
+| task-implementor | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core |
 | task-planner | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core |
 | task-researcher | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core |
 | task-reviewer | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core |

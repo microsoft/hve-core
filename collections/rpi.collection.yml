@@ -34,6 +34,8 @@ items:
   # Subagents
   - path: .github/agents/subagents/artifact-validator.agent.md
     kind: agent
+  - path: .github/agents/subagents/implementation-validator.agent.md
+    kind: agent
   - path: .github/agents/subagents/plan-validator.agent.md
     kind: agent
   - path: .github/agents/subagents/researcher-subagent.agent.md
