@@ -54,8 +54,9 @@ All skill files **MUST** be placed in:
 ```text
 .github/skills/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
-├── convert.sh                  # Bash script (required for cross-platform)
-├── convert.ps1                 # PowerShell script (required for cross-platform)
+├── scripts/
+│   ├── convert.ps1             # PowerShell script (required for cross-platform)
+│   └── convert.sh              # Bash script (required for cross-platform)
 ├── examples/
 │   └── README.md               # Usage examples (recommended)
 └── tests/
@@ -280,7 +281,7 @@ PowerShell skill scripts require Pester 5.x tests:
 
 * Use `.Tests.ps1` suffix matching the source script name
 * Follow the same conventions as `scripts/tests/` (see [Testing Architecture](../architecture/testing.md))
-* Pester configuration at `scripts/tests/pester.config.ps1` automatically discovers skill test files for coverage
+* Pester configuration is defined at `scripts/tests/pester.config.ps1`; co-located skill tests run when their `tests/` directories are included in the Pester run paths (for example via CI or explicit test invocation)
 
 Minimal example:
 
@@ -310,6 +311,7 @@ Skills may include scripts in any of these supported languages. Each language ha
 
 | Language   | Script Extension | Test Framework | Linter / Analyzer                           | CI Coverage        |
 |------------|------------------|----------------|---------------------------------------------|--------------------|
+| Bash       | `.sh`            | N/A            | shellcheck                                  | Lint only          |
 | PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
 | Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Planned            |
 

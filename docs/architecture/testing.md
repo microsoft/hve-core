@@ -177,15 +177,16 @@ Skill scripts use a co-located test pattern instead of the mirror directory stru
 
 ```text
 .github/skills/<skill-name>/
-├── convert.ps1
-├── convert.sh
+├── scripts/
+│   ├── convert.ps1
+│   └── convert.sh
 └── tests/
     └── convert.Tests.ps1
 ```
 
 ### Coverage Integration
 
-The Pester configuration at `scripts/tests/pester.config.ps1` resolves skill scripts from the repository root for code coverage analysis. Skill test files are discovered automatically through the `.Tests.ps1` extension convention.
+The Pester configuration at `scripts/tests/pester.config.ps1` resolves skill scripts from the repository root for code coverage analysis. When you include a skill `tests/` directory in an `Invoke-Pester -Path` argument or test run configuration, Pester discovers the skill test files through the `.Tests.ps1` naming convention.
 
 Coverage path resolution for skills uses the repository root rather than `$scriptRoot` (which points to `scripts/`):
 
