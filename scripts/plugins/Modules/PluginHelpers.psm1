@@ -793,7 +793,25 @@ function New-RelativeSymlink {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    # Remove existing item at destination to avoid conflicts
+    if (Test-Path -Path $DestinationPath) {
+        Remove-Item -Path $DestinationPath -Force -Recurse | Out-Null
+    }
+
+    try {
+        New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    }
+    catch {
+        # Symlink creation requires admin privileges or Developer Mode on Windows.
+        # Fall back to copying the source file or directory.
+        Write-Verbose "Symlink creation failed; falling back to copy for $DestinationPath"
+        if (Test-Path -Path $SourcePath -PathType Container) {
+            Copy-Item -Path $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
+        }
+        else {
+            Copy-Item -Path $SourcePath -Destination $DestinationPath -Force | Out-Null
+        }
+    }
 }
 
 function Write-PluginDirectory {
