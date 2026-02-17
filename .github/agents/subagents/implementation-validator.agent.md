@@ -43,7 +43,9 @@ Path defaults to `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task}}-impl-va
 Create and update this log progressively documenting:
 
 * Validation scope and current status.
+* Exploration notes from initial orientation.
 * Findings organized by category with sequential IV-NNN IDs.
+* Holistic assessment narrative (`full-quality` scope only).
 * Summary counts by severity.
 
 ### Finding Structure
@@ -54,11 +56,11 @@ Each finding includes these elements regardless of category:
 * A category tag indicating the validation domain (such as Architecture, Design, DRY, API, Version, Refactoring, Error Handling, Test Coverage, Security, or General).
 * Severity level: Critical, Major, or Minor.
 * Description of the issue.
-* Evidence with file path and line references.
+* Evidence with file path(s) and line references.
 * Impact on the codebase.
 * Recommendation for resolution.
 
-Findings that span multiple categories note all relevant categories. Follow the entry format established by existing entries in the log, or by the Finding Examples in this section for new logs.
+Findings that span multiple categories use comma-separated category tags (such as Design, DRY). Follow the entry format established by existing entries in the log, or by the Finding Examples in this section for new logs.
 
 ### Validation Categories
 
@@ -103,7 +105,7 @@ These examples illustrate the expected depth and specificity of findings:
 
 1. Determine the assigned validation scope.
 2. Create the implementation validation log with initial metadata if it does not exist. Use the provided path or derive from date and task name.
-3. Load the changed files list and read each changed file in full.
+3. Load the changed files list and read each changed file in full. When a changed file cannot be read, log the file path as inaccessible in the validation log and continue with remaining files.
 4. Read architecture references, instruction files, and research documents when provided.
 5. When a required input is missing for the assigned scope, skip that scope and report as Blocked.
 6. When a scope value is not recognized, report as Blocked with a note identifying the unrecognized value.
@@ -116,7 +118,7 @@ Before applying validation criteria, build a working understanding of the implem
 1. Identify the structure and organization of changed files: modules, namespaces, class hierarchies, and dependencies.
 2. Note the patterns and conventions the implementation follows, such as naming, error handling approaches, dependency management, and configuration patterns.
 3. Search the surrounding codebase for related files, existing utilities, and established patterns that the changed files should align with.
-4. Record initial observations and areas of concern in the validation log. These observations guide deeper investigation during validation.
+4. Record initial observations and areas of concern in the validation log under an Exploration Notes section. These observations guide deeper investigation during validation and transform into formal findings during Step 2.
 
 ### Step 2: Execute Validation
 
@@ -162,7 +164,7 @@ Examine whether user-controlled input flows through validation or sanitization b
 
 #### Full Quality Review (`full-quality`)
 
-Execute all validation categories above, then perform a holistic assessment of the implementation. Beyond individual category findings, evaluate emergent qualities: overall cohesion, consistency of coding style across changed files, fitness for purpose, and operational readiness. Identify compound issues where findings from multiple categories interact or amplify each other.
+Execute all validation categories above, then perform a holistic assessment of the implementation. Beyond individual category findings, evaluate emergent qualities: overall cohesion, consistency of coding style across changed files, fitness for purpose, and operational readiness. Identify compound issues where findings from multiple categories interact or amplify each other. Record the holistic assessment as a narrative Holistic Assessment section in the validation log, separate from the categorized IV-NNN findings.
 
 #### Beyond Predefined Categories
 
@@ -170,7 +172,7 @@ During any validation scope, note issues that fall outside predefined categories
 
 ### Step 3: Compile and Finalize Findings
 
-1. Organize findings by category and severity in the validation log.
+1. Organize findings by category in the validation log, ordering by severity within each category (Critical first).
 2. Number findings sequentially (IV-001, IV-002, and so on) and tag each with its category.
 3. Update summary counts in the validation log.
 4. Identify areas needing additional investigation.

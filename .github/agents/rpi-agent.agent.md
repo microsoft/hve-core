@@ -3,10 +3,11 @@ description: 'Autonomous RPI orchestrator running specialized subagents through 
 argument-hint: 'Autonomous RPI agent. Requires a subagent tool.'
 disable-model-invocation: true
 agents:
-  - codebase-researcher
-  - external-researcher
+  - researcher-subagent
+  - plan-validator
   - phase-implementor
-  - artifact-validator
+  - rpi-validator
+  - implementation-validator
 handoffs:
   - label: "1️⃣"
     agent: rpi-agent
@@ -198,29 +199,21 @@ Proceed to Phase 4 when implementation is complete.
 
 Orchestrate review by running validation subagents directly, then running `task-reviewer` to compile findings.
 
-#### Step 1: Requirements Extraction
+#### Step 1: RPI Validation
 
-Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `requirements-extraction`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Provide the research document path and instruct it to extract implementation requirements, success criteria, and technical scenario items.
+Read the implementation plan to identify its phases. Run parallel `rpi-validator` subagents using `runSubagent` or `task` tools, one per plan phase. When using `runSubagent`, include instructions to read and follow `.github/agents/**/rpi-validator.agent.md`. Provide each subagent with the plan file path, changes log path, research document path, phase number, and validation output file path.
 
-#### Step 2: Plan Step Extraction
+#### Step 2: Implementation Quality
 
-Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `plan-extraction`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Provide the implementation plan path and instruct it to extract each step with completion status.
+Run an `implementation-validator` subagent with scope `full-quality`. When using `runSubagent`, include instructions to read and follow `.github/agents/**/implementation-validator.agent.md`. Provide changed file paths, architecture and instruction file paths, and the research document path.
 
-#### Step 3: File Change Validation
+Run Steps 1-2 in parallel when possible, since they investigate independent validation areas.
 
-Run an `artifact-validator` agent with `runSubagent` or `task` tools with scope `file-verification`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Provide the changes log path and instruct it to verify all listed file changes exist and are correct.
+#### Step 3: Review Compilation
 
-#### Step 4: Convention Compliance
+Compile all validation findings into a review log. Follow `.github/agents/task-reviewer.agent.md` for review log format and completion criteria.
 
-Run one or more `artifact-validator` agents with `runSubagent` or `task` tools with scope `convention-compliance`. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/artifact-validator.agent.md`. Provide the instruction file paths relevant to the changed file types and instruct each to verify convention compliance for the implementation.
-
-Run Steps 1-4 in parallel when possible, since they investigate independent validation areas.
-
-#### Step 5: Review Compilation
-
-Compile all validation findings from Steps 1-4 into a review log. Follow `.github/agents/task-reviewer.agent.md` for review log format and completion criteria.
-
-* Read all artifact-validator findings from Steps 1-4.
+* Read rpi-validator and implementation-validator findings from Steps 1-2.
 * Run applicable validation commands directly (lint, build, test).
 * Determine overall review status (Complete, Iterate, or Escalate).
 * Produce the review document at `.copilot-tracking/reviews/`.

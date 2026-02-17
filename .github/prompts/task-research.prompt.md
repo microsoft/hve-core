@@ -1,6 +1,7 @@
 ---
 description: "Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core"
-agent: 'task-researcher'
+agent: task-researcher
+argument-hint: "topic=... [chat={true|false}]"
 ---
 
 # Task Research
@@ -10,29 +11,9 @@ agent: 'task-researcher'
 * ${input:chat:true}: (Optional, defaults to true) Include conversation context for research analysis.
 * ${input:topic}: (Required) Primary topic or focus area, from user prompt or inferred from conversation.
 
-## Required Steps
+## Requirements
 
-Act as an agent orchestrator. Follow the Required Phases from the mode instructions, dispatching `codebase-researcher` and `external-researcher` subagents for all research activities.
-
-### Step 1: Define Research Scope
-
-Identify what the user wants to accomplish:
-
-* Extract the primary objective from user prompt and conversation context.
-* Note features, behaviors, constraints, and exclusions.
-
-### Step 2: Execute Research
-
-Follow the mode's research phases to run subagents, synthesize findings, and produce the research document.
-
-### Step 3: Return Findings
-
-Summarize research outcomes:
-
-* Key discoveries and their implementation impact.
-* Remaining alternatives needing decisions.
-* Research document path for handoff to implementation planning.
-
----
-
-Follow the Required Phases from the mode instructions, dispatching subagents for all research work, and proceed with the user's topic.
+1. When chat is enabled, incorporate conversation context to refine research scope and identify implicit constraints.
+2. Scope research to the provided topic, including related files, patterns, and external references.
+3. Evaluate implementation alternatives and select a recommended approach with evidence-based rationale.
+4. Produce a consolidated research document at the standard tracking location for handoff to implementation planning.
