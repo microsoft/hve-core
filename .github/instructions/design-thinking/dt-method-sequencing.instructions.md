@@ -15,25 +15,25 @@ The Design Thinking process follows nine methods organized into three spaces. Me
 
 Discover and validate the real problem before generating solutions.
 
-1. **Scope Conversations**: discover real problems behind solution requests. Transform initial requests into understood problem spaces through stakeholder dialogue and constraint discovery.
-2. **Design Research**: conduct systematic stakeholder research and observation. Gather evidence through interviews, environmental observation, and workflow analysis.
-3. **Input Synthesis**: recognize patterns and develop themes. Unify research findings into validated themes that ground solution work in evidence.
+1. Scope conversations. Discover real problems behind solution requests. Transform initial requests into understood problem spaces through stakeholder dialogue and constraint discovery.
+2. Design research. Conduct systematic stakeholder research and observation. Gather evidence through interviews, environmental observation, and workflow analysis.
+3. Input synthesis. Recognize patterns and develop themes. Unify research findings into validated themes that ground solution work in evidence.
 
 ### Solution Space (Methods 4-6)
 
 Generate, visualize, and test solution ideas with increasing concreteness.
 
-4. **Brainstorming**: divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
-5. **User Concepts**: visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
-6. **Lo-Fi Prototypes**: scrappy constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
+4. Brainstorming. Conduct divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
+5. User concepts. Perform visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
+6. Lo-fi prototypes. Use scrappy prototypes for constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
 
 ### Implementation Space (Methods 7-9)
 
 Build, validate, and optimize working solutions.
 
-7. **Hi-Fi Prototypes**: technical feasibility testing. Create stripped-down functional implementations with real data for systematic comparison.
-8. **User Testing**: systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
-9. **Iteration at Scale**: continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
+7. Hi-fi prototypes. Test technical feasibility. Create stripped-down functional implementations with real data for systematic comparison.
+8. User testing. Perform systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
+9. Iteration at scale. Drive continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
 
 ## Space Boundary Transitions
 
@@ -78,10 +78,10 @@ Design Thinking is not strictly linear. Teams frequently need to revisit earlier
 
 ### Common Iteration Patterns
 
-* **Prototype reveals unknown constraint** (Method 6 or 7): return to Method 2 (Design Research) to investigate the constraint with affected stakeholders, then re-synthesize in Method 3.
-* **User testing contradicts synthesis theme** (Method 8): return to Method 3 (Input Synthesis) to re-examine research data for missed patterns, or Method 2 for additional research.
-* **Brainstorming produces no viable ideas** (Method 4): return to Method 3 to check whether synthesis themes are too broad or too narrow, or Method 1 to verify the problem scope.
-* **Stakeholder alignment fails on concepts** (Method 5): return to Method 1 (Scope Conversations) to re-engage misaligned stakeholders.
+* When a prototype in Method 6 or 7 reveals an unknown constraint, return to Method 2 (Design Research) to investigate the constraint with affected stakeholders, then re-synthesize in Method 3.
+* When user testing in Method 8 contradicts a synthesis theme, return to Method 3 (Input Synthesis) to re-examine research data for missed patterns, or Method 2 for additional research.
+* When brainstorming in Method 4 produces no viable ideas, return to Method 3 to check whether synthesis themes are too broad or too narrow, or Method 1 to verify the problem scope.
+* When stakeholder alignment on concepts in Method 5 fails, return to Method 1 (Scope Conversations) to re-engage misaligned stakeholders.
 
 ### Iteration Coaching Approach
 
