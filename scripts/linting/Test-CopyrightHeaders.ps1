@@ -95,6 +95,7 @@ function Test-FileHeaders {
 
     $result = @{
         file = $FilePath -replace [regex]::Escape($Path), '' -replace '^[\\/]', ''
+        fullPath = $FilePath
         hasCopyright = $false
         hasSpdx = $false
         valid = $false
@@ -221,7 +222,7 @@ function Invoke-CopyrightHeaderCheck {
             Write-CIAnnotation `
                 -Message "Missing required headers: $($missing -join ', ')" `
                 -Level Warning `
-                -File $fileResult.file `
+                -File $file.FullName `
                 -Line 1
         }
 
@@ -262,7 +263,7 @@ function Invoke-CopyrightHeaderCheck {
             $m = @()
             if (-not $_.hasCopyright) { $m += 'copyright' }
             if (-not $_.hasSpdx) { $m += 'SPDX' }
-            "| ``$($_.file)`` | $($m -join ', ') |"
+            "| ``$($_.fullPath)`` | $($m -join ', ') |"
         }) -join "`n"
 
         Write-CIStepSummary -Content @"
