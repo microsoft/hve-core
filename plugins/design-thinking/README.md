@@ -11,9 +11,9 @@ copilot plugin install design-thinking@hve-core
 
 ## Instructions
 
-| Instruction          | Description                                                                                                           |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------|
-| dt-coaching-identity | Design Thinking coach identity, philosophy, and interaction model for consistent coaching behavior across all methods |
+| Instruction          | Description                                                                                                                                                                                                                                |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-coaching-identity | Required instructions when working with or doing any Design Thinking (DT); Contains instructions for the Design Thinking coach identity, philosophy, and user interaction and communication requirements for consistent coaching behavior. |
 
 ---
 

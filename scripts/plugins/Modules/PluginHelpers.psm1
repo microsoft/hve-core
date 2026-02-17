@@ -370,7 +370,7 @@ function Update-HveCoreAllCollection {
         }
 
         $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path $collectionPath -Value $yaml -Encoding utf8 -NoNewline
+        Set-Content -LiteralPath $collectionPath -Value $yaml -Encoding utf8 -NoNewline
         Write-Verbose "Updated $collectionPath"
     }
 
@@ -712,7 +712,7 @@ function Write-MarketplaceManifest {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8 -NoNewline
+    $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $outputPath -Encoding utf8 -NoNewline
     Write-Host "  Marketplace manifest: $outputPath" -ForegroundColor Green
 }
 
@@ -804,7 +804,7 @@ function New-RelativeSymlink {
 
         if ($isSymlink -or -not $destItem.PSIsContainer) {
             # Safe to remove: symbolic link (file or directory) or regular file
-            Remove-Item -LiteralPath $DestinationPath -Force -Recurse | Out-Null
+            Remove-Item -LiteralPath $DestinationPath -Force | Out-Null
         }
         else {
             throw "Refusing to remove existing non-symlink directory at '$DestinationPath'. Remove it manually before creating the symbolic link."
@@ -812,12 +812,18 @@ function New-RelativeSymlink {
     }
 
     try {
-        New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+        Push-Location -LiteralPath $destinationDir
+        try {
+            New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+        }
+        finally {
+            Pop-Location
+        }
     }
     catch {
         # Symlink creation requires admin privileges or Developer Mode on Windows.
         # Fall back to copying the source file or directory.
-        Write-Verbose "Symlink creation failed for $DestinationPath`: $($_.Exception.Message). Falling back to copy."
+        Write-Warning "Symlink creation failed for $DestinationPath`: $($_.Exception.Message). Falling back to copy."
         if (Test-Path -LiteralPath $SourcePath -PathType Container) {
             Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
         }
@@ -975,7 +981,7 @@ function Write-PluginDirectory {
         if (-not (Test-Path -LiteralPath $manifestDir)) {
             New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
         }
-        $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath -Encoding utf8 -NoNewline
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
     }
 
     # Generate README.md
@@ -986,7 +992,7 @@ function Write-PluginDirectory {
         Write-Verbose "DryRun: Would write README.md at $readmePath"
     }
     else {
-        Set-Content -Path $readmePath -Value $readmeContent -Encoding utf8 -NoNewline
+        Set-Content -LiteralPath $readmePath -Value $readmeContent -Encoding utf8 -NoNewline
     }
 
     return @{
