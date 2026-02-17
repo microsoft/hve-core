@@ -56,9 +56,9 @@ This transition shifts from creative exploration to technical proof. Prototypes 
 
 Readiness signals:
 
-* Lo-fi prototypes have been tested with actual users in real environments.
+* Lo-Fi prototypes have been tested with actual users in real environments.
 * Core assumptions have been validated or invalidated through prototype testing.
-* Constraint discoveries from lo-fi testing are documented and inform hi-fi approach.
+* Constraint discoveries from Lo-Fi testing are documented and inform Hi-Fi approach.
 * The team has narrowed from multiple concepts to one or two directions worth implementing.
 
 ### Implementation Space Exit (after Method 9)
