@@ -867,9 +867,10 @@ function Invoke-DependencyPinningAnalysis {
         foreach ($fileGroup in $groupedByFile) {
             Write-Host "`n📄 $($fileGroup.Name)" -ForegroundColor Cyan
             foreach ($dep in $fileGroup.Group) {
-                Write-Host "  ⚠️ Line $($dep.Line): $($dep.Name) — $($dep.CurrentRef) (type: $($dep.Type))" -ForegroundColor Yellow
+                $displayVersion = if ($dep.Version) { $dep.Version } elseif ($dep.CurrentRef) { $dep.CurrentRef } else { '<unknown>' }
+                Write-Host "  ⚠️ Line $($dep.Line): $($dep.Name) — $displayVersion (type: $($dep.Type))" -ForegroundColor Yellow
                 Write-CIAnnotation `
-                    -Message "Unpinned $($dep.Type) dependency: $($dep.Name)@$($dep.CurrentRef)" `
+                    -Message "Unpinned $($dep.Type) dependency: $($dep.Name)@$displayVersion" `
                     -Level Warning `
                     -File $dep.File `
                     -Line $dep.Line
