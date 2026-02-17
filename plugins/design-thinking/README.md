@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Design Thinking Coaching
 
-AI-powered Design Thinking coaching system with nine-method curriculum, tiered instruction loading, and DT-to-RPI handoff
+AI-powered Design Thinking coaching system with nine-method curriculum, tiered instruction loading, and DT-to-RPI (Design Thinking to Requirements, Planning, and Implementation) handoff
 
 ## Install
 
