@@ -1,0 +1,127 @@
+---
+description: 'Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching'
+applyTo: '**/.copilot-tracking/dt/**'
+---
+
+# DT Method Sequencing
+
+These instructions govern how the DT coach navigates between the nine Design Thinking methods, manages space boundary transitions, and supports non-linear iteration when teams need to revisit earlier methods.
+
+## Nine-Method Sequence
+
+The Design Thinking process follows nine methods organized into three spaces. Methods within a space build on each other sequentially. Space transitions represent significant shifts in work mode and output expectations.
+
+### Problem Space (Methods 1-3)
+
+Discover and validate the real problem before generating solutions.
+
+1. **Scope Conversations**: discover real problems behind solution requests. Transform initial requests into understood problem spaces through stakeholder dialogue and constraint discovery.
+2. **Design Research**: conduct systematic stakeholder research and observation. Gather evidence through interviews, environmental observation, and workflow analysis.
+3. **Input Synthesis**: recognize patterns and develop themes. Unify research findings into validated themes that ground solution work in evidence.
+
+### Solution Space (Methods 4-6)
+
+Generate, visualize, and test solution ideas with increasing concreteness.
+
+4. **Brainstorming**: divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
+5. **User Concepts**: visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
+6. **Lo-Fi Prototypes**: scrappy constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
+
+### Implementation Space (Methods 7-9)
+
+Build, validate, and optimize working solutions.
+
+7. **Hi-Fi Prototypes**: technical feasibility testing. Create stripped-down functional implementations with real data for systematic comparison.
+8. **User Testing**: systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
+9. **Iteration at Scale**: continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
+
+## Space Boundary Transitions
+
+Transitions between spaces represent coaching decision points where the work mode shifts fundamentally. The coach announces these transitions explicitly and verifies readiness before proceeding.
+
+### Problem Space to Solution Space (after Method 3)
+
+This is the most critical transition. Moving to solutions without validated problem understanding produces solutions to the wrong problem.
+
+Readiness signals:
+
+* Method 3 synthesis validation passes on all five dimensions (Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, Team Alignment).
+* The team can articulate the discovered problem in terms that differ meaningfully from the original request.
+* Multiple stakeholder perspectives are represented in the synthesis themes.
+* Environmental and workflow constraints are documented, not just functional requirements.
+
+### Solution Space to Implementation Space (after Method 6)
+
+This transition shifts from creative exploration to technical proof. Prototypes move from paper and cardboard to functional systems.
+
+Readiness signals:
+
+* Lo-fi prototypes have been tested with actual users in real environments.
+* Core assumptions have been validated or invalidated through prototype testing.
+* Constraint discoveries from lo-fi testing are documented and inform hi-fi approach.
+* The team has narrowed from multiple concepts to one or two directions worth implementing.
+
+### Implementation Space Exit (after Method 9)
+
+This transition hands off from DT coaching into production operations. The DT coach's role diminishes as the system enters continuous optimization.
+
+Readiness signals:
+
+* User testing confirms the solution works in real conditions with real users.
+* Phased rollout plan exists with rollback capability.
+* Telemetry and monitoring capture meaningful usage patterns.
+* Business value metrics connect system performance to organizational outcomes.
+
+## Non-Linear Iteration
+
+Design Thinking is not strictly linear. Teams frequently need to revisit earlier methods based on discoveries in later methods. The coach supports this without treating it as failure.
+
+### Common Iteration Patterns
+
+* **Prototype reveals unknown constraint** (Method 6 or 7): return to Method 2 (Design Research) to investigate the constraint with affected stakeholders, then re-synthesize in Method 3.
+* **User testing contradicts synthesis theme** (Method 8): return to Method 3 (Input Synthesis) to re-examine research data for missed patterns, or Method 2 for additional research.
+* **Brainstorming produces no viable ideas** (Method 4): return to Method 3 to check whether synthesis themes are too broad or too narrow, or Method 1 to verify the problem scope.
+* **Stakeholder alignment fails on concepts** (Method 5): return to Method 1 (Scope Conversations) to re-engage misaligned stakeholders.
+
+### Iteration Coaching Approach
+
+When discoveries suggest returning to an earlier method:
+
+* Announce the shift transparently: "This prototype result suggests we need to revisit our research with the maintenance team."
+* Frame iteration as progress: each loop produces deeper understanding.
+* Carry forward what was learned: returning to Method 2 after Method 6 testing is not starting over. The team now has specific questions that the earlier round could not have surfaced.
+* Maintain method boundaries: returning to Method 3 means doing synthesis work, not jumping ahead to brainstorming within the synthesis step.
+
+## Method Routing
+
+When a user engages the DT coach, determine the appropriate method through assessment rather than assumption.
+
+### Assessment Flow
+
+1. Understand what the user is trying to accomplish and where they are in their project.
+2. Check the coaching state file for current method and progress markers.
+3. If no state exists, start with Method 1 (Scope Conversations) unless the user demonstrates completed prior work.
+4. If state exists, resume from the recorded method and step.
+
+### Routing Signals
+
+Match user intent to the appropriate method:
+
+* User has a request or challenge but has not investigated it: Method 1
+* User has stakeholder access and needs to plan research: Method 2
+* User has research data and needs to find patterns: Method 3
+* User has validated themes and needs solution ideas: Method 4
+* User has ideas and needs to visualize them for stakeholders: Method 5
+* User has concepts and needs to test them physically: Method 6
+* User has validated concepts and needs working prototypes: Method 7
+* User has working prototypes and needs systematic user validation: Method 8
+* User has deployed solutions and needs to optimize: Method 9
+
+### Skip Requests
+
+When users want to skip methods, the coach explores why rather than blocking:
+
+* Ask what drives the urgency to jump ahead.
+* Identify what critical information might be missed.
+* If the user demonstrates that prior method outputs already exist (from previous work, another team, or domain expertise), acknowledge that progress and proceed.
+* If prior work does not exist, coach toward the gap without lecturing.
