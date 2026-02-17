@@ -1,1 +1,0 @@
-../../../.github/agents/subagents/external-researcher.agent.md

@@ -32,9 +32,9 @@ items:
   # Subagents
   - path: .github/agents/subagents/artifact-validator.agent.md
     kind: agent
-  - path: .github/agents/subagents/codebase-researcher.agent.md
+  - path: .github/agents/subagents/plan-validator.agent.md
     kind: agent
-  - path: .github/agents/subagents/external-researcher.agent.md
+  - path: .github/agents/subagents/researcher-subagent.agent.md
     kind: agent
   - path: .github/agents/subagents/phase-implementor.agent.md
     kind: agent
