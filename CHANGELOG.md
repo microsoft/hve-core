@@ -12,6 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.10](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.9...hve-core-v2.3.10) (2026-02-17)
+
+
+### 🐛 Bug Fixes
+
+* **agents:** add subagent support with dedicated subagent files and simplified prompts ([#639](https://github.com/microsoft/hve-core/issues/639)) ([c080b0a](https://github.com/microsoft/hve-core/commit/c080b0a0c7e29e0b7431c84b7f7ad1b4405bd25e))
+* Markdown table in Codespace is not rendered correctly ([#619](https://github.com/microsoft/hve-core/issues/619)) ([5bcea1d](https://github.com/microsoft/hve-core/commit/5bcea1dd01bface78ebab10b7b7b97f17cc75ad2))
+
+
+### 📚 Documentation
+
+* **ai-artifacts:** align contribution guide with plugin and collection workflow ([#622](https://github.com/microsoft/hve-core/issues/622)) ([21820be](https://github.com/microsoft/hve-core/commit/21820beecb00589fc1f055b631ec56989c1a6aeb))
+
 ## [2.3.9](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.8...hve-core-v2.3.9) (2026-02-14)
 
 
