@@ -72,11 +72,11 @@ This is the most critical transition. Moving to solutions without validated prob
 Readiness signals are advisory: the coach uses them to flag risks and discuss tradeoffs with the team rather than blocking progress.
 
 * Method 3 synthesis review shows strength across the five dimensions (Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, Team Alignment), with any remaining gaps explicitly acknowledged.
-  * Research fidelity: synthesis accurately reflects collected research evidence and observations rather than assumptions or hearsay.
-  * Stakeholder completeness: synthesis themes include the full range of relevant stakeholder groups, not only the most vocal or convenient ones.
-  * Pattern robustness: identified patterns and themes appear across multiple data points or sessions, not from isolated anecdotes.
-  * Actionability: synthesis outputs translate into clear problem statements, opportunities, or hypotheses that can guide solution work.
-  * Team alignment: the working team shares a common understanding of the problem framing and agrees that the synthesis reflects their learning.
+  * Research fidelity: synthesis accurately reflects collected research evidence and observations rather than assumptions or hearsay
+  * Stakeholder completeness: synthesis themes include the full range of relevant stakeholder groups, not only the most vocal or convenient ones
+  * Pattern robustness: identified patterns and themes appear across multiple data points or sessions, not from isolated anecdotes
+  * Actionability: synthesis outputs translate into clear problem statements, opportunities, or hypotheses that can guide solution work
+  * Team alignment: the working team shares a common understanding of the problem framing and agrees that the synthesis reflects their learning
 * The team can articulate the discovered problem in terms that differ meaningfully from the original request.
 * Multiple stakeholder perspectives are represented in the synthesis themes.
 * Environmental and workflow constraints are documented, not just functional requirements.
@@ -132,7 +132,7 @@ When a user engages the DT coach, determine the appropriate method through asses
 1. Understand what the user is trying to accomplish and where they are in their project.
 2. Check the coaching state file for current method and progress markers.
 3. If no state exists, start with Method 1 (Scope Conversations) unless the user demonstrates completed prior work.
-4. If state exists, resume from the recorded method and step.
+4. If state exists, resume from the recorded method and phase.
 
 ### Coaching State Schema
 
