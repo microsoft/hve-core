@@ -43,6 +43,7 @@ The project is organized into these main areas:
 * Skills (`.github/skills/`) - Self-contained skill packages with scripts and documentation.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates.
+* Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization
@@ -83,6 +84,20 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search and tracking logs.
 
 All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado-*.instructions.md`.
+
+### Agents and Subagents
+
+Custom agents live under `.github/agents/`. Subagents live under `.github/agents/subagents/`. Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
+
+### Collections
+
+Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
+
+* Each collection has a YAML file (`*.collection.yml`) listing items with `path` and `kind` fields, and a markdown file (`*.collection.md`) describing the collection.
+* Collections must include all subagent dependencies used by their referenced custom agents. When a parent agent declares subagents in its `agents:` frontmatter, those subagent files must appear in the collection YAML.
+* When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update all affected `collections/*.collection.yml` and `collections/*.collection.md` files.
+* After any change to collection YAML or markdown files, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
+* Run `npm run plugin:validate` to confirm collection metadata is correct.
 <!-- </project-structure> -->
 
 <!-- <script-operations> -->

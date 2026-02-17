@@ -39,6 +39,23 @@ items:
   # Prompt Engineering agents
   - path: .github/agents/prompt-builder.agent.md
     kind: agent
+  # Subagents
+  - path: .github/agents/subagents/rpi-validator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/implementation-validator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/plan-validator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/agents/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/subagents/prompt-evaluator.agent.md
+    kind: agent
+  - path: .github/agents/subagents/prompt-tester.agent.md
+    kind: agent
+  - path: .github/agents/subagents/prompt-updater.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/doc-ops-update.prompt.md
     kind: prompt
