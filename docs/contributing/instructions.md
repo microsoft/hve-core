@@ -29,7 +29,7 @@ Create an instructions file when you need to:
 
 ### Location
 
-All instruction files **MUST** be placed in a collection subdirectory:
+Instruction files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/instructions/
@@ -47,6 +47,12 @@ All instruction files **MUST** be placed in a collection subdirectory:
 
 > [!IMPORTANT]
 > The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
+
+<!-- markdownlint-disable-next-line MD028 -->
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 **Examples**:
 
@@ -135,6 +141,7 @@ After creating your instructions file, add an `items[]` entry in each target col
 
 ```yaml
 items:
+    # path can reference artifacts from any subfolder
     - path: .github/instructions/{collection-id}/my-language.instructions.md
         kind: instruction
         maturity: stable
@@ -647,7 +654,7 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/{collection-id}/`
+* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
 * Use `prompt-builder.agent.md` agent for assistance
 

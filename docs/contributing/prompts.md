@@ -28,12 +28,16 @@ Create a prompt when you need to:
 
 ### Location
 
-All prompt files **MUST** be placed in a collection subdirectory:
+Prompt files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/prompts/{collection-id}/
 └── your-prompt-name.prompt.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -122,6 +126,7 @@ After creating your prompt file, add an `items[]` entry in each target collectio
 
 ```yaml
 items:
+  # path can reference artifacts from any subfolder
   - path: .github/prompts/{collection-id}/my-prompt.prompt.md
     kind: prompt
     maturity: stable
@@ -528,7 +533,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/` (the conventional location for prompt files).
 
 ---
 

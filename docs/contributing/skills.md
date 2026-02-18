@@ -50,7 +50,7 @@ The following skill types will likely be **rejected**:
 
 ### Location
 
-All skill files **MUST** be placed in a collection subdirectory:
+Skill files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/skills/{collection-id}/<skill-name>/
@@ -67,6 +67,10 @@ All skill files **MUST** be placed in a collection subdirectory:
 └── tests/
     └── <action>.Tests.ps1      # Pester unit tests (required for PowerShell)
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one `.ps1` file and **SHOULD** contain at least one `.sh` file for cross-platform support. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
@@ -160,6 +164,7 @@ After creating your skill package, add an `items[]` entry in each target collect
 
 ```yaml
 items:
+  # path can reference artifacts from any subfolder
   - path: .github/skills/{collection-id}/my-skill
     kind: skill
     maturity: stable

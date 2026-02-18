@@ -650,44 +650,6 @@ function Test-GlobMatch {
     return $false
 }
 
-function Get-CollectionArtifactKey {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Kind,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    switch ($Kind) {
-        'agent' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
-        }
-        'prompt' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
-        }
-        'instruction' {
-            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
-        }
-        'skill' {
-            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
-        }
-        default {
-            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
-                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
-            }
-
-            if ($Path -like '*.md') {
-                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
-            }
-
-            return [System.IO.Path]::GetFileName($Path)
-        }
-    }
-}
-
 function Get-CollectionArtifactMaturity {
     [CmdletBinding()]
     [OutputType([string])]

@@ -92,7 +92,7 @@ All agents **MUST** target the **latest available models** from **Anthropic and 
 
 ### Location
 
-All agent files **MUST** be placed in a collection subdirectory:
+Agent files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/agents/{collection-id}/
@@ -100,6 +100,10 @@ All agent files **MUST** be placed in a collection subdirectory:
 └── subagents/
     └── your-subagent-name.agent.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -250,6 +254,7 @@ After creating your agent file, add an `items[]` entry to each target collection
 
 ```yaml
 items:
+  # path can reference artifacts from any subfolder
   - path: .github/agents/{collection-id}/my-new-agent.agent.md
   kind: agent
   maturity: stable
@@ -524,7 +529,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
 
 ---
 

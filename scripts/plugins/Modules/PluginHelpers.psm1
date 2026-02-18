@@ -118,6 +118,62 @@ function Get-CollectionManifest {
     return $manifest
 }
 
+function Get-CollectionArtifactKey {
+    <#
+    .SYNOPSIS
+        Extracts a unique key from an artifact path based on its kind.
+
+    .DESCRIPTION
+        Produces the same key that extension packaging uses for deduplication.
+        Agents and prompts use the filename only; instructions use the
+        type-relative path; skills use the directory name.
+
+    .PARAMETER Kind
+        The artifact kind (agent, prompt, instruction, skill).
+
+    .PARAMETER Path
+        The repo-relative artifact path.
+
+    .OUTPUTS
+        [string] The artifact key.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    switch ($Kind) {
+        'agent' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
+        }
+        'prompt' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
+        }
+        'instruction' {
+            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
+        }
+        'skill' {
+            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
+        }
+        default {
+            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
+                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
+            }
+
+            if ($Path -like '*.md') {
+                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
+            }
+
+            return [System.IO.Path]::GetFileName($Path)
+        }
+    }
+}
+
 function Get-ArtifactFrontmatter {
     <#
     .SYNOPSIS
@@ -1059,6 +1115,7 @@ Export-ModuleMember -Function @(
     'Get-AllCollections',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
+    'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
     'Get-PluginItemName',
     'Get-PluginSubdirectory',

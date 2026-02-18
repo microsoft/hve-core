@@ -207,14 +207,14 @@ The plugin generation and validation tooling actively enforces this exclusion:
 
 #### Placement Guidelines
 
-| Scope                       | Location                                            | Included in Plugins |
-|-----------------------------|-----------------------------------------------------|---------------------|
-| **Repository-specific**     | `.github/instructions/hve-core/`                    | ❌ No                |
-| **Collection-scoped**       | `.github/instructions/{collection-id}/`             | ✅ Yes               |
-| **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/` | ✅ Yes               |
-| **Shared cross-collection** | `.github/instructions/shared/`                      | ✅ Yes               |
+| Scope                       | Location                                                | Included in Plugins |
+|-----------------------------|---------------------------------------------------------|---------------------|
+| **Repository-specific**     | `.github/instructions/hve-core/`                        | ❌ No                |
+| **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
+| **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
+| **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
 
-If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
 
 ## Collection Taxonomy
 
@@ -346,6 +346,7 @@ Add or update the maturity value on each collection item in `collections/*.colle
 
 ```yaml
 items:
+  # path can reference artifacts from any subfolder
   - path: .github/agents/{collection-id}/example.agent.md
     kind: agent
     maturity: stable
@@ -831,9 +832,9 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-* **Agents**: Examine files in `.github/agents/{collection-id}/`
-* **Prompts**: Examine files in `.github/prompts/{collection-id}/`
-* **Instructions**: Examine files in `.github/instructions/{collection-id}/`
+* **Agents**: Examine files in `.github/agents/{collection-id}/` (the conventional location)
+* **Prompts**: Examine files in `.github/prompts/{collection-id}/` (the conventional location)
+* **Instructions**: Examine files in `.github/instructions/{collection-id}/` (the conventional location)
 
 ### Check Repository Standards
 

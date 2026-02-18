@@ -95,7 +95,7 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 * Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
 * Execute actual operations rather than providing guidance
 
-**Directory structure:**
+**Directory structure (by convention):**
 
 ```text
 .github/skills/{collection-id}/<skill-name>/
@@ -172,7 +172,7 @@ agent: 'pr-creator'
 ---
 ```
 
-The referenced agent file (`pr-creator.agent.md`) must exist in `.github/agents/{collection-id}/`. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
+The referenced agent file (`pr-creator.agent.md`) is typically organized under `.github/agents/{collection-id}/` by convention. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
 
 ### Instruction Glob Patterns
 
@@ -198,6 +198,8 @@ Skills provide self-contained utilities through the `SKILL.md` file:
 └── examples/
     └── README.md
 ```
+
+The `{collection-id}` path segment reflects the conventional organization; artifacts can reside in any subfolder.
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
@@ -327,7 +329,7 @@ The extension scans these directories at startup:
 * `.github/instructions/{collection-id}/` for technology standards (excluding `hve-core/` subdirectory)
 * `.github/skills/{collection-id}/` for utility packages
 
-Artifact inclusion is controlled by `collections/*.collection.yml`. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is controlled by `collections/*.collection.yml`, and collection manifests can reference artifacts from any subfolder. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|
