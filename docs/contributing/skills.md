@@ -43,6 +43,7 @@ The following skill types will likely be **rejected**:
 * **Duplicate Skills**: Skills that replicate functionality of existing tools or skills
 * **Single-Platform Skills**: Skills that only work on one operating system
 * **Undocumented Utilities**: Scripts without comprehensive SKILL.md documentation
+* **Untested Skills**: Skills that lack unit tests or fail to achieve 80% code coverage
 
 ## File Structure Requirements
 
@@ -53,10 +54,13 @@ All skill files **MUST** be placed in:
 ```text
 .github/skills/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
-├── convert.sh                  # Bash script (required for cross-platform)
-├── convert.ps1                 # PowerShell script (required for cross-platform)
-└── examples/
-    └── README.md               # Usage examples (recommended)
+├── scripts/
+│   ├── convert.ps1             # PowerShell script (required for cross-platform)
+│   └── convert.sh              # Bash script (required for cross-platform)
+├── examples/
+│   └── README.md               # Usage examples (recommended)
+└── tests/
+    └── convert.Tests.ps1       # Pester unit tests (required for PowerShell)
 ```
 
 ### Naming Convention
@@ -257,6 +261,69 @@ PowerShell scripts **MUST**:
 * Check for required dependencies
 * Use proper error handling
 
+## Unit Testing Requirements
+
+All skill scripts MUST include unit tests that achieve a minimum of 80% code coverage. Tests are co-located inside the skill directory to keep each skill self-contained.
+
+### Test File Location
+
+Place test files in a `tests/` subdirectory within the skill directory:
+
+```text
+.github/skills/<skill-name>/
+└── tests/
+    └── <script-name>.Tests.ps1
+```
+
+### PowerShell Tests
+
+PowerShell skill scripts require Pester 5.x tests:
+
+* Use `.Tests.ps1` suffix matching the source script name
+* Follow the same conventions as `scripts/tests/` (see [Testing Architecture](../architecture/testing.md))
+* Pester configuration is defined at `scripts/tests/pester.config.ps1`; co-located skill tests run when their `tests/` directories are included in the Pester run paths (for example via CI or explicit test invocation)
+
+Minimal example:
+
+```powershell
+Describe 'Convert-VideoToGif' {
+    It 'Validates input file exists' {
+        { ./convert.ps1 -InputPath 'nonexistent.mp4' } | Should -Throw
+    }
+}
+```
+
+### Python Tests
+
+Python skill scripts require pytest:
+
+* Use `test_<script_name>.py` naming convention
+* Place tests in the `tests/` subdirectory alongside PowerShell tests
+* Configure pytest and ruff in a `pyproject.toml` at the skill root
+
+### Packaging Note
+
+Co-located `tests/` directories are automatically excluded from the VSIX extension package. No additional contributor action is needed.
+
+## Supported Languages
+
+Skills may include scripts in any of these supported languages. Each language has specific tooling and CI expectations.
+
+| Language   | Script Extension | Test Framework | Linter / Analyzer                           | CI Coverage        |
+|------------|------------------|----------------|---------------------------------------------|--------------------|
+| Bash       | `.sh`            | N/A            | shellcheck                                  | Lint only          |
+| PowerShell | `.ps1`           | Pester 5.x     | PSScriptAnalyzer                            | Full (lint + test) |
+| Python     | `.py`            | pytest         | ruff (line-length=88, target-version=py311) | Planned            |
+
+### Requesting New Language Support
+
+To request support for a new programming language:
+
+1. Open a [Skill Request](https://github.com/microsoft/hve-core/issues/new?template=skill-request.yml) issue
+2. Select the desired language in the Programming Language dropdown (choose "Other" if unlisted)
+3. Describe the tooling requirements: test framework, linter, CI integration needs
+4. A maintainer will evaluate feasibility and update this table when support is added
+
 ## Examples Directory
 
 The `examples/` subdirectory **SHOULD** include:
@@ -291,6 +358,12 @@ Before submitting your skill, verify:
 * [ ] Both scripts implement equivalent functionality
 * [ ] Help and usage documentation included
 
+### Testing
+
+* [ ] Unit tests present in `tests/` subdirectory
+* [ ] PowerShell tests use `.Tests.ps1` naming convention
+* [ ] Tests pass locally via `npm run test:ps`
+
 ### Documentation
 
 * [ ] All required SKILL.md sections present
@@ -307,6 +380,7 @@ Run these commands before submission:
 npm run lint:frontmatter      # Validate SKILL.md frontmatter
 npm run psscriptanalyzer      # Validate PowerShell scripts
 npm run lint                  # Validate markdown formatting
+npm run test:ps               # Run PowerShell unit tests
 ```
 
 All checks **MUST** pass before merge.

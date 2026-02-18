@@ -58,6 +58,29 @@ if ($CodeCoverage.IsPresent) {
         $_.FullName -notmatch '\.Tests\.ps1$'
     } | Select-Object -ExpandProperty FullName
 
+    # Resolve skill script coverage paths from repo root
+    $repoRoot = Split-Path $scriptRoot -Parent
+    $skillsPath = Join-Path $repoRoot '.github/skills'
+    if (Test-Path $skillsPath) {
+        $skillCoveragePaths = Get-ChildItem -Path $skillsPath -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $skillRoot = $_.FullName
+            $skillScripts = Join-Path $skillRoot 'scripts'
+            $paths = @()
+
+            $paths += Get-ChildItem -Path $skillRoot -Include '*.ps1', '*.psm1' -File -ErrorAction SilentlyContinue
+
+            if (Test-Path $skillScripts) {
+                $paths += Get-ChildItem -Path $skillScripts -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
+            }
+
+            $paths
+        } | Where-Object { $_.FullName -notmatch '\.Tests\.ps1$' } |
+            Select-Object -ExpandProperty FullName
+        if ($skillCoveragePaths) {
+            $coveragePaths = @($coveragePaths) + @($skillCoveragePaths)
+        }
+    }
+
     if ($coveragePaths.Count -gt 0) {
         $configuration.CodeCoverage.Path = $coveragePaths
     }
