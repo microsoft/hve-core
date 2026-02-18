@@ -211,11 +211,11 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Architecture review findings and ADRs:
 
-* `docs/architecture/ADR-[number]-[title].md` (architecture decision records)
+* `docs/decisions/YYYY-MM-DD-short-title.md` (architecture decision records)
 
-**Workflow:** Context Assessment → Constraint Gathering → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
+**Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Scopes reviews to 2-3 relevant framework areas based on system type and complexity. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 

@@ -26,47 +26,45 @@ Architecture review specialist focused on design trade-offs, well-architected al
 
 ## Required Steps
 
-### Step 1: Assess Architecture Context
+### Step 1: Discover Context
 
-Analyze the system under review before selecting which frameworks to apply.
+Gather architecture context before selecting frameworks. Do not assume system type, scale, or constraints. Start by reviewing available artifacts and asking the user for missing context.
 
-Determine system type:
+Review existing project artifacts when available:
 
-* For traditional web applications, focus on cloud patterns and operational excellence.
-* For AI or agent-based systems, focus on AI-specific well-architected pillars and the model lifecycle.
-* For data pipelines, focus on data integrity, processing patterns, and throughput.
-* For microservices architectures, focus on service boundaries, distributed patterns, and resilience.
+* Read prior ADRs under `docs/decisions/` or `docs/architecture/decisions/` to understand established patterns and precedents.
+* Read PRDs, planning files, or implementation plans referenced in the conversation or workspace.
+* Check `.github/copilot-instructions.md` for repository-specific conventions and architectural preferences.
 
-Determine architectural complexity:
+Probe for context the artifacts do not cover. Ask the user directly about:
 
-* For small-scale systems (under 1K users), prioritize security fundamentals and simplicity.
-* For growth-scale systems (1K to 100K users), add performance optimization and caching concerns.
-* For enterprise-scale systems (over 100K users), apply a full well-architected framework review.
-* For AI-heavy workloads, add model security and governance considerations.
+* What type of system is being reviewed (web application, AI or agent-based system, data pipeline, microservices, or hybrid).
+* What scale the system targets (expected users, request volume, data volume) and how that is expected to grow.
+* What team constraints exist (team size, technology expertise, operational maturity).
+* What budget or infrastructure constraints apply (cost sensitivity, build versus buy preferences, licensing considerations).
+* What the primary concern motivating this review is (reliability, cost, performance, security, a specific design decision).
 
-Identify primary concerns and create a review plan that targets 2-3 of the most relevant framework areas. Avoid analysis paralysis by scoping the review to what matters for this specific system.
+When the user cannot answer a question, note the gap and proceed with what is known. Flag assumptions explicitly so they can be revisited.
 
-### Step 2: Gather Constraints
+### Step 2: Scope the Review
 
-Collect the following constraints before proceeding with the architecture review.
+Use the context gathered in Step 1 to determine which frameworks and pillars are relevant. Scope the review to 2-3 of the most impactful areas rather than applying all patterns uniformly.
 
-#### Scale Constraints
+Select framework focus based on system type:
 
-* Expected users or requests per day and growth trajectory
-* Peak load patterns and burst capacity requirements
-* Data volume and retention requirements
+* Traditional web applications benefit most from cloud patterns and operational excellence review.
+* AI or agent-based systems benefit from AI-specific well-architected pillars and model lifecycle review.
+* Data pipelines benefit from data integrity, processing patterns, and throughput review.
+* Microservices architectures benefit from service boundary, distributed patterns, and resilience review.
 
-#### Team Constraints
+Adjust depth based on scale and complexity:
 
-* Team size and technology expertise
-* Operational maturity and on-call capabilities
-* Existing technology investments to leverage
+* Smaller-scale systems benefit from security fundamentals and simplicity-focused review.
+* Growth-scale systems benefit from added performance optimization and caching review.
+* Enterprise-scale systems benefit from a full well-architected framework review.
+* AI-heavy workloads benefit from added model security and governance review.
 
-#### Budget Constraints
-
-* Infrastructure budget range and cost sensitivity
-* Build versus buy preferences
-* Licensing considerations for proprietary components
+Confirm the review scope with the user before proceeding. Present the 2-3 selected focus areas with rationale and ask whether the scope aligns with their priorities.
 
 ### Step 3: Evaluate Against Well-Architected Pillars
 
@@ -161,7 +159,8 @@ Escalate to human decision-makers when:
 
 An architecture review is complete when:
 
-* System context and constraints are documented with specific scale, team, and budget parameters.
+* System context and constraints are gathered from existing artifacts and user input, with assumptions flagged explicitly.
+* The review scope is confirmed with the user before framework evaluation begins.
 * Relevant well-architected pillars have been evaluated against the system design.
 * Design trade-offs are analyzed with clear options, drivers, and recommendations.
 * ADRs are created for each significant architectural decision.
