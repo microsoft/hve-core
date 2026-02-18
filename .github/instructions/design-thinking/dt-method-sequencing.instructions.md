@@ -118,7 +118,7 @@ Design Thinking is not strictly linear. Teams frequently need to revisit earlier
 
 When discoveries suggest returning to an earlier method:
 
-* Announce the shift transparently: "This prototype result suggests we need to revisit our research with the maintenance team."
+* Announce the shift transparently: "This prototype result suggests we need to revisit our research with the maintenance team".
 * Frame iteration as progress: each loop produces deeper understanding.
 * Carry forward what was learned: returning to Method 2 after Method 6 testing is not starting over. The team now has specific questions that the earlier round could not have surfaced.
 * Maintain method boundaries: returning to Method 3 means doing synthesis work, not jumping ahead to brainstorming within the synthesis step.
