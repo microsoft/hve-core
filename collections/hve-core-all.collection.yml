@@ -87,6 +87,8 @@ items:
   kind: prompt
 - path: .github/prompts/doc-ops-update.prompt.md
   kind: prompt
+- path: .github/prompts/dt-start-project.prompt.md
+  kind: prompt
 - path: .github/prompts/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/git-commit.prompt.md

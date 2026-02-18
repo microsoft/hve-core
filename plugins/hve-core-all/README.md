@@ -58,6 +58,7 @@ copilot plugin install hve-core-all@hve-core
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
 | checkpoint                                  | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
 | doc-ops-update                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
+| dt-start-project                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction                                            |
 | git-commit-message                          | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                                 |
 | git-commit                                  | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
 | git-merge                                   | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                                     |
