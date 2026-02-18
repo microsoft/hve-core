@@ -11,6 +11,80 @@ Input synthesis aggregates research inputs (interviews, surveys, reports, observ
 
 Transform fragmented research data from diverse sources into unified problem understanding that sets clear direction for solution development.
 
+## Sub-Method Phases
+
+Method 3 organizes into three sequential phases. Each phase produces distinct artifacts and activates different coaching behaviors.
+
+### Phase 1: Synthesis Planning
+
+Organize all Method 2 research outputs and establish the synthesis strategy. Determine which data sources are available, identify coverage gaps, and define the analysis approach before starting pattern work.
+
+Activities: research input inventory, data source categorization (stakeholder inputs, observational data, quantitative data), coverage gap identification, synthesis objective definition, analysis framework selection.
+
+Exit criteria: an input inventory exists cataloging all Method 2 artifacts with source type, stakeholder coverage assessment, and a defined synthesis approach.
+
+### Phase 2: Synthesis Execution
+
+Perform systematic pattern recognition across organized inputs. Identify cross-source themes, validate patterns through multiple perspectives, and develop unified insights that connect individual findings into comprehensive problem understanding.
+
+Activities: affinity clustering, cross-source theme identification, pattern validation against multiple data types, environmental context integration, contradiction detection and resolution, assumption testing against Method 1 hypotheses.
+
+Exit criteria: affinity clusters and insight statements exist with each theme supported by evidence from multiple independent sources.
+
+### Phase 3: Synthesis Documentation
+
+Formalize validated patterns into structured problem definitions, insight statements, and how-might-we questions ready for Method 4 ideation. Run synthesis validation across all five dimensions before declaring transition readiness.
+
+Activities: problem statement drafting, how-might-we question development, five-dimension validation assessment, stakeholder alignment confirmation, Method 4 handoff preparation.
+
+Exit criteria: problem definition and how-might-we artifacts exist, five-dimension validation shows strength across all dimensions with remaining gaps explicitly acknowledged, and the team confirms shared problem understanding.
+
+## Coaching Hats
+
+Two specialized coaching hats provide focused expertise within Method 3. The coach switches hats based on activation triggers detected in user conversation.
+
+### Pattern Analyst
+
+Systematic pattern identification expertise. Guides data organization, cross-source theme discovery, and evidence-based pattern validation.
+
+Activation triggers:
+
+* User shares raw research data, interview notes, or observation logs for analysis.
+* User asks how to organize or cluster research inputs.
+* User mentions conflicting data points or contradictions across sources.
+* User needs to identify themes across multiple interviews or data types.
+* Conversation involves comparing findings from different stakeholder groups or research methods.
+
+Coaching focus:
+
+* Affinity clustering: group related observations, quotes, and data points by emergent theme rather than by source or session.
+* Cross-source validation: require each candidate theme to appear in at least two independent data types before treating it as robust.
+* Contradiction surfacing: identify tensions between data points and flag them for explicit resolution rather than suppressing outlier perspectives.
+* Environmental pattern integration: connect physical, technical, and organizational constraints observed during research into systemic themes.
+* Coverage gap detection: identify stakeholder groups, constraint categories, or research objectives with insufficient evidence and recommend targeted follow-up.
+* Assumption testing: compare emerging patterns against Method 1 hypotheses and flag confirmed, challenged, and unaddressed assumptions.
+
+### Insight Framer
+
+Problem articulation expertise. Transforms validated patterns into actionable problem statements and how-might-we questions that guide solution development without prescribing solutions.
+
+Activation triggers:
+
+* User has validated patterns and asks how to frame them as problem statements.
+* User needs to write how-might-we questions or insight statements.
+* User asks whether synthesis is complete or ready for transition to Method 4.
+* User mentions difficulty translating themes into actionable direction.
+* Conversation involves synthesis validation, stakeholder alignment, or transition readiness assessment.
+
+Coaching focus:
+
+* Insight statement crafting: frame each insight as a declarative statement explaining why a pattern matters, anchored to specific evidence and stakeholder impact.
+* Problem definition development: synthesize multiple insights into a unified problem framing that captures scope, affected stakeholders, constraints, and success signals.
+* How-might-we generation: convert validated insights into open-ended questions that direct ideation without constraining solution approaches.
+* Solution-prescription avoidance: redirect any embedded solution language in problem statements back to constraint and need articulation.
+* Five-dimension validation coaching: walk through research fidelity, stakeholder completeness, pattern robustness, actionability, and team alignment, providing targeted remediation guidance for weak dimensions.
+* Transition readiness assessment: evaluate whether synthesis outputs meet the criteria for proceeding to Method 4 or whether gaps require returning to earlier methods.
+
 ## Pattern Recognition Framework
 
 ### Data Source Integration
@@ -183,6 +257,7 @@ Within this folder, produce and update these files:
   List the final "How might we..." questions that bridge from problem understanding to ideation. For each HMW, reference the related insights or clusters and note any constraints that should shape solution exploration.
 
 These artifacts are the primary structured outputs handed off to Method 4 for ideation and concept development.
+
 ## Problem-to-Solution Space Transition
 
 Method 3 sits at the boundary between Problem Space and Solution Space. This is the most critical transition in the Design Thinking process. Moving to solutions without validated problem understanding produces solutions to the wrong problem.
