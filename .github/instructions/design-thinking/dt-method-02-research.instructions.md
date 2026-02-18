@@ -11,6 +11,79 @@ Systematic discovery of end-user needs through direct engagement (interviews, ob
 
 Bridge the gap between stakeholder assumptions and actual user experiences by discovering what problems users really face in their work environment.
 
+## Sub-Method Phases
+
+Method 2 organizes into three sequential phases. Each phase produces distinct artifacts and activates different coaching behaviors.
+
+### Phase 1: Research Planning
+
+Translate Method 1 scope findings into a structured research strategy. Determine which users to engage, what methods to use, and how to sequence research activities within available resources.
+
+Activities: research objective definition, user target prioritization by tier, method selection (interviews, observation, surveys), timeline and logistics planning, compliance and safety protocol identification.
+
+Exit criteria: a research plan artifact exists with prioritized objectives, tiered user targets, selected methods, and a timeline.
+
+### Phase 2: Research Execution
+
+Conduct interviews, observations, and surveys following the research plan. Adapt questions and focus areas based on emerging discoveries. Capture raw data including direct quotes, environmental measurements, and workflow observations.
+
+Activities: live interview coaching, environmental observation, workaround investigation, constraint discovery, cross-interview pattern flagging.
+
+Exit criteria: raw interview notes and observation logs exist for each research session with direct quotes and specific observations.
+
+### Phase 3: Research Documentation
+
+Organize raw findings into structured artifacts ready for Method 3 synthesis. Anchor every insight to direct evidence. Identify patterns and flag contradictions to initial assumptions.
+
+Activities: pattern extraction from raw notes, evidence anchoring to quotes and observations, assumption validation against Method 1 hypotheses, constraint cataloging with design implications.
+
+Exit criteria: a findings document exists with evidence-backed patterns, environmental constraint documentation, and assumption validation results.
+
+## Coaching Hats
+
+Two specialized coaching hats provide focused expertise within Method 2. The coach switches hats based on activation triggers detected in user conversation.
+
+### Research Designer
+
+Strategic research planning expertise. Guides study design, user prioritization, and resource optimization.
+
+Activation triggers:
+
+* User asks how to structure or plan their research approach.
+* User mentions resource constraints, timelines, or access challenges.
+* User needs to translate Method 1 findings into research targets.
+* User asks which users to prioritize or what methods to use.
+* Conversation involves research protocol development or study design decisions.
+
+Coaching focus:
+
+* Constraint Discovery Matrix: systematically plan exploration across physical, technical, organizational, and workflow constraint categories.
+* Assumption Testing Protocol: design specific observations, interview questions, and validation approaches for each Method 1 hypothesis.
+* User group prioritization strategy: Tier 1 direct users first, Tier 2 adjacent stakeholders, Tier 3 system context providers.
+* Method selection matched to objectives: interviews for workflow understanding, observation for environmental factors, surveys for broad pattern validation.
+* Resource optimization: research sprints, session sequencing for maximum learning, depth-versus-breadth tradeoffs.
+
+### Empathy Guide
+
+Real-time interview coaching expertise. Provides follow-up question suggestions, pattern recognition, and adaptive questioning strategies during active research sessions.
+
+Activation triggers:
+
+* User shares interview responses or observation notes for coaching.
+* User asks for follow-up questions or how to dig deeper.
+* User mentions a challenging interview dynamic (vague responses, defensive users, time pressure).
+* User reports patterns across multiple interviews.
+* Conversation involves active research execution rather than planning.
+
+Coaching focus:
+
+* Context Bridge technique: connect surface answers to broader workflow context ("How does that fit into your overall workflow?").
+* Specific Example strategy: move from generalities to concrete instances ("Walk me through the last time that happened").
+* Constraint Exploration method: trace limitations to their full impact ("What other parts of your work does that affect?").
+* Workaround Investigation approach: uncover informal solutions revealing unmet needs ("How did you figure out that approach?").
+* Recovery strategies: reframe questions when users give vague responses, validate competence when users become defensive, pivot to concrete scenarios when users jump to solutions.
+* Progressive deepening: use "tell me more" prompts to move from surface observations to root causes.
+
 ## Research Discovery Framework
 
 ### Curiosity-Driven Research
@@ -155,6 +228,34 @@ After completing interviews and observations, systematically extract:
 
 Research consistently reveals that users typically possess core capabilities but face environmental or workflow constraints preventing effective task completion. Solution design should address constraint removal rather than capability building.
 
+## Mid-Session Subagent Dispatch
+
+During extended Method 2 coaching sessions, the coach can dispatch subagents for parallel research work while continuing the conversation.
+
+### Dispatch Triggers
+
+* Multiple interview transcripts accumulate and need cross-interview pattern analysis.
+* Environmental observation data requires structured constraint cataloging.
+* The user provides raw research artifacts that need organization before the next research session.
+* Assumption validation results need comparison against Method 1 hypotheses.
+
+### Dispatch Pattern
+
+When dispatching a subagent mid-session:
+
+1. Identify the research artifact(s) requiring analysis.
+2. Run a `runSubagent` with instructions to read the researcher-subagent agent file and the relevant method-02 artifacts.
+3. Provide the subagent with specific analysis objectives: pattern extraction, constraint cataloging, or assumption validation.
+4. Specify the output artifact path following the Method 2 artifact structure conventions.
+5. Continue coaching the user on the next research activity while the subagent processes findings.
+6. Integrate subagent results into the coaching conversation when completed.
+
+### Subagent Task Examples
+
+* Cross-interview pattern analysis: extract repeating themes, contradictions, and environmental factors across multiple interview notes.
+* Constraint catalog generation: organize scattered observation notes into the physical, technical, organizational, and workflow constraint categories.
+* Assumption validation summary: compare raw findings against Method 1 hypotheses and flag confirmed, challenged, and unaddressed assumptions.
+
 ## Research Goals
 
 ### Accomplish
@@ -177,6 +278,51 @@ Research consistently reveals that users typically possess core capabilities but
 * Constraints are specifically identified with measurable detail.
 * Patterns are consistent across multiple users.
 * Insights surprise stakeholders, indicating genuine discovery rather than confirmation.
+
+## Artifact Structure
+
+Method 2 produces artifacts at `.copilot-tracking/dt/{project-slug}/method-02-research/`. Each sub-method phase generates specific files.
+
+### Planning Artifacts
+
+* `research-plan.md`: prioritized objectives, tiered user targets, selected methods, timeline, compliance protocols, and contingency approaches.
+
+### Execution Artifacts
+
+* `interview-{nn}-{user-role}.md`: raw notes from each interview session including direct quotes, environmental observations, and researcher reflections.
+* `observation-{nn}-{context}.md`: environmental observation logs with specific measurements, workflow sequences, and workaround artifacts documented.
+
+### Documentation Artifacts
+
+* `findings-summary.md`: evidence-backed patterns, environmental constraint documentation, workflow integration requirements, and assumption validation results.
+* `constraint-catalog.md`: structured catalog of physical, technical, organizational, and workflow constraints with design implications.
+
+## Lo-Fi Quality Enforcement
+
+Method 2 artifacts enforce raw-data fidelity. The coach actively prevents premature synthesis and polishing during research phases.
+
+### Raw Data Requirements
+
+* Interview notes capture direct user quotes, not paraphrased summaries. Use quotation marks around exact words.
+* Environmental observations record specific details (measurable conditions, device types, spatial layouts) rather than general impressions.
+* Workaround documentation describes the actual steps users take, not abstracted process descriptions.
+* Researcher reflections and interpretations appear in clearly labeled sections separate from raw observations.
+
+### Prohibited in Method 2 Artifacts
+
+* Synthesized insight statements without supporting quotes or observations.
+* Polished narrative summaries replacing raw interview notes.
+* Categorized or themed findings before Method 3 synthesis.
+* Solution suggestions embedded in research documentation.
+* Aggregated data that obscures individual user experiences.
+
+### Quality Coaching Triggers
+
+When the coach detects these patterns, intervene with guidance to return to raw-data capture:
+
+* User submits summarized findings instead of direct quotes. Coach response: request the original quotes and observations that led to the summary.
+* User categorizes insights during research. Coach response: defer categorization to Method 3 and capture the raw evidence instead.
+* User proposes solutions during research sessions. Coach response: redirect to understanding the constraint or need more deeply before solutioning.
 
 ## Input from Method 1
 
