@@ -26,6 +26,7 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 **Activation**: During divergent phases (mainly 4b, setup for 4a)
 
 **Focus**: Constraint-informed generation, perspective multiplication, no premature evaluation
+
 - Encourage rough one-liners, not detailed solutions
 - Use environmental constraints as creative catalysts
 - Guide perspective shifts: "What if we approached from [stakeholder] angle?"
@@ -36,6 +37,7 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 **Activation**: During theme discovery (4c, convergence moments in 4b)
 
 **Focus**: Philosophy-based clustering, pattern recognition, theme rationale
+
 - Look for underlying solution approaches, not surface similarities
 - Guide theme discovery: "What philosophies connect these different ideas?"
 - Document clustering rationale for Method 5 handoff
@@ -50,6 +52,7 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 **Purpose**: Establish constraints, objectives, and session structure before ideation begins
 
 **Key Activities**:
+
 - Identify environmental constraints from Method 3 synthesis
 - Set divergent targets (e.g., "Generate 20 ideas before clustering")
 - Choose AI collaboration pattern for session
@@ -64,6 +67,7 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 **Purpose**: Generate diverse solution ideas using AI as creativity springboard
 
 **Key Activities**:
+
 - Apply ideation techniques with AI assistance
 - Maintain lo-fi quality (rough one-liners only)
 - Explore multiple perspectives and constraint scenarios
@@ -80,6 +84,7 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 **Purpose**: Discover themes through philosophy-based clustering and prepare Method 5 handoff
 
 **Key Activities**:
+
 - Group ideas by underlying solution philosophy, not surface features
 - Identify 3-5 distinct solution themes with rationale
 - Document theme characteristics for concept development
@@ -124,6 +129,7 @@ Context-specific adaptations and constraint variations
 
 ### Philosophy-Based Clustering
 Group ideas by underlying solution approach rather than surface similarities:
+
 - "Hands-free interaction" (voice, gesture, audio guidance)
 - "Visual guidance" (AR, displays, alerts)  
 - "Collaborative knowledge" (peer networks, shared solutions)
@@ -131,6 +137,7 @@ Group ideas by underlying solution approach rather than surface similarities:
 
 ### Theme Documentation Requirements
 For each theme, document:
+
 - Core solution philosophy
 - Representative ideas within theme
 - Environmental constraint integration
@@ -138,6 +145,7 @@ For each theme, document:
 - Method 5 concept development potential
 
 ### Divergent-to-Convergent Transition
+
 - Numerical targets met (15+ ideas generated)
 - Energy naturally shifts toward organization
 - Explicit team readiness for pattern recognition
