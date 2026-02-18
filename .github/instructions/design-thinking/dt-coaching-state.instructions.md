@@ -68,7 +68,7 @@ artifacts: []
 
 #### Methods Completed
 
-List of method numbers the team has finished. A method is complete when the coach and team agree its outputs are sufficient to proceed. Methods may appear and later be revisited without removal from this list.
+List of method numbers the team has finished. A method is complete when the coach and team agree its outputs are sufficient to proceed. Once added, methods remain in this list even if they are revisited later.
 
 #### Transition Log
 
@@ -146,4 +146,4 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 
 ## Integration with Method Sequencing
 
-The coaching state schema aligns with the method routing assessment flow defined in the method sequencing instruction. The `current.method` field drives which method-tier instructions load via `applyTo` pattern matching. The `transition_log` provides the history that the sequencing instruction's transition protocol references.
+The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which method-tier instructions load via `applyTo` pattern matching. The `transition_log` provides the history that the method sequencing transition protocol references.
