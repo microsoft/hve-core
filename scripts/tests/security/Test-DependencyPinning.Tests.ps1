@@ -729,7 +729,7 @@ Describe 'Get-RemediationSuggestion' -Tag 'Unit' {
             $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
             $v.Version = 'v4'
             Mock Invoke-RestMethod { throw 'API error' }
-            Mock Write-PinningLog {}
+            Mock Write-SecurityLog {}
             $result = Get-RemediationSuggestion -Violation $v -Remediate
             $result | Should -Be 'Manually research and pin to immutable reference'
         }
@@ -1061,7 +1061,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         }
     }
 
-    Context 'Write-PinningLog CI annotation forwarding' {
+    Context 'Write-SecurityLog CI annotation forwarding' {
         BeforeAll {
             Mock Write-CIAnnotation {}
             Mock Write-Host {}
@@ -1084,7 +1084,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            # Write-PinningLog "N dependencies require SHA pinning..." emits a Warning annotation
+            # Write-SecurityLog -CIAnnotation "N dependencies require SHA pinning..." emits a Warning annotation
             Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'SHA pinning' }
         }
 
@@ -1105,7 +1105,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            # Write-PinningLog "Compliance score ... below threshold" emits an Error annotation
+            # Write-SecurityLog -CIAnnotation "Compliance score ... below threshold" emits an Error annotation
             Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' -and $null -eq $File -and $Message -match 'below threshold' }
         }
 
