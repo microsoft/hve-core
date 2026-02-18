@@ -37,7 +37,7 @@ Generate, visualize, and test solution ideas with increasing concreteness.
 
 1. (Method 4) Brainstorming. Conduct divergent ideation on validated problems. Generate broad solution ideas constrained by discovered realities.
 2. (Method 5) User concepts. Perform visual concept validation. Simplify ideas into 30-second comprehensible visuals for stakeholder alignment.
-3. (Method 6) Lo-fi prototypes. Use scrappy prototypes for constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
+3. (Method 6) Lo-Fi prototypes. Use scrappy prototypes for constraint discovery. Build minimum viable physical or paper prototypes to reveal constraints that concepts cannot surface.
 
 ### Implementation Space (Methods 7-9)
 
