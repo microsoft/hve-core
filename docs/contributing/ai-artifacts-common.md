@@ -651,6 +651,9 @@ npm run lint:md-links
 
 # PowerShell analysis (if applicable)
 npm run lint:ps
+
+# Validate skill structure (if applicable)
+npm run validate:skills
 ```
 
 ### Quality Gates

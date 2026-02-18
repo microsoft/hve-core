@@ -43,6 +43,7 @@ npm run lint:md          # Run markdownlint
 npm run lint:ps          # Run PowerShell analyzer
 npm run lint:yaml        # Run YAML linter
 npm run lint:frontmatter # Validate markdown frontmatter
+npm run validate:skills  # Validate skill directory structure
 npm run lint:md-links    # Check markdown links
 npm run spell-check      # Run cspell
 npm run format:tables    # Format markdown tables
@@ -61,14 +62,23 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   - [Required Tools](#required-tools)
   - [Validation Commands](#validation-commands)
   - [Development Environment](#development-environment)
+- [Table of Contents](#table-of-contents)
 - [Code of Conduct](#code-of-conduct)
 - [I Have a Question](#i-have-a-question)
 - [I Want To Contribute](#i-want-to-contribute)
   - [Reporting Bugs](#reporting-bugs)
+    - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
+    - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
   - [Suggesting Enhancements](#suggesting-enhancements)
+    - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
+    - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Your First Code Contribution](#your-first-code-contribution)
   - [Improving The Documentation](#improving-the-documentation)
 - [AI Artifact Contributions](#ai-artifact-contributions)
+  - [Getting Started with AI Artifacts](#getting-started-with-ai-artifacts)
+  - [Artifact Types](#artifact-types)
+  - [Essential Resources](#essential-resources)
+  - [Quick Reference](#quick-reference)
 - [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
   - [Active Pull Requests](#active-pull-requests)
   - [Draft Pull Requests](#draft-pull-requests)
@@ -76,6 +86,7 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
 - [Style Guides](#style-guides)
   - [Local Development Setup](#local-development-setup)
   - [Coding Conventions](#coding-conventions)
+  - [Copyright and License Headers](#copyright-and-license-headers)
 - [Testing Requirements](#testing-requirements)
   - [When Tests Are Required](#when-tests-are-required)
   - [Test Conventions](#test-conventions)
@@ -175,7 +186,7 @@ When contributing code to the project, please consider the following guidance:
 - Assign an issue to yourself before beginning any effort, and update the issue status accordingly.
 - If an issue for your contribution does not exist, [please file an issue](https://github.com/microsoft/hve-core/issues/new) first to engage with the project maintainers for guidance.
 - Commits should reference related issues for traceability (e.g., "Fixes #123" or "Relates to #456").
-- When creating a PR, use [GitHub's closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) in the description to automatically link and close related issues.
+- When creating a PR, use [GitHub's closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue) in the description to automatically link and close related issues.
 - All code PRs destined for the `main` branch will be reviewed by pre-determined reviewer groups that are automatically added to each PR.
 
 This project also includes a Dev Container for development work, and using that dev container is preferred, to ensure you are using the same toolchains and tool versions as other contributors. You can read more about the Dev Container in its [ReadMe](./.devcontainer/README.md).
