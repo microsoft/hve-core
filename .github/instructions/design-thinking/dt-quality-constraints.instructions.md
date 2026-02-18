@@ -24,31 +24,49 @@ These rules apply to every method regardless of space or fidelity level.
 
 Quality in the Problem Space means completeness and honesty of understanding.
 
-**Fidelity level**: rough and exploratory. Output is understanding, not deliverables. Solution discussions are premature in this space.
+#### Problem fidelity level
 
-**Exit gate**: Method 3 synthesis validation provides the formal quality checkpoint before entering the Solution Space. The five validation dimensions are Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, and Team Alignment. Each dimension receives a status of Pass, Needs Improvement, or Requires Rework.
+Rough and exploratory. Output is understanding, not deliverables. Solution discussions are premature in this space.
 
-**Anti-patterns**: forcing themes that do not genuinely exist in the data, relying on a single source for conclusions, jumping to solutions before the problem is understood.
+#### Exit gate
+
+Method 3 synthesis validation provides the formal quality checkpoint before entering the Solution Space. The five validation dimensions are Research Fidelity, Stakeholder Completeness, Pattern Robustness, Actionability, and Team Alignment. Each dimension receives a status of Pass, Needs Improvement, or Requires Rework.
+
+#### Problem anti-patterns
+
+Forcing themes that do not genuinely exist in the data, relying on a single source for conclusions, jumping to solutions before the problem is understood.
 
 ### Solution Space (Methods 4-6)
 
 Quality in the Solution Space means creative diversity and learning speed.
 
-**Fidelity level**: intentionally at its lowest. Stick figures, paper prototypes, and cardboard mock-ups are the expected output format. The goal is quantity and variety of ideas with rapid constraint discovery.
+#### Solution fidelity level
 
-**Core principle**: treat instant failure as instant win. A failed prototype that reveals a constraint in minutes saves weeks of rework later.
+Intentionally at its lowest. Stick figures, paper prototypes, and cardboard mock-ups are the expected output format. The goal is quantity and variety of ideas with rapid constraint discovery.
 
-**Anti-patterns**: premature convergence on the first decent idea, polished prototypes that invite surface-level aesthetic feedback, testing in artificial or controlled environments only.
+#### Solution core principle
+
+Treat instant failure as instant win. A failed prototype that reveals a constraint in minutes saves weeks of rework later.
+
+#### Solution anti-patterns
+
+Premature convergence on the first decent idea, polished prototypes that invite surface-level aesthetic feedback, testing in artificial or controlled environments only.
 
 ### Implementation Space (Methods 7-9)
 
 Quality in the Implementation Space means technical proof, user validation depth, and measurable business value.
 
-**Fidelity level**: functionally rigorous but still not visually polished. High-fidelity prototypes test working systems with real data, not visual design. Multiple implementation variants enable systematic comparison.
+#### Implementation fidelity level
 
-**Core principle**: systematic validation through quantitative metrics (task completion, error rates, efficiency) alongside qualitative feedback extracted through progressive questioning.
+Functionally rigorous but still not visually polished. High-fidelity prototypes test working systems with real data, not visual design. Multiple implementation variants enable systematic comparison.
 
-**Anti-patterns**: over-polished interfaces that distract from functional validation, testing a single implementation path without alternatives, running tests only under ideal conditions.
+#### Implementation core principle
+
+Systematic validation through quantitative metrics (task completion, error rates, efficiency) alongside qualitative feedback extracted through progressive questioning.
+
+#### Implementation anti-patterns
+
+Over-polished interfaces that distract from functional validation, testing a single implementation path without alternatives, running tests only under ideal conditions.
 
 ## Method-Specific Quality Frameworks
 
