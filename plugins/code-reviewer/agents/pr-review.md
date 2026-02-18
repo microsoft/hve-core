@@ -1,1 +1,0 @@
-../../../.github/agents/code-reviewer/pr-review.agent.md

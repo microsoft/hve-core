@@ -91,7 +91,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 
 ### Agents and Subagents
 
-Custom agents live under `.github/agents/{collection-id}/`. Each collection places its agents in a dedicated subdirectory (e.g., `.github/agents/rpi/`, `.github/agents/ado/`). RPI subagents live under `.github/agents/rpi/subagents/`, shared subagents under `.github/agents/shared/subagents/`, and other collection subagents under `.github/agents/{collection-id}/subagents/`.
+Custom agents live under `.github/agents/{collection-id}/`. Each collection places its agents in a dedicated subdirectory (e.g., `.github/agents/rpi/`, `.github/agents/ado/`). Subagents live under `.github/agents/{collection-id}/subagents/`.
 Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
 
 Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:

@@ -31,7 +31,6 @@
   },
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
-    ".github/agents/code-reviewer": true,
     ".github/agents/data-science": true,
     ".github/agents/github": true,
     ".github/agents/installer": true,
@@ -39,8 +38,6 @@
     ".github/agents/rpi": true,
     ".github/agents/rpi/subagents": true,
     ".github/agents/security-planning": true,
-    ".github/agents/shared": true,
-    ".github/agents/shared/subagents": true,
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,

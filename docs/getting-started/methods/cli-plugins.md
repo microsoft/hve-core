@@ -40,7 +40,6 @@ copilot plugin install hve-core-all@hve-core
 | github            | GitHub issue management                     |
 | ado               | Azure DevOps integration                    |
 | coding-standards  | Language-specific coding guidelines         |
-| code-reviewer     | Pull request review and analysis            |
 | project-planning  | PRDs, BRDs, ADRs, architecture diagrams     |
 | data-science      | Data specs, notebooks, dashboards           |
 | security-planning | Security and incident response              |

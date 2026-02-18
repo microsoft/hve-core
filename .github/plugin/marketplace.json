@@ -16,12 +16,6 @@
       "version": "2.3.10"
     },
     {
-      "name": "code-reviewer",
-      "source": "./plugins/code-reviewer",
-      "description": "Pull request review with automated analysis and feedback",
-      "version": "2.3.10"
-    },
-    {
       "name": "coding-standards",
       "source": "./plugins/coding-standards",
       "description": "Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform projects",

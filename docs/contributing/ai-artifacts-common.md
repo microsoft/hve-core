@@ -122,19 +122,18 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection          | Tags                                                                          |
-|---------------------|-------------------------------------------------------------------------------|
-| `hve-core-all`      | `hve`, `complete`, `bundle`                                                   |
-| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                |
-| `code-reviewer`     | `code-review`, `pull-request`, `review`                                       |
-| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`    |
-| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science` |
-| `experimental`      | `experimental`, `media`, `utilities`                                          |
-| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                             |
-| `installer`         | `installer`, `setup`, `onboarding`                                            |
-| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`  |
-| `rpi`               | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`         |
-| `security-planning` | `security`, `incident-response`, `risk`, `planning`                           |
+| Collection          | Tags                                                                                 |
+|---------------------|--------------------------------------------------------------------------------------|
+| `hve-core-all`      | `hve`, `complete`, `bundle`                                                          |
+| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                       |
+| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`           |
+| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`        |
+| `experimental`      | `experimental`, `media`, `utilities`                                                 |
+| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
+| `installer`         | `installer`, `setup`, `onboarding`                                                   |
+| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
+| `rpi`               | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
+| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                  |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
@@ -227,7 +226,6 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 |-----------------------|---------------------|----------------------------------------------------------------------------------|
 | **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills     |
 | **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation   |
-| **Code Reviewer**     | `code-reviewer`     | Pull request review workflows and code quality analysis                          |
 | **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform |
 | **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards       |
 | **Experimental**      | `experimental`      | Experimental skills and utilities in early development                           |

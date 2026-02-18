@@ -266,7 +266,7 @@ Choose collections based on who benefits most from your agent:
 | Documentation agents | `hve-core-all`, `rpi`                     |
 | Data science agents  | `hve-core-all`, `data-science`            |
 | ADO/work item agents | `hve-core-all`, `ado`, `project-planning` |
-| Code review agents   | `hve-core-all`, `code-reviewer`           |
+| Code review agents   | `hve-core-all`, `rpi`                     |
 
 ### Declaring Agent Dependencies
 

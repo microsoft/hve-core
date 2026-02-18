@@ -8,6 +8,7 @@ tags:
   - research
   - implementation
   - review
+  - code-review
   - git
   - commits
   - merge
@@ -30,6 +31,8 @@ items:
     kind: agent
   - path: .github/agents/rpi/task-reviewer.agent.md
     kind: agent
+  - path: .github/agents/rpi/pr-review.agent.md
+    kind: agent
   # Subagents
   - path: .github/agents/rpi/subagents/rpi-validator.agent.md
     kind: agent
@@ -45,7 +48,7 @@ items:
     kind: agent
   - path: .github/agents/rpi/subagents/prompt-updater.agent.md
     kind: agent
-  - path: .github/agents/shared/subagents/researcher-subagent.agent.md
+  - path: .github/agents/rpi/subagents/researcher-subagent.agent.md
     kind: agent
   # Prompts
   - path: .github/prompts/rpi/rpi.prompt.md
