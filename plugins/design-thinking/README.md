@@ -9,6 +9,12 @@ Design Thinking coaching identity, quality constraints, and methodology instruct
 copilot plugin install design-thinking@hve-core
 ```
 
+## Commands
+
+| Command          | Description                                                                                                                                  |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-start-project | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
+
 ## Instructions
 
 | Instruction            | Description                                                                                                                                                                                                                                |

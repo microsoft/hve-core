@@ -7,6 +7,9 @@ tags:
   - methodology
   - ux
 items:
+  # Prompts
+  - path: .github/prompts/design-thinking/dt-start-project.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
     kind: instruction
