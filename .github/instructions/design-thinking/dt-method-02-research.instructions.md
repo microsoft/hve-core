@@ -85,7 +85,7 @@ A research plan covers:
 
 ### Question Categories
 
-* Opening and rapport: questions that show respect for the user's expertise and daily reality.
+* Opening and rapport: questions that show respect for the user's expertise and daily reality
 * Current state workflow: "Walk me through what happens from the moment you notice [problem] until it's fully resolved."
 * Pain point discovery: "What takes the longest when you're trying to [task], and why does that step take so much time?"
 * Workaround investigation: "What do you do when the official system or process doesn't work the way it should?"
