@@ -708,7 +708,6 @@ function Write-OutputResult {
             # Build step summary markdown table
             $totalCount = @($Dependencies).Count
             $staleCount = $totalCount
-            $cleanCount = 0
 
             if ($totalCount -eq 0) {
                 $summaryContent = @"
@@ -716,7 +715,7 @@ function Write-OutputResult {
 
 ✅ **All Clear:** No stale dependencies detected.
 
-**Found:** 0 | **Stale:** 0 | **Current:** 0
+**Found:** 0 | **Stale:** 0
 "@
             }
             else {
@@ -728,7 +727,7 @@ function Write-OutputResult {
                 $summaryContent = @"
 # 🔒 SHA Staleness Analysis
 
-**Found:** $totalCount | **Stale:** $staleCount | **Current:** $cleanCount
+**Found:** $totalCount | **Stale:** $staleCount
 
 | Dependency | SHA Age (days) | Threshold (days) | Status |
 |------------|----------------|-------------------|--------|

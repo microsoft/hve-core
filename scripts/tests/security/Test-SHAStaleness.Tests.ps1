@@ -920,6 +920,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
 
     Context 'GitHub output format with stale dependencies' {
         BeforeAll {
+            # Write-OutputResult receives pre-filtered stale items; all entries are stale by definition
             $script:githubDeps = @(
                 @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml'; Message = 'GitHub Action is 45 days old' }
                 @{ Type = 'GitHubAction'; Name = 'actions/setup-node'; DaysOld = 90; Severity = 'High'; File = 'build.yml'; Message = 'GitHub Action is 90 days old' }
@@ -972,7 +973,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
             }
         }
 
-        It 'Includes stale status for dependencies exceeding threshold' {
+        It 'Shows stale status for all dependencies' {
             Mock Write-CIAnnotation { }
             Mock Write-CIStepSummary { }
             Write-OutputResult -Dependencies $script:githubDeps -OutputFormat 'github'
