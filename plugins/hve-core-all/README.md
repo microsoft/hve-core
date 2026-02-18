@@ -28,6 +28,7 @@ copilot plugin install hve-core-all@hve-core
 | memory                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                              |
 | pr-review                | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                              |
 | prd-builder              | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
+| product-manager-advisor  | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                      |
 | prompt-builder           | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                          |
 | rpi-agent                | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                            |
 | security-plan-creator    | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
@@ -44,6 +45,7 @@ copilot plugin install hve-core-all@hve-core
 | task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
 | test-streamlit-dashboard | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                              |
+| ux-ui-designer           | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
 
 ## Commands
 
