@@ -51,6 +51,16 @@ function Invoke-LinkLanguageCheckCore {
         if ($results -and $results.Count -gt 0) {
             Write-Host "Found $($results.Count) URLs with 'en-us' language paths`n" -ForegroundColor Yellow
 
+            $fileGroups = $results | Group-Object -Property file
+            $uniqueFiles = $fileGroups | ForEach-Object { $_.Name }
+
+            foreach ($fileGroup in $fileGroups) {
+                Write-Host "📄 $($fileGroup.Name)" -ForegroundColor Cyan
+                foreach ($item in $fileGroup.Group) {
+                    Write-Host "  ⚠️ Line $($item.line_number): $($item.original_url)" -ForegroundColor Yellow
+                }
+            }
+
             foreach ($item in $results) {
                 Write-CIAnnotation `
                     -Message "URL contains language path: $($item.original_url)" `
@@ -64,7 +74,7 @@ function Invoke-LinkLanguageCheckCore {
                 script = "link-lang-check"
                 summary = @{
                     total_issues = $results.Count
-                    files_affected = ($results | Select-Object -ExpandProperty file -Unique).Count
+                    files_affected = $uniqueFiles.Count
                 }
                 issues = $results
             }
@@ -72,8 +82,6 @@ function Invoke-LinkLanguageCheckCore {
 
             Set-CIOutput -Name "issues" -Value $results.Count
             Set-CIEnv -Name "LINK_LANG_FAILED" -Value "true"
-
-            $uniqueFiles = $results | Select-Object -ExpandProperty file -Unique
 
             Write-CIStepSummary -Content @"
 ## Link Language Path Check Results
@@ -99,6 +107,8 @@ $(($uniqueFiles | ForEach-Object {
     "- $safePath ($count occurrence(s))"
 }) -join "`n")
 "@
+
+            Write-Host "❌ Link language check failed with $($results.Count) issue(s) in $($uniqueFiles.Count) file(s)." -ForegroundColor Red
 
             return 1
         }
