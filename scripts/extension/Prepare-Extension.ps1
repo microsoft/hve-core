@@ -1044,11 +1044,19 @@ function Get-DiscoveredAgents {
     }
 
     $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
-    # Exclude deprecated and repo-specific agents
+    # Exclude deprecated agents
     $agentFiles = $agentFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
-    $agentFiles = $agentFiles | Where-Object { $_.FullName -notmatch '[/\\]hve-core[/\\]' }
 
     foreach ($agentFile in $agentFiles) {
+        $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
+
+        # Skip repo-specific agents not intended for distribution
+        if ($agentRelPath -like 'hve-core/*') {
+            $agentName = $agentFile.BaseName -replace '\.agent$', ''
+            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
+
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
 
         if ($ExcludedAgents -contains $agentName) {
@@ -1062,8 +1070,6 @@ function Get-DiscoveredAgents {
             $result.Skipped += @{ Name = $agentName; Reason = "maturity: $maturity" }
             continue
         }
-
-        $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
         $result.Agents += [PSCustomObject]@{
             name = $agentName
             path = "./.github/agents/$agentRelPath"
@@ -1113,6 +1119,7 @@ function Get-DiscoveredPrompts {
     }
 
     $promptFiles = Get-ChildItem -Path $PromptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
+    $promptFiles = $promptFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
@@ -1174,6 +1181,7 @@ function Get-DiscoveredInstructions {
     }
 
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
+    $instructionFiles = $instructionFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
 
     foreach ($instrFile in $instructionFiles) {
         # Skip repo-specific instructions not intended for distribution
@@ -1239,6 +1247,7 @@ function Get-DiscoveredSkills {
     }
 
     $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
+    $skillFiles = $skillFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
 
     foreach ($skillFile in $skillFiles) {
         $skillDir = $skillFile.Directory

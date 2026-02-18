@@ -114,7 +114,7 @@ Get started with RPI:
 
 * [Why the RPI Workflow Works](docs/rpi/why-rpi.md): the psychology behind constraint-based AI workflows
 * [Your First RPI Workflow](docs/getting-started/first-workflow.md): 15-minute hands-on tutorial
-* [rpi-agent](.github/agents/rpi-agent.agent.md): autonomous mode for simpler tasks that don't need strict phase separation
+* [rpi-agent](.github/agents/rpi/rpi-agent.agent.md): autonomous mode for simpler tasks that don't need strict phase separation
 
 ## What's Included
 

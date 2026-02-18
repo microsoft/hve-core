@@ -11,7 +11,11 @@ tags:
   - planning
 items:
   # Agents
-  - path: .github/agents/agile-coach.agent.md
+  - path: .github/agents/project-planning/agile-coach.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/product-manager-advisor.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/ux-ui-designer.agent.md
     kind: agent
   - path: .github/agents/project-planning/adr-creation.agent.md
     kind: agent

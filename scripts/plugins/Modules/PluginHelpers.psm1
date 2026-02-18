@@ -201,7 +201,10 @@ function Get-ArtifactFiles {
             if ($relativePath -match '^\.github/.*/hve-core/') {
                 continue
             }
-
+            # Exclude deprecated artifacts under .github/deprecated/
+            if ($relativePath -match '^\.github/deprecated/') {
+                continue
+            }
             $items += @{ path = $relativePath; kind = $kind }
         }
     }
@@ -213,6 +216,12 @@ function Get-ArtifactFiles {
         foreach ($skillFile in $skillMdFiles) {
             $dir = $skillFile.Directory
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
+
+            # Exclude deprecated skills
+            if ($relativePath -match '^\.github/deprecated/') {
+                continue
+            }
+
             $items += @{ path = $relativePath; kind = 'skill' }
         }
     }
@@ -285,6 +294,9 @@ function Update-HveCoreAllCollection {
 
     # Discover all artifacts
     $allItems = Get-ArtifactFiles -RepoRoot $RepoRoot
+
+    # Exclude deprecated items by path (independent of maturity metadata)
+    $allItems = @($allItems | Where-Object { $_.path -notmatch '^\.github/deprecated/' })
 
     # Filter deprecated based on existing collection item maturity metadata
     $existingItemMaturities = @{}

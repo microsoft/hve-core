@@ -359,6 +359,45 @@ The extension provides these contribution points:
 * Agents activate through prompt references or direct invocation.
 * Matching instructions inject into Copilot context automatically.
 
+## Deprecated Artifacts
+
+Artifacts that have been superseded or are scheduled for removal live under `.github/deprecated/{type}/`, preserving the same type subdirectories used by active artifacts.
+
+### Location
+
+```text
+.github/deprecated/
+├── agents/         # Superseded agent files
+├── instructions/   # Retired instruction files
+├── prompts/        # Retired prompt files
+└── skills/         # Retired skill packages
+```
+
+### Automatic Exclusion
+
+The build system excludes `.github/deprecated/` contents from all downstream surfaces:
+
+| Surface              | Exclusion Mechanism                         |
+|----------------------|---------------------------------------------|
+| Collection manifests | `Update-HveCoreAllCollection` path filter   |
+| Plugin generation    | `Get-ArtifactFiles` path filter             |
+| Extension packaging  | Discovery function `deprecated` path filter |
+| VS Code activation   | Not discovered at runtime                   |
+
+No manual removal from manifests is required when an artifact moves to `.github/deprecated/`. The path-based exclusion operates independently of `maturity` metadata, providing a reliable safety net against silent reintroduction.
+
+### Retention and Removal
+
+Deprecated artifacts remain in the repository for traceability and migration guidance. Each deprecated file SHOULD contain a frontmatter note or heading that identifies its replacement. Permanent removal occurs at a planned retirement window with a corresponding changelog entry.
+
+### When to Deprecate
+
+Move an artifact to `.github/deprecated/{type}/` when:
+
+* A newer artifact fully replaces its functionality
+* The artifact is no longer maintained or tested
+* The artifact targets a retired platform or workflow
+
 ## Related Documentation
 
 * [Agent Systems Catalog](../agents/README.md) - Overview of all agent systems with workflow documentation

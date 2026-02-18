@@ -169,13 +169,13 @@ items:
 
 Choose collections based on who uses the skill's utilities:
 
-| Skill Type           | Recommended Collections              |
-|----------------------|--------------------------------------|
-| Media processing     | `hve-core-all`                       |
-| Documentation tools  | `hve-core-all`, `rpi`                |
-| Data processing      | `hve-core-all`, `data-science`       |
-| Infrastructure tools | `hve-core-all`, `coding-standards`   |
-| Code generation      | `hve-core-all`, `coding-standards`   |
+| Skill Type           | Recommended Collections            |
+|----------------------|------------------------------------|
+| Media processing     | `hve-core-all`                     |
+| Documentation tools  | `hve-core-all`, `rpi`              |
+| Data processing      | `hve-core-all`, `data-science`     |
+| Infrastructure tools | `hve-core-all`, `coding-standards` |
+| Code generation      | `hve-core-all`, `coding-standards` |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 

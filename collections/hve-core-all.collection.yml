@@ -10,8 +10,6 @@ items:
   kind: agent
 - path: .github/agents/code-reviewer/pr-review.agent.md
   kind: agent
-- path: .github/agents/agile-coach.agent.md
-  kind: agent
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-jupyter-notebook.agent.md
@@ -23,11 +21,11 @@ items:
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/github/github-issue-manager.agent.md
-  kind: agent
 - path: .github/agents/installer/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
+  kind: agent
+- path: .github/agents/project-planning/agile-coach.agent.md
   kind: agent
 - path: .github/agents/project-planning/arch-diagram-builder.agent.md
   kind: agent
@@ -35,9 +33,11 @@ items:
   kind: agent
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
-- path: .github/agents/rpi/doc-ops.agent.md
+- path: .github/agents/project-planning/product-manager-advisor.agent.md
   kind: agent
-- path: .github/agents/product-manager-advisor.agent.md
+- path: .github/agents/project-planning/ux-ui-designer.agent.md
+  kind: agent
+- path: .github/agents/rpi/doc-ops.agent.md
   kind: agent
 - path: .github/agents/rpi/memory.agent.md
   kind: agent
@@ -70,8 +70,6 @@ items:
 - path: .github/agents/security-planning/security-plan-creator.agent.md
   kind: agent
 - path: .github/agents/shared/subagents/researcher-subagent.agent.md
-  kind: agent
-- path: .github/agents/ux-ui-designer.agent.md
   kind: agent
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
   kind: prompt

@@ -1,1 +1,1 @@
-../../../.github/agents/agile-coach.agent.md
+../../../.github/agents/project-planning/agile-coach.agent.md
