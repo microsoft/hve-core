@@ -60,6 +60,7 @@ The `linting/` directory contains scripts for validating code quality and docume
 
 * **PSScriptAnalyzer**: Static analysis for PowerShell files
 * **Markdown Frontmatter**: Validate YAML frontmatter in markdown files
+* **Skill Structure**: Validate skill directory structure and frontmatter
 * **Link Language Check**: Detect en-us language paths in URLs
 * **Markdown Link Check**: Validate markdown links
 * **Shared Module**: Common helper functions for GitHub Actions integration

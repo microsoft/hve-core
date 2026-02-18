@@ -248,9 +248,10 @@ Purpose: Self-contained packages that bundle documentation with executable scrip
 
 Characteristics:
 
-* Bundled with bash and PowerShell scripts in the same directory.
+* Optionally bundled with bash and PowerShell scripts in a `scripts/` subdirectory.
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
+* Skills without scripts are valid documentation-driven knowledge packages.
 
 Skill directory structure:
 
@@ -268,6 +269,32 @@ Skill directory structure:
     └── README.md               # Usage examples (recommended)
 ```
 
+#### Optional Directories
+
+##### scripts/
+
+Contains executable code that agents run to perform tasks:
+
+* Scripts are self-contained or clearly document dependencies.
+* Include helpful error messages and handle edge cases gracefully.
+* Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
+
+##### references/
+
+Contains additional documentation that agents read when needed:
+
+* *REFERENCE.md* for detailed technical reference material.
+* Domain-specific files such as `finance.md` or `legal.md`.
+* Keep individual reference files focused; agents load these on demand.
+
+##### assets/
+
+Contains static resources:
+
+* Templates for documents or configuration files.
+* Images such as diagrams or examples.
+* Data files such as lookup tables or schemas.
+
 ### Skill Content Structure
 
 Skill files include these sections in order:
@@ -281,7 +308,7 @@ Skill files include these sections in order:
 7. Troubleshooting: Common issues and solutions.
 8. Attribution: Attribution in `description:` frontmatter and standard footer.
 
-### Progressive Disclosure
+#### Progressive Disclosure
 
 Structure skills for efficient context usage:
 
@@ -291,7 +318,7 @@ Structure skills for efficient context usage:
 
 Keep the main *SKILL.md* focused. Move detailed reference material to separate files.
 
-### File References
+#### File References
 
 When referencing other files in the skill, use relative paths from the skill root:
 
@@ -304,10 +331,35 @@ scripts/extract.py
 
 Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
 
+#### Skill Invocation from Callers
+
+When prompts, agents, or instructions need a skill's capability, describe the task intent rather than referencing script paths directly. Copilot matches the task description against each skill's `description` frontmatter and loads the skill on-demand via progressive disclosure.
+
+Avoid hardcoded script paths, platform detection logic, or extension fallback code in caller files. Skills handle these concerns internally through their SKILL.md instructions and scripts.
+
+For explicit invocation, reference the slash command `/skill-name` in usage documentation.
+
+Semantic invocation pattern:
+
+```markdown
+<!-- Direct script reference (avoid) -->
+Run `./scripts/dev-tools/pr-ref-gen.sh --base-branch origin/main` to generate the PR reference.
+
+<!-- Semantic skill invocation (preferred) -->
+Generate the PR reference XML file comparing the current branch against origin/main.
+```
+
+When a caller describes a task that semantically matches a skill's `description`, Copilot follows this loading sequence:
+
+1. Level 1 (Discovery): Matches the task description against skill frontmatter `name` and `description` fields (~100 tokens per skill).
+2. Level 2 (Instructions): Loads the full SKILL.md body into context with script usage instructions (<5000 tokens recommended).
+3. Level 3 (Resources): Accesses scripts, examples, and references in the skill directory on-demand during execution.
+
 Validation guidelines:
 
 * Frontmatter follows the Frontmatter Requirements section, including `name` and `description` fields.
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
+* Skills without scripts are valid; omit Parameters Reference and Script Reference sections in that case.
 * Document prerequisites for each supported platform.
 * Keep *SKILL.md* focused; move detailed reference material to `references/`.
 * Additional sections can be added between Parameters Reference and Troubleshooting as needed.
@@ -328,7 +380,7 @@ Skill files also include a standard attribution footer as the last line of body 
 
 ## Frontmatter Requirements
 
-This section defines frontmatter field requirements for prompt engineering artifacts.
+Frontmatter field requirements for prompt engineering artifacts follow.
 
 Maturity is tracked in `collections/*.collection.yml` item metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
 
@@ -352,7 +404,7 @@ Optional fields available by file type:
 
 * `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (target agent name), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
-* `user-invocable:` - Boolean. Set to `false` to hide the agent from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker.
+* `user-invocable:` - Boolean. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker or background-only skills that should not appear in the slash command menu.
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files.
 * `argument-hint:` - Hint text for prompt picker display.

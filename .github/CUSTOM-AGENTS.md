@@ -50,11 +50,13 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 | Agent                     | Purpose                                                            | Key Constraint                                |
 |---------------------------|--------------------------------------------------------------------|-----------------------------------------------|
-| **prd-builder**           | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions |
-| **brd-builder**           | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus          |
-| **adr-creation**          | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                    |
-| **security-plan-creator** | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling              |
-| **doc-ops**               | Documentation operations and maintenance                           | Does not modify source code                   |
+| **product-manager-advisor** | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
+| **ux-ui-designer**          | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
+| **prd-builder**             | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
+| **brd-builder**             | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus                  |
+| **adr-creation**            | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                            |
+| **security-plan-creator**   | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling                      |
+| **doc-ops**                 | Documentation operations and maintenance                           | Does not modify source code                           |
 
 ### Utility Agents
 
@@ -172,6 +174,31 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** 4 phases (Initialize → Analyze → Collaborative Review → Finalize)
 
 **Critical:** Review-only. Never modifies code. Evaluates 8 dimensions: functional correctness, design, idioms, reusability, performance, reliability, security, documentation.
+
+### product-manager-advisor
+
+**Purpose:** Requirements discovery, story quality assurance, and prioritization guidance.
+
+**Workflow:** Discovery → Story Quality → Prioritization → Validation → Handoff
+
+**Handoffs:** Delegates to `prd-builder` for full PRDs, `brd-builder` for business requirements, `ux-ui-designer` for journey mapping, and `task-researcher` for deep research.
+
+**Critical:** Focuses on quality principles rather than prescribing issue formats. Guides teams to leverage platform-native templates (GitHub issue forms, Azure DevOps work item templates). Differentiates from `prd-builder` by focusing on the requirements discovery gate rather than document authoring.
+
+### ux-ui-designer
+
+**Purpose:** UX research artifacts including Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements.
+
+**Creates:** Research documentation using the [user journey template](../docs/templates/user-journey-template.md):
+
+* JTBD analysis documenting user goals and current solution gaps
+* Journey maps tracing user behavior, emotions, and pain points across stages
+* Accessibility requirements integrated into journey stages
+* Design handoff sections with flow descriptions and principles
+
+**Handoffs:** Delegates to `product-manager-advisor` for business alignment and `task-researcher` for technical feasibility.
+
+**Critical:** Research-only. Does not generate UI designs or visual mockups. Produces artifacts that designers translate into Figma flows. Treats accessibility as a foundational constraint.
 
 ### prd-builder
 

@@ -4,18 +4,38 @@
   "title": "Skill File Frontmatter Schema",
   "description": "Frontmatter schema for SKILL.md files in skill directories",
   "type": "object",
-  "required": ["name", "description"],
+  "required": [
+    "name",
+    "description"
+  ],
   "properties": {
     "name": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*$",
       "minLength": 1,
+      "maxLength": 64,
       "description": "Unique identifier for the skill, must match the directory name in lowercase kebab-case"
     },
     "description": {
       "type": "string",
       "minLength": 1,
+      "maxLength": 1024,
       "description": "Brief description of the skill"
+    },
+    "user-invocable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls visibility in the VS Code slash command menu. When true, the skill appears in the / menu for manual invocation."
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Controls automatic loading. When true, the skill is only loaded via manual / slash command invocation, not by semantic matching."
+    },
+    "argument-hint": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Hint text displayed in the VS Code prompt picker showing expected inputs."
     }
   },
   "additionalProperties": false
