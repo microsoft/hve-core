@@ -630,6 +630,22 @@ Describe 'Invoke-PackageExtension' {
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'Simulated unexpected failure'
     }
+
+    It 'Returns success without VSIX creation when DryRun is specified' {
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.Version | Should -Be '1.0.0'
+        $result.OutputPath | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'Test-PackagingInputsValid' {
@@ -963,6 +979,20 @@ name: sec
 
         $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
+    }
+
+    It 'Parses JSON collection file correctly' {
+        $collectionPath = Join-Path $script:testDir 'collection.json'
+        @{
+            id   = 'json-collection'
+            name = 'json'
+        } | ConvertTo-Json | Set-Content $collectionPath
+
+        $collectionReadme = Join-Path $script:extDir 'README.json-collection.md'
+        Set-Content -Path $collectionReadme -Value '# JSON Collection README'
+
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -Be $collectionReadme
     }
 }
 

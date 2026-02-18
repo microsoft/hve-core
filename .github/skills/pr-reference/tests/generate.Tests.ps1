@@ -277,6 +277,21 @@ Describe 'Get-CurrentBranchOrRef' {
 }
 
 Describe 'Invoke-PrReferenceGeneration' {
+    It 'Uses custom OutputPath when specified' {
+        $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $customPath = Join-Path $tempDir 'custom-output/pr-ref.xml'
+
+        try {
+            $result = Invoke-PrReferenceGeneration -BaseBranch 'HEAD~1' -OutputPath $customPath
+            $result | Should -BeOfType [System.IO.FileInfo]
+            $result.FullName | Should -Be (Resolve-Path $customPath).Path
+            Test-Path $customPath | Should -BeTrue
+        }
+        finally {
+            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     It 'Returns FileInfo object' {
         # Skip if not in a git repo or no commits to compare
         $commitCount = Get-CommitCount -ComparisonRef 'HEAD~1'
