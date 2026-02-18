@@ -37,6 +37,8 @@ items:
   kind: agent
 - path: .github/agents/prd-builder.agent.md
   kind: agent
+- path: .github/agents/product-manager-advisor.agent.md
+  kind: agent
 - path: .github/agents/prompt-builder.agent.md
   kind: agent
 - path: .github/agents/rpi-agent.agent.md
@@ -68,6 +70,8 @@ items:
 - path: .github/agents/task-reviewer.agent.md
   kind: agent
 - path: .github/agents/test-streamlit-dashboard.agent.md
+  kind: agent
+- path: .github/agents/ux-ui-designer.agent.md
   kind: agent
 - path: .github/prompts/ado-create-pull-request.prompt.md
   kind: prompt
