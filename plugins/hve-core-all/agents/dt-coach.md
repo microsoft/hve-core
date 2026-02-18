@@ -1,1 +1,0 @@
-../../../.github/agents/design-thinking/dt-coach.agent.md
