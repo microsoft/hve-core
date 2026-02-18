@@ -58,7 +58,7 @@ Scripts are organized by function:
 
 ### Skills Organization
 
-Skills are self-contained packages organized by collection under `.github/skills/{collection-id}/{skill-name}/`:
+Skills are self-contained packages organized by collection under `.github/skills/{collection-id}/{skill-name}/`. Each skill folder contains a `SKILL.md` file with domain-specific instructions, and may include `examples/` and `scripts/` subdirectories.
 
 ### Documentation Structure
 
@@ -74,16 +74,20 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Work Items (`.copilot-tracking/workitems/`) - ADO work item discovery and planning.
 * Pull Requests (`.copilot-tracking/pr/`) - PR reference generation, handoff, and review tracking.
 * Changes (`.copilot-tracking/changes/`) - Change tracking and implementation logs.
-* Plans (`.copilot-tracking/plans/`) - Task planning documents.
+* Plans (`.copilot-tracking/plans/`) - Task implementation plans and planning logs.
 * Details (`.copilot-tracking/details/`) - Task plan implementation details.
-* Research (`.copilot-tracking/research/`) - Technical research findings.
-* Subagent (`.copilot-tracking/subagent/`) - Subagent research outputs organized by date.
+* Research (`.copilot-tracking/research/`) - Technical research findings and subagent research outputs.
+* Reviews (`.copilot-tracking/reviews/`) - Review logs and validation findings.
 * ADRs (`.copilot-tracking/adrs/`) - Architecture Decision Record drafts.
 * BRD Sessions (`.copilot-tracking/brd-sessions/`) - Business requirements document session state.
 * PRD Sessions (`.copilot-tracking/prd-sessions/`) - Product requirements document session state.
-* GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search and tracking logs.
+* GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
+* Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
+* Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
+* Doc Ops (`.copilot-tracking/doc-ops/`) - Documentation operations session tracking.
+* Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 
-All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado-*.instructions.md`.
+All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado/ado-*.instructions.md`.
 
 ### Agents and Subagents
 
@@ -106,10 +110,10 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Scripts follow instructions provided by the codebase for convention and standards.
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * Files under the root `plugins/` directory are generated outputs and are not edited directly.
-* Regenerate plugin outputs using `npm run plugin:generate`; markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
+* Regenerate plugin outputs using `npm run plugin:generate`; this also runs `lint:md:fix` and `format:tables` as post-processing. Markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
 * Artifacts under `.github/**/hve-core/` are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
 
-PowerShell scripts follow PSScriptAnalyzer rules from `PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
+PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->
 
 <!-- <coding-agent-environment> -->
@@ -121,8 +125,9 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 
 * Node.js 20 with npm dependencies from `package.json`
 * Python 3.11
-* PowerShell 7 with Pester 5.7.1 and PowerShell-Yaml modules
+* PowerShell 7 with PSScriptAnalyzer and PowerShell-Yaml modules
 * shellcheck for bash script validation (pre-installed on ubuntu-latest)
+* actionlint for GitHub Actions workflow validation
 
 ### Using npm Scripts
 
@@ -132,7 +137,14 @@ Agents should use npm scripts for all validation:
 * `npm run lint:ps` - PowerShell analysis
 * `npm run lint:yaml` - YAML validation
 * `npm run lint:frontmatter` - Frontmatter validation
-* `npm run lint:all` - Run all linters
+* `npm run lint:links` - Link language checking
+* `npm run lint:md-links` - Markdown link checking
+* `npm run lint:collections-metadata` - Collection metadata validation
+* `npm run lint:version-consistency` - Action version consistency
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:version-consistency`, and `validate:skills`)
+* `npm run validate:copyright` - Copyright header validation
+* `npm run validate:skills` - Skill structure validation
+* `npm run format:tables` - Markdown table formatting
 * `npm run test:ps` - PowerShell tests
 
 ### PowerShell Testing
@@ -160,11 +172,11 @@ npm run test:ps 2>&1 | tail -20
 npm run test:ps -- -TestPath "scripts/tests/linting/" 2>&1 | tail -20
 ```
 
-After the command completes, read `logs/pester-summary.json` to confirm overall status. If failures exist, read `logs/pester-failures.json` to identify which tests failed and why. Use tools that include ignored files when searching the `logs/` directory since it is gitignored.
+After the command completes, read `logs/pester-summary.json` to confirm overall status. If failures exist, read `logs/pester-failures.json` to identify which tests failed and why. If `logs/pester-summary.json` does not exist, review the terminal output for startup errors. Use tools that include ignored files when searching the `logs/` directory since it is gitignored.
 
 ### Environment Synchronization
 
-The `copilot-setup-steps.yml` mirrors tools from `.devcontainer/scripts/on-create.sh` and `.devcontainer/scripts/post-create.sh`. When adding tools to the devcontainer, update the setup workflow to maintain parity.
+The `copilot-setup-steps.yml` and `.devcontainer/scripts/on-create.sh` share most tools but differ intentionally: gitleaks is devcontainer-only (not needed during agent-driven development). When adding or removing tools in either environment, evaluate whether both need the change and update accordingly.
 <!-- </coding-agent-environment> -->
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
