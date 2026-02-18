@@ -94,6 +94,14 @@ function Write-ConsistencyLog {
     }
 
     Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+
+    # Surface warnings and errors as CI annotations so they appear in the Actions/ADO UI
+    if ($Level -eq 'Warning') {
+        Write-CIAnnotation -Message $Message -Level Warning
+    }
+    elseif ($Level -eq 'Error') {
+        Write-CIAnnotation -Message $Message -Level Error
+    }
 }
 
 function Get-ActionVersionViolations {
@@ -391,8 +399,57 @@ function Invoke-ActionVersionConsistency {
     Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
     Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
 
+    # Emit CI annotations per violation
+    foreach ($violation in $violations) {
+        $annotationLevel = switch ($violation.Severity) {
+            'High' { 'Error' }
+            'Medium' { 'Warning' }
+            default { 'Notice' }
+        }
+        Write-CIAnnotation `
+            -Message "$($violation.ViolationType): $($violation.Description)" `
+            -Level $annotationLevel `
+            -File $violation.File `
+            -Line $violation.Line
+    }
+
     # Export report (pipe to Out-Host to prevent pipeline pollution of return value)
     Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions | Out-Host
+
+    # Emit CI step summary
+    if ($violations.Count -eq 0) {
+        Write-CIStepSummary -Content @"
+## Action Version Consistency
+
+:white_check_mark: **Status**: Passed
+
+All $($result.TotalActions) SHA-pinned actions have consistent version comments.
+"@
+    }
+    else {
+        $summaryLines = [System.Collections.ArrayList]::new()
+        [void]$summaryLines.Add(@"
+## Action Version Consistency
+
+:x: **Status**: Failed
+
+| Metric | Count |
+|--------|-------|
+| SHA-Pinned Actions | $($result.TotalActions) |
+| Version Mismatches | $mismatchCount |
+| Missing Comments | $missingCount |
+
+### Violations
+
+| File | Line | Type | Action | Severity | Description |
+|------|------|------|--------|----------|-------------|
+"@)
+        foreach ($v in $violations) {
+            [void]$summaryLines.Add("| ``$($v.File)`` | $($v.Line) | $($v.ViolationType) | ``$($v.Name)`` | $($v.Severity) | $($v.Description) |")
+        }
+
+        Write-CIStepSummary -Content ($summaryLines -join "`n")
+    }
 
     # Determine exit code
     $exitCode = 0

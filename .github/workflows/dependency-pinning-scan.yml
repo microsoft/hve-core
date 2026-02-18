@@ -121,32 +121,6 @@ jobs:
             Write-Host "Compliance Score: $complianceScore%"
             Write-Host "Unpinned Dependencies: $unpinnedCount"
             Write-Host "Is Compliant (>=$threshold%): $isCompliant"
-            
-            # Fire GitHub Actions warnings for each violation
-            if ($unpinnedCount -gt 0) {
-              # Escape function to prevent workflow command injection
-              function ConvertTo-GHAEscaped($Value, [switch]$ForProperty) {
-                if ([string]::IsNullOrEmpty($Value)) { return $Value }
-                $escaped = $Value -replace '%', '%25'
-                $escaped = $escaped -replace "`r", '%0D'
-                $escaped = $escaped -replace "`n", '%0A'
-                $escaped = $escaped -replace '::', '%3A%3A'
-                if ($ForProperty) {
-                  $escaped = $escaped -replace ':', '%3A'
-                  $escaped = $escaped -replace ',', '%2C'
-                }
-                return $escaped
-              }
-              
-              foreach ($violation in $report.Violations) {
-                $escapedFile = ConvertTo-GHAEscaped $violation.File -ForProperty
-                $escapedName = ConvertTo-GHAEscaped $violation.Name
-                $escapedVersion = ConvertTo-GHAEscaped $violation.Version
-                $escapedType = ConvertTo-GHAEscaped $violation.Type
-                $escapedSeverity = ConvertTo-GHAEscaped $violation.Severity
-                Write-Output "::warning file=$escapedFile,line=$($violation.Line)::Unpinned $escapedType dependency: $escapedName@$escapedVersion (Severity: $escapedSeverity)"
-              }
-            }
           }
           else {
             Write-Error "Failed to generate dependency pinning report"
