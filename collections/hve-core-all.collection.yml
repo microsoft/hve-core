@@ -16,9 +16,9 @@ items:
   kind: agent
 - path: .github/agents/brd-builder.agent.md
   kind: agent
-- path: .github/agents/doc-ops.agent.md
+- path: .github/agents/design-thinking/dt-coach.agent.md
   kind: agent
-- path: .github/agents/dt-coach.agent.md
+- path: .github/agents/doc-ops.agent.md
   kind: agent
 - path: .github/agents/gen-data-spec.agent.md
   kind: agent
@@ -188,5 +188,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
