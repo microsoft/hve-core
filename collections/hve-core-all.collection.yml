@@ -16,6 +16,8 @@ items:
   kind: agent
 - path: .github/agents/brd-builder.agent.md
   kind: agent
+- path: .github/agents/design-thinking/dt-coach.agent.md
+  kind: agent
 - path: .github/agents/doc-ops.agent.md
   kind: agent
 - path: .github/agents/gen-data-spec.agent.md

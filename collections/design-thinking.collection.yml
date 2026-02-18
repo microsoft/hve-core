@@ -8,7 +8,7 @@ tags:
   - hve
 items:
   # Agents
-  - path: plugins/design-thinking/agents/dt-coach.md
+  - path: .github/agents/design-thinking/dt-coach.agent.md
     kind: agent
 display:
   ordering: manual
