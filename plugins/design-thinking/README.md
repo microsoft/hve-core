@@ -15,6 +15,7 @@ copilot plugin install design-thinking@hve-core
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | dt-coaching-identity | Required instructions when working with or doing any Design Thinking (DT); Contains instructions for the Design Thinking coach identity, philosophy, and user interaction and communication requirements for consistent coaching behavior. |
 | dt-method-sequencing | Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching                                                                                                             |
+| dt-quality-constraints | Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods                                                                                                                             |
 
 ---
 
