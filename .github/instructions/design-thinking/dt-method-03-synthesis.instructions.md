@@ -193,3 +193,15 @@ Transition readiness signals:
 * The team can articulate the discovered problem in terms that differ meaningfully from the original request.
 * Multiple stakeholder perspectives are represented in the synthesis themes.
 * Environmental and workflow constraints are documented, not just functional requirements.
+
+Next-step pathways when transition criteria are met:
+
+* Proceed to Method 4 when the Method 3 synthesis artifacts are complete and stable. Use them directly as inputs for ideation, concept generation, and early solution framing.
+* Hand off to the RPI workflow using `dt-handoff-problem-space.prompt.md` when the team wants a Researcher/Planner/Implementor to pick up from a validated problem understanding. Attach or reference all Method 3 artifacts in the handoff.
+* Return to Methods 1–2 when synthesis exposes gaps in research coverage, conflicting user narratives, or missing environmental constraints. Capture the specific gaps in the Method 3 artifacts, then run targeted additional research before attempting the transition again.
+
+Lo-fi enforcement for Method 3 artifacts:
+
+* Keep Method 3 outputs focused on problem-space representation: patterns, themes, constraints, and success criteria. Do not include detailed solution designs, flows, or interfaces here.
+* Capture any speculative solution ideas as clearly labeled notes or parking-lot items, and route them to Method 4 backlogs instead of treating them as part of the validated synthesis.
+* Ensure every transition (to Method 4 or to an RPI handoff) references the specific Method 3 artifacts used, so downstream work can trace decisions back to the synthesized problem understanding.
