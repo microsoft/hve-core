@@ -12,6 +12,58 @@
 # Pure Functions (no file system side effects)
 # ---------------------------------------------------------------------------
 
+function Test-DeprecatedPath {
+    <#
+    .SYNOPSIS
+    Checks whether a file path contains a deprecated directory segment.
+
+    .DESCRIPTION
+    Returns true when the path contains a /deprecated/ or \deprecated\ segment,
+    indicating the artifact resides in a deprecated directory tree.
+
+    .PARAMETER Path
+    File path to check (absolute or relative, any slash style).
+
+    .OUTPUTS
+    [bool] True when the path contains a deprecated segment.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    return ($Path -match '[/\\]deprecated[/\\]')
+}
+
+function Test-HveCoreRepoSpecificPath {
+    <#
+    .SYNOPSIS
+    Checks whether a type-relative path belongs to the hve-core repo-specific directory.
+
+    .DESCRIPTION
+    Returns true when the type-relative path starts with hve-core/, indicating
+    it is a repo-specific artifact not intended for distribution.
+
+    .PARAMETER RelativePath
+    Type-relative path (relative to the agents/, prompts/, instructions/, or skills/ directory).
+
+    .OUTPUTS
+    [bool] True when the path is repo-specific.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    return ($RelativePath -like 'hve-core/*')
+}
+
 function Get-CollectionManifest {
     <#
     .SYNOPSIS
@@ -197,12 +249,10 @@ function Get-ArtifactFiles {
             $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
 
-            # Exclude repo-specific artifacts under .github/**/hve-core/
             if ($relativePath -match '^\.github/.*/hve-core/') {
                 continue
             }
-            # Exclude deprecated artifacts under .github/deprecated/
-            if ($relativePath -match '^\.github/deprecated/') {
+            if (Test-DeprecatedPath -Path $relativePath) {
                 continue
             }
             $items += @{ path = $relativePath; kind = $kind }
@@ -217,12 +267,9 @@ function Get-ArtifactFiles {
             $dir = $skillFile.Directory
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
 
-            # Exclude deprecated skills
-            if ($relativePath -match '/deprecated/') {
+            if (Test-DeprecatedPath -Path $relativePath) {
                 continue
             }
-
-            # Exclude repo-specific skills under .github/**/hve-core/
             if ($relativePath -match '^\.github/.*/hve-core/') {
                 continue
             }
@@ -301,7 +348,7 @@ function Update-HveCoreAllCollection {
     $allItems = Get-ArtifactFiles -RepoRoot $RepoRoot
 
     # Exclude deprecated items by path (independent of maturity metadata)
-    $allItems = @($allItems | Where-Object { $_.path -notmatch '^\.github/deprecated/' })
+    $allItems = @($allItems | Where-Object { -not (Test-DeprecatedPath -Path $_.path) })
 
     # Filter deprecated based on existing collection item maturity metadata
     $existingItemMaturities = @{}
@@ -996,6 +1043,8 @@ Export-ModuleMember -Function @(
     'New-RelativeSymlink',
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
+    'Test-DeprecatedPath',
+    'Test-HveCoreRepoSpecificPath',
     'Update-HveCoreAllCollection',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'

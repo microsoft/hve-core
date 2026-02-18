@@ -501,7 +501,7 @@ description: "AI-powered coding agents curated for software engineers"
 maturity: stable
 items:
   - kind: agent
-    path: .github/agents/my-agent.agent.md
+    path: .github/agents/{collection-id}/my-agent.agent.md
     maturity: stable
 ```
 
@@ -543,7 +543,7 @@ To create a new collection:
     maturity: experimental
     items:
       - kind: agent
-        path: .github/agents/my-agent.agent.md
+        path: .github/agents/{collection-id}/my-agent.agent.md
         maturity: experimental
     ```
 

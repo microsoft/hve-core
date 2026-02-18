@@ -62,6 +62,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../plugins/Modules/PluginHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -1044,14 +1045,12 @@ function Get-DiscoveredAgents {
     }
 
     $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
-    # Exclude deprecated agents
-    $agentFiles = $agentFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
+    $agentFiles = $agentFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($agentFile in $agentFiles) {
         $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
 
-        # Skip repo-specific agents not intended for distribution
-        if ($agentRelPath -like 'hve-core/*') {
+        if (Test-HveCoreRepoSpecificPath -RelativePath $agentRelPath) {
             $agentName = $agentFile.BaseName -replace '\.agent$', ''
             $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (hve-core/)' }
             continue
@@ -1119,14 +1118,13 @@ function Get-DiscoveredPrompts {
     }
 
     $promptFiles = Get-ChildItem -Path $PromptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
-    $promptFiles = $promptFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
+    $promptFiles = $promptFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
 
-        # Skip repo-specific prompts not intended for distribution
         $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
-        if ($promptRelPath -like 'hve-core/*') {
+        if (Test-HveCoreRepoSpecificPath -RelativePath $promptRelPath) {
             $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (hve-core/)' }
             continue
         }
@@ -1189,12 +1187,11 @@ function Get-DiscoveredInstructions {
     }
 
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
-    $instructionFiles = $instructionFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
+    $instructionFiles = $instructionFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($instrFile in $instructionFiles) {
-        # Skip repo-specific instructions not intended for distribution
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
-        if ($instrRelPath -like 'hve-core/*') {
+        if (Test-HveCoreRepoSpecificPath -RelativePath $instrRelPath) {
             $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (hve-core/)' }
             continue
         }
@@ -1255,15 +1252,14 @@ function Get-DiscoveredSkills {
     }
 
     $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
-    $skillFiles = $skillFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
+    $skillFiles = $skillFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($skillFile in $skillFiles) {
         $skillDir = $skillFile.Directory
         $skillName = $skillDir.Name
         $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
-        # Skip repo-specific skills not intended for distribution
-        if ($skillRelPath -like 'hve-core/*') {
+        if (Test-HveCoreRepoSpecificPath -RelativePath $skillRelPath) {
             $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (hve-core/)' }
             continue
         }

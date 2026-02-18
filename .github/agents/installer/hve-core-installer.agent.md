@@ -1423,11 +1423,11 @@ Present upgrade summary:
 📋 Upgrade Summary
 
 Files to update (managed):
-  ✅ .github/agents/task-researcher.agent.md
-  ✅ .github/agents/task-planner.agent.md
+  ✅ .github/agents/rpi/task-researcher.agent.md
+  ✅ .github/agents/rpi/task-planner.agent.md
 
 Files requiring decision (modified):
-  ⚠️ .github/agents/task-implementor.agent.md
+  ⚠️ .github/agents/rpi/task-implementor.agent.md
 
 Files skipped (ejected):
   🔒 .github/agents/custom-agent.agent.md
@@ -1449,7 +1449,7 @@ When user requests diff:
 <!-- <diff-display> -->
 ```text
 ─────────────────────────────────────
-File: .github/agents/task-implementor.agent.md
+File: .github/agents/rpi/task-implementor.agent.md
 Status: modified
 ─────────────────────────────────────
 

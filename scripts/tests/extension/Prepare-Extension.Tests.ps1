@@ -725,9 +725,16 @@ description: "Test skill"
 # Skill
 '@ | Set-Content -Path (Join-Path $skillDir 'SKILL.md')
 
-        # Create empty skill directory (no SKILL.md)
-        $emptySkillDir = Join-Path $script:skillsDir 'empty-skill'
-        New-Item -ItemType Directory -Path $emptySkillDir -Force | Out-Null
+        # Create nested skill under a collection-id directory
+        $nestedSkillDir = Join-Path $script:skillsDir 'test-collection/nested-skill'
+        New-Item -ItemType Directory -Path $nestedSkillDir -Force | Out-Null
+        @'
+---
+name: nested-skill
+description: "Nested skill in collection"
+---
+# Nested Skill
+'@ | Set-Content -Path (Join-Path $nestedSkillDir 'SKILL.md')
 
     }
 
@@ -738,8 +745,10 @@ description: "Test skill"
     It 'Discovers skills in directory' {
         $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
         $result.DirectoryExists | Should -BeTrue
-        $result.Skills.Count | Should -Be 1
-        $result.Skills[0].name | Should -Be 'test-skill'
+        $result.Skills.Count | Should -Be 2
+        $skillNames = $result.Skills | ForEach-Object { $_.name }
+        $skillNames | Should -Contain 'test-skill'
+        $skillNames | Should -Contain 'nested-skill'
     }
 
     It 'Returns empty when directory does not exist' {
@@ -755,10 +764,11 @@ description: "Test skill"
         $result.Skipped.Count | Should -BeGreaterThan 0
     }
 
-    It 'Skips directories without SKILL.md' {
+    It 'Discovers nested skills with correct path' {
         $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
-        $skippedNames = $result.Skipped | ForEach-Object { $_.Name }
-        $skippedNames | Should -Contain 'empty-skill'
+        $nestedSkill = $result.Skills | Where-Object { $_.name -eq 'nested-skill' }
+        $nestedSkill | Should -Not -BeNullOrEmpty
+        $nestedSkill.path | Should -Be './.github/skills/test-collection/nested-skill'
     }
 }
 
