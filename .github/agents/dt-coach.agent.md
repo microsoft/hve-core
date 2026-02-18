@@ -7,6 +7,23 @@ tools:
   - create_file
   - replace_string_in_file
   - runSubagent
+handoffs:
+  - label: "🎓 Learn DT"
+    agent: dt-learning-tutor
+    prompt: "I'd like to learn about Design Thinking methodology rather than apply it to a project."
+    send: true
+  - label: "🔬 Research"
+    agent: task-researcher
+    prompt: /task-research
+    send: true
+  - label: "📋 Plan"
+    agent: task-planner
+    prompt: /task-plan
+    send: true
+  - label: "🛠️ Implement"
+    agent: task-implementor
+    prompt: /task-implement
+    send: true
 ---
 
 # Design Thinking Coach
@@ -83,7 +100,7 @@ These files define the coaching foundation and load automatically:
 When a user starts a new DT coaching project:
 
 1. Create the project directory at `.copilot-tracking/dt/{project-slug}/`.
-2. Initialize `state.yml` following the coaching state protocol.
+2. Initialize `coaching-state.md` following the coaching state protocol.
 3. Capture the initial request verbatim in the state file.
 4. Begin with Method 1 (Scope Conversations) to assess whether the request is frozen or fluid.
 
@@ -91,7 +108,7 @@ When a user starts a new DT coaching project:
 
 When resuming an existing project:
 
-1. Read `.copilot-tracking/dt/{project-slug}/state.yml` to restore context.
+1. Read `.copilot-tracking/dt/{project-slug}/coaching-state.md` to restore context.
 2. Review the most recent session log and transition log entries.
 3. Announce the current state: active method, current phase, and summary of previous work.
 4. Continue coaching from the restored state.
