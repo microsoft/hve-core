@@ -26,17 +26,17 @@ You enter Sprint Planning after completing [Stage 4: Decomposition](decompositio
 
 ## Available Tools
 
-| Tool                     | Type        | How to Invoke              | Purpose                                          |
-|--------------------------|-------------|----------------------------|--------------------------------------------------|
-| github-backlog-manager   | Agent       | `@github-backlog-manager`  | Manage GitHub issue backlog end-to-end            |
-| agile-coach              | Agent       | `@agile-coach`             | Get agile methodology guidance and sprint advice  |
-| github-discover-issues   | Prompt      | `/github-discover-issues`  | Find open issues for sprint planning              |
-| github-triage-issues     | Prompt      | `/github-triage-issues`    | Triage and label unprocessed issues               |
-| github-sprint-plan       | Prompt      | `/github-sprint-plan`      | Create a sprint plan from backlog priorities      |
-| github-execute-backlog   | Prompt      | `/github-execute-backlog`  | Execute planned backlog operations                |
-| github-add-issue         | Prompt      | `/github-add-issue`        | Add new issues to the backlog                     |
-| github-backlog-planning  | Instruction | Auto-activated on issues   | Enforces backlog planning conventions             |
-| github-backlog-triage    | Instruction | Auto-activated on triage   | Enforces triage workflow standards                |
+| Tool                    | Type        | How to Invoke             | Purpose                                          |
+|-------------------------|-------------|---------------------------|--------------------------------------------------|
+| github-backlog-manager  | Agent       | `@github-backlog-manager` | Manage GitHub issue backlog end-to-end           |
+| agile-coach             | Agent       | `@agile-coach`            | Get agile methodology guidance and sprint advice |
+| github-discover-issues  | Prompt      | `/github-discover-issues` | Find open issues for sprint planning             |
+| github-triage-issues    | Prompt      | `/github-triage-issues`   | Triage and label unprocessed issues              |
+| github-sprint-plan      | Prompt      | `/github-sprint-plan`     | Create a sprint plan from backlog priorities     |
+| github-execute-backlog  | Prompt      | `/github-execute-backlog` | Execute planned backlog operations               |
+| github-add-issue        | Prompt      | `/github-add-issue`       | Add new issues to the backlog                    |
+| github-backlog-planning | Instruction | Auto-activated on issues  | Enforces backlog planning conventions            |
+| github-backlog-triage   | Instruction | Auto-activated on triage  | Enforces triage workflow standards               |
 
 ## Role-Specific Guidance
 

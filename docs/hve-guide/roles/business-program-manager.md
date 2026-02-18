@@ -39,12 +39,12 @@ This guide is for you if you define business outcomes, manage stakeholder alignm
 
 The BPM and TPM roles share tooling but apply it differently:
 
-| Aspect              | BPM Focus                                                | TPM Focus                                               |
-|---------------------|----------------------------------------------------------|---------------------------------------------------------|
-| Primary artifacts   | Business requirements, outcome definitions               | Technical requirements, work item hierarchies           |
-| Stakeholder scope   | Business leaders, customers, cross-org partners          | Engineering teams, technical stakeholders               |
-| Measurement         | Business outcomes, ROI, customer impact                  | Sprint velocity, delivery milestones, technical quality |
-| Lifecycle stages    | Stage 2: Discovery, Stage 3: Product Definition, Stage 4: Decomposition | Stage 2 through Stage 8 with deeper technical involvement |
+| Aspect            | BPM Focus                                                               | TPM Focus                                                 |
+|-------------------|-------------------------------------------------------------------------|-----------------------------------------------------------|
+| Primary artifacts | Business requirements, outcome definitions                              | Technical requirements, work item hierarchies             |
+| Stakeholder scope | Business leaders, customers, cross-org partners                         | Engineering teams, technical stakeholders                 |
+| Measurement       | Business outcomes, ROI, customer impact                                 | Sprint velocity, delivery milestones, technical quality   |
+| Lifecycle stages  | Stage 2: Discovery, Stage 3: Product Definition, Stage 4: Decomposition | Stage 2 through Stage 8 with deeper technical involvement |
 
 For technical backlog management, Azure DevOps integration, or GitHub issue workflows, see the [TPM Guide](tpm.md).
 
@@ -86,24 +86,24 @@ For technical backlog management, Azure DevOps integration, or GitHub issue work
 
 ## Key Agents and Workflows
 
-| Agent                  | Purpose                                        | Invoke                     | Docs         |
-|------------------------|------------------------------------------------|----------------------------|--------------|
-| brd-builder            | Business requirements document creation        | `@brd-builder`             | Agent file   |
-| product-manager-advisor | Product strategy and prioritization guidance  | `@product-manager-advisor` | Agent file   |
-| agile-coach            | Program-level sprint and milestone planning    | `@agile-coach`             | Agent file   |
-| task-researcher        | Business context and market research           | `@task-researcher`         | Agent file   |
-| ux-ui-designer         | UX/UI guidance for business-facing deliverables | `@ux-ui-designer`         | Agent file   |
-| memory                 | Session context and preference persistence     | `@memory`                  | Agent file   |
+| Agent                   | Purpose                                         | Invoke                     | Docs       |
+|-------------------------|-------------------------------------------------|----------------------------|------------|
+| brd-builder             | Business requirements document creation         | `@brd-builder`             | Agent file |
+| product-manager-advisor | Product strategy and prioritization guidance    | `@product-manager-advisor` | Agent file |
+| agile-coach             | Program-level sprint and milestone planning     | `@agile-coach`             | Agent file |
+| task-researcher         | Business context and market research            | `@task-researcher`         | Agent file |
+| ux-ui-designer          | UX/UI guidance for business-facing deliverables | `@ux-ui-designer`          | Agent file |
+| memory                  | Session context and preference persistence      | `@memory`                  | Agent file |
 
 ## Tips
 
-| Do                                                          | Don't                                                        |
-|-------------------------------------------------------------|--------------------------------------------------------------|
-| Start with `@brd-builder` for structured requirements       | Create informal requirements without BRD structure           |
-| Use `@product-manager-advisor` for data-informed decisions  | Make prioritization decisions without advisory input         |
-| Focus on business outcomes and stakeholder alignment        | Dive into technical implementation details                   |
-| Coordinate with TPMs for technical decomposition            | Attempt Azure DevOps or GitHub issue management directly     |
-| Research market context before defining requirements        | Assume business context without investigation                |
+| Do                                                         | Don't                                                    |
+|------------------------------------------------------------|----------------------------------------------------------|
+| Start with `@brd-builder` for structured requirements      | Create informal requirements without BRD structure       |
+| Use `@product-manager-advisor` for data-informed decisions | Make prioritization decisions without advisory input     |
+| Focus on business outcomes and stakeholder alignment       | Dive into technical implementation details               |
+| Coordinate with TPMs for technical decomposition           | Attempt Azure DevOps or GitHub issue management directly |
+| Research market context before defining requirements       | Assume business context without investigation            |
 
 ## Related Roles
 

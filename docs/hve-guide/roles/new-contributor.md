@@ -109,24 +109,24 @@ Checkpoint: You use HVE Core tools naturally, customize workflows, and help othe
 
 ## Key Agents and Workflows
 
-| Agent           | Purpose                                     | Invoke             | When to Use       |
-|-----------------|---------------------------------------------|--------------------|--------------------|
-| task-researcher | Codebase and context research               | `@task-researcher` | Milestone 1+       |
-| task-planner    | Structured implementation planning          | `@task-planner`    | Milestone 2+       |
-| task-implementor | Phase-based code implementation            | `@task-implementor`| Milestone 2+       |
-| task-reviewer   | Code review and quality validation          | `@task-reviewer`   | Milestone 2+       |
-| rpi-agent       | Full RPI orchestration in one agent         | `@rpi-agent`       | Milestone 3+       |
-| memory          | Session context and preference persistence  | `@memory`          | Milestone 1+       |
+| Agent            | Purpose                                    | Invoke              | When to Use  |
+|------------------|--------------------------------------------|---------------------|--------------|
+| task-researcher  | Codebase and context research              | `@task-researcher`  | Milestone 1+ |
+| task-planner     | Structured implementation planning         | `@task-planner`     | Milestone 2+ |
+| task-implementor | Phase-based code implementation            | `@task-implementor` | Milestone 2+ |
+| task-reviewer    | Code review and quality validation         | `@task-reviewer`    | Milestone 2+ |
+| rpi-agent        | Full RPI orchestration in one agent        | `@rpi-agent`        | Milestone 3+ |
+| memory           | Session context and preference persistence | `@memory`           | Milestone 1+ |
 
 ## Tips
 
-| Do                                                          | Don't                                                       |
-|-------------------------------------------------------------|-------------------------------------------------------------|
-| Follow the milestones in order for your first project       | Skip to Milestone 4 without understanding the fundamentals  |
-| Start with small, well-defined tasks                        | Tackle large refactors before completing Milestone 2        |
-| Read agent output carefully to learn patterns               | Blindly accept all agent suggestions without understanding  |
-| Use `/git-commit` to learn conventional commit conventions  | Write commit messages manually until you know the format    |
-| Ask for help in the repository discussions                  | Struggle silently when stuck on tooling or workflow issues   |
+| Do                                                         | Don't                                                      |
+|------------------------------------------------------------|------------------------------------------------------------|
+| Follow the milestones in order for your first project      | Skip to Milestone 4 without understanding the fundamentals |
+| Start with small, well-defined tasks                       | Tackle large refactors before completing Milestone 2       |
+| Read agent output carefully to learn patterns              | Blindly accept all agent suggestions without understanding |
+| Use `/git-commit` to learn conventional commit conventions | Write commit messages manually until you know the format   |
+| Ask for help in the repository discussions                 | Struggle silently when stuck on tooling or workflow issues |
 
 ## Related Roles
 

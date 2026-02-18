@@ -26,13 +26,13 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 
 ## Available Tools
 
-| Tool                     | Type  | How to Invoke              | Purpose                                        |
-|--------------------------|-------|----------------------------|-------------------------------------------------|
-| prd-builder              | Agent | `@prd-builder`             | Create product requirements documents from BRDs |
-| product-manager-advisor  | Agent | `@product-manager-advisor` | Get product management guidance and feedback     |
-| adr-creation             | Agent | `@adr-creation`            | Document architecture decisions formally         |
-| arch-diagram-builder     | Agent | `@arch-diagram-builder`    | Generate architecture diagrams for PRDs          |
-| security-plan-creator    | Agent | `@security-plan-creator`   | Validate security requirements in product specs  |
+| Tool                    | Type  | How to Invoke              | Purpose                                         |
+|-------------------------|-------|----------------------------|-------------------------------------------------|
+| prd-builder             | Agent | `@prd-builder`             | Create product requirements documents from BRDs |
+| product-manager-advisor | Agent | `@product-manager-advisor` | Get product management guidance and feedback    |
+| adr-creation            | Agent | `@adr-creation`            | Document architecture decisions formally        |
+| arch-diagram-builder    | Agent | `@arch-diagram-builder`    | Generate architecture diagrams for PRDs         |
+| security-plan-creator   | Agent | `@security-plan-creator`   | Validate security requirements in product specs |
 
 ## Role-Specific Guidance
 

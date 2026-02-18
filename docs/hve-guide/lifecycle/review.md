@@ -28,31 +28,31 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Primary Agents
 
-| Tool                     | Type  | How to Invoke               | Purpose                                       |
-|--------------------------|-------|-----------------------------|------------------------------------------------|
-| task-reviewer            | Agent | `@task-reviewer`            | Review implementation against the plan          |
-| pr-review                | Agent | `@pr-review`                | Evaluate pull requests for quality              |
-| test-streamlit-dashboard | Agent | `@test-streamlit-dashboard` | Test Streamlit dashboard implementations        |
+| Tool                     | Type  | How to Invoke               | Purpose                                  |
+|--------------------------|-------|-----------------------------|------------------------------------------|
+| task-reviewer            | Agent | `@task-reviewer`            | Review implementation against the plan   |
+| pr-review                | Agent | `@pr-review`                | Evaluate pull requests for quality       |
+| test-streamlit-dashboard | Agent | `@test-streamlit-dashboard` | Test Streamlit dashboard implementations |
 
 ### Supporting Agents
 
-| Tool                     | Type  | How to Invoke               | Purpose                                       |
-|--------------------------|-------|-----------------------------|------------------------------------------------|
-| rpi-validator            | Agent | `@rpi-validator`            | Validate RPI workflow compliance                |
-| implementation-validator | Agent | `@implementation-validator` | Check implementation against specifications     |
-| prompt-tester            | Agent | `@prompt-tester`            | Test prompt engineering artifacts               |
-| prompt-evaluator         | Agent | `@prompt-evaluator`         | Evaluate prompt quality and effectiveness       |
+| Tool                     | Type  | How to Invoke               | Purpose                                     |
+|--------------------------|-------|-----------------------------|---------------------------------------------|
+| rpi-validator            | Agent | `@rpi-validator`            | Validate RPI workflow compliance            |
+| implementation-validator | Agent | `@implementation-validator` | Check implementation against specifications |
+| prompt-tester            | Agent | `@prompt-tester`            | Test prompt engineering artifacts           |
+| prompt-evaluator         | Agent | `@prompt-evaluator`         | Evaluate prompt quality and effectiveness   |
 
 ### Prompts and Instructions
 
-| Tool                    | Type        | How to Invoke              | Purpose                                       |
-|-------------------------|-------------|----------------------------|------------------------------------------------|
-| task-review             | Prompt      | `/task-review`             | Start a structured task review                  |
-| pull-request            | Prompt      | `/pull-request`            | Create a pull request for current changes       |
-| ado-create-pull-request | Prompt      | `/ado-create-pull-request` | Create an ADO-linked pull request               |
-| doc-ops-update          | Prompt      | `/doc-ops-update`          | Update documentation alongside code changes     |
-| commit-message          | Instruction | Auto-activated             | Enforces commit message conventions             |
-| community-interaction   | Instruction | Auto-activated             | Enforces community communication standards      |
+| Tool                    | Type        | How to Invoke              | Purpose                                     |
+|-------------------------|-------------|----------------------------|---------------------------------------------|
+| task-review             | Prompt      | `/task-review`             | Start a structured task review              |
+| pull-request            | Prompt      | `/pull-request`            | Create a pull request for current changes   |
+| ado-create-pull-request | Prompt      | `/ado-create-pull-request` | Create an ADO-linked pull request           |
+| doc-ops-update          | Prompt      | `/doc-ops-update`          | Update documentation alongside code changes |
+| commit-message          | Instruction | Auto-activated             | Enforces commit message conventions         |
+| community-interaction   | Instruction | Auto-activated             | Enforces community communication standards  |
 
 ## Role-Specific Guidance
 

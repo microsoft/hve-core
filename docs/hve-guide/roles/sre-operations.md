@@ -78,35 +78,35 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 
 ## Key Agents and Workflows
 
-| Agent                 | Purpose                                          | Invoke                   | Docs                                                   |
-|-----------------------|--------------------------------------------------|--------------------------|--------------------------------------------------------|
-| task-researcher       | Structured production issue investigation        | `@task-researcher`       | [Task Researcher](../rpi/task-researcher.md)           |
-| task-implementor      | Infrastructure code implementation               | `@task-implementor`      | [Task Implementor](../rpi/task-implementor.md)         |
-| task-reviewer         | Infrastructure code review                       | `@task-reviewer`         | [Task Reviewer](../rpi/task-reviewer.md)               |
-| security-plan-creator | Infrastructure security planning                 | `@security-plan-creator` | Agent file                                             |
-| pr-review             | Pull request review for infrastructure changes   | `@pr-review`             | Agent file                                             |
-| memory                | Session context and preference persistence       | `@memory`                | Agent file                                             |
+| Agent                 | Purpose                                        | Invoke                   | Docs                                           |
+|-----------------------|------------------------------------------------|--------------------------|------------------------------------------------|
+| task-researcher       | Structured production issue investigation      | `@task-researcher`       | [Task Researcher](../rpi/task-researcher.md)   |
+| task-implementor      | Infrastructure code implementation             | `@task-implementor`      | [Task Implementor](../rpi/task-implementor.md) |
+| task-reviewer         | Infrastructure code review                     | `@task-reviewer`         | [Task Reviewer](../rpi/task-reviewer.md)       |
+| security-plan-creator | Infrastructure security planning               | `@security-plan-creator` | Agent file                                     |
+| pr-review             | Pull request review for infrastructure changes | `@pr-review`             | Agent file                                     |
+| memory                | Session context and preference persistence     | `@memory`                | Agent file                                     |
 
 Prompts complement the agents for operational workflows:
 
-| Prompt             | Purpose                                         | Invoke               |
-|--------------------|--------------------------------------------------|-----------------------|
-| incident-response  | Incident response runbook creation               | `/incident-response`  |
-| git-commit         | Conventional commit message generation           | `/git-commit`         |
-| pull-request       | Pull request creation                            | `/pull-request`       |
-| git-merge          | Git merge and rebase workflow management         | `/git-merge`          |
+| Prompt            | Purpose                                  | Invoke               |
+|-------------------|------------------------------------------|----------------------|
+| incident-response | Incident response runbook creation       | `/incident-response` |
+| git-commit        | Conventional commit message generation   | `/git-commit`        |
+| pull-request      | Pull request creation                    | `/pull-request`      |
+| git-merge         | Git merge and rebase workflow management | `/git-merge`         |
 
 Auto-activated instructions apply IaC standards based on file type: Terraform (`*.tf`, `*.tfvars`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions workflows (`.github/workflows/*.yml`).
 
 ## Tips
 
-| Do                                                            | Don't                                                         |
-|---------------------------------------------------------------|---------------------------------------------------------------|
-| Let IaC-specific instructions auto-activate by file type      | Manually enforce Terraform or Bicep standards                 |
-| Create incident response runbooks before incidents occur      | Write runbooks reactively during active incidents              |
-| Use `@task-researcher` for structured root cause analysis     | Debug production issues without systematic investigation      |
-| Review infrastructure PRs with `@pr-review`                   | Merge infrastructure changes without code review              |
-| Use `/git-commit` for consistent, conventional commit history | Write ad-hoc commit messages for infrastructure changes       |
+| Do                                                            | Don't                                                    |
+|---------------------------------------------------------------|----------------------------------------------------------|
+| Let IaC-specific instructions auto-activate by file type      | Manually enforce Terraform or Bicep standards            |
+| Create incident response runbooks before incidents occur      | Write runbooks reactively during active incidents        |
+| Use `@task-researcher` for structured root cause analysis     | Debug production issues without systematic investigation |
+| Review infrastructure PRs with `@pr-review`                   | Merge infrastructure changes without code review         |
+| Use `/git-commit` for consistent, conventional commit history | Write ad-hoc commit messages for infrastructure changes  |
 
 ## Related Roles
 

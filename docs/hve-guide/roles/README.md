@@ -16,45 +16,45 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 
 ## Role Overview
 
-| Role                     | Dedicated Assets | Total Addressable | Primary Stages                        | Guide                                                        |
-|--------------------------|------------------|-------------------|---------------------------------------|--------------------------------------------------------------|
-| Engineer                 | 26               | 28+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](engineer.md)                                      |
-| TPM                      | 24               | 32+               | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](tpm.md)                                               |
-| Tech Lead / Architect    | 19               | 23+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](tech-lead.md)                                   |
-| Security Architect       | 3                | 9                 | Stage 2, Stage 3, Stage 7, Stage 9    | [Security Architect](security-architect.md)                  |
-| Data Scientist           | 6                | 13                | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](data-scientist.md)                          |
-| SRE / Operations         | 8                | 13+               | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](sre-operations.md)                       |
-| Business Program Manager | N/A              | N/A               | Stage 2, Stage 3, Stage 4, Stage 5    | [Business Program Manager](business-program-manager.md)      |
-| New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7    | [New Contributor](new-contributor.md)                         |
-| Utility                  | N/A              | 13                | All                                   | [Utility](utility.md)                                        |
+| Role                     | Dedicated Assets | Total Addressable | Primary Stages                              | Guide                                                   |
+|--------------------------|------------------|-------------------|---------------------------------------------|---------------------------------------------------------|
+| Engineer                 | 26               | 28+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](engineer.md)                                 |
+| TPM                      | 24               | 32+               | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](tpm.md)                                           |
+| Tech Lead / Architect    | 19               | 23+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](tech-lead.md)                               |
+| Security Architect       | 3                | 9                 | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](security-architect.md)             |
+| Data Scientist           | 6                | 13                | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](data-scientist.md)                     |
+| SRE / Operations         | 8                | 13+               | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](sre-operations.md)                   |
+| Business Program Manager | N/A              | N/A               | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](business-program-manager.md) |
+| New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
+| Utility                  | N/A              | 13                | All                                         | [Utility](utility.md)                                   |
 
 ## Find Your Role
 
-| I want to...                                                    | Recommended Role Guide                                          |
-|-----------------------------------------------------------------|-----------------------------------------------------------------|
-| Write code, implement features, or fix bugs                     | [Engineer](engineer.md)                                         |
-| Plan projects, manage requirements, or track work               | [TPM](tpm.md)                                                   |
-| Design architecture, review code, or set standards              | [Tech Lead](tech-lead.md)                                       |
-| Assess security, create threat models, or review compliance     | [Security Architect](security-architect.md)                     |
-| Analyze data, build notebooks, or create dashboards             | [Data Scientist](data-scientist.md)                             |
-| Manage infrastructure, handle incidents, or deploy              | [SRE / Operations](sre-operations.md)                           |
-| Define business outcomes or manage stakeholder alignment        | [Business Program Manager](business-program-manager.md)         |
-| Get started contributing to the project                         | [New Contributor](new-contributor.md)                            |
-| Use cross-cutting utilities (memory, docs, media)               | [Utility](utility.md)                                           |
+| I want to...                                                | Recommended Role Guide                                  |
+|-------------------------------------------------------------|---------------------------------------------------------|
+| Write code, implement features, or fix bugs                 | [Engineer](engineer.md)                                 |
+| Plan projects, manage requirements, or track work           | [TPM](tpm.md)                                           |
+| Design architecture, review code, or set standards          | [Tech Lead](tech-lead.md)                               |
+| Assess security, create threat models, or review compliance | [Security Architect](security-architect.md)             |
+| Analyze data, build notebooks, or create dashboards         | [Data Scientist](data-scientist.md)                     |
+| Manage infrastructure, handle incidents, or deploy          | [SRE / Operations](sre-operations.md)                   |
+| Define business outcomes or manage stakeholder alignment    | [Business Program Manager](business-program-manager.md) |
+| Get started contributing to the project                     | [New Contributor](new-contributor.md)                   |
+| Use cross-cutting utilities (memory, docs, media)           | [Utility](utility.md)                                   |
 
 ## Collection Quick Reference
 
-| Collection         | Primary Roles              | Install                                              |
-|--------------------|----------------------------|------------------------------------------------------|
-| hve-core-all       | All                        | Full install                                         |
-| rpi                | Engineer, Tech Lead        | `@hve-core-installer install rpi`                    |
-| ado                | TPM, Engineer              | `@hve-core-installer install ado`                    |
-| github             | TPM, Engineer              | `@hve-core-installer install github`                 |
-| coding-standards   | Engineer, Tech Lead, SRE   | `@hve-core-installer install coding-standards`       |
-| data-science       | Data Scientist             | `@hve-core-installer install data-science`           |
-| project-planning   | TPM, BPM, Tech Lead        | `@hve-core-installer install project-planning`       |
-| prompt-engineering | Tech Lead, Prompt Engineers | `@hve-core-installer install prompt-engineering`     |
-| security-planning  | Security Architect, SRE    | `@hve-core-installer install security-planning`      |
+| Collection         | Primary Roles               | Install                                          |
+|--------------------|-----------------------------|--------------------------------------------------|
+| hve-core-all       | All                         | Full install                                     |
+| rpi                | Engineer, Tech Lead         | `@hve-core-installer install rpi`                |
+| ado                | TPM, Engineer               | `@hve-core-installer install ado`                |
+| github             | TPM, Engineer               | `@hve-core-installer install github`             |
+| coding-standards   | Engineer, Tech Lead, SRE    | `@hve-core-installer install coding-standards`   |
+| data-science       | Data Scientist              | `@hve-core-installer install data-science`       |
+| project-planning   | TPM, BPM, Tech Lead         | `@hve-core-installer install project-planning`   |
+| prompt-engineering | Tech Lead, Prompt Engineers | `@hve-core-installer install prompt-engineering` |
+| security-planning  | Security Architect, SRE     | `@hve-core-installer install security-planning`  |
 
 ## Collaboration Patterns
 

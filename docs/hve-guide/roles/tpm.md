@@ -79,29 +79,29 @@ This guide is for you if you drive project planning, manage requirements, coordi
 
 ## Key Agents and Workflows
 
-| Agent                  | Purpose                                       | Invoke                    | Docs                                                           |
-|------------------------|-----------------------------------------------|---------------------------|----------------------------------------------------------------|
-| brd-builder            | Business requirements document creation       | `@brd-builder`            | Agent file                                                     |
-| prd-builder            | Product requirements document generation      | `@prd-builder`            | Agent file                                                     |
-| agile-coach            | Sprint planning and agile methodology         | `@agile-coach`            | Agent file                                                     |
-| ado-prd-to-wit         | PRD to Azure DevOps work item conversion      | `@ado-prd-to-wit`         | Agent file                                                     |
-| github-backlog-manager | GitHub issue discovery and backlog automation  | `@github-backlog-manager` | [GitHub Backlog](../agents/github-backlog/)                    |
-| github-issue-manager   | Single-issue operations (deprecated)          | `@github-issue-manager`   | Agent file                                                     |
-| product-manager-advisor | Product strategy and prioritization guidance  | `@product-manager-advisor`| Agent file                                                     |
-| ux-ui-designer         | UX/UI design guidance and review              | `@ux-ui-designer`         | Agent file                                                     |
-| task-researcher        | Deep technical and requirement research       | `@task-researcher`        | [Task Researcher](../rpi/task-researcher.md)                   |
-| rpi-agent              | RPI workflow orchestration                    | `@rpi-agent`              | [RPI docs](../rpi/README.md)                                   |
-| memory                 | Session context and preference persistence    | `@memory`                 | Agent file                                                     |
+| Agent                   | Purpose                                       | Invoke                     | Docs                                         |
+|-------------------------|-----------------------------------------------|----------------------------|----------------------------------------------|
+| brd-builder             | Business requirements document creation       | `@brd-builder`             | Agent file                                   |
+| prd-builder             | Product requirements document generation      | `@prd-builder`             | Agent file                                   |
+| agile-coach             | Sprint planning and agile methodology         | `@agile-coach`             | Agent file                                   |
+| ado-prd-to-wit          | PRD to Azure DevOps work item conversion      | `@ado-prd-to-wit`          | Agent file                                   |
+| github-backlog-manager  | GitHub issue discovery and backlog automation | `@github-backlog-manager`  | [GitHub Backlog](../agents/github-backlog/)  |
+| github-issue-manager    | Single-issue operations (deprecated)          | `@github-issue-manager`    | Agent file                                   |
+| product-manager-advisor | Product strategy and prioritization guidance  | `@product-manager-advisor` | Agent file                                   |
+| ux-ui-designer          | UX/UI design guidance and review              | `@ux-ui-designer`          | Agent file                                   |
+| task-researcher         | Deep technical and requirement research       | `@task-researcher`         | [Task Researcher](../rpi/task-researcher.md) |
+| rpi-agent               | RPI workflow orchestration                    | `@rpi-agent`               | [RPI docs](../rpi/README.md)                 |
+| memory                  | Session context and preference persistence    | `@memory`                  | Agent file                                   |
 
 ## Tips
 
-| Do                                                          | Don't                                                         |
-|-------------------------------------------------------------|---------------------------------------------------------------|
-| Start with a BRD before jumping to work item creation       | Create work items without documented requirements             |
-| Use `/github-discover-issues` before manual issue searches  | Manually scan repositories for open issues                    |
-| Let `@agile-coach` suggest sprint priorities                | Assign sprint items without capacity or priority analysis     |
-| Triage issues with labels and milestones systematically     | Leave discovered issues uncategorized                         |
-| Use `@github-backlog-manager` over `@github-issue-manager`  | Use the deprecated single-issue manager for bulk operations   |
+| Do                                                         | Don't                                                       |
+|------------------------------------------------------------|-------------------------------------------------------------|
+| Start with a BRD before jumping to work item creation      | Create work items without documented requirements           |
+| Use `/github-discover-issues` before manual issue searches | Manually scan repositories for open issues                  |
+| Let `@agile-coach` suggest sprint priorities               | Assign sprint items without capacity or priority analysis   |
+| Triage issues with labels and milestones systematically    | Leave discovered issues uncategorized                       |
+| Use `@github-backlog-manager` over `@github-issue-manager` | Use the deprecated single-issue manager for bulk operations |
 
 ## Related Roles
 

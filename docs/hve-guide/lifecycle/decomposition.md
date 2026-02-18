@@ -26,13 +26,13 @@ You enter Decomposition after completing [Stage 3: Product Definition](product-d
 
 ## Available Tools
 
-| Tool                   | Type        | How to Invoke                | Purpose                                          |
-|------------------------|-------------|------------------------------|--------------------------------------------------|
-| ado-prd-to-wit         | Agent       | `@ado-prd-to-wit`           | Convert PRDs into ADO work items automatically    |
-| github-issue-manager   | Agent       | `@github-issue-manager`     | Manage GitHub issues (deprecated)                 |
-| ado-get-my-work-items  | Prompt      | `/ado-get-my-work-items`    | Retrieve your assigned work items                 |
-| ado-process-my-work-items | Prompt   | `/ado-process-my-work-items` | Process and prioritize existing work items        |
-| ado-wit-planning       | Instruction | Auto-activated on workitems  | Enforces work item planning conventions           |
+| Tool                      | Type        | How to Invoke                | Purpose                                        |
+|---------------------------|-------------|------------------------------|------------------------------------------------|
+| ado-prd-to-wit            | Agent       | `@ado-prd-to-wit`            | Convert PRDs into ADO work items automatically |
+| github-issue-manager      | Agent       | `@github-issue-manager`      | Manage GitHub issues (deprecated)              |
+| ado-get-my-work-items     | Prompt      | `/ado-get-my-work-items`     | Retrieve your assigned work items              |
+| ado-process-my-work-items | Prompt      | `/ado-process-my-work-items` | Process and prioritize existing work items     |
+| ado-wit-planning          | Instruction | Auto-activated on workitems  | Enforces work item planning conventions        |
 
 ## Role-Specific Guidance
 

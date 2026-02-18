@@ -17,14 +17,14 @@ Use these cross-cutting utilities when your workflow spans multiple roles or lif
 
 ## Utility Categories
 
-| Category       | Assets | Purpose                                                  |
-|----------------|--------|----------------------------------------------------------|
-| Memory         | 1      | Session context and preference persistence               |
-| Documentation  | 2      | Documentation operations and checkpoint summaries        |
-| Media          | 1      | Video-to-GIF conversion with FFmpeg optimization         |
-| Git            | 3      | Commit messages, merge workflows, PR creation            |
-| Installation   | 1      | Collection installation and environment setup            |
-| Diagnostics    | 1      | Build information retrieval and CI/CD status checks      |
+| Category      | Assets | Purpose                                             |
+|---------------|--------|-----------------------------------------------------|
+| Memory        | 1      | Session context and preference persistence          |
+| Documentation | 2      | Documentation operations and checkpoint summaries   |
+| Media         | 1      | Video-to-GIF conversion with FFmpeg optimization    |
+| Git           | 3      | Commit messages, merge workflows, PR creation       |
+| Installation  | 1      | Collection installation and environment setup       |
+| Diagnostics   | 1      | Build information retrieval and CI/CD status checks |
 
 ## Usage Patterns
 
@@ -66,13 +66,13 @@ Refer to the [video-to-gif skill](../../.github/skills/video-to-gif/SKILL.md) fo
 
 Git utilities manage commit messages, merge operations, and pull request creation across all roles.
 
-| Prompt              | Purpose                                        | Invoke              |
-|---------------------|------------------------------------------------|---------------------|
-| git-commit          | Conventional commit message generation         | `/git-commit`       |
-| git-commit-message  | Commit message from staged changes             | `/git-commit-message` |
-| git-merge           | Merge, rebase, and conflict resolution         | `/git-merge`        |
-| pull-request        | Pull request creation with templates           | `/pull-request`     |
-| git-setup           | Git configuration and environment setup        | `/git-setup`        |
+| Prompt             | Purpose                                 | Invoke                |
+|--------------------|-----------------------------------------|-----------------------|
+| git-commit         | Conventional commit message generation  | `/git-commit`         |
+| git-commit-message | Commit message from staged changes      | `/git-commit-message` |
+| git-merge          | Merge, rebase, and conflict resolution  | `/git-merge`          |
+| pull-request       | Pull request creation with templates    | `/pull-request`       |
+| git-setup          | Git configuration and environment setup | `/git-setup`          |
 
 ### Installation and Setup
 
@@ -98,40 +98,40 @@ This fallback activates automatically. No manual configuration is needed.
 
 ### Agents
 
-| Agent              | Category      | Invoke              | Description                                         |
-|--------------------|---------------|----------------------|-----------------------------------------------------|
-| memory             | Memory        | `@memory`            | Session context and preference persistence          |
-| doc-ops            | Documentation | `@doc-ops`           | Documentation operations and maintenance            |
-| hve-core-installer | Installation  | `@hve-core-installer`| Collection installation and setup management        |
+| Agent              | Category      | Invoke                | Description                                  |
+|--------------------|---------------|-----------------------|----------------------------------------------|
+| memory             | Memory        | `@memory`             | Session context and preference persistence   |
+| doc-ops            | Documentation | `@doc-ops`            | Documentation operations and maintenance     |
+| hve-core-installer | Installation  | `@hve-core-installer` | Collection installation and setup management |
 
 ### Prompts
 
-| Prompt             | Category      | Invoke               | Description                                         |
-|--------------------|---------------|-----------------------|-----------------------------------------------------|
-| git-commit         | Git           | `/git-commit`         | Conventional commit message generation              |
-| git-commit-message | Git           | `/git-commit-message` | Commit message from staged changes                  |
-| git-merge          | Git           | `/git-merge`          | Merge, rebase, and conflict resolution workflows    |
-| pull-request       | Git           | `/pull-request`       | Pull request creation with template support         |
-| git-setup          | Git           | `/git-setup`          | Git configuration and environment setup             |
-| checkpoint         | Documentation | `/checkpoint`         | Session progress summary and state capture          |
-| doc-ops-update     | Documentation | `/doc-ops-update`     | Documentation sync and update operations            |
-| ado-get-build-info | Diagnostics   | `/ado-get-build-info` | Azure DevOps build status and log retrieval         |
+| Prompt             | Category      | Invoke                | Description                                      |
+|--------------------|---------------|-----------------------|--------------------------------------------------|
+| git-commit         | Git           | `/git-commit`         | Conventional commit message generation           |
+| git-commit-message | Git           | `/git-commit-message` | Commit message from staged changes               |
+| git-merge          | Git           | `/git-merge`          | Merge, rebase, and conflict resolution workflows |
+| pull-request       | Git           | `/pull-request`       | Pull request creation with template support      |
+| git-setup          | Git           | `/git-setup`          | Git configuration and environment setup          |
+| checkpoint         | Documentation | `/checkpoint`         | Session progress summary and state capture       |
+| doc-ops-update     | Documentation | `/doc-ops-update`     | Documentation sync and update operations         |
+| ado-get-build-info | Diagnostics   | `/ado-get-build-info` | Azure DevOps build status and log retrieval      |
 
 ### Skills
 
-| Skill          | Category | Description                                            |
-|----------------|----------|--------------------------------------------------------|
-| video-to-gif   | Media    | FFmpeg two-pass video-to-GIF conversion                |
+| Skill        | Category | Description                             |
+|--------------|----------|-----------------------------------------|
+| video-to-gif | Media    | FFmpeg two-pass video-to-GIF conversion |
 
 ## Tips
 
-| Do                                                          | Don't                                                       |
-|-------------------------------------------------------------|-------------------------------------------------------------|
-| Use `@memory` to save preferences early in a session        | Repeat the same context setup in every conversation         |
-| Use `/checkpoint` during long, multi-step workflows         | Lose progress context in extended sessions                   |
-| Use `/git-commit` for all commits to maintain conventions   | Write ad-hoc commit messages that skip conventional format  |
-| Install only the collections your role needs                | Install `hve-core-all` when you only need one collection    |
-| Refer to the skill docs for media processing parameters     | Guess at FFmpeg options without consulting the skill file   |
+| Do                                                        | Don't                                                      |
+|-----------------------------------------------------------|------------------------------------------------------------|
+| Use `@memory` to save preferences early in a session      | Repeat the same context setup in every conversation        |
+| Use `/checkpoint` during long, multi-step workflows       | Lose progress context in extended sessions                 |
+| Use `/git-commit` for all commits to maintain conventions | Write ad-hoc commit messages that skip conventional format |
+| Install only the collections your role needs              | Install `hve-core-all` when you only need one collection   |
+| Refer to the skill docs for media processing parameters   | Guess at FFmpeg options without consulting the skill file  |
 
 ## Next Steps
 

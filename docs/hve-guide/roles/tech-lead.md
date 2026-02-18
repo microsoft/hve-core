@@ -78,17 +78,17 @@ This guide is for you if you make architecture decisions, set coding standards, 
 
 ## Key Agents and Workflows
 
-| Agent              | Purpose                                          | Invoke              | Docs                                                   |
-|--------------------|--------------------------------------------------|----------------------|--------------------------------------------------------|
-| adr-creation       | Architecture decision record creation            | `@adr-creation`      | Agent file                                             |
-| arch-diagram-builder | Mermaid architecture diagram generation         | `@arch-diagram-builder` | Agent file                                          |
-| pr-review          | Pull request review automation                   | `@pr-review`         | Agent file                                             |
-| task-reviewer      | Implementation review against plan               | `@task-reviewer`     | [Task Reviewer](../rpi/task-reviewer.md)               |
-| prompt-builder     | Prompt engineering artifact creation             | `@prompt-builder`    | Agent file                                             |
-| task-researcher    | Deep codebase and architecture research          | `@task-researcher`   | [Task Researcher](../rpi/task-researcher.md)           |
-| task-planner       | Structured implementation planning               | `@task-planner`      | [Task Planner](../rpi/task-planner.md)                 |
-| doc-ops            | Documentation operations and maintenance         | `@doc-ops`           | Agent file                                             |
-| memory             | Session context and preference persistence       | `@memory`            | Agent file                                             |
+| Agent                | Purpose                                    | Invoke                  | Docs                                         |
+|----------------------|--------------------------------------------|-------------------------|----------------------------------------------|
+| adr-creation         | Architecture decision record creation      | `@adr-creation`         | Agent file                                   |
+| arch-diagram-builder | Mermaid architecture diagram generation    | `@arch-diagram-builder` | Agent file                                   |
+| pr-review            | Pull request review automation             | `@pr-review`            | Agent file                                   |
+| task-reviewer        | Implementation review against plan         | `@task-reviewer`        | [Task Reviewer](../rpi/task-reviewer.md)     |
+| prompt-builder       | Prompt engineering artifact creation       | `@prompt-builder`       | Agent file                                   |
+| task-researcher      | Deep codebase and architecture research    | `@task-researcher`      | [Task Researcher](../rpi/task-researcher.md) |
+| task-planner         | Structured implementation planning         | `@task-planner`         | [Task Planner](../rpi/task-planner.md)       |
+| doc-ops              | Documentation operations and maintenance   | `@doc-ops`              | Agent file                                   |
+| memory               | Session context and preference persistence | `@memory`               | Agent file                                   |
 
 Auto-activated instructions apply coding standards based on file type: C# (`*.cs`), Python (`*.py`), Bash (`*.sh`), Bicep (`bicep/**`), Terraform (`*.tf`), and GitHub Actions workflows (`*.yml`).
 
@@ -96,7 +96,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 | Do                                                           | Don't                                                          |
 |--------------------------------------------------------------|----------------------------------------------------------------|
-| Create ADRs for significant design decisions                 | Make architectural choices without documented rationale         |
+| Create ADRs for significant design decisions                 | Make architectural choices without documented rationale        |
 | Use `@pr-review` to supplement manual code reviews           | Rely solely on automated review without human judgment         |
 | Let coding standards auto-activate based on file type        | Manually apply rules that already have instruction files       |
 | Use `/prompt-analyze` before refactoring AI artifacts        | Rewrite prompts without understanding their current structure  |

@@ -28,33 +28,33 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 ### Primary Agents
 
-| Tool           | Type  | How to Invoke     | Purpose                                       |
-|----------------|-------|-------------------|------------------------------------------------|
-| doc-ops        | Agent | `@doc-ops`        | Update and maintain documentation               |
-| prompt-builder | Agent | `@prompt-builder` | Refine and optimize operational prompts         |
+| Tool           | Type  | How to Invoke     | Purpose                                 |
+|----------------|-------|-------------------|-----------------------------------------|
+| doc-ops        | Agent | `@doc-ops`        | Update and maintain documentation       |
+| prompt-builder | Agent | `@prompt-builder` | Refine and optimize operational prompts |
 
 ### Prompts
 
-| Tool             | Type   | How to Invoke       | Purpose                                        |
-|------------------|--------|---------------------|-------------------------------------------------|
-| doc-ops-update   | Prompt | `/doc-ops-update`   | Update documentation for the latest release     |
-| incident-response| Prompt | `/incident-response`| Document and triage incidents                   |
-| prompt-analyze   | Prompt | `/prompt-analyze`   | Evaluate prompt effectiveness                   |
-| prompt-refactor  | Prompt | `/prompt-refactor`  | Refactor and improve existing prompts           |
-| checkpoint       | Prompt | `/checkpoint`       | Save operational state for continuity           |
+| Tool              | Type   | How to Invoke        | Purpose                                     |
+|-------------------|--------|----------------------|---------------------------------------------|
+| doc-ops-update    | Prompt | `/doc-ops-update`    | Update documentation for the latest release |
+| incident-response | Prompt | `/incident-response` | Document and triage incidents               |
+| prompt-analyze    | Prompt | `/prompt-analyze`    | Evaluate prompt effectiveness               |
+| prompt-refactor   | Prompt | `/prompt-refactor`   | Refactor and improve existing prompts       |
+| checkpoint        | Prompt | `/checkpoint`        | Save operational state for continuity       |
 
 ### Auto-Activated Instructions
 
-| Instruction    | Activates On    | Purpose                            |
-|----------------|-----------------|-------------------------------------|
-| writing-style  | `**/*.md`       | Enforces voice and tone conventions |
-| markdown       | `**/*.md`       | Enforces Markdown formatting rules  |
-| prompt-builder | AI artifacts    | Enforces authoring standards        |
+| Instruction    | Activates On | Purpose                             |
+|----------------|--------------|-------------------------------------|
+| writing-style  | `**/*.md`    | Enforces voice and tone conventions |
+| markdown       | `**/*.md`    | Enforces Markdown formatting rules  |
+| prompt-builder | AI artifacts | Enforces authoring standards        |
 
 ### Templates
 
-| Template          | Purpose                                     |
-|-------------------|----------------------------------------------|
+| Template          | Purpose                                        |
+|-------------------|------------------------------------------------|
 | incident-response | Structured template for incident documentation |
 
 ## Role-Specific Guidance

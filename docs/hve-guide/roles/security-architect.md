@@ -71,27 +71,27 @@ This guide is for you if you perform threat modeling, build security plans, asse
 
 ## Key Agents and Workflows
 
-| Agent                 | Purpose                                       | Invoke                   | Docs                                                   |
-|-----------------------|-----------------------------------------------|--------------------------|--------------------------------------------------------|
-| security-plan-creator | Security plan and threat model generation     | `@security-plan-creator` | Agent file                                             |
-| task-researcher       | Security-focused codebase and threat research | `@task-researcher`       | [Task Researcher](../rpi/task-researcher.md)           |
-| task-reviewer         | Security compliance review                    | `@task-reviewer`         | [Task Reviewer](../rpi/task-reviewer.md)               |
-| memory                | Session context and preference persistence    | `@memory`                | Agent file                                             |
+| Agent                 | Purpose                                       | Invoke                   | Docs                                         |
+|-----------------------|-----------------------------------------------|--------------------------|----------------------------------------------|
+| security-plan-creator | Security plan and threat model generation     | `@security-plan-creator` | Agent file                                   |
+| task-researcher       | Security-focused codebase and threat research | `@task-researcher`       | [Task Researcher](../rpi/task-researcher.md) |
+| task-reviewer         | Security compliance review                    | `@task-reviewer`         | [Task Reviewer](../rpi/task-reviewer.md)     |
+| memory                | Session context and preference persistence    | `@memory`                | Agent file                                   |
 
 Prompts complement the agents for targeted security workflows:
 
-| Prompt             | Purpose                                      | Invoke               |
-|--------------------|----------------------------------------------|-----------------------|
-| risk-register      | Component risk assessment and documentation  | `/risk-register`      |
-| incident-response  | Incident response runbook creation           | `/incident-response`  |
+| Prompt            | Purpose                                     | Invoke               |
+|-------------------|---------------------------------------------|----------------------|
+| risk-register     | Component risk assessment and documentation | `/risk-register`     |
+| incident-response | Incident response runbook creation          | `/incident-response` |
 
 ## Tips
 
-| Do                                                           | Don't                                                        |
-|--------------------------------------------------------------|--------------------------------------------------------------|
+| Do                                                           | Don't                                                         |
+|--------------------------------------------------------------|---------------------------------------------------------------|
 | Start with `@security-plan-creator` for comprehensive models | Create ad-hoc security notes without structured threat models |
 | Use `/risk-register` for each significant component          | Track risks informally or skip risk documentation             |
-| Research the threat landscape before defining mitigations     | Assume threat models from other projects directly apply       |
+| Research the threat landscape before defining mitigations    | Assume threat models from other projects directly apply       |
 | Update threat models as the system architecture evolves      | Treat security plans as static, one-time documents            |
 | Map security requirements to specific lifecycle stages       | Isolate security from the broader product lifecycle           |
 

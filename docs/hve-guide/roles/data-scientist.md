@@ -78,27 +78,27 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 
 ## Key Agents and Workflows
 
-| Agent                    | Purpose                                     | Invoke                       | Docs                                                   |
-|--------------------------|---------------------------------------------|------------------------------|--------------------------------------------------------|
-| gen-jupyter-notebook     | Jupyter notebook generation                 | `@gen-jupyter-notebook`      | Agent file                                             |
-| gen-streamlit-dashboard  | Streamlit dashboard creation                | `@gen-streamlit-dashboard`   | Agent file                                             |
-| gen-data-spec            | Data specification document creation        | `@gen-data-spec`             | Agent file                                             |
-| test-streamlit-dashboard | Dashboard functional testing                | `@test-streamlit-dashboard`  | Agent file                                             |
-| task-researcher          | Data source and pattern research            | `@task-researcher`           | [Task Researcher](../rpi/task-researcher.md)           |
-| task-planner             | Analytics pipeline planning                 | `@task-planner`              | [Task Planner](../rpi/task-planner.md)                 |
-| memory                   | Session context and preference persistence  | `@memory`                    | Agent file                                             |
+| Agent                    | Purpose                                    | Invoke                      | Docs                                         |
+|--------------------------|--------------------------------------------|-----------------------------|----------------------------------------------|
+| gen-jupyter-notebook     | Jupyter notebook generation                | `@gen-jupyter-notebook`     | Agent file                                   |
+| gen-streamlit-dashboard  | Streamlit dashboard creation               | `@gen-streamlit-dashboard`  | Agent file                                   |
+| gen-data-spec            | Data specification document creation       | `@gen-data-spec`            | Agent file                                   |
+| test-streamlit-dashboard | Dashboard functional testing               | `@test-streamlit-dashboard` | Agent file                                   |
+| task-researcher          | Data source and pattern research           | `@task-researcher`          | [Task Researcher](../rpi/task-researcher.md) |
+| task-planner             | Analytics pipeline planning                | `@task-planner`             | [Task Planner](../rpi/task-planner.md)       |
+| memory                   | Session context and preference persistence | `@memory`                   | Agent file                                   |
 
 Python environment management follows the `uv` virtual environment instructions for reproducible analysis environments.
 
 ## Tips
 
-| Do                                                          | Don't                                                         |
-|-------------------------------------------------------------|---------------------------------------------------------------|
-| Start with `@gen-data-spec` to define schemas before coding | Jump straight to notebook coding without data specifications  |
-| Use `@gen-jupyter-notebook` for structured, documented notebooks | Create raw notebooks without documentation cells          |
-| Test dashboards with `@test-streamlit-dashboard`            | Deploy dashboards without functional validation               |
-| Research data sources with `@task-researcher` first         | Assume data availability without investigation                |
-| Use `uv` for reproducible Python environments               | Install packages globally or skip environment isolation       |
+| Do                                                               | Don't                                                        |
+|------------------------------------------------------------------|--------------------------------------------------------------|
+| Start with `@gen-data-spec` to define schemas before coding      | Jump straight to notebook coding without data specifications |
+| Use `@gen-jupyter-notebook` for structured, documented notebooks | Create raw notebooks without documentation cells             |
+| Test dashboards with `@test-streamlit-dashboard`                 | Deploy dashboards without functional validation              |
+| Research data sources with `@task-researcher` first              | Assume data availability without investigation               |
+| Use `uv` for reproducible Python environments                    | Install packages globally or skip environment isolation      |
 
 ## Related Roles
 

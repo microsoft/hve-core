@@ -26,18 +26,18 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 ## Available Tools
 
-| Tool                  | Type     | How to Invoke            | Purpose                                         |
-|-----------------------|----------|--------------------------|--------------------------------------------------|
-| task-researcher       | Agent    | `@task-researcher`       | Research best practices and technical topics      |
-| brd-builder           | Agent    | `@brd-builder`           | Create business requirements documents            |
-| security-plan-creator | Agent    | `@security-plan-creator` | Generate security plans and threat models         |
-| gen-data-spec         | Agent    | `@gen-data-spec`         | Generate data specifications and schemas          |
-| adr-creation          | Agent    | `@adr-creation`          | Document architecture decisions                   |
-| arch-diagram-builder  | Agent    | `@arch-diagram-builder`  | Generate architecture diagrams                    |
-| ux-ui-designer        | Agent    | `@ux-ui-designer`        | Design user experience and interface concepts     |
-| memory                | Agent    | `@memory`                | Store research findings for later reference       |
-| risk-register         | Prompt   | `/risk-register`         | Identify and track project risks                  |
-| task-research         | Prompt   | `/task-research`         | Quick research queries without full agent context |
+| Tool                  | Type   | How to Invoke            | Purpose                                           |
+|-----------------------|--------|--------------------------|---------------------------------------------------|
+| task-researcher       | Agent  | `@task-researcher`       | Research best practices and technical topics      |
+| brd-builder           | Agent  | `@brd-builder`           | Create business requirements documents            |
+| security-plan-creator | Agent  | `@security-plan-creator` | Generate security plans and threat models         |
+| gen-data-spec         | Agent  | `@gen-data-spec`         | Generate data specifications and schemas          |
+| adr-creation          | Agent  | `@adr-creation`          | Document architecture decisions                   |
+| arch-diagram-builder  | Agent  | `@arch-diagram-builder`  | Generate architecture diagrams                    |
+| ux-ui-designer        | Agent  | `@ux-ui-designer`        | Design user experience and interface concepts     |
+| memory                | Agent  | `@memory`                | Store research findings for later reference       |
+| risk-register         | Prompt | `/risk-register`         | Identify and track project risks                  |
+| task-research         | Prompt | `/task-research`         | Quick research queries without full agent context |
 
 ## Role-Specific Guidance
 

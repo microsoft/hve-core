@@ -26,16 +26,16 @@ You enter Setup when starting a new project or joining an existing engagement th
 
 ## Available Tools
 
-| Tool                | Type        | How to Invoke                | Purpose                                         |
-|---------------------|-------------|------------------------------|------------------------------------------------|
-| hve-core-installer  | Agent       | `@hve-core-installer`       | Install and configure HVE Core for your project |
-| memory              | Agent       | `@memory`                   | Store persistent preferences and conventions    |
-| checkpoint          | Prompt      | `/checkpoint`               | Save current environment state                  |
-| git-setup           | Prompt      | `/git-setup`                | Configure Git settings for the project          |
-| writing-style       | Instruction | Auto-activated on `**/*.md` | Enforces voice and tone conventions             |
-| markdown            | Instruction | Auto-activated on `**/*.md` | Enforces Markdown formatting rules              |
-| prompt-builder      | Instruction | Auto-activated on AI artifacts | Enforces authoring standards                 |
-| hve-core-location   | Instruction | Auto-activated on `**`      | Resolves missing references to hve-core paths   |
+| Tool               | Type        | How to Invoke                  | Purpose                                         |
+|--------------------|-------------|--------------------------------|-------------------------------------------------|
+| hve-core-installer | Agent       | `@hve-core-installer`          | Install and configure HVE Core for your project |
+| memory             | Agent       | `@memory`                      | Store persistent preferences and conventions    |
+| checkpoint         | Prompt      | `/checkpoint`                  | Save current environment state                  |
+| git-setup          | Prompt      | `/git-setup`                   | Configure Git settings for the project          |
+| writing-style      | Instruction | Auto-activated on `**/*.md`    | Enforces voice and tone conventions             |
+| markdown           | Instruction | Auto-activated on `**/*.md`    | Enforces Markdown formatting rules              |
+| prompt-builder     | Instruction | Auto-activated on AI artifacts | Enforces authoring standards                    |
+| hve-core-location  | Instruction | Auto-activated on `**`         | Resolves missing references to hve-core paths   |
 
 ## Role-Specific Guidance
 

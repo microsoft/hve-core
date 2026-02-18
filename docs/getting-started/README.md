@@ -26,9 +26,9 @@ Install directly from VS Code Marketplace for the simplest setup:
 
 Or visit: [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-| Advantage                                                 | Limitation                  |
-|-----------------------------------------------------------|-----------------------------|
-| Zero configuration, automatic updates, works everywhere   | Cannot customize components |
+| Advantage                                               | Limitation                  |
+|---------------------------------------------------------|-----------------------------|
+| Zero configuration, automatic updates, works everywhere | Cannot customize components |
 
 See [Extension Installation Guide](methods/extension.md) for full details.
 

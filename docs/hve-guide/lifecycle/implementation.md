@@ -28,56 +28,56 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                    | Type  | How to Invoke             | Purpose                                        |
-|-------------------------|-------|---------------------------|-------------------------------------------------|
-| task-implementor        | Agent | `@task-implementor`       | Build components following plans                 |
-| rpi-agent               | Agent | `@rpi-agent`              | Orchestrate research-plan-implement workflow     |
-| gen-jupyter-notebook    | Agent | `@gen-jupyter-notebook`   | Create data analysis notebooks                   |
-| gen-streamlit-dashboard | Agent | `@gen-streamlit-dashboard`| Generate Streamlit dashboards                    |
-| prompt-builder          | Agent | `@prompt-builder`         | Create and refine prompt engineering artifacts   |
+| Tool                    | Type  | How to Invoke              | Purpose                                        |
+|-------------------------|-------|----------------------------|------------------------------------------------|
+| task-implementor        | Agent | `@task-implementor`        | Build components following plans               |
+| rpi-agent               | Agent | `@rpi-agent`               | Orchestrate research-plan-implement workflow   |
+| gen-jupyter-notebook    | Agent | `@gen-jupyter-notebook`    | Create data analysis notebooks                 |
+| gen-streamlit-dashboard | Agent | `@gen-streamlit-dashboard` | Generate Streamlit dashboards                  |
+| prompt-builder          | Agent | `@prompt-builder`          | Create and refine prompt engineering artifacts |
 
 ### Supporting Agents
 
-| Tool                | Type  | How to Invoke          | Purpose                                    |
-|---------------------|-------|------------------------|--------------------------------------------|
-| phase-implementor   | Agent | `@phase-implementor`   | Execute individual implementation phases    |
-| prompt-updater      | Agent | `@prompt-updater`      | Update existing prompts and instructions    |
-| researcher-subagent | Agent | `@researcher-subagent` | Conduct focused research within tasks       |
+| Tool                | Type  | How to Invoke          | Purpose                                  |
+|---------------------|-------|------------------------|------------------------------------------|
+| phase-implementor   | Agent | `@phase-implementor`   | Execute individual implementation phases |
+| prompt-updater      | Agent | `@prompt-updater`      | Update existing prompts and instructions |
+| researcher-subagent | Agent | `@researcher-subagent` | Conduct focused research within tasks    |
 
 ### Prompts
 
-| Tool               | Type   | How to Invoke        | Purpose                                       |
-|---------------------|--------|----------------------|------------------------------------------------|
-| rpi                 | Prompt | `/rpi`               | Start the full RPI workflow                    |
-| task-implement      | Prompt | `/task-implement`    | Begin implementation of a specific task        |
-| prompt-build        | Prompt | `/prompt-build`      | Create a new prompt engineering artifact       |
-| prompt-analyze      | Prompt | `/prompt-analyze`    | Analyze prompt quality and effectiveness       |
-| prompt-refactor     | Prompt | `/prompt-refactor`   | Refactor and improve existing prompts          |
-| git-commit          | Prompt | `/git-commit`        | Stage and commit changes                       |
-| git-commit-message  | Prompt | `/git-commit-message`| Generate a commit message for staged changes   |
+| Tool               | Type   | How to Invoke         | Purpose                                      |
+|--------------------|--------|-----------------------|----------------------------------------------|
+| rpi                | Prompt | `/rpi`                | Start the full RPI workflow                  |
+| task-implement     | Prompt | `/task-implement`     | Begin implementation of a specific task      |
+| prompt-build       | Prompt | `/prompt-build`       | Create a new prompt engineering artifact     |
+| prompt-analyze     | Prompt | `/prompt-analyze`     | Analyze prompt quality and effectiveness     |
+| prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts        |
+| git-commit         | Prompt | `/git-commit`         | Stage and commit changes                     |
+| git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes |
 
 ### Auto-Activated Instructions
 
 All coding standard instructions activate automatically based on file type:
 
-| Instruction    | Activates On              | Purpose                              |
-|----------------|---------------------------|--------------------------------------|
-| csharp         | `**/*.cs`                 | C# coding standards                  |
-| python-script  | `**/*.py`                 | Python scripting standards            |
-| bash           | `**/*.sh`                 | Bash script standards                 |
-| bicep          | `**/bicep/**`             | Bicep infrastructure standards        |
-| terraform      | `**/*.tf`                 | Terraform infrastructure standards    |
-| workflows      | `.github/workflows/*.yml` | GitHub Actions workflow standards     |
-| markdown       | `**/*.md`                 | Markdown formatting rules             |
-| writing-style  | `**/*.md`                 | Voice and tone conventions            |
-| prompt-builder | AI artifacts              | Prompt engineering authoring standards |
-| hve-core-location | `**`                   | Reference resolution for hve-core     |
+| Instruction       | Activates On              | Purpose                                |
+|-------------------|---------------------------|----------------------------------------|
+| csharp            | `**/*.cs`                 | C# coding standards                    |
+| python-script     | `**/*.py`                 | Python scripting standards             |
+| bash              | `**/*.sh`                 | Bash script standards                  |
+| bicep             | `**/bicep/**`             | Bicep infrastructure standards         |
+| terraform         | `**/*.tf`                 | Terraform infrastructure standards     |
+| workflows         | `.github/workflows/*.yml` | GitHub Actions workflow standards      |
+| markdown          | `**/*.md`                 | Markdown formatting rules              |
+| writing-style     | `**/*.md`                 | Voice and tone conventions             |
+| prompt-builder    | AI artifacts              | Prompt engineering authoring standards |
+| hve-core-location | `**`                      | Reference resolution for hve-core      |
 
 ### Skills
 
-| Tool         | Type  | How to Invoke    | Purpose                           |
-|--------------|-------|------------------|------------------------------------|
-| video-to-gif | Skill | Referenced in chat | Convert video to optimized GIFs  |
+| Tool         | Type  | How to Invoke      | Purpose                         |
+|--------------|-------|--------------------|---------------------------------|
+| video-to-gif | Skill | Referenced in chat | Convert video to optimized GIFs |
 
 ## Role-Specific Guidance
 

@@ -79,28 +79,28 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 
 ## Key Agents and Workflows
 
-| Agent              | Purpose                                         | Invoke              | Docs                                                   |
-|--------------------|-------------------------------------------------|----------------------|--------------------------------------------------------|
-| task-researcher    | Deep codebase and API research                  | `@task-researcher`   | [Task Researcher](../rpi/task-researcher.md)           |
-| task-planner       | Structured implementation planning              | `@task-planner`      | [Task Planner](../rpi/task-planner.md)                 |
-| task-implementor   | Phase-based code implementation                 | `@task-implementor`  | [Task Implementor](../rpi/task-implementor.md)         |
-| task-reviewer      | Code review and quality validation              | `@task-reviewer`     | [Task Reviewer](../rpi/task-reviewer.md)               |
-| rpi-agent          | Full RPI orchestration in one agent             | `@rpi-agent`         | [RPI Overview](../rpi/README.md)                       |
-| pr-review          | Pull request review automation                  | `@pr-review`         | Agent file                                             |
-| memory             | Session context and preference persistence      | `@memory`            | Agent file                                             |
-| prompt-builder     | Create and refine prompt engineering artifacts  | `@prompt-builder`    | Agent file                                             |
+| Agent            | Purpose                                        | Invoke              | Docs                                           |
+|------------------|------------------------------------------------|---------------------|------------------------------------------------|
+| task-researcher  | Deep codebase and API research                 | `@task-researcher`  | [Task Researcher](../rpi/task-researcher.md)   |
+| task-planner     | Structured implementation planning             | `@task-planner`     | [Task Planner](../rpi/task-planner.md)         |
+| task-implementor | Phase-based code implementation                | `@task-implementor` | [Task Implementor](../rpi/task-implementor.md) |
+| task-reviewer    | Code review and quality validation             | `@task-reviewer`    | [Task Reviewer](../rpi/task-reviewer.md)       |
+| rpi-agent        | Full RPI orchestration in one agent            | `@rpi-agent`        | [RPI Overview](../rpi/README.md)               |
+| pr-review        | Pull request review automation                 | `@pr-review`        | Agent file                                     |
+| memory           | Session context and preference persistence     | `@memory`           | Agent file                                     |
+| prompt-builder   | Create and refine prompt engineering artifacts | `@prompt-builder`   | Agent file                                     |
 
 Auto-activated instructions apply coding standards based on file type: C# (`*.cs`), Python (`*.py`), Bash (`*.sh`), Bicep (`bicep/**`), Terraform (`*.tf`), and GitHub Actions workflows (`*.yml`).
 
 ## Tips
 
-| Do                                                        | Don't                                                       |
-|-----------------------------------------------------------|-------------------------------------------------------------|
-| Research before implementing multi-file changes           | Jump straight to coding complex features                    |
-| Use `/rpi mode=auto` for planned, multi-step work         | Manually coordinate research, planning, and implementation  |
-| Let coding standards auto-activate by file type           | Override or skip language-specific instructions              |
-| Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs              |
-| Clear context between RPI phases with `/clear`            | Carry stale context across research, plan, and implement    |
+| Do                                                         | Don't                                                      |
+|------------------------------------------------------------|------------------------------------------------------------|
+| Research before implementing multi-file changes            | Jump straight to coding complex features                   |
+| Use `/rpi mode=auto` for planned, multi-step work          | Manually coordinate research, planning, and implementation |
+| Let coding standards auto-activate by file type            | Override or skip language-specific instructions            |
+| Review the research doc before starting the planning phase | Skip research for unfamiliar codebases or APIs             |
+| Clear context between RPI phases with `/clear`             | Carry stale context across research, plan, and implement   |
 
 ## Related Roles
 

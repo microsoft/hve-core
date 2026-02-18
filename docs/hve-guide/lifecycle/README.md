@@ -19,33 +19,33 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 
 ## Stage Overview
 
-| Stage | Name               | Asset Count | Key Tools                                        | Guide                                        |
-|-------|--------------------|-------------|--------------------------------------------------|----------------------------------------------|
-| Stage 1 | Setup              | 4           | hve-core-installer, memory                       | [Setup](setup.md)                            |
-| Stage 2 | Discovery          | 14          | task-researcher, brd-builder, security-plan-creator | [Discovery](discovery.md)                 |
-| Stage 3 | Product Definition | 6           | prd-builder, product-manager-advisor, adr-creation | [Product Definition](product-definition.md) |
-| Stage 4 | Decomposition      | 5           | ado-prd-to-wit                                   | [Decomposition](decomposition.md)            |
-| Stage 5 | Sprint Planning    | 9           | github-backlog-manager, agile-coach              | [Sprint Planning](sprint-planning.md)        |
-| Stage 6 | Implementation     | 30          | task-implementor, rpi-agent, prompt-builder      | [Implementation](implementation.md)          |
-| Stage 7 | Review             | 11          | task-reviewer, pr-review                         | [Review](review.md)                          |
-| Stage 8 | Delivery           | 9           | git-merge, ado-get-build-info                    | [Delivery](delivery.md)                      |
-| Stage 9 | Operations         | 11          | doc-ops, prompt-builder, incident-response       | [Operations](operations.md)                  |
+| Stage   | Name               | Asset Count | Key Tools                                           | Guide                                       |
+|---------|--------------------|-------------|-----------------------------------------------------|---------------------------------------------|
+| Stage 1 | Setup              | 4           | hve-core-installer, memory                          | [Setup](setup.md)                           |
+| Stage 2 | Discovery          | 14          | task-researcher, brd-builder, security-plan-creator | [Discovery](discovery.md)                   |
+| Stage 3 | Product Definition | 6           | prd-builder, product-manager-advisor, adr-creation  | [Product Definition](product-definition.md) |
+| Stage 4 | Decomposition      | 5           | ado-prd-to-wit                                      | [Decomposition](decomposition.md)           |
+| Stage 5 | Sprint Planning    | 9           | github-backlog-manager, agile-coach                 | [Sprint Planning](sprint-planning.md)       |
+| Stage 6 | Implementation     | 30          | task-implementor, rpi-agent, prompt-builder         | [Implementation](implementation.md)         |
+| Stage 7 | Review             | 11          | task-reviewer, pr-review                            | [Review](review.md)                         |
+| Stage 8 | Delivery           | 9           | git-merge, ado-get-build-info                       | [Delivery](delivery.md)                     |
+| Stage 9 | Operations         | 11          | doc-ops, prompt-builder, incident-response          | [Operations](operations.md)                 |
 
 ## Where Are You?
 
 Use this navigator to jump directly to the stage matching your current need.
 
-| I want to...                                    | Start Here                                          |
-|-------------------------------------------------|-----------------------------------------------------|
-| Set up HVE Core for the first time              | [Stage 1: Setup](setup.md)                               |
-| Understand requirements or research a topic     | [Stage 2: Discovery](discovery.md)                       |
-| Create a product spec or architecture decision  | [Stage 3: Product Definition](product-definition.md)     |
-| Break work into tasks or work items             | [Stage 4: Decomposition](decomposition.md)               |
-| Plan a sprint or manage my backlog              | [Stage 5: Sprint Planning](sprint-planning.md)           |
-| Write code, build features, or create content   | [Stage 6: Implementation](implementation.md)             |
-| Review code or get PR feedback                  | [Stage 7: Review](review.md)                             |
-| Merge, release, or deploy                       | [Stage 8: Delivery](delivery.md)                         |
-| Monitor, maintain, or respond to incidents      | [Stage 9: Operations](operations.md)                     |
+| I want to...                                   | Start Here                                           |
+|------------------------------------------------|------------------------------------------------------|
+| Set up HVE Core for the first time             | [Stage 1: Setup](setup.md)                           |
+| Understand requirements or research a topic    | [Stage 2: Discovery](discovery.md)                   |
+| Create a product spec or architecture decision | [Stage 3: Product Definition](product-definition.md) |
+| Break work into tasks or work items            | [Stage 4: Decomposition](decomposition.md)           |
+| Plan a sprint or manage my backlog             | [Stage 5: Sprint Planning](sprint-planning.md)       |
+| Write code, build features, or create content  | [Stage 6: Implementation](implementation.md)         |
+| Review code or get PR feedback                 | [Stage 7: Review](review.md)                         |
+| Merge, release, or deploy                      | [Stage 8: Delivery](delivery.md)                     |
+| Monitor, maintain, or respond to incidents     | [Stage 9: Operations](operations.md)                 |
 
 ## Lifecycle Flow
 
