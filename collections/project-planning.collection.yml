@@ -11,6 +11,8 @@ tags:
   - planning
 items:
   # Agents
+  - path: .github/agents/agile-coach.agent.md
+    kind: agent
   - path: .github/agents/doc-ops.agent.md
     kind: agent
   - path: .github/agents/adr-creation.agent.md
