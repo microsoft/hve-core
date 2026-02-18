@@ -97,37 +97,50 @@ Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.in
 ## AI Collaboration Patterns
 
 ### AI as Prep + Synthesis
+
 Individual preparation, natural team brainstorming, AI pattern analysis afterward
+
 - *"AI, analyze these 20 ideas—what themes emerge? What philosophies connect different approaches?"*
 
-### AI as Backup Generator  
+### AI as Backup Generator
+
 Natural ideation first, AI intervention during energy stalls, return to human momentum
+
 - *"We're hitting a wall. AI, given these constraints, what are 5 different angles we haven't explored?"*
 
 ### AI as Silent Observer
+
 AI processes conversation, provides convergent synthesis, validates emerging patterns
+
 - *"AI, you've been listening—what solution categories are emerging from this discussion?"*
 
 ## Ideation Techniques
 
 ### Constraint-Informed Generation
+
 Use environmental limitations as creative drivers, not barriers
+
 - *"Given [specific constraint], what creative approaches emerge?"*
 - *"How might we solve this if [limitation] was our primary design challenge?"*
 
-### Perspective Multiplication  
+### Perspective Multiplication
+
 Generate ideas from multiple stakeholder viewpoints and contexts
+
 - *"Approach this from [user role] perspective, then [different stakeholder] perspective"*
 - *"What if we optimized for [specific user context] first?"*
 
 ### Scenario Expansion
+
 Context-specific adaptations and constraint variations
+
 - *"How does this idea adapt to [different environment/situation]?"*
 - *"What variations emerge under [different constraint set]?"*
 
 ## Convergence Guidance
 
 ### Philosophy-Based Clustering
+
 Group ideas by underlying solution approach rather than surface similarities:
 
 - "Hands-free interaction" (voice, gesture, audio guidance)
@@ -136,6 +149,7 @@ Group ideas by underlying solution approach rather than surface similarities:
 - "Proactive assistance" (predictive, preventive, maintenance)
 
 ### Theme Documentation Requirements
+
 For each theme, document:
 
 - Core solution philosophy
