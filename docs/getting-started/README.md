@@ -2,7 +2,7 @@
 title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 author: Microsoft
-ms.date: 2025-12-02
+ms.date: 2026-02-18
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -18,7 +18,7 @@ HVE Core provides GitHub Copilot customizations (custom agents, instructions, an
 
 ### Quick Install: VS Code Extension ⭐
 
-**Simplest method:** Install directly from VS Code Marketplace:
+Install directly from VS Code Marketplace for the simplest setup:
 
 1. Open VS Code Extensions view (`Ctrl+Shift+X`)
 2. Search for "HVE Core"
@@ -26,8 +26,9 @@ HVE Core provides GitHub Copilot customizations (custom agents, instructions, an
 
 Or visit: [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-**Pros:** Zero configuration, automatic updates, works everywhere
-**Cons:** Cannot customize components
+| Advantage                                                 | Limitation                  |
+|-----------------------------------------------------------|-----------------------------|
+| Zero configuration, automatic updates, works everywhere   | Cannot customize components |
 
 See [Extension Installation Guide](methods/extension.md) for full details.
 
@@ -35,9 +36,10 @@ See [Extension Installation Guide](methods/extension.md) for full details.
 
 For customization or version control, see [Installing HVE-Core](install.md) to choose from six installation methods.
 
-> **Contributing to HVE-Core?** See the [Contributing Guide](../contributing/README.md) for development setup and contribution guidelines.
+> [!TIP]
+> Contributing to HVE-Core? See the [Contributing Guide](../contributing/README.md) for development setup and contribution guidelines.
 
-**Quick start:** Use the `hve-core-installer` agent:
+Use the `hve-core-installer` agent for a guided setup:
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Select `hve-core-installer` from the agent picker
@@ -65,10 +67,10 @@ After installation, verify everything works:
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the **agent picker dropdown**
 3. Verify HVE-Core agents appear:
-   - task-planner
-   - task-researcher
-   - prompt-builder
-   - pr-review
+   * task-planner
+   * task-researcher
+   * prompt-builder
+   * pr-review
 4. Select an agent and submit a test prompt
 
 ## Troubleshooting
@@ -77,21 +79,21 @@ After installation, verify everything works:
 
 #### Agent not available
 
-- Ensure GitHub Copilot extension is installed and active
-- Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
-- Check that hve-core is accessible (cloned or configured correctly)
+* Ensure GitHub Copilot extension is installed and active
+* Reload VS Code window: `Ctrl+Shift+P` → "Developer: Reload Window"
+* Check that hve-core is accessible (cloned or configured correctly)
 
 #### Copilot not discovering customizations
 
-- For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
-- Verify `chat.agentFilesLocations` points to the correct path
-- Check the window title shows the workspace name
+* For Multi-Root: Ensure you opened the `.code-workspace` file, not just the folder
+* Verify `chat.agentFilesLocations` points to the correct path
+* Check the window title shows the workspace name
 
 #### Git or clone errors
 
-- Verify Git is installed: run `git --version` in terminal
-- Check network connectivity to github.com
-- See the [installation guide](install.md) for method-specific troubleshooting
+* Verify Git is installed: run `git --version` in terminal
+* Check network connectivity to github.com
+* See the [installation guide](install.md) for method-specific troubleshooting
 
 ## Optional Scripts
 
@@ -108,12 +110,18 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 ## Next Steps
 
-- Try [Your First Workflow](first-workflow.md) for a quick start
-- Learn the [RPI Workflow](../rpi/README.md) for complex tasks
-- Browse the [Agent Catalog](../agents/README.md) for all agent system documentation
-- Explore [Agents](../../.github/CUSTOM-AGENTS.md) for available agents
-- Review [Instructions](../../.github/instructions/README.md) for coding guidelines
-- Check the [README](../../README.md) for feature overview
+* Try [Your First Workflow](first-workflow.md) for a quick start
+* Learn the [RPI Workflow](../rpi/README.md) for complex tasks
+* Browse the [Agent Catalog](../agents/README.md) for all agent system documentation
+* Explore [Agents](../../.github/CUSTOM-AGENTS.md) for available agents
+* Review [Instructions](../../.github/instructions/README.md) for coding guidelines
+* Check the [README](../../README.md) for feature overview
+
+## See Also
+
+* [New Contributor Guide](../hve-guide/roles/new-contributor.md) - Guided onboarding with milestone progression
+* [Role Guides](../hve-guide/roles/README.md) - Find your role-specific guide
+* [Stage 1: Setup](../hve-guide/lifecycle/setup.md) - Setup stage in the project lifecycle
 
 ---
 
