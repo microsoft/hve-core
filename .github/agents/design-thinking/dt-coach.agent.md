@@ -8,10 +8,7 @@ tools:
   - replace_string_in_file
   - runSubagent
 handoffs:
-  - label: "🎓 Learn DT"
-    agent: dt-learning-tutor
-    prompt: "I'd like to learn about Design Thinking methodology rather than apply it to a project."
-    send: true
+
   - label: "🔬 Research"
     agent: task-researcher
     prompt: /task-research
