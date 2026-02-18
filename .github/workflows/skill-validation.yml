@@ -1,0 +1,59 @@
+name: Skill Validation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on validation failures'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only validate skills with changed files'
+        required: false
+        type: boolean
+        default: true
+      base-branch:
+        description: 'Base branch or SHA for change detection (defaults to origin/main)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Skill Structure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run skill validation
+        shell: pwsh
+        run: |
+          $params = @{}
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+            $baseBranch = '${{ inputs.base-branch }}'
+            if (-not [string]::IsNullOrEmpty($baseBranch)) {
+              $params['BaseBranch'] = $baseBranch
+            }
+          }
+          & './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors @params
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: skill-validation-results
+          path: logs/skill-validation-results.json
+          retention-days: 30
+          if-no-files-found: ignore

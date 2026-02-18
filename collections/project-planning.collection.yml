@@ -11,6 +11,8 @@ tags:
   - planning
 items:
   # Agents
+  - path: .github/agents/agile-coach.agent.md
+    kind: agent
   - path: .github/agents/doc-ops.agent.md
     kind: agent
   - path: .github/agents/adr-creation.agent.md
@@ -20,6 +22,10 @@ items:
   - path: .github/agents/brd-builder.agent.md
     kind: agent
   - path: .github/agents/prd-builder.agent.md
+    kind: agent
+  - path: .github/agents/product-manager-advisor.agent.md
+    kind: agent
+  - path: .github/agents/ux-ui-designer.agent.md
     kind: agent
   # RPI agents
   - path: .github/agents/rpi-agent.agent.md

@@ -319,7 +319,21 @@ function Write-PinningLog {
     )
 
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Output "[$timestamp] [$Level] $Message"
+    $color = switch ($Level) {
+        'Info'    { 'Cyan' }
+        'Warning' { 'Yellow' }
+        'Error'   { 'Red' }
+        'Success' { 'Green' }
+    }
+    Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+
+    # Surface warnings and errors as CI annotations so they appear in the Actions/ADO UI
+    if ($Level -eq 'Warning') {
+        Write-CIAnnotation -Message $Message -Level Warning
+    }
+    elseif ($Level -eq 'Error') {
+        Write-CIAnnotation -Message $Message -Level Error
+    }
 }
 
 function Get-FilesToScan {
@@ -860,32 +874,35 @@ function Invoke-DependencyPinningAnalysis {
         $allViolations += $violations
     }
 
-    # Per-violation CI output — grouped by file
-    if (@($allViolations).Count -gt 0) {
-        Write-Host "`n❌ Found $(@($allViolations).Count) unpinned dependencies:" -ForegroundColor Red
+    Write-PinningLog "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
+
+    # Emit per-violation CI annotations and console output
+    if ($allViolations.Count -gt 0) {
+        Write-Host "`n❌ Found $($allViolations.Count) unpinned dependencies:" -ForegroundColor Red
         $groupedByFile = $allViolations | Group-Object -Property File
         foreach ($fileGroup in $groupedByFile) {
             Write-Host "`n📄 $($fileGroup.Name)" -ForegroundColor Cyan
             foreach ($dep in $fileGroup.Group) {
-                $displayVersion = if ($dep.Version) { $dep.Version } elseif ($dep.CurrentRef) { $dep.CurrentRef } else { '<unknown>' }
-                Write-Host "  ⚠️ Line $($dep.Line): $($dep.Name) — $displayVersion (type: $($dep.Type))" -ForegroundColor Yellow
-
-                # Normalize file path for CI annotations: prefer absolute path based on scan root
-                $annotationFile = $dep.File
-                try {
-                    if ($Path) {
-                        $resolved = Resolve-Path -LiteralPath (Join-Path -Path $Path -ChildPath $dep.File) -ErrorAction Stop
-                        $annotationFile = $resolved.Path
-                    }
+                $annotationLevel = switch ($dep.Severity) {
+                    'High'   { 'Error' }
+                    'Medium' { 'Warning' }
+                    default  { 'Notice' }
                 }
-                catch {
-                    $annotationFile = $dep.File
+                $icon = switch ($dep.Severity) {
+                    'High'   { '❌' }
+                    'Medium' { '⚠️' }
+                    default  { 'ℹ️' }
                 }
-
+                $color = switch ($dep.Severity) {
+                    'High'   { 'Red' }
+                    'Medium' { 'Yellow' }
+                    default  { 'Cyan' }
+                }
+                Write-Host "  $icon [$($dep.Severity)] $($dep.Name)@$($dep.Version): $($dep.Description) (Line $($dep.Line))" -ForegroundColor $color
                 Write-CIAnnotation `
-                    -Message "Unpinned $($dep.Type) dependency: $($dep.Name)@$($dep.CurrentRef)" `
-                    -Level Warning `
-                    -File $annotationFile `
+                    -Message "[$($dep.ViolationType)] $($dep.Name): $($dep.Description)" `
+                    -Level $annotationLevel `
+                    -File $dep.File `
                     -Line $dep.Line
             }
         }
@@ -893,8 +910,6 @@ function Invoke-DependencyPinningAnalysis {
     else {
         Write-Host "`n✅ All dependencies are properly SHA-pinned." -ForegroundColor Green
     }
-
-    Write-PinningLog "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
 
     # Generate compliance report
     $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
