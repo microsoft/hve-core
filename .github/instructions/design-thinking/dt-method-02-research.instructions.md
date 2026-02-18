@@ -57,9 +57,9 @@ This sequence consistently reveals:
 
 Structure research targets into three tiers:
 
-* Tier 1: direct end users who experience the problem daily and can demonstrate workflows firsthand
-* Tier 2: adjacent stakeholders who influence or are affected by the problem area
-* Tier 3: organizational or technical contacts who provide system context and constraint information
+* Tier 1: direct end users who experience the problem daily and can demonstrate workflows firsthand.
+* Tier 2: adjacent stakeholders who influence or are affected by the problem area.
+* Tier 3: organizational or technical contacts who provide system context and constraint information.
 
 Focus effort on Tier 1 users first. Expand to Tier 2 and Tier 3 based on initial findings and available resources.
 
@@ -85,7 +85,7 @@ A research plan covers:
 
 ### Question Categories
 
-* Opening and rapport: questions that show respect for the user's expertise and daily reality
+* Opening and rapport: questions that show respect for the user's expertise and daily reality.
 * Current state workflow: "Walk me through what happens from the moment you notice [problem] until it's fully resolved."
 * Pain point discovery: "What takes the longest when you're trying to [task], and why does that step take so much time?"
 * Workaround investigation: "What do you do when the official system or process doesn't work the way it should?"
@@ -126,10 +126,10 @@ Combine user interviews with direct observation of work environments.
 
 Environmental constraints follow recognizable patterns across domains:
 
-* Healthcare: sterile environments combined with privacy protocols and time pressures constrain information access during patient care
-* Manufacturing: noise levels combined with contamination and safety protocols constrain interface and communication design
-* Education: classroom timing combined with device limitations and attention patterns constrain technology integration
-* Finance: security requirements combined with compliance reporting and client privacy create workflow friction
+* Healthcare: sterile environments combined with privacy protocols and time pressures constrain information access during patient care.
+* Manufacturing: noise levels combined with contamination and safety protocols constrain interface and communication design.
+* Education: classroom timing combined with device limitations and attention patterns constrain technology integration.
+* Finance: security requirements combined with compliance reporting and client privacy create workflow friction.
 
 ## Insight Extraction
 
