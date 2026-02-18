@@ -2100,4 +2100,164 @@ description: All artifacts
     }
 }
 
+#region Deprecated Path Exclusion Tests
+
+Describe 'Get-DiscoveredAgents - deprecated path exclusion' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:agentsDir = Join-Path $script:tempDir 'agents'
+        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
+
+        # Create active agent
+        $activeDir = Join-Path $script:agentsDir 'rpi'
+        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
+        @'
+---
+description: "Active agent"
+---
+'@ | Set-Content -Path (Join-Path $activeDir 'active.agent.md')
+
+        # Create deprecated agent
+        $deprecatedDir = Join-Path $script:agentsDir 'deprecated'
+        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
+        @'
+---
+description: "Deprecated agent"
+---
+'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.agent.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Excludes agents in deprecated directory' {
+        $result = Get-DiscoveredAgents -AgentsDir $script:agentsDir -AllowedMaturities @('stable') -ExcludedAgents @()
+        $agentNames = $result.Agents | ForEach-Object { $_.name }
+        $agentNames | Should -Contain 'active'
+        $agentNames | Should -Not -Contain 'old'
+    }
+}
+
+Describe 'Get-DiscoveredPrompts - deprecated path exclusion' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:promptsDir = Join-Path $script:tempDir 'prompts'
+        $script:ghDir = Join-Path $script:tempDir '.github'
+        New-Item -ItemType Directory -Path $script:promptsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
+
+        # Create active prompt
+        $activeDir = Join-Path $script:promptsDir 'rpi'
+        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
+        @'
+---
+description: "Active prompt"
+---
+'@ | Set-Content -Path (Join-Path $activeDir 'active.prompt.md')
+
+        # Create deprecated prompt
+        $deprecatedDir = Join-Path $script:promptsDir 'deprecated'
+        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
+        @'
+---
+description: "Deprecated prompt"
+---
+'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.prompt.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Excludes prompts in deprecated directory' {
+        $result = Get-DiscoveredPrompts -PromptsDir $script:promptsDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $promptNames = $result.Prompts | ForEach-Object { $_.name }
+        $promptNames | Should -Contain 'active'
+        $promptNames | Should -Not -Contain 'old'
+    }
+}
+
+Describe 'Get-DiscoveredInstructions - deprecated path exclusion' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:instrDir = Join-Path $script:tempDir 'instructions'
+        $script:ghDir = Join-Path $script:tempDir '.github'
+        New-Item -ItemType Directory -Path $script:instrDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:ghDir -Force | Out-Null
+
+        # Create active instruction
+        $activeDir = Join-Path $script:instrDir 'rpi'
+        New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
+        @'
+---
+description: "Active instruction"
+applyTo: "**/*.ps1"
+---
+'@ | Set-Content -Path (Join-Path $activeDir 'active.instructions.md')
+
+        # Create deprecated instruction
+        $deprecatedDir = Join-Path $script:instrDir 'deprecated'
+        New-Item -ItemType Directory -Path $deprecatedDir -Force | Out-Null
+        @'
+---
+description: "Deprecated instruction"
+applyTo: "**/*.ps1"
+---
+'@ | Set-Content -Path (Join-Path $deprecatedDir 'old.instructions.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Excludes instructions in deprecated directory' {
+        $result = Get-DiscoveredInstructions -InstructionsDir $script:instrDir -GitHubDir $script:ghDir -AllowedMaturities @('stable')
+        $instrNames = $result.Instructions | ForEach-Object { $_.name }
+        $instrNames | Should -Contain 'active-instructions'
+        $instrNames | Should -Not -Contain 'old-instructions'
+    }
+}
+
+Describe 'Get-DiscoveredSkills - deprecated path exclusion' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:skillsDir = Join-Path $script:tempDir 'skills'
+        New-Item -ItemType Directory -Path $script:skillsDir -Force | Out-Null
+
+        # Create active skill
+        $activeSkillDir = Join-Path $script:skillsDir 'experimental/good-skill'
+        New-Item -ItemType Directory -Path $activeSkillDir -Force | Out-Null
+        @'
+---
+name: good-skill
+description: "Active skill"
+---
+'@ | Set-Content -Path (Join-Path $activeSkillDir 'SKILL.md')
+
+        # Create deprecated skill
+        $deprecatedSkillDir = Join-Path $script:skillsDir 'deprecated/old-skill'
+        New-Item -ItemType Directory -Path $deprecatedSkillDir -Force | Out-Null
+        @'
+---
+name: old-skill
+description: "Deprecated skill"
+---
+'@ | Set-Content -Path (Join-Path $deprecatedSkillDir 'SKILL.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Excludes skills in deprecated directory' {
+        $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
+        $skillNames = $result.Skills | ForEach-Object { $_.name }
+        $skillNames | Should -Contain 'good-skill'
+        $skillNames | Should -Not -Contain 'old-skill'
+    }
+}
+
+#endregion Deprecated Path Exclusion Tests
+
 #endregion Additional Coverage Tests

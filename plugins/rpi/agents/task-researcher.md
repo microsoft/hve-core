@@ -1,1 +1,1 @@
-../../../.github/agents/task-researcher.agent.md
+../../../.github/agents/rpi/subagents/task-researcher.agent.md

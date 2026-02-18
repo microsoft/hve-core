@@ -28,10 +28,10 @@ Create a prompt when you need to:
 
 ### Location
 
-All prompt files **MUST** be placed in:
+All prompt files **MUST** be placed in a collection subdirectory:
 
 ```text
-.github/prompts/
+.github/prompts/{collection-id}/
 └── your-prompt-name.prompt.md
 ```
 
@@ -122,7 +122,7 @@ After creating your prompt file, add an `items[]` entry in each target collectio
 
 ```yaml
 items:
-  - path: .github/prompts/my-prompt.prompt.md
+  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
     kind: prompt
     maturity: stable
 ```
@@ -133,11 +133,11 @@ Choose collections based on who invokes or benefits from the workflow:
 
 | Prompt Type             | Recommended Collections                   |
 |-------------------------|-------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `git`                     |
+| Git/PR workflows        | `hve-core-all`, `rpi`                     |
 | ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
 | GitHub issue workflows  | `hve-core-all`, `github`                  |
 | RPI workflow prompts    | `hve-core-all`, `rpi`                     |
-| Documentation workflows | `hve-core-all`, `prompt-engineering`      |
+| Documentation workflows | `hve-core-all`, `rpi`                     |
 | Architecture prompts    | `hve-core-all`, `project-planning`        |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
@@ -528,7 +528,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/`.
 
 ---
 

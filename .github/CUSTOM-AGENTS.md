@@ -154,8 +154,8 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Instruction files and prompt files:
 
-* `.github/instructions/*.instructions.md` (coding guidelines and conventions)
-* `.github/prompts/*.prompt.md` (reusable workflow prompts)
+* `.github/instructions/{collection-id}/*.instructions.md` (coding guidelines and conventions)
+* `.github/prompts/{collection-id}/*.prompt.md` (reusable workflow prompts)
 * `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/execution-log.md` (test execution trace)
 * `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{prompt-name}}-{{run-number}}/evaluation-log.md` (quality validation results)
 
@@ -397,7 +397,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 2. Draft instruction file with conventions
 3. Auto-validates with Prompt Tester persona
 4. Iterates up to 3 times for quality
-5. Delivered to `.github/instructions/`
+5. Delivered to `.github/instructions/{collection-id}/`
 
 ### Creating Documentation
 

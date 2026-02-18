@@ -68,6 +68,82 @@ Describe 'Get-ArtifactFiles - hve-core path exclusion' {
     }
 }
 
+Describe 'Get-ArtifactFiles - deprecated path exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-deprecated'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        # Create non-deprecated artifacts
+        $agentsDir = Join-Path $ghDir 'agents/rpi'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'active.agent.md') -Value '---\ndescription: active\n---'
+
+        $promptsDir = Join-Path $ghDir 'prompts/rpi'
+        New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $promptsDir 'active.prompt.md') -Value '---\ndescription: active\n---'
+
+        # Create deprecated artifacts
+        $deprecatedAgentsDir = Join-Path $ghDir 'deprecated/agents'
+        New-Item -ItemType Directory -Path $deprecatedAgentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedAgentsDir 'old.agent.md') -Value '---\ndescription: deprecated\n---'
+
+        $deprecatedPromptsDir = Join-Path $ghDir 'deprecated/prompts'
+        New-Item -ItemType Directory -Path $deprecatedPromptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedPromptsDir 'old.prompt.md') -Value '---\ndescription: deprecated\n---'
+
+        $deprecatedInstrDir = Join-Path $ghDir 'deprecated/instructions'
+        New-Item -ItemType Directory -Path $deprecatedInstrDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedInstrDir 'old.instructions.md') -Value '---\ndescription: deprecated\n---'
+
+        # Create deprecated skill
+        $deprecatedSkillDir = Join-Path $ghDir 'deprecated/skills/old-skill'
+        New-Item -ItemType Directory -Path $deprecatedSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedSkillDir 'SKILL.md') -Value '---\nname: old-skill\ndescription: deprecated\n---'
+
+        # Create non-deprecated skill (under .github/skills/)
+        $skillDir = Join-Path $ghDir 'skills/experimental/good-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value '---\nname: good-skill\ndescription: active\n---'
+    }
+
+    It 'Excludes deprecated agent files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/agents/old.agent.md'
+    }
+
+    It 'Excludes deprecated prompt files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/prompts/old.prompt.md'
+    }
+
+    It 'Excludes deprecated instruction files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/instructions/old.instructions.md'
+    }
+
+    It 'Excludes deprecated skill directories' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/skills/old-skill'
+    }
+
+    It 'Includes non-deprecated artifacts' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/agents/rpi/active.agent.md'
+        $paths | Should -Contain '.github/prompts/rpi/active.prompt.md'
+    }
+
+    It 'Includes non-deprecated skills' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/skills/experimental/good-skill'
+    }
+}
+
 Describe 'Resolve-CollectionItemMaturity' {
     It 'Returns stable for null' {
         $result = Resolve-CollectionItemMaturity -Maturity $null

@@ -92,11 +92,13 @@ All agents **MUST** target the **latest available models** from **Anthropic and 
 
 ### Location
 
-All agent files **MUST** be placed in:
+All agent files **MUST** be placed in a collection subdirectory:
 
 ```text
-.github/agents/
-└── your-agent-name.agent.md
+.github/agents/{collection-id}/
+├── your-agent-name.agent.md
+└── subagents/
+    └── your-subagent-name.agent.md
 ```
 
 ### Naming Convention
@@ -248,7 +250,7 @@ After creating your agent file, add an `items[]` entry to each target collection
 
 ```yaml
 items:
-  - path: .github/agents/my-new-agent.agent.md
+  - path: .github/agents/{collection-id}/my-new-agent.agent.md
   kind: agent
   maturity: stable
 ```
@@ -261,10 +263,10 @@ Choose collections based on who benefits most from your agent:
 |----------------------|-------------------------------------------|
 | Task workflow agents | `hve-core-all`, `rpi`                     |
 | Architecture agents  | `hve-core-all`, `project-planning`        |
-| Documentation agents | `hve-core-all`, `prompt-engineering`      |
+| Documentation agents | `hve-core-all`, `rpi`                     |
 | Data science agents  | `hve-core-all`, `data-science`            |
 | ADO/work item agents | `hve-core-all`, `ado`, `project-planning` |
-| Code review agents   | `hve-core-all`, `coding-standards`        |
+| Code review agents   | `hve-core-all`, `code-reviewer`            |
 
 ### Declaring Agent Dependencies
 
@@ -522,7 +524,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/`.
 
 ---
 

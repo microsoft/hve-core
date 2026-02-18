@@ -1,1 +1,1 @@
-../../../.github/agents/github-issue-manager.agent.md
+../../../.github/agents/github/github-issue-manager.agent.md

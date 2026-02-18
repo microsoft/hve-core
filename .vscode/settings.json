@@ -11,12 +11,11 @@
     ".github/prompts/**/*.prompt.md": true
   },
   "chat.agentFilesLocations": {
-    ".github/agents": true,
-    ".github/agents/subagents": true,
+    ".github/agents/**": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/instructions/commit-message.instructions.md"
+      "file": ".github/instructions/rpi/commit-message.instructions.md"
     }
   ],
   "yaml.schemas": {

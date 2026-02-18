@@ -40,9 +40,9 @@ The project is organized into these main areas:
 
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
-* Skills (`.github/skills/`) - Self-contained skill packages with scripts and documentation.
+* Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages organized by collection.
 * Extension (`extension/`) - VS Code extension source and packaging.
-* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates.
+* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates, each organized into `{collection-id}` subdirectories.
 * Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
@@ -58,7 +58,7 @@ Scripts are organized by function:
 
 ### Skills Organization
 
-Skills are self-contained packages providing guidance and utilities:
+Skills are self-contained packages organized by collection under `.github/skills/{collection-id}/{skill-name}/`:
 
 ### Documentation Structure
 
@@ -87,7 +87,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 
 ### Agents and Subagents
 
-Custom agents live under `.github/agents/`. Subagents live under `.github/agents/subagents/`. Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
+Custom agents live under `.github/agents/{collection-id}/`. Each collection places its agents in a dedicated subdirectory (e.g., `.github/agents/rpi/`, `.github/agents/ado/`). RPI subagents live under `.github/agents/rpi/subagents/`, shared subagents under `.github/agents/shared/subagents/`, and other collection subagents under `.github/agents/{collection-id}/subagents/`. Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
 
 ### Collections
 

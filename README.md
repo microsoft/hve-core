@@ -57,7 +57,7 @@ copilot plugin install hve-core-all@hve-core
 # Or install individual collections
 copilot plugin install rpi@hve-core
 copilot plugin install ado@hve-core
-copilot plugin install prompt-engineering@hve-core
+copilot plugin install coding-standards@hve-core
 ```
 
 See [CLI Plugin Installation Guide](docs/getting-started/methods/cli-plugins.md) for available collections and usage.

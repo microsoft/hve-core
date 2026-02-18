@@ -29,17 +29,20 @@ Create an instructions file when you need to:
 
 ### Location
 
-All instruction files **MUST** be placed in:
+All instruction files **MUST** be placed in a collection subdirectory:
 
 ```text
 .github/instructions/
-├── language-name.instructions.md        # Language-specific
-├── framework-name.instructions.md       # Framework-specific
-├── workflow-name.instructions.md        # Workflow-specific
-├── subfolder/
-│       └── specialized.instructions.md  # Organized by domain
+├── {collection-id}/
+│   └── your-instructions.instructions.md   # Collection-scoped
+├── coding-standards/
+│   ├── language.instructions.md             # Language-specific
+│   └── {language}/
+│       └── language.instructions.md         # Language with subdirectory
+├── shared/
+│   └── cross-collection.instructions.md     # Shared across collections
 └── hve-core/
-        └── repo-only.instructions.md    # Repo-specific (NOT distributed)
+    └── repo-only.instructions.md            # Repo-specific (NOT distributed)
 ```
 
 > [!IMPORTANT]
@@ -47,10 +50,10 @@ All instruction files **MUST** be placed in:
 
 **Examples**:
 
-* `.github/instructions/python-script.instructions.md`
-* `.github/instructions/markdown.instructions.md`
-* `.github/instructions/csharp/csharp.instructions.md`
-* `.github/instructions/bash/bash.instructions.md`
+* `.github/instructions/coding-standards/python-script.instructions.md`
+* `.github/instructions/rpi/markdown.instructions.md`
+* `.github/instructions/coding-standards/csharp/csharp.instructions.md`
+* `.github/instructions/coding-standards/bash/bash.instructions.md`
 
 ### Naming Convention
 
@@ -132,16 +135,16 @@ After creating your instructions file, add an `items[]` entry in each target col
 
 ```yaml
 items:
-    - path: .github/instructions/my-language.instructions.md
+    - path: .github/instructions/{collection-id}/my-language.instructions.md
         kind: instruction
         maturity: stable
 ```
 
-For instructions in subdirectories, use the path format:
+For instructions in language subdirectories, use the full path:
 
 ```yaml
 items:
-    - path: .github/instructions/subdirectory/my-instructions.instructions.md
+    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
         kind: instruction
         maturity: stable
 ```
@@ -154,7 +157,7 @@ Choose collections based on who uses the technology or pattern:
 |-------------------------|---------------------------------------------------|
 | Language standards      | `hve-core-all`, `coding-standards`                |
 | Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
-| Documentation standards | `hve-core-all`, `prompt-engineering`              |
+| Documentation standards | `hve-core-all`, `rpi`                             |
 | Workflow instructions   | `hve-core-all` plus relevant workflow collections |
 | Test standards          | `hve-core-all`, `coding-standards`                |
 | ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
@@ -644,7 +647,7 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/`
+* Review existing examples in `.github/instructions/{collection-id}/`
 * Test glob patterns using file search commands
 * Use `prompt-builder.agent.md` agent for assistance
 

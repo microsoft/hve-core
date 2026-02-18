@@ -179,7 +179,7 @@ function Get-ArtifactFiles {
 
     $items = @()
 
-    # Prompt-engineering artifacts discovered by .<kind>.md suffix under .github/
+    # AI artifacts discovered by .<kind>.md suffix under .github/
     # Keep explicit suffix mapping only where naming differs from manifest kind values.
     $gitHubDir = Join-Path -Path $RepoRoot -ChildPath '.github'
     if (Test-Path -Path $gitHubDir) {
@@ -209,13 +209,11 @@ function Get-ArtifactFiles {
     # Skills (directories containing SKILL.md)
     $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
     if (Test-Path -Path $skillsDir) {
-        $skillDirs = Get-ChildItem -Path $skillsDir -Directory
-        foreach ($dir in $skillDirs) {
-            $skillFile = Join-Path -Path $dir.FullName -ChildPath 'SKILL.md'
-            if (Test-Path -Path $skillFile) {
-                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
-                $items += @{ path = $relativePath; kind = 'skill' }
-            }
+        $skillMdFiles = Get-ChildItem -Path $skillsDir -Filter 'SKILL.md' -File -Recurse
+        foreach ($skillFile in $skillMdFiles) {
+            $dir = $skillFile.Directory
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
+            $items += @{ path = $relativePath; kind = 'skill' }
         }
     }
 

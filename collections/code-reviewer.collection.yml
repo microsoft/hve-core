@@ -1,0 +1,19 @@
+id: code-reviewer
+name: Code Reviewer
+description: Pull request review with automated analysis and feedback
+tags:
+  - code-review
+  - pull-request
+  - review
+items:
+  # Agents
+  - path: .github/agents/code-reviewer/pr-review.agent.md
+    kind: agent
+  # Subagents
+  - path: .github/agents/shared/subagents/researcher-subagent.agent.md
+    kind: agent
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: alpha

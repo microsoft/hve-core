@@ -34,17 +34,19 @@ copilot plugin install hve-core-all@hve-core
 
 ## Available Plugins
 
-| Plugin             | Description                                 |
-|--------------------|---------------------------------------------|
-| rpi                | Research, Plan, Implement, Review lifecycle |
-| github             | GitHub issue management                     |
-| ado                | Azure DevOps integration                    |
-| prompt-engineering | Prompt analysis and building                |
-| git                | Git operations                              |
-| project-planning   | PRDs, BRDs, ADRs, architecture diagrams     |
-| data-science       | Data specs, notebooks, dashboards           |
-| security-planning  | Security and incident response              |
-| hve-core-all       | Full HVE Core bundle                        |
+| Plugin           | Description                                 |
+|------------------|---------------------------------------------|
+| rpi              | Research, Plan, Implement, Review lifecycle |
+| github           | GitHub issue management                     |
+| ado              | Azure DevOps integration                    |
+| coding-standards | Language-specific coding guidelines         |
+| code-reviewer    | Pull request review and analysis            |
+| project-planning | PRDs, BRDs, ADRs, architecture diagrams     |
+| data-science     | Data specs, notebooks, dashboards           |
+| security-planning| Security and incident response              |
+| installer        | HVE Core installation automation            |
+| experimental     | Experimental and preview artifacts          |
+| hve-core-all     | Full HVE Core bundle                        |
 
 ## Plugin Contents
 

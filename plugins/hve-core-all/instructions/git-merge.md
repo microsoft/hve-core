@@ -1,1 +1,1 @@
-../../../.github/instructions/git-merge.instructions.md
+../../../.github/instructions/rpi/git-merge.instructions.md

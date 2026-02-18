@@ -50,10 +50,10 @@ The following skill types will likely be **rejected**:
 
 ### Location
 
-All skill files **MUST** be placed in:
+All skill files **MUST** be placed in a collection subdirectory:
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
 ├── scripts/                    # Executable scripts (optional)
 │   ├── <action>.ps1            # PowerShell script (required)
@@ -160,7 +160,7 @@ After creating your skill package, add an `items[]` entry in each target collect
 
 ```yaml
 items:
-  - path: .github/skills/my-skill
+  - path: .github/skills/{collection-id}/my-skill
     kind: skill
     maturity: stable
 ```
@@ -172,7 +172,7 @@ Choose collections based on who uses the skill's utilities:
 | Skill Type           | Recommended Collections              |
 |----------------------|--------------------------------------|
 | Media processing     | `hve-core-all`                       |
-| Documentation tools  | `hve-core-all`, `prompt-engineering` |
+| Documentation tools  | `hve-core-all`, `rpi`                |
 | Data processing      | `hve-core-all`, `data-science`       |
 | Infrastructure tools | `hve-core-all`, `coding-standards`   |
 | Code generation      | `hve-core-all`, `coding-standards`   |
@@ -235,7 +235,7 @@ Shows basic usage with default settings:
 ## Quick Start
 
 \`\`\`bash
-./.github/skills/video-to-gif/convert.sh input.mp4
+./.github/skills/experimental/video-to-gif/convert.sh input.mp4
 \`\`\`
 ```
 

@@ -799,15 +799,16 @@ function Resolve-HandoffDependencies {
 
     while ($queue.Count -gt 0) {
         $current = $queue.Dequeue()
-        $agentFile = Join-Path $AgentsDir "$current.agent.md"
+        $agentFileMatches = Get-ChildItem -Path $AgentsDir -Filter "$current.agent.md" -Recurse -File
+        $agentFile = $agentFileMatches | Select-Object -First 1
 
-        if (-not (Test-Path $agentFile)) {
-            Write-Warning "Handoff target agent file not found: $agentFile"
+        if (-not $agentFile) {
+            Write-Warning "Handoff target agent file not found: $current.agent.md"
             continue
         }
 
         # Parse handoffs from frontmatter
-        $content = Get-Content -Path $agentFile -Raw
+        $content = Get-Content -Path $agentFile.FullName -Raw
         if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
             try {
@@ -1042,7 +1043,10 @@ function Get-DiscoveredAgents {
         return $result
     }
 
-    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" | Sort-Object Name
+    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
+    # Exclude deprecated and repo-specific agents
+    $agentFiles = $agentFiles | Where-Object { $_.FullName -notmatch '[/\\]deprecated[/\\]' }
+    $agentFiles = $agentFiles | Where-Object { $_.FullName -notmatch '[/\\]hve-core[/\\]' }
 
     foreach ($agentFile in $agentFiles) {
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
@@ -1059,9 +1063,10 @@ function Get-DiscoveredAgents {
             continue
         }
 
+        $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
         $result.Agents += [PSCustomObject]@{
             name = $agentName
-            path = "./.github/agents/$($agentFile.Name)"
+            path = "./.github/agents/$agentRelPath"
         }
     }
 
@@ -1233,16 +1238,12 @@ function Get-DiscoveredSkills {
         return $result
     }
 
-    $skillDirs = Get-ChildItem -Path $SkillsDir -Directory | Sort-Object Name
+    $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
 
-    foreach ($skillDir in $skillDirs) {
+    foreach ($skillFile in $skillFiles) {
+        $skillDir = $skillFile.Directory
         $skillName = $skillDir.Name
-        $skillFile = Join-Path $skillDir.FullName "SKILL.md"
-
-        if (-not (Test-Path $skillFile)) {
-            $result.Skipped += @{ Name = $skillName; Reason = 'missing SKILL.md' }
-            continue
-        }
+        $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
         $maturity = "stable"
 
@@ -1253,7 +1254,7 @@ function Get-DiscoveredSkills {
 
         $result.Skills += [PSCustomObject]@{
             name = $skillName
-            path = "./.github/skills/$skillName"
+            path = "./.github/skills/$skillRelPath"
         }
     }
 

@@ -1,1 +1,1 @@
-../../../.github/agents/task-implementor.agent.md
+../../../.github/agents/rpi/subagents/task-implementor.agent.md

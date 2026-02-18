@@ -1,1 +1,1 @@
-../../../.github/instructions/csharp/csharp-tests.instructions.md
+../../../.github/instructions/coding-standards/csharp/csharp-tests.instructions.md

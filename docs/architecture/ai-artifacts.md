@@ -98,7 +98,7 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 **Directory structure:**
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md           # Required entry point with frontmatter
 ├── scripts/
 │   ├── convert.sh     # Bash implementation
@@ -172,7 +172,7 @@ agent: 'pr-creator'
 ---
 ```
 
-The referenced agent file (`pr-creator.agent.md`) must exist in `.github/agents/`. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
+The referenced agent file (`pr-creator.agent.md`) must exist in `.github/agents/{collection-id}/`. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
 
 ### Instruction Glob Patterns
 
@@ -191,7 +191,7 @@ Multiple instructions can apply to the same file. When patterns overlap, all mat
 Skills provide self-contained utilities through the `SKILL.md` file:
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Entry point documentation
 ├── convert.sh                  # Bash implementation
 ├── convert.ps1                 # PowerShell implementation
@@ -236,10 +236,10 @@ Each collection item defines inclusion metadata for artifact selection and relea
 
 ```yaml
 items:
-    - path: .github/agents/rpi-agent.agent.md
+    - path: .github/agents/rpi/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/task-plan.prompt.md
+    - path: .github/prompts/rpi/task-plan.prompt.md
         kind: prompt
         maturity: preview
 ```
@@ -322,10 +322,10 @@ The VS Code extension discovers and activates AI artifacts through contribution 
 
 The extension scans these directories at startup:
 
-* `.github/prompts/` for workflow entry points
-* `.github/agents/` for specialized behaviors
-* `.github/instructions/` for technology standards (excluding `hve-core/` subdirectory)
-* `.github/skills/` for utility packages
+* `.github/prompts/{collection-id}/` for workflow entry points
+* `.github/agents/{collection-id}/` for specialized behaviors
+* `.github/instructions/{collection-id}/` for technology standards (excluding `hve-core/` subdirectory)
+* `.github/skills/{collection-id}/` for utility packages
 
 Artifact inclusion is controlled by `collections/*.collection.yml`. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 

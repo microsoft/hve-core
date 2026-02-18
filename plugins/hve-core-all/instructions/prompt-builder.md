@@ -1,1 +1,1 @@
-../../../.github/instructions/prompt-builder.instructions.md
+../../../.github/instructions/rpi/prompt-builder.instructions.md
