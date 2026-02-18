@@ -17,6 +17,18 @@ body:
     validations:
       required: true
   
+  - type: dropdown
+    id: programming-language
+    attributes:
+      label: Programming Language
+      description: Primary language for skill logic. All skills require Bash (macOS/Linux) and PowerShell (Windows) scripts for cross-platform support.
+      options:
+        - PowerShell
+        - Python
+        - Other
+    validations:
+      required: true
+  
   - type: textarea
     id: purpose
     attributes:

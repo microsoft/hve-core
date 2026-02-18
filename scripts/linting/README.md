@@ -242,6 +242,51 @@ Validates all links in markdown files using markdown-link-check npm package.
 * Annotations: Error for each broken link
 * Exit Code: Non-zero if broken links found
 
+### Skill Structure Validation
+
+#### `Validate-SkillStructure.ps1`
+
+Validates the structural integrity of skill directories under `.github/skills/`.
+
+**Purpose**: Ensure all skill packages comply with the agentskills.io specification and hve-core conventions.
+
+**Features**:
+
+* Validates SKILL.md presence in each skill directory
+* Checks frontmatter for required `name` and `description` fields
+* Verifies `name` matches directory name
+* When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
+* Warns on unrecognized directories
+* Supports changed-files-only mode via Git
+* Creates CI annotations for violations
+* Exports JSON results to `logs/skill-validation-results.json`
+
+**Parameters**:
+
+* `-SkillsPath` (string) - Root path containing skill directories (default: `.github/skills`)
+* `-WarningsAsErrors` (switch) - Treat warnings as errors
+* `-ChangedFilesOnly` (switch) - Validate only skills with changed files
+* `-BaseBranch` (string) - Git reference for changed file detection (default: `origin/main`)
+
+**Usage**:
+
+```powershell
+# Validate all skills
+./scripts/linting/Validate-SkillStructure.ps1
+
+# Validate with warnings as errors
+./scripts/linting/Validate-SkillStructure.ps1 -WarningsAsErrors
+
+# Validate only changed skills
+./scripts/linting/Validate-SkillStructure.ps1 -ChangedFilesOnly
+```
+
+**GitHub Actions Integration**:
+
+* Workflow: `.github/workflows/skill-validation.yml`
+* Artifacts: `skill-validation-results` (JSON)
+* Exit Code: Non-zero if validation fails
+
 ### Copyright Header Validation
 
 #### `Test-CopyrightHeaders.ps1`
