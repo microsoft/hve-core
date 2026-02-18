@@ -10,6 +10,10 @@ handoffs:
     agent: task-reviewer
     prompt: /task-review
     send: true
+  - label: "Compact"
+    agent: task-implementor
+    send: true
+    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
 ---
 
 # Task Implementor
