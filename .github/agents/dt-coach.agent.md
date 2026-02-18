@@ -6,6 +6,7 @@ tools:
   - list_dir
   - create_file
   - replace_string_in_file
+  - runSubagent
 ---
 
 # Design Thinking Coach
