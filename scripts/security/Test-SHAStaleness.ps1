@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
@@ -704,6 +704,39 @@ function Write-OutputResult {
             else {
                 Write-CIAnnotation -Message "Found $(@($Dependencies).Count) stale dependencies that may pose security risks" -Level Error
             }
+
+            # Build step summary markdown table
+            $totalCount = @($Dependencies).Count
+            $staleCount = @($Dependencies | Where-Object { $_.DaysOld -gt $MaxAge }).Count
+            $cleanCount = $totalCount - $staleCount
+
+            if ($totalCount -eq 0) {
+                $summaryContent = @"
+# 🔒 SHA Staleness Analysis
+
+✅ **All Clear:** No stale dependencies detected.
+
+**Scanned:** 0 | **Stale:** 0 | **Current:** 0
+"@
+            }
+            else {
+                $tableRows = foreach ($Dep in $Dependencies) {
+                    $status = if ($Dep.DaysOld -gt $MaxAge) { '⚠️ Stale' } else { '✅ Current' }
+                    "| $($Dep.Name) | $($Dep.DaysOld) | $MaxAge | $status |"
+                }
+
+                $summaryContent = @"
+# 🔒 SHA Staleness Analysis
+
+**Scanned:** $totalCount | **Stale:** $staleCount | **Current:** $cleanCount
+
+| Dependency | SHA Age (days) | Threshold (days) | Status |
+|------------|----------------|-------------------|--------|
+$($tableRows -join "`n")
+"@
+            }
+
+            Write-CIStepSummary -Content $summaryContent
         }
 
         "azdo" {
