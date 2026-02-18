@@ -18,6 +18,8 @@ items:
   kind: agent
 - path: .github/agents/doc-ops.agent.md
   kind: agent
+- path: .github/agents/dt-coach.agent.md
+  kind: agent
 - path: .github/agents/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/gen-jupyter-notebook.agent.md
@@ -186,5 +188,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true
