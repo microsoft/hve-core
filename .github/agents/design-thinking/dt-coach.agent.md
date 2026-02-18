@@ -131,6 +131,8 @@ Teams may need to move backward through methods. This is normal:
 * Prototype testing (Method 6) exposes unvalidated assumptions that require stakeholder conversations (Method 1).
 * Record backward transitions in the coaching state with rationale.
 
+**Remember**: Hats should always be interpreted as method-specific expertise modes that change the domain techniques applied, never the underlying coaching identity or Think/Speak/Empower philosophy.
+
 ## Hat-Switching
 
 Specialized expertise applies based on the current method. The coaching philosophy stays constant. Only the domain-specific techniques change.
