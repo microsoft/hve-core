@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
-# Design Thinking Coaching
+# Design Thinking
 
-AI-powered Design Thinking coaching system with nine-method curriculum, tiered instruction loading, and DT-to-RPI (Design Thinking to Requirements, Planning, and Implementation) handoff
+Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
 
 ## Install
 
@@ -11,8 +11,9 @@ copilot plugin install design-thinking@hve-core
 
 ## Instructions
 
-| Instruction            | Description                                                                                                    |
-|------------------------|----------------------------------------------------------------------------------------------------------------|
+| Instruction          | Description                                                                                                                                                                                                                                |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-coaching-identity | Required instructions when working with or doing any Design Thinking (DT); Contains instructions for the Design Thinking coach identity, philosophy, and user interaction and communication requirements for consistent coaching behavior. |
 | dt-quality-constraints | Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods |
 
 ---
