@@ -6,18 +6,7 @@
   },
   "search.followSymlinks": false,
   "markdown.mermaid.theme": "default",
-  "chat.instructionsFilesLocations": {
-    ".github/instructions/**/*.instructions.md": true,
-    ".github/prompts/**/*.prompt.md": true
-  },
-  "chat.agentFilesLocations": {
-    ".github/agents/**": true
-  },
-  "github.copilot.chat.commitMessageGeneration.instructions": [
-    {
-      "file": ".github/instructions/rpi/commit-message.instructions.md"
-    }
-  ],
+
   "yaml.schemas": {
     "./scripts/linting/schemas/root-community-frontmatter.schema.json": [
       "README.md",
@@ -30,5 +19,38 @@
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
     ]
-  }
+  },
+
+  "chat.instructionsFilesLocations": {
+    ".github/instructions/ado": true,
+    ".github/instructions/coding-standards": true,
+    ".github/instructions/github": true,
+    ".github/instructions/hve-core": true,
+    ".github/instructions/rpi": true,
+    ".github/instructions/shared": true,
+  },
+  "chat.agentFilesLocations": {
+    ".github/agents/ado": true,
+    ".github/agents/code-reviewer": true,
+    ".github/agents/data-science": true,
+    ".github/agents/github": true,
+    ".github/agents/installer": true,
+    ".github/agents/project-planning": true,
+    ".github/agents/rpi": true,
+    ".github/agents/rpi/subagents": true,
+    ".github/agents/security-planning": true,
+    ".github/agents/shared": true,
+    ".github/agents/shared/subagents": true,
+  },
+  "chat.promptFilesLocations": {
+    ".github/prompts/ado": true,
+    ".github/prompts/github": true,
+    ".github/prompts/rpi": true,
+    ".github/prompts/security-planning": true,
+  },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/instructions/rpi/commit-message.instructions.md"
+    }
+  ],
 }

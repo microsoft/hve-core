@@ -135,6 +135,33 @@ Agents should use npm scripts for all validation:
 * `npm run lint:all` - Run all linters
 * `npm run test:ps` - PowerShell tests
 
+### PowerShell Testing
+
+PowerShell tests run exclusively through `npm run test:ps`. Never invoke Pester or test scripts directly.
+
+Run specific tests by passing a `-TestPath` argument:
+
+```bash
+npm run test:ps -- -TestPath "scripts/tests/linting/"
+npm run test:ps -- -TestPath "scripts/tests/security/Validate-DependencyPinning.Tests.ps1"
+```
+
+Test results are always written to the `logs/` directory:
+
+* `logs/pester-summary.json` - Overall pass/fail counts, duration, and result status.
+* `logs/pester-failures.json` - Failure details including test name, file path, error message, and stack trace.
+
+#### Inline execution protocol
+
+Pipe output through `tail` to capture the summary:
+
+```bash
+npm run test:ps 2>&1 | tail -20
+npm run test:ps -- -TestPath "scripts/tests/linting/" 2>&1 | tail -20
+```
+
+After the command completes, read `logs/pester-summary.json` to confirm overall status. If failures exist, read `logs/pester-failures.json` to identify which tests failed and why. Use tools that include ignored files when searching the `logs/` directory since it is gitignored.
+
 ### Environment Synchronization
 
 The `copilot-setup-steps.yml` mirrors tools from `.devcontainer/scripts/on-create.sh` and `.devcontainer/scripts/post-create.sh`. When adding tools to the devcontainer, update the setup workflow to maintain parity.
