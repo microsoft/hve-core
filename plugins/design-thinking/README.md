@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Design Thinking
 
-Design Thinking coaching capabilities with a single coach agent, tiered instruction loading, and progressive guidance across 9 methods
+Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
 
 ## Install
 
@@ -14,6 +14,12 @@ copilot plugin install design-thinking@hve-core
 | Agent    | Description                                                                                                                                       |
 |----------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | dt-coach | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core |
+
+## Instructions
+
+| Instruction          | Description                                                                                                                                                                                                                                |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-coaching-identity | Required instructions when working with or doing any Design Thinking (DT); Contains instructions for the Design Thinking coach identity, philosophy, and user interaction and communication requirements for consistent coaching behavior. |
 
 ---
 

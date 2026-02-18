@@ -1,14 +1,18 @@
 id: design-thinking
 name: Design Thinking
-description: Design Thinking coaching capabilities with a single coach agent, tiered instruction loading, and progressive guidance across 9 methods
+description: Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
 tags:
   - design-thinking
   - coaching
-  - problem-discovery
-  - hve
+  - methodology
+  - ux
 items:
   # Agents
   - path: .github/agents/design-thinking/dt-coach.agent.md
     kind: agent
+
+  # Instructions
+  - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
+    kind: instruction
 display:
-  ordering: manual
+  ordering: alpha

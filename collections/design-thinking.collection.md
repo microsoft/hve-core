@@ -1,5 +1,6 @@
-Guide teams through the 9 Design Thinking methods using a single conversational coach agent with tiered instruction loading. The coach maintains identity continuity across Problem Space (scope, research, synthesis), Solution Space (brainstorming, concepts, lo-fi prototypes), and Implementation Space (hi-fi prototypes, testing, iteration at scale).
+Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
 
-This collection includes:
+This collection includes instructions for:
 
+- **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
 - **DT Coach**: Conversational coaching agent that guides teams through all 9 methods with Think/Speak/Empower philosophy
