@@ -1,6 +1,6 @@
 ---
 name: dt-coach
-description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy'
+description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core'
 tools:
   - read_file
   - list_dir
