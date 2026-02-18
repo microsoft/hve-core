@@ -955,7 +955,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
         }
 
         It 'Passes markdown containing the summary table header' {
-            Mock Write-CIAnnotation { }
+ Mock Write-CIAnnotation { }
             Mock Write-CIStepSummary { }
             Write-OutputResult -Dependencies $script:githubDeps -OutputFormat 'github'
             Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
@@ -986,7 +986,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
             Mock Write-CIStepSummary { }
             Write-OutputResult -Dependencies $script:githubDeps -OutputFormat 'github'
             Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
-                $Content -match 'Scanned:.+2' -and $Content -match 'Stale:.+2'
+                $Content -match 'Found:.+2' -and $Content -match 'Stale:.+2'
             }
         }
     }

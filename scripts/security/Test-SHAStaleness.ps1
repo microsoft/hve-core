@@ -707,8 +707,8 @@ function Write-OutputResult {
 
             # Build step summary markdown table
             $totalCount = @($Dependencies).Count
-            $staleCount = @($Dependencies | Where-Object { $_.DaysOld -gt $MaxAge }).Count
-            $cleanCount = $totalCount - $staleCount
+            $staleCount = $totalCount
+            $cleanCount = 0
 
             if ($totalCount -eq 0) {
                 $summaryContent = @"
@@ -716,19 +716,19 @@ function Write-OutputResult {
 
 ✅ **All Clear:** No stale dependencies detected.
 
-**Scanned:** 0 | **Stale:** 0 | **Current:** 0
+**Found:** 0 | **Stale:** 0 | **Current:** 0
 "@
             }
             else {
                 $tableRows = foreach ($Dep in $Dependencies) {
-                    $status = if ($Dep.DaysOld -gt $MaxAge) { '⚠️ Stale' } else { '✅ Current' }
+                    $status = '⚠️ Stale'
                     "| $($Dep.Name) | $($Dep.DaysOld) | $MaxAge | $status |"
                 }
 
                 $summaryContent = @"
 # 🔒 SHA Staleness Analysis
 
-**Scanned:** $totalCount | **Stale:** $staleCount | **Current:** $cleanCount
+**Found:** $totalCount | **Stale:** $staleCount | **Current:** $cleanCount
 
 | Dependency | SHA Age (days) | Threshold (days) | Status |
 |------------|----------------|-------------------|--------|
