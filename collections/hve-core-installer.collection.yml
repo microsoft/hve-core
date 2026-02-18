@@ -1,0 +1,13 @@
+id: hve-core-installer
+name: HVE Core Installer
+description: Decision-driven installer for HVE-Core with extension quick-install and 6 clone-based installation methods
+tags:
+  - installer
+  - setup
+  - configuration
+items:
+  - path: .github/skills/hve-core-installer
+    kind: skill
+display:
+  featured: false
+  ordering: alpha

@@ -40,6 +40,12 @@
       "version": "2.3.10"
     },
     {
+      "name": "hve-core-installer",
+      "source": "./plugins/hve-core-installer",
+      "description": "Decision-driven installer for HVE-Core with extension quick-install and 6 clone-based installation methods",
+      "version": "2.3.10"
+    },
+    {
       "name": "project-planning",
       "source": "./plugins/project-planning",
       "description": "PRDs, BRDs, ADRs, architecture diagrams, and documentation operations",

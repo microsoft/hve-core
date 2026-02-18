@@ -37,12 +37,6 @@ For customization or version control, see [Installing HVE-Core](install.md) to c
 
 > **Contributing to HVE-Core?** See the [Contributing Guide](../contributing/README.md) for development setup and contribution guidelines.
 
-**Quick start:** Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Follow the guided installation
-
 ### Installation Methods
 
 HVE-Core supports eight installation methods. See the [installation guide](install.md) for a decision matrix to help you choose:

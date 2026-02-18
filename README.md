@@ -25,7 +25,7 @@ estimated_reading_time: 3
 
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
-**Quick Install:** Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
+**Quick Install:** Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from VS Code Marketplace (~10 seconds)
 
 ## Overview
 
@@ -61,26 +61,6 @@ copilot plugin install prompt-engineering@hve-core
 ```
 
 See [CLI Plugin Installation Guide](docs/getting-started/methods/cli-plugins.md) for available collections and usage.
-
-### Automated Agent Installation
-
-For customization or team version control, use the `hve-core-installer` agent:
-
-[![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core) [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://aka.ms/install-hve-core-insiders)
-
-After installing the agent:
-
-1. Open GitHub Copilot Chat in VS Code (Ctrl+Alt+I)
-2. Select `hve-core-installer` from the agent list
-3. Enter: "Install HVE Core into my project"
-4. Follow the guided installation
-
-The installer will:
-
-* Clone the hve-core repository as a sibling to your workspace
-* Validate the repository structure
-* Update your VS Code settings.json with custom agent, prompt, and instruction paths
-* Make all HVE Core components immediately available
 
 ### Manual Installation
 
@@ -123,7 +103,7 @@ Get started with RPI:
 | Agents       | 18    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
 | Instructions | 17+   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | 18    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Skills       | 1     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
+| Skills       | 2     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
 | Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Prompt Engineering Framework
