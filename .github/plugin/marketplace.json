@@ -28,6 +28,12 @@
       "version": "2.3.10"
     },
     {
+      "name": "design-thinking",
+      "source": "./plugins/design-thinking",
+      "description": "Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods",
+      "version": "2.3.10"
+    },
+    {
       "name": "github",
       "source": "./plugins/github",
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
