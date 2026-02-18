@@ -97,12 +97,11 @@ After installation, verify everything works:
 
 HVE Core includes utility scripts you may want to copy into your project:
 
-| Script                                             | Purpose                                             |
-|----------------------------------------------------|-----------------------------------------------------|
-| `scripts/dev-tools/Generate-PrReference.ps1`       | Generate PR reference docs for handoff to reviewers |
-| `scripts/linting/Validate-MarkdownFrontmatter.ps1` | Validate markdown frontmatter against JSON schemas  |
-| `scripts/linting/Invoke-PSScriptAnalyzer.ps1`      | Run PSScriptAnalyzer with project settings          |
-| `scripts/security/Test-DependencyPinning.ps1`      | Check GitHub Actions for pinned dependencies        |
+| Script                                             | Purpose                                            |
+|----------------------------------------------------|----------------------------------------------------|
+| `scripts/linting/Validate-MarkdownFrontmatter.ps1` | Validate markdown frontmatter against JSON schemas |
+| `scripts/linting/Invoke-PSScriptAnalyzer.ps1`      | Run PSScriptAnalyzer with project settings         |
+| `scripts/security/Test-DependencyPinning.ps1`      | Check GitHub Actions for pinned dependencies       |
 
 Copy the scripts you need to your project's `scripts/` directory and adjust paths as needed.
 

@@ -520,6 +520,22 @@ description: 'Skill with recognized dirs'
             $result.IsValid | Should -BeTrue
             $result.Warnings | Should -HaveCount 0
         }
+
+        It 'Does not warn about tests/ subdirectory' {
+            $frontmatter = @"
+---
+name: tests-dir-skill
+description: 'Skill with co-located tests directory'
+---
+
+# Tests Dir Skill
+"@
+            $dir = New-TestSkillDirectory -SkillName 'tests-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('tests')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
     }
 
     Context 'Result object structure' {

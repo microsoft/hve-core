@@ -59,6 +59,12 @@ copilot plugin install prompt-engineering@hve-core
 | prompt-builder | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills       |
 | git-merge      | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls. |
 
+## Skills
+
+| Skill        | Description  |
+|--------------|--------------|
+| pr-reference | pr-reference |
+
 ---
 
 > Source: [microsoft/hve-core](https://github.com/microsoft/hve-core)

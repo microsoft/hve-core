@@ -432,7 +432,7 @@ Before submitting your skill, verify:
 * [ ] Directory at `.github/skills/<skill-name>/`
 * [ ] SKILL.md present with valid frontmatter
 * [ ] If `scripts/` directory exists: at least one `.ps1` file present (`.sh` recommended)
-* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`)
+* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`, `tests`)
 * [ ] Examples README (recommended)
 
 ### Frontmatter

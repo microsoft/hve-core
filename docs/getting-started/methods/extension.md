@@ -42,7 +42,7 @@ VS Code Extension System
 │   ├── .github/agents/         # All chat agents
 │   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
-│   └── scripts/dev-tools/      # PR reference generation
+│   └── .github/skills/         # All skill packages
 └── Only optional workspace configuration needed!
 ```
 
@@ -105,7 +105,7 @@ The extension provides all HVE-Core components:
 | Chat Agents  | task-planner, pr-review, adr-creation   |
 | Prompts      | git-commit, pull-request, ado-create-pr |
 | Instructions | markdown, python-script, commit-message |
-| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh |
+| Skills       | pr-reference, video-to-gif              |
 
 ## Updating
 

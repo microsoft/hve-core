@@ -37,29 +37,10 @@ Treat `.copilot-tracking/pr/pr-reference.xml` as the canonical diff source.
 * If the user declines, delete `pr-reference.xml` before continuing.
 * Plan to record the total line count and note it in the chat.
 * If `pr-reference.xml` is not provided, run `git fetch {{remote}} {{branch}}` using `${input:branch:origin/main}`.
-* Plan to create `pr-reference.xml` using the repository scripts that match the host environment. Avoid other commands for git status or diffs.
-* Check local scripts in `./scripts/dev-tools/` first, then fall back to the VS Code extension path `~/.vscode/extensions/ise-hve-essentials.hve-core-*/scripts/dev-tools/`.
-* Locate extension scripts when needed using the following commands:
-
-  ```bash
-  # Find PowerShell script
-  pwsh -c '$SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Generate-PrReference.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found: $SCRIPT"'
-
-  # Find shell script
-  find ~/.vscode/extensions -name "pr-ref-gen.sh" 2>/dev/null | head -1
-  ```
-
-* For Unix-like shells, prefer `./scripts/dev-tools/pr-ref-gen.sh` when available or the extension path.
-* For Windows PowerShell hosts, prefer `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1` when available or the extension path.
-* Use the following command variants when needed:
-
-  * Default: `./scripts/dev-tools/pr-ref-gen.sh`
-  * Exclude markdown: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff`
-  * Custom base branch: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}`
-  * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`
-  * Exclude markdown: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff`
-  * Custom base branch: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff -BaseBranch ${input:branch}`
-
+* Generate a PR reference XML file containing commit history and diffs using the `pr-reference` skill.
+* Use the `--base-branch` parameter with `${input:branch}` to compare against the target branch.
+* If the user requests excluding markdown diffs, pass `--no-md-diff`.
+* The output is saved to the default location `.copilot-tracking/pr/pr-reference.xml`.
 * Capture the total line count from the script output and note it in the chat.
 
 ### Step 2: Discover PR templates

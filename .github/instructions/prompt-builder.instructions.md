@@ -262,11 +262,10 @@ Skill directory structure:
 │   ├── <action>.sh             # Bash script for macOS/Linux
 │   └── <action>.ps1            # PowerShell for Windows; provide both for cross-platform
 ├── references/                 # Agents load on demand; keep files focused (optional)
-│   └── REFERENCE.md            # Detailed technical reference
-├── assets/                     # Templates, images, data files (optional)
-│   └── templates/              # Document or configuration templates
-└── examples/
-    └── README.md               # Usage examples (recommended)
+│   ├── REFERENCE.md            # Detailed technical reference
+│   └── FORMS.md                # Form templates or structured data formats
+└── assets/                     # Templates, images, data files (optional)
+    └── templates/              # Document or configuration templates
 ```
 
 #### Optional Directories
@@ -283,7 +282,8 @@ Contains executable code that agents run to perform tasks:
 
 Contains additional documentation that agents read when needed:
 
-* *REFERENCE.md* for detailed technical reference material.
+* *REFERENCE.md* for detailed technical reference.
+* *FORMS.md* for form templates or structured data formats.
 * Domain-specific files such as `finance.md` or `legal.md`.
 * Keep individual reference files focused; agents load these on demand.
 
@@ -343,10 +343,10 @@ Semantic invocation pattern:
 
 ```markdown
 <!-- Direct script reference (avoid) -->
-Run `./scripts/dev-tools/pr-ref-gen.sh --base-branch origin/main` to generate the PR reference.
+Run `./scripts/linting/Validate-SkillStructure.ps1 -WarningsAsErrors` to validate all skill directories.
 
 <!-- Semantic skill invocation (preferred) -->
-Generate the PR reference XML file comparing the current branch against origin/main.
+Validate all skill directory structures with warnings treated as errors.
 ```
 
 When a caller describes a task that semantically matches a skill's `description`, Copilot follows this loading sequence:

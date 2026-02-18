@@ -29,7 +29,7 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 # Recognized subdirectories within a skill directory
-$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples')
+$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests')
 
 function Get-SkillFrontmatter {
     <#

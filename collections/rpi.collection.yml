@@ -92,5 +92,8 @@ items:
   # Git instructions
   - path: .github/instructions/git-merge.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/pr-reference
+    kind: skill
 display:
   ordering: manual
