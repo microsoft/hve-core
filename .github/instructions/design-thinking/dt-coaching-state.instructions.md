@@ -1,6 +1,6 @@
 ---
-description: 'YAML-based coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery'
-applyTo: '**/.copilot-tracking/dt/**'
+description: 'Coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery'
+applyTo: '**/.copilot-tracking/dt/**/coaching-state.md'
 ---
 
 # DT Coaching State Protocol
@@ -9,7 +9,7 @@ This instruction defines the coaching state schema, file conventions, and sessio
 
 ## State File Location
 
-Store the coaching state file at `.copilot-tracking/dt/{project-slug}/state.yml`.
+Store the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 
 * `{project-slug}` is a kebab-case identifier derived from the project name (e.g., `factory-floor-maintenance`, `patient-handoff-optimization`).
 * Create the directory when initializing a new coaching project.
@@ -18,7 +18,7 @@ Store the coaching state file at `.copilot-tracking/dt/{project-slug}/state.yml`
 ## State File Schema
 
 ```yaml
-# .copilot-tracking/dt/{project-slug}/state.yml
+# .copilot-tracking/dt/{project-slug}/coaching-state.md
 project:
   name: "Human-readable project name"
   slug: "kebab-case-identifier"
@@ -126,7 +126,7 @@ Do not set space independently of method.
 
 When resuming a coaching session:
 
-1. Read the state file at `.copilot-tracking/dt/{project-slug}/state.yml`.
+1. Read the state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 2. Verify the file parses as valid YAML and contains required fields (`project`, `current`, `methods_completed`, `transition_log`).
 3. Restore coaching context from `current.method`, `current.space`, and `current.phase`.
 4. Review the most recent `transition_log` and `session_log` entries to understand where the team left off.
@@ -140,7 +140,7 @@ If the state file is missing or corrupted, inform the user and offer to reinitia
 
 The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific artifacts alongside the state file:
 
-* `state.yml`: coaching state (this schema).
+* `coaching-state.md`: coaching state (this schema).
 * Method outputs: stakeholder maps, interview notes, synthesis documents, concept descriptions, prototype feedback, testing results.
 * Naming convention: use descriptive kebab-case filenames prefixed with the method number (e.g., `method-01-stakeholder-map.md`, `method-03-synthesis-themes.md`).
 
