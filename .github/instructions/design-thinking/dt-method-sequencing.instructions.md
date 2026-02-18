@@ -1,6 +1,6 @@
 ---
 description: 'Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching'
-applyTo: '**/.copilot-tracking/design-thinking/**'
+applyTo: '**/.copilot-tracking/dt/**'
 ---
 
 # DT Method Sequencing
@@ -46,6 +46,20 @@ Build, validate, and optimize working solutions.
 1. (Method 7) Hi-fi prototypes. Test technical feasibility. Create stripped-down functional implementations with real data for systematic comparison.
 2. (Method 8) User testing. Perform systematic validation and iteration. Test with real users in real environments using progressive questioning to extract deep insights.
 3. (Method 9) Iteration at scale. Drive continuous optimization. Monitor production systems through telemetry and iterate based on measured outcomes.
+
+## Method Completion Signals
+
+Each method has lightweight completion signals the coach looks for before discussing transition. These are advisory indicators, not hard gates.
+
+1. Scope conversations: the team can articulate a problem statement that differs meaningfully from the original request, and key stakeholder groups are identified.
+2. Design research: interview or observation evidence exists from multiple stakeholder groups, and the team has documented environmental and workflow context.
+3. Input synthesis: research data is organized into themes supported by multiple data points, and the team agrees the themes reflect their learning.
+4. Brainstorming: the team has generated multiple distinct solution directions grounded in synthesis themes, not just variations of a single idea.
+5. User concepts: at least one concept has been simplified into a visual that a stakeholder can understand within 30 seconds, and initial feedback is captured.
+6. Lo-fi prototypes: a physical or paper prototype has been tested with real users, and constraint discoveries are documented.
+7. Hi-fi prototypes: a functional prototype runs with real data, and systematic comparison criteria are defined.
+8. User testing: real users have tested the solution in real environments, and findings are categorized by severity and frequency.
+9. Iteration at scale: telemetry captures meaningful usage patterns, and the team has a feedback loop connecting metrics to iteration priorities.
 
 ## Space Boundary Transitions
 

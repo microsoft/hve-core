@@ -155,6 +155,8 @@ items:
   kind: instruction
 - path: .github/instructions/csharp/csharp.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
+  kind: instruction
 - path: .github/instructions/git-merge.instructions.md
   kind: instruction
 - path: .github/instructions/github-backlog-discovery.instructions.md
