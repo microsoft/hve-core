@@ -93,29 +93,39 @@ function Test-HveCoreRepoRelativePath {
 function Get-CollectionManifest {
     <#
     .SYNOPSIS
-    Reads and parses a .collection.yml file.
+    Loads a collection manifest from a YAML or JSON file.
 
     .DESCRIPTION
-    Loads a collection manifest YAML file and returns its parsed content
-    as a hashtable using ConvertFrom-Yaml.
+    Reads and parses a collection manifest file that defines collection-based
+    artifact filtering rules. Supports both YAML (.yml/.yaml) and JSON (.json)
+    formats.
 
     .PARAMETER CollectionPath
-    Absolute or relative path to the .collection.yml file.
+    Path to the collection manifest file (YAML or JSON).
 
     .OUTPUTS
-    [hashtable] Parsed collection data with id, name, description, items, etc.
+    [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$CollectionPath
     )
 
-    $content = Get-Content -Path $CollectionPath -Raw
-    $manifest = ConvertFrom-Yaml -Yaml $content
+    if (-not (Test-Path $CollectionPath)) {
+        throw "Collection manifest not found: $CollectionPath"
+    }
 
-    return $manifest
+    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
+    if ($extension -in @('.yml', '.yaml')) {
+        $content = Get-Content -Path $CollectionPath -Raw
+        return ConvertFrom-Yaml -Yaml $content
+    }
+
+    $content = Get-Content -Path $CollectionPath -Raw
+    return $content | ConvertFrom-Json -AsHashtable
 }
 
 function Get-CollectionArtifactKey {

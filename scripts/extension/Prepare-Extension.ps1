@@ -583,41 +583,6 @@ function Test-CollectionMaturityEligible {
     }
 }
 
-function Get-CollectionManifest {
-    <#
-    .SYNOPSIS
-        Loads a collection manifest from a YAML or JSON file.
-    .DESCRIPTION
-        Reads and parses a collection manifest file that defines collection-based
-        artifact filtering rules for extension packaging. Supports both YAML
-        (.yml/.yaml) and JSON (.json) formats.
-    .PARAMETER CollectionPath
-        Path to the collection manifest file (YAML or JSON).
-    .OUTPUTS
-        [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$CollectionPath
-    )
-
-    if (-not (Test-Path $CollectionPath)) {
-        throw "Collection manifest not found: $CollectionPath"
-    }
-
-    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
-    if ($extension -in @('.yml', '.yaml')) {
-        $content = Get-Content -Path $CollectionPath -Raw
-        return ConvertFrom-Yaml -Yaml $content
-    }
-
-    $content = Get-Content -Path $CollectionPath -Raw
-    return $content | ConvertFrom-Json -AsHashtable
-}
-
 function Test-GlobMatch {
     <#
     .SYNOPSIS
@@ -648,21 +613,6 @@ function Test-GlobMatch {
         }
     }
     return $false
-}
-
-function Get-CollectionArtifactMaturity {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [hashtable]$CollectionItem
-    )
-
-    if ($CollectionItem.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionItem.maturity)) {
-        return [string]$CollectionItem.maturity
-    }
-
-    return 'stable'
 }
 
 function Get-CollectionArtifacts {
@@ -709,7 +659,7 @@ function Get-CollectionArtifacts {
         $kind = [string]$item.kind
         $path = [string]$item.path
 
-        $maturity = Get-CollectionArtifactMaturity -CollectionItem $item
+        $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
         if ($AllowedMaturities -notcontains $maturity) {
             continue
         }
@@ -1621,7 +1571,7 @@ function Invoke-PrepareExtension {
                 $itemKind = [string]$item.kind
                 $itemPath = [string]$item.path
                 $artifactKey = Get-CollectionArtifactKey -Kind $itemKind -Path $itemPath
-                $effectiveMaturity = Get-CollectionArtifactMaturity -CollectionItem $item
+                $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
                 if (-not $collectionMaturities.ContainsKey("${itemKind}s") -or $null -eq $collectionMaturities["${itemKind}s"]) {
                     $collectionMaturities["${itemKind}s"] = @{}
                 }
