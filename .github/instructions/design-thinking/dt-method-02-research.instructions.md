@@ -17,8 +17,8 @@ Bridge the gap between stakeholder assumptions and actual user experiences by di
 
 Open-ended exploration that uncovers insights stakeholders and users themselves might not initially recognize.
 
-* "Walk me through a typical day when you need to [accomplish core task]."
-* "What happens when you encounter [challenge/obstacle]?"
+* "Walk me through a typical day when you need to \[accomplish core task\]."
+* "What happens when you encounter \[challenge/obstacle\]?"
 * "How do you currently work around that limitation?"
 * "What information do you wish you had access to?"
 
