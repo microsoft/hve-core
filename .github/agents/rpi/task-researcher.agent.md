@@ -12,6 +12,10 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: task-researcher
     prompt: /task-research continue deeper research based on potential next research items
+  - label: "Compact"
+    agent: task-researcher
+    send: true
+    prompt: "/compact make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Planner and the user will switch to it when they are done with Task Researcher"
 ---
 
 # Task Researcher
