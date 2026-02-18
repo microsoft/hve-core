@@ -165,6 +165,24 @@ Do not force themes that are not genuinely supported by evidence. Weak patterns 
 * Stakeholder priorities and specific needs for solution targeting
 * Success criteria based on synthesized problem understanding
 
+## Artifacts
+
+Create and maintain Method 3 synthesis artifacts under the folder:
+
+* `.copilot-tracking/dt/{project-slug}/method-03-synthesis/`
+
+Within this folder, produce and update these files:
+
+* `.copilot-tracking/dt/{project-slug}/method-03-synthesis/affinity-clusters.md`  
+  Group related observations, quotes, and data points into labeled affinity clusters. Document each cluster name, a short description, representative evidence, and any notable tensions or contradictions.
+* `.copilot-tracking/dt/{project-slug}/method-03-synthesis/insight-statements.md`  
+  Capture synthesized insight statements that explain why patterns matter. For each insight, include a short statement, supporting clusters or sources, and implications for design.
+* `.copilot-tracking/dt/{project-slug}/method-03-synthesis/problem-definition.md`  
+  Describe the unified problem framing that emerges from synthesis. Include a concise problem statement, affected stakeholders, context and constraints, and measurable impact or success signals.
+* `.copilot-tracking/dt/{project-slug}/method-03-synthesis/how-might-we-questions.md`  
+  List the final "How might we..." questions that bridge from problem understanding to ideation. For each HMW, reference the related insights or clusters and note any constraints that should shape solution exploration.
+
+These artifacts are the primary structured outputs handed off to Method 4 for ideation and concept development.
 ## Problem-to-Solution Space Transition
 
 Method 3 sits at the boundary between Problem Space and Solution Space. This is the most critical transition in the Design Thinking process. Moving to solutions without validated problem understanding produces solutions to the wrong problem.
