@@ -107,7 +107,7 @@ Create the state file when starting a new coaching project via the `dt-start-pro
 
 Update the state file at these events:
 
-* Method transition (forward, backward, or lateral): update `current` block, append to `transition_log`, add departing method to `methods_completed` if not already present.
+* Method transition (forward, backward, or lateral): update `current` block and append to `transition_log`. When the transition reflects that the current method is complete (the coach and team agree its outputs are sufficient to proceed), add the departing method to `methods_completed` if not already present.
 * Session start: append to `session_log` with current date and active method.
 * Artifact creation: append to `artifacts` list.
 * Phase change within a method: update `current.phase`.
