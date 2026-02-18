@@ -3,3 +3,4 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 This collection includes instructions for:
 
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
+- **DT Method 03: Input Synthesis** — Pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness for transforming fragmented research data into unified problem understanding
