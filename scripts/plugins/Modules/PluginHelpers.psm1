@@ -64,6 +64,32 @@ function Test-HveCoreRepoSpecificPath {
     return ($RelativePath -like 'hve-core/*')
 }
 
+function Test-HveCoreRepoRelativePath {
+    <#
+    .SYNOPSIS
+    Checks whether a repo-relative path belongs to an hve-core repo-specific directory.
+
+    .DESCRIPTION
+    Returns true when the repo-relative path matches .github/**/hve-core/,
+    indicating it is a repo-specific artifact not intended for distribution.
+
+    .PARAMETER Path
+    Repo-relative path (e.g., .github/agents/hve-core/foo.agent.md).
+
+    .OUTPUTS
+    [bool] True when the path is under an hve-core repo-specific directory.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    return ($Path -match '^\.github/.*/hve-core/')
+}
+
 function Get-CollectionManifest {
     <#
     .SYNOPSIS
@@ -249,7 +275,7 @@ function Get-ArtifactFiles {
             $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
 
-            if ($relativePath -match '^\.github/.*/hve-core/') {
+            if (Test-HveCoreRepoRelativePath -Path $relativePath) {
                 continue
             }
             if (Test-DeprecatedPath -Path $relativePath) {
@@ -270,7 +296,7 @@ function Get-ArtifactFiles {
             if (Test-DeprecatedPath -Path $relativePath) {
                 continue
             }
-            if ($relativePath -match '^\.github/.*/hve-core/') {
+            if (Test-HveCoreRepoRelativePath -Path $relativePath) {
                 continue
             }
 
@@ -1044,6 +1070,7 @@ Export-ModuleMember -Function @(
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
     'Test-DeprecatedPath',
+    'Test-HveCoreRepoRelativePath',
     'Test-HveCoreRepoSpecificPath',
     'Update-HveCoreAllCollection',
     'Write-MarketplaceManifest',

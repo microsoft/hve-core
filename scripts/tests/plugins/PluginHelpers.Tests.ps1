@@ -144,6 +144,72 @@ Describe 'Get-ArtifactFiles - deprecated path exclusion' {
     }
 }
 
+Describe 'Test-DeprecatedPath' {
+    It 'Returns true for path containing /deprecated/ segment' {
+        Test-DeprecatedPath -Path '.github/deprecated/agents/old.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns true for path with backslash deprecated segment' {
+        Test-DeprecatedPath -Path '.github\deprecated\agents\old.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns false for path without deprecated segment' {
+        Test-DeprecatedPath -Path '.github/agents/rpi/active.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns false when deprecated appears in filename only' {
+        Test-DeprecatedPath -Path '.github/agents/deprecated-notes.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns true for mid-path deprecated directory' {
+        Test-DeprecatedPath -Path 'skills/deprecated/old-skill/SKILL.md' | Should -BeTrue
+    }
+}
+
+Describe 'Test-HveCoreRepoSpecificPath' {
+    It 'Returns true for path starting with hve-core/' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/workflows.instructions.md' | Should -BeTrue
+    }
+
+    It 'Returns false for path not starting with hve-core/' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'rpi/active.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns false when hve-core appears mid-path' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'shared/hve-core/foo.md' | Should -BeFalse
+    }
+
+    It 'Returns true for nested path under hve-core/' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/deep/nested.md' | Should -BeTrue
+    }
+}
+
+Describe 'Test-HveCoreRepoRelativePath' {
+    It 'Returns true for .github/agents/hve-core/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/hve-core/internal.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns true for .github/instructions/hve-core/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/instructions/hve-core/workflows.instructions.md' | Should -BeTrue
+    }
+
+    It 'Returns true for .github/prompts/hve-core/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/prompts/hve-core/internal.prompt.md' | Should -BeTrue
+    }
+
+    It 'Returns false for non-.github path' {
+        Test-HveCoreRepoRelativePath -Path 'scripts/plugins/foo.ps1' | Should -BeFalse
+    }
+
+    It 'Returns false for .github path without hve-core segment' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/rpi/active.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns false for hve-core at wrong nesting level' {
+        Test-HveCoreRepoRelativePath -Path '.github/hve-core/foo.md' | Should -BeFalse
+    }
+}
+
 Describe 'Resolve-CollectionItemMaturity' {
     It 'Returns stable for null' {
         $result = Resolve-CollectionItemMaturity -Maturity $null
