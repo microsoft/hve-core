@@ -182,7 +182,7 @@ function Get-ArtifactFiles {
     # Prompt-engineering artifacts discovered by .<kind>.md suffix under .github/
     # Keep explicit suffix mapping only where naming differs from manifest kind values.
     $gitHubDir = Join-Path -Path $RepoRoot -ChildPath '.github'
-    if (Test-Path -LiteralPath $gitHubDir) {
+    if (Test-Path -Path $gitHubDir) {
         $suffixToKind = @{
             instructions = 'instruction'
         }
@@ -208,11 +208,11 @@ function Get-ArtifactFiles {
 
     # Skills (directories containing SKILL.md)
     $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
-    if (Test-Path -LiteralPath $skillsDir) {
+    if (Test-Path -Path $skillsDir) {
         $skillDirs = Get-ChildItem -Path $skillsDir -Directory
         foreach ($dir in $skillDirs) {
             $skillFile = Join-Path -Path $dir.FullName -ChildPath 'SKILL.md'
-            if (Test-Path -LiteralPath $skillFile) {
+            if (Test-Path -Path $skillFile) {
                 $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
                 $items += @{ path = $relativePath; kind = 'skill' }
             }
@@ -370,7 +370,7 @@ function Update-HveCoreAllCollection {
         }
 
         $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -LiteralPath $collectionPath -Value $yaml -Encoding utf8 -NoNewline
+        Set-Content -Path $collectionPath -Value $yaml -Encoding utf8 -NoNewline
         Write-Verbose "Updated $collectionPath"
     }
 
@@ -708,11 +708,11 @@ function Write-MarketplaceManifest {
         return
     }
 
-    if (-not (Test-Path -LiteralPath $outputDir)) {
+    if (-not (Test-Path -Path $outputDir)) {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $outputPath -Encoding utf8 -NoNewline
+    $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8 -NoNewline
     Write-Host "  Marketplace manifest: $outputPath" -ForegroundColor Green
 }
 
@@ -789,48 +789,11 @@ function New-RelativeSymlink {
     $destinationDir = Split-Path -Parent $DestinationPath
     $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath)
 
-    if (-not (Test-Path -LiteralPath $destinationDir)) {
+    if (-not (Test-Path -Path $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    # Remove existing item at destination to avoid conflicts, but avoid
-    # recursively deleting real directories that are not symlinks.
-    if (Test-Path -LiteralPath $DestinationPath) {
-        $destItem = Get-Item -LiteralPath $DestinationPath -Force
-        $isSymlink = $false
-        if ($null -ne $destItem.Attributes -and ($destItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
-            $isSymlink = $true
-        }
-
-        if ($isSymlink -or -not $destItem.PSIsContainer) {
-            # Safe to remove: symbolic link (file or directory) or regular file
-            Remove-Item -LiteralPath $DestinationPath -Force | Out-Null
-        }
-        else {
-            throw "Refusing to remove existing non-symlink directory at '$DestinationPath'. Remove it manually before creating the symbolic link."
-        }
-    }
-
-    try {
-        Push-Location -LiteralPath $destinationDir
-        try {
-            New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    catch {
-        # Symlink creation requires admin privileges or Developer Mode on Windows.
-        # Fall back to copying the source file or directory.
-        Write-Warning "Symlink creation failed for $DestinationPath`: $($_.Exception.Message). Falling back to copy."
-        if (Test-Path -LiteralPath $SourcePath -PathType Container) {
-            Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Recurse -Force | Out-Null
-        }
-        else {
-            Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force | Out-Null
-        }
-    }
+    New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
 }
 
 function Write-PluginDirectory {
@@ -913,7 +876,7 @@ function Write-PluginDirectory {
 
             # Read frontmatter from the source file for description
             $fallback = $itemName -replace '\.md$', ''
-            if (Test-Path -LiteralPath $sourcePath) {
+            if (Test-Path -Path $sourcePath) {
                 $frontmatter = Get-ArtifactFrontmatter -FilePath $sourcePath -FallbackDescription $fallback
                 $description = $frontmatter.description
             }
@@ -956,7 +919,7 @@ function Write-PluginDirectory {
         $sourcePath = Join-Path -Path $RepoRoot -ChildPath $dir.Source
         $destPath = Join-Path -Path $pluginRoot -ChildPath $dir.Destination
 
-        if (-not (Test-Path -LiteralPath $sourcePath)) {
+        if (-not (Test-Path -Path $sourcePath)) {
             Write-Warning "Shared directory not found: $sourcePath"
             continue
         }
@@ -978,10 +941,10 @@ function Write-PluginDirectory {
         Write-Verbose "DryRun: Would write plugin.json at $manifestPath"
     }
     else {
-        if (-not (Test-Path -LiteralPath $manifestDir)) {
+        if (-not (Test-Path -Path $manifestDir)) {
             New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
         }
-        $manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding utf8 -NoNewline
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath -Encoding utf8 -NoNewline
     }
 
     # Generate README.md
@@ -992,7 +955,7 @@ function Write-PluginDirectory {
         Write-Verbose "DryRun: Would write README.md at $readmePath"
     }
     else {
-        Set-Content -LiteralPath $readmePath -Value $readmeContent -Encoding utf8 -NoNewline
+        Set-Content -Path $readmePath -Value $readmeContent -Encoding utf8 -NoNewline
     }
 
     return @{
