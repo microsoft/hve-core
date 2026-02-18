@@ -307,7 +307,7 @@ Bash scripts **MUST**:
 * Check for required dependencies
 * Handle platform differences (macOS vs Linux)
 
-See [bash.instructions.md](../../.github/instructions/bash/bash.instructions.md) for complete standards.
+See [bash.instructions.md](../../.github/instructions/coding-standards/bash/bash.instructions.md) for complete standards.
 
 ### PowerShell Scripts
 

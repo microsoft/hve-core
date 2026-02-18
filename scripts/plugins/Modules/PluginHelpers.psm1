@@ -218,7 +218,12 @@ function Get-ArtifactFiles {
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
 
             # Exclude deprecated skills
-            if ($relativePath -match '^\.github/deprecated/') {
+            if ($relativePath -match '/deprecated/') {
+                continue
+            }
+
+            # Exclude repo-specific skills under .github/**/hve-core/
+            if ($relativePath -match '^\.github/.*/hve-core/') {
                 continue
             }
 

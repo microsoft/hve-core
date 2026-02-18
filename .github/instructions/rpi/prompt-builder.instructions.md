@@ -143,7 +143,7 @@ Characteristics:
 
 * Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
-* Typically live under `.github/agents/subagents/` to separate them from user-facing agents.
+* Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/rpi/subagents/`) to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Cannot run their own subagents; only the parent agent orchestrates subagent calls.

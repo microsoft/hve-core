@@ -40,9 +40,9 @@ copilot plugin install hve-core-all@hve-core
 | prompt-updater           | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research                                          |
 | rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core                                             |
 | task-implementor         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core                                                             |
+| task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
-| task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | security-plan-creator    | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
 | researcher-subagent      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                               |
 

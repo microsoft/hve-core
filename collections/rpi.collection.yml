@@ -24,13 +24,13 @@ items:
     kind: agent
   - path: .github/agents/rpi/prompt-builder.agent.md
     kind: agent
+  - path: .github/agents/rpi/task-researcher.agent.md
+    kind: agent
+  - path: .github/agents/rpi/task-implementor.agent.md
+    kind: agent
+  - path: .github/agents/rpi/task-reviewer.agent.md
+    kind: agent
   # Subagents
-  - path: .github/agents/rpi/subagents/task-researcher.agent.md
-    kind: agent
-  - path: .github/agents/rpi/subagents/task-implementor.agent.md
-    kind: agent
-  - path: .github/agents/rpi/subagents/task-reviewer.agent.md
-    kind: agent
   - path: .github/agents/rpi/subagents/rpi-validator.agent.md
     kind: agent
   - path: .github/agents/rpi/subagents/implementation-validator.agent.md

@@ -1123,6 +1123,14 @@ function Get-DiscoveredPrompts {
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
+
+        # Skip repo-specific prompts not intended for distribution
+        $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
+        if ($promptRelPath -like 'hve-core/*') {
+            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
+
         $maturity = "stable"
 
         if ($AllowedMaturities -notcontains $maturity) {
@@ -1253,6 +1261,12 @@ function Get-DiscoveredSkills {
         $skillDir = $skillFile.Directory
         $skillName = $skillDir.Name
         $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
+
+        # Skip repo-specific skills not intended for distribution
+        if ($skillRelPath -like 'hve-core/*') {
+            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
 
         $maturity = "stable"
 
