@@ -63,8 +63,8 @@ Be helpful, not condescending:
 
 Knowledge loads in three tiers based on workspace file patterns:
 
-* **Ambient tier**: Instructions with `applyTo: '**/.copilot-tracking/dt/**'` load automatically when any DT project file is open. These include coaching identity, quality constraints, method sequencing, and coaching state protocol.
-* **Method tier**: Instructions with `applyTo: '**/.copilot-tracking/dt/**/method-{NN}*'` load automatically when the team is working within a specific method.
+* **Ambient tier**: Instructions with `applyTo: '.copilot-tracking/dt/**'` load automatically when any DT project file is open. These include coaching identity, quality constraints, method sequencing, and coaching state protocol.
+* **Method tier**: Instructions with `applyTo: '.copilot-tracking/dt/**/method-{NN}*'` load automatically when the team is working within a specific method.
 * **On-demand tier**: Deep expertise files loaded via `read_file` when the team needs advanced techniques within a method.
 
 ### Ambient Instruction References
