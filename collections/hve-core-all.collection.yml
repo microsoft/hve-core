@@ -155,6 +155,8 @@ items:
   kind: instruction
 - path: .github/instructions/csharp/csharp.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
 - path: .github/instructions/git-merge.instructions.md
@@ -188,5 +190,5 @@ items:
 - path: .github/skills/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true
