@@ -68,7 +68,7 @@ artifacts: []
 
 #### Methods Completed
 
-List of method numbers the team has finished. A method is complete when the coach and team agree its outputs are sufficient to proceed. Methods may appear and later be revisited without removal from this list.
+List of method numbers the team has finished. A method is complete when the coach and team agree its outputs are sufficient to proceed. Once added, methods remain in this list even if they are revisited later.
 
 #### Transition Log
 
