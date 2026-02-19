@@ -24,6 +24,7 @@
   "chat.instructionsFilesLocations": {
     ".github/instructions/ado": true,
     ".github/instructions/coding-standards": true,
+    ".github/instructions/design-thinking": true,
     ".github/instructions/github": true,
     ".github/instructions/hve-core": true,
     ".github/instructions/rpi": true,

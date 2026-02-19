@@ -50,7 +50,7 @@ Present the following and await explicit consent:
 I'll help you install HVE-Core agents, prompts, and instructions.
 
 Available content:
-• 20+ specialized agents (task-researcher, task-planner, etc.)
+• 25+ specialized agents (task-researcher, task-planner, etc.)
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
 
@@ -500,22 +500,36 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 ### Settings Configuration
 
-After cloning, update `.vscode/settings.json` with this structure. Replace `<PREFIX>` with the settings path prefix from the method table:
+After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
+
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Include nested subdirectories such as `rpi/subagents`. Create one entry per subdirectory.
 
 <!-- <settings-template> -->
 ```json
 {
   "chat.agentFilesLocations": {
-    ".github/agents/**": true,
-    "<PREFIX>/.github/agents/**": true
+    "<PREFIX>/.github/agents/ado": true,
+    "<PREFIX>/.github/agents/data-science": true,
+    "<PREFIX>/.github/agents/github": true,
+    "<PREFIX>/.github/agents/installer": true,
+    "<PREFIX>/.github/agents/project-planning": true,
+    "<PREFIX>/.github/agents/rpi": true,
+    "<PREFIX>/.github/agents/rpi/subagents": true,
+    "<PREFIX>/.github/agents/security-planning": true
   },
   "chat.promptFilesLocations": {
-    ".github/prompts": true,
-    "<PREFIX>/.github/prompts": true
+    "<PREFIX>/.github/prompts/ado": true,
+    "<PREFIX>/.github/prompts/github": true,
+    "<PREFIX>/.github/prompts/rpi": true,
+    "<PREFIX>/.github/prompts/security-planning": true
   },
   "chat.instructionsFilesLocations": {
-    ".github/instructions": true,
-    "<PREFIX>/.github/instructions": true
+    "<PREFIX>/.github/instructions/ado": true,
+    "<PREFIX>/.github/instructions/coding-standards": true,
+    "<PREFIX>/.github/instructions/design-thinking": true,
+    "<PREFIX>/.github/instructions/github": true,
+    "<PREFIX>/.github/instructions/rpi": true,
+    "<PREFIX>/.github/instructions/shared": true
   }
 }
 ```
@@ -576,9 +590,30 @@ Add to devcontainer.json:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents/**": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/data-science": true,
+          "/workspaces/hve-core/.github/agents/github": true,
+          "/workspaces/hve-core/.github/agents/installer": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
+          "/workspaces/hve-core/.github/agents/rpi": true,
+          "/workspaces/hve-core/.github/agents/rpi/subagents": true,
+          "/workspaces/hve-core/.github/agents/security-planning": true
+        },
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/github": true,
+          "/workspaces/hve-core/.github/prompts/rpi": true,
+          "/workspaces/hve-core/.github/prompts/security-planning": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions/ado": true,
+          "/workspaces/hve-core/.github/instructions/coding-standards": true,
+          "/workspaces/hve-core/.github/instructions/design-thinking": true,
+          "/workspaces/hve-core/.github/instructions/github": true,
+          "/workspaces/hve-core/.github/instructions/rpi": true,
+          "/workspaces/hve-core/.github/instructions/shared": true
+        }
       }
     }
   }
@@ -1045,16 +1080,18 @@ Copying agents enables local customization and offline use.
   • task-researcher - Technical research and evidence gathering
   • task-planner - Implementation plan creation
   • task-implementor - Plan execution with tracking
+  • task-reviewer - Implementation review and validation
   • rpi-agent - RPI workflow coordinator
 
 📋 Planning & Documentation
-  • adr-creation, brd-builder, doc-ops, prd-builder, security-plan-creator
+  • adr-creation, agile-coach, brd-builder, doc-ops, prd-builder
+  • product-manager-advisor, security-plan-creator, ux-ui-designer
 
 ⚙️ Generators
   • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
-  • pr-review, prompt-builder, task-reviewer, test-streamlit-dashboard
+  • pr-review, prompt-builder, test-streamlit-dashboard
 
 🧠 Utilities
   • memory - Conversation memory and session continuity
@@ -1165,22 +1202,23 @@ Before copying, check for existing agent files with matching names. Generate a s
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-$sourceDir = "$hveCoreBasePath/.github/agents"
+$sourceBase = "$hveCoreBasePath/.github/agents"
 $targetDir = ".github/agents"
 
-# Get files to copy based on selection
+# Get files to copy based on selection (paths relative to agents/)
 $filesToCopy = switch ($selection) {
-    "rpi-core" { @("task-researcher.agent.md", "task-planner.agent.md", "task-implementor.agent.md", "task-reviewer.agent.md", "rpi-agent.agent.md") }
+    "rpi-core" { @("rpi/task-researcher.agent.md", "rpi/task-planner.agent.md", "rpi/task-implementor.agent.md", "rpi/task-reviewer.agent.md", "rpi/rpi-agent.agent.md") }
     default {
-        # Collection-based: $selection contains filtered agent names from collection manifest
+        # Collection-based: paths from collection manifest relative to agents/
         $collectionAgents
     }
 }
 
-# Check for collisions
+# Check for collisions (target uses filename only)
 $collisions = @()
 foreach ($file in $filesToCopy) {
-    $targetPath = Join-Path $targetDir $file
+    $fileName = Split-Path $file -Leaf
+    $targetPath = Join-Path $targetDir $fileName
     if (Test-Path $targetPath) { $collisions += $targetPath }
 }
 
@@ -1241,7 +1279,7 @@ After selection and collision resolution, execute the copy operation. Generate a
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-$sourceDir = "$hveCoreBasePath/.github/agents"
+$sourceBase = "$hveCoreBasePath/.github/agents"
 $targetDir = ".github/agents"
 $manifestPath = ".hve-tracking.json"
 
@@ -1260,20 +1298,21 @@ $manifest = @{
     files = @{}; skip = @()
 }
 
-# Copy files
+# Copy files (source paths are relative to agents/, target is flat)
 foreach ($file in $filesToCopy) {
-    $sourcePath = Join-Path $sourceDir $file
-    $targetPath = Join-Path $targetDir $file
-    $relPath = ".github/agents/$file"
+    $fileName = Split-Path $file -Leaf
+    $sourcePath = Join-Path $sourceBase $file
+    $targetPath = Join-Path $targetDir $fileName
+    $relPath = ".github/agents/$fileName"
 
     if ($keepExisting -and $collisions -contains $targetPath) {
-        Write-Host "⏭️ Kept existing: $file"; continue
+        Write-Host "⏭️ Kept existing: $fileName"; continue
     }
 
     Set-Content -Path $targetPath -Value (Get-Content $sourcePath -Raw) -NoNewline
     $hash = (Get-FileHash -Path $targetPath -Algorithm SHA256).Hash.ToLower()
     $manifest.files[$relPath] = @{ version = $manifest.version; sha256 = $hash; status = "managed" }
-    Write-Host "✅ Copied $file"
+    Write-Host "✅ Copied $fileName"
 }
 
 $manifest | ConvertTo-Json -Depth 10 | Set-Content $manifestPath
