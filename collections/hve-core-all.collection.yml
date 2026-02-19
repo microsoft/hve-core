@@ -85,6 +85,8 @@ items:
   kind: prompt
 - path: .github/prompts/checkpoint.prompt.md
   kind: prompt
+- path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+  kind: prompt
 - path: .github/prompts/doc-ops-update.prompt.md
   kind: prompt
 - path: .github/prompts/git-commit-message.prompt.md

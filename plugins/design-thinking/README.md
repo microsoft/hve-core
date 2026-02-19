@@ -9,6 +9,12 @@ Design Thinking coaching identity, quality constraints, and methodology instruct
 copilot plugin install design-thinking@hve-core
 ```
 
+## Commands
+
+| Command            | Description                                                                                                                        |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| dt-resume-coaching | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core |
+
 ## Instructions
 
 | Instruction          | Description                                                                                                                                                                                                                                |

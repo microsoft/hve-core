@@ -57,6 +57,7 @@ copilot plugin install hve-core-all@hve-core
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
 | checkpoint                                  | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
+| dt-resume-coaching                          | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core               |
 | doc-ops-update                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
 | git-commit-message                          | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                                 |
 | git-commit                                  | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
