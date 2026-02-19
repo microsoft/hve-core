@@ -78,11 +78,21 @@ if ($CodeCoverage.IsPresent) {
         $_.FullName -notmatch '\.Tests\.ps1$'
     } | Select-Object -ExpandProperty FullName
 
-    # Resolve skill script coverage paths from repo root
+    # Resolve skill script coverage paths from repo root.
+    # Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+    # so probe two fixed depths, matching test directory discovery above.
     $repoRoot = Split-Path $scriptRoot -Parent
     $skillsPath = Join-Path $repoRoot '.github/skills'
     if (Test-Path $skillsPath) {
-        $skillCoveragePaths = Get-ChildItem -Path $skillsPath -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        $skillRoots = @()
+        foreach ($depth in @('*', '*/*')) {
+            $pattern = Join-Path $skillsPath $depth 'scripts'
+            $skillRoots += @(Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer } |
+                ForEach-Object { $_.Parent })
+        }
+
+        $skillCoveragePaths = $skillRoots | ForEach-Object {
             $skillRoot = $_.FullName
             $skillScripts = Join-Path $skillRoot 'scripts'
             $paths = @()
