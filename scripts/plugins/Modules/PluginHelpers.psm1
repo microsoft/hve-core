@@ -12,32 +12,176 @@
 # Pure Functions (no file system side effects)
 # ---------------------------------------------------------------------------
 
+function Test-DeprecatedPath {
+    <#
+    .SYNOPSIS
+    Checks whether a file path contains a deprecated directory segment.
+
+    .DESCRIPTION
+    Returns true when the path contains a /deprecated/ or \deprecated\ segment,
+    indicating the artifact resides in a deprecated directory tree.
+
+    .PARAMETER Path
+    File path to check (absolute or relative, any slash style).
+
+    .OUTPUTS
+    [bool] True when the path contains a deprecated segment.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    return ($Path -match '[/\\]deprecated[/\\]')
+}
+
+function Test-HveCoreRepoSpecificPath {
+    <#
+    .SYNOPSIS
+    Checks whether a type-relative path belongs to the hve-core repo-specific directory.
+
+    .DESCRIPTION
+    Returns true when the type-relative path starts with hve-core/, indicating
+    it is a repo-specific artifact not intended for distribution.
+
+    .PARAMETER RelativePath
+    Type-relative path (relative to the agents/, prompts/, instructions/, or skills/ directory).
+
+    .OUTPUTS
+    [bool] True when the path is repo-specific.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    return ($RelativePath -like 'hve-core/*')
+}
+
+function Test-HveCoreRepoRelativePath {
+    <#
+    .SYNOPSIS
+    Checks whether a repo-relative path belongs to an hve-core repo-specific directory.
+
+    .DESCRIPTION
+    Returns true when the repo-relative path matches .github/**/hve-core/,
+    indicating it is a repo-specific artifact not intended for distribution.
+
+    .PARAMETER Path
+    Repo-relative path (e.g., .github/agents/hve-core/foo.agent.md).
+
+    .OUTPUTS
+    [bool] True when the path is under an hve-core repo-specific directory.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path
+    )
+
+    return ($Path -match '^\.github/.*/hve-core/')
+}
+
 function Get-CollectionManifest {
     <#
     .SYNOPSIS
-    Reads and parses a .collection.yml file.
+    Loads a collection manifest from a YAML or JSON file.
 
     .DESCRIPTION
-    Loads a collection manifest YAML file and returns its parsed content
-    as a hashtable using ConvertFrom-Yaml.
+    Reads and parses a collection manifest file that defines collection-based
+    artifact filtering rules. Supports both YAML (.yml/.yaml) and JSON (.json)
+    formats.
 
     .PARAMETER CollectionPath
-    Absolute or relative path to the .collection.yml file.
+    Path to the collection manifest file (YAML or JSON).
 
     .OUTPUTS
-    [hashtable] Parsed collection data with id, name, description, items, etc.
+    [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$CollectionPath
     )
 
-    $content = Get-Content -Path $CollectionPath -Raw
-    $manifest = ConvertFrom-Yaml -Yaml $content
+    if (-not (Test-Path $CollectionPath)) {
+        throw "Collection manifest not found: $CollectionPath"
+    }
 
-    return $manifest
+    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
+    if ($extension -in @('.yml', '.yaml')) {
+        $content = Get-Content -Path $CollectionPath -Raw
+        return ConvertFrom-Yaml -Yaml $content
+    }
+
+    $content = Get-Content -Path $CollectionPath -Raw
+    return $content | ConvertFrom-Json -AsHashtable
+}
+
+function Get-CollectionArtifactKey {
+    <#
+    .SYNOPSIS
+        Extracts a unique key from an artifact path based on its kind.
+
+    .DESCRIPTION
+        Produces the same key that extension packaging uses for deduplication.
+        Agents and prompts use the filename only; instructions use the
+        type-relative path; skills use the directory name.
+
+    .PARAMETER Kind
+        The artifact kind (agent, prompt, instruction, skill).
+
+    .PARAMETER Path
+        The repo-relative artifact path.
+
+    .OUTPUTS
+        [string] The artifact key.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    switch ($Kind) {
+        'agent' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
+        }
+        'prompt' {
+            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
+        }
+        'instruction' {
+            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
+        }
+        'skill' {
+            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
+        }
+        default {
+            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
+                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
+            }
+
+            if ($Path -like '*.md') {
+                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
+            }
+
+            return [System.IO.Path]::GetFileName($Path)
+        }
+    }
 }
 
 function Get-ArtifactFrontmatter {
@@ -179,7 +323,7 @@ function Get-ArtifactFiles {
 
     $items = @()
 
-    # Prompt-engineering artifacts discovered by .<kind>.md suffix under .github/
+    # AI artifacts discovered by .<kind>.md suffix under .github/
     # Keep explicit suffix mapping only where naming differs from manifest kind values.
     $gitHubDir = Join-Path -Path $RepoRoot -ChildPath '.github'
     if (Test-Path -Path $gitHubDir) {
@@ -197,11 +341,12 @@ function Get-ArtifactFiles {
             $kind = if ($suffixToKind.ContainsKey($suffix)) { $suffixToKind[$suffix] } else { $suffix }
             $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
 
-            # Exclude repo-specific artifacts under .github/**/hve-core/
-            if ($relativePath -match '^\.github/.*/hve-core/') {
+            if (Test-HveCoreRepoRelativePath -Path $relativePath) {
                 continue
             }
-
+            if (Test-DeprecatedPath -Path $relativePath) {
+                continue
+            }
             $items += @{ path = $relativePath; kind = $kind }
         }
     }
@@ -209,13 +354,19 @@ function Get-ArtifactFiles {
     # Skills (directories containing SKILL.md)
     $skillsDir = Join-Path -Path $RepoRoot -ChildPath '.github/skills'
     if (Test-Path -Path $skillsDir) {
-        $skillDirs = Get-ChildItem -Path $skillsDir -Directory
-        foreach ($dir in $skillDirs) {
-            $skillFile = Join-Path -Path $dir.FullName -ChildPath 'SKILL.md'
-            if (Test-Path -Path $skillFile) {
-                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
-                $items += @{ path = $relativePath; kind = 'skill' }
+        $skillMdFiles = Get-ChildItem -Path $skillsDir -Filter 'SKILL.md' -File -Recurse
+        foreach ($skillFile in $skillMdFiles) {
+            $dir = $skillFile.Directory
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $dir.FullName) -replace '\\', '/'
+
+            if (Test-DeprecatedPath -Path $relativePath) {
+                continue
             }
+            if (Test-HveCoreRepoRelativePath -Path $relativePath) {
+                continue
+            }
+
+            $items += @{ path = $relativePath; kind = 'skill' }
         }
     }
 
@@ -287,6 +438,9 @@ function Update-HveCoreAllCollection {
 
     # Discover all artifacts
     $allItems = Get-ArtifactFiles -RepoRoot $RepoRoot
+
+    # Exclude deprecated items by path (independent of maturity metadata)
+    $allItems = @($allItems | Where-Object { -not (Test-DeprecatedPath -Path $_.path) })
 
     # Filter deprecated based on existing collection item maturity metadata
     $existingItemMaturities = @{}
@@ -971,6 +1125,7 @@ Export-ModuleMember -Function @(
     'Get-AllCollections',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
+    'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
     'Get-PluginItemName',
     'Get-PluginSubdirectory',
@@ -981,6 +1136,9 @@ Export-ModuleMember -Function @(
     'New-RelativeSymlink',
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
+    'Test-DeprecatedPath',
+    'Test-HveCoreRepoRelativePath',
+    'Test-HveCoreRepoSpecificPath',
     'Update-HveCoreAllCollection',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'

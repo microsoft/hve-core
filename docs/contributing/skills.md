@@ -50,10 +50,10 @@ The following skill types will likely be **rejected**:
 
 ### Location
 
-All skill files **MUST** be placed in:
+Skill files are typically organized in a collection subdirectory by convention:
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Main skill definition (required)
 ├── scripts/                    # Executable scripts (optional)
 │   ├── <action>.ps1            # PowerShell script (required)
@@ -67,6 +67,10 @@ All skill files **MUST** be placed in:
 └── tests/
     └── <action>.Tests.ps1      # Pester unit tests (required for PowerShell)
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one `.ps1` file and **SHOULD** contain at least one `.sh` file for cross-platform support. Skills without scripts are valid and function as documentation-driven knowledge packages.
 
@@ -160,7 +164,8 @@ After creating your skill package, add an `items[]` entry in each target collect
 
 ```yaml
 items:
-  - path: .github/skills/my-skill
+  # path can reference artifacts from any subfolder
+  - path: .github/skills/{collection-id}/my-skill
     kind: skill
     maturity: stable
 ```
@@ -169,13 +174,13 @@ items:
 
 Choose collections based on who uses the skill's utilities:
 
-| Skill Type           | Recommended Collections              |
-|----------------------|--------------------------------------|
-| Media processing     | `hve-core-all`                       |
-| Documentation tools  | `hve-core-all`, `prompt-engineering` |
-| Data processing      | `hve-core-all`, `data-science`       |
-| Infrastructure tools | `hve-core-all`, `coding-standards`   |
-| Code generation      | `hve-core-all`, `coding-standards`   |
+| Skill Type           | Recommended Collections            |
+|----------------------|------------------------------------|
+| Media processing     | `hve-core-all`                     |
+| Documentation tools  | `hve-core-all`, `rpi`              |
+| Data processing      | `hve-core-all`, `data-science`     |
+| Infrastructure tools | `hve-core-all`, `coding-standards` |
+| Code generation      | `hve-core-all`, `coding-standards` |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
@@ -235,7 +240,7 @@ Shows basic usage with default settings:
 ## Quick Start
 
 \`\`\`bash
-./.github/skills/video-to-gif/convert.sh input.mp4
+./.github/skills/experimental/video-to-gif/convert.sh input.mp4
 \`\`\`
 ```
 
@@ -307,7 +312,7 @@ Bash scripts **MUST**:
 * Check for required dependencies
 * Handle platform differences (macOS vs Linux)
 
-See [bash.instructions.md](../../.github/instructions/bash/bash.instructions.md) for complete standards.
+See [bash.instructions.md](../../.github/instructions/coding-standards/bash/bash.instructions.md) for complete standards.
 
 ### PowerShell Scripts
 

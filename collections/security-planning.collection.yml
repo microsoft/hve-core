@@ -8,91 +8,15 @@ tags:
   - planning
 items:
   # Agents
-  - path: .github/agents/security-plan-creator.agent.md
-    kind: agent
-  # RPI agents
-  - path: .github/agents/rpi-agent.agent.md
-    kind: agent
-  - path: .github/agents/task-researcher.agent.md
-    kind: agent
-  - path: .github/agents/task-planner.agent.md
-    kind: agent
-  - path: .github/agents/task-implementor.agent.md
-    kind: agent
-  - path: .github/agents/task-reviewer.agent.md
-    kind: agent
-  - path: .github/agents/memory.agent.md
-    kind: agent
-  - path: .github/agents/pr-review.agent.md
-    kind: agent
-  # Prompt Engineering agents
-  - path: .github/agents/prompt-builder.agent.md
-    kind: agent
-  # Subagents
-  - path: .github/agents/subagents/rpi-validator.agent.md
-    kind: agent
-  - path: .github/agents/subagents/implementation-validator.agent.md
-    kind: agent
-  - path: .github/agents/subagents/plan-validator.agent.md
-    kind: agent
-  - path: .github/agents/subagents/researcher-subagent.agent.md
-    kind: agent
-  - path: .github/agents/subagents/phase-implementor.agent.md
-    kind: agent
-  - path: .github/agents/subagents/prompt-evaluator.agent.md
-    kind: agent
-  - path: .github/agents/subagents/prompt-tester.agent.md
-    kind: agent
-  - path: .github/agents/subagents/prompt-updater.agent.md
+  - path: .github/agents/security-planning/security-plan-creator.agent.md
     kind: agent
   # Prompts
-  - path: .github/prompts/incident-response.prompt.md
+  - path: .github/prompts/security-planning/incident-response.prompt.md
     kind: prompt
-  - path: .github/prompts/risk-register.prompt.md
+  - path: .github/prompts/security-planning/risk-register.prompt.md
     kind: prompt
-  # RPI prompts
-  - path: .github/prompts/rpi.prompt.md
-    kind: prompt
-  - path: .github/prompts/task-research.prompt.md
-    kind: prompt
-  - path: .github/prompts/task-plan.prompt.md
-    kind: prompt
-  - path: .github/prompts/task-implement.prompt.md
-    kind: prompt
-  - path: .github/prompts/task-review.prompt.md
-    kind: prompt
-  - path: .github/prompts/checkpoint.prompt.md
-    kind: prompt
-  # Git prompts
-  - path: .github/prompts/git-commit-message.prompt.md
-    kind: prompt
-  - path: .github/prompts/git-commit.prompt.md
-    kind: prompt
-  - path: .github/prompts/git-merge.prompt.md
-    kind: prompt
-  - path: .github/prompts/git-setup.prompt.md
-    kind: prompt
-  - path: .github/prompts/pull-request.prompt.md
-    kind: prompt
-  # Prompt Engineering prompts
-  - path: .github/prompts/prompt-analyze.prompt.md
-    kind: prompt
-  - path: .github/prompts/prompt-build.prompt.md
-    kind: prompt
-  - path: .github/prompts/prompt-refactor.prompt.md
-    kind: prompt
-  # Common instructions
-  - path: .github/instructions/writing-style.instructions.md
-    kind: instruction
-  - path: .github/instructions/markdown.instructions.md
-    kind: instruction
-  - path: .github/instructions/commit-message.instructions.md
-    kind: instruction
-  # Prompt Engineering instructions
-  - path: .github/instructions/prompt-builder.instructions.md
-    kind: instruction
-  # Git instructions
-  - path: .github/instructions/git-merge.instructions.md
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:
   ordering: manual

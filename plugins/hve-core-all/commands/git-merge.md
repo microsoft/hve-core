@@ -1,1 +1,1 @@
-../../../.github/prompts/git-merge.prompt.md
+../../../.github/prompts/rpi/git-merge.prompt.md
