@@ -11,8 +11,8 @@ copilot plugin install hve-core-installer@hve-core
 
 ## Skills
 
-| Skill | Description |
-| ----- | ----------- |
+| Skill              | Description        |
+|--------------------|--------------------|
 | hve-core-installer | hve-core-installer |
 
 ---

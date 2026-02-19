@@ -302,17 +302,17 @@ How would you like to receive updates? (auto/controlled)
 
 Use this matrix to determine the recommended method:
 
-| Environment                 | Team | Updates    | **Recommended Method**                                  |
-|-----------------------------|------|------------|---------------------------------------------------------|
-| Any (simplest)              | Any  | -          | **Extension Quick Install** (works in all environments) |
-| Local (no container)        | Solo | -          | **Method 1: Peer Clone**                                |
-| Local (no container)        | Team | Controlled | **Method 6: Submodule**                                 |
-| Local devcontainer          | Solo | Auto       | **Method 2: Git-Ignored**                               |
-| Local devcontainer          | Team | Controlled | **Method 6: Submodule**                                 |
-| Codespaces only             | Solo | Auto       | **Method 4: Codespaces**                                |
-| Codespaces only             | Team | Controlled | **Method 6: Submodule**                                 |
-| Both local + Codespaces     | Any  | Any        | **Method 5: Multi-Root Workspace**                      |
-| HVE-Core repo (Codespaces)  | -    | -          | **Method 4: Codespaces** (already configured)           |
+| Environment                | Team | Updates    | **Recommended Method**                                  |
+|----------------------------|------|------------|---------------------------------------------------------|
+| Any (simplest)             | Any  | -          | **Extension Quick Install** (works in all environments) |
+| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                |
+| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                 |
+| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                               |
+| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                 |
+| Codespaces only            | Solo | Auto       | **Method 4: Codespaces**                                |
+| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                 |
+| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                      |
+| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Codespaces** (already configured)           |
 
 ### Method Selection Logic
 
@@ -936,10 +936,10 @@ User input handling:
 
 ### Agent Bundle Definitions
 
-| Bundle            | Agents                                                                   |
-|-------------------|--------------------------------------------------------------------------|
+| Bundle            | Agents                                                                    |
+|-------------------|---------------------------------------------------------------------------|
 | `rpi-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
-| `collection:<id>` | Stable agents matching the collection                                    |
+| `collection:<id>` | Stable agents matching the collection                                     |
 
 ### Collision Detection
 
@@ -1174,16 +1174,16 @@ Proceeding to final success report...
 
 All scripts live under `scripts/` relative to this skill directory.
 
-| Script                   | Bash                       | PowerShell                    | Purpose                                  |
-|--------------------------|----------------------------|-------------------------------|------------------------------------------|
-| Environment detection    | `detect-environment.sh`    | `detect-environment.ps1`     | Detect local, devcontainer, or Codespaces |
-| Extension validation     | `validate-extension.sh`    | `validate-extension.ps1`    | Verify extension installation             |
-| Installation validation  | `validate-installation.sh` | `validate-installation.ps1` | Verify clone-based installation           |
-| Collision detection      | `detect-collision.sh`      | `detect-collision.ps1`      | Find existing agent files before copy     |
-| Agent copy               | `copy-agents.sh`           | `copy-agents.ps1`           | Copy agents and create tracking manifest  |
-| Upgrade detection        | `detect-upgrade.sh`        | `detect-upgrade.ps1`        | Check manifest version against source     |
-| File status check        | `check-file-status.sh`     | `check-file-status.ps1`     | Compare files against manifest hashes     |
-| Eject file               | `eject-file.sh`            | `eject-file.ps1`            | Remove file from upgrade tracking         |
+| Script                  | Bash                       | PowerShell                  | Purpose                                   |
+|-------------------------|----------------------------|-----------------------------|-------------------------------------------|
+| Environment detection   | `detect-environment.sh`    | `detect-environment.ps1`    | Detect local, devcontainer, or Codespaces |
+| Extension validation    | `validate-extension.sh`    | `validate-extension.ps1`    | Verify extension installation             |
+| Installation validation | `validate-installation.sh` | `validate-installation.ps1` | Verify clone-based installation           |
+| Collision detection     | `detect-collision.sh`      | `detect-collision.ps1`      | Find existing agent files before copy     |
+| Agent copy              | `copy-agents.sh`           | `copy-agents.ps1`           | Copy agents and create tracking manifest  |
+| Upgrade detection       | `detect-upgrade.sh`        | `detect-upgrade.ps1`        | Check manifest version against source     |
+| File status check       | `check-file-status.sh`     | `check-file-status.ps1`     | Compare files against manifest hashes     |
+| Eject file              | `eject-file.sh`            | `eject-file.ps1`            | Remove file from upgrade tracking         |
 
 ---
 
