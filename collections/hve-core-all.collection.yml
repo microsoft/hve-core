@@ -69,6 +69,8 @@ items:
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
   kind: agent
+- path: .github/agents/project-planning/system-architecture-reviewer.agent.md
+  kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
 - path: .github/agents/security-planning/security-plan-creator.agent.md
@@ -210,5 +212,5 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
