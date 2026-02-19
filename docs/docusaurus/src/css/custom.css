@@ -50,9 +50,17 @@ a:hover {
   text-decoration: underline;
 }
 
+a:visited {
+  color: var(--ms-learn-visited-link);
+}
+
 /* Navbar link hover: no underline in nav */
 .navbar__link:hover {
   text-decoration: none;
+}
+
+.navbar__link:visited {
+  color: inherit;
 }
 
 /* Navbar dark mode */
@@ -62,15 +70,15 @@ a:hover {
 }
 
 [data-theme='dark'] .navbar__title {
-  color: #e0e0e0;
+  color: #fff;
 }
 
 [data-theme='dark'] .navbar__link {
-  color: #e0e0e0;
+  color: #fff;
 }
 
 [data-theme='dark'] .navbar__link:hover {
-  color: #479ef5;
+  color: #75b6e7;
 }
 
 /* Footer: MS Learn-style warm gray background */
@@ -120,31 +128,31 @@ a:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
-/* Dark mode: derived from light palette with WCAG AA contrast verification */
+/* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */
 [data-theme='dark'] {
-  --ifm-color-primary: #479ef5;
-  --ifm-color-primary-dark: #0f6cbd;
-  --ifm-color-primary-darker: #115ea3;
-  --ifm-color-primary-darkest: #0c3b5e;
-  --ifm-color-primary-light: #62abf5;
-  --ifm-color-primary-lighter: #96c6fa;
+  --ifm-color-primary: #75b6e7;
+  --ifm-color-primary-dark: #479ef5;
+  --ifm-color-primary-darker: #2886c7;
+  --ifm-color-primary-darkest: #0f6cbd;
+  --ifm-color-primary-light: #96c6fa;
+  --ifm-color-primary-lighter: #b8d7f5;
   --ifm-color-primary-lightest: #cfe4fa;
-  --ifm-background-color: #1b1b1b;
-  --ifm-font-color-base: #e0e0e0;
-  --ifm-link-color: #479ef5;
-  --ifm-footer-background-color: #1f1f1f;
-  --ifm-card-background-color: #292929;
+  --ifm-background-color: #1f1f1f;
+  --ifm-font-color-base: #ffffff;
+  --ifm-link-color: #75b6e7;
+  --ifm-footer-background-color: #091f2c;
+  --ifm-card-background-color: #091f2c;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
   --ms-learn-hero-bg: #1a6fb5;
   --ms-learn-hero-gradient: linear-gradient(174.2deg, #1a6fb5 0%, #115ea3 66.72%, #0c3b5e);
   --ms-learn-hero-text: #ffffff;
-  --ms-learn-card-accent: #479ef5;
-  --ms-learn-card-border: #505050;
-  --ms-learn-text-subtle: #b0b0b0;
-  --ms-learn-section-bg: #252525;
-  --ms-learn-footer-bg: #1f1f1f;
-  --ms-learn-visited-link: #b4a0d6;
+  --ms-learn-card-accent: #75b6e7;
+  --ms-learn-card-border: #404040;
+  --ms-learn-text-subtle: #d2d2d2;
+  --ms-learn-section-bg: #292929;
+  --ms-learn-footer-bg: #091f2c;
+  --ms-learn-visited-link: #ac7ee1;
   --ms-learn-success: #2ea043;
   --ms-learn-danger: #f85149;
 }

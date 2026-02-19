@@ -7,6 +7,7 @@
   text-decoration: none;
   color: inherit;
   box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  min-height: 100px;
 }
 
 .card:hover {
@@ -28,7 +29,8 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 1rem;
-  padding: 0 16px;
+  padding: 16px 16px 0;
+  margin: -16px 0 18px;
 }
 
 .iconContainer {
@@ -47,16 +49,24 @@
   display: block;
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 3.6px;
+  font-weight: 400;
   color: inherit;
-  margin-bottom: 0.25rem;
+  margin: 16px 0 0;
+  line-height: 12px;
 }
 
 .cardTitle {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
+  display: block;
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 20px;
   color: var(--ifm-color-primary);
+}
+
+.card:visited .cardTitle {
+  color: var(--ms-learn-visited-link);
 }
 
 .cardDescription {

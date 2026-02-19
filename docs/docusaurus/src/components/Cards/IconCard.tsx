@@ -23,7 +23,7 @@ export default function IconCard({
         <div className={styles.iconContainer}>{icon}</div>
         <div className={styles.iconCardContent}>
           <span className={styles.supertitle}>{supertitle}</span>
-          <h3 className={styles.cardTitle}>{title}</h3>
+          <span className={styles.cardTitle}>{title}</span>
           {description && <p className={styles.cardDescription}>{description}</p>}
         </div>
       </div>
