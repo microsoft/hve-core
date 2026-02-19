@@ -3,6 +3,7 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 This collection includes instructions for:
 
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
+- **DT Coaching State** — Session persistence schema, method progress tracking, and session recovery protocol enabling the coach to resume seamlessly across conversations
 - **DT Method Sequencing** — Governs the nine-method sequence across three spaces, space boundary transition protocols with readiness signals, non-linear iteration patterns, method routing logic, and coaching state tracking
 - **DT Quality Constraints** — Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods
 - **DT Method 01: Scope Conversations** — Frozen vs fluid assessment, stakeholder discovery, constraint patterns, and conversation navigation for transforming initial customer requests into genuine understanding of business challenges

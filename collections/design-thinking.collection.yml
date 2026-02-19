@@ -14,6 +14,8 @@ items:
     kind: instruction
   - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
     kind: instruction
+  - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
+    kind: instruction
   - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
     kind: instruction
   - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
