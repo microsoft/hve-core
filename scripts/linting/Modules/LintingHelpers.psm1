@@ -116,25 +116,28 @@ function Get-FilesRecursive {
         [string]$GitIgnorePath
     )
 
-    $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -Force -ErrorAction SilentlyContinue
+    # git ls-files handles gitignore natively; parameter kept for callers
+    $null = $GitIgnorePath
 
-    # Apply gitignore filtering if provided
-    if ($GitIgnorePath -and (Test-Path $GitIgnorePath)) {
-        $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath $GitIgnorePath
-        
-        $files = $files | Where-Object {
-            $file = $_
-            $excluded = $false
-            
-            foreach ($pattern in $gitignorePatterns) {
-                if ($file.FullName -like $pattern) {
-                    $excluded = $true
-                    break
-                }
-            }
-            
-            -not $excluded
+    # Use git ls-files for fast, accurate file discovery that natively
+    # respects .gitignore and never follows symlinks
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($repoRoot) {
+        $gitArgs = @('ls-files', '--cached', '--others', '--exclude-standard')
+        foreach ($pattern in $Include) {
+            $gitArgs += $pattern
         }
+        $files = @(git @gitArgs | Where-Object { $_ } | ForEach-Object {
+            $fullPath = Join-Path $repoRoot $_
+            if (Test-Path $fullPath -PathType Leaf) {
+                Get-Item -LiteralPath $fullPath
+            }
+        })
+    }
+    else {
+        # Fallback for non-git contexts
+        $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -ErrorAction SilentlyContinue |
+            Where-Object { -not $_.LinkTarget }
     }
 
     return $files
