@@ -4,6 +4,23 @@
  * Dual-layer: Infima overrides + custom --ms-learn-* properties
  */
 
+/* Segoe UI Variable web font (matches MS Learn) */
+@font-face {
+  font-family: 'Segoe UI Variable Text';
+  src: url('https://learn.microsoft.com/static/third-party/SegoeUIVariable/SegoeUI-VF.ttf') format('truetype-variations');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SegoeUI';
+  src: url('https://learn.microsoft.com/static/third-party/SegoeUIWeb/1.01.206/SegoeUI-Roman-VF_web.woff2') format('woff2');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Layer 1: Infima variable overrides */
 :root {
   --ifm-color-primary: #0f6cbd;
@@ -22,6 +39,14 @@
   --ifm-font-family-base: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --ifm-heading-font-family: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Heading sizes to match MS Learn */
+  --ifm-h1-font-size: 2.5rem;
+  --ifm-h2-font-size: 1.125rem;
+  --ifm-h3-font-size: 1rem;
+  --ifm-h4-font-size: 0.875rem;
+  --ifm-heading-font-weight: 600;
+  --ifm-line-height-base: 1.3;
 
   /* Layer 2: Custom MS Learn properties */
   --ms-learn-hero-bg: #005ba1;
@@ -110,8 +135,7 @@ a:visited {
   font-weight: 400;
 }
 
-/* Replace filled triangle dropdown arrow with chevron */
-.navbar__link--active::after,
+/* Replace filled triangle dropdown arrow with chevron - only on dropdown items */
 .navbar__link[aria-expanded]::after {
   border: none;
   content: '';
@@ -149,10 +173,11 @@ a:visited {
 
 /* Sidebar: MS Learn-style */
 .menu__link {
-  font-size: 13px;
-  line-height: 20px;
-  padding: 4px 8px;
-  color: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 25.6px;
+  padding: 2px 0 2px 16px;
+  color: #e6e6e6;
 }
 
 .menu__link:hover {
@@ -163,8 +188,14 @@ a:visited {
   color: inherit;
 }
 
-.menu__list-item-collapsible > .menu__link {
+.menu__link--active {
   font-weight: 600;
+  color: var(--ifm-font-color-base);
+  background-color: var(--ms-learn-section-bg);
+}
+
+.menu__list-item-collapsible > .menu__link {
+  font-weight: 400;
 }
 
 /* Move caret/chevron to left side of label */
@@ -174,12 +205,29 @@ a:visited {
 
 .menu__caret {
   order: -1;
-  padding: 0 4px 0 0;
-  transform: scale(0.65);
+  padding: 0;
+  margin-right: -4px;
+  transform: scale(0.5);
 }
 
 .menu__link--sublist {
+  padding-left: 4px;
+}
+
+/* Child items indented */
+.menu__list .menu__list {
+  margin-left: 16px;
   padding-left: 0;
+}
+
+/* Sidebar container */
+.menu {
+  padding: 0 24px 24px;
+}
+
+.theme-doc-sidebar-menu {
+  position: sticky;
+  top: 24px;
 }
 
 /* Footer: MS Learn-style warm gray background */
@@ -205,10 +253,31 @@ a:visited {
   margin: 0 0.5rem;
 }
 
-/* TOC: "In this article" heading style */
+.breadcrumbs__link {
+  font-size: 14px;
+  color: var(--ifm-link-color);
+}
+
+/* Content area padding */
+.theme-doc-markdown {
+  padding: 24px 0;
+}
+
+/* TOC: "In this article" heading on right-side TOC */
 .table-of-contents {
   border-left: 2px solid var(--ms-learn-card-border);
   padding-left: 1rem;
+}
+
+.table-of-contents::before {
+  content: 'In this article';
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Article metadata styling */
