@@ -1,1 +1,1 @@
-../../../.github/prompts/prompt-build.prompt.md
+../../../.github/prompts/rpi/prompt-build.prompt.md

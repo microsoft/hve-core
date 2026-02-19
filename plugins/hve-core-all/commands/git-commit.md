@@ -1,1 +1,1 @@
-../../../.github/prompts/git-commit.prompt.md
+../../../.github/prompts/rpi/git-commit.prompt.md

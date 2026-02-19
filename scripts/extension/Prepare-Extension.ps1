@@ -62,6 +62,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../plugins/Modules/PluginHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -258,7 +259,7 @@ function Invoke-ExtensionCollectionsGeneration {
     $expectedFiles = @()
 
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         if ($collection -isnot [hashtable]) {
             throw "Collection manifest must be a hashtable: $($collectionFile.FullName)"
         }
@@ -300,7 +301,7 @@ function Invoke-ExtensionCollectionsGeneration {
     # Generate README files for each collection
     $readmeTemplatePath = Join-Path $templatesDir 'README.template.md'
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         $collectionId = [string]$collection.id
 
         $collectionMdPath = Join-Path $collectionsDir "$collectionId.collection.md"
@@ -582,41 +583,6 @@ function Test-CollectionMaturityEligible {
     }
 }
 
-function Get-CollectionManifest {
-    <#
-    .SYNOPSIS
-        Loads a collection manifest from a YAML or JSON file.
-    .DESCRIPTION
-        Reads and parses a collection manifest file that defines collection-based
-        artifact filtering rules for extension packaging. Supports both YAML
-        (.yml/.yaml) and JSON (.json) formats.
-    .PARAMETER CollectionPath
-        Path to the collection manifest file (YAML or JSON).
-    .OUTPUTS
-        [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$CollectionPath
-    )
-
-    if (-not (Test-Path $CollectionPath)) {
-        throw "Collection manifest not found: $CollectionPath"
-    }
-
-    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
-    if ($extension -in @('.yml', '.yaml')) {
-        $content = Get-Content -Path $CollectionPath -Raw
-        return ConvertFrom-Yaml -Yaml $content
-    }
-
-    $content = Get-Content -Path $CollectionPath -Raw
-    return $content | ConvertFrom-Json -AsHashtable
-}
-
 function Test-GlobMatch {
     <#
     .SYNOPSIS
@@ -647,59 +613,6 @@ function Test-GlobMatch {
         }
     }
     return $false
-}
-
-function Get-CollectionArtifactKey {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Kind,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    switch ($Kind) {
-        'agent' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
-        }
-        'prompt' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
-        }
-        'instruction' {
-            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
-        }
-        'skill' {
-            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
-        }
-        default {
-            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
-                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
-            }
-
-            if ($Path -like '*.md') {
-                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
-            }
-
-            return [System.IO.Path]::GetFileName($Path)
-        }
-    }
-}
-
-function Get-CollectionArtifactMaturity {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [hashtable]$CollectionItem
-    )
-
-    if ($CollectionItem.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionItem.maturity)) {
-        return [string]$CollectionItem.maturity
-    }
-
-    return 'stable'
 }
 
 function Get-CollectionArtifacts {
@@ -746,7 +659,7 @@ function Get-CollectionArtifacts {
         $kind = [string]$item.kind
         $path = [string]$item.path
 
-        $maturity = Get-CollectionArtifactMaturity -CollectionItem $item
+        $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
         if ($AllowedMaturities -notcontains $maturity) {
             continue
         }
@@ -799,15 +712,16 @@ function Resolve-HandoffDependencies {
 
     while ($queue.Count -gt 0) {
         $current = $queue.Dequeue()
-        $agentFile = Join-Path $AgentsDir "$current.agent.md"
+        $agentFileMatches = Get-ChildItem -Path $AgentsDir -Filter "$current.agent.md" -Recurse -File
+        $agentFile = $agentFileMatches | Select-Object -First 1
 
-        if (-not (Test-Path $agentFile)) {
-            Write-Warning "Handoff target agent file not found: $agentFile"
+        if (-not $agentFile) {
+            Write-Warning "Handoff target agent file not found: $current.agent.md"
             continue
         }
 
         # Parse handoffs from frontmatter
-        $content = Get-Content -Path $agentFile -Raw
+        $content = Get-Content -Path $agentFile.FullName -Raw
         if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
             try {
@@ -1042,9 +956,18 @@ function Get-DiscoveredAgents {
         return $result
     }
 
-    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" | Sort-Object Name
+    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
+    $agentFiles = $agentFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($agentFile in $agentFiles) {
+        $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
+
+        if (Test-HveCoreRepoSpecificPath -RelativePath $agentRelPath) {
+            $agentName = $agentFile.BaseName -replace '\.agent$', ''
+            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
+
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
 
         if ($ExcludedAgents -contains $agentName) {
@@ -1058,10 +981,9 @@ function Get-DiscoveredAgents {
             $result.Skipped += @{ Name = $agentName; Reason = "maturity: $maturity" }
             continue
         }
-
         $result.Agents += [PSCustomObject]@{
             name = $agentName
-            path = "./.github/agents/$($agentFile.Name)"
+            path = "./.github/agents/$agentRelPath"
         }
     }
 
@@ -1108,9 +1030,17 @@ function Get-DiscoveredPrompts {
     }
 
     $promptFiles = Get-ChildItem -Path $PromptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
+    $promptFiles = $promptFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
+
+        $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
+        if (Test-HveCoreRepoSpecificPath -RelativePath $promptRelPath) {
+            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (hve-core/)' }
+            continue
+        }
+
         $maturity = "stable"
 
         if ($AllowedMaturities -notcontains $maturity) {
@@ -1169,11 +1099,11 @@ function Get-DiscoveredInstructions {
     }
 
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
+    $instructionFiles = $instructionFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($instrFile in $instructionFiles) {
-        # Skip repo-specific instructions not intended for distribution
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
-        if ($instrRelPath -like 'hve-core/*') {
+        if (Test-HveCoreRepoSpecificPath -RelativePath $instrRelPath) {
             $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (hve-core/)' }
             continue
         }
@@ -1233,14 +1163,16 @@ function Get-DiscoveredSkills {
         return $result
     }
 
-    $skillDirs = Get-ChildItem -Path $SkillsDir -Directory | Sort-Object Name
+    $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
+    $skillFiles = $skillFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
-    foreach ($skillDir in $skillDirs) {
+    foreach ($skillFile in $skillFiles) {
+        $skillDir = $skillFile.Directory
         $skillName = $skillDir.Name
-        $skillFile = Join-Path $skillDir.FullName "SKILL.md"
+        $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
-        if (-not (Test-Path $skillFile)) {
-            $result.Skipped += @{ Name = $skillName; Reason = 'missing SKILL.md' }
+        if (Test-HveCoreRepoSpecificPath -RelativePath $skillRelPath) {
+            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (hve-core/)' }
             continue
         }
 
@@ -1253,7 +1185,7 @@ function Get-DiscoveredSkills {
 
         $result.Skills += [PSCustomObject]@{
             name = $skillName
-            path = "./.github/skills/$skillName"
+            path = "./.github/skills/$skillRelPath"
         }
     }
 
@@ -1608,7 +1540,7 @@ function Invoke-PrepareExtension {
             # resolve from the root YAML collection by ID.
             $rootCollectionPath = Join-Path $RepoRoot "collections/$($collectionManifest.id).collection.yml"
             if (Test-Path $rootCollectionPath) {
-                $artifactCollectionManifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $rootCollectionPath -Raw)
+                $artifactCollectionManifest = Get-CollectionManifest -CollectionPath $rootCollectionPath
                 Write-Host "Using root collection for items: $rootCollectionPath"
             }
             else {
@@ -1639,7 +1571,7 @@ function Invoke-PrepareExtension {
                 $itemKind = [string]$item.kind
                 $itemPath = [string]$item.path
                 $artifactKey = Get-CollectionArtifactKey -Kind $itemKind -Path $itemPath
-                $effectiveMaturity = Get-CollectionArtifactMaturity -CollectionItem $item
+                $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
                 if (-not $collectionMaturities.ContainsKey("${itemKind}s") -or $null -eq $collectionMaturities["${itemKind}s"]) {
                     $collectionMaturities["${itemKind}s"] = @{}
                 }

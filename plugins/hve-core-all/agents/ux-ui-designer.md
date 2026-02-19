@@ -1,1 +1,1 @@
-../../../.github/agents/ux-ui-designer.agent.md
+../../../.github/agents/project-planning/ux-ui-designer.agent.md
