@@ -132,7 +132,7 @@ Each collection manifest declares a top-level `tags` array for categorization an
 | `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
 | `installer`         | `installer`, `setup`, `onboarding`                                                   |
 | `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
-| `rpi`               | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
 | `security-planning` | `security`, `incident-response`, `risk`, `planning`                                  |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
@@ -232,7 +232,7 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 | **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution           |
 | **Installer**         | `installer`         | HVE Core installation and environment setup                                      |
 | **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations            |
-| **RPI Workflow**      | `rpi`               | Research, Plan, Implement, Review workflow agents and prompts                    |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                    |
 | **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                   |
 
 ### Collection Assignment Guidelines

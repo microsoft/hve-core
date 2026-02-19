@@ -177,7 +177,7 @@ Choose collections based on who uses the skill's utilities:
 | Skill Type           | Recommended Collections            |
 |----------------------|------------------------------------|
 | Media processing     | `hve-core-all`                     |
-| Documentation tools  | `hve-core-all`, `rpi`              |
+| Documentation tools  | `hve-core-all`, `hve-core`         |
 | Data processing      | `hve-core-all`, `data-science`     |
 | Infrastructure tools | `hve-core-all`, `coding-standards` |
 | Code generation      | `hve-core-all`, `coding-standards` |

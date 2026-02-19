@@ -55,7 +55,7 @@ copilot plugin marketplace add microsoft/hve-core
 copilot plugin install hve-core-all@hve-core
 
 # Or install individual collections
-copilot plugin install rpi@hve-core
+copilot plugin install hve-core@hve-core
 copilot plugin install ado@hve-core
 copilot plugin install coding-standards@hve-core
 ```

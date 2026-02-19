@@ -219,7 +219,7 @@ function Invoke-ExtensionCollectionsGeneration {
         Generates collection package files from root collection manifests.
     .DESCRIPTION
         Reads the package template and each collections/*.collection.yml file,
-        producing extension/package.json (for hve-core-all) and
+        producing extension/package.json (for hve-core) and
         extension/package.{id}.json for every other collection. Stale collection
         files are removed.
     .PARAMETER RepoRoot

@@ -201,8 +201,6 @@ items:
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
-- path: .github/instructions/workflows.instructions.md
-  kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill
 display:

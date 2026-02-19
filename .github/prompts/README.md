@@ -31,16 +31,16 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Onboarding & Planning
 
-- **[Task Research](./rpi/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
-- **[Task Plan](./rpi/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
-- **[Task Implement](./rpi/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
+- **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
+- **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
+- **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
 
 ### Source Control & Commit Quality
 
-- **[Git Commit (Stage + Commit)](./rpi/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
-- **[Git Commit Message Generator](./rpi/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
-- **[Git Merge](./rpi/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
-- **[Git Setup](./rpi/git-setup.prompt.md)** - Verification-first Git configuration assistant
+- **[Git Commit (Stage + Commit)](./hve-core/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
+- **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
+- **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
+- **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
 
 ### Azure DevOps Integration
 
@@ -66,7 +66,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Documentation & Process
 
-- **[Pull Request](./rpi/pull-request.prompt.md)** - PR description and review assistance
+- **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
 - **[Risk Register](./security-planning/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Custom Agents
@@ -77,17 +77,17 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Quick Start
 
-1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./rpi/task-research.prompt.md)
-2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./rpi/task-plan.prompt.md)
-3. **Executing a plan?** Use `/task-implement` to execute plans with [Task Implement](./rpi/task-implement.prompt.md)
-4. **Committing changes?** Use [Git Commit Message Generator](./rpi/git-commit-message.prompt.md) or [Git Commit](./rpi/git-commit.prompt.md)
-5. **Handling merge conflicts?** Use [Git Merge](./rpi/git-merge.prompt.md)
-6. **Setting up Git?** Use [Git Setup](./rpi/git-setup.prompt.md)
+1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./hve-core/task-research.prompt.md)
+2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./hve-core/task-plan.prompt.md)
+3. **Executing a plan?** Use `/task-implement` to execute plans with [Task Implement](./hve-core/task-implement.prompt.md)
+4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
+5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
+6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
 7. **Tracking your work?** Run [ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)
 8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)
 9. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
 10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
-11. **Working on PRs?** Use [Pull Request](./rpi/pull-request.prompt.md)
+11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
 12. **Responding to Azure incidents?** Use [Incident Response](./security-planning/incident-response.prompt.md)
 
 ## Related Resources
