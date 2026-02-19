@@ -1,6 +1,7 @@
 ---
 description: 'Method 1 Scope Conversations coaching knowledge for Design Thinking: frozen vs fluid assessment, stakeholder discovery, constraint patterns, and conversation navigation'
 applyTo: '**/.copilot-tracking/dt/**/method-01*'
+maturity: preview
 ---
 
 # DT Method 01: Scope Conversations
@@ -164,6 +165,12 @@ Environmental constraints often reveal why initial solution requests will not wo
 
 * Agreeing on solutions or implementation details.
 * Locking into the initial request without exploring alternatives.
+
+## Quality Rules
+
+* Classify constraints as frozen (fixed, non-negotiable) or fluid (malleable, open to change) before proceeding
+* Success indicator: the customer shares context they had not originally planned to discuss. The initial request evolves or becomes more nuanced.
+* Document the original request alongside the discovered problem space. The gap between them reveals understanding depth.
 
 ## Success Indicators
 
