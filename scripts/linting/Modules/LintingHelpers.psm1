@@ -116,18 +116,46 @@ function Get-FilesRecursive {
         [string]$GitIgnorePath
     )
 
-    # git ls-files handles gitignore natively; parameter kept for callers
-    $null = $GitIgnorePath
-
-    # Use git ls-files for fast, accurate file discovery that natively
-    # respects .gitignore and never follows symlinks
+    # Determine whether $Path resides inside the current git repository
     $repoRoot = git rev-parse --show-toplevel 2>$null
-    if ($repoRoot) {
+    $resolved = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
+    $resolvedPath = if ($resolved) { $resolved.Path } else { $null }
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    $useGit = $repoRoot -and $resolvedPath -and (
+        $resolvedPath -eq $repoRoot -or
+        $resolvedPath.StartsWith("$repoRoot$sep")
+    )
+
+    if ($useGit) {
+        # git ls-files natively respects .gitignore via --exclude-standard
+        $relPath = if ($resolvedPath -eq $repoRoot) { '' }
+                   else { $resolvedPath.Substring($repoRoot.Length + 1) }
+
         $gitArgs = @('ls-files', '--cached', '--others', '--exclude-standard')
-        foreach ($pattern in $Include) {
-            $gitArgs += $pattern
+        if ($relPath) {
+            $gitArgs += '--'
+            $gitArgs += "$relPath/"
         }
-        $files = @(git @gitArgs | Where-Object { $_ } | ForEach-Object {
+        else {
+            foreach ($pattern in $Include) {
+                $gitArgs += $pattern
+            }
+        }
+
+        $rawFiles = @(git @gitArgs | Where-Object { $_ })
+
+        # When scoped to a subdirectory, filter by Include patterns
+        if ($relPath) {
+            $rawFiles = @($rawFiles | Where-Object {
+                $name = [System.IO.Path]::GetFileName($_)
+                foreach ($p in $Include) {
+                    if ($name -like $p) { return $true }
+                }
+                return $false
+            })
+        }
+
+        $files = @($rawFiles | ForEach-Object {
             $fullPath = Join-Path $repoRoot $_
             if (Test-Path $fullPath -PathType Leaf) {
                 Get-Item -LiteralPath $fullPath
@@ -135,9 +163,22 @@ function Get-FilesRecursive {
         })
     }
     else {
-        # Fallback for non-git contexts
+        # Fallback for non-git contexts or paths outside the repository
         $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -ErrorAction SilentlyContinue |
             Where-Object { -not $_.LinkTarget }
+
+        if ($GitIgnorePath) {
+            $patterns = Get-GitIgnorePatterns -GitIgnorePath $GitIgnorePath
+            if ($patterns) {
+                $files = @($files | Where-Object {
+                    $fullName = $_.FullName
+                    foreach ($p in $patterns) {
+                        if ($fullName -like $p) { return $false }
+                    }
+                    return $true
+                })
+            }
+        }
     }
 
     return $files
