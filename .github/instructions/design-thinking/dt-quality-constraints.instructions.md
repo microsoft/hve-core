@@ -1,7 +1,6 @@
 ---
 description: 'Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods'
 applyTo: '**/.copilot-tracking/dt/**'
-maturity: preview
 ---
 
 # DT Quality Constraints

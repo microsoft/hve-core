@@ -1,7 +1,6 @@
 ---
 description: 'Required instructions when working with or doing any Design Thinking (DT); Contains instructions for the Design Thinking coach identity, philosophy, and user interaction and communication requirements for consistent coaching behavior.'
 applyTo: '**/.copilot-tracking/dt/**'
-maturity: preview
 ---
 
 # DT Coaching Identity

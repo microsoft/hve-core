@@ -1,7 +1,6 @@
 ---
 description: 'Method 2 Design Research coaching knowledge: interview techniques, research planning, environmental observation, and insight extraction patterns'
 applyTo: '**/.copilot-tracking/dt/**/method-02*'
-maturity: preview
 ---
 
 # DT Method 02: Design Research

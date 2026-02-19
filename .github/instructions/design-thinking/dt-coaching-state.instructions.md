@@ -1,7 +1,6 @@
 ---
 description: 'Coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery'
 applyTo: '**/.copilot-tracking/dt/**/coaching-state.md'
-maturity: preview
 ---
 
 # DT Coaching State Protocol

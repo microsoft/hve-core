@@ -1,7 +1,6 @@
 ---
 description: 'Method 3 Input Synthesis coaching knowledge: pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness'
 applyTo: '**/.copilot-tracking/dt/**/method-03*'
-maturity: preview
 ---
 
 # DT Method 03: Input Synthesis

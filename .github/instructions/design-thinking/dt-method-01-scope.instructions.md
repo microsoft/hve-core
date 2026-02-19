@@ -1,7 +1,6 @@
 ---
 description: 'Method 1 Scope Conversations coaching knowledge for Design Thinking: frozen vs fluid assessment, stakeholder discovery, constraint patterns, and conversation navigation'
 applyTo: '**/.copilot-tracking/dt/**/method-01*'
-maturity: preview
 ---
 
 # DT Method 01: Scope Conversations
