@@ -10,7 +10,7 @@
   inset: 0;
   background-image: var(--ms-learn-hero-pattern);
   background-repeat: repeat;
-  background-size: 200px;
+  background-size: 50px;
   pointer-events: none;
 }
 

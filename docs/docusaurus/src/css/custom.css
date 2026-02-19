@@ -27,7 +27,7 @@
   --ms-learn-hero-bg: #005ba1;
   --ms-learn-hero-gradient: linear-gradient(174.2deg, #005ba1 0%, #004d88 66.72%, #003e6e);
   --ms-learn-hero-text: #ffffff;
-  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpath d='M0 10h20M10 0v20' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.08' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --ms-learn-card-accent: #0078d4;
   --ms-learn-card-border: #e6e6e6;
   --ms-learn-text-subtle: #505050;
@@ -63,10 +63,57 @@ a:visited {
   color: inherit;
 }
 
+/* Navbar: MS Learn-style sizing */
+.navbar {
+  height: 54px;
+  padding: 0 24px;
+}
+
+.navbar__brand {
+  gap: 0;
+}
+
+.navbar__logo {
+  margin-right: 8px;
+  padding-right: 8px;
+  border-right: 2px solid #161616;
+  height: 24px;
+}
+
+.navbar__title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.navbar__link {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Replace filled triangle dropdown arrow with chevron */
+.navbar__link--active::after,
+.navbar__link[aria-expanded]::after {
+  border: none;
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  margin-left: 6px;
+  margin-bottom: 4px;
+  vertical-align: middle;
+}
+
 /* Navbar dark mode */
 [data-theme='dark'] .navbar {
   background-color: #1f1f1f;
   border-bottom: 1px solid var(--ms-learn-card-border);
+}
+
+[data-theme='dark'] .navbar__logo {
+  border-right-color: #fff;
 }
 
 [data-theme='dark'] .navbar__title {

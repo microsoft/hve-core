@@ -69,8 +69,8 @@ const config = {
         logo: {
           alt: 'Microsoft',
           src: 'img/microsoft-logo.svg',
-          width: 24,
-          height: 24,
+          width: 26,
+          height: 26,
         },
         items: [
           {
