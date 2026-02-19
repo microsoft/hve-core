@@ -98,16 +98,16 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
 
         # Create artifact directories and files referenced by test collections
         $instrDir = Join-Path $script:repoRoot '.github/instructions'
-        $hveCoreInstrDir = Join-Path $instrDir 'hve-core'
+        $repoInstrDir = Join-Path $instrDir '_repo'
         $agentsDir = Join-Path $script:repoRoot '.github/agents'
-        $hveCoreAgentsDir = Join-Path $agentsDir 'hve-core'
+        $repoAgentsDir = Join-Path $agentsDir '_repo'
 
-        New-Item -ItemType Directory -Path $hveCoreInstrDir -Force | Out-Null
-        New-Item -ItemType Directory -Path $hveCoreAgentsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $repoInstrDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $repoAgentsDir -Force | Out-Null
 
-        Set-Content -Path (Join-Path $hveCoreInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
+        Set-Content -Path (Join-Path $repoInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
         Set-Content -Path (Join-Path $instrDir 'hve-core-location.instructions.md') -Value '---\ndescription: shared\n---'
-        Set-Content -Path (Join-Path $hveCoreAgentsDir 'some.agent.md') -Value '---\ndescription: repo-specific agent\n---'
+        Set-Content -Path (Join-Path $repoAgentsDir 'some.agent.md') -Value '---\ndescription: repo-specific agent\n---'
         Set-Content -Path (Join-Path $agentsDir 'good.agent.md') -Value '---\ndescription: good agent\n---'
     }
 
@@ -119,14 +119,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
     }
 
-    It 'Fails validation for instruction under .github/instructions/hve-core/' {
+    It 'Fails validation for instruction under .github/instructions/_repo/' {
         $manifest = [ordered]@{
             id          = 'test-reject-instr'
             name        = 'Test Reject Instruction'
             description = 'Tests repo-specific instruction rejection'
             items       = @(
                 [ordered]@{
-                    path = '.github/instructions/hve-core/workflows.instructions.md'
+                    path = '.github/instructions/_repo/workflows.instructions.md'
                     kind = 'instruction'
                 }
             )
@@ -139,7 +139,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 
-    It 'Does NOT reject hve-core-location.instructions.md (not under hve-core/ subdirectory)' {
+    It 'Does NOT reject hve-core-location.instructions.md (not under _repo/ subdirectory)' {
         $manifest = [ordered]@{
             id          = 'test-allow-location'
             name        = 'Test Allow Location'
@@ -158,14 +158,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.Success | Should -BeTrue
     }
 
-    It 'Fails validation for agent under .github/agents/hve-core/' {
+    It 'Fails validation for agent under .github/agents/_repo/' {
         $manifest = [ordered]@{
             id          = 'test-reject-agent'
             name        = 'Test Reject Agent'
             description = 'Tests repo-specific agent rejection'
             items       = @(
                 [ordered]@{
-                    path = '.github/agents/hve-core/some.agent.md'
+                    path = '.github/agents/_repo/some.agent.md'
                     kind = 'agent'
                 }
             )
@@ -178,7 +178,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 
-    It 'Passes validation for agent NOT under hve-core/ subdirectory' {
+    It 'Passes validation for agent NOT under _repo/ subdirectory' {
         $manifest = [ordered]@{
             id          = 'test-allow-agent'
             name        = 'Test Allow Agent'

@@ -6,7 +6,7 @@ BeforeAll {
     Import-Module $PSScriptRoot/../../plugins/Modules/PluginHelpers.psm1 -Force
 }
 
-Describe 'Get-ArtifactFiles - hve-core path exclusion' {
+Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo'
         $ghDir = Join-Path $script:repoRoot '.github'
@@ -21,15 +21,15 @@ Describe 'Get-ArtifactFiles - hve-core path exclusion' {
         New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
         Set-Content -Path (Join-Path $instrDir 'shared.instructions.md') -Value '---\ndescription: shared\n---'
 
-        # Create repo-specific files under .github/instructions/hve-core/
-        $hveCoreInstrDir = Join-Path $instrDir 'hve-core'
-        New-Item -ItemType Directory -Path $hveCoreInstrDir -Force | Out-Null
-        Set-Content -Path (Join-Path $hveCoreInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
+        # Create repo-specific files under .github/instructions/_repo/
+        $repoInstrDir = Join-Path $instrDir '_repo'
+        New-Item -ItemType Directory -Path $repoInstrDir -Force | Out-Null
+        Set-Content -Path (Join-Path $repoInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
 
-        # Create repo-specific files under .github/agents/hve-core/
-        $hveCoreAgentsDir = Join-Path $agentsDir 'hve-core'
-        New-Item -ItemType Directory -Path $hveCoreAgentsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $hveCoreAgentsDir 'internal.agent.md') -Value '---\ndescription: repo-specific agent\n---'
+        # Create repo-specific files under .github/agents/_repo/
+        $repoAgentsDir = Join-Path $agentsDir '_repo'
+        New-Item -ItemType Directory -Path $repoAgentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $repoAgentsDir 'internal.agent.md') -Value '---\ndescription: repo-specific agent\n---'
 
         # Create a prompt file
         $promptsDir = Join-Path $ghDir 'prompts'
@@ -37,16 +37,27 @@ Describe 'Get-ArtifactFiles - hve-core path exclusion' {
         Set-Content -Path (Join-Path $promptsDir 'gen-plan.prompt.md') -Value '---\ndescription: prompt\n---'
     }
 
-    It 'Excludes files under .github/instructions/hve-core/' {
+    It 'Excludes files under .github/instructions/_repo/' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Not -Contain '.github/instructions/hve-core/workflows.instructions.md'
+        $paths | Should -Not -Contain '.github/instructions/_repo/workflows.instructions.md'
     }
 
-    It 'Excludes files under .github/agents/hve-core/' {
+    It 'Excludes files under .github/agents/_repo/' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Not -Contain '.github/agents/hve-core/internal.agent.md'
+        $paths | Should -Not -Contain '.github/agents/_repo/internal.agent.md'
+    }
+
+    It 'Does NOT exclude files under .github/agents/hve-core/' {
+        # Regression: hve-core/ is now a distributable directory, not repo-specific
+        $hveCoreAgentsDir = Join-Path $script:repoRoot '.github/agents/hve-core'
+        New-Item -ItemType Directory -Path $hveCoreAgentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $hveCoreAgentsDir 'distributable.agent.md') -Value '---\ndescription: distributable\n---'
+
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/agents/hve-core/distributable.agent.md'
     }
 
     It 'Includes shared instruction files' {
@@ -55,7 +66,7 @@ Describe 'Get-ArtifactFiles - hve-core path exclusion' {
         $paths | Should -Contain '.github/instructions/shared.instructions.md'
     }
 
-    It 'Includes non-hve-core agent files' {
+    It 'Includes non-repo-specific agent files' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
         $paths | Should -Contain '.github/agents/good.agent.md'
@@ -167,46 +178,54 @@ Describe 'Test-DeprecatedPath' {
 }
 
 Describe 'Test-HveCoreRepoSpecificPath' {
-    It 'Returns true for path starting with hve-core/' {
-        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/workflows.instructions.md' | Should -BeTrue
+    It 'Returns true for path starting with _repo/' {
+        Test-HveCoreRepoSpecificPath -RelativePath '_repo/workflows.instructions.md' | Should -BeTrue
     }
 
-    It 'Returns false for path not starting with hve-core/' {
+    It 'Returns false for path not starting with _repo/' {
         Test-HveCoreRepoSpecificPath -RelativePath 'rpi/active.agent.md' | Should -BeFalse
     }
 
-    It 'Returns false when hve-core appears mid-path' {
-        Test-HveCoreRepoSpecificPath -RelativePath 'shared/hve-core/foo.md' | Should -BeFalse
+    It 'Returns false when _repo appears mid-path' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'shared/_repo/foo.md' | Should -BeFalse
     }
 
-    It 'Returns true for nested path under hve-core/' {
-        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/deep/nested.md' | Should -BeTrue
+    It 'Returns true for nested path under _repo/' {
+        Test-HveCoreRepoSpecificPath -RelativePath '_repo/deep/nested.md' | Should -BeTrue
+    }
+
+    It 'Returns false for hve-core/ path (no longer excluded)' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/workflows.instructions.md' | Should -BeFalse
     }
 }
 
 Describe 'Test-HveCoreRepoRelativePath' {
-    It 'Returns true for .github/agents/hve-core/ path' {
-        Test-HveCoreRepoRelativePath -Path '.github/agents/hve-core/internal.agent.md' | Should -BeTrue
+    It 'Returns true for .github/agents/_repo/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/_repo/internal.agent.md' | Should -BeTrue
     }
 
-    It 'Returns true for .github/instructions/hve-core/ path' {
-        Test-HveCoreRepoRelativePath -Path '.github/instructions/hve-core/workflows.instructions.md' | Should -BeTrue
+    It 'Returns true for .github/instructions/_repo/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/instructions/_repo/workflows.instructions.md' | Should -BeTrue
     }
 
-    It 'Returns true for .github/prompts/hve-core/ path' {
-        Test-HveCoreRepoRelativePath -Path '.github/prompts/hve-core/internal.prompt.md' | Should -BeTrue
+    It 'Returns true for .github/prompts/_repo/ path' {
+        Test-HveCoreRepoRelativePath -Path '.github/prompts/_repo/internal.prompt.md' | Should -BeTrue
     }
 
     It 'Returns false for non-.github path' {
         Test-HveCoreRepoRelativePath -Path 'scripts/plugins/foo.ps1' | Should -BeFalse
     }
 
-    It 'Returns false for .github path without hve-core segment' {
+    It 'Returns false for .github path without _repo segment' {
         Test-HveCoreRepoRelativePath -Path '.github/agents/rpi/active.agent.md' | Should -BeFalse
     }
 
-    It 'Returns false for hve-core at wrong nesting level' {
-        Test-HveCoreRepoRelativePath -Path '.github/hve-core/foo.md' | Should -BeFalse
+    It 'Returns false for _repo at wrong nesting level' {
+        Test-HveCoreRepoRelativePath -Path '.github/_repo/foo.md' | Should -BeFalse
+    }
+
+    It 'Returns false for .github/agents/hve-core/ path (no longer excluded)' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/hve-core/distributable.agent.md' | Should -BeFalse
     }
 }
 

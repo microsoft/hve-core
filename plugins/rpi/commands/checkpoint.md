@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/checkpoint.prompt.md

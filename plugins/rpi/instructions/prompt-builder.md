@@ -1,1 +1,0 @@
-../../../.github/instructions/rpi/prompt-builder.instructions.md

@@ -937,11 +937,11 @@ Describe 'Get-CollectionReadmePath' {
         }
     }
 
-    It 'Returns null for hve-core-all collection' {
+    It 'Returns null for hve-core collection' {
         $collectionPath = Join-Path $script:testDir 'collection.yml'
         @"
-id: hve-core-all
-name: all
+id: hve-core
+name: core
 "@ | Set-Content $collectionPath
 
         $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir

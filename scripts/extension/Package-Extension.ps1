@@ -260,7 +260,7 @@ function Get-CollectionReadmePath {
         Resolves the collection-specific README path from a collection manifest.
     .DESCRIPTION
         Maps a collection manifest to its collection-specific README file. Returns
-        null when the collection is the full package (hve-core-all) or when no
+        null when the collection is the flagship package (hve-core) or when no
         matching collection README exists on disk. Supports both YAML and JSON
         manifest formats.
     .PARAMETER CollectionPath
@@ -283,8 +283,8 @@ function Get-CollectionReadmePath {
     $manifest = Get-CollectionManifest -CollectionPath $CollectionPath
     $collectionId = $manifest.id
 
-    # Full package uses the default README.md
-    if ($collectionId -eq 'hve-core-all') {
+    # Flagship package uses the default README.md
+    if ($collectionId -eq 'hve-core') {
         return $null
     }
 

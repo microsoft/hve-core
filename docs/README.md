@@ -61,7 +61,7 @@ Research, Plan, Implement (RPI) is a structured methodology for complex AI-assis
 
 HVE Core provides a structured approach to building AI artifacts with protocol patterns, input variables, and maturity lifecycle management.
 
-* [Prompt Builder Agent](../.github/agents/rpi/prompt-builder.agent.md) - Interactive artifact creation with sandbox testing
+* [Prompt Builder Agent](../.github/agents/hve-core/prompt-builder.agent.md) - Interactive artifact creation with sandbox testing
 * [AI Artifacts Overview](contributing/ai-artifacts-common.md) - Common patterns across artifact types
 * [Activation Context](architecture/ai-artifacts.md#activation-context) - When artifacts activate within workflows
 

@@ -62,7 +62,7 @@ User-facing documentation guides teams through installation, configuration, and 
 
 ### GitHub Assets
 
-The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations. All artifact types are organized into `{collection-id}` subdirectories by convention (e.g., `.github/agents/rpi/`, `.github/instructions/coding-standards/`).
+The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations. All artifact types are organized into `{collection-id}` subdirectories by convention (e.g., `.github/agents/hve-core/`, `.github/instructions/coding-standards/`).
 
 Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns. By convention, skills are organized under `.github/skills/{collection-id}/{skill-name}/`.
 

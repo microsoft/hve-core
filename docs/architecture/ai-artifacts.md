@@ -238,10 +238,10 @@ Each collection item defines inclusion metadata for artifact selection and relea
 
 ```yaml
 items:
-    - path: .github/agents/rpi/rpi-agent.agent.md
+    - path: .github/agents/hve-core/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/rpi/task-plan.prompt.md
+    - path: .github/prompts/hve-core/task-plan.prompt.md
         kind: prompt
         maturity: preview
 ```

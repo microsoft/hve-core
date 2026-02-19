@@ -57,7 +57,7 @@ Instruction files are typically organized in a collection subdirectory by conven
 **Examples**:
 
 * `.github/instructions/coding-standards/python-script.instructions.md`
-* `.github/instructions/rpi/markdown.instructions.md`
+* `.github/instructions/hve-core/markdown.instructions.md`
 * `.github/instructions/coding-standards/csharp/csharp.instructions.md`
 * `.github/instructions/coding-standards/bash/bash.instructions.md`
 

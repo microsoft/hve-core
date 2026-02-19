@@ -20,14 +20,6 @@ copilot plugin install hve-core-all@hve-core
 | test-streamlit-dashboard | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                              |
 | dt-coach                 | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core                                                          |
 | github-backlog-manager   | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core                                              |
-| hve-core-installer       | Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core                                             |
-| adr-creation             | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
-| agile-coach              | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
-| arch-diagram-builder     | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
-| brd-builder              | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
-| prd-builder              | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
-| product-manager-advisor  | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                      |
-| ux-ui-designer           | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
 | doc-ops                  | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                          |
 | memory                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                              |
 | pr-review                | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                              |
@@ -45,6 +37,14 @@ copilot plugin install hve-core-all@hve-core
 | task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
+| hve-core-installer       | Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core                                             |
+| adr-creation             | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
+| agile-coach              | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
+| arch-diagram-builder     | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
+| brd-builder              | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
+| prd-builder              | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
+| product-manager-advisor  | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                      |
+| ux-ui-designer           | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
 | security-plan-creator    | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
 
 ## Commands
@@ -115,6 +115,7 @@ copilot plugin install hve-core-all@hve-core
 | prompt-builder           | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
 | writing-style            | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
 | hve-core-location        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| workflows                | Required instructions for GitHub Actions workflow files in hve-core repository                                                                                                                                                                              |
 
 ## Skills
 
