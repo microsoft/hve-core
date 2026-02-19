@@ -154,9 +154,6 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/uv-projects.instructions.md
   kind: instruction
-- path: .github/instructions/github/community-interaction.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
@@ -165,6 +162,9 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
   kind: instruction
+- path: .github/instructions/github/community-interaction.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/github/github-backlog-discovery.instructions.md
   kind: instruction
   maturity: experimental
