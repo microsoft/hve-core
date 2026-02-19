@@ -1,0 +1,5 @@
+{
+  "name": "hve-core-installer",
+  "description": "Decision-driven installer for HVE-Core with extension quick-install and 6 clone-based installation methods",
+  "version": "2.3.10"
+}

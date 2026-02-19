@@ -49,7 +49,7 @@ If you need customization or version control of HVE-Core, choose from the method
 
 > **Starter prompt:** "Help me choose how to install this library"
 
-Open Copilot Chat, select the `hve-core-installer` agent, and use this prompt. The agent will ask three questions about your environment and recommend the best method.
+Use the hve-core-installer Skill (available through the VS Code extension or Copilot CLI plugins) to guide you through environment detection and method selection.
 
 ## Help Me Choose
 
@@ -103,11 +103,11 @@ The VS Code Marketplace extension installs the **full collection** containing al
 
 ### Clone Methods (Collection Filtering)
 
-Clone-based installation methods support collection-based agent filtering through the installer agent:
+Clone-based installation methods support collection-based agent filtering through the hve-core-installer Skill:
 
 1. Clone the repository using your preferred method
-2. Run the `hve-core-installer` agent
-3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
+2. Use the hve-core-installer Skill to configure settings and validate
+3. In the Agent Customization phase, select your role-based collection or install all agents
 
 The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
 
@@ -162,16 +162,16 @@ These methods are for HVE-Core contributors or advanced scenarios:
 | [Mounted Directory](methods/mounted.md)       | Advanced devcontainer sharing | High       |
 | [GitHub Codespaces](methods/codespaces.md)    | Codespaces-only projects      | Medium     |
 
-## Using the Installer Agent
+## Using the Installer Skill
 
-The `hve-core-installer` agent automates any installation method:
+The hve-core-installer Skill automates any installation method. Obtain it through the VS Code extension or Copilot CLI plugins:
 
-1. Open GitHub Copilot Chat in VS Code (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Answer the environment detection questions
-4. The agent executes your chosen method
+```bash
+# Install via Copilot CLI
+copilot plugin install hve-core-installer@hve-core
+```
 
-The agent handles:
+The Skill handles:
 
 * Environment detection (Local VS Code, Devcontainer, Codespaces)
 * Repository cloning or configuration

@@ -48,12 +48,7 @@ your-project/
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using git submodule"
-4. Follow the guided setup
+Install the hve-core-installer Skill through the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) or Copilot CLI plugins, then follow the guided setup for git submodule.
 
 ## Manual Setup
 

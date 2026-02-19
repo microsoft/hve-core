@@ -55,8 +55,6 @@ items:
   kind: agent
 - path: .github/agents/hve-core/task-reviewer.agent.md
   kind: agent
-- path: .github/agents/installer/hve-core-installer.agent.md
-  kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -205,3 +203,4 @@ items:
   kind: skill
 display:
   ordering: alpha
+  featured: true
