@@ -19,7 +19,6 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
-├── dev-tools/       Development utilities (PR reference generation)
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
@@ -27,15 +26,6 @@ scripts/
 ├── security/        Security scanning and SHA pinning scripts
 └── tests/           Pester test organization
 ```
-
-## Dev Tools
-
-Development utilities for working with hve-core.
-
-| Script                     | Purpose                                   |
-|----------------------------|-------------------------------------------|
-| `Generate-PrReference.ps1` | Generate PR reference XML for reviews     |
-| `pr-ref-gen.sh`            | Shell wrapper for PR reference generation |
 
 ## Extension
 
@@ -79,13 +69,12 @@ The `security/` directory contains scripts for security scanning and dependency 
 
 Pester test organization matching the scripts structure.
 
-| Directory    | Tests For                     |
-|--------------|-------------------------------|
-| `dev-tools/` | PR reference generation tests |
-| `extension/` | Extension packaging tests     |
-| `lib/`       | Library utility tests         |
-| `linting/`   | Linting script tests          |
-| `security/`  | Security validation tests     |
+| Directory    | Tests For                 |
+|--------------|---------------------------|
+| `extension/` | Extension packaging tests |
+| `lib/`       | Library utility tests     |
+| `linting/`   | Linting script tests      |
+| `security/`  | Security validation tests |
 
 Run all tests:
 
@@ -161,7 +150,7 @@ Key rules:
 * The `if` guard wraps `try`/`catch` (not the reverse)
 * Name the orchestrator `Invoke-*` matching the script noun
 * Use `#region Functions` and `#region Main Execution` markers
-* See [Generate-PrReference.ps1](dev-tools/Generate-PrReference.ps1) for a canonical example
+* See [Package-Extension.ps1](extension/Package-Extension.ps1) for a canonical example
 
 ## Related Documentation
 

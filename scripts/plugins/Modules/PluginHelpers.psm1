@@ -1067,7 +1067,6 @@ function Write-PluginDirectory {
     # Symlink shared resource directories (unconditional, all plugins)
     $sharedDirs = @(
         @{ Source = 'docs/templates';    Destination = 'docs/templates' }
-        @{ Source = 'scripts/dev-tools'; Destination = 'scripts/dev-tools' }
         @{ Source = 'scripts/lib';       Destination = 'scripts/lib' }
     )
 

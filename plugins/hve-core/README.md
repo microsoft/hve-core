@@ -62,6 +62,12 @@ copilot plugin install hve-core@hve-core
 | git-merge         | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls.                                                                                                                                              |
 | hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
+## Skills
+
+| Skill        | Description  |
+|--------------|--------------|
+| pr-reference | pr-reference |
+
 ---
 
 > Source: [microsoft/hve-core](https://github.com/microsoft/hve-core)

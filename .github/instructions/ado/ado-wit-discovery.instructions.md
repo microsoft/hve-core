@@ -63,8 +63,8 @@ Add an **External References** section to work item descriptions when authoritat
 
 **Git context** (when `${input:includeBranchChanges}` is `true` and no documents exist):
 
-* `run_in_terminal`: Generate diff XML via `scripts/dev-tools/pr-ref-gen.sh --base-branch "${input:baseBranch}" --output "<planning-folder>/git-branch-diff.xml"`
-* Sync remote first: `git fetch <remote> <branch> --prune`
+* Generate a branch diff XML using the `pr-reference` skill with `--base-branch "${input:baseBranch}"` and `--output "<planning-folder>/git-branch-diff.xml"`.
+* Sync remote first via `run_in_terminal`: `git fetch <remote> <branch> --prune`
 
 **Workspace utilities**: `list_dir`, `read_file`, `grep_search` for artifact location.
 

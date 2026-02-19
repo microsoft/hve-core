@@ -1185,7 +1185,7 @@ function Get-DiscoveredSkills {
 
         $result.Skills += [PSCustomObject]@{
             name = $skillName
-            path = "./.github/skills/$skillRelPath"
+            path = "./.github/skills/$skillRelPath/SKILL.md"
         }
     }
 
@@ -1782,12 +1782,19 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
         }
 
+        # Default to hve-core collection when no collection is specified.
+        # package.json is identity-mapped to the hve-core collection, so the
+        # default build must apply hve-core filtering rather than including all
+        # artifacts (hve-core-all behavior). Use -Collection with
+        # hve-core-all.collection.yml explicitly to include everything.
+        if (-not $Collection) {
+            $Collection = Join-Path $RepoRoot 'collections/hve-core.collection.yml'
+        }
+
         Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
         Write-Host "==============================" -ForegroundColor Cyan
         Write-Host "   Channel: $Channel" -ForegroundColor Cyan
-        if ($Collection) {
-            Write-Host "   Collection: $Collection" -ForegroundColor Cyan
-        }
+        Write-Host "   Collection: $Collection" -ForegroundColor Cyan
         Write-Host ""
 
         # Call orchestration function

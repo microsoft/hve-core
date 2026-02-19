@@ -24,3 +24,7 @@ Supporting subagents included:
 - **Artifact Validator** — Validates implementation work against plans and conventions
 - **Prompt Tester** — Tests prompt files by following them literally in a sandbox
 - **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+
+Skills included:
+
+- **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
