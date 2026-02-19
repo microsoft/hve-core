@@ -1,1 +1,1 @@
-../../../.github/agents/subagents/rpi-validator.agent.md
+../../../.github/agents/rpi/subagents/rpi-validator.agent.md

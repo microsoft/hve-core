@@ -1,1 +1,0 @@
-../../../.github/agents/github-issue-manager.agent.md

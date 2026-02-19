@@ -89,6 +89,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../plugins/Modules/PluginHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -279,13 +280,7 @@ function Get-CollectionReadmePath {
         [string]$ExtensionDirectory
     )
 
-    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
-    if ($extension -in @('.yml', '.yaml')) {
-        $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $CollectionPath -Raw)
-    }
-    else {
-        $manifest = Get-Content -Path $CollectionPath -Raw | ConvertFrom-Json
-    }
+    $manifest = Get-CollectionManifest -CollectionPath $CollectionPath
     $collectionId = $manifest.id
 
     # Full package uses the default README.md

@@ -4,7 +4,7 @@
   "description": "HVE Core",
   "private": true,
   "scripts": {
-    "test:ps": "pwsh -NoProfile -Command \"Invoke-Pester -Configuration (& ./scripts/tests/pester.config.ps1)\"",
+    "test:ps": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",

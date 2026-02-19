@@ -1,1 +1,1 @@
-../../../.github/agents/subagents/prompt-tester.agent.md
+../../../.github/agents/rpi/subagents/prompt-tester.agent.md

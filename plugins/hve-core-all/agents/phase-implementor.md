@@ -1,1 +1,1 @@
-../../../.github/agents/subagents/phase-implementor.agent.md
+../../../.github/agents/rpi/subagents/phase-implementor.agent.md
