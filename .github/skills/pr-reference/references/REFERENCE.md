@@ -151,6 +151,32 @@ Different workflows use different output paths and filenames:
 | New PR creation       | `pr-reference.xml`   | `.copilot-tracking/pr/new/{{branch}}/pr-reference.xml`          |
 | Work item discovery   | `git-branch-diff.xml`| `.copilot-tracking/workitems/discovery/{{folder}}/git-branch-diff.xml` |
 
+## Utility Script Reference
+
+### list-changed-files
+
+Extracts file paths from the PR reference XML diff headers.
+
+| Parameter       | Flag (bash)    | Flag (PowerShell) | Default                                 | Description                              |
+| --------------- | -------------- | ----------------- | --------------------------------------- | ---------------------------------------- |
+| Input path      | `--input, -i`  | `-InputPath`      | `.copilot-tracking/pr/pr-reference.xml` | Path to the PR reference XML             |
+| Change type     | `--type, -t`   | `-Type`           | `all`                                   | Filter: all, added, deleted, modified, renamed |
+| Output format   | `--format, -f` | `-Format`         | `plain`                                 | Output: plain, json, or markdown         |
+
+### read-diff
+
+Reads diff content with chunking and file filtering support.
+
+| Parameter       | Flag (bash)       | Flag (PowerShell) | Default                                 | Description                              |
+| --------------- | ----------------- | ----------------- | --------------------------------------- | ---------------------------------------- |
+| Input path      | `--input, -i`     | `-InputPath`      | `.copilot-tracking/pr/pr-reference.xml` | Path to the PR reference XML             |
+| Chunk number    | `--chunk, -c`     | `-Chunk`          | -                                       | 1-based chunk number to read             |
+| Chunk size      | `--chunk-size, -s`| `-ChunkSize`      | 500                                     | Lines per chunk                          |
+| Line range      | `--lines, -l`     | `-Lines`          | -                                       | Range format: START,END or START-END     |
+| File path       | `--file, -f`      | `-File`           | -                                       | Extract diff for specific file           |
+| Summary         | `--summary`       | `-Summary`        | -                                       | Show file list with change stats         |
+| Info            | `--info`          | `-Info`           | -                                       | Show chunk breakdown without content     |
+
 ## Semantic Invocation
 
 Callers reference the skill by describing the task intent rather than hardcoding script paths. Copilot matches the task description against the skill's description and loads the skill on-demand.

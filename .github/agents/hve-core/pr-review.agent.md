@@ -172,7 +172,7 @@ Create `in-progress-review.md` with:
 
 #### Step 5: Parse PR Reference
 
-Parse `pr-reference.xml` to populate initial file listings and commit metadata.
+Parse `pr-reference.xml` to populate initial file listings and commit metadata. Use the pr-reference skill to extract changed file paths filtered by change type and to read diff content in manageable chunks. When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
 
 #### Step 6: Draft Overview
 
@@ -186,7 +186,7 @@ Key tools: XML parsing utilities, `.github/instructions/*.instructions.md`
 
 #### Step 1: Extract Changed Files
 
-Extract all changed files from `pr-reference.xml`, capturing path, change type, and line statistics.
+Extract all changed files from `pr-reference.xml`, capturing path, change type, and line statistics. Use the pr-reference skill to list changed files with structured output. When the skill is unavailable, parse diff headers from the XML or run `git diff --name-status` against the base branch.
 
 Parsing guidance:
 

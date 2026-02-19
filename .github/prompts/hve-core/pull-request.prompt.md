@@ -63,6 +63,7 @@ Search for PR templates and decide whether to use the repository template or fal
 Read and analyze the entire `pr-reference.xml` file, which includes the branch name, commit history compared to `${input:branch:origin/main}`, and the detailed diff.
 
 * Confirm the read reached the reported line count and includes `</full_diff>` and `</commit_history>` before moving on.
+* For large diffs, use the pr-reference skill to read the diff in manageable chunks and list changed files by type. When the skill is unavailable, parse the XML directly or use `git diff` and `git log` commands to extract the equivalent information.
 * Build a complete understanding of the changes before drafting any PR content.
 * Use `pr-reference.xml` only for generating `pr.md`.
 
@@ -99,7 +100,7 @@ Use this section only when a template was found in Step 2.
 
 #### Change type detection patterns
 
-Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and extract file paths from diff headers like `diff --git a/path/to/file b/path/to/file`.
+Analyze changed files from the `<full_diff>` section of `pr-reference.xml`. Extract file paths with change types using the pr-reference skill's file listing capability, or parse diff headers (`diff --git a/<path> b/<path>`) directly from the XML. When neither is available, run `git diff --name-status` against the base branch.
 
 | Change Type                | File Pattern             | Branch Pattern            | Commit Pattern            |
 |----------------------------|--------------------------|---------------------------|---------------------------|
