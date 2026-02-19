@@ -1,1 +1,1 @@
-../../../.github/agents/system-architecture-reviewer.agent.md
+../../../.github/agents/project-planning/system-architecture-reviewer.agent.md
