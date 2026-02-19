@@ -1,0 +1,101 @@
+id: hve-core
+name: HVE Core Workflow
+description: HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts
+tags:
+  - workflow
+  - hve-core
+  - rpi
+  - planning
+  - research
+  - implementation
+  - review
+  - code-review
+  - git
+  - commits
+  - merge
+  - pull-request
+items:
+  # Agents
+  - path: .github/agents/hve-core/rpi-agent.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/task-planner.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/memory.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/doc-ops.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/prompt-builder.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/task-researcher.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/task-implementor.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/task-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/pr-review.agent.md
+    kind: agent
+  # Subagents
+  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/prompt-tester.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/prompt-updater.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/hve-core/rpi.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/task-research.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/task-plan.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/task-implement.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/task-review.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/checkpoint.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/doc-ops-update.prompt.md
+    kind: prompt
+  # Git prompts
+  - path: .github/prompts/hve-core/git-commit-message.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/git-commit.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/git-merge.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/git-setup.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/pull-request.prompt.md
+    kind: prompt
+  # Prompt Engineering prompts
+  - path: .github/prompts/hve-core/prompt-analyze.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/prompt-build.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/prompt-refactor.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/hve-core/writing-style.instructions.md
+    kind: instruction
+  - path: .github/instructions/hve-core/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/hve-core/commit-message.instructions.md
+    kind: instruction
+  - path: .github/instructions/hve-core/prompt-builder.instructions.md
+    kind: instruction
+  - path: .github/instructions/hve-core/git-merge.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

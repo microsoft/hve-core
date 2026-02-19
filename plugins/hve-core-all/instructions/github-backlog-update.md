@@ -1,1 +1,1 @@
-../../../.github/instructions/github-backlog-update.instructions.md
+../../../.github/instructions/github/github-backlog-update.instructions.md
