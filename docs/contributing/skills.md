@@ -400,12 +400,12 @@ The `examples/` subdirectory **SHOULD** include:
 
 Skill packages are self-contained and relocatable. The skill root directory varies by distribution context:
 
-| Context            | Skill Root Example                                                           |
-| ------------------ | ---------------------------------------------------------------------------- |
-| In-repo            | `.github/skills/<collection>/<skill>/`                                       |
-| Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`               |
-| VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/`            |
-| Plugin output      | `plugins/<collection>/skills/<skill>/`                                        |
+| Context            | Skill Root Example                                                 |
+|--------------------|--------------------------------------------------------------------|
+| In-repo            | `.github/skills/<collection>/<skill>/`                             |
+| Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`    |
+| VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/` |
+| Plugin output      | `plugins/<collection>/skills/<skill>/`                             |
 
 The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
 

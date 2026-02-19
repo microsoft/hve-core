@@ -38,7 +38,8 @@ Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` us
 
 ## Tooling
 
-Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `${input:baseBranch}` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path. When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
+Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `${input:baseBranch}` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path.
+When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
 
 Git operations via `run_in_terminal`:
 
