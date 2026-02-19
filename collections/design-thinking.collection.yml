@@ -14,6 +14,8 @@ items:
   # Prompts
   - path: .github/prompts/design-thinking/dt-start-project.prompt.md
     kind: prompt
+  - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+    kind: prompt
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
