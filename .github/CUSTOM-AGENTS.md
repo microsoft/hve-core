@@ -48,15 +48,16 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Documentation and Planning Agents
 
-| Agent                     | Purpose                                                            | Key Constraint                                |
-|---------------------------|--------------------------------------------------------------------|-----------------------------------------------|
-| **product-manager-advisor** | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
-| **ux-ui-designer**          | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
-| **prd-builder**             | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
-| **brd-builder**             | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus                  |
-| **adr-creation**            | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                            |
-| **security-plan-creator**   | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling                      |
-| **doc-ops**                 | Documentation operations and maintenance                           | Does not modify source code                           |
+| Agent                            | Purpose                                                            | Key Constraint                                        |
+|----------------------------------|--------------------------------------------------------------------|-------------------------------------------------------|
+| **adr-creation**                 | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                            |
+| **brd-builder**                  | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus                  |
+| **doc-ops**                      | Documentation operations and maintenance                           | Does not modify source code                           |
+| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
+| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
+| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling                      |
+| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment             | Scoped review; delegates security concerns            |
+| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
 
 ### Utility Agents
 
@@ -232,6 +233,16 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Workflow:** Discovery → Research → Analysis → Documentation
 
 **Critical:** Uses Socratic coaching methods. Guides users through decision-making process. Adapts coaching style to experience level.
+
+### system-architecture-reviewer
+
+**Creates:** Architecture review findings and ADRs:
+
+* `docs/decisions/YYYY-MM-DD-short-title.md` (architecture decision records)
+
+**Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
+
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 
