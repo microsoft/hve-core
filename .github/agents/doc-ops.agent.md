@@ -146,7 +146,7 @@ Run three `researcher-subagent` agents in parallel with `runSubagent` or `task` 
 Run a `researcher-subagent` agent with:
 
 * Task: Scan all in-scope files for divergences from writing-style.instructions.md and markdown.instructions.md.
-* Instructions to read: [writing-style.instructions.md](.github/instructions/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/markdown.instructions.md).
+* Instructions to read: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).
 * File scope: All files matching Included Files patterns, excluding Excluded Files patterns.
 * Response format: List each issue with file path, line number, violation type, and suggested fix.
 * Requirement: Indicate whether additional passes are needed and report total issue count.
@@ -208,7 +208,7 @@ If using the `runSubagent` tool then include instructions for each to read and f
 Each `phase-implementor` agent receives:
 
 * Task: Execute assigned work items from the plan.
-* Instructions to follow: [writing-style.instructions.md](.github/instructions/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/markdown.instructions.md).
+* Instructions to follow: [writing-style.instructions.md](../instructions/writing-style.instructions.md), [markdown.instructions.md](../instructions/markdown.instructions.md).
 * Work items: Specific numbered items from the plan.
 * Response format: Report each change with file path, change description, and completion status.
 * Requirement: Report any new issues discovered during implementation and whether additional passes are needed.
@@ -409,4 +409,4 @@ When all phases complete, provide:
 | Validation Status | Passed, Failed with count, or Partial       |
 | Followup Items    | Count requiring manual intervention         |
 
-Suggest a commit message following [commit-message.instructions.md](.github/instructions/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.
+Suggest a commit message following [commit-message.instructions.md](../instructions/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.
