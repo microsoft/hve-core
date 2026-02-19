@@ -115,19 +115,19 @@ Reverse-transition: return to Phase 2 when clustering reveals missing solution c
 
 Individual preparation, natural team brainstorming, AI pattern analysis afterward
 
-- *"AI, analyze these 20 ideas—what themes emerge? What philosophies connect different approaches?"*
+* *"AI, analyze these 20 ideas—what themes emerge? What philosophies connect different approaches?"*
 
 ### AI as Backup Generator
 
 Natural ideation first, AI intervention during energy stalls, return to human momentum
 
-- *"We're hitting a wall. AI, given these constraints, what are 5 different angles we haven't explored?"*
+* *"We're hitting a wall. AI, given these constraints, what are 5 different angles we haven't explored?"*
 
 ### AI as Silent Observer
 
 AI processes conversation, provides convergent synthesis, validates emerging patterns
 
-- *"AI, you've been listening—what solution categories are emerging from this discussion?"*
+* *"AI, you've been listening—what solution categories are emerging from this discussion?"*
 
 ## Ideation Techniques
 
@@ -135,22 +135,22 @@ AI processes conversation, provides convergent synthesis, validates emerging pat
 
 Use environmental limitations as creative drivers, not barriers
 
-- *"Given [specific constraint], what creative approaches emerge?"*
-- *"How might we solve this if [limitation] was our primary design challenge?"*
+* *"Given [specific constraint], what creative approaches emerge?"*
+* *"How might we solve this if [limitation] was our primary design challenge?"*
 
 ### Perspective Multiplication
 
 Generate ideas from multiple stakeholder viewpoints and contexts
 
-- *"Approach this from [user role] perspective, then [different stakeholder] perspective"*
-- *"What if we optimized for [specific user context] first?"*
+* *"Approach this from [user role] perspective, then [different stakeholder] perspective"*
+* *"What if we optimized for [specific user context] first?"*
 
 ### Scenario Expansion
 
 Context-specific adaptations and constraint variations
 
-- *"How does this idea adapt to [different environment/situation]?"*
-- *"What variations emerge under [different constraint set]?"*
+* *"How does this idea adapt to [different environment/situation]?"*
+* *"What variations emerge under [different constraint set]?"*
 
 ## Convergence Guidance
 
@@ -158,27 +158,27 @@ Context-specific adaptations and constraint variations
 
 Group ideas by underlying solution approach rather than surface similarities:
 
-- "Hands-free interaction" (voice, gesture, audio guidance)
-- "Visual guidance" (AR, displays, alerts)  
-- "Collaborative knowledge" (peer networks, shared solutions)
-- "Proactive assistance" (predictive, preventive, maintenance)
+* "Hands-free interaction" (voice, gesture, audio guidance)
+* "Visual guidance" (AR, displays, alerts)  
+* "Collaborative knowledge" (peer networks, shared solutions)
+* "Proactive assistance" (predictive, preventive, maintenance)
 
 ### Theme Documentation Requirements
 
 For each theme, document:
 
-- Core solution philosophy
-- Representative ideas within theme
-- Environmental constraint integration
-- Stakeholder value implications
-- Method 5 concept development potential
+* Core solution philosophy
+* Representative ideas within theme
+* Environmental constraint integration
+* Stakeholder value implications
+* Method 5 concept development potential
 
 ### Divergent-to-Convergent Transition
 
-- Numerical targets met (15+ ideas generated)
-- Energy naturally shifts toward organization
-- Explicit team readiness for pattern recognition
-- Diminishing returns on new idea generation
+* Numerical targets met (15+ ideas generated)
+* Energy naturally shifts toward organization
+* Explicit team readiness for pattern recognition
+* Diminishing returns on new idea generation
 
 ## Quality Standards
 
