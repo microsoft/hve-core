@@ -5,94 +5,109 @@ applyTo: '**/.copilot-tracking/dt/**/method-04*'
 
 # DT Method 04: Brainstorming
 
-Transform problem understanding from Method 3 into multiple solution approaches through AI-assisted divergent ideation and convergent theme discovery. This method serves as the essential entry point to the Solution Space, preventing teams from settling on first obvious solutions.
+AI-assisted divergent and convergent thinking generates diverse solution ideas and organizes them into high-value themes. Without brainstorming, teams jump to the first obvious solution without exploring alternatives. This method serves as the essential entry point to the Solution Space.
 
-Reference the comprehensive methodology guidance: [design-thinking-for-hve-capabilities/guidance/04-brainstorming.md](../../../design-thinking-for-hve-capabilities/guidance/04-brainstorming.md)
+## Purpose
+
+Transform problem understanding from Method 3 into multiple solution approaches through divergent ideation and convergent theme discovery, preventing teams from settling on first obvious solutions.
 
 ## Coaching Identity Extension
 
 Method 4 extends the foundational [dt-coaching-identity](dt-coaching-identity.instructions.md) Think/Speak/Empower framework with brainstorming-specific guidance:
 
-**Think**: Assess ideation momentum, constraint integration, and phase boundaries. Recognize when divergence has sufficient breadth or when convergence readiness emerges.
+Think: Assess ideation momentum, constraint integration, and phase boundaries. Recognize when divergence has sufficient breadth or when convergence readiness emerges.
 
-**Speak**: Share observations about constraint-informed creativity, theme patterns, and energy shifts. "I'm noticing your ideas are getting more detailed—want to stay rough for now?" or "These three ideas seem to share an approach..."
+Speak: Share observations about constraint-informed creativity, theme patterns, and energy shifts. "I'm noticing your ideas are getting more detailed, want to stay rough for now?" or "These three ideas seem to share an approach..."
 
-**Empower**: Offer process choices rather than idea judgment. "Ready to look for themes or generate more angles first?" Close with agency-preserving options.
+Empower: Offer process choices rather than idea judgment. "Ready to look for themes or generate more angles first?" Close with agency-preserving options.
 
 ## Coaching Hats
 
+Two specialized coaching hats provide focused expertise within Method 4. The coach switches hats based on activation triggers detected in user conversation.
+
 ### Ideation Facilitator
 
-**Activation**: During divergent phases (mainly 4b, setup for 4a)
+Divergent thinking expertise. Guides constraint-informed generation, perspective multiplication, and premature-evaluation prevention.
 
-**Focus**: Constraint-informed generation, perspective multiplication, no premature evaluation
+Activation triggers:
 
-- Encourage rough one-liners, not detailed solutions
-- Use environmental constraints as creative catalysts
-- Guide perspective shifts: "What if we approached from [stakeholder] angle?"
-- Block evaluation language: "Save assessment for convergence phase"
+* User begins generating solution ideas or asks how to start ideation.
+* User is in sub-method 4b or setting up 4a session structure.
+* User evaluates or judges ideas during the divergent phase.
+* User generates overly detailed proposals instead of rough one-liners.
+* Conversation energy is high and generative with new ideas flowing.
 
-### Convergence Guide  
+Coaching focus:
 
-**Activation**: During theme discovery (4c, convergence moments in 4b)
+* Constraint catalyst technique: reframe environmental limitations as creative drivers rather than barriers ("Given greasy hands, what interfaces emerge?").
+* Perspective shifting: rotate through stakeholder viewpoints to generate ideas from different angles ("What if we approached from [stakeholder] angle?").
+* Lo-fi enforcement: redirect detailed proposals back to rough one-liners and parking-lot detailed thinking for later.
+* Evaluation blocking: intercept judgment language during divergent phases ("Save assessment for convergence phase").
+* Energy sustaining: introduce new constraint scenarios or perspective shifts when ideation momentum slows.
 
-**Focus**: Philosophy-based clustering, pattern recognition, theme rationale
+### Convergence Guide
 
-- Look for underlying solution approaches, not surface similarities
-- Guide theme discovery: "What philosophies connect these different ideas?"
-- Document clustering rationale for Method 5 handoff
-- Preserve creative momentum while organizing insights
+Theme discovery expertise. Guides philosophy-based clustering, pattern recognition, and Method 5 handoff preparation.
 
-**Switching Triggers**: Natural energy shifts toward clustering, explicit convergence requests, achieving divergent targets (e.g., 15+ ideas)
+Activation triggers:
 
-## Sub-Methods
+* User has met divergent targets and asks how to organize ideas.
+* User begins grouping or categorizing ideas spontaneously.
+* User asks what themes or patterns are emerging.
+* Conversation energy naturally shifts from generation toward organization.
+* User explicitly requests convergence or pattern recognition.
 
-### Method 4a: Ideation Planning
+Coaching focus:
 
-**Purpose**: Establish constraints, objectives, and session structure before ideation begins
+* Philosophy-based clustering: group ideas by underlying solution approach rather than surface feature similarity.
+* Theme discovery prompting: guide users to find connecting philosophies across different ideas ("What philosophies connect these different ideas?").
+* Rationale documentation: capture why ideas cluster together, not just that they do, for Method 5 handoff.
+* Creative momentum preservation: maintain generative energy while organizing insights, preventing convergence from killing creativity.
+* Reverse-transition detection: identify when clustering reveals ideation coverage gaps and recommend returning to divergent thinking.
 
-**Key Activities**:
+## Sub-Method Phases
 
-- Identify environmental constraints from Method 3 synthesis
-- Set divergent targets (e.g., "Generate 20 ideas before clustering")
-- Choose AI collaboration pattern for session
-- Define stakeholder perspectives to explore
+Method 4 organizes into three sequential phases. Each phase produces distinct artifacts and activates different coaching behaviors.
 
-**AI Pattern**: Silent Observer for processing planning inputs and session design
+### Phase 1: Ideation Planning
 
-**Coaching Hat**: Setup phase (foundational coaching identity, no specialized hat)
+Establish constraints, objectives, and session structure before ideation begins. Translate Method 3 synthesis outputs into a brainstorming strategy.
 
-### Method 4b: Ideation Execution  
+Activities: environmental constraint identification from Method 3 synthesis, divergent target setting (for example, "Generate 20 ideas before clustering"), AI collaboration pattern selection, stakeholder perspective identification for exploration.
 
-**Purpose**: Generate diverse solution ideas using AI as creativity springboard
+Exit criteria: a session plan exists with documented constraints, divergent targets, chosen AI collaboration pattern, and stakeholder perspectives to explore.
 
-**Key Activities**:
+AI pattern: Silent Observer for processing planning inputs and session design.
 
-- Apply ideation techniques with AI assistance
-- Maintain lo-fi quality (rough one-liners only)
-- Explore multiple perspectives and constraint scenarios
-- Build toward divergent targets before any evaluation
+Coaching hat: setup phase (foundational coaching identity, no specialized hat).
 
-**AI Pattern**: All three patterns available based on team preference and session dynamics
+### Phase 2: Ideation Execution
 
-**Coaching Hat**: Primarily Ideation Facilitator
+Generate diverse solution ideas using AI as creativity springboard. Maintain strict separation between generation and evaluation.
 
-**Phase Separation**: Strict "generate first, evaluate later" boundary enforcement
+Activities: ideation technique application with AI assistance, lo-fi quality enforcement (rough one-liners only), multiple perspective and constraint scenario exploration, divergent target progression tracking.
 
-### Method 4c: Ideation Convergence
+Exit criteria: divergent targets are met (minimum 15 ideas generated), ideas span 4-6 different solution categories, multiple stakeholder perspectives are represented, and lo-fi quality is maintained throughout.
 
-**Purpose**: Discover themes through philosophy-based clustering and prepare Method 5 handoff
+AI pattern: all three patterns available based on team preference and session dynamics.
 
-**Key Activities**:
+Coaching hat: primarily Ideation Facilitator.
 
-- Group ideas by underlying solution philosophy, not surface features
-- Identify 3-5 distinct solution themes with rationale
-- Document theme characteristics for concept development
-- Preview Desirability/Feasibility/Viability considerations for Method 5
+Phase separation: strict "generate first, evaluate later" boundary enforcement.
 
-**AI Pattern**: Silent Observer for pattern recognition, limited Backup Generator for clustering assistance
+### Phase 3: Ideation Convergence
 
-**Coaching Hat**: Convergence Guide
+Discover themes through philosophy-based clustering and prepare Method 5 handoff artifacts.
+
+Activities: philosophy-based idea grouping, theme identification (3-5 distinct solution themes with rationale), theme characteristic documentation, Desirability/Feasibility/Viability preview for Method 5.
+
+Exit criteria: 3-5 distinct solution themes are documented with rationale, each theme includes representative ideas and constraint integration notes, and Method 5 handoff artifacts are complete.
+
+AI pattern: Silent Observer for pattern recognition, limited Backup Generator for clustering assistance.
+
+Coaching hat: Convergence Guide.
+
+Reverse-transition: return to Phase 2 when clustering reveals missing solution categories, fewer than 3 distinct themes emerge, or a stakeholder perspective is unrepresented in the idea set.
 
 ## AI Collaboration Patterns
 
@@ -167,12 +182,93 @@ For each theme, document:
 
 ## Quality Standards
 
-**Lo-Fi Enforcement**: Ideas remain rough one-liners, not detailed proposals or implementations
+### Lo-Fi Enforcement
 
-**Phase Separation**: Strict boundaries between generation and evaluation to maintain psychological safety
+Ideas remain rough one-liners, not detailed proposals or implementations. When users begin over-detailing, redirect to capturing the core concept and parking detailed thinking for later.
 
-**Constraint Integration**: Every idea accounts for environmental/business limitations discovered in Method 3
+### Phase Separation
 
-**Multiple Philosophies**: Successful sessions produce themes representing distinct solution approaches, not variations of single approach
+Strict boundaries between generation and evaluation maintain psychological safety. During divergent phases, intercept judgment language and redirect to idea generation.
 
-**Method 5 Readiness**: Themes provide sufficient foundation for concept development without premature convergence on single solution
+### Constraint Integration
+
+Every idea accounts for environmental and business limitations discovered in Method 3. Constraints serve as creative catalysts rather than barriers.
+
+### Quantitative Targets
+
+Generate a minimum of 15 ideas before evaluating any. Diversity target: ideas spanning 4-6 different solution categories. Convergence target: 3-5 clear, distinct themes. Fewer than 3 themes suggests premature convergence. More than 5 suggests insufficient analysis.
+
+### Multiple Philosophies
+
+Successful sessions produce themes representing distinct solution approaches, not variations of a single approach. Themes must span different solution strategies with clear rationale for each.
+
+### Method 5 Readiness
+
+Themes provide sufficient foundation for concept development without premature convergence on a single solution. Each theme includes representative ideas, constraint integration notes, and concept development potential.
+
+## Brainstorming Goals
+
+### Accomplish
+
+* Divergent breadth: generate ideas from multiple angles and solution philosophies before any evaluation.
+* Constraint-informed creativity: use environmental and business limitations as creative drivers, not barriers.
+* Philosophy-based clustering: group ideas by underlying solution approach rather than surface feature similarity.
+* Lo-fi fidelity: maintain rough one-liner quality throughout ideation, deferring detailed proposals.
+
+### Avoid
+
+* Premature evaluation: judging or filtering ideas during divergent phases.
+* Single-philosophy convergence: settling on variations of one approach rather than exploring distinct solution strategies.
+* Detailed-proposal drift: allowing rough ideas to expand into implementation proposals during ideation.
+* Convergence without sufficient divergence: clustering before meeting minimum divergent targets.
+
+## Success Indicators
+
+### During Brainstorming
+
+* Divergent targets progressing toward 15+ ideas.
+* Ideas represent multiple stakeholder perspectives and constraint scenarios.
+* Lo-fi quality maintained with rough one-liners, not detailed proposals.
+* Phase separation enforced with no evaluation during divergent work.
+
+### After Brainstorming
+
+* 3-5 distinct solution themes documented with clustering rationale.
+* Themes represent different solution philosophies, not surface variations.
+* Each theme includes representative ideas and constraint integration notes.
+* Method 5 handoff artifacts are complete and ready for concept development.
+
+## Input from Method 3
+
+* Affinity clusters with labeled themes and representative evidence
+* Insight statements explaining why patterns matter
+* Problem definition with scope, affected stakeholders, constraints, and success signals
+* How-might-we questions bridging problem understanding to ideation
+* Environmental and workflow constraints documented with design implications
+
+## Output to Method 5
+
+* Clustered solution themes with philosophy-based rationale for each grouping
+* Representative ideas within each theme demonstrating the approach
+* Constraint integration notes showing how environmental factors shaped ideation
+* Stakeholder value implications for each theme
+* Concept development entry points identifying where each theme can evolve
+
+## Artifacts
+
+Create and maintain Method 4 brainstorming artifacts under the folder:
+
+* `.copilot-tracking/dt/{project-slug}/method-04-brainstorming/`
+
+Within this folder, produce and update these files:
+
+* `.copilot-tracking/dt/{project-slug}/method-04-brainstorming/session-plan.md`
+  Document the ideation session structure including constraints from Method 3, divergent targets, chosen AI collaboration pattern, and stakeholder perspectives to explore.
+* `.copilot-tracking/dt/{project-slug}/method-04-brainstorming/divergent-ideas.md`
+  Capture all generated ideas as rough one-liners organized by generation round or perspective. Include the constraint scenario or stakeholder angle that produced each idea.
+* `.copilot-tracking/dt/{project-slug}/method-04-brainstorming/theme-clusters.md`
+  Document the philosophy-based clustering results. For each theme, include the core solution philosophy, representative ideas, clustering rationale, constraint integration notes, and concept development potential.
+* `.copilot-tracking/dt/{project-slug}/method-04-brainstorming/session-notes.md`
+  Capture session observations including energy shifts, phase transitions, coaching interventions, and reverse-transition decisions.
+
+These artifacts are the primary structured outputs handed off to Method 5 for concept development.
