@@ -298,6 +298,122 @@ Describe 'Get-FilesRecursive' {
             $result.Count | Should -Be 1
         }
     }
+
+    Context 'Git ls-files code path at repo root' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return '/mock/repo'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/app.ps1', 'src/helper.psm1', 'tests/run.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+
+            Mock Resolve-Path {
+                [PSCustomObject]@{ Path = '/mock/repo' }
+            } -ModuleName 'LintingHelpers'
+
+            Mock Test-Path { $true } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $LiteralPath -or ($Path -and $PathType -eq 'Leaf')
+            }
+
+            Mock Get-Item {
+                [PSCustomObject]@{
+                    FullName      = $LiteralPath
+                    Name          = [System.IO.Path]::GetFileName($LiteralPath)
+                    PSIsContainer = $false
+                }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Calls git ls-files when path is inside the repository' {
+            Get-FilesRecursive -Path '.' -Include @('*.ps1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'ls-files'
+            }
+        }
+
+        It 'Returns FileInfo objects from git ls-files output' {
+            $result = Get-FilesRecursive -Path '.' -Include @('*.ps1')
+            $result | Should -Not -BeNullOrEmpty
+            $result | ForEach-Object { $_.PSIsContainer | Should -BeFalse }
+        }
+
+        It 'Passes Include patterns as pathspecs at repo root' {
+            Get-FilesRecursive -Path '.' -Include @('*.ps1', '*.psm1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args -contains '*.ps1' -and $args -contains '*.psm1'
+            }
+        }
+
+        It 'Accepts GitIgnorePath without error on git path' {
+            { Get-FilesRecursive -Path '.' -Include @('*.ps1') -GitIgnorePath '/nonexistent/.gitignore' } |
+                Should -Not -Throw
+        }
+    }
+
+    Context 'Git ls-files subdirectory scoping' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return '/mock/repo'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/app.ps1', 'src/helper.psm1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+
+            Mock Resolve-Path {
+                [PSCustomObject]@{ Path = '/mock/repo/src' }
+            } -ModuleName 'LintingHelpers'
+
+            Mock Test-Path { $true } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $LiteralPath -or ($Path -and $PathType -eq 'Leaf')
+            }
+
+            Mock Get-Item {
+                [PSCustomObject]@{
+                    FullName      = $LiteralPath
+                    Name          = [System.IO.Path]::GetFileName($LiteralPath)
+                    PSIsContainer = $false
+                }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Scopes git ls-files to the specified subdirectory' {
+            Get-FilesRecursive -Path './src' -Include @('*.ps1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args -contains '--' -and $args -contains 'src/'
+            }
+        }
+
+        It 'Filters subdirectory results by Include patterns' {
+            $result = Get-FilesRecursive -Path './src' -Include @('*.ps1')
+            $result.Name | Should -Contain 'app.ps1'
+            $result.Name | Should -Not -Contain 'helper.psm1'
+        }
+    }
+
+    Context 'Git unavailable' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            New-Item -Path 'TestDrive:/nogit' -ItemType Directory -Force | Out-Null
+            New-Item -Path 'TestDrive:/nogit/script.ps1' -ItemType File -Force | Out-Null
+        }
+
+        It 'Falls back to Get-ChildItem when git is unavailable' {
+            $result = Get-FilesRecursive -Path 'TestDrive:/nogit' -Include @('*.ps1')
+            $result.Count | Should -Be 1
+            $result.Name | Should -Contain 'script.ps1'
+        }
+    }
 }
 
 #endregion

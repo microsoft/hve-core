@@ -78,7 +78,7 @@ The [LintingHelpers.psm1](../../scripts/linting/Modules/LintingHelpers.psm1) mod
 | Function                  | Purpose                                                         |
 |---------------------------|-----------------------------------------------------------------|
 | `Get-ChangedFilesFromGit` | Detects changed files using merge-base with fallback strategies |
-| `Get-FilesRecursive`      | Recursively finds files while respecting gitignore patterns     |
+| `Get-FilesRecursive`      | Finds files via `git ls-files` with `Get-ChildItem` fallback    |
 | `Get-GitIgnorePatterns`   | Parses `.gitignore` into PowerShell wildcard patterns           |
 | `Write-GitHubAnnotation`  | Writes GitHub Actions annotations for errors and warnings       |
 | `Set-GitHubOutput`        | Sets GitHub Actions output variables                            |
