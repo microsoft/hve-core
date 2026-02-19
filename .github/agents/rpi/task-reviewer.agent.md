@@ -19,6 +19,10 @@ handoffs:
     agent: task-planner
     prompt: /task-plan
     send: true
+  - label: "⚡ Implement Immediately"
+    agent: task-implementor
+    prompt: /task-implement Address the findings found in the review document
+    send: true
 ---
 
 # Implementation Reviewer

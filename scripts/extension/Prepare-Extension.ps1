@@ -259,7 +259,7 @@ function Invoke-ExtensionCollectionsGeneration {
     $expectedFiles = @()
 
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         if ($collection -isnot [hashtable]) {
             throw "Collection manifest must be a hashtable: $($collectionFile.FullName)"
         }
@@ -301,7 +301,7 @@ function Invoke-ExtensionCollectionsGeneration {
     # Generate README files for each collection
     $readmeTemplatePath = Join-Path $templatesDir 'README.template.md'
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         $collectionId = [string]$collection.id
 
         $collectionMdPath = Join-Path $collectionsDir "$collectionId.collection.md"
@@ -1540,7 +1540,7 @@ function Invoke-PrepareExtension {
             # resolve from the root YAML collection by ID.
             $rootCollectionPath = Join-Path $RepoRoot "collections/$($collectionManifest.id).collection.yml"
             if (Test-Path $rootCollectionPath) {
-                $artifactCollectionManifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $rootCollectionPath -Raw)
+                $artifactCollectionManifest = Get-CollectionManifest -CollectionPath $rootCollectionPath
                 Write-Host "Using root collection for items: $rootCollectionPath"
             }
             else {
