@@ -20,6 +20,7 @@ export interface BoxCardData {
   title: string;
   description: string;
   links: { label: string; href: string }[];
+  icon?: string;
 }
 
 export const iconCards: IconCardData[] = [
@@ -69,6 +70,7 @@ export const iconCards: IconCardData[] = [
 
 export const boxCards: BoxCardData[] = [
   {
+    icon: '/img/icons/i_quickstart.svg',
     title: 'Quick Start',
     description: 'Get up and running in minutes',
     links: [
@@ -78,6 +80,7 @@ export const boxCards: BoxCardData[] = [
     ],
   },
   {
+    icon: '/img/icons/i_build-ai.svg',
     title: 'Build with AI',
     description: 'Leverage AI across the development lifecycle',
     links: [
@@ -87,6 +90,7 @@ export const boxCards: BoxCardData[] = [
     ],
   },
   {
+    icon: '/img/icons/i_plan-architect.svg',
     title: 'Plan & Architect',
     description: 'Structure work before coding',
     links: [
@@ -96,6 +100,7 @@ export const boxCards: BoxCardData[] = [
     ],
   },
   {
+    icon: '/img/icons/i_customize.svg',
     title: 'Customize & Extend',
     description: 'Tailor HVE Core to your team',
     links: [

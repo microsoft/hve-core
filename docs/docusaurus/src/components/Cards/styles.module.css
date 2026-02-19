@@ -74,6 +74,16 @@
   padding: 1.5rem;
 }
 
+.boxCardIcon {
+  margin-bottom: 0.75rem;
+}
+
+.boxCardIcon img {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+
 .boxCardTitle {
   margin: 0 0 0.75rem;
   font-size: 18px;
