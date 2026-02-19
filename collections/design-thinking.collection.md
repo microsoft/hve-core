@@ -13,5 +13,6 @@ This collection includes agents, prompts, and instructions for:
 - **DT Method 02: Design Research** — Interview techniques, research planning, environmental observation, and insight extraction patterns for systematic discovery of end-user needs through direct engagement across three phases: planning, execution, and documentation
 - **DT Method 03: Input Synthesis** — Pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness for transforming fragmented research data into unified problem understanding
 - **DT Method 03 Deep** — Advanced affinity analysis with multi-pass clustering, insight frameworks with observation-inference-insight formula, HMW question scaffolding, problem statement articulation, and manufacturing synthesis patterns
+- **DT→RPI Handoff Contract** — Exit-point definitions, artifact schemas, per-agent input contracts, graduation awareness behavior, and quality markers for lateral transitions from Design Thinking coaching into the RPI workflow
 - **DT Method 07: High-Fidelity Prototypes** — Technical translation, functional prototypes, and specifications for Implementation Space entry with three-hat architecture and progressive fidelity modeling
 - **DT Quality Constraints** — Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods
