@@ -57,6 +57,12 @@ const config = {
       },
       navbar: {
         title: 'HVE Core',
+        logo: {
+          alt: 'Microsoft',
+          src: 'img/microsoft-logo.svg',
+          width: 24,
+          height: 24,
+        },
         items: [
           {
             type: 'docSidebar',
