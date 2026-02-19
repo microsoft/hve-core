@@ -342,3 +342,43 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
 }
 
 #endregion
+
+#region PATH Sanitization Tests
+
+Describe 'PATH Sanitization Logic' -Tag 'Unit' {
+    # Validates the PATH filtering expression used in Main Execution to strip
+    # /mnt/* (WSL Windows mount) entries that cause slow 9P lookups.
+
+    It 'Strips /mnt/* entries from PATH' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/usr/bin${sep}/mnt/c/Windows/System32${sep}/home/user/bin${sep}/mnt/d/Tools"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be "/usr/bin${sep}/home/user/bin"
+    }
+
+    It 'Preserves all entries when no /mnt/* paths present' {
+        $original = '/usr/bin:/home/user/bin:/usr/local/bin'
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be $original
+    }
+
+    It 'Handles PATH with only /mnt/* entries' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/mnt/c/Windows${sep}/mnt/d/Tools"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Does not strip similar but non-matching paths' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/mnt${sep}/usr/mnt/bin${sep}/home/mnt"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be $original
+    }
+}
+
+#endregion
