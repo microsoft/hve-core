@@ -16,8 +16,6 @@ Test files follow a mirror pattern where each script directory has a correspondi
 
 ```text
 scripts/
-├── dev-tools/
-│   └── Generate-PrReference.ps1
 ├── extension/
 │   ├── Package-Extension.ps1
 │   └── Prepare-Extension.ps1
@@ -28,8 +26,6 @@ scripts/
 ├── security/
 │   └── *.ps1
 └── tests/
-    ├── dev-tools/
-    │   └── Generate-PrReference.Tests.ps1
     ├── extension/
     ├── lib/
     ├── linting/
@@ -50,7 +46,7 @@ The configuration file at [scripts/tests/pester.config.ps1](../../scripts/tests/
 # Key configuration settings
 $configuration.Run.TestExtension = '.Tests.ps1'
 $configuration.Filter.ExcludeTag = @('Integration', 'Slow')
-$configuration.CodeCoverage.CoveragePercentTarget = 70
+$configuration.CodeCoverage.CoveragePercentTarget = 80
 ```
 
 ### Coverage Configuration
@@ -59,12 +55,12 @@ Code coverage analyzes scripts in production directories while excluding test fi
 
 | Setting           | Value               |
 |-------------------|---------------------|
-| Coverage target   | 70% minimum         |
+| Coverage target   | 80% minimum         |
 | Output format     | JaCoCo XML          |
 | Output path       | `logs/coverage.xml` |
 | Excluded patterns | `*.Tests.ps1`       |
 
-Coverage directories include `linting/`, `security/`, `dev-tools/`, `lib/`, and `extension/`.
+Coverage directories include `linting/`, `security/`, `lib/`, and `extension/`.
 
 ### Test Output
 
@@ -82,7 +78,7 @@ The [LintingHelpers.psm1](../../scripts/linting/Modules/LintingHelpers.psm1) mod
 | Function                  | Purpose                                                         |
 |---------------------------|-----------------------------------------------------------------|
 | `Get-ChangedFilesFromGit` | Detects changed files using merge-base with fallback strategies |
-| `Get-FilesRecursive`      | Recursively finds files while respecting gitignore patterns     |
+| `Get-FilesRecursive`      | Finds files via `git ls-files` with `Get-ChildItem` fallback    |
 | `Get-GitIgnorePatterns`   | Parses `.gitignore` into PowerShell wildcard patterns           |
 | `Write-GitHubAnnotation`  | Writes GitHub Actions annotations for errors and warnings       |
 | `Set-GitHubOutput`        | Sets GitHub Actions output variables                            |

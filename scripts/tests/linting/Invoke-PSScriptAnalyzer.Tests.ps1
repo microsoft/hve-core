@@ -42,6 +42,7 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Accepts ChangedFilesOnly switch' {
@@ -62,6 +63,7 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Uses default config path when not specified' {
@@ -84,6 +86,7 @@ Describe 'Invoke-PSScriptAnalyzer Parameter Validation' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Accepts custom output path' {
@@ -104,6 +107,7 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
             Mock Install-Module {} -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Import-Module { throw 'Module not found' } -ParameterFilter { $Name -eq 'PSScriptAnalyzer' }
             Mock Write-Error {}
+            Mock Out-File {}
         }
 
         It 'Reports error when module unavailable' {
@@ -120,6 +124,7 @@ Describe 'PSScriptAnalyzer Module Availability' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Proceeds when module available' {
@@ -141,6 +146,7 @@ Describe 'File Discovery' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Uses Get-FilesRecursive for all files' {
@@ -162,6 +168,7 @@ Describe 'File Discovery' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Uses Get-ChangedFilesFromGit when ChangedFilesOnly specified' {
@@ -199,6 +206,7 @@ Describe 'CI Integration' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
         }
 
         It 'Calls Write-CIAnnotation for each issue' {
@@ -295,6 +303,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
             Mock Invoke-ScriptAnalyzer { @() }
+            Mock Out-File {}
         }
 
         It 'Returns success when no issues' {
@@ -310,6 +319,7 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
             Mock Set-CIEnv {}
             Mock Write-CIStepSummary {}
             Mock Write-CIAnnotation {}
+            Mock Out-File {}
 
             Mock Invoke-ScriptAnalyzer {
                 return @(
@@ -328,6 +338,46 @@ Describe 'Exit Code Handling' -Tag 'Unit' {
         It 'Throws when issues found' {
             { Invoke-PSScriptAnalyzerCore } | Should -Throw '*issue*'
         }
+    }
+}
+
+#endregion
+
+#region PATH Sanitization Tests
+
+Describe 'PATH Sanitization Logic' -Tag 'Unit' {
+    # Validates the PATH filtering expression used in Main Execution to strip
+    # /mnt/* (WSL Windows mount) entries that cause slow 9P lookups.
+
+    It 'Strips /mnt/* entries from PATH' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/usr/bin${sep}/mnt/c/Windows/System32${sep}/home/user/bin${sep}/mnt/d/Tools"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be "/usr/bin${sep}/home/user/bin"
+    }
+
+    It 'Preserves all entries when no /mnt/* paths present' {
+        $original = '/usr/bin:/home/user/bin:/usr/local/bin'
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be $original
+    }
+
+    It 'Handles PATH with only /mnt/* entries' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/mnt/c/Windows${sep}/mnt/d/Tools"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -BeNullOrEmpty
+    }
+
+    It 'Does not strip similar but non-matching paths' {
+        $sep = [System.IO.Path]::PathSeparator
+        $original = "/mnt${sep}/usr/mnt/bin${sep}/home/mnt"
+        $result = ($original -split [System.IO.Path]::PathSeparator |
+            Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+        $result | Should -Be $original
     }
 }
 

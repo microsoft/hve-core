@@ -2,7 +2,7 @@
 title: Architecture Overview
 description: HVE Core system design and component relationships
 author: Microsoft
-ms.date: 2026-01-22
+ms.date: 2026-02-19
 ms.topic: concept
 ---
 
@@ -20,26 +20,26 @@ graph TD
     EXT --> SKILLS[Skills]
     SCRIPTS[Scripts] --> LINTING[Linting]
     SCRIPTS --> SECURITY[Security]
-    SCRIPTS --> DEVTOOLS[Dev Tools]
+    SCRIPTS --> PLUGINS[Plugins]
     DOCS[Documentation] --> GUIDES[User Guides]
     DOCS --> ARCH[Architecture]
 ```
 
 ## Component Summary
 
-| Component           | Location                   | Purpose                                                                 |
-|---------------------|----------------------------|-------------------------------------------------------------------------|
-| Extension           | `extension/`               | VS Code extension providing contribution points for AI artifacts        |
-| Scripts             | `scripts/`                 | PowerShell automation for linting, security validation, and dev tools   |
-| Documentation       | `docs/`                    | User guides, architecture docs, and contribution guidelines             |
-| GitHub Assets       | `.github/`                 | Workflows, instructions, prompts, agents, and issue templates           |
-| Skills              | `.github/skills/`          | Self-contained packages combining scripts with domain-specific guidance |
-| Dev Container       | `.devcontainer/`           | Codespaces and local container development environment                  |
-| Frontmatter Schema  | `scripts/linting/schemas/` | JSON schemas for AI artifact validation                                 |
-| GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation        |
-| Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                            |
-| MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                               |
-| Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                              |
+| Component           | Location                   | Purpose                                                                       |
+|---------------------|----------------------------|-------------------------------------------------------------------------------|
+| Extension           | `extension/`               | VS Code extension providing contribution points for AI artifacts              |
+| Scripts             | `scripts/`                 | PowerShell automation for linting, security validation, and plugin generation |
+| Documentation       | `docs/`                    | User guides, architecture docs, and contribution guidelines                   |
+| GitHub Assets       | `.github/`                 | Workflows, instructions, prompts, agents, skills, and issue templates         |
+| Dev Container       | `.devcontainer/`           | Codespaces and local container development environment                        |
+| Frontmatter Schema  | `scripts/linting/schemas/` | JSON schemas for AI artifact validation                                       |
+| GitHub Workflows    | `.github/workflows/`       | CI/CD pipelines for validation, security, and release automation              |
+| Access Control      | `.github/CODEOWNERS`       | Path-based review requirements and ownership                                  |
+| MCP Configuration   | `.vscode/mcp.json`         | Model Context Protocol server definitions                                     |
+| Plugins             | `plugins/`                 | Generated Copilot CLI plugin output from collection manifests                 |
+| Test Infrastructure | `scripts/tests/`           | Pester test suites with fixtures and mocks                                    |
 
 ## Core Subsystems
 
@@ -53,8 +53,12 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 * Linting scripts validate markdown formatting, link integrity, YAML structure, and PowerShell code quality
 * Security scripts verify dependency pinning and SHA staleness for workflow actions
-* Dev tools assist with PR reference generation and other development tasks
+* Plugin scripts generate Copilot CLI plugins from collection manifests
 * Library modules provide shared utilities like verified downloads
+
+### Plugins
+
+Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills. Running `npm run plugin:generate` produces the `plugins/` directory, which contains generated output organized by collection ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](../../scripts/plugins/README.md) for the generation pipeline.
 
 ### Documentation
 
@@ -62,13 +66,13 @@ User-facing documentation guides teams through installation, configuration, and 
 
 ### GitHub Assets
 
-The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations.
+The `.github/` directory contains workflow definitions, issue templates, and the AI artifacts that define Copilot behavior. Instructions files provide context-specific guidance that Copilot applies when working with certain file types or directories. Agents define specialized personas for different tasks. Prompts offer reusable starting points for common operations. All artifact types are organized into `{collection-id}` subdirectories by convention (e.g., `.github/agents/hve-core/`, `.github/instructions/coding-standards/`).
 
-Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns.
+Skills package executable utilities with cross-platform scripts and domain-specific guidance; each skill is self-contained with a SKILL.md file describing capabilities and usage patterns. By convention, skills are organized under `.github/skills/{collection-id}/{skill-name}/`.
 
 ## Package Relationships
 
-Components interact through well-defined boundaries. The extension registers contribution points for agents, prompts, and instructions, making them available to Copilot Chat. Skills use a separate discovery mechanism: Copilot scans `.github/skills/` for `SKILL.md` files that describe executable capabilities. Scripts operate independently of the extension but share configuration files like `PSScriptAnalyzer.psd1` and schema definitions in `scripts/linting/schemas/`.
+Components interact through well-defined boundaries. The extension registers contribution points for agents, prompts, and instructions, making them available to Copilot Chat. Skills use a separate discovery mechanism: Copilot scans `.github/skills/{collection-id}/` subdirectories by convention for `SKILL.md` files that describe executable capabilities. Scripts operate independently of the extension but share configuration files like `PSScriptAnalyzer.psd1` and schema definitions in `scripts/linting/schemas/`.
 
 Documentation references both the extension capabilities and script utilities, providing guidance on how to use each component effectively. The tracking directory (`.copilot-tracking/`) serves as a workspace for AI-assisted workflows, storing work item discoveries, plan artifacts, and change records that bridge human and AI collaboration.
 
