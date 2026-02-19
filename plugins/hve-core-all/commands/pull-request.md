@@ -1,1 +1,1 @@
-../../../.github/prompts/pull-request.prompt.md
+../../../.github/prompts/rpi/pull-request.prompt.md

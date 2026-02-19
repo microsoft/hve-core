@@ -1,1 +1,1 @@
-../../../.github/agents/prompt-builder.agent.md
+../../../.github/agents/rpi/prompt-builder.agent.md

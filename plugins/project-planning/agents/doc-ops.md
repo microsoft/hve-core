@@ -1,1 +1,0 @@
-../../../.github/agents/doc-ops.agent.md

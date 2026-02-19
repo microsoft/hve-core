@@ -1,1 +1,1 @@
-../../../.github/agents/subagents/prompt-updater.agent.md
+../../../.github/agents/rpi/subagents/prompt-updater.agent.md
