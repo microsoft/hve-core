@@ -1275,3 +1275,5 @@ Use these exact emojis for consistency:
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
 
 > Brought to you by microsoft/hve-core
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
