@@ -7,15 +7,20 @@
 Generates the Copilot PR reference XML using git history and diff data.
 
 .DESCRIPTION
-Creates .copilot-tracking/pr/pr-reference.xml relative to the repository root,
-mirroring the behaviour of scripts/pr-ref-gen.sh. Supports excluding markdown
-files from the diff and specifying an alternate base branch for comparisons.
+Creates a pr-reference.xml file (default: .copilot-tracking/pr/pr-reference.xml)
+relative to the repository root, mirroring the behaviour of generate.sh. Supports
+excluding markdown files from the diff and specifying an alternate base branch
+for comparisons.
 
 .PARAMETER BaseBranch
 Git branch used as the comparison base. Defaults to "main".
 
 .PARAMETER ExcludeMarkdownDiff
 When supplied, excludes markdown (*.md) files from the diff output.
+
+.PARAMETER OutputPath
+Custom output file path. When empty, defaults to
+.copilot-tracking/pr/pr-reference.xml relative to the repository root.
 #>
 
 [CmdletBinding()]
@@ -24,12 +29,13 @@ param(
     [string]$BaseBranch = "main",
 
     [Parameter()]
-    [switch]$ExcludeMarkdownDiff
+    [switch]$ExcludeMarkdownDiff,
+
+    [Parameter()]
+    [string]$OutputPath = ""
 )
 
 $ErrorActionPreference = 'Stop'
-
-Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 function Test-GitAvailability {
 <#
@@ -69,11 +75,11 @@ System.String
 function New-PrDirectory {
 <#
 .SYNOPSIS
-Creates the PR tracking directory when missing.
+Creates the parent directory for the output file when missing.
 .DESCRIPTION
-Ensures .copilot-tracking/pr exists beneath the supplied repository root.
-.PARAMETER RepoRoot
-Absolute path to the git repository root.
+Ensures the parent directory of the specified path exists.
+.PARAMETER OutputFilePath
+Absolute path to the output file whose parent directory should be created.
 .OUTPUTS
 System.String
 #>
@@ -81,17 +87,17 @@ System.String
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [string]$OutputFilePath
     )
 
-    $prDirectory = Join-Path $RepoRoot '.copilot-tracking/pr'
-    if (-not (Test-Path $prDirectory)) {
-        if ($PSCmdlet.ShouldProcess($prDirectory, 'Create PR tracking directory')) {
-            $null = New-Item -ItemType Directory -Path $prDirectory -Force
+    $parentDir = Split-Path -Parent $OutputFilePath
+    if (-not (Test-Path $parentDir)) {
+        if ($PSCmdlet.ShouldProcess($parentDir, 'Create output directory')) {
+            $null = New-Item -ItemType Directory -Path $parentDir -Force
         }
     }
 
-    return $prDirectory
+    return $parentDir
 }
 
 function Resolve-ComparisonReference {
@@ -428,6 +434,9 @@ Coordinates git queries, XML creation, and console reporting for Copilot usage.
 Branch used as the comparison base.
 .PARAMETER ExcludeMarkdownDiff
 Switch to omit markdown files from the diff and summary.
+.PARAMETER OutputPath
+Custom output file path. When empty, defaults to
+.copilot-tracking/pr/pr-reference.xml relative to the repository root.
 .OUTPUTS
 System.IO.FileInfo
 #>
@@ -437,14 +446,23 @@ System.IO.FileInfo
         [string]$BaseBranch,
 
         [Parameter()]
-        [switch]$ExcludeMarkdownDiff
+        [switch]$ExcludeMarkdownDiff,
+
+        [Parameter()]
+        [string]$OutputPath = ""
     )
 
     Test-GitAvailability
 
     $repoRoot = Get-RepositoryRoot
-    $prDirectory = New-PrDirectory -RepoRoot $repoRoot
-    $prReferencePath = Join-Path $prDirectory 'pr-reference.xml'
+
+    if ($OutputPath) {
+        $prReferencePath = $OutputPath
+    } else {
+        $prReferencePath = Join-Path $repoRoot '.copilot-tracking/pr/pr-reference.xml'
+    }
+
+    $null = New-PrDirectory -OutputFilePath $prReferencePath
 
     $diffSummary = '0 files changed'
     $commitCount = 0
@@ -456,12 +474,12 @@ System.IO.FileInfo
         $currentBranch = Get-CurrentBranchOrRef
         $comparisonInfo = Resolve-ComparisonReference -BaseBranch $BaseBranch
         $baseCommit = Get-ShortCommitHash -Ref $comparisonInfo.Ref
-    $commitEntries = Get-CommitEntry -ComparisonRef $comparisonInfo.Ref
+        $commitEntries = Get-CommitEntry -ComparisonRef $comparisonInfo.Ref
         $commitCount = Get-CommitCount -ComparisonRef $comparisonInfo.Ref
         $diffOutput = Get-DiffOutput -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff
         $diffSummary = Get-DiffSummary -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff
 
-    $xmlContent = Get-PrXmlContent -CurrentBranch $currentBranch -BaseBranch $BaseBranch -CommitEntries $commitEntries -DiffOutput $diffOutput
+        $xmlContent = Get-PrXmlContent -CurrentBranch $currentBranch -BaseBranch $BaseBranch -CommitEntries $commitEntries -DiffOutput $diffOutput
         $xmlContent | Set-Content -LiteralPath $prReferencePath
     }
     finally {
@@ -490,12 +508,12 @@ System.IO.FileInfo
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff | Out-Null
+        Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff -OutputPath $OutputPath | Out-Null
         exit 0
     }
     catch {
         Write-Error -ErrorAction Continue "Generate PR Reference failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        Write-Warning "PR reference generation failed: $($_.Exception.Message)"
         exit 1
     }
 }

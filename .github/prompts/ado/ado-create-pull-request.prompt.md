@@ -13,7 +13,7 @@ Follow all instructions from #file:../instructions/ado-create-pull-request.instr
 * ${input:baseBranch:origin/main}: Git comparison base and target branch for the PR.
 * ${input:sourceBranch}: Source branch for the pull request (defaults to current branch).
 * ${input:isDraft:false}: Whether to create the PR as a draft.
-* ${input:includeMarkdown:true}: Include markdown file diffs in pr-reference.xml (passed as --no-md-diff if false to pr-ref-gen.sh).
+* ${input:includeMarkdown:true}: Include markdown file diffs in pr-reference.xml (passed as --no-md-diff if false to the pr-reference skill).
 * ${input:workItemIds}: (Optional) Comma-separated work item IDs to link (skips work item discovery if provided).
 * ${input:similarityThreshold:0.2}: Minimum similarity score for work item relevance (0.0-1.0).
 * ${input:areaPath}: (Optional) Area Path filter for work item searches.

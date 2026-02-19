@@ -451,11 +451,6 @@ function Get-PackagingDirectorySpec {
             IsFile      = $false
         },
         @{
-            Source      = Join-Path $RepoRoot "scripts/dev-tools"
-            Destination = Join-Path $ExtensionDirectory "scripts/dev-tools"
-            IsFile      = $false
-        },
-        @{
             Source      = Join-Path $RepoRoot "scripts/lib/Modules/CIHelpers.psm1"
             Destination = Join-Path $ExtensionDirectory "scripts/lib/Modules/CIHelpers.psm1"
             IsFile      = $true

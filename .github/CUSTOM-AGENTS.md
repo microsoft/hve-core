@@ -168,7 +168,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 **Creates:** Review tracking files in normalized branch folders:
 
 * `.copilot-tracking/pr/review/{normalized-branch}/in-progress-review.md` (living review document with findings)
-* `.copilot-tracking/pr/review/{normalized-branch}/pr-reference.xml` (PR metadata and diff summary)
+* `.copilot-tracking/pr/review/{normalized-branch}/pr-reference.xml` (PR metadata and diff summary, generated via the `pr-reference` skill)
 * `.copilot-tracking/pr/review/{normalized-branch}/handoff.md` (finalized comments for PR submission)
 
 **Workflow:** 4 phases (Initialize → Analyze → Collaborative Review → Finalize)

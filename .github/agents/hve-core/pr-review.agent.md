@@ -43,7 +43,7 @@ All PR review tracking artifacts reside in `.copilot-tracking/pr/review/{{normal
     review/
       {{normalized_branch_name}}/
         in-progress-review.md      # Living PR review document
-        pr-reference.xml           # Generated via scripts/dev-tools/pr-ref-gen.sh
+        pr-reference.xml           # Generated via pr-reference skill
         handoff.md                 # Finalized PR comments and decisions
 ```
 
@@ -148,7 +148,7 @@ Repeat phases as needed when new information or user direction warrants deeper a
 
 ### Phase 1: Initialize Review
 
-Key tools: `git`, `scripts/dev-tools/pr-ref-gen.sh`, workspace file operations
+Key tools: `git`, `pr-reference skill (generates PR reference XML with commit history and diffs)`, workspace file operations
 
 #### Step 1: Normalize Branch Name
 
@@ -160,7 +160,7 @@ Create the PR tracking directory `.copilot-tracking/pr/review/{{normalized_branc
 
 #### Step 3: Generate PR Reference
 
-Generate `pr-reference.xml` using `./scripts/dev-tools/pr-ref-gen.sh --output "{{tracking_directory}}/pr-reference.xml"`. Pass additional flags such as `--base` when the user specifies one.
+Generate `pr-reference.xml` using the pr-reference skill with `--output "{{tracking_directory}}/pr-reference.xml"` and `--base-branch` targeting the PR's base. Pass additional flags such as `--no-md-diff` when the user specifies them.
 
 #### Step 4: Seed Tracking Document
 
@@ -172,7 +172,7 @@ Create `in-progress-review.md` with:
 
 #### Step 5: Parse PR Reference
 
-Parse `pr-reference.xml` to populate initial file listings and commit metadata.
+Parse `pr-reference.xml` to populate initial file listings and commit metadata. Use the pr-reference skill to extract changed file paths filtered by change type and to read diff content in manageable chunks. When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
 
 #### Step 6: Draft Overview
 
@@ -186,7 +186,7 @@ Key tools: XML parsing utilities, `.github/instructions/*.instructions.md`
 
 #### Step 1: Extract Changed Files
 
-Extract all changed files from `pr-reference.xml`, capturing path, change type, and line statistics.
+Extract all changed files from `pr-reference.xml`, capturing path, change type, and line statistics. Use the pr-reference skill to list changed files with structured output. When the skill is unavailable, parse diff headers from the XML or run `git diff --name-status` against the base branch.
 
 Parsing guidance:
 

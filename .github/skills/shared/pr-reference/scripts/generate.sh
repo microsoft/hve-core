@@ -2,20 +2,24 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
-# Script to generate a PR reference file with commit history and full diff
-# This file will be used by GitHub Copilot to generate accurate PR descriptions
+# generate.sh
+# Generates a PR reference file with commit history and full diff.
+# The output XML is consumed by GitHub Copilot to produce accurate PR descriptions.
 #
-# The script compares the current branch with a specified base branch (default: main)
-# and generates an XML file with commit history and diff information
+# Compares the current branch with a specified base branch (default: main)
+# and writes an XML document containing commit history and diff information.
+
+set -euo pipefail
 
 # Display usage information
-function show_usage {
-  echo "Usage: $0 [--no-md-diff] [--base-branch BRANCH] [--output FILE]"
+show_usage() {
+  echo "Usage: ${0##*/} [OPTIONS]"
   echo ""
   echo "Options:"
   echo "  --no-md-diff       Exclude markdown files (*.md) from the diff output"
   echo "  --base-branch      Specify the base branch to compare against (default: main)"
   echo "  --output           Specify output file path (default: .copilot-tracking/pr/pr-reference.xml)"
+  echo "  --help, -h         Show this help message"
   exit 1
 }
 
@@ -28,45 +32,45 @@ BASE_BRANCH="origin/main"
 OUTPUT_FILE="${REPO_ROOT}/.copilot-tracking/pr/pr-reference.xml"
 while [[ $# -gt 0 ]]; do
   case "$1" in
-  --no-md-diff)
-    NO_MD_DIFF=true
-    shift
-    ;;
-  --base-branch)
-    if [[ -z $2 || $2 == --* ]]; then
-      echo "Error: --base-branch requires an argument"
+    --no-md-diff)
+      NO_MD_DIFF=true
+      shift
+      ;;
+    --base-branch)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo "Error: --base-branch requires an argument" >&2
+        show_usage
+      fi
+      BASE_BRANCH="$2"
+      shift 2
+      ;;
+    --output)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo "Error: --output requires an argument" >&2
+        show_usage
+      fi
+      OUTPUT_FILE="$2"
+      shift 2
+      ;;
+    --help|-h)
       show_usage
-    fi
-    BASE_BRANCH="$2"
-    shift 2
-    ;;
-  --output)
-    if [[ -z $2 || $2 == --* ]]; then
-      echo "Error: --output requires an argument"
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
       show_usage
-    fi
-    OUTPUT_FILE="$2"
-    shift 2
-    ;;
-  --help | -h)
-    show_usage
-    ;;
-  *)
-    echo "Unknown option: $1"
-    show_usage
-    ;;
+      ;;
   esac
 done
 
 # Verify the base branch exists
 if ! git rev-parse --verify "${BASE_BRANCH}" &>/dev/null; then
-  echo "Error: Branch '${BASE_BRANCH}' does not exist or is not accessible"
+  echo "Error: Branch '${BASE_BRANCH}' does not exist or is not accessible" >&2
   exit 1
 fi
 
-# Set output file path
+# Set output file path and ensure parent directory exists
 PR_REF_FILE="${OUTPUT_FILE}"
-mkdir -p "$(dirname "$PR_REF_FILE")"
+mkdir -p "$(dirname "${PR_REF_FILE}")"
 
 # Create the reference file with commit history using XML tags
 {
@@ -89,8 +93,7 @@ mkdir -p "$(dirname "$PR_REF_FILE")"
 
   # Add the full diff, excluding specified files
   echo "  <full_diff>"
-  # Exclude prompts and this file from diff history
-  if [ "$NO_MD_DIFF" = true ]; then
+  if [[ "${NO_MD_DIFF}" == "true" ]]; then
     git --no-pager diff "${BASE_BRANCH}" -- ':!*.md'
   else
     git --no-pager diff "${BASE_BRANCH}"
@@ -102,9 +105,9 @@ mkdir -p "$(dirname "$PR_REF_FILE")"
 LINE_COUNT=$(wc -l <"${PR_REF_FILE}" | awk '{print $1}')
 
 echo "Created ${PR_REF_FILE}"
-if [ "$NO_MD_DIFF" = true ]; then
+if [[ "${NO_MD_DIFF}" == "true" ]]; then
   echo "Note: Markdown files were excluded from diff output"
 fi
-echo "Lines: $LINE_COUNT"
-echo "Base branch: $BASE_BRANCH"
-echo "File name: $PR_REF_FILE"
+echo "Lines: ${LINE_COUNT}"
+echo "Base branch: ${BASE_BRANCH}"
+echo "File name: ${PR_REF_FILE}"

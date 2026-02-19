@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
-
-}
-
-AfterAll {
-    Remove-Module CIHelpers -Force -ErrorAction SilentlyContinue
+    . (Join-Path -Path $PSScriptRoot -ChildPath '../scripts/generate.ps1')
 }
 
 Describe 'Test-GitAvailability' {
@@ -51,16 +46,18 @@ Describe 'New-PrDirectory' {
         Remove-Item -Path $script:tempRepo -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    It 'Creates .copilot-tracking/pr directory' {
-        $result = New-PrDirectory -RepoRoot $script:tempRepo
+    It 'Creates parent directory for the output file' {
+        $outputFile = Join-Path $script:tempRepo '.copilot-tracking/pr/pr-reference.xml'
+        $result = New-PrDirectory -OutputFilePath $outputFile
         $result | Should -Not -BeNullOrEmpty
         Test-Path -Path $result -PathType Container | Should -BeTrue
         $result | Should -Match '\.copilot-tracking[\\/]pr$'
     }
 
     It 'Returns existing directory without error' {
-        $firstCall = New-PrDirectory -RepoRoot $script:tempRepo
-        $secondCall = New-PrDirectory -RepoRoot $script:tempRepo
+        $outputFile = Join-Path $script:tempRepo '.copilot-tracking/pr/pr-reference.xml'
+        $firstCall = New-PrDirectory -OutputFilePath $outputFile
+        $secondCall = New-PrDirectory -OutputFilePath $outputFile
         $secondCall | Should -Be $firstCall
     }
 }
@@ -235,7 +232,7 @@ Describe 'Get-LineImpact' {
 
 Describe 'Get-CurrentBranchOrRef' {
     BeforeAll {
-        . $PSScriptRoot/../../dev-tools/Generate-PrReference.ps1
+        . (Join-Path -Path $PSScriptRoot -ChildPath '../scripts/generate.ps1')
     }
 
     It 'Returns branch name when on a branch' {
@@ -280,6 +277,21 @@ Describe 'Get-CurrentBranchOrRef' {
 }
 
 Describe 'Invoke-PrReferenceGeneration' {
+    It 'Uses custom OutputPath when specified' {
+        $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $customPath = Join-Path $tempDir 'custom-output/pr-ref.xml'
+
+        try {
+            $result = Invoke-PrReferenceGeneration -BaseBranch 'HEAD~1' -OutputPath $customPath
+            $result | Should -BeOfType [System.IO.FileInfo]
+            $result.FullName | Should -Be (Resolve-Path $customPath).Path
+            Test-Path $customPath | Should -BeTrue
+        }
+        finally {
+            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
     It 'Returns FileInfo object' {
         # Skip if not in a git repo or no commits to compare
         $commitCount = Get-CommitCount -ComparisonRef 'HEAD~1'
@@ -337,5 +349,43 @@ Describe 'Invoke-PrReferenceGeneration' {
 
         # Verify the markdown exclusion note was output
         Should -Invoke Write-Host -ParameterFilter { $Object -eq 'Note: Markdown files were excluded from diff output' }
+    }
+}
+
+Describe 'Large diff warning' {
+    It 'Should output large diff message when line impact exceeds 1000' {
+        Mock Test-GitAvailability {}
+        Mock Get-RepositoryRoot { return (& git rev-parse --show-toplevel).Trim() }
+        Mock Get-CurrentBranchOrRef { return 'feature/test' }
+        Mock Resolve-ComparisonReference { return [PSCustomObject]@{ Ref = 'HEAD~1'; Label = 'main' } }
+        Mock Get-ShortCommitHash { return 'abc1234' }
+        Mock Get-CommitEntry { return @('<commit hash="abc1234" date="2026-01-01"><message><subject><![CDATA[test]]></subject><body><![CDATA[]]></body></message></commit>') }
+        Mock Get-CommitCount { return 1 }
+        Mock Get-DiffOutput { return @('diff --git a/file.txt b/file.txt') }
+        Mock Get-DiffSummary { return '10 files changed, 800 insertions(+), 500 deletions(-)' }
+        Mock Set-Content {}
+        Mock Get-Content { return @('line1', 'line2') }
+        Mock Get-Item { return [System.IO.FileInfo]::new('/tmp/pr-reference.xml') }
+        Mock Write-Host {}
+
+        $null = Invoke-PrReferenceGeneration -BaseBranch 'main'
+
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -like '*Large diff detected*'
+        }
+    }
+}
+
+Describe 'Entry-point execution' -Tag 'Integration' {
+    It 'Should exit 0 when executed successfully as a script' {
+        $scriptPath = Join-Path $PSScriptRoot '../scripts/generate.ps1'
+        $null = & pwsh -File $scriptPath -BaseBranch 'HEAD~1' 2>&1
+        $LASTEXITCODE | Should -Be 0
+    }
+
+    It 'Should exit 1 with error message when generation fails' {
+        $scriptPath = Join-Path $PSScriptRoot '../scripts/generate.ps1'
+        $null = & pwsh -File $scriptPath -BaseBranch 'nonexistent-branch-xyz-999' 2>&1
+        $LASTEXITCODE | Should -Be 1
     }
 }

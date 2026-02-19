@@ -37,29 +37,10 @@ Treat `.copilot-tracking/pr/pr-reference.xml` as the canonical diff source.
 * If the user declines, delete `pr-reference.xml` before continuing.
 * Plan to record the total line count and note it in the chat.
 * If `pr-reference.xml` is not provided, run `git fetch {{remote}} {{branch}}` using `${input:branch:origin/main}`.
-* Plan to create `pr-reference.xml` using the repository scripts that match the host environment. Avoid other commands for git status or diffs.
-* Check local scripts in `./scripts/dev-tools/` first, then fall back to the VS Code extension path `~/.vscode/extensions/ise-hve-essentials.hve-core-*/scripts/dev-tools/`.
-* Locate extension scripts when needed using the following commands:
-
-  ```bash
-  # Find PowerShell script
-  pwsh -c '$SCRIPT = Get-ChildItem -Path "$HOME/.vscode/extensions" -Filter "Generate-PrReference.ps1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Host "Found: $SCRIPT"'
-
-  # Find shell script
-  find ~/.vscode/extensions -name "pr-ref-gen.sh" 2>/dev/null | head -1
-  ```
-
-* For Unix-like shells, prefer `./scripts/dev-tools/pr-ref-gen.sh` when available or the extension path.
-* For Windows PowerShell hosts, prefer `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1` when available or the extension path.
-* Use the following command variants when needed:
-
-  * Default: `./scripts/dev-tools/pr-ref-gen.sh`
-  * Exclude markdown: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff`
-  * Custom base branch: `./scripts/dev-tools/pr-ref-gen.sh --no-md-diff --base-branch ${input:branch}`
-  * Default: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1`
-  * Exclude markdown: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff`
-  * Custom base branch: `pwsh -File ./scripts/dev-tools/Generate-PrReference.ps1 -ExcludeMarkdownDiff -BaseBranch ${input:branch}`
-
+* Generate a PR reference XML file containing commit history and diffs using the `pr-reference` skill.
+* Use the `--base-branch` parameter with `${input:branch}` to compare against the target branch.
+* If the user requests excluding markdown diffs, pass `--no-md-diff`.
+* The output is saved to the default location `.copilot-tracking/pr/pr-reference.xml`.
 * Capture the total line count from the script output and note it in the chat.
 
 ### Step 2: Discover PR templates
@@ -82,6 +63,7 @@ Search for PR templates and decide whether to use the repository template or fal
 Read and analyze the entire `pr-reference.xml` file, which includes the branch name, commit history compared to `${input:branch:origin/main}`, and the detailed diff.
 
 * Confirm the read reached the reported line count and includes `</full_diff>` and `</commit_history>` before moving on.
+* For large diffs, use the pr-reference skill to read the diff in manageable chunks and list changed files by type. When the skill is unavailable, parse the XML directly or use `git diff` and `git log` commands to extract the equivalent information.
 * Build a complete understanding of the changes before drafting any PR content.
 * Use `pr-reference.xml` only for generating `pr.md`.
 
@@ -118,7 +100,7 @@ Use this section only when a template was found in Step 2.
 
 #### Change type detection patterns
 
-Analyze changed files from the `<full_diff>` section of `pr-reference.xml` and extract file paths from diff headers like `diff --git a/path/to/file b/path/to/file`.
+Analyze changed files from the `<full_diff>` section of `pr-reference.xml`. Extract file paths with change types using the pr-reference skill's file listing capability, or parse diff headers (`diff --git a/<path> b/<path>`) directly from the XML. When neither is available, run `git diff --name-status` against the base branch.
 
 | Change Type                | File Pattern             | Branch Pattern            | Commit Pattern            |
 |----------------------------|--------------------------|---------------------------|---------------------------|

@@ -50,7 +50,6 @@ The project is organized into these main areas:
 
 Scripts are organized by function:
 
-* Development Tools (`scripts/dev-tools/`) - PR reference generation utilities.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, and PowerShell analysis.
 * Security (`scripts/security/`) - Dependency pinning validation and SHA staleness checks.

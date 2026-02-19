@@ -38,10 +38,12 @@ Output planning files to `.copilot-tracking/pr/new/<normalized-branch-name>/` us
 
 ## Tooling
 
+Generate a PR reference XML containing commit history and diffs using the `pr-reference` skill, comparing against `${input:baseBranch}` and saving to the tracking directory. After generation, use the pr-reference skill to query the XML: extract changed file paths with change type filters and output format options, and read diff content in chunks by number, line range, or specific file path.
+When the skill is unavailable, parse the XML directly or use `git diff --name-status` and `git diff` commands for equivalent extraction.
+
 Git operations via `run_in_terminal`:
 
 * `git fetch <remote> <branch-name> --prune` to sync remote
-* `scripts/dev-tools/pr-ref-gen.sh --base-branch "${input:baseBranch}" --output "<path>/pr-reference.xml"` for PR reference
 * `git config user.email` for current user
 * `git log --all --pretty=format:'%H %an <%ae>' -- <file-pattern> | head -20` for contributors
 
@@ -366,7 +368,7 @@ Execute without presenting details to user:
 3. Initialize `planning-log.md` with Phase-1 status.
 4. Check if `pr-reference.xml` exists:
    * If exists: Use existing file silently.
-   * If not exists: Generate using `scripts/dev-tools/pr-ref-gen.sh` with optional `--no-md-diff` flag if `${input:includeMarkdown}` is false.
+   * If not exists: Generate using the `pr-reference` skill with optional `--no-md-diff` flag if `${input:includeMarkdown}` is false.
 5. Read complete `pr-reference.xml`. For files exceeding 2000 lines, read in 1000-2000 line chunks, capturing complete commit boundaries before advancing to the next chunk.
 6. Log artifact in `planning-log.md` with status `Complete`.
 
