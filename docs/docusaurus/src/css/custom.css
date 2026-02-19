@@ -19,8 +19,8 @@
   --ifm-footer-background-color: #e8e6df;
   --ifm-card-background-color: #ffffff;
   --ifm-code-font-size: 95%;
-  --ifm-font-family-base: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --ifm-heading-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-base: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ifm-heading-font-family: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 
   /* Layer 2: Custom MS Learn properties */
