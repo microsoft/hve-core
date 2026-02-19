@@ -1,0 +1,5 @@
+{
+  "name": "experimental",
+  "description": "Experimental and preview artifacts not yet promoted to stable collections",
+  "version": "2.3.10"
+}

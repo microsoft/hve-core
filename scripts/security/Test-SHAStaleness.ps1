@@ -77,45 +77,14 @@ $ErrorActionPreference = 'Stop'
 
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
+
+# Route Write-SecurityLog output through script-scoped format and log path
+$PSDefaultParameterValues['Write-SecurityLog:OutputFormat'] = $OutputFormat
+$PSDefaultParameterValues['Write-SecurityLog:LogPath'] = $LogPath
 
 # Script-scope collection of stale dependencies (used by multiple functions)
 $script:StaleDependencies = @()
-
-function Write-SecurityLog {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet("Info", "Warning", "Error", "Success")]
-        [string]$Level = "Info"
-    )
-
-    if ([string]::IsNullOrWhiteSpace($Message)) {
-        $Message = "Empty log message"
-    }
-
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logEntry = "[$timestamp] [$Level] $Message"
-
-    # Console output with colors (only in console mode)
-    if ($OutputFormat -eq "console") {
-        switch ($Level) {
-            "Info" { Write-Host $logEntry -ForegroundColor Cyan }
-            "Warning" { Write-Host $logEntry -ForegroundColor Yellow }
-            "Error" { Write-Host $logEntry -ForegroundColor Red }
-            "Success" { Write-Host $logEntry -ForegroundColor Green }
-        }
-    }
-
-    # File logging
-    try {
-        Add-Content -Path $LogPath -Value $logEntry -ErrorAction SilentlyContinue
-    }
-    catch {
-        Write-Error "Failed to write to log file: $($_.Exception.Message)" -ErrorAction SilentlyContinue
-    }
-}
 
 function Test-GitHubToken {
     param(

@@ -96,19 +96,24 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $script:repoRoot = Join-Path $TestDrive 'repo'
         $script:collectionsDir = Join-Path $script:repoRoot 'collections'
 
-        # Create artifact directories and files referenced by test collections
+        # Create artifact directories and files
         $instrDir = Join-Path $script:repoRoot '.github/instructions'
-        $hveCoreInstrDir = Join-Path $instrDir 'hve-core'
         $agentsDir = Join-Path $script:repoRoot '.github/agents'
+        $sharedDir = Join-Path $instrDir 'shared'
         $hveCoreAgentsDir = Join-Path $agentsDir 'hve-core'
 
-        New-Item -ItemType Directory -Path $hveCoreInstrDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $sharedDir -Force | Out-Null
         New-Item -ItemType Directory -Path $hveCoreAgentsDir -Force | Out-Null
 
-        Set-Content -Path (Join-Path $hveCoreInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
-        Set-Content -Path (Join-Path $instrDir 'hve-core-location.instructions.md') -Value '---\ndescription: shared\n---'
-        Set-Content -Path (Join-Path $hveCoreAgentsDir 'some.agent.md') -Value '---\ndescription: repo-specific agent\n---'
-        Set-Content -Path (Join-Path $agentsDir 'good.agent.md') -Value '---\ndescription: good agent\n---'
+        # Root-level (repo-specific) files
+        Set-Content -Path (Join-Path $instrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
+        Set-Content -Path (Join-Path $agentsDir 'internal.agent.md') -Value '---\ndescription: repo-specific agent\n---'
+
+        # Subdirectory (collection-scoped) files
+        Set-Content -Path (Join-Path $sharedDir 'hve-core-location.instructions.md') -Value '---\ndescription: shared\n---'
+        Set-Content -Path (Join-Path $hveCoreAgentsDir 'rpi-agent.agent.md') -Value '---\ndescription: distributable agent\n---'
     }
 
     BeforeEach {
@@ -119,14 +124,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
     }
 
-    It 'Fails validation for instruction under .github/instructions/hve-core/' {
+    It 'Fails validation for root-level instruction' {
         $manifest = [ordered]@{
             id          = 'test-reject-instr'
             name        = 'Test Reject Instruction'
             description = 'Tests repo-specific instruction rejection'
             items       = @(
                 [ordered]@{
-                    path = '.github/instructions/hve-core/workflows.instructions.md'
+                    path = '.github/instructions/workflows.instructions.md'
                     kind = 'instruction'
                 }
             )
@@ -139,14 +144,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 
-    It 'Does NOT reject hve-core-location.instructions.md (not under hve-core/ subdirectory)' {
+    It 'Passes validation for instruction in subdirectory' {
         $manifest = [ordered]@{
             id          = 'test-allow-location'
             name        = 'Test Allow Location'
-            description = 'Tests that hve-core-location is allowed'
+            description = 'Tests that subdirectory instructions are allowed'
             items       = @(
                 [ordered]@{
-                    path = '.github/instructions/hve-core-location.instructions.md'
+                    path = '.github/instructions/shared/hve-core-location.instructions.md'
                     kind = 'instruction'
                 }
             )
@@ -158,14 +163,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.Success | Should -BeTrue
     }
 
-    It 'Fails validation for agent under .github/agents/hve-core/' {
+    It 'Fails validation for root-level agent' {
         $manifest = [ordered]@{
             id          = 'test-reject-agent'
             name        = 'Test Reject Agent'
             description = 'Tests repo-specific agent rejection'
             items       = @(
                 [ordered]@{
-                    path = '.github/agents/hve-core/some.agent.md'
+                    path = '.github/agents/internal.agent.md'
                     kind = 'agent'
                 }
             )
@@ -178,14 +183,14 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 
-    It 'Passes validation for agent NOT under hve-core/ subdirectory' {
+    It 'Passes validation for agent in subdirectory' {
         $manifest = [ordered]@{
             id          = 'test-allow-agent'
             name        = 'Test Allow Agent'
-            description = 'Tests that normal agents pass'
+            description = 'Tests that subdirectory agents pass'
             items       = @(
                 [ordered]@{
-                    path = '.github/agents/good.agent.md'
+                    path = '.github/agents/hve-core/rpi-agent.agent.md'
                     kind = 'agent'
                 }
             )

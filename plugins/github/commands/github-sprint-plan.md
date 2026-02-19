@@ -1,1 +1,1 @@
-../../../.github/prompts/github-sprint-plan.prompt.md
+../../../.github/prompts/github/github-sprint-plan.prompt.md

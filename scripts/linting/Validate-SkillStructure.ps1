@@ -29,7 +29,7 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 # Recognized subdirectories within a skill directory
-$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples')
+$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests')
 
 function Get-SkillFrontmatter {
     <#
@@ -439,17 +439,36 @@ function Invoke-SkillStructureValidation {
         }
 
         if ($ChangedFilesOnly) {
-            Write-Host "Found $($changedSkills.Count) changed skill(s) to validate" -ForegroundColor Cyan
+            Write-Host "Found $($changedSkills.Count) changed skill path(s) to validate" -ForegroundColor Cyan
 
             $results = @()
-            foreach ($skillName in $changedSkills) {
-                $skillDirPath = Join-Path -Path $fullSkillsPath -ChildPath $skillName
-                if (Test-Path $skillDirPath -PathType Container) {
-                    $dirInfo = Get-Item $skillDirPath
-                    $results += Test-SkillDirectory -Directory $dirInfo -RepoRoot $repoRoot
+            $validatedDirs = @{}
+            foreach ($skillRelPath in $changedSkills) {
+                $candidatePath = Join-Path -Path $fullSkillsPath -ChildPath $skillRelPath
+                if (-not (Test-Path $candidatePath -PathType Container)) {
+                    Write-Host "  ⏭️  Skill '$skillRelPath' was deleted - skipping validation" -ForegroundColor DarkGray
+                    continue
                 }
-                else {
-                    Write-Host "  ⏭️  Skill '$skillName' was deleted - skipping validation" -ForegroundColor DarkGray
+                # Find SKILL.md files at or below the changed path
+                $skillMdFiles = Get-ChildItem -Path $candidatePath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue
+                if ($null -eq $skillMdFiles -or @($skillMdFiles).Count -eq 0) {
+                    # Check if the changed path is inside a skill directory (ancestor has SKILL.md)
+                    $searchDir = Get-Item $candidatePath
+                    while ($null -ne $searchDir -and $searchDir.FullName -ne $fullSkillsPath) {
+                        $ancestorSkillMd = Join-Path -Path $searchDir.FullName -ChildPath 'SKILL.md'
+                        if (Test-Path $ancestorSkillMd -PathType Leaf) {
+                            $skillMdFiles = @(Get-Item $ancestorSkillMd)
+                            break
+                        }
+                        $searchDir = $searchDir.Parent
+                    }
+                }
+                foreach ($skillMdFile in $skillMdFiles) {
+                    $dirKey = $skillMdFile.Directory.FullName
+                    if (-not $validatedDirs.ContainsKey($dirKey)) {
+                        $validatedDirs[$dirKey] = $true
+                        $results += Test-SkillDirectory -Directory $skillMdFile.Directory -RepoRoot $repoRoot
+                    }
                 }
             }
 
@@ -464,17 +483,17 @@ function Invoke-SkillStructureValidation {
                 return 0
             }
 
-            $skillDirs = Get-ChildItem -Path $fullSkillsPath -Directory -ErrorAction SilentlyContinue
-            if ($null -eq $skillDirs -or @($skillDirs).Count -eq 0) {
+            $skillFiles = Get-ChildItem -Path $fullSkillsPath -Filter 'SKILL.md' -File -Recurse -ErrorAction SilentlyContinue
+            if ($null -eq $skillFiles -or @($skillFiles).Count -eq 0) {
                 Write-Host "No skill directories found under '$SkillsPath' - nothing to validate" -ForegroundColor Yellow
                 return 0
             }
 
-            Write-Host "🔍 Validating $(@($skillDirs).Count) skill directory(ies)..." -ForegroundColor Cyan
+            Write-Host "🔍 Validating $(@($skillFiles).Count) skill directory(ies)..." -ForegroundColor Cyan
 
             $results = @()
-            foreach ($dir in $skillDirs) {
-                $results += Test-SkillDirectory -Directory $dir -RepoRoot $repoRoot
+            foreach ($skillFile in $skillFiles) {
+                $results += Test-SkillDirectory -Directory $skillFile.Directory -RepoRoot $repoRoot
             }
         }
 

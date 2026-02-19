@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
@@ -520,6 +520,22 @@ description: 'Skill with recognized dirs'
             $result.IsValid | Should -BeTrue
             $result.Warnings | Should -HaveCount 0
         }
+
+        It 'Does not warn about tests/ subdirectory' {
+            $frontmatter = @"
+---
+name: tests-dir-skill
+description: 'Skill with co-located tests directory'
+---
+
+# Tests Dir Skill
+"@
+            $dir = New-TestSkillDirectory -SkillName 'tests-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('tests')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
     }
 
     Context 'Result object structure' {
@@ -911,8 +927,33 @@ description: 'A valid skill for integration testing'
         }
     }
 
+    Context 'Nested collection-based skill directories' {
+        It 'Returns 0 for a valid skill nested under a collection-id directory' {
+            $skillsDir = Join-Path $script:ValidationDir 'nested-valid'
+            $skillDir = Join-Path $skillsDir 'my-collection/my-nested-skill'
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            $content = @"
+---
+name: my-nested-skill
+description: 'A valid nested skill under a collection directory'
+---
+
+# My Nested Skill
+"@
+            Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value $content
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $script:ValidationDir
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'nested-valid'
+            $exitCode | Should -Be 0
+        }
+    }
+
     Context 'Invalid skill directories' {
-        It 'Returns 1 when a skill is missing SKILL.md' {
+        It 'Returns 0 when a directory has no SKILL.md (file-driven discovery)' {
             $skillsDir = Join-Path $script:ValidationDir 'invalid-missing'
             $skillDir = Join-Path $skillsDir 'broken-skill'
             New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
@@ -923,7 +964,7 @@ description: 'A valid skill for integration testing'
             } -ParameterFilter { $args[0] -eq 'rev-parse' }
 
             $exitCode = Invoke-SkillStructureValidation -SkillsPath 'invalid-missing'
-            $exitCode | Should -Be 1
+            $exitCode | Should -Be 0
         }
 
         It 'Returns 1 when SKILL.md has no frontmatter' {
@@ -1101,7 +1142,7 @@ name: bad-skill
     }
 
     Context 'Multiple skills with mixed results' {
-        It 'Returns 1 when at least one skill has errors among valid ones' {
+        It 'Returns 0 when valid skills exist alongside empty directories' {
             $skillsDir = Join-Path $script:ValidationDir 'mixed'
             New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
 
@@ -1118,9 +1159,9 @@ description: 'Valid skill'
 "@
             Set-Content -Path (Join-Path $validDir 'SKILL.md') -Value $validContent
 
-            # Invalid skill (missing SKILL.md)
-            $invalidDir = Join-Path $skillsDir 'beta-skill'
-            New-Item -ItemType Directory -Path $invalidDir -Force | Out-Null
+            # Empty directory (no SKILL.md) — file-driven discovery skips it
+            $emptyDir = Join-Path $skillsDir 'beta-skill'
+            New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
 
             Mock git {
                 $global:LASTEXITCODE = 0
@@ -1128,6 +1169,37 @@ description: 'Valid skill'
             } -ParameterFilter { $args[0] -eq 'rev-parse' }
 
             $exitCode = Invoke-SkillStructureValidation -SkillsPath 'mixed'
+            $exitCode | Should -Be 0
+        }
+
+        It 'Returns 1 when at least one skill has frontmatter errors' {
+            $skillsDir = Join-Path $script:ValidationDir 'mixed-errors'
+            New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
+
+            # Valid skill
+            $validDir = Join-Path $skillsDir 'good-skill'
+            New-Item -ItemType Directory -Path $validDir -Force | Out-Null
+            $validContent = @"
+---
+name: good-skill
+description: 'Valid skill'
+---
+
+# Good Skill
+"@
+            Set-Content -Path (Join-Path $validDir 'SKILL.md') -Value $validContent
+
+            # Invalid skill (SKILL.md exists but has bad frontmatter)
+            $invalidDir = Join-Path $skillsDir 'bad-skill'
+            New-Item -ItemType Directory -Path $invalidDir -Force | Out-Null
+            Set-Content -Path (Join-Path $invalidDir 'SKILL.md') -Value '# No frontmatter'
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return $script:ValidationDir
+            } -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            $exitCode = Invoke-SkillStructureValidation -SkillsPath 'mixed-errors'
             $exitCode | Should -Be 1
         }
     }
