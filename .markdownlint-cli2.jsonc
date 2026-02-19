@@ -6,6 +6,8 @@
     "venv/**",
     "scripts/tests/Fixtures/**",
     "extension/README.md",
+    "extension/README.*.md",
+    "extension/CHANGELOG.md",
     "collections/*.collection.md",
     "plugins/**/agents/**",
     "plugins/**/instructions/**",

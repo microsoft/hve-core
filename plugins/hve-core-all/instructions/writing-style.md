@@ -1,1 +1,1 @@
-../../../.github/instructions/writing-style.instructions.md
+../../../.github/instructions/rpi/writing-style.instructions.md

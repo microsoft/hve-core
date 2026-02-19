@@ -1,1 +1,1 @@
-../../../.github/instructions/commit-message.instructions.md
+../../../.github/instructions/rpi/commit-message.instructions.md

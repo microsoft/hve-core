@@ -1,1 +1,1 @@
-../../../.github/prompts/prompt-analyze.prompt.md
+../../../.github/prompts/rpi/prompt-analyze.prompt.md
