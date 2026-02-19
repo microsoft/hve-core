@@ -1,1 +1,1 @@
-../../../.github/prompts/github-execute-backlog.prompt.md
+../../../.github/prompts/github/github-execute-backlog.prompt.md

@@ -68,7 +68,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](../../.github/instructions/commit-message.instructions.md).
+For more details, see the [commit message instructions](../../.github/instructions/hve-core/commit-message.instructions.md).
 
 ## For Maintainers
 
@@ -164,7 +164,7 @@ stateDiagram-v2
 * **Experimental work**: Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts
 * **Preview promotions**: Set `preview` on collection items when core functionality is complete
 * **Stable promotions**: Set `stable` on collection items after production validation
-* **Deprecation**: Set `deprecated` on collection items before removal to provide transition time
+* **Deprecation**: Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy.
 
 ---
 

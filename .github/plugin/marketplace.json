@@ -28,9 +28,27 @@
       "version": "2.3.10"
     },
     {
+      "name": "design-thinking",
+      "source": "./plugins/design-thinking",
+      "description": "Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods",
+      "version": "2.3.10"
+    },
+    {
+      "name": "experimental",
+      "source": "./plugins/experimental",
+      "description": "Experimental and preview artifacts not yet promoted to stable collections",
+      "version": "2.3.10"
+    },
+    {
       "name": "github",
       "source": "./plugins/github",
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
+      "version": "2.3.10"
+    },
+    {
+      "name": "hve-core",
+      "source": "./plugins/hve-core",
+      "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
       "version": "2.3.10"
     },
     {
@@ -40,21 +58,15 @@
       "version": "2.3.10"
     },
     {
+      "name": "installer",
+      "source": "./plugins/installer",
+      "description": "Interactive installer agent for deploying HVE Core artifacts across workspace configurations",
+      "version": "2.3.10"
+    },
+    {
       "name": "project-planning",
       "source": "./plugins/project-planning",
-      "description": "PRDs, BRDs, ADRs, architecture diagrams, and documentation operations",
-      "version": "2.3.10"
-    },
-    {
-      "name": "prompt-engineering",
-      "source": "./plugins/prompt-engineering",
-      "description": "Tools for analyzing, building, and refactoring prompts, agents, and instructions",
-      "version": "2.3.10"
-    },
-    {
-      "name": "rpi",
-      "source": "./plugins/rpi",
-      "description": "Research, Plan, Implement, Review workflow with Git commit, merge, setup, and pull request prompts",
+      "description": "PRDs, BRDs, ADRs, and architecture diagrams",
       "version": "2.3.10"
     },
     {

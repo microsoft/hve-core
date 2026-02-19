@@ -92,14 +92,14 @@ flowchart TB
 
     INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
 
-    DISC --> AG["Agents<br/>.github/agents/*.agent.md"]
-    DISC --> PR["Prompts<br/>.github/prompts/*.prompt.md"]
-    DISC --> IN["Instructions<br/>.github/instructions/*.instructions.md"]
-    DISC --> SK["Skills<br/>.github/skills/*/SKILL.md"]
+    DISC --> AG["Agents<br/>.github/agents/**/*.agent.md"]
+    DISC --> PR["Prompts<br/>.github/prompts/**/*.prompt.md"]
+    DISC --> IN["Instructions<br/>.github/instructions/**/*.instructions.md"]
+    DISC --> SK["Skills<br/>.github/skills/**/SKILL.md"]
 
     AG -->|Filter by maturity| FM[Maturity-Filtered Set]
     PR -->|Filter by maturity| FM
-    IN -->|"Filter by maturity<br/>+ exclude hve-core/"| FM
+    IN -->|"Filter by maturity<br/>+ exclude root-level"| FM
     SK -->|Filter by maturity| FM
 
     FM --> CF{"Collection<br/>specified?"}
@@ -500,7 +500,8 @@ description: "AI-powered coding agents curated for software engineers"
 maturity: stable
 items:
   - kind: agent
-    path: .github/agents/my-agent.agent.md
+    # path can reference artifacts from any subfolder
+    path: .github/agents/{collection-id}/my-agent.agent.md
     maturity: stable
 ```
 
@@ -542,7 +543,8 @@ To create a new collection:
     maturity: experimental
     items:
       - kind: agent
-        path: .github/agents/my-agent.agent.md
+        # path can reference artifacts from any subfolder
+        path: .github/agents/{collection-id}/my-agent.agent.md
         maturity: experimental
     ```
 
@@ -558,8 +560,8 @@ To create a new collection:
 
 * The `.github` and `docs/templates` folders are temporarily copied during packaging (not permanently stored)
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-* Only essential extension files are included (agents, prompts, instructions, skills, templates)
-* Repo-specific instructions under `.github/instructions/hve-core/` are excluded from all builds
+* Only essential extension files are included (agents, prompts, instructions, skills, templates, dev-tools)
+* Repo-specific instructions at the root of `.github/instructions/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository
 
