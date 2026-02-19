@@ -1,0 +1,13 @@
+id: experimental
+name: Experimental
+description: Experimental and preview artifacts not yet promoted to stable collections
+maturity: experimental
+tags:
+  - experimental
+  - preview
+items:
+  # Skills
+  - path: .github/skills/experimental/video-to-gif
+    kind: skill
+display:
+  ordering: alpha

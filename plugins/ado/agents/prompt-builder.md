@@ -1,1 +1,0 @@
-../../../.github/agents/prompt-builder.agent.md

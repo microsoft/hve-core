@@ -93,10 +93,10 @@ flowchart TB
 
     INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
 
-    DISC --> AG["Agents<br/>.github/agents/*.agent.md"]
-    DISC --> PR["Prompts<br/>.github/prompts/*.prompt.md"]
-    DISC --> IN["Instructions<br/>.github/instructions/*.instructions.md"]
-    DISC --> SK["Skills<br/>.github/skills/*/SKILL.md"]
+    DISC --> AG["Agents<br/>.github/agents/**/*.agent.md"]
+    DISC --> PR["Prompts<br/>.github/prompts/**/*.prompt.md"]
+    DISC --> IN["Instructions<br/>.github/instructions/**/*.instructions.md"]
+    DISC --> SK["Skills<br/>.github/skills/**/SKILL.md"]
 
     AG -->|Filter by maturity| FM[Maturity-Filtered Set]
     PR -->|Filter by maturity| FM
@@ -501,7 +501,8 @@ description: "AI-powered coding agents curated for software engineers"
 maturity: stable
 items:
   - kind: agent
-    path: .github/agents/my-agent.agent.md
+    # path can reference artifacts from any subfolder
+    path: .github/agents/{collection-id}/my-agent.agent.md
     maturity: stable
 ```
 
@@ -543,7 +544,8 @@ To create a new collection:
     maturity: experimental
     items:
       - kind: agent
-        path: .github/agents/my-agent.agent.md
+        # path can reference artifacts from any subfolder
+        path: .github/agents/{collection-id}/my-agent.agent.md
         maturity: experimental
     ```
 

@@ -243,7 +243,7 @@ function Invoke-CollectionValidation {
             $effectiveMaturity = Resolve-ItemMaturity -Maturity $itemMaturity
 
             # Repo-specific path exclusion
-            if ($itemPath -match '^\.github/.*/hve-core/') {
+            if (Test-HveCoreRepoRelativePath -Path $itemPath) {
                 $fileErrors += "repo-specific path not allowed in collections: $itemPath (artifacts under .github/**/hve-core/ are excluded from distribution)"
             }
 
@@ -300,6 +300,33 @@ function Invoke-CollectionValidation {
         }
 
         $validatedCount++
+    }
+
+    # Duplicate artifact key detection across all collections
+    $artifactKeyMap = @{}
+    foreach ($itemKey in $itemOccurrences.Keys) {
+        $occurrences = $itemOccurrences[$itemKey]
+        $first = $occurrences[0]
+        $artifactKey = Get-CollectionArtifactKey -Kind $first.Kind -Path $first.Path
+        $compositeKey = "$($first.Kind)|$artifactKey"
+
+        if (-not $artifactKeyMap.ContainsKey($compositeKey)) {
+            $artifactKeyMap[$compositeKey] = @()
+        }
+        if ($artifactKeyMap[$compositeKey] -notcontains $first.Path) {
+            $artifactKeyMap[$compositeKey] += $first.Path
+        }
+    }
+
+    foreach ($compositeKey in $artifactKeyMap.Keys) {
+        $paths = $artifactKeyMap[$compositeKey]
+        if ($paths.Count -gt 1) {
+            $kindLabel = ($compositeKey -split '\|')[0]
+            $nameLabel = ($compositeKey -split '\|')[1]
+            $pathList = ($paths | Sort-Object) -join ', '
+            Write-Host "  FAIL duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList" -ForegroundColor Red
+            $errorCount++
+        }
     }
 
     foreach ($itemKey in $itemOccurrences.Keys) {
