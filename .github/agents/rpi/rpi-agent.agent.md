@@ -10,6 +10,10 @@ agents:
   - rpi-validator
   - implementation-validator
 handoffs:
+  - label: "Compact"
+    agent: rpi-agent
+    send: true
+    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include executive details for each of the `Phase 4: Review` findings. Must include all of the `Phase 5: Discover` follow up work items and their order with complete and consistent details."
   - label: "1️⃣"
     agent: rpi-agent
     prompt: "/rpi continue=1"
@@ -34,10 +38,6 @@ handoffs:
     agent: rpi-agent
     prompt: "/rpi auto=true"
     send: true
-  - label: "Compact"
-    agent: rpi-agent
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include executive details for each of the `Phase 4: Review` findings. Must include all of the `Phase 5: Discover` follow up work items and their order with complete and consistent details."
   - label: "💾 Save"
     agent: memory
     prompt: /checkpoint

@@ -7,6 +7,10 @@ agents:
   - researcher-subagent
   - implementation-validator
 handoffs:
+  - label: "Compact"
+    agent: task-reviewer
+    send: true
+    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths to the review documents and executive details about each individual finding. Be sure to include that the next agent instructions will be one-of Task Researcher for deeper research on the chosen findings to address, Task Planner to go right into planning based off of the chosen findings from the review document, or right back into implementation addressing the chosen findings from the review document. The user will switch to the agent instructions when they are done with Task Review."
   - label: "🔬 Research More"
     agent: task-researcher
     prompt: /task-research
@@ -15,10 +19,6 @@ handoffs:
     agent: task-planner
     prompt: /task-plan
     send: true
-  - label: "Compact"
-    agent: task-reviewer
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths to the review documents and executive details about each individual finding. Be sure to include that the next agent instructions will be one-of Task Researcher for deeper research on the chosen findings to address, Task Planner to go right into planning based off of the chosen findings from the review document, or right back into implementation addressing the chosen findings from the review document. The user will switch to the agent instructions when they are done with Task Review."
 ---
 
 # Implementation Reviewer
