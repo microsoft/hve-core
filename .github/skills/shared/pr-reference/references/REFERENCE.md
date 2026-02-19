@@ -75,11 +75,11 @@ Each `<commit>` element has `hash` and `date` attributes. The `<subject>` and `<
 Generate a reference comparing the current branch against `origin/main` with output at the default location:
 
 ```bash
-./.github/skills/shared/pr-reference/scripts/generate.sh
+./scripts/generate.sh
 ```
 
 ```powershell
-./.github/skills/shared/pr-reference/scripts/generate.ps1
+./scripts/generate.ps1
 ```
 
 Output: `.copilot-tracking/pr/pr-reference.xml`
@@ -89,11 +89,11 @@ Output: `.copilot-tracking/pr/pr-reference.xml`
 Compare against a branch other than `origin/main`, such as a release branch:
 
 ```bash
-./.github/skills/shared/pr-reference/scripts/generate.sh --base-branch origin/release/2.0
+./scripts/generate.sh --base-branch origin/release/2.0
 ```
 
 ```powershell
-./.github/skills/shared/pr-reference/scripts/generate.ps1 -BaseBranch release/2.0
+./scripts/generate.ps1 -BaseBranch release/2.0
 ```
 
 The PowerShell script automatically resolves `origin/release/2.0` when a bare branch name is provided.
@@ -103,11 +103,11 @@ The PowerShell script automatically resolves `origin/release/2.0` when a bare br
 Exclude documentation changes from the diff when generating PR descriptions, reducing noise in the output:
 
 ```bash
-./.github/skills/shared/pr-reference/scripts/generate.sh --no-md-diff
+./scripts/generate.sh --no-md-diff
 ```
 
 ```powershell
-./.github/skills/shared/pr-reference/scripts/generate.ps1 -ExcludeMarkdownDiff
+./scripts/generate.ps1 -ExcludeMarkdownDiff
 ```
 
 ### Custom Output Path
@@ -115,12 +115,12 @@ Exclude documentation changes from the diff when generating PR descriptions, red
 Write the XML to a branch-specific tracking directory for PR review workflows:
 
 ```bash
-./.github/skills/shared/pr-reference/scripts/generate.sh \
+./scripts/generate.sh \
   --output .copilot-tracking/pr/review/feature-auth/pr-reference.xml
 ```
 
 ```powershell
-./.github/skills/shared/pr-reference/scripts/generate.ps1 `
+./scripts/generate.ps1 `
   -OutputPath .copilot-tracking/pr/review/feature-auth/pr-reference.xml
 ```
 
@@ -129,13 +129,13 @@ Write the XML to a branch-specific tracking directory for PR review workflows:
 Use a custom filename for work item discovery workflows that analyze branch changes:
 
 ```bash
-./.github/skills/shared/pr-reference/scripts/generate.sh \
+./scripts/generate.sh \
   --base-branch origin/main \
   --output .copilot-tracking/workitems/discovery/sprint-42/git-branch-diff.xml
 ```
 
 ```powershell
-./.github/skills/shared/pr-reference/scripts/generate.ps1 `
+./scripts/generate.ps1 `
   -BaseBranch main `
   -OutputPath .copilot-tracking/workitems/discovery/sprint-42/git-branch-diff.xml
 ```

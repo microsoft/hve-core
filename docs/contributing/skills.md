@@ -240,7 +240,7 @@ Shows basic usage with default settings:
 ## Quick Start
 
 \`\`\`bash
-./.github/skills/experimental/video-to-gif/convert.sh input.mp4
+./scripts/convert.sh input.mp4
 \`\`\`
 ```
 
@@ -395,6 +395,25 @@ The `examples/` subdirectory **SHOULD** include:
 * Test data generation instructions
 * Quality comparison guides
 * Batch processing patterns
+
+## Path Portability
+
+Skill packages are self-contained and relocatable. The skill root directory varies by distribution context:
+
+| Context            | Skill Root Example                                                           |
+| ------------------ | ---------------------------------------------------------------------------- |
+| In-repo            | `.github/skills/<collection>/<skill>/`                                       |
+| Copilot CLI plugin | `~/.copilot/installed-plugins/_direct/<plugin>/skills/<skill>/`               |
+| VS Code extension  | `~/.vscode/extensions/<publisher>.<ext>-<version>/skills/<skill>/`            |
+| Plugin output      | `plugins/<collection>/skills/<skill>/`                                        |
+
+The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
+
+* Use `./scripts/generate.sh` instead of `./.github/skills/<collection>/<skill>/scripts/generate.sh`
+* Use `references/REFERENCE.md` instead of `.github/skills/<collection>/<skill>/references/REFERENCE.md`
+* From files in subdirectories (such as `references/`), use `../scripts/` to reach sibling directories
+
+This rule applies to all files in the skill: SKILL.md, reference documents, assets, and code examples in documentation. Repo-root-relative paths break portability and will fail validation.
 
 ## Semantic Skill Loading
 

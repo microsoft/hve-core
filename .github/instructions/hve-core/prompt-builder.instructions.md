@@ -320,7 +320,9 @@ Keep the main *SKILL.md* focused. Move detailed reference material to separate f
 
 #### File References
 
-When referencing other files in the skill, use relative paths from the skill root:
+Skill packages are self-contained and relocatable. The skill root directory varies by distribution context (in-repo at `.github/skills/`, as a Copilot CLI plugin at `~/.copilot/installed-plugins/`, or as a VS Code extension at `~/.vscode/extensions/`). The `.github/` directory does not exist outside the source repository.
+
+All paths within a skill must be relative to the skill root, never repo-root-relative:
 
 ```markdown
 See [the reference guide](references/REFERENCE.md) for details.
@@ -328,6 +330,8 @@ See [the reference guide](references/REFERENCE.md) for details.
 Run the extraction script:
 scripts/extract.py
 ```
+
+From files in subdirectories (such as `references/`), use `../` to reach sibling directories. Repo-root-relative paths like `./.github/skills/<collection>/<skill>/scripts/...` break portability across all distributed contexts.
 
 Keep file references one level deep from *SKILL.md*. Avoid deeply nested reference chains.
 
