@@ -1,1 +1,1 @@
-../../../.github/prompts/task-plan.prompt.md
+../../../.github/prompts/rpi/task-plan.prompt.md

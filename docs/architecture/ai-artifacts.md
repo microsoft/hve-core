@@ -95,10 +95,10 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
 * Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
 * Execute actual operations rather than providing guidance
 
-**Directory structure:**
+**Directory structure (by convention):**
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md           # Required entry point with frontmatter
 ├── scripts/
 │   ├── convert.sh     # Bash implementation
@@ -172,7 +172,7 @@ agent: 'pr-creator'
 ---
 ```
 
-The referenced agent file (`pr-creator.agent.md`) must exist in `.github/agents/`. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
+The referenced agent file (`pr-creator.agent.md`) is typically organized under `.github/agents/{collection-id}/` by convention. When a user invokes the prompt, Copilot activates the specified agent with the prompt's context.
 
 ### Instruction Glob Patterns
 
@@ -191,13 +191,15 @@ Multiple instructions can apply to the same file. When patterns overlap, all mat
 Skills provide self-contained utilities through the `SKILL.md` file:
 
 ```text
-.github/skills/<skill-name>/
+.github/skills/{collection-id}/<skill-name>/
 ├── SKILL.md                    # Entry point documentation
 ├── convert.sh                  # Bash implementation
 ├── convert.ps1                 # PowerShell implementation
 └── examples/
     └── README.md
 ```
+
+The `{collection-id}` path segment reflects the conventional organization; artifacts can reside in any subfolder.
 
 Copilot discovers skills automatically when their description matches the current task context. Skills can also be referenced explicitly by name. The skill's `SKILL.md` documents prerequisites, parameters, and usage patterns. Cross-platform scripts ensure consistent behavior across operating systems.
 
@@ -236,10 +238,10 @@ Each collection item defines inclusion metadata for artifact selection and relea
 
 ```yaml
 items:
-    - path: .github/agents/rpi-agent.agent.md
+    - path: .github/agents/rpi/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/task-plan.prompt.md
+    - path: .github/prompts/rpi/task-plan.prompt.md
         kind: prompt
         maturity: preview
 ```
@@ -322,12 +324,12 @@ The VS Code extension discovers and activates AI artifacts through contribution 
 
 The extension scans these directories at startup:
 
-* `.github/prompts/` for workflow entry points
-* `.github/agents/` for specialized behaviors
-* `.github/instructions/` for technology standards (excluding `hve-core/` subdirectory)
-* `.github/skills/` for utility packages
+* `.github/prompts/{collection-id}/` for workflow entry points
+* `.github/agents/{collection-id}/` for specialized behaviors
+* `.github/instructions/{collection-id}/` for technology standards (excluding `hve-core/` subdirectory)
+* `.github/skills/{collection-id}/` for utility packages
 
-Artifact inclusion is controlled by `collections/*.collection.yml`. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is controlled by `collections/*.collection.yml`, and collection manifests can reference artifacts from any subfolder. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|
@@ -358,6 +360,45 @@ The extension provides these contribution points:
 * `/prompt <name>` invokes prompts by filename.
 * Agents activate through prompt references or direct invocation.
 * Matching instructions inject into Copilot context automatically.
+
+## Deprecated Artifacts
+
+Artifacts that have been superseded or are scheduled for removal live under `.github/deprecated/{type}/`, preserving the same type subdirectories used by active artifacts.
+
+### Location
+
+```text
+.github/deprecated/
+├── agents/         # Superseded agent files
+├── instructions/   # Retired instruction files
+├── prompts/        # Retired prompt files
+└── skills/         # Retired skill packages
+```
+
+### Automatic Exclusion
+
+The build system excludes `.github/deprecated/` contents from all downstream surfaces:
+
+| Surface              | Exclusion Mechanism                         |
+|----------------------|---------------------------------------------|
+| Collection manifests | `Update-HveCoreAllCollection` path filter   |
+| Plugin generation    | `Get-ArtifactFiles` path filter             |
+| Extension packaging  | Discovery function `deprecated` path filter |
+| VS Code activation   | Not discovered at runtime                   |
+
+No manual removal from manifests is required when an artifact moves to `.github/deprecated/`. The path-based exclusion operates independently of `maturity` metadata, providing a reliable safety net against silent reintroduction.
+
+### Retention and Removal
+
+Deprecated artifacts remain in the repository for traceability and migration guidance. Each deprecated file SHOULD contain a frontmatter note or heading that identifies its replacement. Permanent removal occurs at a planned retirement window with a corresponding changelog entry.
+
+### When to Deprecate
+
+Move an artifact to `.github/deprecated/{type}/` when:
+
+* A newer artifact fully replaces its functionality
+* The artifact is no longer maintained or tested
+* The artifact targets a retired platform or workflow
 
 ## Related Documentation
 

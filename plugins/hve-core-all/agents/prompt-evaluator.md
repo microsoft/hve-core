@@ -1,1 +1,1 @@
-../../../.github/agents/subagents/prompt-evaluator.agent.md
+../../../.github/agents/rpi/subagents/prompt-evaluator.agent.md
