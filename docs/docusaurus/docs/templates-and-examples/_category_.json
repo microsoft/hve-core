@@ -1,0 +1,12 @@
+{
+  "label": "Templates & Examples",
+  "position": 6,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Templates & Examples",
+    "slug": "/category/templates-and-examples",
+    "description": "Ready-to-use templates for agents, prompts, and instructions"
+  }
+}

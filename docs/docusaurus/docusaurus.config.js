@@ -35,6 +35,8 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
+          showLastUpdateTime: true,
+          showLastUpdateAuthor: true,
           editUrl:
             'https://github.com/microsoft/hve-core/tree/main/docs/docusaurus/',
         },
@@ -52,6 +54,13 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: 'img/docusaurus-social-card.jpg',
+      announcementBar: {
+        id: 'draft_notice',
+        content: '⚠️ <strong>Draft Content</strong> — This documentation site is under active development. Content is preliminary and subject to change.',
+        backgroundColor: '#fff3cd',
+        textColor: '#664d03',
+        isCloseable: false,
+      },
       colorMode: {
         respectPrefersColorScheme: true,
       },
@@ -69,6 +78,16 @@ const config = {
             sidebarId: 'docsSidebar',
             position: 'left',
             label: 'Documentation',
+          },
+          {
+            type: 'dropdown',
+            label: 'Topics',
+            position: 'left',
+            items: [
+              { label: 'Agents & Prompts', to: '/docs/category/agents-and-prompts' },
+              { label: 'Workflows', to: '/docs/category/workflows' },
+              { label: 'Design Thinking', to: '/docs/category/design-thinking' },
+            ],
           },
           {
             href: 'https://github.com/microsoft/hve-core',
@@ -103,7 +122,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Microsoft. Built with Docusaurus.`,
+        copyright: `© Microsoft ${new Date().getFullYear()}. Built with HVE.`,
       },
       prism: {
         theme: prismThemes.github,

@@ -1,31 +1,150 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * MS Learn Architecture Center Color System
+ * Three-blue palette: #005ba1 (hero), #0078d4 (cards), #0f6cbd (primary)
+ * Dual-layer: Infima overrides + custom --ms-learn-* properties
  */
 
-/* You can override the default Infima variables here. */
+/* Layer 1: Infima variable overrides */
 :root {
-  --ifm-color-primary: #0078D4;
-  --ifm-color-primary-dark: #006CBF;
-  --ifm-color-primary-darker: #0063B1;
-  --ifm-color-primary-darkest: #004E8C;
-  --ifm-color-primary-light: #1A86D9;
-  --ifm-color-primary-lighter: #2B8FDE;
-  --ifm-color-primary-lightest: #4DA3E5;
+  --ifm-color-primary: #0f6cbd;
+  --ifm-color-primary-dark: #115ea3;
+  --ifm-color-primary-darker: #0c3b5e;
+  --ifm-color-primary-darkest: #0a2e4a;
+  --ifm-color-primary-light: #2886c7;
+  --ifm-color-primary-lighter: #479ef5;
+  --ifm-color-primary-lightest: #96c6fa;
+  --ifm-background-color: #ffffff;
+  --ifm-font-color-base: #161616;
+  --ifm-link-color: #0065b3;
+  --ifm-footer-background-color: #e8e6df;
+  --ifm-card-background-color: #ffffff;
   --ifm-code-font-size: 95%;
   --ifm-font-family-base: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --ifm-heading-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Layer 2: Custom MS Learn properties */
+  --ms-learn-hero-bg: #005ba1;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #005ba1 0%, #004d88 66.72%, #003e6e);
+  --ms-learn-hero-text: #ffffff;
+  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpath d='M0 10h20M10 0v20' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+  --ms-learn-card-accent: #0078d4;
+  --ms-learn-card-border: #e6e6e6;
+  --ms-learn-text-subtle: #505050;
+  --ms-learn-section-bg: #f2f2f2;
+  --ms-learn-footer-bg: #e8e6df;
+  --ms-learn-visited-link: #624991;
+  --ms-learn-success: #107c10;
+  --ms-learn-danger: #bc2f32;
 }
 
+/* Announcement bar dark mode */
+[data-theme='dark'] div[class*="announcementBar"] {
+  background-color: #332b00;
+  color: #ffd54f;
+}
+
+/* Link hover: MS Learn style (darker color + underline) */
+a:hover {
+  color: var(--ifm-color-primary-dark);
+  text-decoration: underline;
+}
+
+/* Navbar link hover: no underline in nav */
+.navbar__link:hover {
+  text-decoration: none;
+}
+
+/* Navbar dark mode */
+[data-theme='dark'] .navbar {
+  background-color: #1f1f1f;
+  border-bottom: 1px solid var(--ms-learn-card-border);
+}
+
+[data-theme='dark'] .navbar__title {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .navbar__link {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .navbar__link:hover {
+  color: #479ef5;
+}
+
+/* Footer: MS Learn-style warm gray background */
+.footer--dark {
+  background-color: var(--ms-learn-footer-bg);
+  color: var(--ifm-font-color-base);
+}
+
+.footer--dark .footer__title {
+  color: var(--ifm-font-color-base);
+}
+
+.footer--dark .footer__link-item {
+  color: var(--ifm-link-color);
+}
+
+.footer--dark .footer__copyright {
+  color: var(--ms-learn-text-subtle);
+}
+
+/* Breadcrumbs: MS Learn-style spacing */
+.breadcrumbs__item:not(:last-child)::after {
+  margin: 0 0.5rem;
+}
+
+/* TOC: "In this article" heading style */
+.table-of-contents {
+  border-left: 2px solid var(--ms-learn-card-border);
+  padding-left: 1rem;
+}
+
+/* Article metadata styling */
+.theme-doc-markdown header + div {
+  color: var(--ms-learn-text-subtle);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Generated-index cards: MS Learn-style treatment */
+.docCard {
+  border: 1px solid var(--ms-learn-card-border);
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+}
+
+.docCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Dark mode: derived from light palette with WCAG AA contrast verification */
 [data-theme='dark'] {
-  --ifm-color-primary: #4DA3E5;
-  --ifm-color-primary-dark: #2B8FDE;
-  --ifm-color-primary-darker: #1A86D9;
-  --ifm-color-primary-darkest: #0078D4;
-  --ifm-color-primary-light: #6FB3EA;
-  --ifm-color-primary-lighter: #82BEEF;
-  --ifm-color-primary-lightest: #A5D1F5;
+  --ifm-color-primary: #479ef5;
+  --ifm-color-primary-dark: #0f6cbd;
+  --ifm-color-primary-darker: #115ea3;
+  --ifm-color-primary-darkest: #0c3b5e;
+  --ifm-color-primary-light: #62abf5;
+  --ifm-color-primary-lighter: #96c6fa;
+  --ifm-color-primary-lightest: #cfe4fa;
+  --ifm-background-color: #1b1b1b;
+  --ifm-font-color-base: #e0e0e0;
+  --ifm-link-color: #479ef5;
+  --ifm-footer-background-color: #1f1f1f;
+  --ifm-card-background-color: #292929;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --ms-learn-hero-bg: #1a6fb5;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #1a6fb5 0%, #115ea3 66.72%, #0c3b5e);
+  --ms-learn-hero-text: #ffffff;
+  --ms-learn-card-accent: #479ef5;
+  --ms-learn-card-border: #505050;
+  --ms-learn-text-subtle: #b0b0b0;
+  --ms-learn-section-bg: #252525;
+  --ms-learn-footer-bg: #1f1f1f;
+  --ms-learn-visited-link: #b4a0d6;
+  --ms-learn-success: #2ea043;
+  --ms-learn-danger: #f85149;
 }

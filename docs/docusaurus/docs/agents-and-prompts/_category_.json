@@ -1,0 +1,12 @@
+{
+  "label": "Agents & Prompts",
+  "position": 2,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Agents & Prompts",
+    "slug": "/category/agents-and-prompts",
+    "description": "Custom agents and prompt templates for AI-assisted development"
+  }
+}
