@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
 # Validates an HVE-Core clone-based installation by checking required directories
@@ -20,9 +20,10 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $valid = $true
-@("$BasePath/.github/agents", "$BasePath/.github/prompts", "$BasePath/.github/instructions") | ForEach-Object {
-    if (-not (Test-Path $_)) { $valid = $false; Write-Host "❌ Missing: $_" }
-    else { Write-Host "✅ Found: $_" }
+$requiredDirs = @("$BasePath/.github/agents", "$BasePath/.github/prompts", "$BasePath/.github/instructions")
+foreach ($dir in $requiredDirs) {
+    if (-not (Test-Path $dir)) { $valid = $false; Write-Host "❌ Missing: $dir" }
+    else { Write-Host "✅ Found: $dir" }
 }
 
 # Method 5 additional check: workspace file

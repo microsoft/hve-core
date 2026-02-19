@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
 # Ejects a file from HVE-Core upgrade tracking. Ejected files are permanently
