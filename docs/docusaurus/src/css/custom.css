@@ -50,6 +50,12 @@ a:hover {
   text-decoration: underline;
 }
 
+/* No underline on card links */
+a[class*="cardContainer"]:hover,
+a[class*="card"]:hover {
+  text-decoration: none;
+}
+
 a:visited {
   color: inherit;
 }
@@ -221,6 +227,10 @@ a:visited {
 
 .docCard:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.docCard a:hover {
+  text-decoration: none;
 }
 
 /* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */
