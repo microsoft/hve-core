@@ -121,7 +121,7 @@ function Get-CollectionManifest {
     $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
     if ($extension -in @('.yml', '.yaml')) {
         $content = Get-Content -Path $CollectionPath -Raw
-        return ConvertFrom-Yaml -Yaml $content
+        return ConvertFrom-Yaml -Yaml $content -Ordered
     }
 
     $content = Get-Content -Path $CollectionPath -Raw
