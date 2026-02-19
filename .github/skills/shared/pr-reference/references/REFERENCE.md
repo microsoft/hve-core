@@ -189,7 +189,7 @@ Generate the PR reference XML file comparing the current branch against origin/m
 Generate a PR reference XML excluding markdown diffs, saving to the review tracking directory.
 ```
 
-Avoid referencing script paths directly in prompts, agents, or instructions. The skill handles platform detection and script selection internally.
+Avoid referencing script paths directly in prompts, agents, or instructions. The agent selects the appropriate script based on the current platform.
 
 ---
 

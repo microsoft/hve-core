@@ -7,6 +7,8 @@ compatibility: 'Requires git available on PATH'
 
 # PR Reference Generation Skill
 
+## Overview
+
 Queries git for commit metadata and diff output, then produces a structured XML document. Both bash and PowerShell implementations are provided.
 
 Use cases:
@@ -22,17 +24,15 @@ After successful generation, include a file link to the absolute path of the XML
 
 The repository must have at least one commit diverging from the base branch.
 
-### Platform Requirements
-
-| Platform      | Runtime                    |
-| ------------- | -------------------------- |
-| macOS / Linux | Bash (pre-installed)       |
-| Windows       | PowerShell 7+ (pwsh)       |
-| Cross-platform | PowerShell 7+ (pwsh)      |
+| Platform       | Runtime              |
+| -------------- | -------------------- |
+| macOS / Linux  | Bash (pre-installed) |
+| Windows        | PowerShell 7+ (pwsh) |
+| Cross-platform | PowerShell 7+ (pwsh) |
 
 ## Quick Start
 
-Generate a PR reference using default settings (compares against `origin/main`):
+Run the following command to generate a PR reference with default settings (compares against `origin/main`):
 
 ```bash
 ./scripts/generate.sh
@@ -46,101 +46,61 @@ Output saves to `.copilot-tracking/pr/pr-reference.xml` by default.
 
 ## Parameters Reference
 
-| Parameter          | Flag (bash)     | Flag (PowerShell)       | Default                                       | Description                                 |
-| ------------------ | --------------- | ----------------------- | --------------------------------------------- | ------------------------------------------- |
-| Base branch        | `--base-branch` | `-BaseBranch`           | `origin/main` (bash) / `main` (PowerShell)    | Target branch for comparison                |
-| Exclude markdown   | `--no-md-diff`  | `-ExcludeMarkdownDiff`  | false                                         | Exclude markdown files (*.md) from the diff |
-| Output path        | `--output`      | `-OutputPath`           | `.copilot-tracking/pr/pr-reference.xml`       | Custom output file path                     |
+| Parameter        | Flag (bash)     | Flag (PowerShell)      | Default                                    | Description                                 |
+| ---------------- | --------------- | ---------------------- | ------------------------------------------ | ------------------------------------------- |
+| Base branch      | `--base-branch` | `-BaseBranch`          | `origin/main` (bash) / `main` (PowerShell) | Target branch for comparison                |
+| Exclude markdown | `--no-md-diff`  | `-ExcludeMarkdownDiff` | false                                      | Exclude markdown files (*.md) from the diff |
+| Output path      | `--output`      | `-OutputPath`          | `.copilot-tracking/pr/pr-reference.xml`    | Custom output file path                     |
 
-The PowerShell script automatically resolves `origin/<branch>` when a bare branch name is provided for `-BaseBranch`.
+Both defaults resolve to the same remote comparison. The PowerShell script automatically resolves `origin/<branch>` when a bare branch name is provided.
 
-## Utility Scripts
+## Additional Scripts Reference
 
-After generating the PR reference, use these utility scripts to query the XML without manual terminal commands.
+After generating the PR reference, use these utility scripts to query the XML.
 
 ### List Changed Files
 
-Extract file paths from the diff:
+Run the list script to extract file paths from the diff:
 
 ```bash
-# List all changed files
-./scripts/list-changed-files.sh
-
-# Filter by change type
-./scripts/list-changed-files.sh --type added
-
-# Output as markdown table
-./scripts/list-changed-files.sh --format markdown
+./scripts/list-changed-files.sh                  # all changed files
+./scripts/list-changed-files.sh --type added      # filter by change type
+./scripts/list-changed-files.sh --format markdown  # output as markdown table
 ```
 
 ```powershell
-# List all changed files
-./scripts/list-changed-files.ps1
-
-# Filter by change type
-./scripts/list-changed-files.ps1 -Type Added
-
-# Output as JSON
-./scripts/list-changed-files.ps1 -Format Json
+./scripts/list-changed-files.ps1                   # all changed files
+./scripts/list-changed-files.ps1 -Type Added       # filter by change type
+./scripts/list-changed-files.ps1 -Format Json      # output as JSON
 ```
 
 ### Read Diff Content
 
-Read diff content with chunking support for large diffs:
+Run the read script to inspect diff content with chunking for large diffs:
 
 ```bash
-# Show chunk info (how many chunks, line ranges)
-./scripts/read-diff.sh --info
-
-# Read a specific chunk (default 500 lines/chunk)
-./scripts/read-diff.sh --chunk 1
-
-# Read by line range
-./scripts/read-diff.sh --lines 200,800
-
-# Extract diff for a specific file
-./scripts/read-diff.sh --file src/main.ts
-
-# Show summary with file stats
-./scripts/read-diff.sh --summary
+./scripts/read-diff.sh --info             # chunk info (count, line ranges)
+./scripts/read-diff.sh --chunk 1          # read a specific chunk
+./scripts/read-diff.sh --file src/main.ts  # extract diff for one file
+./scripts/read-diff.sh --summary          # file stats summary
 ```
 
 ```powershell
-# Show chunk info
-./scripts/read-diff.ps1 -Info
-
-# Read a specific chunk
-./scripts/read-diff.ps1 -Chunk 1
-
-# Read by line range
-./scripts/read-diff.ps1 -Lines "200,800"
-
-# Extract diff for a specific file
-./scripts/read-diff.ps1 -File "src/main.ts"
+./scripts/read-diff.ps1 -Info              # chunk info
+./scripts/read-diff.ps1 -Chunk 1           # read a specific chunk
+./scripts/read-diff.ps1 -File "src/main.ts" # extract diff for one file
 ```
 
 ## Output Format
 
-The generated XML follows this structure:
+The generated XML wraps commit metadata and unified diff output in a `<commit_history>` root element. See the [reference guide](references/REFERENCE.md) for the complete XML schema, element reference, output path variations, and workflow integration patterns.
 
-```xml
-<commit_history>
-  <current_branch>feature/example</current_branch>
-  <base_branch>origin/main</base_branch>
-  <commits>
-    <commit hash="abc1234" date="2026-01-15">
-      <message>
-        <subject><![CDATA[feat: add new feature]]></subject>
-        <body><![CDATA[Detailed description]]></body>
-      </message>
-    </commit>
-  </commits>
-  <full_diff>
-    <!-- unified diff output -->
-  </full_diff>
-</commit_history>
-```
+## Troubleshooting
 
-See the [reference guide](references/REFERENCE.md) for the complete XML schema, output path variations, and workflow integration patterns.
+| Symptom                          | Cause                                | Resolution                                                               |
+| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| "No commits found" or empty XML  | No diverging commits from base branch | Verify the branch has commits ahead of the base with `git log base..HEAD` |
+| "Branch not found" error         | Base branch ref missing locally      | Run `git fetch origin` to update remote tracking refs                    |
+| "git: command not found"         | git is not on PATH                   | Install git or verify PATH includes the git binary directory             |
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
