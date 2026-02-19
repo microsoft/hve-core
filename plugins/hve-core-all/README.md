@@ -56,13 +56,13 @@ copilot plugin install hve-core-all@hve-core
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                                 |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
+| dt-start-project                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core     |
 | github-add-issue                            | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
 | github-discover-issues                      | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
 | github-execute-backlog                      | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
 | github-sprint-plan                          | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
 | github-triage-issues                        | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 | checkpoint                                  | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
-| dt-start-project                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core     |
 | doc-ops-update                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
 | git-commit-message                          | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                                 |
 | git-commit                                  | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
