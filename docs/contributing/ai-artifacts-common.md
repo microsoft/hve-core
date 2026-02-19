@@ -113,7 +113,7 @@ items:
   - path: .github/instructions/coding-standards/python-script.instructions.md
     kind: instruction
     maturity: stable
-  - path: .github/prompts/rpi/task-plan.prompt.md
+  - path: .github/prompts/hve-core/task-plan.prompt.md
     kind: prompt
     maturity: preview
 ```
@@ -132,7 +132,7 @@ Each collection manifest declares a top-level `tags` array for categorization an
 | `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
 | `installer`         | `installer`, `setup`, `onboarding`                                                   |
 | `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
-| `rpi`               | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
 | `security-planning` | `security`, `incident-response`, `risk`, `planning`                                  |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
@@ -142,7 +142,7 @@ When creating a new collection, choose tags that describe the domain, technologi
 Each `items[]` entry follows this structure:
 
 ```yaml
-- path: .github/agents/rpi/rpi-agent.agent.md
+- path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
   maturity: stable
 ```
@@ -165,9 +165,9 @@ When contributing a new artifact:
 6. Run `npm run plugin:validate` to validate collection manifests
 7. Run `npm run plugin:generate` to regenerate plugin directories
 
-### Repo-Specific Instructions Exclusion
+### Repo-Specific Artifact Exclusion
 
-Instructions placed in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal hve-core repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
+Artifacts placed at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
 
 ### Deprecated Artifact Placement
 
@@ -189,7 +189,7 @@ Artifacts that have been superseded or are scheduled for removal MUST be moved t
 
 #### Exclusion Scope
 
-Artifacts under `.github/**/hve-core/` are excluded from:
+Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` are excluded from:
 
 * Collection manifests (`collections/*.collection.yml` items)
 * Plugin generation (`plugins/` directory contents)
@@ -201,20 +201,20 @@ Artifacts under `.github/**/hve-core/` are excluded from:
 
 The plugin generation and validation tooling actively enforces this exclusion:
 
-* Collection validation fails if hve-core-specific paths appear in `items[]`
-* Plugin generation skips any hve-core-scoped artifacts
+* Collection validation fails if root-level repo-specific paths appear in `items[]`
+* Plugin generation skips root-level artifacts
 * Extension packaging filters out these files during build
 
 #### Placement Guidelines
 
 | Scope                       | Location                                                | Included in Plugins |
 |-----------------------------|---------------------------------------------------------|---------------------|
-| **Repository-specific**     | `.github/instructions/hve-core/`                        | ❌ No                |
+| **Repository-specific**     | `.github/instructions/` (root, no subdirectory)         | ❌ No                |
 | **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
 | **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
 | **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
 
-If your instructions apply only to the hve-core repository and are not intended for distribution to consumers, place them in `.github/instructions/hve-core/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
 
 ## Collection Taxonomy
 
@@ -232,7 +232,7 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 | **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution           |
 | **Installer**         | `installer`         | HVE Core installation and environment setup                                      |
 | **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations            |
-| **RPI Workflow**      | `rpi`               | Research, Plan, Implement, Review workflow agents and prompts                    |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                    |
 | **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                   |
 
 ### Collection Assignment Guidelines
@@ -249,15 +249,15 @@ Adding an artifact to multiple collections means adding its `items[]` entry in e
 
 ```yaml
 # In collections/hve-core-all.collection.yml - Universal
-- path: .github/instructions/rpi/markdown.instructions.md
+- path: .github/instructions/hve-core/markdown.instructions.md
   kind: instruction
 
 # In collections/coding-standards.collection.yml - Coding standards
-- path: .github/instructions/rpi/markdown.instructions.md
+- path: .github/instructions/hve-core/markdown.instructions.md
   kind: instruction
 
-# In collections/rpi.collection.yml - Core workflow
-- path: .github/agents/rpi/rpi-agent.agent.md
+# In collections/hve-core.collection.yml - Core workflow
+- path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
 ```
 
@@ -417,7 +417,7 @@ This command checks:
 * **Kind values**: Valid artifact kinds (agent, prompt, instruction, skill, hook)
 * **Maturity values**: Valid maturity levels (stable, preview, experimental, deprecated)
 * **Duplicate paths**: No duplicate artifact entries within a collection
-* **hve-core exclusions**: No repo-specific artifacts from `.github/**/hve-core/`
+* **Root-level exclusions**: No repo-specific artifacts from `.github/{type}/` root
 
 Always validate before generating plugins:
 
@@ -824,7 +824,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See [commit-message.instructions.md](../../.github/instructions/rpi/commit-message.instructions.md) for the complete list of types and scopes.
+See [commit-message.instructions.md](../../.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
 
 ## Getting Help
 

@@ -80,10 +80,10 @@ Instructions answer the question "what standards apply to this context?" and ens
 
 #### Repo-Specific Instructions
 
-Instructions placed in `.github/instructions/hve-core/` are scoped to the hve-core repository itself and MUST NOT be included in collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Collection manifests intentionally exclude this subdirectory from artifact selection and package composition.
+Instructions placed at the root of `.github/instructions/` (without a subdirectory) are scoped to the hve-core repository itself and MUST NOT be included in collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that are not applicable outside the repository. Root-level artifacts are intentionally excluded from artifact selection and package composition.
 
 > [!IMPORTANT]
-> The `.github/instructions/hve-core/` directory is reserved for repo-specific instructions. Files in this directory are never distributed through extension packages or collections.
+> Root-level files under `.github/instructions/` (no subdirectory) are repo-specific and never distributed. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
 
 ### Skills
 
@@ -238,10 +238,10 @@ Each collection item defines inclusion metadata for artifact selection and relea
 
 ```yaml
 items:
-    - path: .github/agents/rpi/rpi-agent.agent.md
+    - path: .github/agents/hve-core/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/rpi/task-plan.prompt.md
+    - path: .github/prompts/hve-core/task-plan.prompt.md
         kind: prompt
         maturity: preview
 ```
@@ -326,10 +326,10 @@ The extension scans these directories at startup:
 
 * `.github/prompts/{collection-id}/` for workflow entry points
 * `.github/agents/{collection-id}/` for specialized behaviors
-* `.github/instructions/{collection-id}/` for technology standards (excluding `hve-core/` subdirectory)
+* `.github/instructions/{collection-id}/` for technology standards
 * `.github/skills/{collection-id}/` for utility packages
 
-These paths reflect the conventional directory structure. Artifact inclusion is controlled by `collections/*.collection.yml`, and collection manifests can reference artifacts from any subfolder. Repo-specific instructions under `.github/instructions/hve-core/` are excluded from discovery and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is controlled by `collections/*.collection.yml`, and collection manifests can reference artifacts from any subfolder. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|

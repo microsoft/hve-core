@@ -358,17 +358,20 @@ Detects files changed in current branch compared to main.
 
 #### `Get-FilesRecursive`
 
-Recursively finds files matching patterns with gitignore support.
+Finds files matching patterns using `git ls-files` with a `Get-ChildItem` fallback.
 
 **Parameters**:
 
 * `-Path` (string, required) - Root directory to search from
 * `-Include` (string[], required) - File patterns to include (e.g., `@('*.ps1', '*.psm1')`)
-* `-GitIgnorePath` (string) - Path to `.gitignore` file for exclusion patterns
+* `-GitIgnorePath` (string) - Path to `.gitignore` file for exclusion patterns (fallback path only)
 
 **Returns**: Array of FileInfo objects
 
-**Respects**: `.gitignore` patterns when `-GitIgnorePath` is provided
+**Behavior**:
+
+* Inside a git repository, uses `git ls-files --cached --others --exclude-standard` scoped to the given path. Git natively handles `.gitignore` exclusions.
+* Outside a git repository (or when `git` is unavailable), falls back to `Get-ChildItem -Recurse` with optional `-GitIgnorePath` filtering.
 
 #### `Get-GitIgnorePatterns`
 

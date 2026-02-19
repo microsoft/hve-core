@@ -1,1 +1,0 @@
-../../../.github/instructions/rpi/writing-style.instructions.md

@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/pull-request.prompt.md

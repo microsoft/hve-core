@@ -219,7 +219,7 @@ function Invoke-ExtensionCollectionsGeneration {
         Generates collection package files from root collection manifests.
     .DESCRIPTION
         Reads the package template and each collections/*.collection.yml file,
-        producing extension/package.json (for hve-core-all) and
+        producing extension/package.json (for hve-core) and
         extension/package.{id}.json for every other collection. Stale collection
         files are removed.
     .PARAMETER RepoRoot
@@ -271,12 +271,15 @@ function Invoke-ExtensionCollectionsGeneration {
 
         $collectionDescription = if ($collection.ContainsKey('description')) { [string]$collection.description } else { [string]$packageTemplate.description }
 
-        $extensionName = if ($collectionId -eq 'hve-core-all') { [string]$packageTemplate.name } else { "hve-$collectionId" }
-        $extensionDisplayName = if ($collectionId -eq 'hve-core-all') {
-            [string]$packageTemplate.displayName
+        $extensionName = switch ($collectionId) {
+            'hve-core'     { [string]$packageTemplate.name }
+            'hve-core-all' { 'hve-core-all' }
+            default        { "hve-$collectionId" }
         }
-        else {
-            Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName)
+        $extensionDisplayName = switch ($collectionId) {
+            'hve-core'     { [string]$packageTemplate.displayName }
+            'hve-core-all' { 'HVE Core - All' }
+            default        { Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName) }
         }
 
         $packageTemplateOutput = Copy-TemplateWithOverrides -Template $packageTemplate -Overrides @{
@@ -285,11 +288,10 @@ function Invoke-ExtensionCollectionsGeneration {
             description = $collectionDescription
         }
 
-        $packagePath = if ($collectionId -eq 'hve-core-all') {
-            Join-Path $RepoRoot 'extension/package.json'
-        }
-        else {
-            Join-Path $RepoRoot "extension/package.$collectionId.json"
+        $packagePath = switch ($collectionId) {
+            'hve-core'     { Join-Path $RepoRoot 'extension/package.json' }
+            'hve-core-all' { Join-Path $RepoRoot 'extension/package.hve-core-all.json' }
+            default        { Join-Path $RepoRoot "extension/package.$collectionId.json" }
         }
 
         Set-JsonFile -Path $packagePath -Content $packageTemplateOutput
@@ -309,11 +311,10 @@ function Invoke-ExtensionCollectionsGeneration {
             continue
         }
 
-        $readmePath = if ($collectionId -eq 'hve-core-all') {
-            Join-Path $RepoRoot 'extension/README.md'
-        }
-        else {
-            Join-Path $RepoRoot "extension/README.$collectionId.md"
+        $readmePath = switch ($collectionId) {
+            'hve-core'     { Join-Path $RepoRoot 'extension/README.md' }
+            'hve-core-all' { Join-Path $RepoRoot 'extension/README.hve-core-all.md' }
+            default        { Join-Path $RepoRoot "extension/README.$collectionId.md" }
         }
 
         New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath
@@ -407,11 +408,10 @@ function New-CollectionReadme {
     )
 
     $collectionId = [string]$Collection.id
-    $displayName = if ($collectionId -eq 'hve-core-all') {
-        'HVE Core'
-    }
-    else {
-        Get-CollectionDisplayName -CollectionManifest $Collection -DefaultValue "HVE Core - $collectionId"
+    $displayName = switch ($collectionId) {
+        'hve-core'     { 'HVE Core' }
+        'hve-core-all' { 'HVE Core - All' }
+        default        { Get-CollectionDisplayName -CollectionManifest $Collection -DefaultValue "HVE Core - $collectionId" }
     }
     $description = if ($Collection.ContainsKey('description')) { [string]$Collection.description } else { '' }
 
@@ -470,7 +470,7 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
-    $fullEdition = if ($collectionId -ne 'hve-core-all') {
+    $fullEdition = if ($collectionId -notin @('hve-core', 'hve-core-all')) {
         "## Full Edition`n`nLooking for more agents covering additional domains? Check out the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
     }
     else {
@@ -964,7 +964,7 @@ function Get-DiscoveredAgents {
 
         if (Test-HveCoreRepoSpecificPath -RelativePath $agentRelPath) {
             $agentName = $agentFile.BaseName -replace '\.agent$', ''
-            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (hve-core/)' }
+            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1037,7 +1037,7 @@ function Get-DiscoveredPrompts {
 
         $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
         if (Test-HveCoreRepoSpecificPath -RelativePath $promptRelPath) {
-            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (hve-core/)' }
+            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1104,7 +1104,7 @@ function Get-DiscoveredInstructions {
     foreach ($instrFile in $instructionFiles) {
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
         if (Test-HveCoreRepoSpecificPath -RelativePath $instrRelPath) {
-            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (hve-core/)' }
+            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (root-level)' }
             continue
         }
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
@@ -1172,7 +1172,7 @@ function Get-DiscoveredSkills {
         $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
         if (Test-HveCoreRepoSpecificPath -RelativePath $skillRelPath) {
-            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (hve-core/)' }
+            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1185,7 +1185,7 @@ function Get-DiscoveredSkills {
 
         $result.Skills += [PSCustomObject]@{
             name = $skillName
-            path = "./.github/skills/$skillRelPath"
+            path = "./.github/skills/$skillRelPath/SKILL.md"
         }
     }
 
@@ -1685,7 +1685,7 @@ function Invoke-PrepareExtension {
     }
 
     # Apply collection template when building a non-default collection
-    if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core-all') {
+    if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core') {
         $collectionId = $collectionManifest.id
         $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
         if (-not (Test-Path $templatePath)) {
@@ -1782,12 +1782,19 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
         }
 
+        # Default to hve-core collection when no collection is specified.
+        # package.json is identity-mapped to the hve-core collection, so the
+        # default build must apply hve-core filtering rather than including all
+        # artifacts (hve-core-all behavior). Use -Collection with
+        # hve-core-all.collection.yml explicitly to include everything.
+        if (-not $Collection) {
+            $Collection = Join-Path $RepoRoot 'collections/hve-core.collection.yml'
+        }
+
         Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
         Write-Host "==============================" -ForegroundColor Cyan
         Write-Host "   Channel: $Channel" -ForegroundColor Cyan
-        if ($Collection) {
-            Write-Host "   Collection: $Collection" -ForegroundColor Cyan
-        }
+        Write-Host "   Collection: $Collection" -ForegroundColor Cyan
         Write-Host ""
 
         # Call orchestration function

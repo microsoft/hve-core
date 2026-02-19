@@ -502,7 +502,7 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Include nested subdirectories such as `rpi/subagents`. Create one entry per subdirectory.
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Include nested subdirectories such as `hve-core/subagents`. Create one entry per subdirectory.
 
 <!-- <settings-template> -->
 ```json
@@ -513,14 +513,14 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/agents/github": true,
     "<PREFIX>/.github/agents/installer": true,
     "<PREFIX>/.github/agents/project-planning": true,
-    "<PREFIX>/.github/agents/rpi": true,
-    "<PREFIX>/.github/agents/rpi/subagents": true,
+    "<PREFIX>/.github/agents/hve-core": true,
+    "<PREFIX>/.github/agents/hve-core/subagents": true,
     "<PREFIX>/.github/agents/security-planning": true
   },
   "chat.promptFilesLocations": {
     "<PREFIX>/.github/prompts/ado": true,
     "<PREFIX>/.github/prompts/github": true,
-    "<PREFIX>/.github/prompts/rpi": true,
+    "<PREFIX>/.github/prompts/hve-core": true,
     "<PREFIX>/.github/prompts/security-planning": true
   },
   "chat.instructionsFilesLocations": {
@@ -528,7 +528,7 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/instructions/coding-standards": true,
     "<PREFIX>/.github/instructions/design-thinking": true,
     "<PREFIX>/.github/instructions/github": true,
-    "<PREFIX>/.github/instructions/rpi": true,
+    "<PREFIX>/.github/instructions/hve-core": true,
     "<PREFIX>/.github/instructions/shared": true
   }
 }
@@ -596,14 +596,14 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/agents/github": true,
           "/workspaces/hve-core/.github/agents/installer": true,
           "/workspaces/hve-core/.github/agents/project-planning": true,
-          "/workspaces/hve-core/.github/agents/rpi": true,
-          "/workspaces/hve-core/.github/agents/rpi/subagents": true,
+          "/workspaces/hve-core/.github/agents/hve-core": true,
+          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
           "/workspaces/hve-core/.github/agents/security-planning": true
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
           "/workspaces/hve-core/.github/prompts/github": true,
-          "/workspaces/hve-core/.github/prompts/rpi": true,
+          "/workspaces/hve-core/.github/prompts/hve-core": true,
           "/workspaces/hve-core/.github/prompts/security-planning": true
         },
         "chat.instructionsFilesLocations": {
@@ -611,7 +611,7 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
           "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
-          "/workspaces/hve-core/.github/instructions/rpi": true,
+          "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
         }
       }
@@ -1186,14 +1186,14 @@ User input handling:
 
 | Bundle            | Agents                                                                    |
 |-------------------|---------------------------------------------------------------------------|
-| `rpi-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
+| `hve-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
 | `collection:<id>` | Stable agents matching the collection                                     |
 
 ### Collision Detection
 
 Before copying, check for existing agent files with matching names. Generate a script for the user's shell that:
 
-1. Builds list of source files based on selection (`rpi-core` = 5 files, `collection` = filtered `.agent.md` files)
+1. Builds list of source files based on selection (`hve-core` = 5 files, `collection` = filtered `.agent.md` files)
 2. Copies files with `.agent.md` extension
 3. Checks target directory (`.github/agents/`) for each name
 4. Reports collisions or clean state
@@ -1207,7 +1207,7 @@ $targetDir = ".github/agents"
 
 # Get files to copy based on selection (paths relative to agents/)
 $filesToCopy = switch ($selection) {
-    "rpi-core" { @("rpi/task-researcher.agent.md", "rpi/task-planner.agent.md", "rpi/task-implementor.agent.md", "rpi/task-reviewer.agent.md", "rpi/rpi-agent.agent.md") }
+    "hve-core" { @("hve-core/task-researcher.agent.md", "hve-core/task-planner.agent.md", "hve-core/task-implementor.agent.md", "hve-core/task-reviewer.agent.md", "hve-core/rpi-agent.agent.md") }
     default {
         # Collection-based: paths from collection manifest relative to agents/
         $collectionAgents
@@ -1294,7 +1294,7 @@ $manifest = @{
     source = "microsoft/hve-core"
     version = (Get-Content "$hveCoreBasePath/package.json" | ConvertFrom-Json).version
     installed = (Get-Date -Format "o")
-    collection = $collectionId  # "rpi-core" or collection id(s) e.g. "developer" or "developer,devops"
+    collection = $collectionId  # "hve-core" or collection id(s) e.g. "developer" or "developer,devops"
     files = @{}; skip = @()
 }
 
@@ -1372,7 +1372,7 @@ if (Test-Path $manifestPath) {
     Write-Host "INSTALLED_VERSION=$($manifest.version)"
     Write-Host "SOURCE_VERSION=$sourceVersion"
     Write-Host "VERSION_CHANGED=$($sourceVersion -ne $manifest.version)"
-    Write-Host "INSTALLED_COLLECTION=$($manifest.collection ?? 'rpi-core')"
+    Write-Host "INSTALLED_COLLECTION=$($manifest.collection ?? 'hve-core')"
 } else {
     Write-Host "UPGRADE_MODE=false"
 }
@@ -1462,11 +1462,11 @@ Present upgrade summary:
 📋 Upgrade Summary
 
 Files to update (managed):
-  ✅ .github/agents/rpi/task-researcher.agent.md
-  ✅ .github/agents/rpi/task-planner.agent.md
+  ✅ .github/agents/hve-core/task-researcher.agent.md
+  ✅ .github/agents/hve-core/task-planner.agent.md
 
 Files requiring decision (modified):
-  ⚠️ .github/agents/rpi/task-implementor.agent.md
+  ⚠️ .github/agents/hve-core/task-implementor.agent.md
 
 Files skipped (ejected):
   🔒 .github/agents/custom-agent.agent.md
@@ -1488,7 +1488,7 @@ When user requests diff:
 <!-- <diff-display> -->
 ```text
 ─────────────────────────────────────
-File: .github/agents/rpi/task-implementor.agent.md
+File: .github/agents/hve-core/task-implementor.agent.md
 Status: modified
 ─────────────────────────────────────
 

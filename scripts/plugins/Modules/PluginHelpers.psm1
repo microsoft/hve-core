@@ -41,11 +41,12 @@ function Test-DeprecatedPath {
 function Test-HveCoreRepoSpecificPath {
     <#
     .SYNOPSIS
-    Checks whether a type-relative path belongs to the hve-core repo-specific directory.
+    Checks whether a type-relative path is a root-level repo-specific artifact.
 
     .DESCRIPTION
-    Returns true when the type-relative path starts with hve-core/, indicating
-    it is a repo-specific artifact not intended for distribution.
+    Returns true when the type-relative path has no subdirectory component,
+    indicating it is a root-level repo-specific artifact not intended for
+    distribution. Collection-scoped artifacts reside in subdirectories.
 
     .PARAMETER RelativePath
     Type-relative path (relative to the agents/, prompts/, instructions/, or skills/ directory).
@@ -61,23 +62,24 @@ function Test-HveCoreRepoSpecificPath {
         [string]$RelativePath
     )
 
-    return ($RelativePath -like 'hve-core/*')
+    return ($RelativePath -notlike '*/*')
 }
 
 function Test-HveCoreRepoRelativePath {
     <#
     .SYNOPSIS
-    Checks whether a repo-relative path belongs to an hve-core repo-specific directory.
+    Checks whether a repo-relative path is a root-level repo-specific artifact.
 
     .DESCRIPTION
-    Returns true when the repo-relative path matches .github/**/hve-core/,
-    indicating it is a repo-specific artifact not intended for distribution.
+    Returns true when the repo-relative path is directly under a .github type
+    directory (agents, instructions, prompts, skills) with no subdirectory,
+    indicating it is a root-level repo-specific artifact not intended for distribution.
 
     .PARAMETER Path
-    Repo-relative path (e.g., .github/agents/hve-core/foo.agent.md).
+    Repo-relative path (e.g., .github/instructions/workflows.instructions.md).
 
     .OUTPUTS
-    [bool] True when the path is under an hve-core repo-specific directory.
+    [bool] True when the path is a root-level repo-specific artifact.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -87,7 +89,7 @@ function Test-HveCoreRepoRelativePath {
         [string]$Path
     )
 
-    return ($Path -match '^\.github/.*/hve-core/')
+    return ($Path -match '^\.github/(agents|instructions|prompts|skills)/[^/]+$')
 }
 
 function Get-CollectionManifest {
@@ -1065,7 +1067,6 @@ function Write-PluginDirectory {
     # Symlink shared resource directories (unconditional, all plugins)
     $sharedDirs = @(
         @{ Source = 'docs/templates';    Destination = 'docs/templates' }
-        @{ Source = 'scripts/dev-tools'; Destination = 'scripts/dev-tools' }
         @{ Source = 'scripts/lib';       Destination = 'scripts/lib' }
     )
 

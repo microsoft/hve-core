@@ -67,12 +67,27 @@ jobs:
           Write-Host "Changed PowerShell files:"
           $changedFiles | ForEach-Object { Write-Host "  - $_" }
 
+          # Build test search paths: scripts/tests + skill test dirs at known depths
+          # Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+          $testSearchPaths = @('scripts/tests')
+          $skillsRoot = Join-Path (Get-Location) '.github' 'skills'
+          if (Test-Path $skillsRoot) {
+            foreach ($depth in @('*', '*/*')) {
+              $pattern = Join-Path $skillsRoot $depth 'tests'
+              Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer -and (Test-Path (Join-Path $_.Parent.FullName 'scripts')) } |
+                ForEach-Object { $testSearchPaths += $_.FullName }
+            }
+          }
+
           # Map source files to their test files
           $testFiles = @()
           foreach ($file in $changedFiles) {
             $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            # Look for corresponding test file anywhere in scripts/tests
-            $matchingTests = Get-ChildItem -Path "scripts/tests" -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            # Look for corresponding test file in all test search paths (scripts/tests and skill test dirs)
+            $matchingTests = $testSearchPaths | ForEach-Object {
+              Get-ChildItem -Path $_ -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            }
             if ($matchingTests) {
               $testFiles += $matchingTests.FullName
             }
