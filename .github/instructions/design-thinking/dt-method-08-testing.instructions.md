@@ -1,5 +1,5 @@
 ---
-description: 'Design Thinking Method 8: User Testing — evidence-based evaluation, test protocols, and non-linear iteration support'
+description: 'Design Thinking Method 8: User Testing - evidence-based evaluation, test protocols, and non-linear iteration support'
 applyTo: '**/.copilot-tracking/dt/**/method-08*'
 ---
 
@@ -95,11 +95,13 @@ Method 8 is the primary trigger for non-linear navigation. The coach helps users
 
 When test results suggest revisiting earlier methods, the coach facilitates honest assessment:
 
-* **Shallow finding**: "Users found the button hard to tap" → Method 9 iteration (UI refinement)
-* **Deep finding**: "Users don't understand the core value proposition" → Method 4 revisit (concept rethink)
-* **Research gap**: "We assumed users work alone, but they coordinate in pairs" → Method 2 revisit (field research)
+| Finding depth | Example                                                     | Response                           |
+|---------------|-------------------------------------------------------------|------------------------------------|
+| Shallow       | "Users found the button hard to tap"                        | Method 9 iteration (UI refinement) |
+| Deep          | "Users don't understand the core value proposition"         | Method 4 revisit (concept rethink) |
+| Research gap  | "We assumed users work alone, but they coordinate in pairs" | Method 2 revisit (field research)  |
 
-The coach prevents avoidance: "The data suggests users struggled with the fundamental interaction model. That's a Method 4 finding, not a Method 9 tweak — should we revisit our concepts?"
+The coach prevents avoidance: "The data suggests users struggled with the fundamental interaction model. That's a Method 4 finding, not a Method 9 tweak. Should we revisit our concepts?"
 
 ## Coaching Examples
 
@@ -109,7 +111,7 @@ The coach prevents avoidance: "The data suggests users struggled with the fundam
 
 **Level 1 Coaching**: "What patterns do you see across all 10 sessions?"
 **Level 2 Coaching**: "You have strong results from most users. What about the 3 users who abandoned the task?"
-**Level 3 Coaching**: "Those 3 users share a characteristic — they're all from the night shift with less experience. What does that tell us about expertise-dependent assumptions?"
+**Level 3 Coaching**: "Those 3 users share a characteristic: they're all from the night shift with less experience. What does that tell us about expertise-dependent assumptions?"
 **Level 4 Coaching**: "The abandonment pattern correlates with experience level. This suggests the interface assumes expertise that newer users lack. That's a concept-level finding, not a UI fix."
 
 ### Leap Enabling Coaching
@@ -125,7 +127,7 @@ The coach prevents avoidance: "The data suggests users struggled with the fundam
 **Level 1 Coaching**: "What did you notice about how users interacted with each other during testing?"
 **Level 2 Coaching**: "The pair coordination pattern appeared in most sessions. Was that in our original user research?"
 **Level 3 Coaching**: "If pair coordination is fundamental to how work happens here, our individual workflow assumption may need revisiting."
-**Level 4 Coaching**: "This is a research gap — we built on an assumption about individual workflows that testing disproved. A Method 2 field study of actual coordination patterns would strengthen the foundation before we iterate."
+**Level 4 Coaching**: "This is a research gap: we built on an assumption about individual workflows that testing disproved. A Method 2 field study of actual coordination patterns would strengthen the foundation before we iterate."
 
 ## Output Artifacts
 
