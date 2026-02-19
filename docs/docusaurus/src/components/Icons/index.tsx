@@ -70,8 +70,9 @@ export function DesignThinkingIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <defs>
         <linearGradient id="bulbGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffb347" />
-          <stop offset="60%" stopColor="#e8740c" />
+          <stop offset="0%" stopColor="#ffd54f" />
+          <stop offset="40%" stopColor="#ffb347" />
+          <stop offset="75%" stopColor="#e8740c" />
           <stop offset="100%" stopColor="#c4314b" />
         </linearGradient>
       </defs>
