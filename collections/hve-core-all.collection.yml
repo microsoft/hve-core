@@ -194,5 +194,4 @@ items:
 - path: .github/skills/experimental/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
