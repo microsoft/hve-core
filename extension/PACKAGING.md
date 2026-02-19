@@ -14,7 +14,6 @@ This folder contains the VS Code extension configuration for HVE Core.
 extension/
 ├── .github/              # Temporarily copied during packaging (removed after)
 ├── docs/templates/       # Temporarily copied during packaging (removed after)
-├── scripts/dev-tools/    # Temporarily copied during packaging (removed after)
 ├── package.json          # Generated extension manifest (gitignored, created by Prepare-Extension.ps1)\n├── templates/            # Source templates for package generation
 ├── .vscodeignore         # Controls what gets packaged into the .vsix
 ├── README.md             # Extension marketplace description
@@ -29,7 +28,7 @@ extension/
 
 The extension is configured with `"extensionKind": ["workspace", "ui"]` in `package.json` to support multiple execution contexts:
 
-* **Workspace mode**: Extension runs in the workspace (remote) extension host. In this mode, the extension accesses its bundled files from the extension installation directory in the remote/workspace context (for example, the packaged `.github/` and `scripts/dev-tools/` folders).
+* **Workspace mode**: Extension runs in the workspace (remote) extension host. In this mode, the extension accesses its bundled files from the extension installation directory in the remote/workspace context (for example, the packaged `.github/` folder).
 * **UI mode**: Extension runs in the UI extension host on the user's local machine and accesses the same bundled extension files from the local installation directory.
 
 Access to files in the user's project workspace always uses the standard VS Code workspace APIs and is independent of the extension kind. Both modes use the same packaged extension assets and differ only in execution context (local UI versus remote/workspace). This bundling approach ensures GitHub Copilot can reliably access instruction files and scripts regardless of cross-platform path resolution issues (for example, Windows/WSL environments).
@@ -93,14 +92,14 @@ flowchart TB
 
     INPUTS[Resolve Inputs] --> DISC[Discover Artifact Files from .github/]
 
-    DISC --> AG["Agents<br/>.github/agents/*.agent.md"]
-    DISC --> PR["Prompts<br/>.github/prompts/*.prompt.md"]
-    DISC --> IN["Instructions<br/>.github/instructions/*.instructions.md"]
-    DISC --> SK["Skills<br/>.github/skills/*/SKILL.md"]
+    DISC --> AG["Agents<br/>.github/agents/**/*.agent.md"]
+    DISC --> PR["Prompts<br/>.github/prompts/**/*.prompt.md"]
+    DISC --> IN["Instructions<br/>.github/instructions/**/*.instructions.md"]
+    DISC --> SK["Skills<br/>.github/skills/**/SKILL.md"]
 
     AG -->|Filter by maturity| FM[Maturity-Filtered Set]
     PR -->|Filter by maturity| FM
-    IN -->|"Filter by maturity<br/>+ exclude hve-core/"| FM
+    IN -->|"Filter by maturity<br/>+ exclude root-level"| FM
     SK -->|Filter by maturity| FM
 
     FM --> CF{"Collection<br/>specified?"}
@@ -188,8 +187,8 @@ flowchart TB
     WRITE --> PREP[Prepare Extension Directory]
 
     PREP --> MODE{"Collection<br/>mode?"}
-    MODE -->|"Full (default)"| FULL["Copy entire .github/<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/<br/>+ .github/skills/"]
-    MODE -->|Collection| COLL["Copy only artifacts listed<br/>in package.json contributes<br/>+ scripts/dev-tools/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/"]
+    MODE -->|"Full (default)"| FULL["Copy entire .github/<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/<br/>+ .github/skills/"]
+    MODE -->|Collection| COLL["Copy only artifacts listed<br/>in package.json contributes<br/>+ scripts/lib/Modules/CIHelpers.psm1<br/>+ docs/templates/"]
 
     FULL --> RDM{"Collection<br/>README?"}
     COLL --> RDM
@@ -212,7 +211,7 @@ If you need to package manually:
 
 ```bash
 cd extension
-rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && cp -r ../scripts/dev-tools scripts/ && vsce package && rm -rf .github scripts
+rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && vsce package && rm -rf .github scripts
 ```
 
 ## Publishing the Extension
@@ -252,8 +251,8 @@ The `extension/.vscodeignore` file controls what gets packaged. Currently includ
 * `.github/agents/**` - All custom agent definitions
 * `.github/prompts/**` - All prompt templates
 * `.github/instructions/**` - All instruction files
+* `.github/skills/**` - All skill packages
 * `docs/templates/**` - Document templates used by agents (ADR, BRD, Security Plan)
-* `scripts/dev-tools/**` - Developer utilities (PR reference generation)
 * `package.json` - Extension manifest
 * `README.md` - Extension description
 * `LICENSE` - License file
@@ -501,7 +500,8 @@ description: "AI-powered coding agents curated for software engineers"
 maturity: stable
 items:
   - kind: agent
-    path: .github/agents/my-agent.agent.md
+    # path can reference artifacts from any subfolder
+    path: .github/agents/{collection-id}/my-agent.agent.md
     maturity: stable
 ```
 
@@ -543,7 +543,8 @@ To create a new collection:
     maturity: experimental
     items:
       - kind: agent
-        path: .github/agents/my-agent.agent.md
+        # path can reference artifacts from any subfolder
+        path: .github/agents/{collection-id}/my-agent.agent.md
         maturity: experimental
     ```
 
@@ -557,10 +558,10 @@ To create a new collection:
 
 ## Notes
 
-* The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
+* The `.github` and `docs/templates` folders are temporarily copied during packaging (not permanently stored)
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
-* Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
-* Repo-specific instructions under `.github/instructions/hve-core/` are excluded from all builds
+* Only essential extension files are included (agents, prompts, instructions, skills, templates)
+* Repo-specific instructions at the root of `.github/instructions/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository
 

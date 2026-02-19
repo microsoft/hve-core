@@ -62,6 +62,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../plugins/Modules/PluginHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -218,7 +219,7 @@ function Invoke-ExtensionCollectionsGeneration {
         Generates collection package files from root collection manifests.
     .DESCRIPTION
         Reads the package template and each collections/*.collection.yml file,
-        producing extension/package.json (for hve-core-all) and
+        producing extension/package.json (for hve-core) and
         extension/package.{id}.json for every other collection. Stale collection
         files are removed.
     .PARAMETER RepoRoot
@@ -258,7 +259,7 @@ function Invoke-ExtensionCollectionsGeneration {
     $expectedFiles = @()
 
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         if ($collection -isnot [hashtable]) {
             throw "Collection manifest must be a hashtable: $($collectionFile.FullName)"
         }
@@ -270,12 +271,15 @@ function Invoke-ExtensionCollectionsGeneration {
 
         $collectionDescription = if ($collection.ContainsKey('description')) { [string]$collection.description } else { [string]$packageTemplate.description }
 
-        $extensionName = if ($collectionId -eq 'hve-core-all') { [string]$packageTemplate.name } else { "hve-$collectionId" }
-        $extensionDisplayName = if ($collectionId -eq 'hve-core-all') {
-            [string]$packageTemplate.displayName
+        $extensionName = switch ($collectionId) {
+            'hve-core'     { [string]$packageTemplate.name }
+            'hve-core-all' { 'hve-core-all' }
+            default        { "hve-$collectionId" }
         }
-        else {
-            Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName)
+        $extensionDisplayName = switch ($collectionId) {
+            'hve-core'     { [string]$packageTemplate.displayName }
+            'hve-core-all' { 'HVE Core - All' }
+            default        { Get-CollectionDisplayName -CollectionManifest $collection -DefaultValue ([string]$packageTemplate.displayName) }
         }
 
         $packageTemplateOutput = Copy-TemplateWithOverrides -Template $packageTemplate -Overrides @{
@@ -284,11 +288,10 @@ function Invoke-ExtensionCollectionsGeneration {
             description = $collectionDescription
         }
 
-        $packagePath = if ($collectionId -eq 'hve-core-all') {
-            Join-Path $RepoRoot 'extension/package.json'
-        }
-        else {
-            Join-Path $RepoRoot "extension/package.$collectionId.json"
+        $packagePath = switch ($collectionId) {
+            'hve-core'     { Join-Path $RepoRoot 'extension/package.json' }
+            'hve-core-all' { Join-Path $RepoRoot 'extension/package.hve-core-all.json' }
+            default        { Join-Path $RepoRoot "extension/package.$collectionId.json" }
         }
 
         Set-JsonFile -Path $packagePath -Content $packageTemplateOutput
@@ -300,7 +303,7 @@ function Invoke-ExtensionCollectionsGeneration {
     # Generate README files for each collection
     $readmeTemplatePath = Join-Path $templatesDir 'README.template.md'
     foreach ($collectionFile in $collectionFiles) {
-        $collection = ConvertFrom-Yaml -Yaml (Get-Content -Path $collectionFile.FullName -Raw)
+        $collection = Get-CollectionManifest -CollectionPath $collectionFile.FullName
         $collectionId = [string]$collection.id
 
         $collectionMdPath = Join-Path $collectionsDir "$collectionId.collection.md"
@@ -308,11 +311,10 @@ function Invoke-ExtensionCollectionsGeneration {
             continue
         }
 
-        $readmePath = if ($collectionId -eq 'hve-core-all') {
-            Join-Path $RepoRoot 'extension/README.md'
-        }
-        else {
-            Join-Path $RepoRoot "extension/README.$collectionId.md"
+        $readmePath = switch ($collectionId) {
+            'hve-core'     { Join-Path $RepoRoot 'extension/README.md' }
+            'hve-core-all' { Join-Path $RepoRoot 'extension/README.hve-core-all.md' }
+            default        { Join-Path $RepoRoot "extension/README.$collectionId.md" }
         }
 
         New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath
@@ -406,11 +408,10 @@ function New-CollectionReadme {
     )
 
     $collectionId = [string]$Collection.id
-    $displayName = if ($collectionId -eq 'hve-core-all') {
-        'HVE Core'
-    }
-    else {
-        Get-CollectionDisplayName -CollectionManifest $Collection -DefaultValue "HVE Core - $collectionId"
+    $displayName = switch ($collectionId) {
+        'hve-core'     { 'HVE Core' }
+        'hve-core-all' { 'HVE Core - All' }
+        default        { Get-CollectionDisplayName -CollectionManifest $Collection -DefaultValue "HVE Core - $collectionId" }
     }
     $description = if ($Collection.ContainsKey('description')) { [string]$Collection.description } else { '' }
 
@@ -469,7 +470,7 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
-    $fullEdition = if ($collectionId -ne 'hve-core-all') {
+    $fullEdition = if ($collectionId -notin @('hve-core', 'hve-core-all')) {
         "## Full Edition`n`nLooking for more agents covering additional domains? Check out the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
     }
     else {
@@ -582,41 +583,6 @@ function Test-CollectionMaturityEligible {
     }
 }
 
-function Get-CollectionManifest {
-    <#
-    .SYNOPSIS
-        Loads a collection manifest from a YAML or JSON file.
-    .DESCRIPTION
-        Reads and parses a collection manifest file that defines collection-based
-        artifact filtering rules for extension packaging. Supports both YAML
-        (.yml/.yaml) and JSON (.json) formats.
-    .PARAMETER CollectionPath
-        Path to the collection manifest file (YAML or JSON).
-    .OUTPUTS
-        [hashtable] Parsed collection manifest with id, name, displayName, description, items, and optional include/exclude.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$CollectionPath
-    )
-
-    if (-not (Test-Path $CollectionPath)) {
-        throw "Collection manifest not found: $CollectionPath"
-    }
-
-    $extension = [System.IO.Path]::GetExtension($CollectionPath).ToLowerInvariant()
-    if ($extension -in @('.yml', '.yaml')) {
-        $content = Get-Content -Path $CollectionPath -Raw
-        return ConvertFrom-Yaml -Yaml $content
-    }
-
-    $content = Get-Content -Path $CollectionPath -Raw
-    return $content | ConvertFrom-Json -AsHashtable
-}
-
 function Test-GlobMatch {
     <#
     .SYNOPSIS
@@ -647,59 +613,6 @@ function Test-GlobMatch {
         }
     }
     return $false
-}
-
-function Get-CollectionArtifactKey {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Kind,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    switch ($Kind) {
-        'agent' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.agent\.md$', '')
-        }
-        'prompt' {
-            return ([System.IO.Path]::GetFileName($Path) -replace '\.prompt\.md$', '')
-        }
-        'instruction' {
-            return ($Path -replace '^\.github/instructions/', '' -replace '\.instructions\.md$', '')
-        }
-        'skill' {
-            return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
-        }
-        default {
-            if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
-                return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
-            }
-
-            if ($Path -like '*.md') {
-                return [System.IO.Path]::GetFileNameWithoutExtension($Path)
-            }
-
-            return [System.IO.Path]::GetFileName($Path)
-        }
-    }
-}
-
-function Get-CollectionArtifactMaturity {
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [hashtable]$CollectionItem
-    )
-
-    if ($CollectionItem.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionItem.maturity)) {
-        return [string]$CollectionItem.maturity
-    }
-
-    return 'stable'
 }
 
 function Get-CollectionArtifacts {
@@ -746,7 +659,7 @@ function Get-CollectionArtifacts {
         $kind = [string]$item.kind
         $path = [string]$item.path
 
-        $maturity = Get-CollectionArtifactMaturity -CollectionItem $item
+        $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
         if ($AllowedMaturities -notcontains $maturity) {
             continue
         }
@@ -799,15 +712,16 @@ function Resolve-HandoffDependencies {
 
     while ($queue.Count -gt 0) {
         $current = $queue.Dequeue()
-        $agentFile = Join-Path $AgentsDir "$current.agent.md"
+        $agentFileMatches = Get-ChildItem -Path $AgentsDir -Filter "$current.agent.md" -Recurse -File
+        $agentFile = $agentFileMatches | Select-Object -First 1
 
-        if (-not (Test-Path $agentFile)) {
-            Write-Warning "Handoff target agent file not found: $agentFile"
+        if (-not $agentFile) {
+            Write-Warning "Handoff target agent file not found: $current.agent.md"
             continue
         }
 
         # Parse handoffs from frontmatter
-        $content = Get-Content -Path $agentFile -Raw
+        $content = Get-Content -Path $agentFile.FullName -Raw
         if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
             $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
             try {
@@ -1042,9 +956,18 @@ function Get-DiscoveredAgents {
         return $result
     }
 
-    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" | Sort-Object Name
+    $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
+    $agentFiles = $agentFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($agentFile in $agentFiles) {
+        $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
+
+        if (Test-HveCoreRepoSpecificPath -RelativePath $agentRelPath) {
+            $agentName = $agentFile.BaseName -replace '\.agent$', ''
+            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (root-level)' }
+            continue
+        }
+
         $agentName = $agentFile.BaseName -replace '\.agent$', ''
 
         if ($ExcludedAgents -contains $agentName) {
@@ -1058,10 +981,9 @@ function Get-DiscoveredAgents {
             $result.Skipped += @{ Name = $agentName; Reason = "maturity: $maturity" }
             continue
         }
-
         $result.Agents += [PSCustomObject]@{
             name = $agentName
-            path = "./.github/agents/$($agentFile.Name)"
+            path = "./.github/agents/$agentRelPath"
         }
     }
 
@@ -1108,9 +1030,17 @@ function Get-DiscoveredPrompts {
     }
 
     $promptFiles = Get-ChildItem -Path $PromptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
+    $promptFiles = $promptFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
+
+        $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
+        if (Test-HveCoreRepoSpecificPath -RelativePath $promptRelPath) {
+            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (root-level)' }
+            continue
+        }
+
         $maturity = "stable"
 
         if ($AllowedMaturities -notcontains $maturity) {
@@ -1169,12 +1099,12 @@ function Get-DiscoveredInstructions {
     }
 
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
+    $instructionFiles = $instructionFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
     foreach ($instrFile in $instructionFiles) {
-        # Skip repo-specific instructions not intended for distribution
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
-        if ($instrRelPath -like 'hve-core/*') {
-            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (hve-core/)' }
+        if (Test-HveCoreRepoSpecificPath -RelativePath $instrRelPath) {
+            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (root-level)' }
             continue
         }
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
@@ -1233,14 +1163,16 @@ function Get-DiscoveredSkills {
         return $result
     }
 
-    $skillDirs = Get-ChildItem -Path $SkillsDir -Directory | Sort-Object Name
+    $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
+    $skillFiles = $skillFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
 
-    foreach ($skillDir in $skillDirs) {
+    foreach ($skillFile in $skillFiles) {
+        $skillDir = $skillFile.Directory
         $skillName = $skillDir.Name
-        $skillFile = Join-Path $skillDir.FullName "SKILL.md"
+        $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
-        if (-not (Test-Path $skillFile)) {
-            $result.Skipped += @{ Name = $skillName; Reason = 'missing SKILL.md' }
+        if (Test-HveCoreRepoSpecificPath -RelativePath $skillRelPath) {
+            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1253,7 +1185,7 @@ function Get-DiscoveredSkills {
 
         $result.Skills += [PSCustomObject]@{
             name = $skillName
-            path = "./.github/skills/$skillName"
+            path = "./.github/skills/$skillRelPath/SKILL.md"
         }
     }
 
@@ -1608,7 +1540,7 @@ function Invoke-PrepareExtension {
             # resolve from the root YAML collection by ID.
             $rootCollectionPath = Join-Path $RepoRoot "collections/$($collectionManifest.id).collection.yml"
             if (Test-Path $rootCollectionPath) {
-                $artifactCollectionManifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $rootCollectionPath -Raw)
+                $artifactCollectionManifest = Get-CollectionManifest -CollectionPath $rootCollectionPath
                 Write-Host "Using root collection for items: $rootCollectionPath"
             }
             else {
@@ -1639,7 +1571,7 @@ function Invoke-PrepareExtension {
                 $itemKind = [string]$item.kind
                 $itemPath = [string]$item.path
                 $artifactKey = Get-CollectionArtifactKey -Kind $itemKind -Path $itemPath
-                $effectiveMaturity = Get-CollectionArtifactMaturity -CollectionItem $item
+                $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
                 if (-not $collectionMaturities.ContainsKey("${itemKind}s") -or $null -eq $collectionMaturities["${itemKind}s"]) {
                     $collectionMaturities["${itemKind}s"] = @{}
                 }
@@ -1753,7 +1685,7 @@ function Invoke-PrepareExtension {
     }
 
     # Apply collection template when building a non-default collection
-    if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core-all') {
+    if ($null -ne $collectionManifest -and $collectionManifest.id -ne 'hve-core') {
         $collectionId = $collectionManifest.id
         $templatePath = Join-Path $ExtensionDirectory "package.$collectionId.json"
         if (-not (Test-Path $templatePath)) {
@@ -1850,12 +1782,19 @@ if ($MyInvocation.InvocationName -ne '.') {
             }
         }
 
+        # Default to hve-core collection when no collection is specified.
+        # package.json is identity-mapped to the hve-core collection, so the
+        # default build must apply hve-core filtering rather than including all
+        # artifacts (hve-core-all behavior). Use -Collection with
+        # hve-core-all.collection.yml explicitly to include everything.
+        if (-not $Collection) {
+            $Collection = Join-Path $RepoRoot 'collections/hve-core.collection.yml'
+        }
+
         Write-Host "📦 HVE Core Extension Preparer" -ForegroundColor Cyan
         Write-Host "==============================" -ForegroundColor Cyan
         Write-Host "   Channel: $Channel" -ForegroundColor Cyan
-        if ($Collection) {
-            Write-Host "   Collection: $Collection" -ForegroundColor Cyan
-        }
+        Write-Host "   Collection: $Collection" -ForegroundColor Cyan
         Write-Host ""
 
         # Call orchestration function

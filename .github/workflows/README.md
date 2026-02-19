@@ -555,8 +555,8 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 | `.markdownlint.json`                                  | Markdown formatting rules    | `markdown-lint.yml`         |
 | `scripts/linting/markdown-link-check.config.json`     | Link checking configuration  | `markdown-link-check.yml`   |
 | `.cspell.json`                                        | Spell checking configuration | `spell-check.yml`           |
-| `.github/instructions/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
-| `.github/instructions/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
+| `.github/instructions/hve-core/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
+| `.github/instructions/hve-core/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources
 

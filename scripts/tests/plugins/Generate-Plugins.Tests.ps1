@@ -159,7 +159,6 @@ description: "Test skill"
 
         # Create docs/templates and scripts directories for shared symlinking
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'docs/templates') -Force | Out-Null
-        New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'scripts/dev-tools') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:tempDir 'scripts/lib') -Force | Out-Null
 
         # Create plugins directory

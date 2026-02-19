@@ -28,12 +28,16 @@ Create a prompt when you need to:
 
 ### Location
 
-All prompt files **MUST** be placed in:
+Prompt files are typically organized in a collection subdirectory by convention:
 
 ```text
-.github/prompts/
+.github/prompts/{collection-id}/
 └── your-prompt-name.prompt.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -122,7 +126,8 @@ After creating your prompt file, add an `items[]` entry in each target collectio
 
 ```yaml
 items:
-  - path: .github/prompts/my-prompt.prompt.md
+  # path can reference artifacts from any subfolder
+  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
     kind: prompt
     maturity: stable
 ```
@@ -133,11 +138,11 @@ Choose collections based on who invokes or benefits from the workflow:
 
 | Prompt Type             | Recommended Collections                   |
 |-------------------------|-------------------------------------------|
-| Git/PR workflows        | `hve-core-all`, `git`                     |
+| Git/PR workflows        | `hve-core-all`, `hve-core`                |
 | ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
 | GitHub issue workflows  | `hve-core-all`, `github`                  |
-| RPI workflow prompts    | `hve-core-all`, `rpi`                     |
-| Documentation workflows | `hve-core-all`, `prompt-engineering`      |
+| RPI workflow prompts    | `hve-core-all`, `hve-core`                |
+| Documentation workflows | `hve-core-all`, `hve-core`                |
 | Architecture prompts    | `hve-core-all`, `project-planning`        |
 
 For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
@@ -528,7 +533,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/` (the conventional location for prompt files).
 
 ---
 
