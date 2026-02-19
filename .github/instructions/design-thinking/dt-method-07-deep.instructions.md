@@ -1,5 +1,5 @@
 ---
-description: 'Deep expertise for Method 7: High-Fidelity Prototypes; fidelity translation, architecture patterns, and specification writing'
+description: 'Deep expertise for Method 7: High-Fidelity Prototypes; fidelity translation, architecture, and specification writing'
 applyTo: ''
 ---
 
@@ -25,11 +25,11 @@ Tie each assignment to specific Method 6 constraint discoveries. Elements withou
 
 Five stages from roughest to most functional. Each stage has an advancement criterion and an over-engineering signal:
 
-1. **Paper or cardboard** (Method 6 output): Advance when the hypothesis requires interactive behavior paper cannot provide.
-2. **Static digital mockup** (visual layout, no logic): Advance when users need to interact with the system to provide meaningful feedback.
-3. **Interactive simulation** (logic present, simulated data): Advance when simulated data masks behaviors the hypothesis depends on.
-4. **Functional prototype** (real data, constrained scope): The target state for Method 7. Advance to production only in Method 9.
-5. **Production-ready**: Reaching this stage during Method 7 is an anti-pattern; redirect effort to testing preparation.
+1. Paper or cardboard serves as the Method 6 output. Advance when the hypothesis requires interactive behavior paper cannot provide.
+2. A static digital mockup provides visual layout without logic. Advance when users need to interact with the system to provide meaningful feedback.
+3. An interactive simulation introduces logic with simulated data. Advance when simulated data masks behaviors the hypothesis depends on.
+4. A functional prototype uses real data within constrained scope and represents the target state for Method 7. Advance to production only in Method 9.
+5. Reaching production-ready during Method 7 is an anti-pattern; redirect effort to testing preparation.
 
 ### Learning Preservation
 
@@ -67,11 +67,11 @@ When multiple factors conflict, prioritize the factor that most directly tests t
 
 Evaluate implementation approaches across these dimensions:
 
-* **Implementation complexity**: effort, skills required, tooling dependencies.
-* **Constraint compliance**: alignment with noise, safety, environmental, and workflow constraints from Method 6.
-* **Integration risk**: compatibility with existing systems, data format requirements, protocol support.
-* **Iteration speed**: time to modify and retest after Method 8 user feedback.
-* **Technical debt profile**: nature and volume of shortcuts; whether debt blocks user testing.
+* Assess implementation complexity by evaluating effort, skills required, and tooling dependencies.
+* Evaluate constraint compliance through alignment with noise, safety, environmental, and workflow constraints from Method 6.
+* Gauge integration risk by examining compatibility with existing systems, data format requirements, and protocol support.
+* Measure iteration speed as the time to modify and retest after Method 8 user feedback.
+* Characterize the technical debt profile by identifying the nature and volume of shortcuts and whether debt blocks user testing.
 
 Each approach receives a comparative rating per dimension. The optimal choice minimizes integration risk and maximizes iteration speed, accepting complexity trade-offs that do not block testing.
 
@@ -93,10 +93,12 @@ Review trigger: reassess the debt budget when accumulated debt would prevent Met
 
 Different stakeholders need different views of the prototype documentation:
 
-* **Developers**: architecture decisions, API contracts, data flows, known limitations, build and deployment instructions.
-* **Product managers**: feature scope boundaries, trade-off rationale, user impact summary, deferred decisions.
-* **Testers (Method 8)**: test boundaries, known failure modes, environment setup requirements, expected vs unexpected behaviors.
-* **Future implementors (Method 9)**: scalability assumptions, production gaps, deployment constraints, rebuild-vs-extend guidance.
+| Audience                       | Documentation Needs                                                                                     |
+|--------------------------------|---------------------------------------------------------------------------------------------------------|
+| Developers                     | Architecture decisions, API contracts, data flows, known limitations, build and deployment instructions |
+| Product managers               | Feature scope boundaries, trade-off rationale, user impact summary, deferred decisions                  |
+| Testers (Method 8)             | Test boundaries, known failure modes, environment setup requirements, expected vs unexpected behaviors  |
+| Future implementors (Method 9) | Scalability assumptions, production gaps, deployment constraints, rebuild-vs-extend guidance            |
 
 ### Decision Rationale Capture
 
@@ -114,10 +116,10 @@ Capture rationale during implementation, not after. Post-hoc reconstruction omit
 
 Track four categories:
 
-* **Tested assumptions**: beliefs validated through Method 6 or 7 testing, with evidence references.
-* **Untested assumptions**: identified but deferred; document why deferral is acceptable for the current prototype.
-* **Known unknowns**: gaps identified during prototyping that require future investigation.
-* **External dependencies**: decisions or resources controlled by other teams, systems, or timelines not yet confirmed.
+* Tested assumptions are beliefs validated through Method 6 or 7 testing, with evidence references.
+* Untested assumptions have been identified but deferred; document why deferral is acceptable for the current prototype.
+* Known unknowns are gaps identified during prototyping that require future investigation.
+* External dependencies are decisions or resources controlled by other teams, systems, or timelines not yet confirmed.
 
 ## Manufacturing-Specific Patterns
 
@@ -125,32 +127,32 @@ Track four categories:
 
 Prototypes interact with industrial control systems through read-only data taps or simulation layers. Direct write operations to production PLCs are out of scope.
 
-* **Simulation approaches**: OPC-UA test servers, PLC simulators (Siemens PLCSIM, Allen-Bradley emulators), recorded sensor data playback.
-* **Integration fidelity**: test with actual communication protocols (Modbus, OPC-UA, EtherNet/IP) against simulated endpoints. Protocol timing and error handling must be realistic even when endpoints are simulated.
-* **Constraint categories**: scan cycle timing, network latency tolerance, data format compatibility, historian integration requirements.
+* Simulation approaches include OPC-UA test servers, PLC simulators (Siemens PLCSIM, Allen-Bradley emulators), and recorded sensor data playback.
+* Test integration fidelity with actual communication protocols (Modbus, OPC-UA, EtherNet/IP) against simulated endpoints. Protocol timing and error handling must be realistic even when endpoints are simulated.
+* Constraint categories to evaluate include scan cycle timing, network latency tolerance, data format compatibility, and historian integration requirements.
 
 ### Digital Twin Prototyping
 
 Four fidelity levels for digital twin prototypes:
 
-1. **Static model**: historical data visualization, no live connection.
-2. **Dynamic model**: live data stream integration with real-time updates.
-3. **Predictive model**: scenario simulation using current data to forecast outcomes.
-4. **Prescriptive model**: automated response recommendations. This level exceeds Method 7 scope; treat as a Method 9 target.
+1. A static model provides historical data visualization with no live connection.
+2. A dynamic model integrates live data streams with real-time updates.
+3. A predictive model runs scenario simulations using current data to forecast outcomes.
+4. A prescriptive model generates automated response recommendations. This level exceeds Method 7 scope; treat as a Method 9 target.
 
 Identify the minimum sensor coverage for meaningful twin behavior. Document data quality assumptions and compare twin predictions against actual system behavior to calibrate divergence tolerance.
 
 ### Safety-Critical Boundaries
 
-* **Hard stop rule**: prototypes do not issue commands to safety-critical systems (emergency stops, safety interlocks, pressure relief, fire suppression).
-* **Observation-only in safety zones**: prototypes may read safety system status but must not interfere with safety PLC logic or certified safety functions.
-* **Regulatory awareness**: in regulated industries (pharmaceuticals, food, energy), prototype testing requires documented risk assessment even for observation-only deployments.
-* **Physical proximity**: prototype hardware placed in safety zones must meet the same ingress protection and electrical safety standards as production equipment.
+* Prototypes do not issue commands to safety-critical systems, including emergency stops, safety interlocks, pressure relief, and fire suppression.
+* Prototypes may read safety system status in safety zones but must not interfere with safety PLC logic or certified safety functions.
+* In regulated industries (pharmaceuticals, food, energy), prototype testing requires documented risk assessment even for observation-only deployments.
+* Prototype hardware placed in safety zones must meet the same ingress protection and electrical safety standards as production equipment.
 
 ### Operator Interface Fidelity
 
-* **Glove-friendly interaction**: touch targets minimum 15 mm for bare hands, 20 mm for gloved operation. No fine-motor gestures.
-* **Visibility constraints**: screen readability at arm's length under industrial lighting. High-contrast requirements; no glossy screens.
-* **Shift handoff**: interface state must be comprehensible to an incoming operator without training on prototype specifics.
-* **Noise environment**: audio feedback is unreliable above 80 dB. Visual and haptic feedback patterns are required.
-* **Dirty environment**: interfaces exposed to oil, dust, or moisture need appropriate enclosures. Prototype enclosures can be improvised (sealed bags, ruggedized tablets) but must be tested under actual conditions.
+* Touch targets require a minimum of 15 mm for bare hands and 20 mm for gloved operation, with no fine-motor gestures.
+* Screens must be readable at arm's length under industrial lighting, with high-contrast displays and no glossy screens.
+* Interface state must be comprehensible to an incoming operator during shift handoff without training on prototype specifics.
+* Audio feedback is unreliable above 80 dB; use visual and haptic feedback patterns instead.
+* Interfaces exposed to oil, dust, or moisture need appropriate enclosures. Prototype enclosures can be improvised (sealed bags, ruggedized tablets) but must be tested under actual conditions.
