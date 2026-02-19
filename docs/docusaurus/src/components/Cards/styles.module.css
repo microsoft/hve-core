@@ -1,27 +1,16 @@
 .card {
   display: block;
+  position: relative;
   background: var(--ifm-card-background-color);
   border: 1px solid transparent;
   border-radius: 2px;
   padding: 16px 0 0;
-  text-decoration: none;
-  color: inherit;
   box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
   min-height: 100px;
 }
 
-.card:hover {
-  text-decoration: none;
-  color: inherit;
-}
-
 .card:hover .cardTitle {
   text-decoration: underline;
-}
-
-.card a:hover,
-.card:hover a {
-  text-decoration: none;
 }
 
 .iconCardLayout {
@@ -63,9 +52,20 @@
   font-weight: 600;
   line-height: 20px;
   color: var(--ifm-color-primary);
+  text-decoration: none;
 }
 
-.card:visited .cardTitle {
+.cardTitle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.cardTitle:hover {
+  text-decoration: underline;
+}
+
+.cardTitle:visited {
   color: var(--ms-learn-visited-link);
 }
 

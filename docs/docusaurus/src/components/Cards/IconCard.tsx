@@ -18,15 +18,15 @@ export default function IconCard({
   description,
 }: IconCardProps): React.ReactElement {
   return (
-    <Link to={href} className={styles.card}>
+    <article className={styles.card}>
       <div className={styles.iconCardLayout}>
         <div className={styles.iconContainer}>{icon}</div>
         <div className={styles.iconCardContent}>
           <span className={styles.supertitle}>{supertitle}</span>
-          <span className={styles.cardTitle}>{title}</span>
+          <Link to={href} className={styles.cardTitle}>{title}</Link>
           {description && <p className={styles.cardDescription}>{description}</p>}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

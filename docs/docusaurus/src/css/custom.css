@@ -96,13 +96,12 @@ a:visited {
   border: none;
   content: '';
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
   border-right: 1.5px solid currentColor;
   border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg);
-  margin-left: 6px;
-  margin-bottom: 4px;
+  transform: rotate(45deg) translateY(-2px);
+  margin-left: 4px;
   vertical-align: middle;
 }
 
