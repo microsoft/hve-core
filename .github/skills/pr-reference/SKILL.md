@@ -131,24 +131,24 @@ Extract file paths from the diff:
 
 ```bash
 # List all changed files
-./.github/skills/pr-reference/scripts/list-changed-files.sh
+./scripts/list-changed-files.sh
 
 # Filter by change type
-./.github/skills/pr-reference/scripts/list-changed-files.sh --type added
+./scripts/list-changed-files.sh --type added
 
 # Output as markdown table
-./.github/skills/pr-reference/scripts/list-changed-files.sh --format markdown
+./scripts/list-changed-files.sh --format markdown
 ```
 
 ```powershell
 # List all changed files
-./.github/skills/pr-reference/scripts/list-changed-files.ps1
+./scripts/list-changed-files.ps1
 
 # Filter by change type
-./.github/skills/pr-reference/scripts/list-changed-files.ps1 -Type Added
+./scripts/list-changed-files.ps1 -Type Added
 
 # Output as JSON
-./.github/skills/pr-reference/scripts/list-changed-files.ps1 -Format Json
+./scripts/list-changed-files.ps1 -Format Json
 ```
 
 ### Read Diff Content
@@ -157,33 +157,33 @@ Read diff content with chunking support for large diffs:
 
 ```bash
 # Show chunk info (how many chunks, line ranges)
-./.github/skills/pr-reference/scripts/read-diff.sh --info
+./scripts/read-diff.sh --info
 
 # Read a specific chunk (default 500 lines/chunk)
-./.github/skills/pr-reference/scripts/read-diff.sh --chunk 1
+./scripts/read-diff.sh --chunk 1
 
 # Read by line range
-./.github/skills/pr-reference/scripts/read-diff.sh --lines 200,800
+./scripts/read-diff.sh --lines 200,800
 
 # Extract diff for a specific file
-./.github/skills/pr-reference/scripts/read-diff.sh --file src/main.ts
+./scripts/read-diff.sh --file src/main.ts
 
 # Show summary with file stats
-./.github/skills/pr-reference/scripts/read-diff.sh --summary
+./scripts/read-diff.sh --summary
 ```
 
 ```powershell
 # Show chunk info
-./.github/skills/pr-reference/scripts/read-diff.ps1 -Info
+./scripts/read-diff.ps1 -Info
 
 # Read a specific chunk
-./.github/skills/pr-reference/scripts/read-diff.ps1 -Chunk 1
+./scripts/read-diff.ps1 -Chunk 1
 
 # Read by line range
-./.github/skills/pr-reference/scripts/read-diff.ps1 -Lines "200,800"
+./scripts/read-diff.ps1 -Lines "200,800"
 
 # Extract diff for a specific file
-./.github/skills/pr-reference/scripts/read-diff.ps1 -File "src/main.ts"
+./scripts/read-diff.ps1 -File "src/main.ts"
 ```
 
 ## Output Format

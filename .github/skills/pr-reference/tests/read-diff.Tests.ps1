@@ -142,29 +142,29 @@ Describe 'Get-ChunkRange' {
 
 Describe 'Get-FileDiff' {
     BeforeAll {
-        $fixtureContent = @(Get-Content -LiteralPath $script:FixturePath)
+        $script:fileDiffContent = @(Get-Content -LiteralPath $script:FixturePath)
     }
 
     It 'Extracts diff block for an existing file' {
-        $result = Get-FileDiff -Content $fixtureContent -FilePath 'src/beta.ts'
+        $result = Get-FileDiff -Content $script:fileDiffContent -FilePath 'src/beta.ts'
         $result | Should -Not -BeNullOrEmpty
         $result | Should -Match 'diff --git a/src/beta.ts'
         $result | Should -Match 'return true'
     }
 
     It 'Stops extraction at the next diff header' {
-        $result = Get-FileDiff -Content $fixtureContent -FilePath 'src/alpha.ts'
+        $result = Get-FileDiff -Content $script:fileDiffContent -FilePath 'src/alpha.ts'
         $result | Should -Match 'diff --git a/src/alpha.ts'
         $result | Should -Not -Match 'diff --git a/src/beta.ts'
     }
 
     It 'Returns empty string when file is not in the diff' {
-        $result = Get-FileDiff -Content $fixtureContent -FilePath 'src/nonexistent.ts'
+        $result = Get-FileDiff -Content $script:fileDiffContent -FilePath 'src/nonexistent.ts'
         $result | Should -BeNullOrEmpty
     }
 
     It 'Extracts the last file in the diff without a trailing diff header' {
-        $result = Get-FileDiff -Content $fixtureContent -FilePath 'src/gamma.ts'
+        $result = Get-FileDiff -Content $script:fileDiffContent -FilePath 'src/gamma.ts'
         $result | Should -Match 'diff --git a/src/gamma.ts'
         $result | Should -Match 'deleted file mode'
     }
@@ -186,34 +186,34 @@ Describe 'Get-FileDiff' {
 
 Describe 'Get-DiffSummary' {
     BeforeAll {
-        $fixtureContent = @(Get-Content -LiteralPath $script:FixturePath)
+        $script:summaryContent = @(Get-Content -LiteralPath $script:FixturePath)
     }
 
     It 'Counts additions and deletions per file' {
-        $result = Get-DiffSummary -Content $fixtureContent
+        $result = Get-DiffSummary -Content $script:summaryContent
         # src/alpha.ts: 4 additions (bare + line excluded by regex), 0 deletions
         $result | Should -Match 'src/alpha.ts \(\+4/-0\)'
     }
 
     It 'Reports correct counts for modified files' {
-        $result = Get-DiffSummary -Content $fixtureContent
+        $result = Get-DiffSummary -Content $script:summaryContent
         # src/beta.ts: 3 additions (+return true, +added line one, +added line two), 1 deletion (-return false)
         $result | Should -Match 'src/beta.ts \(\+3/-1\)'
     }
 
     It 'Reports correct counts for deleted files' {
-        $result = Get-DiffSummary -Content $fixtureContent
+        $result = Get-DiffSummary -Content $script:summaryContent
         # src/gamma.ts: 0 additions, 3 deletions
         $result | Should -Match 'src/gamma.ts \(\+0/-3\)'
     }
 
     It 'Starts output with Changed files header' {
-        $result = Get-DiffSummary -Content $fixtureContent
+        $result = Get-DiffSummary -Content $script:summaryContent
         $result | Should -Match '^Changed files:'
     }
 
     It 'Sorts files alphabetically' {
-        $result = Get-DiffSummary -Content $fixtureContent
+        $result = Get-DiffSummary -Content $script:summaryContent
         $lines = ($result -split [Environment]::NewLine) | Where-Object { $_ -match '^\s+\S' }
         $filePaths = $lines | ForEach-Object { ($_ -replace '^\s+(\S+)\s.*', '$1') }
         $sorted = $filePaths | Sort-Object

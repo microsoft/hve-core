@@ -20,6 +20,26 @@ param(
     [string[]]$TestPath = @("$PSScriptRoot")
 )
 
+# Dynamically discover skill test directories when using the default TestPath.
+# Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+# so we probe two fixed depths.
+if (-not $PSBoundParameters.ContainsKey('TestPath')) {
+    $scriptRoot = Split-Path $PSScriptRoot -Parent
+    $repoRoot = Split-Path $scriptRoot -Parent
+    $skillsPath = Join-Path $repoRoot '.github' 'skills'
+    if (Test-Path $skillsPath) {
+        $skillTestDirs = @()
+        foreach ($depth in @('*', '*/*')) {
+            $pattern = Join-Path $skillsPath $depth 'tests'
+            $skillTestDirs += @(Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer -and (Test-Path (Join-Path $_.Parent.FullName 'scripts')) })
+        }
+        if ($skillTestDirs) {
+            $TestPath = @($TestPath) + @($skillTestDirs.FullName)
+        }
+    }
+}
+
 $configuration = New-PesterConfiguration
 
 # Run configuration
