@@ -37,11 +37,7 @@ items:
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
-- path: .github/agents/system-architecture-reviewer.agent.md
-  kind: agent
 - path: .github/agents/rpi/doc-ops.agent.md
-  kind: agent
-- path: .github/agents/task-implementor.agent.md
   kind: agent
 - path: .github/agents/rpi/memory.agent.md
   kind: agent
@@ -76,6 +72,8 @@ items:
 - path: .github/agents/rpi/task-reviewer.agent.md
   kind: agent
 - path: .github/agents/security-planning/security-plan-creator.agent.md
+  kind: agent
+- path: .github/agents/system-architecture-reviewer.agent.md
   kind: agent
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
   kind: prompt

@@ -20,7 +20,7 @@ copilot plugin install project-planning@hve-core
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
 | brd-builder                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
-| rpi-agent                    | rpi-agent                                                                                                                                                                                                  |
+| rpi-agent                    | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                            |
 | prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
 
 ## Instructions

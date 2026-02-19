@@ -26,7 +26,7 @@ items:
   - path: .github/agents/system-architecture-reviewer.agent.md
     kind: agent
   # RPI agents
-  - path: .github/agents/rpi-agent.agent.md
+  - path: .github/agents/rpi/rpi-agent.agent.md
     kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
