@@ -4,7 +4,6 @@ description: How custom agents extend GitHub Copilot with specialized domain exp
 sidebar_position: 1
 ---
 
-# Understanding Agents
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

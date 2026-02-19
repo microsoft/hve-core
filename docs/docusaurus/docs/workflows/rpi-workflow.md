@@ -4,7 +4,6 @@ description: How the Research-Plan-Implement loop structures AI-assisted develop
 sidebar_position: 2
 ---
 
-# The RPI Workflow
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

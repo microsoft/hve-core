@@ -4,7 +4,6 @@ description: What HVE Core provides and how to get started with AI-driven develo
 sidebar_position: 1
 ---
 
-# Getting Started Overview
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

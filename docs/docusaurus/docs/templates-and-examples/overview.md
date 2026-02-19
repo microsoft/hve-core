@@ -4,7 +4,6 @@ description: Ready-to-use templates and examples for agents, prompts, instructio
 sidebar_position: 1
 ---
 
-# Templates & Examples
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

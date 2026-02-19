@@ -4,7 +4,6 @@ description: How to install and configure HVE Core in your project.
 sidebar_position: 2
 ---
 
-# Installation
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

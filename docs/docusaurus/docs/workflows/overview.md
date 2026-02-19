@@ -4,7 +4,6 @@ description: An overview of the development workflows supported by HVE Core.
 sidebar_position: 1
 ---
 
-# Workflows Overview
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

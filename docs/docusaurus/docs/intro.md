@@ -5,7 +5,6 @@ sidebar_position: 1
 sidebar_label: Introduction
 ---
 
-# Introduction to HVE Core
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

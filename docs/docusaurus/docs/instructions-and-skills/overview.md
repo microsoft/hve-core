@@ -4,7 +4,6 @@ description: Auto-applied coding guidelines and reusable skill packages that enh
 sidebar_position: 1
 ---
 
-# Instructions & Skills
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.

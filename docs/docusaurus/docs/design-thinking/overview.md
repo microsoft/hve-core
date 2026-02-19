@@ -4,7 +4,6 @@ description: Shape your work through structured planning, specification, and arc
 sidebar_position: 1
 ---
 
-# Design Thinking with AI
 
 :::caution Draft Content
 This documentation site is under active development. Content on this page is preliminary and subject to change.
