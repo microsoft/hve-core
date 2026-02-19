@@ -172,6 +172,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
@@ -212,5 +214,5 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true
