@@ -846,7 +846,7 @@ description: "Root-level skill"
         $result = Get-DiscoveredSkills -SkillsDir $script:skillsDir -AllowedMaturities @('stable')
         $nestedSkill = $result.Skills | Where-Object { $_.name -eq 'nested-skill' }
         $nestedSkill | Should -Not -BeNullOrEmpty
-        $nestedSkill.path | Should -Be './.github/skills/test-collection/nested-skill'
+        $nestedSkill.path | Should -Be './.github/skills/test-collection/nested-skill/SKILL.md'
     }
 
     It 'Skips root-level repo-specific skills with correct skip reason' {
