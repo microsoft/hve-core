@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - docs/docusaurus-site
     paths:
       - 'docs/docusaurus/**'
       - '.github/workflows/deploy-docs.yml'

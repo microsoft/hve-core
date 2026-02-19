@@ -11,10 +11,10 @@ const config = {
     v4: true,
   },
 
-  url: 'https://jakkaj.github.io',
+  url: 'https://microsoft.github.io',
   baseUrl: '/hve-core/',
 
-  organizationName: 'jakkaj',
+  organizationName: 'microsoft',
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
