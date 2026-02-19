@@ -98,7 +98,7 @@ items:
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
-  - path: .github/skills/pr-reference
+  - path: .github/skills/shared/pr-reference
     kind: skill
 display:
   ordering: manual

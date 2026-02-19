@@ -203,6 +203,8 @@ items:
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill
+- path: .github/skills/shared/pr-reference
+  kind: skill
 display:
-  featured: true
   ordering: alpha
+  featured: true
