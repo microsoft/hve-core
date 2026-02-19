@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/task-plan.prompt.md

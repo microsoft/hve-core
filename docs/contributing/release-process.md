@@ -68,7 +68,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](../../.github/instructions/rpi/commit-message.instructions.md).
+For more details, see the [commit message instructions](../../.github/instructions/hve-core/commit-message.instructions.md).
 
 ## For Maintainers
 

@@ -50,7 +50,6 @@ The project is organized into these main areas:
 
 Scripts are organized by function:
 
-* Development Tools (`scripts/dev-tools/`) - PR reference generation utilities.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, and PowerShell analysis.
 * Security (`scripts/security/`) - Dependency pinning validation and SHA staleness checks.
@@ -91,7 +90,7 @@ All tracking files use markdown format with frontmatter and follow patterns from
 
 ### Agents and Subagents
 
-By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/rpi/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
+By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
 Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
 
 Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
@@ -110,7 +109,7 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * Files under the root `plugins/` directory are generated outputs and are not edited directly.
 * Regenerate plugin outputs using `npm run plugin:generate`; this also runs `lint:md:fix` and `format:tables` as post-processing. Markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
-* Artifacts under `.github/**/hve-core/` are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
+* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->

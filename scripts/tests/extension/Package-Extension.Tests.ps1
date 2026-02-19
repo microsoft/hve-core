@@ -276,7 +276,6 @@ Describe 'Invoke-PackageExtension' {
         New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
-        New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
         New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
@@ -631,6 +630,22 @@ Describe 'Invoke-PackageExtension' {
         $result.Success | Should -BeFalse
         $result.ErrorMessage | Should -Match 'Simulated unexpected failure'
     }
+
+    It 'Returns success without VSIX creation when DryRun is specified' {
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.Version | Should -Be '1.0.0'
+        $result.OutputPath | Should -BeNullOrEmpty
+    }
 }
 
 Describe 'Test-PackagingInputsValid' {
@@ -714,9 +729,9 @@ Describe 'Get-PackagingDirectorySpec' {
         $script:extDir = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-ext'
     }
 
-    It 'Returns array of 4 directory specifications' {
+    It 'Returns array of 3 directory specifications' {
         $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
-        $result.Count | Should -Be 4
+        $result.Count | Should -Be 3
     }
 
     It 'Includes .github directory specification' {
@@ -725,13 +740,6 @@ Describe 'Get-PackagingDirectorySpec' {
         $githubSpec | Should -Not -BeNullOrEmpty
         $githubSpec.Destination | Should -BeLike '*.github'
         $githubSpec.IsFile | Should -BeFalse
-    }
-
-    It 'Includes dev-tools directory specification' {
-        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
-        $devToolsSpec = $result | Where-Object { $_.Source -like '*dev-tools' }
-        $devToolsSpec | Should -Not -BeNullOrEmpty
-        $devToolsSpec.IsFile | Should -BeFalse
     }
 
     It 'Includes CIHelpers.psm1 file specification' {
@@ -937,11 +945,11 @@ Describe 'Get-CollectionReadmePath' {
         }
     }
 
-    It 'Returns null for hve-core-all collection' {
+    It 'Returns null for hve-core collection' {
         $collectionPath = Join-Path $script:testDir 'collection.yml'
         @"
-id: hve-core-all
-name: all
+id: hve-core
+name: core
 "@ | Set-Content $collectionPath
 
         $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
@@ -971,6 +979,20 @@ name: sec
 
         $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
         $result | Should -BeNullOrEmpty
+    }
+
+    It 'Parses JSON collection file correctly' {
+        $collectionPath = Join-Path $script:testDir 'collection.json'
+        @{
+            id   = 'json-collection'
+            name = 'json'
+        } | ConvertTo-Json | Set-Content $collectionPath
+
+        $collectionReadme = Join-Path $script:extDir 'README.json-collection.md'
+        Set-Content -Path $collectionReadme -Value '# JSON Collection README'
+
+        $result = Get-CollectionReadmePath -CollectionPath $collectionPath -ExtensionDirectory $script:extDir
+        $result | Should -Be $collectionReadme
     }
 }
 
@@ -1165,7 +1187,6 @@ Describe 'Invoke-PackageExtension - Collection mode' {
         New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
-        New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
         New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
@@ -1265,7 +1286,6 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
-            New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
             Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
             New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null
@@ -1357,7 +1377,6 @@ Describe 'CI Integration - Package-Extension' {
             New-Item -Path $script:repoRoot -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot '.github/skills') -ItemType Directory -Force | Out-Null
-            New-Item -Path (Join-Path $script:repoRoot 'scripts/dev-tools') -ItemType Directory -Force | Out-Null
             New-Item -Path (Join-Path $script:repoRoot 'scripts/lib/Modules') -ItemType Directory -Force | Out-Null
             Set-Content -Path (Join-Path $script:repoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Value '# Mock module'
             New-Item -Path (Join-Path $script:repoRoot 'docs/templates') -ItemType Directory -Force | Out-Null

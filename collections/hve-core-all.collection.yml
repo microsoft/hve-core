@@ -21,6 +21,40 @@ items:
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/hve-core/doc-ops.agent.md
+  kind: agent
+- path: .github/agents/hve-core/memory.agent.md
+  kind: agent
+- path: .github/agents/hve-core/pr-review.agent.md
+  kind: agent
+- path: .github/agents/hve-core/prompt-builder.agent.md
+  kind: agent
+- path: .github/agents/hve-core/rpi-agent.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/plan-validator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/prompt-tester.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/prompt-updater.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/task-implementor.agent.md
+  kind: agent
+- path: .github/agents/hve-core/task-planner.agent.md
+  kind: agent
+- path: .github/agents/hve-core/task-researcher.agent.md
+  kind: agent
+- path: .github/agents/hve-core/task-reviewer.agent.md
+  kind: agent
 - path: .github/agents/installer/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
@@ -36,40 +70,6 @@ items:
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
-  kind: agent
-- path: .github/agents/rpi/doc-ops.agent.md
-  kind: agent
-- path: .github/agents/rpi/memory.agent.md
-  kind: agent
-- path: .github/agents/rpi/pr-review.agent.md
-  kind: agent
-- path: .github/agents/rpi/prompt-builder.agent.md
-  kind: agent
-- path: .github/agents/rpi/rpi-agent.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/implementation-validator.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/phase-implementor.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/plan-validator.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/prompt-evaluator.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/prompt-tester.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/prompt-updater.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/researcher-subagent.agent.md
-  kind: agent
-- path: .github/agents/rpi/subagents/rpi-validator.agent.md
-  kind: agent
-- path: .github/agents/rpi/task-implementor.agent.md
-  kind: agent
-- path: .github/agents/rpi/task-planner.agent.md
-  kind: agent
-- path: .github/agents/rpi/task-researcher.agent.md
-  kind: agent
-- path: .github/agents/rpi/task-reviewer.agent.md
   kind: agent
 - path: .github/agents/security-planning/security-plan-creator.agent.md
   kind: agent
@@ -104,35 +104,35 @@ items:
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/rpi/checkpoint.prompt.md
+- path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/doc-ops-update.prompt.md
+- path: .github/prompts/hve-core/doc-ops-update.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/git-commit-message.prompt.md
+- path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/git-commit.prompt.md
+- path: .github/prompts/hve-core/git-commit.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/git-merge.prompt.md
+- path: .github/prompts/hve-core/git-merge.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/git-setup.prompt.md
+- path: .github/prompts/hve-core/git-setup.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/prompt-analyze.prompt.md
+- path: .github/prompts/hve-core/prompt-analyze.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/prompt-build.prompt.md
+- path: .github/prompts/hve-core/prompt-build.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/prompt-refactor.prompt.md
+- path: .github/prompts/hve-core/prompt-refactor.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/pull-request.prompt.md
+- path: .github/prompts/hve-core/pull-request.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/rpi.prompt.md
+- path: .github/prompts/hve-core/rpi.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/task-implement.prompt.md
+- path: .github/prompts/hve-core/task-implement.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/task-plan.prompt.md
+- path: .github/prompts/hve-core/task-plan.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/task-research.prompt.md
+- path: .github/prompts/hve-core/task-research.prompt.md
   kind: prompt
-- path: .github/prompts/rpi/task-review.prompt.md
+- path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
 - path: .github/prompts/security-planning/incident-response.prompt.md
   kind: prompt
@@ -166,11 +166,15 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
   kind: instruction
@@ -191,19 +195,22 @@ items:
 - path: .github/instructions/github/github-backlog-update.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rpi/commit-message.instructions.md
+- path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
-- path: .github/instructions/rpi/git-merge.instructions.md
+- path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
-- path: .github/instructions/rpi/markdown.instructions.md
+- path: .github/instructions/hve-core/markdown.instructions.md
   kind: instruction
-- path: .github/instructions/rpi/prompt-builder.instructions.md
+- path: .github/instructions/hve-core/prompt-builder.instructions.md
   kind: instruction
-- path: .github/instructions/rpi/writing-style.instructions.md
+- path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill
+- path: .github/skills/shared/pr-reference
+  kind: skill
 display:
   ordering: alpha
+  featured: true

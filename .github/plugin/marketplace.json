@@ -46,6 +46,12 @@
       "version": "2.3.10"
     },
     {
+      "name": "hve-core",
+      "source": "./plugins/hve-core",
+      "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
+      "version": "2.3.10"
+    },
+    {
       "name": "hve-core-all",
       "source": "./plugins/hve-core-all",
       "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
@@ -61,12 +67,6 @@
       "name": "project-planning",
       "source": "./plugins/project-planning",
       "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-      "version": "2.3.10"
-    },
-    {
-      "name": "rpi",
-      "source": "./plugins/rpi",
-      "description": "Research, Plan, Implement, Review workflow with Git commit, merge, setup, and pull request prompts",
       "version": "2.3.10"
     },
     {

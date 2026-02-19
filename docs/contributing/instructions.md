@@ -42,11 +42,11 @@ Instruction files are typically organized in a collection subdirectory by conven
 ├── shared/
 │   └── cross-collection.instructions.md     # Shared across collections
 └── hve-core/
-    └── repo-only.instructions.md            # Repo-specific (NOT distributed)
+    └── markdown.instructions.md               # Collection-scoped (distributed)
 ```
 
 > [!IMPORTANT]
-> The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through extension packages or collections. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
 
 <!-- markdownlint-disable-next-line MD028 -->
 
@@ -57,7 +57,7 @@ Instruction files are typically organized in a collection subdirectory by conven
 **Examples**:
 
 * `.github/instructions/coding-standards/python-script.instructions.md`
-* `.github/instructions/rpi/markdown.instructions.md`
+* `.github/instructions/hve-core/markdown.instructions.md`
 * `.github/instructions/coding-standards/csharp/csharp.instructions.md`
 * `.github/instructions/coding-standards/bash/bash.instructions.md`
 
@@ -130,10 +130,10 @@ lastUpdated: '2025-11-19'
 
 ## Collection Entry Requirements
 
-All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed in `.github/instructions/hve-core/`. Collection entries control distribution and maturity.
+All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
 
 > [!NOTE]
-> Instructions in `.github/instructions/hve-core/` are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
 
 ### Adding Your Instructions to a Collection
 
@@ -164,7 +164,7 @@ Choose collections based on who uses the technology or pattern:
 |-------------------------|---------------------------------------------------|
 | Language standards      | `hve-core-all`, `coding-standards`                |
 | Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
-| Documentation standards | `hve-core-all`, `rpi`                             |
+| Documentation standards | `hve-core-all`, `hve-core`                        |
 | Workflow instructions   | `hve-core-all` plus relevant workflow collections |
 | Test standards          | `hve-core-all`, `coding-standards`                |
 | ADO integration         | `hve-core-all`, `ado`, `project-planning`         |

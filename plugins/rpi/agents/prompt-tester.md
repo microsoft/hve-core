@@ -1,1 +1,0 @@
-../../../.github/agents/rpi/subagents/prompt-tester.agent.md

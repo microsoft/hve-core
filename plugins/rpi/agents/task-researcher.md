@@ -1,1 +1,0 @@
-../../../.github/agents/rpi/task-researcher.agent.md

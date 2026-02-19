@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/doc-ops-update.prompt.md

@@ -244,7 +244,7 @@ function Invoke-CollectionValidation {
 
             # Repo-specific path exclusion
             if (Test-HveCoreRepoRelativePath -Path $itemPath) {
-                $fileErrors += "repo-specific path not allowed in collections: $itemPath (artifacts under .github/**/hve-core/ are excluded from distribution)"
+                $fileErrors += "repo-specific path not allowed in collections: $itemPath (root-level artifacts under .github/{type}/ are excluded from distribution)"
             }
 
             # Path existence

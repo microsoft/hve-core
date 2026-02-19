@@ -46,16 +46,16 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 | File                                                                          | Applies To                                                    | Purpose                                |
 |-------------------------------------------------------------------------------|---------------------------------------------------------------|----------------------------------------|
-| [rpi/markdown.instructions.md](rpi/markdown.instructions.md)                 | `**/*.md`                                                     | Markdown formatting standards          |
-| [rpi/writing-style.instructions.md](rpi/writing-style.instructions.md)       | `**/*.md`                                                     | Voice, tone, and language conventions  |
-| [rpi/prompt-builder.instructions.md](rpi/prompt-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md`         | Prompt engineering artifact authoring  |
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)                 | `**/*.md`                                                     | Markdown formatting standards          |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)       | `**/*.md`                                                     | Voice, tone, and language conventions  |
+| [hve-core/prompt-builder.instructions.md](hve-core/prompt-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md`         | Prompt engineering artifact authoring  |
 
 ### Git and Workflow
 
 | File                                                                      | Applies To     | Purpose                              |
 |---------------------------------------------------------------------------|----------------|---------------------------------------|
-| [rpi/commit-message.instructions.md](rpi/commit-message.instructions.md) | Commit actions | Conventional commit message format    |
-| [rpi/git-merge.instructions.md](rpi/git-merge.instructions.md)           | Git operations | Merge, rebase, and conflict handling  |
+| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions | Conventional commit message format    |
+| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations | Merge, rebase, and conflict handling  |
 
 ### Azure DevOps Integration
 
@@ -128,7 +128,7 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── github-backlog-planning.instructions.md
 │   ├── github-backlog-triage.instructions.md
 │   └── github-backlog-update.instructions.md
-├── rpi/                              # RPI workflow
+├── hve-core/                              # HVE Core workflow
 │   ├── commit-message.instructions.md
 │   ├── git-merge.instructions.md
 │   ├── markdown.instructions.md
