@@ -17,11 +17,11 @@ Method 7 bridges the Solution Space's constraint discovery with the Implementati
 
 Method 7 uniquely operates through three sequential sub-methods addressing distinct technical validation needs:
 
-| Sub-Method | Purpose | Coaching Focus |
-|------------|---------|----------------|
-| **7a: Translation Planning** | Convert lo-fi discoveries into architectural requirements | Guide technical constraint mapping and implementation option analysis |
-| **7b: Prototype Construction** | Build functional implementations testing feasibility | Coach multiple approach generation and scrappy functional focus |
-| **7c: Specification Drafting** | Document implementation findings for Method 8 | Support technical trade-off documentation and user testing preparation |
+| Sub-Method                     | Purpose                                                   | Coaching Focus                                                         |
+|--------------------------------|-----------------------------------------------------------|------------------------------------------------------------------------|
+| **7a: Translation Planning**   | Convert lo-fi discoveries into architectural requirements | Guide technical constraint mapping and implementation option analysis  |
+| **7b: Prototype Construction** | Build functional implementations testing feasibility      | Coach multiple approach generation and scrappy functional focus        |
+| **7c: Specification Drafting** | Document implementation findings for Method 8             | Support technical trade-off documentation and user testing preparation |
 
 Each sub-method represents a distinct technical validation phase with clear transition criteria and specific coaching interventions.
 
@@ -39,11 +39,11 @@ Advance to specification drafting when functional prototypes are tested under re
 
 Method 7 requires three specialized hats instead of the standard two-hat pattern due to the unique complexity of bridging lo-fi discoveries to hi-fi technical validation. The three-dimensional nature of this transition (constraint compliance, technical feasibility, and specification clarity) necessitates distinct expertise areas.
 
-| Hat | Activation Trigger | Primary Responsibilities |
-|-----|-------------------|-------------------------|
-| **Fidelity Translator** | Method 6 constraint discoveries | Bridge lo-fi insights to technical requirements; map user constraints to implementation architecture |
-| **Technical Architect** | Implementation design decisions | Generate multiple technical approaches; validate feasibility under real-world conditions |
-| **Specification Writer** | Technical findings documentation | Capture implementation trade-offs; prepare technical foundation for user testing |
+| Hat                      | Activation Trigger               | Primary Responsibilities                                                                             |
+|--------------------------|----------------------------------|------------------------------------------------------------------------------------------------------|
+| **Fidelity Translator**  | Method 6 constraint discoveries  | Bridge lo-fi insights to technical requirements; map user constraints to implementation architecture |
+| **Technical Architect**  | Implementation design decisions  | Generate multiple technical approaches; validate feasibility under real-world conditions             |
+| **Specification Writer** | Technical findings documentation | Capture implementation trade-offs; prepare technical foundation for user testing                     |
 
 ### Hat Switching Logic
 
@@ -70,7 +70,14 @@ Prototypes transition from lo-fi (Method 6) to hi-fi (Method 7) status when they
 
 Recognize over-engineering anti-patterns: visual polish, production-ready interfaces, single implementation paths, ideal-condition-only testing.
 
-When teams drift toward over-engineering, redirect focus to functional core capabilities and comparative technical validation. The over-engineering escalation applies the general Progressive Hint Engine from the coaching identity to Method 7's specific challenge of maintaining functional focus over visual polish. Use escalation levels: "What's the core technical question?" then "How does this compare to your other approach?" then "What would happen if you tested this with actual environmental constraints?" then "Remember the target is technical proof, not visual design."
+When teams drift toward over-engineering, redirect focus to functional core capabilities and
+comparative technical validation. The over-engineering escalation applies the general Progressive
+Hint Engine from the coaching identity to Method 7's specific challenge of maintaining functional
+focus over visual polish.
+
+Use escalation levels: "What's the core technical question?" then "How does this compare to
+your other approach?" then "What would happen if you tested this with actual environmental
+constraints?" then "Remember the target is technical proof, not visual design."
 
 ## Coaching Examples
 
@@ -109,15 +116,18 @@ Method 7 produces standardized technical validation artifacts organized under `.
 ## Method Integration
 
 ### From Method 6 (Lo-Fi Prototypes)
+
 * Physical, environmental, and workflow constraint discoveries as technical requirements
 * Validated interaction approaches as implementation specifications
 * Assumption testing results indicating which core beliefs were proven or disproven
 * User behavior patterns observed during real-environment prototype testing
 
 ### To Method 8 (User Testing)
+
 * Validated implementations ready for formal user comparison testing
 * Known capabilities and limitations informing testing scenarios
 * Multiple technical approaches for user preference validation
 
 ### Cross-Method Consistency
+
 Maintains DT coaching principles: end-user validation focus, environmental constraint application, multi-stakeholder perspectives, and iterative "fail fast, learn fast" refinement within technical feasibility constraints.
