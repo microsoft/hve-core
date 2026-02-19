@@ -20,7 +20,7 @@ copilot plugin install design-thinking@hve-core
 | Command            | Description                                                                                                                                  |
 |--------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
 | dt-start-project   | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
-| dt-resume-coaching | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core            |
+| dt-resume-coaching | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core           |
 
 ## Instructions
 

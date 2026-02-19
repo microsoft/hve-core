@@ -83,9 +83,9 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
-- path: .github/prompts/design-thinking/dt-start-project.prompt.md
-  kind: prompt
 - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+  kind: prompt
+- path: .github/prompts/design-thinking/dt-start-project.prompt.md
   kind: prompt
 - path: .github/prompts/github/github-add-issue.prompt.md
   kind: prompt
