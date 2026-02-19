@@ -171,4 +171,34 @@ Run a specific test file:
 Invoke-Pester -Path ./scripts/tests/linting/Invoke-PSScriptAnalyzer.Tests.ps1
 ```
 
+## Skills Testing
+
+Skill scripts use a co-located test pattern instead of the mirror directory structure used by `scripts/`. Each skill contains its own `tests/` subdirectory:
+
+```text
+.github/skills/<skill-name>/
+├── scripts/
+│   ├── convert.ps1
+│   └── convert.sh
+└── tests/
+    └── convert.Tests.ps1
+```
+
+### Coverage Integration
+
+The Pester configuration at `scripts/tests/pester.config.ps1` resolves skill scripts from the repository root for code coverage analysis. When you include a skill `tests/` directory in an `Invoke-Pester -Path` argument or test run configuration, Pester discovers the skill test files through the `.Tests.ps1` naming convention.
+
+Coverage path resolution for skills uses the repository root rather than `$scriptRoot` (which points to `scripts/`):
+
+```powershell
+$repoRoot = Split-Path $scriptRoot -Parent
+$skillScripts = Get-ChildItem -Path (Join-Path $repoRoot '.github/skills') `
+    -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -notmatch '\.Tests\.ps1$' }
+```
+
+### Packaging Exclusion
+
+Co-located `tests/` directories are excluded from the VSIX extension package by `Package-Extension.ps1`. After copying a skill directory, the packaging script removes any `tests/` subdirectories from the destination.
+
 🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

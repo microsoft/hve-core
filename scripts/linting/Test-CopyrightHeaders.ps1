@@ -218,6 +218,11 @@ function Invoke-CopyrightHeaderCheck {
             if (-not $fileResult.hasCopyright) { $missing += "copyright" }
             if (-not $fileResult.hasSpdx) { $missing += "SPDX" }
             Write-Host "  ❌ $($fileResult.file) (missing: $($missing -join ', '))" -ForegroundColor Red
+            Write-CIAnnotation `
+                -Message "Missing required headers: $($missing -join ', ')" `
+                -Level Warning `
+                -File $file.FullName `
+                -Line 1
         }
 
         $results += $fileResult
@@ -245,6 +250,38 @@ function Invoke-CopyrightHeaderCheck {
     Write-Host "   With headers:   $($output.filesWithHeaders)" -ForegroundColor Green
     Write-Host "   Missing headers: $($output.filesMissingHeaders)" -ForegroundColor $(if ($output.filesMissingHeaders -gt 0) { 'Red' } else { 'Green' })
     Write-Host "   Compliance:     $($output.compliancePercentage)%" -ForegroundColor $(if ($output.compliancePercentage -eq 100) { 'Green' } else { 'Yellow' })
+
+    # CI step summary
+    Write-CIStepSummary -Content "## Copyright Header Validation`n"
+
+    if ($output.filesMissingHeaders -eq 0) {
+        Write-CIStepSummary -Content "✅ **Status**: Passed`n`nAll $($output.totalFiles) files have required copyright headers."
+    }
+    else {
+        $failingFiles = ($results | Where-Object { -not $_.valid } | ForEach-Object {
+            $m = @()
+            if (-not $_.hasCopyright) { $m += 'copyright' }
+            if (-not $_.hasSpdx) { $m += 'SPDX' }
+            "| ``$($_.file)`` | $($m -join ', ') |"
+        }) -join "`n"
+
+        Write-CIStepSummary -Content @"
+❌ **Status**: Failed
+
+| Metric | Count |
+|--------|-------|
+| Total Files | $($output.totalFiles) |
+| With Headers | $($output.filesWithHeaders) |
+| Missing Headers | $($output.filesMissingHeaders) |
+| Compliance | $($output.compliancePercentage)% |
+
+### Files Missing Headers
+
+| File | Missing |
+|------|--------|
+$failingFiles
+"@
+    }
 
     # Throw if requested and files are missing headers
     if ($FailOnMissing -and $filesMissingHeaders -gt 0) {

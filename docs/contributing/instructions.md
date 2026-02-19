@@ -29,28 +29,37 @@ Create an instructions file when you need to:
 
 ### Location
 
-All instruction files **MUST** be placed in:
+Instruction files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/instructions/
-├── language-name.instructions.md        # Language-specific
-├── framework-name.instructions.md       # Framework-specific
-├── workflow-name.instructions.md        # Workflow-specific
-├── subfolder/
-│       └── specialized.instructions.md  # Organized by domain
+├── {collection-id}/
+│   └── your-instructions.instructions.md   # Collection-scoped
+├── coding-standards/
+│   ├── language.instructions.md             # Language-specific
+│   └── {language}/
+│       └── language.instructions.md         # Language with subdirectory
+├── shared/
+│   └── cross-collection.instructions.md     # Shared across collections
 └── hve-core/
-        └── repo-only.instructions.md    # Repo-specific (NOT distributed)
+    └── repo-only.instructions.md            # Repo-specific (NOT distributed)
 ```
 
 > [!IMPORTANT]
 > The `.github/instructions/hve-core/` subdirectory is reserved for repo-specific instructions that apply only to the hve-core repository. Files in this directory are NOT registered as AI artifacts and are never distributed through extension packages or collections. Use this location for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers.
 
+<!-- markdownlint-disable-next-line MD028 -->
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
+
 **Examples**:
 
-* `.github/instructions/python-script.instructions.md`
-* `.github/instructions/markdown.instructions.md`
-* `.github/instructions/csharp/csharp.instructions.md`
-* `.github/instructions/bash/bash.instructions.md`
+* `.github/instructions/coding-standards/python-script.instructions.md`
+* `.github/instructions/rpi/markdown.instructions.md`
+* `.github/instructions/coding-standards/csharp/csharp.instructions.md`
+* `.github/instructions/coding-standards/bash/bash.instructions.md`
 
 ### Naming Convention
 
@@ -132,16 +141,17 @@ After creating your instructions file, add an `items[]` entry in each target col
 
 ```yaml
 items:
-    - path: .github/instructions/my-language.instructions.md
+    # path can reference artifacts from any subfolder
+    - path: .github/instructions/{collection-id}/my-language.instructions.md
         kind: instruction
         maturity: stable
 ```
 
-For instructions in subdirectories, use the path format:
+For instructions in language subdirectories, use the full path:
 
 ```yaml
 items:
-    - path: .github/instructions/subdirectory/my-instructions.instructions.md
+    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
         kind: instruction
         maturity: stable
 ```
@@ -154,7 +164,7 @@ Choose collections based on who uses the technology or pattern:
 |-------------------------|---------------------------------------------------|
 | Language standards      | `hve-core-all`, `coding-standards`                |
 | Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
-| Documentation standards | `hve-core-all`, `prompt-engineering`              |
+| Documentation standards | `hve-core-all`, `rpi`                             |
 | Workflow instructions   | `hve-core-all` plus relevant workflow collections |
 | Test standards          | `hve-core-all`, `coding-standards`                |
 | ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
@@ -644,7 +654,7 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/`
+* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
 * Use `prompt-builder.agent.md` agent for assistance
 

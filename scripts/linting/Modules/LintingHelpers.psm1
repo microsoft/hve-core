@@ -116,7 +116,7 @@ function Get-FilesRecursive {
         [string]$GitIgnorePath
     )
 
-    $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -ErrorAction SilentlyContinue
+    $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -Force -ErrorAction SilentlyContinue
 
     # Apply gitignore filtering if provided
     if ($GitIgnorePath -and (Test-Path $GitIgnorePath)) {

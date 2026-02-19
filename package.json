@@ -1,10 +1,10 @@
 {
   "name": "hve-core",
-  "version": "2.3.9",
+  "version": "2.3.10",
   "description": "HVE Core",
   "private": true,
   "scripts": {
-    "test:ps": "pwsh -NoProfile -Command \"Invoke-Pester -Configuration (& ./scripts/tests/pester.config.ps1)\"",
+    "test:ps": "pwsh -NoProfile -File scripts/tests/Invoke-PesterTests.ps1",
     "spell-check": "cspell \"**/*.{md,ts,js,json,yaml,yml}\"",
     "spell-check:fix": "cspell \"**/*.{md,ts,js,json,yaml,yml}\" --show-suggestions",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
@@ -16,7 +16,7 @@
     "lint:frontmatter": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-MarkdownFrontmatter.ps1' -WarningsAsErrors -EnableSchemaValidation\"",
     "lint:collections-metadata": "pwsh -File scripts/plugins/Validate-Collections.ps1",
     "lint:version-consistency": "pwsh -NoProfile -Command \"./scripts/security/Test-ActionVersionConsistency.ps1 -FailOnMismatch\"",
-    "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:version-consistency",
+    "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:version-consistency && npm run validate:skills",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
     "extension:prepare:prerelease": "pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease",
@@ -24,6 +24,7 @@
     "package:extension": "npm run extension:package --",
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
+    "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
     "plugin:validate": "npm run lint:collections-metadata"
   },
@@ -31,7 +32,7 @@
     "cspell": "9.6.4",
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "^1.7.0",
-    "markdownlint-cli2": "^0.20.0"
+    "markdownlint-cli2": "^0.21.0"
   },
   "overrides": {
     "markdown-it": "14.1.1",
