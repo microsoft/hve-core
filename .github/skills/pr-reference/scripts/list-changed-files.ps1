@@ -138,20 +138,48 @@ function Format-Output {
     }
 }
 
-# Main execution
-$repoRoot = Get-RepositoryRoot
-$xmlPath = if ($InputPath) {
-    $InputPath
-} else {
-    Join-Path $repoRoot '.copilot-tracking/pr/pr-reference.xml'
+function Invoke-ListChangedFiles {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [string]$InputPath = "",
+
+        [Parameter()]
+        [ValidateSet('All', 'Added', 'Deleted', 'Modified', 'Renamed')]
+        [string]$Type = "All",
+
+        [Parameter()]
+        [ValidateSet('Plain', 'Json', 'Markdown')]
+        [string]$Format = "Plain"
+    )
+
+    $repoRoot = Get-RepositoryRoot
+    $xmlPath = if ($InputPath) {
+        $InputPath
+    } else {
+        Join-Path $repoRoot '.copilot-tracking/pr/pr-reference.xml'
+    }
+
+    if (-not (Test-Path -LiteralPath $xmlPath)) {
+        throw "PR reference file not found: $xmlPath`nRun generate.ps1 first to create the PR reference."
+    }
+
+    $changes = Get-FileChanges -XmlPath $xmlPath -FilterType $Type
+    $output = Format-Output -Changes $changes -OutputFormat $Format
+
+    Write-Output $output
 }
 
-if (-not (Test-Path -LiteralPath $xmlPath)) {
-    Write-Error "PR reference file not found: $xmlPath`nRun generate.ps1 first to create the PR reference."
-    exit 1
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-ListChangedFiles -InputPath $InputPath -Type $Type -Format $Format
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue $_.Exception.Message
+        exit 1
+    }
 }
-
-$changes = Get-FileChanges -XmlPath $xmlPath -FilterType $Type
-$output = Format-Output -Changes $changes -OutputFormat $Format
-
-Write-Output $output
+#endregion

@@ -135,6 +135,7 @@ function Get-FileDiff {
     [OutputType([string])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [string[]]$Content,
 
         [Parameter(Mandatory)]
@@ -167,6 +168,7 @@ function Get-DiffSummary {
     [OutputType([string])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [string[]]$Content
     )
 
@@ -210,97 +212,131 @@ function Get-DiffSummary {
     return $output -join [Environment]::NewLine
 }
 
-# Main execution
-$repoRoot = Get-RepositoryRoot
-$xmlPath = if ($InputPath) {
-    $InputPath
-} else {
-    Join-Path $repoRoot '.copilot-tracking/pr/pr-reference.xml'
-}
+function Invoke-ReadDiff {
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string]$InputPath = "",
 
-if (-not (Test-Path -LiteralPath $xmlPath)) {
-    Write-Error "PR reference file not found: $xmlPath`nRun generate.ps1 first to create the PR reference."
-    exit 1
-}
+        [Parameter()]
+        [int]$Chunk = 0,
 
-$content = Get-Content -LiteralPath $xmlPath
-$totalLines = $content.Count
-$chunkInfo = Get-ChunkInfo -TotalLines $totalLines -ChunkSize $ChunkSize
+        [Parameter()]
+        [int]$ChunkSize = 500,
 
-# Info mode
-if ($Info) {
+        [Parameter()]
+        [string]$Lines = "",
+
+        [Parameter()]
+        [string]$File = "",
+
+        [Parameter()]
+        [switch]$Summary,
+
+        [Parameter()]
+        [switch]$Info
+    )
+
+    $repoRoot = Get-RepositoryRoot
+    $xmlPath = if ($InputPath) {
+        $InputPath
+    } else {
+        Join-Path $repoRoot '.copilot-tracking/pr/pr-reference.xml'
+    }
+
+    if (-not (Test-Path -LiteralPath $xmlPath)) {
+        throw "PR reference file not found: $xmlPath`nRun generate.ps1 first to create the PR reference."
+    }
+
+    $content = Get-Content -LiteralPath $xmlPath
+    $totalLines = $content.Count
+    $chunkInfo = Get-ChunkInfo -TotalLines $totalLines -ChunkSize $ChunkSize
+
+    # Info mode
+    if ($Info) {
+        Write-Output "File: $xmlPath"
+        Write-Output "Total lines: $totalLines"
+        Write-Output "Chunk size: $ChunkSize"
+        Write-Output "Total chunks: $($chunkInfo.TotalChunks)"
+        Write-Output ""
+        Write-Output "Chunk breakdown:"
+        for ($i = 1; $i -le $chunkInfo.TotalChunks; $i++) {
+            $range = Get-ChunkRange -ChunkNumber $i -ChunkSize $ChunkSize -TotalLines $totalLines
+            Write-Output "  Chunk ${i}: lines $($range.Start)-$($range.End)"
+        }
+        return
+    }
+
+    # Summary mode
+    if ($Summary) {
+        $summaryOutput = Get-DiffSummary -Content $content
+        Write-Output $summaryOutput
+        return
+    }
+
+    # File extraction mode
+    if ($File) {
+        $fileDiff = Get-FileDiff -Content $content -FilePath $File
+        if ($fileDiff) {
+            Write-Output $fileDiff
+        }
+        else {
+            Write-Warning "No diff found for file: $File"
+        }
+        return
+    }
+
+    # Chunk mode
+    if ($Chunk -gt 0) {
+        if ($Chunk -gt $chunkInfo.TotalChunks) {
+            throw "Chunk $Chunk exceeds file (only $($chunkInfo.TotalChunks) chunks available)"
+        }
+
+        $range = Get-ChunkRange -ChunkNumber $Chunk -ChunkSize $ChunkSize -TotalLines $totalLines
+        Write-Output "# Chunk $Chunk/$($chunkInfo.TotalChunks) (lines $($range.Start)-$($range.End) of $totalLines)"
+        Write-Output ""
+        $content[($range.Start - 1)..($range.End - 1)] | ForEach-Object { Write-Output $_ }
+        return
+    }
+
+    # Line range mode
+    if ($Lines) {
+        $rangeParts = $Lines -replace ',', '-' -split '-'
+        if ($rangeParts.Count -ne 2) {
+            throw "Invalid line range format. Use START,END or START-END"
+        }
+
+        $start = [int]$rangeParts[0]
+        $end = [math]::Min([int]$rangeParts[1], $totalLines)
+
+        if ($start -gt $totalLines) {
+            throw "Start line $start exceeds file length ($totalLines lines)"
+        }
+
+        Write-Output "# Lines $start-$end of $totalLines"
+        Write-Output ""
+        $content[($start - 1)..($end - 1)] | ForEach-Object { Write-Output $_ }
+        return
+    }
+
+    # Default: show info
     Write-Output "File: $xmlPath"
     Write-Output "Total lines: $totalLines"
-    Write-Output "Chunk size: $ChunkSize"
-    Write-Output "Total chunks: $($chunkInfo.TotalChunks)"
+    Write-Output "Total chunks: $($chunkInfo.TotalChunks) (at $ChunkSize lines/chunk)"
     Write-Output ""
-    Write-Output "Chunk breakdown:"
-    for ($i = 1; $i -le $chunkInfo.TotalChunks; $i++) {
-        $range = Get-ChunkRange -ChunkNumber $i -ChunkSize $ChunkSize -TotalLines $totalLines
-        Write-Output "  Chunk ${i}: lines $($range.Start)-$($range.End)"
-    }
-    exit 0
+    Write-Output "Use -Chunk N to read a specific chunk, -Lines START,END for a range,"
+    Write-Output "or -File PATH to extract a specific file's diff."
 }
 
-# Summary mode
-if ($Summary) {
-    $summaryOutput = Get-DiffSummary -Content $content
-    Write-Output $summaryOutput
-    exit 0
-}
-
-# File extraction mode
-if ($File) {
-    $fileDiff = Get-FileDiff -Content $content -FilePath $File
-    if ($fileDiff) {
-        Write-Output $fileDiff
+#region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-ReadDiff -InputPath $InputPath -Chunk $Chunk -ChunkSize $ChunkSize -Lines $Lines -File $File -Summary:$Summary -Info:$Info
+        exit 0
     }
-    else {
-        Write-Warning "No diff found for file: $File"
-    }
-    exit 0
-}
-
-# Chunk mode
-if ($Chunk -gt 0) {
-    if ($Chunk -gt $chunkInfo.TotalChunks) {
-        Write-Error "Chunk $Chunk exceeds file (only $($chunkInfo.TotalChunks) chunks available)"
+    catch {
+        Write-Error -ErrorAction Continue $_.Exception.Message
         exit 1
     }
-
-    $range = Get-ChunkRange -ChunkNumber $Chunk -ChunkSize $ChunkSize -TotalLines $totalLines
-    Write-Output "# Chunk $Chunk/$($chunkInfo.TotalChunks) (lines $($range.Start)-$($range.End) of $totalLines)"
-    Write-Output ""
-    $content[($range.Start - 1)..($range.End - 1)] | ForEach-Object { Write-Output $_ }
-    exit 0
 }
-
-# Line range mode
-if ($Lines) {
-    $rangeParts = $Lines -replace ',', '-' -split '-'
-    if ($rangeParts.Count -ne 2) {
-        Write-Error "Invalid line range format. Use START,END or START-END"
-        exit 1
-    }
-
-    $start = [int]$rangeParts[0]
-    $end = [math]::Min([int]$rangeParts[1], $totalLines)
-
-    if ($start -gt $totalLines) {
-        Write-Error "Start line $start exceeds file length ($totalLines lines)"
-        exit 1
-    }
-
-    Write-Output "# Lines $start-$end of $totalLines"
-    Write-Output ""
-    $content[($start - 1)..($end - 1)] | ForEach-Object { Write-Output $_ }
-    exit 0
-}
-
-# Default: show info
-Write-Output "File: $xmlPath"
-Write-Output "Total lines: $totalLines"
-Write-Output "Total chunks: $($chunkInfo.TotalChunks) (at $ChunkSize lines/chunk)"
-Write-Output ""
-Write-Output "Use -Chunk N to read a specific chunk, -Lines START,END for a range,"
-Write-Output "or -File PATH to extract a specific file's diff."
+#endregion

@@ -52,11 +52,11 @@ git --version
 Generate a PR reference using default settings (compares against `origin/main`):
 
 ```bash
-./.github/skills/pr-reference/scripts/generate.sh
+./scripts/generate.sh
 ```
 
 ```powershell
-./.github/skills/pr-reference/scripts/generate.ps1
+./scripts/generate.ps1
 ```
 
 Output saves to `.copilot-tracking/pr/pr-reference.xml` by default.
