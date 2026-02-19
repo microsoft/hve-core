@@ -2,6 +2,9 @@
 title: Templates & Examples
 description: Ready-to-use templates and examples for agents, prompts, instructions, and skills
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -20,3 +23,5 @@ Examples demonstrate real-world usage patterns — from simple prompt files to c
 - Instruction templates for coding guidelines
 - Skill package templates with script examples
 - Worked examples showing end-to-end workflows
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

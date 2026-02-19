@@ -2,6 +2,9 @@
 title: Understanding Agents
 description: How custom agents extend GitHub Copilot with specialized domain expertise
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -23,3 +26,5 @@ Start by exploring the built-in agents in `.github/agents/` to understand the pa
 - Built-in agents and their capabilities
 - Creating custom agents for your workflows
 - Prompt engineering for effective agent instructions
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

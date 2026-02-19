@@ -2,6 +2,9 @@
 title: Instructions & Skills Overview
 description: Auto-applied coding guidelines and reusable skill packages that enhance AI-assisted development
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -23,3 +26,5 @@ Instructions use `.instructions.md` files with `applyTo` glob patterns. When you
 - Writing effective coding guidelines for Copilot
 - Building reusable skill packages
 - Managing instructions across teams and projects
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

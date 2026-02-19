@@ -2,6 +2,9 @@
 title: The RPI Workflow
 description: How the Research-Plan-Implement loop structures AI-assisted development.
 sidebar_position: 2
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: concept
 ---
 
 
@@ -56,3 +59,5 @@ The RPI workflow is most valuable for:
 - Tasks where the implementation approach is not immediately obvious
 
 For simple, well-understood changes, direct implementation with Copilot Chat may be more appropriate.
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

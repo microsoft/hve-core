@@ -3,6 +3,9 @@ title: Introduction to HVE Core
 description: HVE Core brings AI assistance to every phase of the software development lifecycle through GitHub Copilot customizations.
 sidebar_position: 1
 sidebar_label: Introduction
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -43,3 +46,5 @@ graph LR
 ```
 
 Each phase has dedicated agents and prompts. Explore the [Getting Started](getting-started/overview) section to begin using HVE Core, or visit [Workflows](workflows/overview) to learn about specific development workflows.
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

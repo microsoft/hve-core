@@ -2,6 +2,9 @@
 title: Overview
 description: What HVE Core provides and how to get started with AI-driven development workflows.
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -27,3 +30,5 @@ When you install HVE Core, your Copilot environment gains access to:
 - A GitHub repository where you want to use HVE Core
 
 Continue to [Installation](installation) to set up HVE Core in your project.
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

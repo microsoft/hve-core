@@ -2,6 +2,9 @@
 title: Design Thinking with AI
 description: Shape your work through structured planning, specification, and architecture before implementation
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -23,3 +26,5 @@ The planning workflow follows a numbered sequence: `/plan-1a-explore` → `/plan
 - Using AI to resolve ambiguities before coding
 - Creating phase-based implementation plans
 - Architecture decision records (ADRs) for key choices
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

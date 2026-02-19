@@ -2,6 +2,9 @@
 title: Overview
 description: An overview of the development workflows supported by HVE Core.
 sidebar_position: 1
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: overview
 ---
 
 
@@ -34,3 +37,5 @@ HVE Core includes workflows for GitHub and Azure DevOps backlog operations:
 Streamline the PR lifecycle with automated description generation, reviewer identification, and work item linking.
 
 Explore the [RPI Workflow](rpi-workflow) to learn about the core development cycle.
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

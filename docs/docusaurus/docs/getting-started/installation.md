@@ -2,6 +2,9 @@
 title: Installation
 description: How to install and configure HVE Core in your project.
 sidebar_position: 2
+author: Microsoft
+ms.date: 2026-02-19
+ms.topic: tutorial
 ---
 
 
@@ -34,3 +37,5 @@ See the [HVE Core repository](https://github.com/microsoft/hve-core) for detaile
 ## Verify Installation
 
 After installation, open GitHub Copilot Chat in VS Code and type `@` to see the available agents. You should see HVE Core agents listed alongside any existing agents.
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
