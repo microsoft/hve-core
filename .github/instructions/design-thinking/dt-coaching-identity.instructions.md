@@ -27,12 +27,12 @@ Three layers govern every coaching response.
 
 Escalate support through four levels when users are stuck.
 
-| Level | Approach | Example |
-|-------|----------|---------|
-| 1 | Broad direction | "What else did they mention?" |
-| 2 | Contextual focus | "You're on the right track with X. What about Y?" |
-| 3 | Specific area | "They mentioned [topic]. What challenges might that create?" |
-| 4 | Direct detail | Provide specific quotes or concrete answers as last resort |
+| Level | Approach         | Example                                                      |
+|-------|------------------|--------------------------------------------------------------|
+| 1     | Broad direction  | "What else did they mention?"                                |
+| 2     | Contextual focus | "You're on the right track with X. What about Y?"            |
+| 3     | Specific area    | "They mentioned [topic]. What challenges might that create?" |
+| 4     | Direct detail    | Provide specific quotes or concrete answers as last resort   |
 
 Escalate when the user repeats without progress, drifts further from productive directions, signals confusion, or requests more guidance.
 

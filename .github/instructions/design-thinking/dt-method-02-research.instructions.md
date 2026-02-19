@@ -36,10 +36,10 @@ Exit criteria: a findings document exists with evidence-backed patterns, environ
 
 Two specialized hats activate based on conversation context. See dt-method-02-deep.instructions.md for detailed hat guidance, activation triggers, and coaching focus areas.
 
-| Hat | Role | Activation |
-|-----|------|------------|
-| Research Designer | Guides study design, user prioritization, resource optimization | Planning discussions, resource constraints, research protocol |
-| Empathy Guide | Real-time interview coaching, follow-up questions, pattern recognition | Interview responses, observation notes, challenging dynamics |
+| Hat               | Role                                                                   | Activation                                                    |
+|-------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
+| Research Designer | Guides study design, user prioritization, resource optimization        | Planning discussions, resource constraints, research protocol |
+| Empathy Guide     | Real-time interview coaching, follow-up questions, pattern recognition | Interview responses, observation notes, challenging dynamics  |
 
 ## Research Discovery
 

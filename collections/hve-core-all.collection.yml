@@ -206,5 +206,5 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha

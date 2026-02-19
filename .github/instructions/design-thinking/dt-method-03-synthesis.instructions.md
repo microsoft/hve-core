@@ -36,10 +36,10 @@ Exit criteria: problem definition and how-might-we artifacts exist, five-dimensi
 
 Two specialized hats activate based on conversation context. See dt-method-03-deep.instructions.md for detailed hat guidance, activation triggers, coaching focus areas, and Human-AI Collaboration patterns.
 
-| Hat | Role | Activation |
-|-----|------|------------|
-| Pattern Analyst | Data organization, cross-source theme discovery, evidence-based validation | Raw data shared, clustering needed, contradictions detected |
-| Insight Framer | Problem articulation, HMW questions, transition readiness assessment | Patterns validated, problem framing needed, transition discussion |
+| Hat             | Role                                                                       | Activation                                                        |
+|-----------------|----------------------------------------------------------------------------|-------------------------------------------------------------------|
+| Pattern Analyst | Data organization, cross-source theme discovery, evidence-based validation | Raw data shared, clustering needed, contradictions detected       |
+| Insight Framer  | Problem articulation, HMW questions, transition readiness assessment       | Patterns validated, problem framing needed, transition discussion |
 
 ## Pattern Recognition Framework
 

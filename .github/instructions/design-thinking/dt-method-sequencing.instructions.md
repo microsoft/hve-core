@@ -10,17 +10,17 @@ Navigate method transitions, space boundaries, and non-linear iteration across t
 
 ## Nine-Method Sequence
 
-| # | Method | Space | Key Output | Exit Signal |
-|---|--------|-------|------------|-------------|
-| 1 | Scope Conversations | Problem | Validated problem statement, stakeholder map | Problem differs from original request; stakeholders identified |
-| 2 | Design Research | Problem | Interview evidence, constraint documentation | Multi-source evidence; environmental context documented |
-| 3 | Input Synthesis | Problem | Themes, problem definition, HMW questions | Themes validated across sources; team alignment confirmed |
-| 4 | Brainstorming | Solution | Divergent solution ideas | Multiple distinct directions grounded in themes |
-| 5 | User Concepts | Solution | Visual concepts for validation | 30-second comprehensible visual with feedback captured |
-| 6 | Lo-Fi Prototypes | Solution | Constraint discoveries from testing | Prototype tested with real users; constraints documented |
-| 7 | Hi-Fi Prototypes | Implementation | Functional systems with real data | Systematic comparison criteria defined |
-| 8 | User Testing | Implementation | Validated findings by severity | Real users tested in real environments |
-| 9 | Iteration at Scale | Implementation | Telemetry-driven optimization | Metrics connected to iteration priorities |
+| # | Method              | Space          | Key Output                                   | Exit Signal                                                    |
+|---|---------------------|----------------|----------------------------------------------|----------------------------------------------------------------|
+| 1 | Scope Conversations | Problem        | Validated problem statement, stakeholder map | Problem differs from original request; stakeholders identified |
+| 2 | Design Research     | Problem        | Interview evidence, constraint documentation | Multi-source evidence; environmental context documented        |
+| 3 | Input Synthesis     | Problem        | Themes, problem definition, HMW questions    | Themes validated across sources; team alignment confirmed      |
+| 4 | Brainstorming       | Solution       | Divergent solution ideas                     | Multiple distinct directions grounded in themes                |
+| 5 | User Concepts       | Solution       | Visual concepts for validation               | 30-second comprehensible visual with feedback captured         |
+| 6 | Lo-Fi Prototypes    | Solution       | Constraint discoveries from testing          | Prototype tested with real users; constraints documented       |
+| 7 | Hi-Fi Prototypes    | Implementation | Functional systems with real data            | Systematic comparison criteria defined                         |
+| 8 | User Testing        | Implementation | Validated findings by severity               | Real users tested in real environments                         |
+| 9 | Iteration at Scale  | Implementation | Telemetry-driven optimization                | Metrics connected to iteration priorities                      |
 
 ## Space Boundary Transitions
 
@@ -52,16 +52,16 @@ Frame iteration as progress: each loop produces deeper understanding. Carry forw
 
 ## Method Routing
 
-| Signal | Route To |
-|--------|----------|
-| New challenge, no investigation | Method 1 |
-| Stakeholder access, research needed | Method 2 |
-| Research data needs pattern recognition | Method 3 |
-| Validated themes need solutions | Method 4 |
-| Ideas need stakeholder visualization | Method 5 |
-| Concepts need physical testing | Method 6 |
+| Signal                                     | Route To |
+|--------------------------------------------|----------|
+| New challenge, no investigation            | Method 1 |
+| Stakeholder access, research needed        | Method 2 |
+| Research data needs pattern recognition    | Method 3 |
+| Validated themes need solutions            | Method 4 |
+| Ideas need stakeholder visualization       | Method 5 |
+| Concepts need physical testing             | Method 6 |
 | Validated concepts need working prototypes | Method 7 |
 | Prototypes need systematic user validation | Method 8 |
-| Deployed solution needs optimization | Method 9 |
+| Deployed solution needs optimization       | Method 9 |
 
 When no coaching state exists, start at Method 1 unless the user demonstrates completed prior work. When users request skipping methods, explore why rather than blocking.
