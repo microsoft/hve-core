@@ -159,6 +159,12 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
+  kind: instruction
 - path: .github/instructions/git-merge.instructions.md
   kind: instruction
 - path: .github/instructions/github-backlog-discovery.instructions.md
