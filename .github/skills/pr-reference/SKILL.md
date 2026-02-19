@@ -1,6 +1,6 @@
 ---
 name: pr-reference
-description: 'Generate PR reference XML files with commit history and diffs for pull requests and task workflows - Brought to you by microsoft/hve-core'
+description: 'Skill to generate PR reference XML files with commit history and diffs for pull requests and task workflows - Brought to you by microsoft/hve-core'
 user-invocable: true
 ---
 
