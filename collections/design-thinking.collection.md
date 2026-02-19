@@ -13,4 +13,4 @@ This collection includes agents, prompts, and instructions for:
 - **DT Method 02: Design Research** — Interview techniques, research planning, environmental observation, and insight extraction patterns for systematic discovery of end-user needs through direct engagement across three phases: planning, execution, and documentation
 - **DT Method 03: Input Synthesis** — Pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness for transforming fragmented research data into unified problem understanding
 - **DT Method 07: High-Fidelity Prototypes** — Technical translation, functional prototypes, and specifications for Implementation Space entry with three-hat architecture and progressive fidelity modeling
-- **DT Quality Constraints** — Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods
+- **DT Method 07: Deep Expertise** — On-demand fidelity translation, architecture trade-off analysis, specification writing patterns, and manufacturing-specific prototyping guidance for complex Method 7 coaching scenarios
