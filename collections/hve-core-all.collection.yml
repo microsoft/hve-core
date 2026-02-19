@@ -156,6 +156,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
@@ -192,5 +194,4 @@ items:
 - path: .github/skills/experimental/video-to-gif
   kind: skill
 display:
-  featured: true
   ordering: alpha
