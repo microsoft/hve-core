@@ -100,7 +100,7 @@ flowchart TB
 
     AG -->|Filter by maturity| FM[Maturity-Filtered Set]
     PR -->|Filter by maturity| FM
-    IN -->|"Filter by maturity<br/>+ exclude _repo/"| FM
+    IN -->|"Filter by maturity<br/>+ exclude root-level"| FM
     SK -->|Filter by maturity| FM
 
     FM --> CF{"Collection<br/>specified?"}
@@ -562,7 +562,7 @@ To create a new collection:
 * The `.github`, `docs/templates`, and `scripts/dev-tools` folders are temporarily copied during packaging (not permanently stored)
 * `LICENSE` and `CHANGELOG.md` are copied from root during packaging and excluded from git
 * Only essential extension files are included (agents, prompts, instructions, templates, dev-tools)
-* Repo-specific instructions under `.github/instructions/_repo/` are excluded from all builds
+* Repo-specific instructions at the root of `.github/instructions/` are excluded from all builds
 * Non-essential files are excluded (workflows, issue templates, agent installer, etc.)
 * The root `package.json` contains development scripts for the repository
 

@@ -165,9 +165,9 @@ When contributing a new artifact:
 6. Run `npm run plugin:validate` to validate collection manifests
 7. Run `npm run plugin:generate` to regenerate plugin directories
 
-### Repo-Specific Instructions Exclusion
+### Repo-Specific Artifact Exclusion
 
-Instructions placed in `.github/instructions/_repo/` are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
+Artifacts placed at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
 
 ### Deprecated Artifact Placement
 
@@ -189,7 +189,7 @@ Artifacts that have been superseded or are scheduled for removal MUST be moved t
 
 #### Exclusion Scope
 
-Artifacts under `.github/**/_repo/` are excluded from:
+Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` are excluded from:
 
 * Collection manifests (`collections/*.collection.yml` items)
 * Plugin generation (`plugins/` directory contents)
@@ -201,20 +201,20 @@ Artifacts under `.github/**/_repo/` are excluded from:
 
 The plugin generation and validation tooling actively enforces this exclusion:
 
-* Collection validation fails if hve-core-specific paths appear in `items[]`
-* Plugin generation skips any hve-core-scoped artifacts
+* Collection validation fails if root-level repo-specific paths appear in `items[]`
+* Plugin generation skips root-level artifacts
 * Extension packaging filters out these files during build
 
 #### Placement Guidelines
 
 | Scope                       | Location                                                | Included in Plugins |
 |-----------------------------|---------------------------------------------------------|---------------------|
-| **Repository-specific**     | `.github/instructions/_repo/`                           | ❌ No                |
+| **Repository-specific**     | `.github/instructions/` (root, no subdirectory)         | ❌ No                |
 | **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
 | **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
 | **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
 
-If your instructions apply only to this repository and are not intended for distribution to consumers, place them in `.github/instructions/_repo/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
 
 ## Collection Taxonomy
 
@@ -417,7 +417,7 @@ This command checks:
 * **Kind values**: Valid artifact kinds (agent, prompt, instruction, skill, hook)
 * **Maturity values**: Valid maturity levels (stable, preview, experimental, deprecated)
 * **Duplicate paths**: No duplicate artifact entries within a collection
-* **_repo exclusions**: No repo-specific artifacts from `.github/**/_repo/`
+* **Root-level exclusions**: No repo-specific artifacts from `.github/{type}/` root
 
 Always validate before generating plugins:
 

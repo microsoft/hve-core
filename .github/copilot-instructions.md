@@ -110,7 +110,7 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Scripts used by the codebase have an `npm run` script for ease of use.
 * Files under the root `plugins/` directory are generated outputs and are not edited directly.
 * Regenerate plugin outputs using `npm run plugin:generate`; this also runs `lint:md:fix` and `format:tables` as post-processing. Markdown files under `plugins/` can be symlinked or generated, so direct edits can cause conflicts and non-durable changes.
-* Artifacts under `.github/**/_repo/` are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
+* Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
 <!-- </script-operations> -->

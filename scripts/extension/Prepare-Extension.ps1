@@ -964,7 +964,7 @@ function Get-DiscoveredAgents {
 
         if (Test-HveCoreRepoSpecificPath -RelativePath $agentRelPath) {
             $agentName = $agentFile.BaseName -replace '\.agent$', ''
-            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (_repo/)' }
+            $result.Skipped += @{ Name = $agentName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1037,7 +1037,7 @@ function Get-DiscoveredPrompts {
 
         $promptRelPath = [System.IO.Path]::GetRelativePath($PromptsDir, $promptFile.FullName) -replace '\\', '/'
         if (Test-HveCoreRepoSpecificPath -RelativePath $promptRelPath) {
-            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (_repo/)' }
+            $result.Skipped += @{ Name = $promptName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
@@ -1104,7 +1104,7 @@ function Get-DiscoveredInstructions {
     foreach ($instrFile in $instructionFiles) {
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
         if (Test-HveCoreRepoSpecificPath -RelativePath $instrRelPath) {
-            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (_repo/)' }
+            $result.Skipped += @{ Name = $instrFile.BaseName; Reason = 'repo-specific (root-level)' }
             continue
         }
         $baseName = $instrFile.BaseName -replace '\.instructions$', ''
@@ -1172,7 +1172,7 @@ function Get-DiscoveredSkills {
         $skillRelPath = [System.IO.Path]::GetRelativePath($SkillsDir, $skillDir.FullName) -replace '\\', '/'
 
         if (Test-HveCoreRepoSpecificPath -RelativePath $skillRelPath) {
-            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (_repo/)' }
+            $result.Skipped += @{ Name = $skillName; Reason = 'repo-specific (root-level)' }
             continue
         }
 
