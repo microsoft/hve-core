@@ -42,7 +42,7 @@ Activation triggers:
 Coaching focus:
 
 * Concept-to-prototype translation: identify the core assumption in each concept and design the simplest artifact that tests it.
-* Multiple approach generation: produce 3-5 prototype variations per concept using different formats and interaction modes.
+* Multiple approach generation: facilitate generating 3-5 prototype variations per concept using different formats and interaction modes.
 * Scrappy enforcement: redirect polished artifacts back to rough drafts and apply Progressive Hint Engine for "Too Nice Prototype" escalation.
 * Material and format selection: match prototype type to assumption category (paper, cardboard, markdown stub, conversation script).
 * Single-assumption focus: each prototype tests exactly one core belief, not multiple hypotheses.
@@ -71,17 +71,28 @@ Coaching focus:
 
 ## Sub-Method Phases
 
-Method 6 organizes into three sequential phases. Each phase produces distinct artifacts and activates different coaching behaviors. Phases 2 and 3 often interleave as teams build-test-iterate.
+Method 6 organizes into three sequential phases. Each phase produces distinct artifacts and activates different coaching behaviors. Phases 2 and 3 often interleave as teams build-test-iterate. During interleaved work, Feedback Designer takes precedence when live user testing is active; Prototype Builder resumes when the coach returns to building or revising prototypes.
 
 ### Phase 1: Prototype Planning
 
 Analyze concepts from Method 5 and design prototype approaches before building. Identify core assumptions and select formats.
 
-Activities: concept analysis from Method 5, core assumption identification per concept, prototype approach brainstorming (3-5 formats per concept), material and format selection, test user identification, environment mapping for real-world testing.
+Activities:
 
-Exit criteria: each concept has at least one identified core assumption, multiple prototype approaches documented with materials selected, test users identified with environment requirements noted.
+* Concept analysis from Method 5.
+* Core assumption identification per concept.
+* Prototype approach brainstorming (3-5 formats per concept).
+* Material and format selection.
+* Test user identification.
+* Environment mapping for real-world testing.
 
-AI pattern: Silent Observer for processing Method 5 concept inputs and generating prototype approach variations.
+Exit criteria:
+
+* Each concept has at least one identified core assumption.
+* Multiple prototype approaches documented with materials selected.
+* Test users identified with environment requirements noted.
+
+AI pattern: Silent Observer, processes inputs and provides convergent synthesis without directing, for processing Method 5 concept inputs and generating prototype approach variations.
 
 Coaching hat: Prototype Builder.
 
@@ -89,11 +100,21 @@ Coaching hat: Prototype Builder.
 
 Build scrappy prototypes using selected formats. Enforce deliberate roughness and single-assumption focus.
 
-Activities: build prototypes using selected formats, enforce build-time constraint (minutes to hours), generate competing variations, apply lo-fi enforcement rules, iterate rapidly between build-test-learn cycles.
+Activities:
 
-Exit criteria: 3-5 prototype variations exist per concept each testing one core assumption, all prototypes use deliberately rough materials and formats, build time per prototype stays within minutes-to-hours range.
+* Build prototypes using selected formats.
+* Enforce build-time constraint (minutes to hours).
+* Generate competing variations.
+* Apply lo-fi enforcement rules.
+* Iterate rapidly between build-test-learn cycles.
 
-AI pattern: Backup Generator for producing alternative prototype approaches when the team fixates on one format.
+Exit criteria:
+
+* 3-5 prototype variations exist per concept, each testing one core assumption.
+* All prototypes use deliberately rough materials and formats.
+* Build time per prototype stays within minutes-to-hours range.
+
+AI pattern: Backup Generator, intervenes during energy stalls while preserving human momentum, for producing alternative prototype approaches when the team fixates on one format.
 
 Coaching hat: Prototype Builder (primary), Feedback Designer activates when user begins informal testing during build.
 
@@ -101,11 +122,27 @@ Coaching hat: Prototype Builder (primary), Feedback Designer activates when user
 
 Design and execute hypothesis-driven testing with real users in real environments. Capture structured observations and prepare Method 7 handoff.
 
-Activities: hypothesis-driven test plan creation, leap-enabling question design, participant selection (edge cases, stress conditions, skill diversity), real-environment test execution, behavioral observation, structured result capture, constraint pattern identification across sessions, severity assessment, Method 7 handoff preparation.
+Activities:
 
-Exit criteria: prototypes tested with real users in real environments, constraint discoveries documented across physical, environmental, and workflow categories, assumptions explicitly validated or invalidated with evidence, narrowed to 1-2 directions for Method 7 handoff.
+* Hypothesis-driven test plan creation.
+* Leap-enabling question design.
+* Participant selection (edge cases, stress conditions, skill diversity).
+* Real-environment test execution.
+* Behavioral observation.
+* Structured result capture.
+* Constraint pattern identification across sessions.
+* Severity assessment.
+* Constraint pattern documentation in `constraint-discoveries.md`.
+* Method 7 handoff preparation.
 
-AI pattern: Silent Observer for constraint pattern analysis across test sessions.
+Exit criteria:
+
+* Prototypes tested with real users in real environments.
+* Constraint discoveries documented across physical, environmental, and workflow categories.
+* Assumptions explicitly validated or invalidated with evidence.
+* Narrowed to 1-2 directions for Method 7 handoff.
+
+AI pattern: Silent Observer, processes inputs and provides convergent synthesis without directing, for constraint pattern analysis across test sessions.
 
 Coaching hat: Feedback Designer.
 
@@ -125,6 +162,10 @@ Scrappy principle: deliberately rough materials prevent feedback on aesthetics r
 * Level 2 (Contextual): "Before refining the wording, want to check whether [stakeholder] would use this interaction pattern?"
 * Level 3 (Specific): "This formatting looks production-ready, but we haven't tested whether users need [section]. Strip it back to the core interaction?"
 * Level 4 (Direct): "This has crossed into implementation territory. Create a new rough artifact testing only [assumption], and save this version for Method 7."
+
+### AI Artifact Enforcement
+
+AI prototype artifacts (markdown files) look identical to production artifacts. Enforcement relies on content completeness, tooling usage, and time invested rather than material roughness.
 
 Fidelity boundary: the `.copilot-tracking/sandbox/` environment with model invocation crosses into Method 7 territory. Human-simulated examples without model execution remain Method 6.
 
@@ -149,8 +190,6 @@ Fidelity boundary: the `.copilot-tracking/sandbox/` environment with model invoc
 | Wizard of Oz     | Human-simulated AI response   | Output usefulness        | Human-written in <15 min, no model call   |
 | Role Playing     | Stakeholder perspective sim   | Clarity for non-authors  | No test framework, people reading files   |
 | Cardboard        | Stub agent files              | Information architecture | Placeholder content, TODO markers         |
-
-AI prototype artifacts (markdown files) look identical to production artifacts. Enforcement relies on content completeness, tooling usage, and time invested rather than material roughness.
 
 ## Feedback Planning
 
@@ -180,6 +219,8 @@ Constraint discovered: [physical / environmental / workflow]
 Severity: [blocker / friction / minor]
 Assumption status: [validated / invalidated / inconclusive]
 ```
+
+Capture observations in `test-observations.md`; see Artifacts for file paths and storage.
 
 ## Quality Standards
 
@@ -238,6 +279,15 @@ Generate 3-5 prototype variations per concept. Fewer than 3 risks single-prototy
 * Narrowed to 1-2 directions for Method 7 handoff.
 * Feedback Designer observation templates completed for each test session.
 
+## Method 6 Completion
+
+Method 6 is complete when:
+
+* 3-5 prototype variations tested per concept with real users in real environments.
+* Constraint discoveries documented across physical, environmental, and workflow categories with severity assessment.
+* Assumptions explicitly validated or invalidated with behavioral evidence.
+* Narrowed to 1-2 directions with `constraint-discoveries.md` prepared for Method 7 handoff.
+
 ## Input from Method 5
 
 * Prioritized user concepts with core value propositions
@@ -245,14 +295,14 @@ Generate 3-5 prototype variations per concept. Fewer than 3 risks single-prototy
 * Concept selection rationale and evaluation criteria
 * Environmental and workflow context from earlier methods
 
-Method 5 instructions file does not yet exist. These inputs are derived from the DT method sequence. When dt-method-05-user-concepts.instructions.md is created, align this section with its Output to Method 6.
-
 ## Output to Method 7
 
 * Physical, environmental, and workflow constraint discoveries as technical requirements
 * Validated interaction approaches as implementation specifications
 * Assumption testing results indicating which core beliefs were proven or disproven
 * User behavior patterns observed during real-environment prototype testing
+
+See `constraint-discoveries.md` in the Artifacts section for handoff format.
 
 ## Artifacts
 
