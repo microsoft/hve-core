@@ -516,13 +516,20 @@ function Update-HveCoreAllCollection {
     }
     else {
         # Rebuild manifest preserving metadata
+        $displayOrdered = [ordered]@{}
+        if ($existing.display.Contains('featured')) {
+            $displayOrdered['featured'] = $existing.display['featured']
+        }
+        if ($existing.display.Contains('ordering')) {
+            $displayOrdered['ordering'] = $existing.display['ordering']
+        }
         $manifest = [ordered]@{
             id          = $existing.id
             name        = $existing.name
             description = $existing.description
             tags        = $existing.tags
             items       = $newItems
-            display     = $existing.display
+            display     = $displayOrdered
         }
 
         $yaml = ConvertTo-Yaml -Data $manifest
