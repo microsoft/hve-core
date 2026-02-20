@@ -25,13 +25,13 @@ Apply these fallback rules whenever a step references this section:
 
 1. If no PR template is resolved, use the standard format in the PR Description Format section.
 2. If a template is resolved but mapping details are ambiguous, preserve section order and map by closest semantic match.
-3. If no required check commands are discovered, skip command execution and continue.
+3. If required checks cannot be discovered confidently, ask the user for direction before running commands.
 4. If no issue references are discovered, use `None` in the related issues section.
-5. If PR creation fails, apply Step 7 shared error handling in order: branch readiness, permissions, duplicate PR handling.
+5. If PR creation fails, apply Step 8 shared error handling in order: branch readiness, permissions, duplicate PR handling.
 
 ## Required Steps
 
-### Step 1: Pre-requisite Validation
+### Step 1: Resolve Template State
 
 Entry criteria:
 
@@ -47,36 +47,18 @@ Entry criteria:
    * `templatePath`: chosen template path, or `None`.
    * `templateSections`: parsed H2 section structure when a template exists.
    * `checkCommands`: backtick-wrapped required check commands from checklist items (for example, under "Required Automated Checks").
-5. Capture pre-check snapshot with `git status --porcelain`.
-6. Apply sandbox-safe check execution rules when required:
-   * In sandbox or no-side-effect contexts, run only checks that do not write outside the allowed workspace.
-   * When a required check cannot be run safely, record it as `Not Run (sandbox-safe restriction)` with the reason and continue using available check results.
-7. Run each command in `checkCommands` and record pass/fail status with a concise output summary.
-8. Capture post-check snapshot with `git status --porcelain`.
-9. Compute decision flags:
-   * `hasNewChanges`: post-check snapshot introduced new or modified files not present before checks.
-   * `hasFailures`: any check command returned a non-zero exit code.
-10. Apply this decision matrix:
 
-| hasNewChanges | hasFailures | Outcome |
-|---------------|-------------|---------|
-| `false`       | `false`     | Continue to Step 2 |
-| `true`        | `false`     | Block and provide remediation: list changed files, stage and commit only check-introduced files with `git add <changed-files> && git commit -m "style: apply lint fixes"`, then restart Step 1 |
-| `false`       | `true`      | Block and provide remediation: report failed checks with output, provide specific fix guidance, then restart Step 1 |
-| `true`        | `true`      | Block and provide combined remediation for changed files and failed checks in one message, then restart Step 1 |
-
-When no template is resolved or no check commands are found, apply Canonical Fallback Rules and continue.
+When no template is resolved, apply Canonical Fallback Rules and continue.
 
 Exit criteria:
 
 * Template state is resolved and persisted for reuse.
-* Either Step 2 is reached or a single blocking remediation message is provided and Step 1 restarts after fixes.
 
 ### Step 2: Generate PR Reference
 
 Entry criteria:
 
-* Step 1 completed with no blocking check outcome.
+* Step 1 completed.
 
 Generate the PR reference XML file using the pr-reference skill:
 
@@ -206,16 +188,105 @@ Exit criteria:
 
 * `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
 
-### Step 7: Create Pull Request When Requested by User
+### Step 7: Validate PR Readiness
+
+Entry criteria:
+
+* `.copilot-tracking/pr/pr.md` exists.
+
+Run PR-readiness validation even when the user has not explicitly requested direct PR creation.
+
+#### Step 7A: Discover Required Checks
+
+1. Start with `checkCommands` captured from the selected PR template in Step 1.
+2. Expand required checks using applicable instruction files for the current change scope.
+3. Build one de-duplicated ordered command list and record the source for each command (template or instruction).
+4. If required checks cannot be discovered confidently, ask the user for direction before running commands.
+5. Do not invent repository-specific command mappings in this file.
+
+Exit criteria:
+
+* Required checks are either confidently discovered, or user direction is requested before continuing.
+
+#### Step 7B: Run and Triage Validation
+
+1. Run all discovered required checks.
+2. Record each check result as `Passed`, `Failed`, or `Skipped` (with reason).
+3. For failures, categorize findings before remediation using this taxonomy:
+   * `Environment/Tooling`
+   * `Lint/Format`
+   * `Tests`
+   * `Policy/Compliance`
+   * `Unknown/Mixed`
+4. Provide executive details for failed checks and identified issues, including:
+   * Failed check name and category.
+   * PR-readiness impact (`blocking` or `non-blocking`).
+   * Most likely scope or root-cause area.
+   * Recommended next action.
+
+Exit criteria:
+
+* Validation results are captured and failed checks are triaged with executive details.
+
+#### Step 7C: Remediation Routing
+
+1. If fixes are bounded and localized, implement accurate direct fixes and rerun relevant failed checks.
+2. If fixes require broader rewrites or refactors (cross-cutting changes, multi-area redesign, or architecture-impacting updates), stop direct remediation and recommend `/rpi`.
+3. Keep remediation guidance concise and actionable.
+
+Exit criteria:
+
+* Validation failures are either resolved with direct fixes, or `/rpi` is recommended for larger rewrite/refactor scope.
+
+#### Step 7D: Readiness Outcome
+
+1. If required checks pass, continue to Step 8 when PR creation was requested.
+2. If required checks remain unresolved, do not proceed with direct PR creation.
+3. When PR creation was not requested, report readiness status and next actions without creating a PR.
+
+Exit criteria:
+
+* PR readiness status is explicit and next actions are clear.
+
+### Step 8: Create Pull Request When Requested by User
 
 Entry criteria:
 
 * `.copilot-tracking/pr/pr.md` exists.
 * User explicitly requested PR creation.
+* Step 7 completed with required checks passing.
 
-Create a pull request using MCP tools. Skip this step when the user has not requested PR creation and proceed to Step 8.
+Create a pull request using MCP tools. Skip this step when the user has not requested PR creation and proceed to Step 9.
 
-#### Step 7A: Branch Readiness
+#### Step 8A: Branch Freshness Gate
+
+1. Resolve `baseRefInput` from the user-provided base branch.
+2. If no base branch was provided, default `baseRefInput` to `origin/main`.
+3. Resolve `baseRef` used for freshness checks:
+   * If `baseRefInput` starts with `origin/`, use it unchanged.
+   * If `baseRefInput` is a plain branch name (for example, `main`), convert it to `origin/<branch>`.
+   * Otherwise use `baseRefInput` as provided.
+4. Fetch the base branch ref before comparison:
+   * When `baseRef` starts with `origin/`, run `git fetch origin <branch-name-without-origin-prefix>`.
+   * Otherwise fetch the needed remote refs so `baseRef` can be compared safely.
+5. Compute ahead/behind counts with `git rev-list --left-right --count "${baseRef}...HEAD"`.
+6. Parse the result as `behindCount aheadCount`.
+7. If `behindCount` is `0`, continue to Step 8B.
+8. If `behindCount` is greater than `0`, ask the user whether to update the branch before PR creation.
+9. If the user declines update, block direct PR creation and provide the next action: update the branch to include `${baseRef}` and rerun Step 8.
+10. If the user confirms update, ask which strategy to use: `merge` or `rebase`.
+11. Execute the selected strategy using these exact command forms:
+   * Merge: `git merge --no-edit ${baseRef}`
+   * Rebase: `git rebase --empty=drop --reapply-cherry-picks ${baseRef}`
+12. If conflicts occur, follow `.github/instructions/hve-core/git-merge.instructions.md` before continuing.
+13. After update completes, continue to Step 8B.
+
+Exit criteria:
+
+* The branch freshness check against the selected base ref is complete.
+* The branch is either confirmed current enough for PR creation, or direct PR creation is blocked with a clear next action.
+
+#### Step 8B: Branch Pushed Readiness
 
 1. Check whether the current branch is pushed to the remote.
 2. If not pushed, push the current branch before continuing.
@@ -224,7 +295,7 @@ Exit criteria:
 
 * The head branch exists on the remote and is ready for PR creation.
 
-#### Step 7B: Approval Loop
+#### Step 8C: Approval Loop
 
 1. Extract the PR title and body from `pr.md`:
    * Title is the first line of pr.md with the leading `#` stripped (for example, `# feat(scope): description` becomes `feat(scope): description`).
@@ -236,9 +307,9 @@ Exit criteria:
 
 * User has approved the PR title and body.
 
-#### Step 7C: PR Creation and Error Handling
+#### Step 8D: PR Creation and Error Handling
 
-1. Prepare the base branch reference by stripping any remote prefix (for example, `origin/main` becomes `main`).
+1. Prepare the base branch reference by stripping any remote prefix from `baseRef` (for example, `origin/main` becomes `main`).
 2. Create the pull request by calling `mcp_github_create_pull_request` with these parameters:
    * `owner`: Repository owner derived from the git remote URL.
    * `repo`: Repository name derived from the git remote URL.
@@ -247,26 +318,26 @@ Exit criteria:
    * `head`: Current branch name.
    * `base`: Target branch with remote prefix stripped.
    * `draft`: Set when the user requests a draft PR.
-3. If creation fails, apply Canonical Fallback Rules and then apply the Step 7 Shared Error Handling subsection.
+3. If creation fails, apply Canonical Fallback Rules and then apply the Step 8 Shared Error Handling subsection.
 4. Share the PR URL after successful creation.
 
 Exit criteria:
 
 * Pull request is created successfully and URL is shared, or a clear next action is provided for a blocking error.
 
-#### Step 7 Shared Error Handling
+#### Step 8 Shared Error Handling
 
 Apply this ordered error handling when PR creation fails:
 
-1. Branch not found: verify Step 7A completed and the branch is present on remote.
+1. Branch not found: verify Step 8B completed and the branch is present on remote.
 2. Permission denied: inform the user about required repository permissions.
 3. Duplicate PR: check for an existing PR on the same branch and offer to update it with `mcp_github_update_pull_request`.
 
-### Step 8: Cleanup
+### Step 9: Cleanup
 
 Entry criteria:
 
-* PR content generation is complete, and Step 7 is complete or skipped.
+* PR content generation is complete, and Step 8 is complete or skipped.
 
 1. Delete `.copilot-tracking/pr/pr-reference.xml` after the analysis is complete.
 2. Delete the `.copilot-tracking/pr/subagents/` directory and its contents.
