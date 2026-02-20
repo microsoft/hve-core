@@ -1,1 +1,0 @@
-../../../.github/instructions/ado/ado-update-wit-items.instructions.md
