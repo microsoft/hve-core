@@ -135,6 +135,18 @@ a:visited {
   font-weight: 400;
 }
 
+.dropdown > .navbar__link {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18.2px;
+  padding: 4px 12px;
+  display: block;
+}
+
+.dropdown.navbar__item {
+  padding: 0;
+}
+
 /* Replace filled triangle dropdown arrow with chevron - only on dropdown items */
 .navbar__link[aria-expanded]::after {
   border: none;
