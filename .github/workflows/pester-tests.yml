@@ -36,11 +36,6 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Create logs directory
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path logs | Out-Null
-
       - name: Install Pester
         shell: pwsh
         run: |
@@ -72,12 +67,27 @@ jobs:
           Write-Host "Changed PowerShell files:"
           $changedFiles | ForEach-Object { Write-Host "  - $_" }
 
+          # Build test search paths: scripts/tests + skill test dirs at known depths
+          # Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+          $testSearchPaths = @('scripts/tests')
+          $skillsRoot = Join-Path (Get-Location) '.github' 'skills'
+          if (Test-Path $skillsRoot) {
+            foreach ($depth in @('*', '*/*')) {
+              $pattern = Join-Path $skillsRoot $depth 'tests'
+              Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer -and (Test-Path (Join-Path $_.Parent.FullName 'scripts')) } |
+                ForEach-Object { $testSearchPaths += $_.FullName }
+            }
+          }
+
           # Map source files to their test files
           $testFiles = @()
           foreach ($file in $changedFiles) {
             $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            # Look for corresponding test file anywhere in scripts/tests
-            $matchingTests = Get-ChildItem -Path "scripts/tests" -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            # Look for corresponding test file in all test search paths (scripts/tests and skill test dirs)
+            $matchingTests = $testSearchPaths | ForEach-Object {
+              Get-ChildItem -Path $_ -Filter "$fileName.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            }
             if ($matchingTests) {
               $testFiles += $matchingTests.FullName
             }
@@ -113,42 +123,34 @@ jobs:
         shell: pwsh
         run: |
           $params = @{ CI = $true }
-          
-          # Enable code coverage if requested
-          $codeCoverage = ('${{ inputs.code-coverage }}' -eq 'true')
-          if ($codeCoverage) {
+
+          if ('${{ inputs.code-coverage }}' -eq 'true') {
             $params['CodeCoverage'] = $true
           }
-          
+
           # Use specific test paths if changed-files-only is enabled
           if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:TEST_PATHS) {
             $testPaths = $env:TEST_PATHS -split ';'
             $params['TestPath'] = $testPaths
           }
-          
-          $config = & './scripts/tests/pester.config.ps1' @params
-          $results = Invoke-Pester -Configuration $config
 
-          if ($results.FailedCount -gt 0 -and $env:GITHUB_ENV) {
-            "PESTER_FAILED=true" | Out-File -FilePath $env:GITHUB_ENV -Append
-          }
+          ./scripts/tests/Invoke-PesterTests.ps1 @params
 
-          # Output coverage percentage if available
-          if ($codeCoverage -and $results.CodeCoverage) {
-            $coveragePercent = [math]::Round($results.CodeCoverage.CoveragePercent, 2)
-            Write-Host "Code coverage: $coveragePercent%"
-            if ($env:GITHUB_OUTPUT) {
-              $outDir = Split-Path -Parent $env:GITHUB_OUTPUT
-              if ($outDir -and -not (Test-Path $outDir)) {
-                New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+          # Read coverage from summary JSON for downstream steps
+          if ('${{ inputs.code-coverage }}' -eq 'true' -and (Test-Path 'logs/pester-summary.json')) {
+            $summary = Get-Content 'logs/pester-summary.json' | ConvertFrom-Json
+            if ($summary.CoveragePercent) {
+              Write-Host "Code coverage: $($summary.CoveragePercent)%"
+              if ($env:GITHUB_OUTPUT) {
+                $outDir = Split-Path -Parent $env:GITHUB_OUTPUT
+                if ($outDir -and -not (Test-Path $outDir)) {
+                  New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+                }
+                if (-not (Test-Path $env:GITHUB_OUTPUT)) {
+                  New-Item -ItemType File -Path $env:GITHUB_OUTPUT -Force | Out-Null
+                }
+                "coverage=$($summary.CoveragePercent)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
               }
-              if (-not (Test-Path $env:GITHUB_OUTPUT)) {
-                New-Item -ItemType File -Path $env:GITHUB_OUTPUT -Force | Out-Null
-              }
-              "coverage=$coveragePercent" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            }
-            else {
-              Write-Warning "GITHUB_OUTPUT not set; skipping coverage output export."
             }
           }
         continue-on-error: ${{ inputs.soft-fail }}
@@ -158,7 +160,10 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
         with:
           name: pester-test-results
-          path: logs/pester-results.xml
+          path: |
+            logs/pester-results.xml
+            logs/pester-summary.json
+            logs/pester-failures.json
           retention-days: 30
           if-no-files-found: ignore
 
@@ -207,7 +212,10 @@ jobs:
         if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
         shell: pwsh
         run: |
-          if ($env:PESTER_FAILED -eq 'true') {
-            Write-Error "Pester tests failed"
-            exit 1
+          if (Test-Path 'logs/pester-summary.json') {
+            $summary = Get-Content 'logs/pester-summary.json' | ConvertFrom-Json
+            if ($summary.FailedCount -gt 0) {
+              Write-Error "Pester tests failed: $($summary.FailedCount) failure(s)"
+              exit 1
+            }
           }

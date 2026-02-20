@@ -6,19 +6,6 @@
   },
   "search.followSymlinks": false,
   "markdown.mermaid.theme": "default",
-  "chat.instructionsFilesLocations": {
-    ".github/instructions/**/*.instructions.md": true,
-    ".github/prompts/**/*.prompt.md": true
-  },
-  "chat.agentFilesLocations": {
-    ".github/agents": true,
-    ".github/agents/subagents": true,
-  },
-  "github.copilot.chat.commitMessageGeneration.instructions": [
-    {
-      "file": ".github/instructions/commit-message.instructions.md"
-    }
-  ],
   "yaml.schemas": {
     "./scripts/linting/schemas/root-community-frontmatter.schema.json": [
       "README.md",
@@ -31,5 +18,40 @@
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
     ]
-  }
+  },
+  "chat.instructionsFilesLocations": {
+    ".github/instructions/ado": true,
+    ".github/instructions/coding-standards": true,
+    ".github/instructions/design-thinking": true,
+    ".github/instructions/github": true,
+    ".github/instructions/hve-core": true,
+    ".github/instructions/shared": true,
+  },
+  "chat.agentFilesLocations": {
+    ".github/agents/ado": true,
+    ".github/agents/data-science": true,
+    ".github/agents/design-thinking": true,
+    ".github/agents/github": true,
+    ".github/agents/installer": true,
+    ".github/agents/project-planning": true,
+    ".github/agents/hve-core": true,
+    ".github/agents/hve-core/subagents": true,
+    ".github/agents/security-planning": true,
+  },
+  "chat.promptFilesLocations": {
+    ".github/prompts/ado": true,
+    ".github/prompts/design-thinking": true,
+    ".github/prompts/github": true,
+    ".github/prompts/hve-core": true,
+    ".github/prompts/security-planning": true,
+  },
+  "chat.agentSkillsLocations": {
+    ".github/skills": true,
+    ".github/skills/shared": true
+  },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/instructions/hve-core/commit-message.instructions.md"
+    }
+  ],
 }

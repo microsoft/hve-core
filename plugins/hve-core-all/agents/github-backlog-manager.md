@@ -1,1 +1,1 @@
-../../../.github/agents/github-backlog-manager.agent.md
+../../../.github/agents/github/github-backlog-manager.agent.md

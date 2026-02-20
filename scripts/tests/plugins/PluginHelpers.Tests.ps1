@@ -6,65 +6,222 @@ BeforeAll {
     Import-Module $PSScriptRoot/../../plugins/Modules/PluginHelpers.psm1 -Force
 }
 
-Describe 'Get-ArtifactFiles - hve-core path exclusion' {
+Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo'
         $ghDir = Join-Path $script:repoRoot '.github'
 
-        # Create agent files
+        # Create root-level repo-specific agent (should be excluded)
         $agentsDir = Join-Path $ghDir 'agents'
         New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $agentsDir 'good.agent.md') -Value '---\ndescription: good\n---'
+        Set-Content -Path (Join-Path $agentsDir 'internal.agent.md') -Value '---\ndescription: repo-specific\n---'
 
-        # Create instruction files (shared)
-        $instrDir = Join-Path $ghDir 'instructions'
-        New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
-        Set-Content -Path (Join-Path $instrDir 'shared.instructions.md') -Value '---\ndescription: shared\n---'
-
-        # Create repo-specific files under .github/instructions/hve-core/
-        $hveCoreInstrDir = Join-Path $instrDir 'hve-core'
-        New-Item -ItemType Directory -Path $hveCoreInstrDir -Force | Out-Null
-        Set-Content -Path (Join-Path $hveCoreInstrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
-
-        # Create repo-specific files under .github/agents/hve-core/
+        # Create collection-scoped agent in subdirectory (should be included)
         $hveCoreAgentsDir = Join-Path $agentsDir 'hve-core'
         New-Item -ItemType Directory -Path $hveCoreAgentsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $hveCoreAgentsDir 'internal.agent.md') -Value '---\ndescription: repo-specific agent\n---'
+        Set-Content -Path (Join-Path $hveCoreAgentsDir 'rpi-agent.agent.md') -Value '---\ndescription: distributable\n---'
 
-        # Create a prompt file
+        # Create root-level repo-specific instruction (should be excluded)
+        $instrDir = Join-Path $ghDir 'instructions'
+        New-Item -ItemType Directory -Path $instrDir -Force | Out-Null
+        Set-Content -Path (Join-Path $instrDir 'workflows.instructions.md') -Value '---\ndescription: repo-specific\n---'
+
+        # Create collection-scoped instruction in subdirectory (should be included)
+        $sharedInstrDir = Join-Path $instrDir 'shared'
+        New-Item -ItemType Directory -Path $sharedInstrDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedInstrDir 'hve-core-location.instructions.md') -Value '---\ndescription: shared\n---'
+
+        # Create root-level repo-specific prompt (should be excluded)
         $promptsDir = Join-Path $ghDir 'prompts'
         New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
-        Set-Content -Path (Join-Path $promptsDir 'gen-plan.prompt.md') -Value '---\ndescription: prompt\n---'
+        Set-Content -Path (Join-Path $promptsDir 'internal.prompt.md') -Value '---\ndescription: repo-specific prompt\n---'
+
+        # Create collection-scoped prompt in subdirectory (should be included)
+        $hveCorePromptsDir = Join-Path $promptsDir 'hve-core'
+        New-Item -ItemType Directory -Path $hveCorePromptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $hveCorePromptsDir 'task-plan.prompt.md') -Value '---\ndescription: distributable prompt\n---'
     }
 
-    It 'Excludes files under .github/instructions/hve-core/' {
+    It 'Excludes root-level repo-specific instructions' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Not -Contain '.github/instructions/hve-core/workflows.instructions.md'
+        $paths | Should -Not -Contain '.github/instructions/workflows.instructions.md'
     }
 
-    It 'Excludes files under .github/agents/hve-core/' {
+    It 'Excludes root-level repo-specific agents' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Not -Contain '.github/agents/hve-core/internal.agent.md'
+        $paths | Should -Not -Contain '.github/agents/internal.agent.md'
     }
 
-    It 'Includes shared instruction files' {
+    It 'Excludes root-level repo-specific prompts' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Contain '.github/instructions/shared.instructions.md'
+        $paths | Should -Not -Contain '.github/prompts/internal.prompt.md'
     }
 
-    It 'Includes non-hve-core agent files' {
+    It 'Includes collection-scoped agents in subdirectories' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Contain '.github/agents/good.agent.md'
+        $paths | Should -Contain '.github/agents/hve-core/rpi-agent.agent.md'
     }
 
-    It 'Includes prompt files' {
+    It 'Includes collection-scoped instructions in subdirectories' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
-        $paths | Should -Contain '.github/prompts/gen-plan.prompt.md'
+        $paths | Should -Contain '.github/instructions/shared/hve-core-location.instructions.md'
+    }
+
+    It 'Includes collection-scoped prompts in subdirectories' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/prompts/hve-core/task-plan.prompt.md'
+    }
+}
+
+Describe 'Get-ArtifactFiles - deprecated path exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-deprecated'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        # Create non-deprecated artifacts
+        $agentsDir = Join-Path $ghDir 'agents/rpi'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'active.agent.md') -Value '---\ndescription: active\n---'
+
+        $promptsDir = Join-Path $ghDir 'prompts/rpi'
+        New-Item -ItemType Directory -Path $promptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $promptsDir 'active.prompt.md') -Value '---\ndescription: active\n---'
+
+        # Create deprecated artifacts
+        $deprecatedAgentsDir = Join-Path $ghDir 'deprecated/agents'
+        New-Item -ItemType Directory -Path $deprecatedAgentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedAgentsDir 'old.agent.md') -Value '---\ndescription: deprecated\n---'
+
+        $deprecatedPromptsDir = Join-Path $ghDir 'deprecated/prompts'
+        New-Item -ItemType Directory -Path $deprecatedPromptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedPromptsDir 'old.prompt.md') -Value '---\ndescription: deprecated\n---'
+
+        $deprecatedInstrDir = Join-Path $ghDir 'deprecated/instructions'
+        New-Item -ItemType Directory -Path $deprecatedInstrDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedInstrDir 'old.instructions.md') -Value '---\ndescription: deprecated\n---'
+
+        # Create deprecated skill
+        $deprecatedSkillDir = Join-Path $ghDir 'deprecated/skills/old-skill'
+        New-Item -ItemType Directory -Path $deprecatedSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $deprecatedSkillDir 'SKILL.md') -Value '---\nname: old-skill\ndescription: deprecated\n---'
+
+        # Create non-deprecated skill (under .github/skills/)
+        $skillDir = Join-Path $ghDir 'skills/experimental/good-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value '---\nname: good-skill\ndescription: active\n---'
+    }
+
+    It 'Excludes deprecated agent files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/agents/old.agent.md'
+    }
+
+    It 'Excludes deprecated prompt files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/prompts/old.prompt.md'
+    }
+
+    It 'Excludes deprecated instruction files' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/instructions/old.instructions.md'
+    }
+
+    It 'Excludes deprecated skill directories' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/deprecated/skills/old-skill'
+    }
+
+    It 'Includes non-deprecated artifacts' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/agents/rpi/active.agent.md'
+        $paths | Should -Contain '.github/prompts/rpi/active.prompt.md'
+    }
+
+    It 'Includes non-deprecated skills' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/skills/experimental/good-skill'
+    }
+}
+
+Describe 'Test-DeprecatedPath' {
+    It 'Returns true for path containing /deprecated/ segment' {
+        Test-DeprecatedPath -Path '.github/deprecated/agents/old.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns true for path with backslash deprecated segment' {
+        Test-DeprecatedPath -Path '.github\deprecated\agents\old.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns false for path without deprecated segment' {
+        Test-DeprecatedPath -Path '.github/agents/rpi/active.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns false when deprecated appears in filename only' {
+        Test-DeprecatedPath -Path '.github/agents/deprecated-notes.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns true for mid-path deprecated directory' {
+        Test-DeprecatedPath -Path 'skills/deprecated/old-skill/SKILL.md' | Should -BeTrue
+    }
+}
+
+Describe 'Test-HveCoreRepoSpecificPath' {
+    It 'Returns true for root-level file (no subdirectory)' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'workflows.instructions.md' | Should -BeTrue
+    }
+
+    It 'Returns false for file in a subdirectory' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'hve-core/markdown.instructions.md' | Should -BeFalse
+    }
+
+    It 'Returns false for file in nested subdirectory' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'coding-standards/csharp/style.instructions.md' | Should -BeFalse
+    }
+
+    It 'Returns false for shared subdirectory path' {
+        Test-HveCoreRepoSpecificPath -RelativePath 'shared/hve-core-location.instructions.md' | Should -BeFalse
+    }
+}
+
+Describe 'Test-HveCoreRepoRelativePath' {
+    It 'Returns true for root-level agent' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/internal.agent.md' | Should -BeTrue
+    }
+
+    It 'Returns true for root-level instruction' {
+        Test-HveCoreRepoRelativePath -Path '.github/instructions/workflows.instructions.md' | Should -BeTrue
+    }
+
+    It 'Returns true for root-level prompt' {
+        Test-HveCoreRepoRelativePath -Path '.github/prompts/internal.prompt.md' | Should -BeTrue
+    }
+
+    It 'Returns false for non-.github path' {
+        Test-HveCoreRepoRelativePath -Path 'scripts/plugins/foo.ps1' | Should -BeFalse
+    }
+
+    It 'Returns false for collection-scoped path in subdirectory' {
+        Test-HveCoreRepoRelativePath -Path '.github/agents/hve-core/rpi-agent.agent.md' | Should -BeFalse
+    }
+
+    It 'Returns false for shared instruction in subdirectory' {
+        Test-HveCoreRepoRelativePath -Path '.github/instructions/shared/hve-core-location.instructions.md' | Should -BeFalse
+    }
+
+    It 'Returns false for path directly under .github (wrong nesting level)' {
+        Test-HveCoreRepoRelativePath -Path '.github/foo.md' | Should -BeFalse
     }
 }
 
