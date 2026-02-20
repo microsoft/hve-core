@@ -186,6 +186,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
@@ -256,5 +258,5 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
