@@ -72,6 +72,7 @@ Structure concepts into visualizable, testable formats with YAML artifact genera
 - Craft concept titles (2-4 words) that immediately convey the core idea
 - Write concept descriptions (1-2 sentences) covering what and how
 - Identify purpose and validation target for each concept
+- Document purpose and validation target in stakeholder-alignment.md for reference during Method 5c evaluation
 - Create visualization prompts emphasizing stick figures, minimal lines, plain backgrounds
 - Generate `concepts.yml` artifact with name, description, file, prompt fields
 - Validate concepts against 30-second comprehension test
@@ -95,6 +96,8 @@ Validate concepts through stakeholder alignment and three-lens evaluation framew
 - Evaluate concepts through Desirability, Feasibility, Viability lenses
 - Document concept selection rationale and evaluation criteria
 - Prepare Method 6 handoff with prioritized concepts (1-2 selected)
+
+**When stakeholders are unavailable**: Guide user through role-playing multiple perspectives with explicit acknowledgment that simulated feedback should be validated with real stakeholders when available. Document simulation in stakeholder-alignment.md.
 
 **Exit Criteria**: Stakeholder alignment completed via Silent Review sequence, D/F/V evaluation documented, concept selection rationale captured, Method 6 handoff prepared
 
@@ -124,6 +127,8 @@ concepts:
 - `description`: May use YAML folded block (`>-`), covers what and how in 1-2 sentences
 - `file`: kebab-case filename with `.png` extension
 - `prompt`: Must include lo-fi style directives (stick figures, minimal lines, plain background, black-and-white line art)
+
+**Multi-Line Format**: Use YAML folded block (`>-`) for description and prompt fields to maintain readability. Literal blocks (`|-`) and single-line strings are acceptable alternatives.
 
 **Quality Rules**: No extra fields beyond these four, strict adherence to lo-fi prompt patterns, artifact consumed by `generate-dalle-images.ps1` or M365 Copilot image generation
 
@@ -232,6 +237,12 @@ Method 5 enforces deliberate roughness to focus validation on core assumptions, 
 - **Level 3 (Specific)**: "This concept has implementation details that Method 6 prototyping should test. Strip it back to the core user value."
 - **Level 4 (Direct)**: "This has crossed into solution specification. Create a new concept testing only the core assumption, using a 15-second napkin sketch style."
 
+**Escalation Triggers**:
+
+- Level 1 → 2: User adds implementation detail after initial hint
+- Level 2 → 3: User continues adding detail after contextual reminder
+- Level 3 → 4: Concept crosses into solution specification after specific redirection
+
 **Scrappy Principle Alignment**: Rough concepts invite structural feedback ("Does this solve the right problem?"). Polished concepts invite cosmetic feedback ("I'd change the wording here"). Maintain roughness to preserve validation quality.
 
 ## Quality Standards
@@ -314,7 +325,7 @@ Method 5 enforces deliberate roughness to focus validation on core assumptions, 
 
 **Files**:
 
-- `concepts.yml` — Structured concept definitions with name, description, file, prompt fields
-- `{concept-name}.png` — Generated concept visualization images (optional, may be generated outside session)
-- `stakeholder-alignment.md` — Silent Review results, D/F/V evaluation, resonance assessment documentation
-- `method-06-handoff.md` — Prioritized concepts (1-2 selected) with evaluation rationale and constraint context for prototyping
+- `concepts.yml` — (Required) Structured concept definitions with name, description, file, prompt fields
+- `{concept-name}.png` — (Optional) Generated concept visualization images, typically created between Method 5 and Method 6 using `generate-dalle-images.ps1` or M365 Copilot. Not required for Method 6 handoff.
+- `stakeholder-alignment.md` — (Recommended) Silent Review results, D/F/V evaluation, resonance assessment documentation
+- `method-06-handoff.md` — (Required) Prioritized concepts (1-2 selected) with evaluation rationale and constraint context for prototyping
