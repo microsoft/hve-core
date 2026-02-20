@@ -32,6 +32,8 @@ items:
     kind: instruction
   - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
     kind: instruction
+  - path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
+    kind: instruction
   - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
     kind: instruction
   - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
