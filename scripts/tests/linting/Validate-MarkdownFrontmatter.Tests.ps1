@@ -791,6 +791,16 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
             $result.IsValid | Should -BeTrue
         }
 
+        It 'Rejects agents as non-wildcard string' {
+            $frontmatter = @{
+                description = 'test'
+                agents      = 'all'
+            }
+            $result = Test-JsonSchemaValidation -Frontmatter $frontmatter -SchemaContent $script:NestedSchema
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Where-Object { $_ -match 'must match one of the allowed schemas' } | Should -Not -BeNullOrEmpty
+        }
+
         It 'Accepts handoff without prompt (prompt is optional)' {
             $frontmatter = @{
                 description = 'test'
