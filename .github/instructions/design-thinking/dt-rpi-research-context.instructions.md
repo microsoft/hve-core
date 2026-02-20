@@ -1,7 +1,6 @@
 ---
 description: 'DT-aware task-researcher context — frames research around DT methods, stakeholder needs, and empathy-driven inquiry'
 applyTo: '**/.copilot-tracking/dt/**'
-maturity: stable
 ---
 
 # DT Research Context
