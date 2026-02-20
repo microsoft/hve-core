@@ -13,8 +13,12 @@ argument-hint: "[branch=origin/main] [excludeMarkdown={true|false}]"
 
 ## Requirements
 
-Read and follow all instructions from `pull-request.instructions.md` to generate a pull request body of changes using the pr-reference Skill with parallel subagents.
+Read and follow all instructions from `hve-core/pull-request.instructions.md` to generate a pull request body of changes using the pr-reference Skill with parallel subagent review.
 
 ---
 
 Generate a new pr.md file following the pull-request instructions.
+
+* Analyzes branch diffs against the base branch and reviews changes using parallel subagents.
+* Produces `.copilot-tracking/pr/pr.md` with the final PR description, along with temporary analysis artifacts in `.copilot-tracking/pr/subagents/`.
+* Creates a pull request via MCP tools when explicitly requested.

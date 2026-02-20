@@ -11,16 +11,16 @@ Repository-specific conventions for pull request generation in hve-core. Follow 
 
 Map PR content to the repository template at `.github/PULL_REQUEST_TEMPLATE.md`. The template defines these H2 sections:
 
-| pr.md Component       | Template Section           | Guidance                                          |
-|-----------------------|----------------------------|---------------------------------------------------|
-| H1 Title              | Document title             | Replace the existing title with the generated one |
-| Summary paragraph     | ## Description             | Add after the placeholder comment if present      |
-| Change bullets        | ## Description             | Append after the summary                          |
-| Detected issue refs   | ## Related Issue(s)        | Replace placeholder comment if present            |
-| Detected change types | ## Type of Change          | Check matching `- [ ]` boxes                      |
-| Security analysis     | ## Security Considerations | Check boxes and add notes when issues exist       |
-| GHCP Maturity section | Before ## Additional Notes | Insert when non-stable GHCP files detected        |
-| Notes or Important    | ## Additional Notes        | Insert content                                    |
+| pr.md Component       | Template Section           | Mode   | Guidance                                          |
+|-----------------------|----------------------------|--------|---------------------------------------------------|
+| H1 Title              | Document title             | Map    | Replace the existing title with the generated one |
+| Summary paragraph     | ## Description             | Map    | Add after the placeholder comment if present      |
+| Change bullets        | ## Description             | Map    | Append after the summary                          |
+| Detected issue refs   | ## Related Issue(s)        | Map    | Replace placeholder comment if present            |
+| Detected change types | ## Type of Change          | Map    | Check matching `- [ ]` boxes                      |
+| Security analysis     | ## Security Considerations | Map    | Check boxes and add notes when issues exist       |
+| GHCP Maturity section | (new section)              | Insert | Insert before ## Additional Notes when non-stable GHCP files detected |
+| Notes or Important    | ## Additional Notes        | Map    | Insert content                                    |
 
 * For each detected change type, replace the matching `- [ ]` checkbox with `- [x]`.
 * Extract related issues using patterns from the shared instructions and place them in the Related Issue(s) section.
@@ -58,6 +58,8 @@ Priority rules:
 * Multiple change types can be selected.
 
 ## GHCP Maturity Detection
+
+Skip this section when no GHCP artifact files (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`) are included in the changes.
 
 After detecting GHCP files from change type detection, look up maturity levels from collection manifest item metadata:
 
@@ -126,23 +128,13 @@ After PR generation, analyze the pr-reference-log.md for security and compliance
 5. ✅/❌ Missing referenced files
 6. ✅/❌ Conventional commits compliance for title and reviewed commit messages
 
-## Pre-generation Checklist
-
-Before generating the PR description, confirm:
-
-* [ ] Core guidance from the shared instructions will be followed
-* [ ] Required steps from the shared instructions will be followed
-* [ ] PR content generation principles will be followed
-* [ ] PR content matches the template structure or fallback format
-* [ ] Markdown editing conventions in this repository are applied
-
 ## Post-generation Checklist
 
 After generating the PR, review pr.md and confirm:
 
 * [ ] Core guidance was followed
 * [ ] Required steps were followed
-* [ ] PR content generation principles were followed
+* [ ] PR writing standards were followed
 * [ ] PR description includes all significant changes and omits trivial or auto-generated ones
 * [ ] Referenced files and paths are accurate
 * [ ] Follow-up tasks are actionable and clearly scoped
