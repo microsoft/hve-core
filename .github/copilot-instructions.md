@@ -61,6 +61,9 @@ By convention, skills are self-contained packages organized under `.github/skill
 
 ### Documentation Structure
 
+* HVE Guide (`docs/hve-guide/`) - Project lifecycle stages and role-specific guides.
+  * Lifecycle (`docs/hve-guide/lifecycle/`) - AI-assisted project lifecycle stage documentation.
+  * Roles (`docs/hve-guide/roles/`) - Role-specific guides for engineers, leads, architects, and other contributors.
 * Getting Started (`docs/getting-started/`) - Installation and first workflow guides with multiple setup methods.
 * RPI (`docs/rpi/`) - Task researcher, planner, and implementor workflow documentation.
 * Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
@@ -123,7 +126,7 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 
 * Node.js 20 with npm dependencies from `package.json`
 * Python 3.11
-* PowerShell 7 with PSScriptAnalyzer and PowerShell-Yaml modules
+* PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
 * shellcheck for bash script validation (pre-installed on ubuntu-latest)
 * actionlint for GitHub Actions workflow validation
 
