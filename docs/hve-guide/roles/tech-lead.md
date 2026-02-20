@@ -17,14 +17,9 @@ This guide is for you if you make architecture decisions, set coding standards, 
 ## Recommended Collections
 
 > [!TIP]
-> Install the collections that match your workflow:
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> ```text
-> Minimum: @hve-core-installer install rpi coding-standards project-planning
-> Full:    @hve-core-installer install rpi coding-standards project-planning prompt-engineering
-> ```
->
-> The `rpi` collection provides research and review workflows. Adding `coding-standards` activates language-specific rules. The `prompt-engineering` collection adds tools for creating and analyzing AI prompts, instructions, and agent definitions.
+> Your primary collections are `rpi` (research and review workflows), `coding-standards` (language-specific rules), and `project-planning` (architecture decision records and planning). For clone-based setups, use the **hve-core-installer** agent with `install rpi coding-standards project-planning`.
 
 ## What HVE Core Does for You
 
@@ -48,59 +43,85 @@ This guide is for you if you make architecture decisions, set coding standards, 
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use `@task-researcher` to evaluate design options, research external patterns, and gather architectural evidence.
-2. Stage 3: Product Definition. Create architecture decision records with `@adr-creation` and generate diagrams with `@arch-diagram-builder`.
+1. Stage 2: Discovery. Use the **task-researcher** agent to evaluate design options, research external patterns, and gather architectural evidence.
+2. Stage 3: Product Definition. Create architecture decision records with the **adr-creation** agent and generate diagrams with the **arch-diagram-builder** agent.
 3. Stage 6: Implementation. Guide engineers using coding standards (auto-activated by file type) and prompt engineering tools for AI artifact creation.
-4. Stage 7: Review. Run `@pr-review` for automated pull request feedback and `@task-reviewer` for implementation-against-plan validation.
+4. Stage 7: Review. Run the **pr-review** agent for automated pull request feedback and the **task-reviewer** agent for implementation-against-plan validation.
 5. Stage 9: Operations. Use `/prompt-analyze` and `/prompt-refactor` to maintain and evolve prompt engineering artifacts as team practices mature.
 
 ## Starter Prompts
 
+Select **adr-creation** agent:
+
 ```text
-@adr-creation Create an ADR for {design decision}
+Create an ADR for adopting OpenTelemetry as our observability standard,
+replacing the current custom tracing library. Cover decision drivers
+around vendor neutrality and auto-instrumentation support, alternatives
+like Datadog APM and Jaeger, and migration impact on existing services.
+```
+
+Select **arch-diagram-builder** agent:
+
+```text
+Generate an architecture diagram for the event-driven order processing
+pipeline. Show the message flow from API gateway through the event bus
+to worker services, including the dead-letter queue and monitoring
+integration. Use mermaid flowchart syntax.
+```
+
+Select **pr-review** agent:
+
+```text
+Review the current pull request focusing on architecture alignment with
+docs/architecture/ patterns, API contract consistency with existing
+endpoints, test coverage for new code paths, and performance implications
+of any new database queries.
 ```
 
 ```text
-@arch-diagram-builder Generate architecture diagram for {component}
+/prompt-build Create a new instructions file for Python data pipeline
+development. Cover pandas conventions, type hinting requirements,
+virtual environment setup with uv, and testing patterns using pytest.
 ```
 
 ```text
-@pr-review Review the current pull request
-```
-
-```text
-/prompt-build Create a new {type} for {purpose}
-```
-
-```text
-/prompt-analyze Analyze {prompt file} for quality
+/prompt-analyze Analyze .github/instructions/coding-standards/python-script.instructions.md
+for quality. Check frontmatter schema, applyTo coverage, instruction
+specificity, and alignment with repository conventions.
 ```
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                    | Invoke                  | Docs                                         |
-|----------------------|--------------------------------------------|-------------------------|----------------------------------------------|
-| adr-creation         | Architecture decision record creation      | `@adr-creation`         | Agent file                                   |
-| arch-diagram-builder | Mermaid architecture diagram generation    | `@arch-diagram-builder` | Agent file                                   |
-| pr-review            | Pull request review automation             | `@pr-review`            | Agent file                                   |
-| task-reviewer        | Implementation review against plan         | `@task-reviewer`        | [Task Reviewer](../rpi/task-reviewer.md)     |
-| prompt-builder       | Prompt engineering artifact creation       | `@prompt-builder`       | Agent file                                   |
-| task-researcher      | Deep codebase and architecture research    | `@task-researcher`      | [Task Researcher](../rpi/task-researcher.md) |
-| task-planner         | Structured implementation planning         | `@task-planner`         | [Task Planner](../rpi/task-planner.md)       |
-| doc-ops              | Documentation operations and maintenance   | `@doc-ops`              | Agent file                                   |
-| memory               | Session context and preference persistence | `@memory`               | Agent file                                   |
+| Agent                    | Purpose                                    | Docs                                         |
+|--------------------------|--------------------------------------------|----------------------------------------------|
+| **adr-creation**         | Architecture decision record creation      | Agent file                                   |
+| **arch-diagram-builder** | Mermaid architecture diagram generation    | Agent file                                   |
+| **pr-review**            | Pull request review automation             | Agent file                                   |
+| **task-reviewer**        | Implementation review against plan         | [Task Reviewer](../rpi/task-reviewer.md)     |
+| **prompt-builder**       | Prompt engineering artifact creation       | Agent file                                   |
+| **task-researcher**      | Deep codebase and architecture research    | [Task Researcher](../rpi/task-researcher.md) |
+| **task-planner**         | Structured implementation planning         | [Task Planner](../rpi/task-planner.md)       |
+| **doc-ops**              | Documentation operations and maintenance   | Agent file                                   |
+| **memory**               | Session context and preference persistence | Agent file                                   |
+
+Prompts complement the agents for cross-cutting workflows:
+
+| Prompt       | Purpose                                                       | Invoke          |
+|--------------|---------------------------------------------------------------|-----------------|
+| git-commit   | Stage and commit changes with conventional message formatting | `/git-commit`   |
+| pull-request | Create a pull request with structured description             | `/pull-request` |
 
 Auto-activated instructions apply coding standards based on file type: C# (`*.cs`), Python (`*.py`), Bash (`*.sh`), Bicep (`bicep/**`), Terraform (`*.tf`), and GitHub Actions workflows (`*.yml`).
 
 ## Tips
 
-| Do                                                           | Don't                                                          |
-|--------------------------------------------------------------|----------------------------------------------------------------|
-| Create ADRs for significant design decisions                 | Make architectural choices without documented rationale        |
-| Use `@pr-review` to supplement manual code reviews           | Rely solely on automated review without human judgment         |
-| Let coding standards auto-activate based on file type        | Manually apply rules that already have instruction files       |
-| Use `/prompt-analyze` before refactoring AI artifacts        | Rewrite prompts without understanding their current structure  |
-| Research with `@task-researcher` before architecture changes | Design without investigating existing patterns and constraints |
+| Do                                                                      | Don't                                                          |
+|-------------------------------------------------------------------------|----------------------------------------------------------------|
+| Create ADRs for significant design decisions                            | Make architectural choices without documented rationale        |
+| Use the **pr-review** agent to supplement manual code reviews           | Rely solely on automated review without human judgment         |
+| Let coding standards auto-activate based on file type                   | Manually apply rules that already have instruction files       |
+| Use `/prompt-analyze` before refactoring AI artifacts                   | Rewrite prompts without understanding their current structure  |
+| Research with the **task-researcher** agent before architecture changes | Design without investigating existing patterns and constraints |
 
 ## Related Roles
 
@@ -116,9 +137,6 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 > Review coding standards: [Coding Standards Collection](../../collections/coding-standards.collection.md)
 
 ---
-
-> [!NOTE]
-> Prompt engineering maturity scoring (GAP-06) and automated standards enforcement dashboards are planned improvements.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

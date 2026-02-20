@@ -28,6 +28,8 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
 | Utility                  | N/A              | 13                | All                                         | [Utility](utility.md)                                   |
 
+> **Dedicated Assets** count agents, prompts, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (memory, Git prompts, auto-activated instructions) and shared collection assets. The **+** suffix indicates additional auto-activated assets not individually enumerated.
+
 ## Find Your Role
 
 | I want to...                                                | Recommended Role Guide                                  |
@@ -42,20 +44,6 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | Get started contributing to the project                     | [New Contributor](new-contributor.md)                   |
 | Use cross-cutting utilities (memory, docs, media)           | [Utility](utility.md)                                   |
 
-## Collection Quick Reference
-
-| Collection         | Primary Roles               | Install                                          |
-|--------------------|-----------------------------|--------------------------------------------------|
-| hve-core-all       | All                         | Full install                                     |
-| rpi                | Engineer, Tech Lead         | `@hve-core-installer install rpi`                |
-| ado                | TPM, Engineer               | `@hve-core-installer install ado`                |
-| github             | TPM, Engineer               | `@hve-core-installer install github`             |
-| coding-standards   | Engineer, Tech Lead, SRE    | `@hve-core-installer install coding-standards`   |
-| data-science       | Data Scientist              | `@hve-core-installer install data-science`       |
-| project-planning   | TPM, BPM, Tech Lead         | `@hve-core-installer install project-planning`   |
-| prompt-engineering | Tech Lead, Prompt Engineers | `@hve-core-installer install prompt-engineering` |
-| security-planning  | Security Architect, SRE     | `@hve-core-installer install security-planning`  |
-
 ## Collaboration Patterns
 
 Roles frequently collaborate across workflows. These scenarios illustrate common multi-role interactions:
@@ -64,6 +52,26 @@ Roles frequently collaborate across workflows. These scenarios illustrate common
 * TPMs and security architects coordinate secure product launches combining requirements gathering, threat modeling, and compliance verification. See the [TPM](tpm.md) and [Security Architect](security-architect.md) guides.
 * Data scientists and engineers bridge analytics pipeline development with data specification, notebook prototyping, and production integration. See the [Data Scientist](data-scientist.md) and [Engineer](engineer.md) guides.
 * New contributors progress to engineers through onboarding from guided workflows to full autonomous engineering. See the [New Contributor](new-contributor.md) and [Engineer](engineer.md) guides.
+
+## Coverage Notes
+
+Each role intersects with 9 lifecycle stages, producing 72 role-stage pairs. Coverage levels across those pairs:
+
+| Level    | Role-Stage Pairs | Percent |
+|----------|-----------------:|--------:|
+| Strong   |               11 |     15% |
+| Moderate |               15 |     21% |
+| Thin     |               18 |     25% |
+| None     |               28 |     39% |
+
+**Strongest coverage**: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations).
+
+**Thinnest roles**: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
+
+**Least-covered stage**: Stage 4 Decomposition — 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
+
+> [!NOTE]
+> Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/README.md) for guidance on creating new agents, prompts, and instructions.
 
 ## Next Steps
 

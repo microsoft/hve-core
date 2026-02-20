@@ -17,14 +17,9 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 ## Recommended Collections
 
 > [!TIP]
-> Install the collections that match your workflow:
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> ```text
-> Minimum: @hve-core-installer install data-science
-> Full:    @hve-core-installer install data-science rpi
-> ```
->
-> The `data-science` collection provides notebook generation, dashboard creation, and data specification tools. Adding `rpi` enables research and planning workflows for larger analytics projects.
+> Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `rpi` (research and planning workflows for larger analytics projects). For clone-based setups, use the **hve-core-installer** agent with `install data-science rpi`.
 
 ## What HVE Core Does for You
 
@@ -48,57 +43,88 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Use `@task-researcher` to investigate data sources, explore available datasets, and research analytical approaches.
-2. Stage 3: Product Definition. Run `@gen-data-spec` to define data schemas, sources, and transformation requirements as structured specification documents.
-3. Stage 6: Notebook Development. Generate analysis notebooks with `@gen-jupyter-notebook` and create dashboards with `@gen-streamlit-dashboard`.
-4. Stage 7: Validation. Test generated dashboards with `@test-streamlit-dashboard` and review analysis results for accuracy and completeness.
+1. Stage 2: Discovery. Use the **task-researcher** agent to investigate data sources, explore available datasets, and research analytical approaches.
+2. Stage 3: Product Definition. Run the **gen-data-spec** agent to define data schemas, sources, and transformation requirements as structured specification documents.
+3. Stage 6: Notebook Development. Generate analysis notebooks with the **gen-jupyter-notebook** agent and create dashboards with the **gen-streamlit-dashboard** agent.
+4. Stage 7: Validation. Test generated dashboards with the **test-streamlit-dashboard** agent and review analysis results for accuracy and completeness.
 5. Stage 8: Delivery. Package notebooks, dashboards, and documentation for sharing with stakeholders and engineering teams.
 
 ## Starter Prompts
 
-```text
-@gen-jupyter-notebook Create an analysis notebook for {dataset}
-```
+Select **gen-jupyter-notebook** agent:
 
 ```text
-@gen-data-spec Define a data specification for {data pipeline}
+Create a data analysis notebook for the Q4 sales transactions dataset in
+data/sales-q4-2025.parquet. Include data quality assessment, revenue trend
+analysis by product category and region, and customer cohort segmentation
+using RFM scoring with matplotlib visualizations.
 ```
 
-```text
-@gen-streamlit-dashboard Build a dashboard for {metrics}
-```
+Select **gen-data-spec** agent:
 
 ```text
-@test-streamlit-dashboard Validate the dashboard at {path}
+Define a data specification for the customer event ingestion pipeline.
+Source is a Kafka topic with Avro encoding, target is a Delta Lake table.
+Include timestamp normalization, PII hashing transformations, quality
+rules for null checks, and partitioning by event_date and event_type.
 ```
 
+Select **gen-streamlit-dashboard** agent:
+
 ```text
-@task-researcher Research data sources for {analysis goal}
+Build a dashboard for API latency and error rate metrics from the
+Prometheus endpoint at /metrics. Include P50/P95/P99 latency percentiles,
+error rate breakdown by endpoint (5xx vs 4xx), and a 30-day daily active
+users trend. Set refresh interval to 5 minutes.
+```
+
+Select **test-streamlit-dashboard** agent:
+
+```text
+Validate the dashboard at dashboards/api-performance.json. Check that all
+queries return data for the last 7 days, panels render without errors, and
+the refresh rate does not exceed Prometheus scrape intervals.
+```
+
+Select **task-researcher** agent:
+
+```text
+Research data sources for predicting customer churn in the SaaS platform.
+Identify internal sources like usage telemetry and billing history,
+external benchmark datasets, data freshness requirements for daily
+granularity, and GDPR privacy constraints for EU customer data.
 ```
 
 ## Key Agents and Workflows
 
-| Agent                    | Purpose                                    | Invoke                      | Docs                                         |
-|--------------------------|--------------------------------------------|-----------------------------|----------------------------------------------|
-| gen-jupyter-notebook     | Jupyter notebook generation                | `@gen-jupyter-notebook`     | Agent file                                   |
-| gen-streamlit-dashboard  | Streamlit dashboard creation               | `@gen-streamlit-dashboard`  | Agent file                                   |
-| gen-data-spec            | Data specification document creation       | `@gen-data-spec`            | Agent file                                   |
-| test-streamlit-dashboard | Dashboard functional testing               | `@test-streamlit-dashboard` | Agent file                                   |
-| task-researcher          | Data source and pattern research           | `@task-researcher`          | [Task Researcher](../rpi/task-researcher.md) |
-| task-planner             | Analytics pipeline planning                | `@task-planner`             | [Task Planner](../rpi/task-planner.md)       |
-| memory                   | Session context and preference persistence | `@memory`                   | Agent file                                   |
+| Agent                        | Purpose                                    | Docs                                         |
+|------------------------------|--------------------------------------------|----------------------------------------------|
+| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                   |
+| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                   |
+| **gen-data-spec**            | Data specification document creation       | Agent file                                   |
+| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                   |
+| **task-researcher**          | Data source and pattern research           | [Task Researcher](../rpi/task-researcher.md) |
+| **task-planner**             | Analytics pipeline planning                | [Task Planner](../rpi/task-planner.md)       |
+| **memory**                   | Session context and preference persistence | Agent file                                   |
+
+Prompts complement the agents for cross-cutting workflows:
+
+| Prompt       | Purpose                                                       | Invoke          |
+|--------------|---------------------------------------------------------------|-----------------|
+| git-commit   | Stage and commit changes with conventional message formatting | `/git-commit`   |
+| pull-request | Create a pull request with structured description             | `/pull-request` |
 
 Python environment management follows the `uv` virtual environment instructions for reproducible analysis environments.
 
 ## Tips
 
-| Do                                                               | Don't                                                        |
-|------------------------------------------------------------------|--------------------------------------------------------------|
-| Start with `@gen-data-spec` to define schemas before coding      | Jump straight to notebook coding without data specifications |
-| Use `@gen-jupyter-notebook` for structured, documented notebooks | Create raw notebooks without documentation cells             |
-| Test dashboards with `@test-streamlit-dashboard`                 | Deploy dashboards without functional validation              |
-| Research data sources with `@task-researcher` first              | Assume data availability without investigation               |
-| Use `uv` for reproducible Python environments                    | Install packages globally or skip environment isolation      |
+| Do                                                                          | Don't                                                        |
+|-----------------------------------------------------------------------------|--------------------------------------------------------------|
+| Start with the **gen-data-spec** agent to define schemas before coding      | Jump straight to notebook coding without data specifications |
+| Use the **gen-jupyter-notebook** agent for structured, documented notebooks | Create raw notebooks without documentation cells             |
+| Test dashboards with the **test-streamlit-dashboard** agent                 | Deploy dashboards without functional validation              |
+| Research data sources with the **task-researcher** agent first              | Assume data availability without investigation               |
+| Use `uv` for reproducible Python environments                               | Install packages globally or skip environment isolation      |
 
 ## Related Roles
 
@@ -109,13 +135,10 @@ Python environment management follows the `uv` virtual environment instructions 
 
 > [!TIP]
 > Explore the data science collection: [Data Science Collection](../../collections/data-science.collection.md)
-> Set up your Python environment: [uv Projects](../../.github/instructions/uv-projects.instructions.md)
+> Set up your Python environment: [uv Projects](../../.github/instructions/coding-standards/uv-projects.instructions.md)
 > See how analytics fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---
-
-> [!NOTE]
-> Model evaluation harness (GAP-09), advanced autoML integration, and MLflow experiment tracking are planned improvements.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

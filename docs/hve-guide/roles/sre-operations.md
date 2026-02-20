@@ -14,17 +14,19 @@ estimated_reading_time: 10
 
 This guide is for you if you manage infrastructure, handle incidents, deploy systems, maintain CI/CD pipelines, or ensure production reliability. SRE and operations engineers have 13+ addressable assets spanning infrastructure as code, incident response, security operations, and deployment automation.
 
+> [!CAUTION]
+> The security agents and prompts referenced in this guide are **assistive tools only**.
+> They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
+> All AI-generated security plans, threat models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
+> AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+> Never treat AI-generated security artifacts as authoritative without independent verification.
+
 ## Recommended Collections
 
 > [!TIP]
-> Install the collections that match your workflow:
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> ```text
-> Minimum: @hve-core-installer install coding-standards
-> Full:    @hve-core-installer install coding-standards security-planning rpi
-> ```
->
-> The `coding-standards` collection activates IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions. Adding `security-planning` enables incident response tooling, and `rpi` supports structured investigation and remediation workflows.
+> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security-planning` (incident response tooling), and `rpi` (structured investigation and remediation workflows). For clone-based setups, use the **hve-core-installer** agent with `install coding-standards security-planning rpi`.
 
 ## What HVE Core Does for You
 
@@ -49,43 +51,61 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Stage Walkthrough
 
 1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
-2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use `@security-plan-creator` for infrastructure security planning.
-3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use `@task-implementor` for complex multi-file changes.
+2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-plan-creator** agent for infrastructure security planning.
+3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
 4. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
-5. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with `@task-researcher` for structured root cause analysis.
+5. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
 
 ## Starter Prompts
 
 ```text
-/incident-response Create a runbook for {incident scenario}
+/incident-response Create an incident response runbook for a data breach
+involving customer PII exposure through a misconfigured storage bucket.
+Include containment steps, GDPR notification timelines, forensic evidence
+preservation, and post-incident review process.
 ```
 
-```text
-@task-researcher Investigate {production issue}
-```
+Select **task-researcher** agent:
 
 ```text
-@security-plan-creator Create a security plan for {infrastructure component}
+Investigate elevated 503 errors on the /api/orders endpoint. Error rate
+increased from 0.1% to 12% starting at 14:30 UTC. The service runs on
+3 Kubernetes pods in the production-east cluster. Check pod logs, recent
+deployments, and upstream dependency health.
+```
+
+Select **security-plan-creator** agent:
+
+```text
+Create a security plan for the Kubernetes ingress controller cluster.
+Cover TLS termination and certificate rotation automation, network policy
+rules for namespace isolation, WAF configuration for OWASP Top 10
+protection, and audit logging for ingress configuration changes.
 ```
 
 ```text
 /pull-request Create a PR for infrastructure changes
 ```
 
+Select **task-implementor** agent:
+
 ```text
-@task-implementor Implement infrastructure for {component}
+Implement Terraform infrastructure for the Redis cache cluster in the
+staging environment. Use existing module patterns in infra/modules/.
+Configure a 3-node cluster with 6GB memory, automatic failover, and
+encryption at rest. Output the connection string to the Vault KV store.
 ```
 
 ## Key Agents and Workflows
 
-| Agent                 | Purpose                                        | Invoke                   | Docs                                           |
-|-----------------------|------------------------------------------------|--------------------------|------------------------------------------------|
-| task-researcher       | Structured production issue investigation      | `@task-researcher`       | [Task Researcher](../rpi/task-researcher.md)   |
-| task-implementor      | Infrastructure code implementation             | `@task-implementor`      | [Task Implementor](../rpi/task-implementor.md) |
-| task-reviewer         | Infrastructure code review                     | `@task-reviewer`         | [Task Reviewer](../rpi/task-reviewer.md)       |
-| security-plan-creator | Infrastructure security planning               | `@security-plan-creator` | Agent file                                     |
-| pr-review             | Pull request review for infrastructure changes | `@pr-review`             | Agent file                                     |
-| memory                | Session context and preference persistence     | `@memory`                | Agent file                                     |
+| Agent                     | Purpose                                        | Docs                                           |
+|---------------------------|------------------------------------------------|------------------------------------------------|
+| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../rpi/task-researcher.md)   |
+| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../rpi/task-implementor.md) |
+| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../rpi/task-reviewer.md)       |
+| **security-plan-creator** | Infrastructure security planning               | Agent file                                     |
+| **pr-review**             | Pull request review for infrastructure changes | Agent file                                     |
+| **memory**                | Session context and preference persistence     | Agent file                                     |
 
 Prompts complement the agents for operational workflows:
 
@@ -100,13 +120,13 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 ## Tips
 
-| Do                                                            | Don't                                                    |
-|---------------------------------------------------------------|----------------------------------------------------------|
-| Let IaC-specific instructions auto-activate by file type      | Manually enforce Terraform or Bicep standards            |
-| Create incident response runbooks before incidents occur      | Write runbooks reactively during active incidents        |
-| Use `@task-researcher` for structured root cause analysis     | Debug production issues without systematic investigation |
-| Review infrastructure PRs with `@pr-review`                   | Merge infrastructure changes without code review         |
-| Use `/git-commit` for consistent, conventional commit history | Write ad-hoc commit messages for infrastructure changes  |
+| Do                                                                   | Don't                                                    |
+|----------------------------------------------------------------------|----------------------------------------------------------|
+| Let IaC-specific instructions auto-activate by file type             | Manually enforce Terraform or Bicep standards            |
+| Create incident response runbooks before incidents occur             | Write runbooks reactively during active incidents        |
+| Use the **task-researcher** agent for structured root cause analysis | Debug production issues without systematic investigation |
+| Review infrastructure PRs with the **pr-review** agent               | Merge infrastructure changes without code review         |
+| Use `/git-commit` for consistent, conventional commit history        | Write ad-hoc commit messages for infrastructure changes  |
 
 ## Related Roles
 
@@ -122,9 +142,6 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---
-
-> [!NOTE]
-> Automated runbook triggering (GAP-10), deployment orchestration, and SLO monitoring integration are planned improvements.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

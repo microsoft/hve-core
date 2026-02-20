@@ -2,7 +2,7 @@
 title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-02-19
 ms.topic: how-to
 keywords:
   - TPM
@@ -17,14 +17,9 @@ This guide is for you if you drive project planning, manage requirements, coordi
 ## Recommended Collections
 
 > [!TIP]
-> Install the collections that match your workflow:
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> ```text
-> Minimum: @hve-core-installer install project-planning
-> Full:    @hve-core-installer install project-planning ado github
-> ```
->
-> The `project-planning` collection provides BRD/PRD builders, agile coaching, and work item management. Adding `ado` enables Azure DevOps integration, and `github` adds issue discovery and backlog automation.
+> Your primary collections are `project-planning` (BRD/PRD builders, agile coaching, and work item management), `ado` (Azure DevOps integration), and `github` (issue discovery and backlog automation). For clone-based setups, use the **hve-core-installer** agent with `install project-planning ado github`.
 
 ## What HVE Core Does for You
 
@@ -49,59 +44,79 @@ This guide is for you if you drive project planning, manage requirements, coordi
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Run `@task-researcher` for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
-2. Stage 3: Product Definition. Use `@brd-builder` to create business requirements, then `@prd-builder` to generate a product specification from the BRD.
-3. Stage 4: Decomposition. Convert PRD requirements to Azure DevOps work items with `@ado-prd-to-wit`, creating proper parent-child hierarchies.
-4. Stage 5: Sprint Planning. Triage discovered issues with `/github-triage-issues` and plan sprints using `@agile-coach` for priority-based selection.
+1. Stage 2: Discovery. Run the **task-researcher** agent for technical investigation and `/github-discover-issues` to find and categorize existing issues across repositories.
+2. Stage 3: Product Definition. Use the **brd-builder** agent to create business requirements, then the **prd-builder** agent to generate a product specification from the BRD.
+3. Stage 4: Decomposition. Convert PRD requirements to Azure DevOps work items with the **ado-prd-to-wit** agent, creating proper parent-child hierarchies.
+4. Stage 5: Sprint Planning. Triage discovered issues with `/github-triage-issues` and plan sprints using the **agile-coach** agent for priority-based selection.
 5. Stage 8: Delivery. Update work items as features ship, close completed milestones, and track delivery metrics.
 
 ## Starter Prompts
 
-```text
-@brd-builder Create a BRD for {project}
-```
+Select **brd-builder** agent:
 
 ```text
-@prd-builder Generate a PRD from the BRD at docs/brds/{name}.md
+Create a business requirements document for the customer onboarding portal.
+Target enterprise customers with 500+ seats, with the objective of reducing
+onboarding time from 2 weeks to 3 days. Include integration requirements
+for existing SSO and billing systems and SOC 2 Type II compliance constraints.
+```
+
+Select **prd-builder** agent:
+
+```text
+Generate a PRD from the BRD at docs/brds/customer-onboarding-v2.md.
+Focus on the self-service registration flow with acceptance criteria for
+each user story, non-functional requirements for sub-200ms API responses,
+and a data migration plan from the legacy system.
 ```
 
 ```text
 /github-discover-issues Find and categorize open issues
 ```
 
-```text
-@agile-coach Help plan the sprint with current priorities
-```
+Select **agile-coach** agent:
 
 ```text
-@ado-prd-to-wit Convert PRD requirements to Azure DevOps work items
+Refine the user story for the notification preferences feature. The current
+story says "users can manage notifications" but lacks specifics. Target
+mobile and web channels, support per-category opt-in/opt-out, and ensure
+GDPR consent tracking. Help me write acceptance criteria that are binary
+and testable.
+```
+
+Select **ado-prd-to-wit** agent:
+
+```text
+Convert the PRD at docs/prds/notification-service-v3.md to Azure DevOps
+work items. Map each functional requirement to a user story and each
+non-functional requirement to a task under the "Platform Quality" epic.
+Set iteration path to Sprint 24.
 ```
 
 ## Key Agents and Workflows
 
-| Agent                   | Purpose                                       | Invoke                     | Docs                                         |
-|-------------------------|-----------------------------------------------|----------------------------|----------------------------------------------|
-| brd-builder             | Business requirements document creation       | `@brd-builder`             | Agent file                                   |
-| prd-builder             | Product requirements document generation      | `@prd-builder`             | Agent file                                   |
-| agile-coach             | Sprint planning and agile methodology         | `@agile-coach`             | Agent file                                   |
-| ado-prd-to-wit          | PRD to Azure DevOps work item conversion      | `@ado-prd-to-wit`          | Agent file                                   |
-| github-backlog-manager  | GitHub issue discovery and backlog automation | `@github-backlog-manager`  | [GitHub Backlog](../agents/github-backlog/)  |
-| github-issue-manager    | Single-issue operations (deprecated)          | `@github-issue-manager`    | Agent file                                   |
-| product-manager-advisor | Product strategy and prioritization guidance  | `@product-manager-advisor` | Agent file                                   |
-| ux-ui-designer          | UX/UI design guidance and review              | `@ux-ui-designer`          | Agent file                                   |
-| task-researcher         | Deep technical and requirement research       | `@task-researcher`         | [Task Researcher](../rpi/task-researcher.md) |
-| rpi-agent               | RPI workflow orchestration                    | `@rpi-agent`               | [RPI docs](../rpi/README.md)                 |
-| memory                  | Session context and preference persistence    | `@memory`                  | Agent file                                   |
+| Agent                       | Purpose                                       | Docs                                         |
+|-----------------------------|-----------------------------------------------|----------------------------------------------|
+| **brd-builder**             | Business requirements document creation       | Agent file                                   |
+| **prd-builder**             | Product requirements document generation      | Agent file                                   |
+| **agile-coach**             | Sprint planning and agile methodology         | Agent file                                   |
+| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion      | Agent file                                   |
+| **github-backlog-manager**  | GitHub issue discovery and backlog automation | [GitHub Backlog](../agents/github-backlog/)  |
+| **product-manager-advisor** | Product strategy and prioritization guidance  | Agent file                                   |
+| **ux-ui-designer**          | UX/UI design guidance and review              | Agent file                                   |
+| **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../rpi/task-researcher.md) |
+| **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../rpi/README.md)                 |
+| **memory**                  | Session context and preference persistence    | Agent file                                   |
 
 ## Tips
 
-| Do                                                         | Don't                                                       |
-|------------------------------------------------------------|-------------------------------------------------------------|
-| Start with a BRD before jumping to work item creation      | Create work items without documented requirements           |
-| Use `/github-discover-issues` before manual issue searches | Manually scan repositories for open issues                  |
-| Let `@agile-coach` suggest sprint priorities               | Assign sprint items without capacity or priority analysis   |
-| Triage issues with labels and milestones systematically    | Leave discovered issues uncategorized                       |
-| Use `@github-backlog-manager` over `@github-issue-manager` | Use the deprecated single-issue manager for bulk operations |
+| Do                                                            | Don't                                                     |
+|---------------------------------------------------------------|-----------------------------------------------------------|
+| Start with a BRD before jumping to work item creation         | Create work items without documented requirements         |
+| Use `/github-discover-issues` before manual issue searches    | Manually scan repositories for open issues                |
+| Let the **agile-coach** agent suggest sprint priorities       | Assign sprint items without capacity or priority analysis |
+| Triage issues with labels and milestones systematically       | Leave discovered issues uncategorized                     |
+| Use the **github-backlog-manager** agent for issue management | Manage issues manually without backlog automation         |
 
 ## Related Roles
 
@@ -116,9 +131,6 @@ This guide is for you if you drive project planning, manage requirements, coordi
 > Review collaboration with Security: [Security Architect Guide](security-architect.md)
 
 ---
-
-> [!NOTE]
-> BRD-to-PRD traceability (GAP-15a), agent schema alignment (GAP-15b), and PRD-to-GitHub-Issues conversion (GAP-16) are planned improvements.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

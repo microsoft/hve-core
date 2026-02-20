@@ -12,15 +12,17 @@ keywords:
 estimated_reading_time: 12
 ---
 
-This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. Follow the four milestones below to progressively build fluency with agents, prompts, and workflows.
+This guide helps you get started with HVE Core from your first install through independent, AI-assisted engineering. HVE Core provides 10 addressable assets tailored for new contributors. Follow the four milestones below to progressively build fluency with agents, prompts, and workflows.
 
 ## Recommended Collections
 
 > [!TIP]
-> Install the starter collection:
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+>
+> For custom installations, select the **hve-core-installer** agent and install the starter collection:
 >
 > ```text
-> @hve-core-installer install rpi
+> install rpi
 > ```
 >
 > The `rpi` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
@@ -42,9 +44,9 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 Install HVE Core and run your first agent interaction.
 
 1. Follow the [installation guide](../getting-started/install.md) to set up your development environment.
-2. Install the `rpi` collection using `@hve-core-installer install rpi`.
-3. Open a chat and invoke `@memory` to verify agent responsiveness.
-4. Run `@task-researcher` against a file or concept in the codebase to see research output.
+2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments. For custom installations, use the **hve-core-installer** agent instead.
+3. Open a chat and select the **memory** agent to verify agent responsiveness.
+4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
 
 Start with `/rpi mode=guided` for step-by-step workflow assistance, then transition to `/rpi` as you gain confidence.
 
@@ -55,10 +57,10 @@ Checkpoint: You can invoke agents, see their output, and understand the chat-bas
 Complete a full research-plan-implement cycle with hand-holding.
 
 1. Pick a small, well-defined task (a bug fix or documentation update works well).
-2. Research the task with `@task-researcher` to understand the codebase context.
-3. Plan the implementation with `@task-planner` to create a structured approach.
-4. Implement the change with `@task-implementor` following the plan.
-5. Review your changes with `@task-reviewer` before committing.
+2. Research the task with the **task-researcher** agent to understand the codebase context.
+3. Plan the implementation with the **task-planner** agent to create a structured approach.
+4. Implement the change with the **task-implementor** agent following the plan.
+5. Review your changes with the **task-reviewer** agent before committing.
 6. Commit using `/git-commit` for a conventional commit message.
 
 Checkpoint: You have completed one full RPI cycle and understand how phases connect.
@@ -70,7 +72,7 @@ Use agents selectively and combine workflows for larger tasks.
 1. Use `/rpi mode=auto` for end-to-end automation on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
 3. Install a second collection relevant to your work (see the [Collection Quick Reference](README.md#collection-quick-reference)).
-4. Use `@memory` to save preferences and context that persist across sessions.
+4. Use the **memory** agent to save preferences and context that persist across sessions.
 
 Checkpoint: You choose which agents to use based on task needs and work with multiple collections.
 
@@ -87,36 +89,65 @@ Checkpoint: You use HVE Core tools naturally, customize workflows, and help othe
 
 ## Starter Prompts
 
+Select **task-researcher** agent:
+
 ```text
-@task-researcher Research {topic} in this codebase
+Research how error handling works in this codebase. Look at exception
+hierarchies in src/errors/, how validation errors propagate from API
+handlers to responses, and logging patterns including structured logging
+and correlation IDs.
+```
+
+Select **task-planner** agent:
+
+```text
+Plan the implementation for adding CSV export to the reporting API. The
+endpoint should accept date range parameters, stream results for large
+datasets, and follow existing response format patterns in
+src/api/handlers/reports.py.
+```
+
+Select **task-implementor** agent:
+
+```text
+Implement the plan from the latest task-planner output in
+.copilot-tracking/plans/. Follow the implementation order specified
+in the plan and run tests after each component.
+```
+
+Select **task-reviewer** agent and attach the changes log:
+
+```text
+Review my implementation. Check for error handling gaps, verify
+correctness against the plan, and validate compliance with coding
+standards.
 ```
 
 ```text
-@task-planner Plan the implementation for {task}
-```
-
-```text
-@task-implementor Implement the plan
-```
-
-```text
-/rpi mode=auto Implement {task description}
+/rpi mode=auto Implement the input validation helpers for the user
+registration form. Add email format checking, password strength rules
+matching the policy in docs/security/password-policy.md, and unit tests
+for each validator.
 ```
 
 ```text
 /git-commit Commit changes with a conventional message
 ```
 
+```text
+/pull-request Create a pull request for the current changes
+```
+
 ## Key Agents and Workflows
 
-| Agent            | Purpose                                    | Invoke              | When to Use  |
-|------------------|--------------------------------------------|---------------------|--------------|
-| task-researcher  | Codebase and context research              | `@task-researcher`  | Milestone 1+ |
-| task-planner     | Structured implementation planning         | `@task-planner`     | Milestone 2+ |
-| task-implementor | Phase-based code implementation            | `@task-implementor` | Milestone 2+ |
-| task-reviewer    | Code review and quality validation         | `@task-reviewer`    | Milestone 2+ |
-| rpi-agent        | Full RPI orchestration in one agent        | `@rpi-agent`        | Milestone 3+ |
-| memory           | Session context and preference persistence | `@memory`           | Milestone 1+ |
+| Agent                | Purpose                                    | When to Use  |
+|----------------------|--------------------------------------------|--------------|
+| **task-researcher**  | Codebase and context research              | Milestone 1+ |
+| **task-planner**     | Structured implementation planning         | Milestone 2+ |
+| **task-implementor** | Phase-based code implementation            | Milestone 2+ |
+| **task-reviewer**    | Code review and quality validation         | Milestone 2+ |
+| **rpi-agent**        | Full RPI orchestration in one agent        | Milestone 3+ |
+| **memory**           | Session context and preference persistence | Milestone 1+ |
 
 ## Tips
 
@@ -142,9 +173,6 @@ Checkpoint: You use HVE Core tools naturally, customize workflows, and help othe
 > Find your role: [Role Guides Overview](README.md)
 
 ---
-
-> [!NOTE]
-> Environment validation automation (GAP-07) and good-first-issue discovery filtering (GAP-10) are planned improvements. Current workflows rely on manual environment checks after installation and manual issue browsing for contributor-friendly tasks.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
