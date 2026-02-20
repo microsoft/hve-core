@@ -1,7 +1,7 @@
 ---
 description: 'Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core'
 agent: agent
-argument-hint: "[branch=origin/main] [excludeMarkdown={true|false}]"
+argument-hint: "[branch=origin/main] [createPullRequest=false] [excludeMarkdown={true|false}]"
 ---
 
 # Pull Request
@@ -9,7 +9,8 @@ argument-hint: "[branch=origin/main] [excludeMarkdown={true|false}]"
 ## Inputs
 
 * ${input:branch:origin/main}: (Optional, defaults to origin/main) Base branch reference for diff generation
-* ${input:excludeMarkdown}: (Optional) When true, exclude markdown diffs from pr-reference generation
+* ${input:createPullRequest:false}: (Optional, determined through conversation provided by user) When true, then explicitly include following instructions for creating pull request with MCP tools.
+* ${input:excludeMarkdown:false}: (Optional) When true, exclude markdown diffs from pr-reference generation
 
 ## Requirements
 
