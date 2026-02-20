@@ -152,7 +152,7 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 ### rpi-agent: When Simplicity Fits
 
-Use the [autonomous agent](../../.github/agents/rpi-agent.agent.md) when:
+Use the [autonomous agent](../../.github/agents/hve-core/rpi-agent.agent.md) when:
 
 * ✅ **Clear scope**: straightforward feature or bug fix
 * ✅ **Minimal research**: codebase-only investigation

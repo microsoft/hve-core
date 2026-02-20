@@ -20,6 +20,26 @@ param(
     [string[]]$TestPath = @("$PSScriptRoot")
 )
 
+# Dynamically discover skill test directories when using the default TestPath.
+# Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+# so we probe two fixed depths.
+if (-not $PSBoundParameters.ContainsKey('TestPath')) {
+    $scriptRoot = Split-Path $PSScriptRoot -Parent
+    $repoRoot = Split-Path $scriptRoot -Parent
+    $skillsPath = Join-Path $repoRoot '.github' 'skills'
+    if (Test-Path $skillsPath) {
+        $skillTestDirs = @()
+        foreach ($depth in @('*', '*/*')) {
+            $pattern = Join-Path $skillsPath $depth 'tests'
+            $skillTestDirs += @(Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer -and (Test-Path (Join-Path $_.Parent.FullName 'scripts')) })
+        }
+        if ($skillTestDirs) {
+            $TestPath = @($TestPath) + @($skillTestDirs.FullName)
+        }
+    }
+}
+
 $configuration = New-PesterConfiguration
 
 # Run configuration
@@ -50,13 +70,46 @@ if ($CodeCoverage.IsPresent) {
 
     # Resolve coverage paths explicitly - Join-Path with wildcards returns literal paths without file system expansion in Pester configuration
     $scriptRoot = Split-Path $PSScriptRoot -Parent
-    $coverageDirs = @('linting', 'security', 'dev-tools', 'lib', 'extension')
+    $coverageDirs = @('linting', 'security', 'lib', 'extension', 'plugins')
 
     $coveragePaths = $coverageDirs | ForEach-Object {
         Get-ChildItem -Path (Join-Path $scriptRoot $_) -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
     } | Where-Object {
         $_.FullName -notmatch '\.Tests\.ps1$'
     } | Select-Object -ExpandProperty FullName
+
+    # Resolve skill script coverage paths from repo root.
+    # Skills live at .github/skills/<skill>/ or .github/skills/<collection>/<skill>/
+    # so probe two fixed depths, matching test directory discovery above.
+    $repoRoot = Split-Path $scriptRoot -Parent
+    $skillsPath = Join-Path $repoRoot '.github/skills'
+    if (Test-Path $skillsPath) {
+        $skillRoots = @()
+        foreach ($depth in @('*', '*/*')) {
+            $pattern = Join-Path $skillsPath $depth 'scripts'
+            $skillRoots += @(Get-Item -Path $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.PSIsContainer } |
+                ForEach-Object { $_.Parent })
+        }
+
+        $skillCoveragePaths = $skillRoots | ForEach-Object {
+            $skillRoot = $_.FullName
+            $skillScripts = Join-Path $skillRoot 'scripts'
+            $paths = @()
+
+            $paths += Get-ChildItem -Path $skillRoot -Include '*.ps1', '*.psm1' -File -ErrorAction SilentlyContinue
+
+            if (Test-Path $skillScripts) {
+                $paths += Get-ChildItem -Path $skillScripts -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
+            }
+
+            $paths
+        } | Where-Object { $_.FullName -notmatch '\.Tests\.ps1$' } |
+            Select-Object -ExpandProperty FullName
+        if ($skillCoveragePaths) {
+            $coveragePaths = @($coveragePaths) + @($skillCoveragePaths)
+        }
+    }
 
     if ($coveragePaths.Count -gt 0) {
         $configuration.CodeCoverage.Path = $coveragePaths

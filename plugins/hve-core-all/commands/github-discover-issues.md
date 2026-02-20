@@ -1,1 +1,1 @@
-../../../.github/prompts/github-discover-issues.prompt.md
+../../../.github/prompts/github/github-discover-issues.prompt.md

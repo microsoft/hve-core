@@ -1,4 +1,5 @@
 AAOS
+ADKAR
 ASME
 BCDR
 BYOK
@@ -12,6 +13,8 @@ FAISS
 FIDAP
 FMEA
 Gitflow
+GHCP
+GHSA
 GTDN
 GZRS
 HACCP
@@ -21,6 +24,8 @@ MTTD
 MTTR
 MSRC
 msrc
+NERC
+nerc
 NNPI
 NUMA
 openssf
@@ -32,6 +37,7 @@ rbac
 RAGRS
 RAGZRS
 Rego
+SARIF
 SCIM
 SCOR
 STIX
@@ -44,6 +50,8 @@ WCAG
 wcag
 XBRL
 ZTNA
+FERC
+ferc
 FIPS
 fips
 ITAR
@@ -69,4 +77,8 @@ cnet
 LOCALMCP
 REMOTEMCP
 DEVCON
+JTBD
+brds
+IATF
 LLMAPI
+prds

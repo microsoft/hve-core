@@ -12,6 +12,123 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [2.3.10](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.9...hve-core-v2.3.10) (2026-02-17)
+
+
+### 🐛 Bug Fixes
+
+* **agents:** add subagent support with dedicated subagent files and simplified prompts ([#639](https://github.com/microsoft/hve-core/issues/639)) ([c080b0a](https://github.com/microsoft/hve-core/commit/c080b0a0c7e29e0b7431c84b7f7ad1b4405bd25e))
+* Markdown table in Codespace is not rendered correctly ([#619](https://github.com/microsoft/hve-core/issues/619)) ([5bcea1d](https://github.com/microsoft/hve-core/commit/5bcea1dd01bface78ebab10b7b7b97f17cc75ad2))
+
+
+### 📚 Documentation
+
+* **ai-artifacts:** align contribution guide with plugin and collection workflow ([#622](https://github.com/microsoft/hve-core/issues/622)) ([21820be](https://github.com/microsoft/hve-core/commit/21820beecb00589fc1f055b631ec56989c1a6aeb))
+
+## [2.3.9](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.8...hve-core-v2.3.9) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **plugins:** merge git collection into rpi and distribute to all plugins ([#549](https://github.com/microsoft/hve-core/issues/549)) ([9509a87](https://github.com/microsoft/hve-core/commit/9509a87bc32bb91205ec4000553f706f01039a57))
+
+## [2.3.8](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.7...hve-core-v2.3.8) (2026-02-14)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** use draft-first release flow to avoid immutability errors ([#554](https://github.com/microsoft/hve-core/issues/554)) ([c8eee58](https://github.com/microsoft/hve-core/commit/c8eee58ce370c1a6bcf8d25fd55f7d2430eaa8de))
+
+## [2.3.7](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.6...hve-core-v2.3.7) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** delete and recreate draft release to publish ([#552](https://github.com/microsoft/hve-core/issues/552)) ([e3d6fca](https://github.com/microsoft/hve-core/commit/e3d6fca6e1f683f2913b28449ebbacec4f040ce3))
+
+## [2.3.6](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.5...hve-core-v2.3.6) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** delete and recreate immutable release as draft ([#550](https://github.com/microsoft/hve-core/issues/550)) ([75217da](https://github.com/microsoft/hve-core/commit/75217da01caa3aa57d313d149a065f207e28209c))
+
+## [2.3.5](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.4...hve-core-v2.3.5) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** replace draft release config with post-creation draft conversion ([#545](https://github.com/microsoft/hve-core/issues/545)) ([2311d04](https://github.com/microsoft/hve-core/commit/2311d04297ab1a607d03163e54dd278146254fdf))
+
+## [2.3.4](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.3...hve-core-v2.3.4) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** package pre-release VSIX artifacts correctly ([#544](https://github.com/microsoft/hve-core/issues/544)) ([f5f6887](https://github.com/microsoft/hve-core/commit/f5f6887a546f49a6bbb3877e61cab671ce0c92e6))
+
+## [2.3.3](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.2...hve-core-v2.3.3) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** add manual tag creation for draft releases until release-please-action updates ([#538](https://github.com/microsoft/hve-core/issues/538)) ([4a6ef2c](https://github.com/microsoft/hve-core/commit/4a6ef2c3ed691b26d4fd35f2086758d861c33cdb))
+
+## [2.3.2](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.1...hve-core-v2.3.2) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **settings:** ensure draft flag is set for release configuration ([#536](https://github.com/microsoft/hve-core/issues/536)) ([9e98c68](https://github.com/microsoft/hve-core/commit/9e98c688a15e769b15b2a28f8ea283dfe3cbe795))
+
+## [2.3.1](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.0...hve-core-v2.3.1) (2026-02-13)
+
+
+### 🐛 Bug Fixes
+
+* **build:** remove draft flag that prevents release tag creation ([#533](https://github.com/microsoft/hve-core/issues/533)) ([c8de0aa](https://github.com/microsoft/hve-core/commit/c8de0aa65a313dd10001cdfdf1308115d5bd7cfc))
+* **workflows:** correct JSON output formatting in plugin discovery step ([#531](https://github.com/microsoft/hve-core/issues/531)) ([910fb8b](https://github.com/microsoft/hve-core/commit/910fb8b55cff89dd14eec07b99c3ffeff76f071c))
+
+## [2.3.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.2.0...hve-core-v2.3.0) (2026-02-13)
+
+
+### ✨ Features
+
+* **agents:** add GitHub backlog management pipeline ([#448](https://github.com/microsoft/hve-core/issues/448)) ([2b4d123](https://github.com/microsoft/hve-core/commit/2b4d1232f1fef5f2c858ccec23582bfed93db47f))
+* **docs:** define inactivity closure policies for issues and PRs ([#452](https://github.com/microsoft/hve-core/issues/452)) ([5e710fd](https://github.com/microsoft/hve-core/commit/5e710fdb389632283bc50eb17c31b34d4d7535f1))
+* **extension:** implement collection-based plugin distribution system ([#439](https://github.com/microsoft/hve-core/issues/439)) ([3156d98](https://github.com/microsoft/hve-core/commit/3156d989fcde1e181d04ebf56ab4ad29b0084d04))
+* **instructions:** replace EVEN/ODD hardcoding with runtime milestone discovery protocol ([#486](https://github.com/microsoft/hve-core/issues/486)) ([ae95eb2](https://github.com/microsoft/hve-core/commit/ae95eb27ec37d53ad57ca81028a89e241ba891f9))
+* **plugin:** support Copilot CLI plugin generation from collection manifests ([#496](https://github.com/microsoft/hve-core/issues/496)) ([e6cee85](https://github.com/microsoft/hve-core/commit/e6cee852f9118caa4ff8e778d8bf40e1d61bb69e))
+* **scripts:** enhance on-create.sh to install actionlint and PowerShell modules ([#500](https://github.com/microsoft/hve-core/issues/500)) ([67585f5](https://github.com/microsoft/hve-core/commit/67585f5a7c29605c5d38424436c8b34e5258efcc))
+
+
+### 🐛 Bug Fixes
+
+* **docs:** replace broken relative link with inline code reference ([#465](https://github.com/microsoft/hve-core/issues/465)) ([8133b36](https://github.com/microsoft/hve-core/commit/8133b3634f37497ba8958c22127aa6e97de422d4))
+* **instructions:** prevent local-only paths from leaking into GitHub issues ([#489](https://github.com/microsoft/hve-core/issues/489)) ([497d2fe](https://github.com/microsoft/hve-core/commit/497d2feb4333b25d272225f78ce489ab82fffc02))
+* **workflows:** prevent release-please infinite loop on main branch ([#470](https://github.com/microsoft/hve-core/issues/470)) ([134bdd6](https://github.com/microsoft/hve-core/commit/134bdd6046ba8e954916b8ed4c7b6a03b593fa94))
+* **workflows:** remove release-please skip guard that prevents tag creation ([#511](https://github.com/microsoft/hve-core/issues/511)) ([5e53271](https://github.com/microsoft/hve-core/commit/5e532716eb8b14bf6a1e5e381a746f4ce35cdf7d))
+
+
+### 📚 Documentation
+
+* **agents:** add GitHub Backlog Manager documentation and agent catalog ([#503](https://github.com/microsoft/hve-core/issues/503)) ([5e818ce](https://github.com/microsoft/hve-core/commit/5e818cefcfe1daf83fa2983d2fadf843e8406872))
+* align CONTRIBUTING.md with docs/contributing/ guides ([#445](https://github.com/microsoft/hve-core/issues/445)) ([73ef6aa](https://github.com/microsoft/hve-core/commit/73ef6aa63b2e39a58d605edff87caba1fbc1cc46))
+
+
+### ♻️ Refactoring
+
+* **scripts:** refactor dev-tools and lib scripts to use CIHelpers module ([#482](https://github.com/microsoft/hve-core/issues/482)) ([fdf9145](https://github.com/microsoft/hve-core/commit/fdf9145175f80fe1e8d1674d358b0c255d0de8db))
+* **scripts:** standardize PowerShell entry point guard pattern ([#477](https://github.com/microsoft/hve-core/issues/477)) ([6b84a8e](https://github.com/microsoft/hve-core/commit/6b84a8e49193d266411df9e4b8e8b1be2369eed2))
+
+
+### 🔧 Maintenance
+
+* **config:** standardize action mappings in artifact-retention.yml ([#487](https://github.com/microsoft/hve-core/issues/487)) ([7927db2](https://github.com/microsoft/hve-core/commit/7927db28105f384d1445e5f42eeb5ad6bd129542))
+* **deps-dev:** bump cspell from 9.6.2 to 9.6.4 in the npm-dependencies group ([#461](https://github.com/microsoft/hve-core/issues/461)) ([c788095](https://github.com/microsoft/hve-core/commit/c7880959cb62f5cea343506b9bbe8dc5b39f78a6))
+* **deps:** bump actions/setup-python from 5.1.1 to 6.2.0 in the github-actions group ([#462](https://github.com/microsoft/hve-core/issues/462)) ([69ef3c9](https://github.com/microsoft/hve-core/commit/69ef3c9217f1b4e0f8bc46c7f553e9ed6f62ed92))
+* **security:** add SBOM artifact retention policy ([#479](https://github.com/microsoft/hve-core/issues/479)) ([8031557](https://github.com/microsoft/hve-core/commit/803155739be3fe56e4cc2a9d6ea921d1e0220321)), closes [#453](https://github.com/microsoft/hve-core/issues/453)
+
 ## [2.2.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.1.0...hve-core-v2.2.0) (2026-02-06)
 
 

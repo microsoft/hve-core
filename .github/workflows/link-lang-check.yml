@@ -48,6 +48,37 @@ jobs:
         shell: pwsh
         run: |
           if ($env:LINK_LANG_FAILED -eq 'true') {
-            Write-Host "Link language check failed and soft-fail is false. Failing the job."
+            $resultsPath = 'logs/link-lang-check-results.json'
+
+            if (Test-Path -LiteralPath $resultsPath) {
+              try {
+                $results = Get-Content -LiteralPath $resultsPath -Raw | ConvertFrom-Json
+                $totalIssues = [int]($results.summary.total_issues)
+                $filesAffected = [int]($results.summary.files_affected)
+
+                if ($results.issues -and $results.issues.Count -gt 0) {
+                  if ($totalIssues -le 0) {
+                    $totalIssues = [int]$results.issues.Count
+                  }
+
+                  if ($filesAffected -le 0) {
+                    $filesAffected = [int](($results.issues | Select-Object -ExpandProperty file -Unique).Count)
+                  }
+
+                  Write-Host "❌ Link language check failed with $totalIssues issue(s) in $filesAffected file(s)."
+
+                  foreach ($issue in $results.issues) {
+                    Write-Host "  ⚠️ $($issue.file):$($issue.line_number) - $($issue.original_url)"
+                  }
+                } else {
+                  Write-Host 'Link language check failed and no issue entries were found in logs/link-lang-check-results.json.'
+                }
+              } catch {
+                Write-Host 'Link language check failed and logs/link-lang-check-results.json could not be parsed.'
+              }
+            } else {
+              Write-Host 'Link language check failed and logs/link-lang-check-results.json was not found.'
+            }
+
             exit 1
           }

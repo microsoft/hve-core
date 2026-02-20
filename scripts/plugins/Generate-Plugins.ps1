@@ -24,6 +24,11 @@
 .PARAMETER DryRun
     Optional. Shows what would be done without making changes.
 
+.PARAMETER Channel
+    Optional. Release channel controlling eligible item maturities.
+    Stable includes only stable items. PreRelease includes stable, preview,
+    and experimental. Deprecated is excluded from both channels.
+
 .EXAMPLE
     ./Generate-Plugins.ps1
     # Generates all plugins (default: all + refresh)
@@ -35,6 +40,10 @@
 .EXAMPLE
     ./Generate-Plugins.ps1 -DryRun
     # Shows what would be generated without making changes
+
+.EXAMPLE
+    ./Generate-Plugins.ps1 -Channel Stable
+    # Generates plugins with stable-only items
 
 .NOTES
     Dependencies: PowerShell-Yaml module, scripts/plugins/Modules/PluginHelpers.psm1
@@ -49,7 +58,11 @@ param(
     [switch]$Refresh,
 
     [Parameter(Mandatory = $false)]
-    [switch]$DryRun
+    [switch]$DryRun,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('Stable', 'PreRelease')]
+    [string]$Channel = 'PreRelease'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,6 +71,76 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/PluginHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Orchestration
+
+function Get-AllowedCollectionMaturities {
+    <#
+    .SYNOPSIS
+        Returns allowed collection item maturities for a channel.
+
+    .PARAMETER Channel
+        Release channel ('Stable' or 'PreRelease').
+
+    .OUTPUTS
+        [string[]] Allowed maturity values for collection items.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel
+    )
+
+    if ($Channel -eq 'Stable') {
+        return @('stable')
+    }
+
+    return @('stable', 'preview', 'experimental')
+}
+
+function Select-CollectionItemsByChannel {
+    <#
+    .SYNOPSIS
+        Filters collection items by channel using item maturity metadata.
+
+    .PARAMETER Collection
+        Collection manifest hashtable.
+
+    .PARAMETER Channel
+        Release channel ('Stable' or 'PreRelease').
+
+    .OUTPUTS
+        [hashtable] Collection clone with filtered items.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Collection,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel
+    )
+
+    $allowedMaturities = Get-AllowedCollectionMaturities -Channel $Channel
+    $filteredItems = @()
+
+    foreach ($item in $Collection.items) {
+        $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+        if ($allowedMaturities -contains $effectiveMaturity) {
+            $filteredItems += $item
+        }
+    }
+
+    $filteredCollection = @{}
+    foreach ($key in $Collection.Keys) {
+        $filteredCollection[$key] = $Collection[$key]
+    }
+    $filteredCollection['items'] = $filteredItems
+
+    return $filteredCollection
+}
 
 function Invoke-PluginGeneration {
     <#
@@ -82,6 +165,9 @@ function Invoke-PluginGeneration {
     .PARAMETER DryRun
         When specified, logs actions without creating files or directories.
 
+    .PARAMETER Channel
+        Release channel controlling item maturity eligibility.
+
     .OUTPUTS
         Hashtable with Success, PluginCount, and ErrorMessage keys
         via New-GenerateResult.
@@ -100,15 +186,27 @@ function Invoke-PluginGeneration {
         [switch]$Refresh,
 
         [Parameter(Mandatory = $false)]
-        [switch]$DryRun
+        [switch]$DryRun,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease'
     )
 
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $pluginsDir = Join-Path -Path $RepoRoot -ChildPath 'plugins'
 
+    # Read repo version from package.json for plugin manifests
+    $packageJsonPath = Join-Path -Path $RepoRoot -ChildPath 'package.json'
+    $repoVersion = (Get-Content -Path $packageJsonPath -Raw | ConvertFrom-Json).version
+
     # Auto-update hve-core-all collection with discovered artifacts
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
+
+    # Probe symlink capability once for the entire generation run
+    $symlinkCapable = Test-SymlinkCapability
+    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
 
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
@@ -130,6 +228,7 @@ function Invoke-PluginGeneration {
 
     Write-Host "`n=== Plugin Generation ===" -ForegroundColor Cyan
     Write-Host "Collections: $($allCollections.Count)"
+    Write-Host "Channel: $Channel"
     Write-Host "Plugins dir: $pluginsDir"
     if ($DryRun) {
         Write-Host '[DRY RUN] No changes will be made' -ForegroundColor Yellow
@@ -145,6 +244,16 @@ function Invoke-PluginGeneration {
         $id = $collection.id
         $pluginDir = Join-Path -Path $pluginsDir -ChildPath $id
 
+        # Skip deprecated collections
+        $collectionMaturity = if ($collection.ContainsKey('maturity') -and $collection.maturity) {
+            [string]$collection.maturity
+        } else { 'stable' }
+
+        if ($collectionMaturity -eq 'deprecated') {
+            Write-Verbose "Skipping deprecated collection: $id"
+            continue
+        }
+
         # Refresh: remove existing plugin directory
         if ($Refresh -and (Test-Path -Path $pluginDir)) {
             if ($DryRun) {
@@ -157,12 +266,17 @@ function Invoke-PluginGeneration {
         }
 
         # Generate plugin directory structure
-        $result = Write-PluginDirectory -Collection $collection `
+        $filteredCollection = Select-CollectionItemsByChannel -Collection $collection -Channel $Channel
+
+        $result = Write-PluginDirectory -Collection $filteredCollection `
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
-            -DryRun:$DryRun
+            -Version $repoVersion `
+            -Maturity $collectionMaturity `
+            -DryRun:$DryRun `
+            -SymlinkCapable:$symlinkCapable
 
-        $itemCount = $collection.items.Count
+        $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount
         $totalCommands += $result.CommandCount
         $totalInstructions += $result.InstructionCount
@@ -170,6 +284,21 @@ function Invoke-PluginGeneration {
         $generated++
 
         Write-Host "  $id ($itemCount items)" -ForegroundColor Green
+    }
+
+    # Generate marketplace.json from all collections
+    Write-MarketplaceManifest `
+        -RepoRoot $RepoRoot `
+        -Collections $allCollections `
+        -DryRun:$DryRun
+
+    # Fix git index modes for text stubs on non-symlink systems so Linux
+    # checkouts materialize real symbolic links instead of plain files.
+    if (-not $symlinkCapable) {
+        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
+        if ($fixedCount -gt 0) {
+            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
+        }
     }
 
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
@@ -185,7 +314,50 @@ function Invoke-PluginGeneration {
 #endregion Orchestration
 
 #region Main Execution
-if ($MyInvocation.InvocationName -ne '.') {
+
+function Start-PluginGeneration {
+    <#
+    .SYNOPSIS
+        Entry point for CLI invocation. Returns 0 on success, 1 on failure.
+
+    .PARAMETER ScriptPath
+        Absolute path to this script file, used to resolve the repo root.
+
+    .PARAMETER CollectionIds
+        Optional collection IDs forwarded to Invoke-PluginGeneration.
+
+    .PARAMETER Refresh
+        Forwarded refresh switch.
+
+    .PARAMETER DryRun
+        Forwarded dry-run switch.
+
+    .PARAMETER Channel
+        Forwarded channel parameter.
+
+    .OUTPUTS
+        [int] Exit code: 0 for success, 1 for failure.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptPath,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$CollectionIds,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Refresh,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease'
+    )
+
     try {
         # Verify PowerShell-Yaml module
         if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
@@ -194,7 +366,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         Import-Module PowerShell-Yaml -ErrorAction Stop
 
         # Resolve paths
-        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        $ScriptDir = Split-Path -Parent $ScriptPath
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
 
         Write-Host 'HVE Core Plugin Generator' -ForegroundColor Cyan
@@ -210,7 +382,8 @@ if ($MyInvocation.InvocationName -ne '.') {
             -RepoRoot $RepoRoot `
             -CollectionIds $CollectionIds `
             -Refresh:$effectiveRefresh `
-            -DryRun:$DryRun
+            -DryRun:$DryRun `
+            -Channel $Channel
 
         if (-not $result.Success) {
             throw $result.ErrorMessage
@@ -220,12 +393,21 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host 'Done!' -ForegroundColor Green
         Write-Host "   $($result.PluginCount) plugin(s) generated."
 
-        exit 0
+        return 0
     }
     catch {
         Write-Error "Plugin generation failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
-        exit 1
+        return 1
     }
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    exit (Start-PluginGeneration `
+        -ScriptPath $MyInvocation.MyCommand.Path `
+        -CollectionIds $CollectionIds `
+        -Refresh:$Refresh `
+        -DryRun:$DryRun `
+        -Channel $Channel)
 }
 #endregion

@@ -85,6 +85,35 @@ Answer these questions to find your recommended installation method:
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
+## Collection Packages
+
+HVE-Core supports role-based artifact collections tailored to specific roles:
+
+| Collection    | Extension Name  | Collection ID  | Maturity     | Description                          |
+|---------------|-----------------|----------------|--------------|--------------------------------------|
+| **Full**      | `hve-core`      | `hve-core-all` | Stable       | All artifacts (recommended for most) |
+| **Developer** | `hve-developer` | `developer`    | Experimental | Software engineering focus           |
+
+> [!NOTE]
+> Experimental collections are only available via PreRelease extension builds. The Stable channel includes the Full collection only.
+
+### Extension Installation (Full Collection)
+
+The VS Code Marketplace extension installs the **full collection** containing all stable artifacts. This is the recommended approach for most users.
+
+### Clone Methods (Collection Filtering)
+
+Clone-based installation methods support collection-based agent filtering through the installer agent:
+
+1. Clone the repository using your preferred method
+2. Run the `hve-core-installer` agent
+3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
+
+The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
+
+> [!NOTE]
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
+
 ### Quick Decision Tree
 
 ```text

@@ -1,12 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "draft": true,
   "release-search-depth": 800,
   "commit-search-depth": 1000,
   "packages": {
     ".": {
       "release-type": "node",
       "package-name": "hve-core",
+      "draft": true,
       "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
@@ -21,8 +21,24 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "extension/package.json",
+          "path": "extension/templates/package.template.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": ".github/plugin/marketplace.json",
+          "jsonpath": "$.metadata.version"
+        },
+        {
+          "type": "json",
+          "path": ".github/plugin/marketplace.json",
+          "jsonpath": "$.plugins[*].version"
+        },
+        {
+          "type": "json",
+          "path": "plugins/*/.github/plugin/plugin.json",
+          "jsonpath": "$.version",
+          "glob": true
         }
       ]
     }

@@ -94,6 +94,14 @@ function Write-ConsistencyLog {
     }
 
     Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+
+    # Surface warnings and errors as CI annotations so they appear in the Actions/ADO UI
+    if ($Level -eq 'Warning') {
+        Write-CIAnnotation -Message $Message -Level Warning
+    }
+    elseif ($Level -eq 'Error') {
+        Write-CIAnnotation -Message $Message -Level Error
+    }
 }
 
 function Get-ActionVersionViolations {
@@ -352,11 +360,13 @@ function Export-ConsistencyReport {
     }
 }
 
-#region Main Execution
-
-function Invoke-ActionVersionConsistencyCheck {
+function Invoke-ActionVersionConsistency {
+    <#
+    .SYNOPSIS
+        Orchestrates the version consistency analysis.
+    #>
+    [OutputType([int])]
     [CmdletBinding()]
-    [OutputType([void])]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = '.github/workflows',
@@ -378,6 +388,7 @@ function Invoke-ActionVersionConsistencyCheck {
     Write-ConsistencyLog 'Starting GitHub Actions version consistency analysis...' -Level Info
     Write-ConsistencyLog "Scanning path: $Path" -Level Info
 
+    # Scan for violations
     $result = Get-ActionVersionViolations -WorkflowPath $Path
 
     $violations = $result.Violations
@@ -388,33 +399,83 @@ function Invoke-ActionVersionConsistencyCheck {
     Write-ConsistencyLog "Found $mismatchCount version mismatches" -Level $(if ($mismatchCount -gt 0) { 'Warning' } else { 'Info' })
     Write-ConsistencyLog "Found $missingCount missing version comments" -Level $(if ($missingCount -gt 0) { 'Warning' } else { 'Info' })
 
-    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions
+    # Emit CI annotations per violation
+    foreach ($violation in $violations) {
+        $annotationLevel = switch ($violation.Severity) {
+            'High' { 'Error' }
+            'Medium' { 'Warning' }
+            default { 'Notice' }
+        }
+        Write-CIAnnotation `
+            -Message "$($violation.ViolationType): $($violation.Description)" `
+            -Level $annotationLevel `
+            -File $violation.File `
+            -Line $violation.Line
+    }
 
-    $failed = $false
+    # Export report (pipe to Out-Host to prevent pipeline pollution of return value)
+    Export-ConsistencyReport -Violations $violations -Format $Format -OutputPath $OutputPath -TotalActions $result.TotalActions | Out-Host
+
+    # Emit CI step summary
+    if ($violations.Count -eq 0) {
+        Write-CIStepSummary -Content @"
+## Action Version Consistency
+
+:white_check_mark: **Status**: Passed
+
+All $($result.TotalActions) SHA-pinned actions have consistent version comments.
+"@
+    }
+    else {
+        $summaryLines = [System.Collections.ArrayList]::new()
+        [void]$summaryLines.Add(@"
+## Action Version Consistency
+
+:x: **Status**: Failed
+
+| Metric | Count |
+|--------|-------|
+| SHA-Pinned Actions | $($result.TotalActions) |
+| Version Mismatches | $mismatchCount |
+| Missing Comments | $missingCount |
+
+### Violations
+
+| File | Line | Type | Action | Severity | Description |
+|------|------|------|--------|----------|-------------|
+"@)
+        foreach ($v in $violations) {
+            [void]$summaryLines.Add("| ``$($v.File)`` | $($v.Line) | $($v.ViolationType) | ``$($v.Name)`` | $($v.Severity) | $($v.Description) |")
+        }
+
+        Write-CIStepSummary -Content ($summaryLines -join "`n")
+    }
+
+    # Determine exit code
+    $exitCode = 0
 
     if ($FailOnMismatch -and $mismatchCount -gt 0) {
         Write-ConsistencyLog "Failing due to $mismatchCount version mismatch(es) (-FailOnMismatch enabled)" -Level Error
-        $failed = $true
+        $exitCode = 1
     }
 
     if ($FailOnMissingComment -and $missingCount -gt 0) {
         Write-ConsistencyLog "Failing due to $missingCount missing version comment(s) (-FailOnMissingComment enabled)" -Level Error
-        $failed = $true
+        $exitCode = 1
     }
 
-    if ($failed) {
-        throw 'Version consistency violations detected'
-    }
-
-    if ($violations.Count -eq 0) {
+    if ($exitCode -eq 0 -and $violations.Count -eq 0) {
         Write-ConsistencyLog 'All SHA-pinned actions have consistent version comments!' -Level Success
     }
+
+    return $exitCode
 }
 
+#region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-ActionVersionConsistencyCheck -Path $Path -Format $Format -OutputPath $OutputPath -FailOnMismatch:$FailOnMismatch -FailOnMissingComment:$FailOnMissingComment
-        exit 0
+        $exitCode = Invoke-ActionVersionConsistency @PSBoundParameters
+        exit $exitCode
     }
     catch {
         Write-Error -ErrorAction Continue "Test-ActionVersionConsistency failed: $($_.Exception.Message)"
@@ -422,5 +483,4 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 1
     }
 }
-
 #endregion Main Execution

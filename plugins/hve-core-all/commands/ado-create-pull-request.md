@@ -1,1 +1,1 @@
-../../../.github/prompts/ado-create-pull-request.prompt.md
+../../../.github/prompts/ado/ado-create-pull-request.prompt.md

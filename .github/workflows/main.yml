@@ -64,7 +64,6 @@ jobs:
 
   release-please:
     name: Release Please
-    if: "${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'chore(main): release') }}"
     needs:
       - spell-check
       - markdown-lint
@@ -80,7 +79,7 @@ jobs:
       minor: ${{ steps.release.outputs.minor }}
       patch: ${{ steps.release.outputs.patch }}
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Generate GitHub App Token
         id: app-token
@@ -96,9 +95,40 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # On release commits, skip PR creation to prevent bogus PRs
+          # from draft release lazy tag timing. Release commits have zero
+          # unreleased changes so skipping loses nothing. The tag is
+          # created in the next step, ensuring subsequent runs find it.
+          skip-github-pull-request: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main)') }}
+
+      # Workaround: release-please with "draft": true uses lazy tag
+      # creation. The git tag is not materialized until the release is
+      # published. Without the tag, release-please cannot find the draft
+      # on subsequent runs, breaking version anchoring and causing bogus
+      # major-version PRs. The skip-github-pull-request conditional above
+      # prevents PR creation on release commits (zero unreleased changes),
+      # and this step creates the tag so subsequent runs find the release.
+      # Replace both workarounds with "force-tag-creation": true in
+      # release-please-config.json once release-please-action ships a
+      # version that includes googleapis/release-please#2627.
+      - name: Create git tag for draft release
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          TAG="${{ steps.release.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
+            gh api "/repos/$REPO/git/refs" \
+              -f "ref=refs/tags/$TAG" \
+              -f "sha=${{ github.sha }}"
+            echo "Created git tag $TAG -> ${{ github.sha }}"
+          else
+            echo "Git tag $TAG already exists"
+          fi
 
   extension-package-release:
-    name: Package VS Code Extension (Release)
+    name: Package VS Code Extensions (Release)
     needs: [release-please]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     uses: ./.github/workflows/extension-package.yml
@@ -107,11 +137,24 @@ jobs:
     permissions:
       contents: read
 
+  plugin-package-release:
+    name: Package Plugins (Release)
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    uses: ./.github/workflows/plugin-package.yml
+    with:
+      version: ${{ needs.release-please.outputs.version }}
+    permissions:
+      contents: read
+
   attest-and-upload:
-    name: Attest and Upload Release Assets
+    name: Attest and Upload (${{ matrix.id }})
     needs: [release-please, extension-package-release]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.extension-package-release.outputs.collections-matrix) }}
     permissions:
       contents: write
       id-token: write
@@ -120,13 +163,13 @@ jobs:
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: extension-vsix
+          name: extension-vsix-${{ matrix.id }}
           path: ./dist
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
-          subject-path: 'dist/*.vsix'
+          subject-path: "dist/*.vsix"
 
       - name: Upload VSIX to GitHub Release
         env:
@@ -134,13 +177,53 @@ jobs:
         run: |
           VSIX_FILE=$(find dist -name '*.vsix' | head -1)
           if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found in dist/"
+            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
             exit 1
           fi
           gh release upload "${{ needs.release-please.outputs.tag_name }}" "$VSIX_FILE" --clobber -R "${{ github.repository }}"
 
+  upload-plugin-packages:
+    name: Upload Plugin Package (${{ matrix.id }})
+    needs: [release-please, plugin-package-release]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plugin-package-release.outputs.collections-matrix) }}
+    permissions:
+      contents: write
+    steps:
+      - name: Download plugin artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: plugin-package-${{ matrix.id }}
+          path: ./dist/plugins
+
+      - name: Upload plugin package to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
+          if [ ! -f "$PLUGIN_ARCHIVE" ]; then
+            echo "::error::Plugin archive not found for collection ${{ matrix.id }}"
+            exit 1
+          fi
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$PLUGIN_ARCHIVE" --clobber -R "${{ github.repository }}"
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [release-please, attest-and-upload, upload-plugin-packages]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release edit "${{ needs.release-please.outputs.tag_name }}" --draft=false -R "${{ github.repository }}"
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          # Promote draft to published. The release becomes immutable
+          # after publish with all assets already attached.
+          gh release edit "$TAG" --draft=false -R "$REPO"

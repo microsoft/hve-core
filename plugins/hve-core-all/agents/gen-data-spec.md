@@ -1,1 +1,1 @@
-../../../.github/agents/gen-data-spec.agent.md
+../../../.github/agents/data-science/gen-data-spec.agent.md

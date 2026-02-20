@@ -29,23 +29,37 @@ Create an instructions file when you need to:
 
 ### Location
 
-All instruction files **MUST** be placed in:
+Instruction files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/instructions/
-├── language-name.instructions.md        # Language-specific
-├── framework-name.instructions.md       # Framework-specific
-├── workflow-name.instructions.md        # Workflow-specific
-└── subfolder/
-        └── specialized.instructions.md      # Organized by domain
+├── {collection-id}/
+│   └── your-instructions.instructions.md   # Collection-scoped
+├── coding-standards/
+│   ├── language.instructions.md             # Language-specific
+│   └── {language}/
+│       └── language.instructions.md         # Language with subdirectory
+├── shared/
+│   └── cross-collection.instructions.md     # Shared across collections
+└── hve-core/
+    └── markdown.instructions.md               # Collection-scoped (distributed)
 ```
+
+> [!IMPORTANT]
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through extension packages or collections. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
+
+<!-- markdownlint-disable-next-line MD028 -->
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 **Examples**:
 
-* `.github/instructions/python-script.instructions.md`
-* `.github/instructions/markdown.instructions.md`
-* `.github/instructions/csharp/csharp.instructions.md`
-* `.github/instructions/bash/bash.instructions.md`
+* `.github/instructions/coding-standards/python-script.instructions.md`
+* `.github/instructions/hve-core/markdown.instructions.md`
+* `.github/instructions/coding-standards/csharp/csharp.instructions.md`
+* `.github/instructions/coding-standards/bash/bash.instructions.md`
 
 ### Naming Convention
 
@@ -84,17 +98,6 @@ Instruction files **MUST**:
   * Directory scope: `**/src/**/*.sh`
   * Specific paths: `**/.copilot-tracking/pr/new/**`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this instruction
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New instructions should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
 
 **`version`** (string)
@@ -119,12 +122,54 @@ Instruction files **MUST**:
 ---
 description: 'Required instructions for Python script implementation with type hints, docstrings, and error handling'
 applyTo: '**/*.py, **/*.ipynb'
-maturity: 'stable'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Collection Entry Requirements
+
+All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
+
+> [!NOTE]
+> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+
+### Adding Your Instructions to a Collection
+
+After creating your instructions file, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+    # path can reference artifacts from any subfolder
+    - path: .github/instructions/{collection-id}/my-language.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+For instructions in language subdirectories, use the full path:
+
+```yaml
+items:
+    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+### Selecting Collections for Instructions
+
+Choose collections based on who uses the technology or pattern:
+
+| Instruction Type        | Recommended Collections                           |
+|-------------------------|---------------------------------------------------|
+| Language standards      | `hve-core-all`, `coding-standards`                |
+| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
+| Documentation standards | `hve-core-all`, `hve-core`                        |
+| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
+| Test standards          | `hve-core-all`, `coding-standards`                |
+| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ## Content Structure Standards
 
@@ -609,7 +654,7 @@ All checks **MUST** pass before merge.
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/`
+* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
 * Use `prompt-builder.agent.md` agent for assistance
 

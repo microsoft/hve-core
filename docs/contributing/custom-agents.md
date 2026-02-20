@@ -92,12 +92,18 @@ All agents **MUST** target the **latest available models** from **Anthropic and 
 
 ### Location
 
-All agent files **MUST** be placed in:
+Agent files are typically organized in a collection subdirectory by convention:
 
 ```text
-.github/agents/
-└── your-agent-name.agent.md
+.github/agents/{collection-id}/
+├── your-agent-name.agent.md
+└── subagents/
+    └── your-subagent-name.agent.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -125,18 +131,13 @@ Agent files **MUST**:
 * **Style**: Sentence case with proper punctuation
 * **Example**: `'Validates contributed content for quality and compliance with hve-core standards'`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this agent
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New agents should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
+
+**`name`** (string)
+
+* **Purpose**: Custom display name for the agent
+* **Format**: Lowercase kebab-case matching filename without extension
+* **Default**: File name used if not specified
 
 **`tools`** (array of strings)
 
@@ -163,21 +164,44 @@ Agent files **MUST**:
   * `context7/*` - Library documentation
   * `microsoft-docs/*` - Microsoft documentation
 
-**`mode`** (string enum)
+**`agents`** (array of strings)
 
-* **Purpose**: Defines agent interaction pattern
-* **Valid values**: `agent`, `assistant`, `copilot`
-* **Default**: Auto-detected from usage pattern
+* **Purpose**: Declares subagent dependencies available to this agent
+* **Format**: Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use
+* **Requirement**: When specified, include the `agent` tool in the `tools` property
 
-**`version`** (string)
+**`model`** (string or array of strings)
 
-* **Purpose**: Tracks agent revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
+* **Purpose**: Specifies the AI model for this agent
+* **Format**: Single model name or prioritized list of models (system tries each in order until available)
+* **Default**: Currently selected model in model picker when omitted
 
-**`author`** (string)
+**`user-invocable`** (boolean)
 
-* **Purpose**: Attribution for agent creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+* **Purpose**: Controls whether the agent appears in the agents dropdown
+* **Default**: `true`
+* **Usage**: Set to `false` for agents that are only accessible as subagents
+
+**`disable-model-invocation`** (boolean)
+
+* **Purpose**: Prevents the agent from being invoked as a subagent by other agents
+* **Default**: `false`
+* **Usage**: Set to `true` for agents that run subagents, cause side effects, or should only run when explicitly requested
+
+**`argument-hint`** (string)
+
+* **Purpose**: Hint text shown in the chat input field to guide users
+* **Format**: Brief text with required arguments first, then optional
+
+**`target`** (string enum)
+
+* **Purpose**: Target environment for the custom agent
+* **Valid values**: `vscode`, `github-copilot`
+
+**`mcp-servers`** (array of objects)
+
+* **Purpose**: MCP server configuration for GitHub Copilot agents
+* **Usage**: Only applicable when `target: github-copilot`
 
 **`handoffs`** (array of objects)
 
@@ -188,6 +212,7 @@ Agent files **MUST**:
   * `agent` (string, required): Target agent filename without `.agent.md` extension
   * `prompt` (string, optional): Pre-filled prompt text, can include slash commands
   * `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
+  * `model` (string, optional): Language model override for the handoff execution
 * **Requirements**: VS Code 1.106+ required for handoff support
 * **Example**:
 
@@ -199,17 +224,61 @@ Agent files **MUST**:
       send: true
   ```
 
+### Deprecated Fields
+
+**`infer`** (boolean)
+
+* **Status**: Deprecated. Use `user-invocable` and `disable-model-invocation` instead.
+* **Previous behavior**: `infer: true` (default) made the agent both visible in the picker and available as a subagent. `infer: false` hid it from both.
+
 ### Frontmatter Example
 
 ```yaml
 ---
 description: 'Validates and reviews contributed agents, prompts, and instructions for quality and compliance'
 tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
-mode: 'agent'
-version: '1.0.0'
-author: 'microsoft/hve-core'
+disable-model-invocation: true
+agents:
+  - prompt-tester
+  - prompt-evaluator
 ---
 ```
+
+## Collection Entry Requirements
+
+All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
+
+### Adding Your Agent to a Collection
+
+After creating your agent file, add an `items[]` entry to each target collection:
+
+```yaml
+items:
+  # path can reference artifacts from any subfolder
+  - path: .github/agents/{collection-id}/my-new-agent.agent.md
+  kind: agent
+  maturity: stable
+```
+
+### Selecting Collections for Agents
+
+Choose collections based on who benefits most from your agent:
+
+| Agent Type             | Recommended Collections                   |
+|------------------------|-------------------------------------------|
+| Task workflow agents   | `hve-core-all`, `hve-core`                |
+| Architecture agents    | `hve-core-all`, `project-planning`        |
+| Documentation agents   | `hve-core-all`, `hve-core`                |
+| Data science agents    | `hve-core-all`, `data-science`            |
+| Design thinking agents | `hve-core-all`, `design-thinking`         |
+| ADO/work item agents   | `hve-core-all`, `ado`, `project-planning` |
+| Code review agents     | `hve-core-all`, `hve-core`                |
+
+### Declaring Agent Dependencies
+
+If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
 
 ### MCP Tool Dependencies
 
@@ -387,7 +456,8 @@ Before submitting your agent, verify:
 * [ ] Valid YAML between `---` delimiters
 * [ ] `description` field present and descriptive (10-200 chars)
 * [ ] `tools` array contains only valid tool names (if present)
-* [ ] `mode` is one of: `agent`, `assistant`, `copilot` (if present)
+* [ ] `agents` array contains valid subagent names (if present)
+* [ ] `user-invocable` and `disable-model-invocation` used correctly (if present)
 * [ ] No trailing whitespace in values
 * [ ] Single newline at EOF
 
@@ -460,7 +530,7 @@ All checks **MUST** pass before merge.
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
 
 ---
 

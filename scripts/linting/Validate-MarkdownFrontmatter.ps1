@@ -31,6 +31,9 @@ param(
     [string[]]$ExcludePaths = @(
         'scripts/tests/Fixtures/**',
         'extension/README.md',
+        'extension/README.*.md',
+        'extension/templates/README.template.md',
+        'collections/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
         'plugins/**'
@@ -541,7 +544,7 @@ function Test-FrontmatterValidation {
         $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath (Join-Path $repoRoot ".gitignore")
         foreach ($path in ($Paths | Where-Object { -not [string]::IsNullOrEmpty($_) })) {
             if (Test-Path $path) {
-                $rawFiles = Get-ChildItem -Path $path -Filter '*.md' -Recurse -File -ErrorAction SilentlyContinue
+                $rawFiles = Get-ChildItem -Path $path -Filter '*.md' -Recurse -File -Force -ErrorAction SilentlyContinue
                 foreach ($f in $rawFiles) {
                     if ($null -eq $f -or [string]::IsNullOrEmpty($f.FullName)) { continue }
                     $excluded = $false

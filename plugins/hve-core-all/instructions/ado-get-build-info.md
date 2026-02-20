@@ -1,1 +1,1 @@
-../../../.github/instructions/ado-get-build-info.instructions.md
+../../../.github/instructions/ado/ado-get-build-info.instructions.md

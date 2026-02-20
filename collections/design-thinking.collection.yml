@@ -1,0 +1,122 @@
+id: design-thinking
+name: Design Thinking
+description: Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
+tags:
+  - design-thinking
+  - coaching
+  - methodology
+  - ux
+maturity: experimental
+items:
+  # Agents
+  - path: .github/agents/design-thinking/dt-coach.agent.md
+    kind: agent
+    maturity: experimental
+
+  # Prompts
+  - path: .github/prompts/design-thinking/dt-start-project.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    kind: prompt
+    maturity: experimental
+
+  # Instructions
+  - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-09-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
+    kind: instruction
+    maturity: experimental
+display:
+  ordering: alpha

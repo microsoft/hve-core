@@ -85,18 +85,245 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
 4. **Future-proofing**: Older models will be deprecated and removed from service
 
-## Maturity Field Requirements
+## Collections
 
-All AI artifacts (agents, instructions, prompts) **MUST** include a `maturity` field in frontmatter.
+Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and distribution.
 
-### Purpose
+### Collection Purpose
+
+Collection manifests serve three primary functions:
+
+1. **Selection**: Determine which artifacts are included in each collection via `items[]`
+2. **Maturity filtering**: Control channel inclusion with `items[].maturity` (defaults to `stable`)
+3. **Packaging inputs**: Provide canonical manifest data used by build and distribution flows
+
+### Collection Structure
+
+Each manifest contains top-level collection metadata and an `items` array:
+
+```yaml
+id: coding-standards
+name: Coding Standards
+description: Language-specific coding instructions
+tags:
+  - coding-standards
+  - bash
+  - python
+items:
+  - path: .github/instructions/coding-standards/python-script.instructions.md
+    kind: instruction
+    maturity: stable
+  - path: .github/prompts/hve-core/task-plan.prompt.md
+    kind: prompt
+    maturity: preview
+```
+
+### Collection Tags
+
+Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
+
+| Collection          | Tags                                                                                 |
+|---------------------|--------------------------------------------------------------------------------------|
+| `hve-core-all`      | `hve`, `complete`, `bundle`                                                          |
+| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                       |
+| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`           |
+| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`        |
+| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                   |
+| `experimental`      | `experimental`, `media`, `utilities`                                                 |
+| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
+| `installer`         | `installer`, `setup`, `onboarding`                                                   |
+| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
+| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                  |
+
+When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
+
+### Collection Item Format
+
+Each `items[]` entry follows this structure:
+
+```yaml
+- path: .github/agents/hve-core/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
+```
+
+| Field      | Required | Description                                                                    |
+|------------|----------|--------------------------------------------------------------------------------|
+| `path`     | Yes      | Repository-relative path to the artifact source                                |
+| `kind`     | Yes      | Artifact type (`agent`, `prompt`, `instruction`, `skill`, or `hook`)           |
+| `maturity` | No       | Release readiness level; when omitted, effective maturity defaults to `stable` |
+
+### Adding Artifacts to a Collection
+
+When contributing a new artifact:
+
+1. Create the artifact file in the appropriate directory
+2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
+3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
+4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
+5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
+6. Run `npm run plugin:validate` to validate collection manifests
+7. Run `npm run plugin:generate` to regenerate plugin directories
+
+### Repo-Specific Artifact Exclusion
+
+Artifacts placed at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
+
+### Deprecated Artifact Placement
+
+Artifacts that have been superseded or are scheduled for removal MUST be moved to `.github/deprecated/{type}/` (e.g., `.github/deprecated/agents/`, `.github/deprecated/prompts/`). The build system automatically excludes this subtree from collection manifests, plugin generation, and extension packaging.
+
+#### When to Move an Artifact to Deprecated
+
+* A newer artifact fully replaces the existing one
+* The artifact is no longer maintained or tested
+* The artifact targets a retired platform or workflow
+
+#### How to Deprecate an Artifact
+
+1. Move the file with `git mv` to preserve history: `git mv .github/agents/{collection}/old.agent.md .github/deprecated/agents/old.agent.md`
+2. Add a note in the deprecated file's frontmatter or body identifying its replacement
+3. Remove the artifact's entry from all `collections/*.collection.yml` files
+4. Run `npm run plugin:generate` to regenerate plugin outputs
+5. Update any documentation that references the old artifact path
+
+#### Exclusion Scope
+
+Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` are excluded from:
+
+* Collection manifests (`collections/*.collection.yml` items)
+* Plugin generation (`plugins/` directory contents)
+* Extension packaging and distribution
+* Collection builds and bundles
+* Artifact selection for published releases
+
+#### Validation Enforcement
+
+The plugin generation and validation tooling actively enforces this exclusion:
+
+* Collection validation fails if root-level repo-specific paths appear in `items[]`
+* Plugin generation skips root-level artifacts
+* Extension packaging filters out these files during build
+
+#### Placement Guidelines
+
+| Scope                       | Location                                                | Included in Plugins |
+|-----------------------------|---------------------------------------------------------|---------------------|
+| **Repository-specific**     | `.github/instructions/` (root, no subdirectory)         | ❌ No                |
+| **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
+| **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
+| **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
+
+If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+
+## Collection Taxonomy
+
+Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
+
+### Defined Collections
+
+| Collection            | Identifier          | Description                                                                          |
+|-----------------------|---------------------|--------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
+| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation       |
+| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
+| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
+| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions |
+| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                               |
+| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution               |
+| **Installer**         | `installer`         | HVE Core installation and environment setup                                          |
+| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                        |
+| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                       |
+
+### Collection Assignment Guidelines
+
+When assigning collections to artifacts:
+
+* **Universal artifacts** should include `hve-core-all` plus any role-specific collections that particularly benefit
+* **Role-specific artifacts** should include only the relevant collections (omit `hve-core-all` for highly specialized artifacts)
+* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant collections
+
+**Example collection assignments:**
+
+Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
+
+```yaml
+# In collections/hve-core-all.collection.yml - Universal
+- path: .github/instructions/hve-core/markdown.instructions.md
+  kind: instruction
+
+# In collections/coding-standards.collection.yml - Coding standards
+- path: .github/instructions/hve-core/markdown.instructions.md
+  kind: instruction
+
+# In collections/hve-core.collection.yml - Core workflow
+- path: .github/agents/hve-core/rpi-agent.agent.md
+  kind: agent
+```
+
+### Selecting Collections for New Artifacts
+
+Answer these questions when determining collection assignments:
+
+1. **Who is the primary user?** Identify the main role that benefits from this artifact
+2. **Who else benefits?** Consider secondary roles that may find value
+3. **Is it foundational?** Core workflow artifacts should include multiple collections
+4. **Is it specialized?** Domain-specific artifacts may target fewer collections
+
+When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
+
+## Extension Packaging
+
+Collections are consumed during VS Code Extension packaging to determine which artifacts are included in stable and pre-release extension channels.
+
+### Agent Handoff Dependencies
+
+During VS Code Extension packaging, agent handoff dependencies are automatically resolved to ensure UI navigation buttons work correctly.
+
+#### How Handoff Resolution Works
+
+The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) includes the `Resolve-HandoffDependencies` function:
+
+1. **Seed agents**: Starts with agents listed in the collection manifest
+2. **Parse frontmatter**: Reads the `handoffs` field from each agent's frontmatter
+3. **BFS traversal**: Performs breadth-first search to find all reachable agents through handoff chains
+4. **Include all**: Adds all discovered agents to the extension package
+
+#### Collection Manifests and Dependencies
+
+**Collection manifests do NOT declare dependencies.** They only specify:
+
+* `path`: Repository-relative path to the artifact
+* `kind`: Artifact type (agent, prompt, instruction, skill, hook)
+* `maturity`: Release readiness level (optional, defaults to stable)
+
+Dependencies are resolved through agent frontmatter `handoffs` declarations during extension packaging, not through collection manifest fields.
+
+#### Creating Artifacts with Dependencies
+
+When creating artifacts that reference other artifacts:
+
+* **Agent handoffs**: Use the `handoffs` frontmatter field in agents to declare UI navigation buttons
+* **Document relationships**: Clearly describe dependencies in artifact documentation
+* **Test in isolation**: Verify your artifact works when only its collection is installed
+* **Keep coupling minimal**: Avoid unnecessary dependencies between artifacts
+
+For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
+
+### Maturity Field Requirements
+
+Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
+
+#### Purpose
 
 The maturity field controls which extension channel includes the artifact:
 
 * **Stable channel**: Only artifacts with `maturity: stable`
 * **Pre-release channel**: Artifacts with `stable`, `preview`, or `experimental` maturity
 
-### Valid Values
+#### Valid Values
 
 | Value          | Description                                 | Stable Channel | Pre-release Channel |
 |----------------|---------------------------------------------|----------------|---------------------|
@@ -105,27 +332,115 @@ The maturity field controls which extension channel includes the artifact:
 | `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
 | `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
 
-### Default for New Contributions
+When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
 
-New artifacts **SHOULD** use `maturity: stable` unless:
+#### Default for New Contributions
+
+New collection items **SHOULD** use `maturity: stable` unless:
 
 * The artifact is a proof-of-concept or experimental feature
 * The artifact requires additional testing or feedback before wide release
 * The contributor explicitly intends to target early adopters
 
-### Example
+#### Setting Maturity
+
+Add or update the maturity value on each collection item in `collections/*.collection.yml`:
 
 ```yaml
----
-description: 'Specialized agent for security analysis'
-maturity: 'stable'
-tools: ['codebase', 'search']
----
+items:
+  # path can reference artifacts from any subfolder
+  - path: .github/agents/{collection-id}/example.agent.md
+    kind: agent
+    maturity: stable
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
 **Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+
+## Plugin Generation
+
+The `plugins/` directory contains **auto-generated plugin bundles** created from collection manifests for use with GitHub Copilot CLI. These plugin directories are outputs of the build process and **MUST NOT be edited directly**.
+
+### Generation Workflow
+
+When you add an artifact to a collection manifest:
+
+1. **Author artifact**: Create your agent, prompt, instruction, or skill in `.github/`
+2. **Update collection**: Add an `items[]` entry to one or more `collections/*.collection.yml` files
+3. **Validate collections**: Run `npm run plugin:validate` to check manifest correctness
+4. **Generate plugins**: Run `npm run plugin:generate` to regenerate all plugin directories
+5. **Commit both**: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
+
+### Plugin Directory Structure
+
+Each generated plugin directory contains:
+
+* **Symlinked artifacts**: Direct symlinks to source files in `.github/` (preserves single source of truth)
+* **Generated README**: Auto-generated documentation listing all included artifacts
+* **Plugin manifest**: `plugin.json` file for GitHub Copilot CLI plugin system
+* **Marketplace metadata**: Aggregated data for extension distribution
+
+### Critical Rules for Plugin Files
+
+> [!WARNING]
+> Files under `plugins/` are generated outputs and MUST NOT be edited directly.
+
+* **Regenerate after changes**: Always run `npm run plugin:generate` after modifying collection manifests or artifacts
+* **Symlinked files**: Markdown artifacts are symlinked, so edits to plugin files modify source artifacts
+* **Generated files**: README and JSON files are generated fresh on each run
+* **Durable edits**: Direct edits to plugin files will be overwritten or cause conflicts
+* **Source of truth**: Always edit the source artifact in `.github/`, not the plugin copy
+
+### When to Regenerate Plugins
+
+Run `npm run plugin:generate` whenever you:
+
+* Add a new artifact to a collection manifest
+* Remove an artifact from a collection manifest
+* Modify artifact frontmatter (description, dependencies, handoffs)
+* Update artifact file content that affects generated README documentation
+* Change collection manifest metadata (tags, description, name)
+* Update the `hve-core-all` collection (auto-updated during generation)
+
+### Validating Collection Manifests
+
+Before generating plugins, validate collection YAML files to catch errors early:
+
+```bash
+npm run plugin:validate
+```
+
+This command checks:
+
+* **YAML syntax**: Valid YAML structure and formatting
+* **Required fields**: Presence of `id`, `name`, `description`, `items`
+* **Path references**: All artifact paths exist and are accessible
+* **Kind values**: Valid artifact kinds (agent, prompt, instruction, skill, hook)
+* **Maturity values**: Valid maturity levels (stable, preview, experimental, deprecated)
+* **Duplicate paths**: No duplicate artifact entries within a collection
+* **Root-level exclusions**: No repo-specific artifacts from `.github/{type}/` root
+
+Always validate before generating plugins:
+
+```bash
+# Recommended workflow
+npm run plugin:validate  # Validate collections first
+npm run plugin:generate  # Then regenerate plugins
+```
+
+Validation errors will prevent successful plugin generation, so fixing validation issues first saves time and prevents incomplete plugin outputs.
+
+### Plugin Generation Reference
+
+For detailed documentation on the plugin generation system, including:
+
+* Generation script implementation details
+* Collection validation rules
+* Plugin directory structure specifications
+* Troubleshooting generation errors
+
+See the [Plugin Scripts README](../../scripts/plugins/README.md).
 
 ## XML-Style Block Standards
 
@@ -357,6 +672,9 @@ npm run lint:md-links
 
 # PowerShell analysis (if applicable)
 npm run lint:ps
+
+# Validate skill structure (if applicable)
+npm run validate:skills
 ```
 
 ### Quality Gates
@@ -508,7 +826,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See [commit-message.instructions.md](../../.github/instructions/commit-message.instructions.md) for the complete list of types and scopes.
+See [commit-message.instructions.md](../../.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
 
 ## Getting Help
 
@@ -516,9 +834,9 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-* **Agents**: Examine files in `.github/agents/`
-* **Prompts**: Examine files in `.github/prompts/`
-* **Instructions**: Examine files in `.github/instructions/`
+* **Agents**: Examine files in `.github/agents/{collection-id}/` (the conventional location)
+* **Prompts**: Examine files in `.github/prompts/{collection-id}/` (the conventional location)
+* **Instructions**: Examine files in `.github/instructions/{collection-id}/` (the conventional location)
 
 ### Check Repository Standards
 
