@@ -1,0 +1,1 @@
+../../../.github/prompts/ado/ado-get-build-info.prompt.md
