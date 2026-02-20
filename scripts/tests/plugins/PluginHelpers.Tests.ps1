@@ -510,7 +510,6 @@ Describe 'Update-HveCoreAllCollection - display key ordering' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo-display-order'
         $ghDir = Join-Path $script:repoRoot '.github'
-        $collectionsDir = Join-Path $script:repoRoot 'collections'
 
         # Create a minimal artifact so discovery finds at least one item
         $agentsDir = Join-Path $ghDir 'agents/test-collection'
