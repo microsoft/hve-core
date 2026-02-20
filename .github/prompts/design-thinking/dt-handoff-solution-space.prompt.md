@@ -115,13 +115,13 @@ Create a self-contained RPI handoff document at `.copilot-tracking/plans/{projec
 
 Transform DT artifacts into planning-ready context using these mappings:
 
-| DT Artifact                     | RPI Planning Context           | Notes                                  |
-|---------------------------------|--------------------------------|----------------------------------------|
-| Validated concepts (Method 5)   | Implementation requirements    | Preserve concept descriptions          |
-| Constraint discoveries (Method 6) | Technical boundaries         | Group by category, flag blockers       |
-| User behavior patterns (Method 6) | Usage scenarios              | Include observation evidence           |
-| Invalidated assumptions         | Risks and mitigations          | Document what testing disproved        |
-| Technical unknowns              | Research scope priorities      | Items marked assumed/unknown/conflicting |
+| DT Artifact                       | RPI Planning Context        | Notes                                    |
+|-----------------------------------|-----------------------------|------------------------------------------|
+| Validated concepts (Method 5)     | Implementation requirements | Preserve concept descriptions            |
+| Constraint discoveries (Method 6) | Technical boundaries        | Group by category, flag blockers         |
+| User behavior patterns (Method 6) | Usage scenarios             | Include observation evidence             |
+| Invalidated assumptions           | Risks and mitigations       | Document what testing disproved          |
+| Technical unknowns                | Research scope priorities   | Items marked assumed/unknown/conflicting |
 
 Structure the document with these sections:
 
