@@ -67,6 +67,9 @@ items:
   - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
     kind: instruction
     maturity: experimental
