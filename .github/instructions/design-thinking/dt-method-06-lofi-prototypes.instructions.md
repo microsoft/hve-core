@@ -183,13 +183,13 @@ Fidelity boundary: the `.copilot-tracking/sandbox/` environment with model invoc
 
 ### AI-Assisted Prototypes
 
-| Traditional      | AI/HVE Equivalent             | What It Tests            | Lo-Fi Signals                             |
-|------------------|-------------------------------|--------------------------|-------------------------------------------|
-| Paper Prototype  | Markdown document prototype   | Information shape        | No frontmatter, no linting, no formatting |
-| Storyboarding    | User journey narrative        | Conversation flow        | Plain prose numbered list, no diagrams    |
-| Wizard of Oz     | Human-simulated AI response   | Output usefulness        | Human-written in <15 min, no model call   |
-| Role Playing     | Stakeholder perspective sim   | Clarity for non-authors  | No test framework, people reading files   |
-| Cardboard        | Stub agent files              | Information architecture | Placeholder content, TODO markers         |
+| Traditional     | AI/HVE Equivalent           | What It Tests            | Lo-Fi Signals                             |
+|-----------------|-----------------------------|--------------------------|-------------------------------------------|
+| Paper Prototype | Markdown document prototype | Information shape        | No frontmatter, no linting, no formatting |
+| Storyboarding   | User journey narrative      | Conversation flow        | Plain prose numbered list, no diagrams    |
+| Wizard of Oz    | Human-simulated AI response | Output usefulness        | Human-written in <15 min, no model call   |
+| Role Playing    | Stakeholder perspective sim | Clarity for non-authors  | No test framework, people reading files   |
+| Cardboard       | Stub agent files            | Information architecture | Placeholder content, TODO markers         |
 
 ## Feedback Planning
 
@@ -197,13 +197,13 @@ Every test session begins with a stated hypothesis: "We believe [stakeholder] ne
 
 ### Leap-Enabling Questions
 
-| Category               | Pattern                            | Example                                                        |
-|------------------------|------------------------------------|----------------------------------------------------------------|
+| Category                | Pattern                            | Example                                                       |
+|-------------------------|------------------------------------|---------------------------------------------------------------|
 | Behavioral walk-through | "Walk me through how you would..." | "Walk me through how you'd use this when the machine acts up" |
-| Barrier discovery      | "What would prevent you from..."   | "What would prevent you from using this during typical work?" |
-| Environmental fit      | "Does this work in..."             | "Does this work in the actual environment where it's used?"   |
-| Workflow integration   | "When and how does this fit..."    | "When does this fit into your current work process?"          |
-| Observable interaction | "Show me how..."                   | "Show me how you would interact with this"                    |
+| Barrier discovery       | "What would prevent you from..."   | "What would prevent you from using this during typical work?" |
+| Environmental fit       | "Does this work in..."             | "Does this work in the actual environment where it's used?"   |
+| Workflow integration    | "When and how does this fit..."    | "When does this fit into your current work process?"          |
+| Observable interaction  | "Show me how..."                   | "Show me how you would interact with this"                    |
 
 Avoid leap-killing patterns: "Do you like...?" generates agreement without insight. "What do you think?" elicits surface opinion. "Is this useful?" produces binary responses with no constraint data.
 
