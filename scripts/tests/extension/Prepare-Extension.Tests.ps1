@@ -2533,4 +2533,90 @@ description: "Deprecated skill"
 
 #endregion Deprecated Path Exclusion Tests
 
+#region Maturity Notice Tests
+
+Describe 'New-CollectionReadme - maturity notice' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
+
+        # Create minimal README template with all tokens including MATURITY_NOTICE
+        $templateContent = @"
+# {{DISPLAY_NAME}}
+
+> {{DESCRIPTION}}
+
+{{MATURITY_NOTICE}}
+
+{{BODY}}
+
+## Included Artifacts
+
+{{ARTIFACTS}}
+
+{{FULL_EDITION}}
+"@
+        $script:templatePath = Join-Path $script:tempDir 'README.template.md'
+        Set-Content -Path $script:templatePath -Value $templateContent
+
+        # Create collection body markdown
+        $script:bodyPath = Join-Path $script:tempDir 'test.collection.md'
+        Set-Content -Path $script:bodyPath -Value 'Collection body content.'
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Includes experimental notice for experimental collection' {
+        $collection = @{
+            id          = 'test-exp'
+            name        = 'Test Experimental'
+            description = 'An experimental collection'
+            maturity    = 'experimental'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-exp.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Match '\u26A0' # warning sign emoji
+        $content | Should -Match 'Pre-Release channel'
+    }
+
+    It 'Has no notice for collection without maturity field' {
+        $collection = @{
+            id          = 'test-default'
+            name        = 'Test Default'
+            description = 'A default collection'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-default.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Not -Match '\u26A0'
+    }
+
+    It 'Has no notice for explicit stable maturity' {
+        $collection = @{
+            id          = 'test-stable'
+            name        = 'Test Stable'
+            description = 'A stable collection'
+            maturity    = 'stable'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-stable.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Not -Match '\u26A0'
+    }
+}
+
+#endregion Maturity Notice Tests
+
 #endregion Additional Coverage Tests

@@ -18,9 +18,9 @@ items:
   kind: agent
 - path: .github/agents/design-thinking/dt-coach.agent.md
   kind: agent
+  maturity: experimental
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-  maturity: experimental
 - path: .github/agents/hve-core/doc-ops.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
@@ -87,25 +87,23 @@ items:
   kind: prompt
 - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/design-thinking/dt-start-project.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/github/github-add-issue.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/github/github-discover-issues.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/github/github-execute-backlog.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/github/github-sprint-plan.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/doc-ops-update.prompt.md
@@ -166,83 +164,110 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/github/community-interaction.instructions.md
   kind: instruction
-  maturity: experimental
 - path: .github/instructions/github/github-backlog-discovery.instructions.md
   kind: instruction
-  maturity: experimental
 - path: .github/instructions/github/github-backlog-planning.instructions.md
   kind: instruction
-  maturity: experimental
 - path: .github/instructions/github/github-backlog-triage.instructions.md
   kind: instruction
-  maturity: experimental
 - path: .github/instructions/github/github-backlog-update.instructions.md
   kind: instruction
-  maturity: experimental
 - path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
@@ -260,5 +285,4 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  featured: true
   ordering: alpha
