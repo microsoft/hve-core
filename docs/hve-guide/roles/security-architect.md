@@ -92,8 +92,8 @@ arguments.
 | Agent                     | Purpose                                       | Docs                                         |
 |---------------------------|-----------------------------------------------|----------------------------------------------|
 | **security-plan-creator** | Security plan and threat model generation     | Agent file                                   |
-| **task-researcher**       | Security-focused codebase and threat research | [Task Researcher](../rpi/task-researcher.md) |
-| **task-reviewer**         | Security compliance review                    | [Task Reviewer](../rpi/task-reviewer.md)     |
+| **task-researcher**       | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher.md) |
+| **task-reviewer**         | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
 | **memory**                | Session context and preference persistence    | Agent file                                   |
 
 Prompts complement the agents for targeted security workflows:
@@ -123,7 +123,7 @@ Prompts complement the agents for targeted security workflows:
 
 > [!TIP]
 > Explore security planning tools: [Security Planning Collection](../../collections/security-planning.collection.md)
-> Review the threat model documentation: [Threat Model](../security/threat-model.md)
+> Review the threat model documentation: [Threat Model](../../security/threat-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

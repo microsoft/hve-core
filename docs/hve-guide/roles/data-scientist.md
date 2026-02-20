@@ -103,8 +103,8 @@ granularity, and GDPR privacy constraints for EU customer data.
 | **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                   |
 | **gen-data-spec**            | Data specification document creation       | Agent file                                   |
 | **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                   |
-| **task-researcher**          | Data source and pattern research           | [Task Researcher](../rpi/task-researcher.md) |
-| **task-planner**             | Analytics pipeline planning                | [Task Planner](../rpi/task-planner.md)       |
+| **task-researcher**          | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
+| **task-planner**             | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
 | **memory**                   | Session context and preference persistence | Agent file                                   |
 
 Prompts complement the agents for cross-cutting workflows:

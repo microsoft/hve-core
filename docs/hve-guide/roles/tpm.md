@@ -101,11 +101,11 @@ Set iteration path to Sprint 24.
 | **prd-builder**             | Product requirements document generation      | Agent file                                   |
 | **agile-coach**             | Sprint planning and agile methodology         | Agent file                                   |
 | **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion      | Agent file                                   |
-| **github-backlog-manager**  | GitHub issue discovery and backlog automation | [GitHub Backlog](../agents/github-backlog/)  |
+| **github-backlog-manager**  | GitHub issue discovery and backlog automation | [GitHub Backlog](../../agents/github-backlog/)  |
 | **product-manager-advisor** | Product strategy and prioritization guidance  | Agent file                                   |
 | **ux-ui-designer**          | UX/UI design guidance and review              | Agent file                                   |
-| **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../rpi/task-researcher.md) |
-| **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../rpi/README.md)                 |
+| **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../../rpi/task-researcher.md) |
+| **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../../rpi/README.md)                 |
 | **memory**                  | Session context and preference persistence    | Agent file                                   |
 
 ## Tips
@@ -126,7 +126,7 @@ Set iteration path to Sprint 24.
 ## Next Steps
 
 > [!TIP]
-> Explore GitHub Backlog automation: [GitHub Backlog Manager](../agents/github-backlog/)
+> Explore GitHub Backlog automation: [GitHub Backlog Manager](../../agents/github-backlog/)
 > Understand the full project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 > Review collaboration with Security: [Security Architect Guide](security-architect.md)
 

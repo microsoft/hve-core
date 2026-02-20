@@ -22,7 +22,7 @@ Setup is the entry point for every HVE Core engagement. This stage covers instal
 You enter Setup when starting a new project or joining an existing engagement that uses HVE Core tooling.
 
 > [!NOTE]
-> Prerequisites: VS Code with GitHub Copilot Chat enabled. See [Getting Started](../getting-started/install.md) for detailed installation instructions.
+> Prerequisites: VS Code with GitHub Copilot Chat enabled. See [Getting Started](../../getting-started/install.md) for detailed installation instructions.
 
 ## Available Tools
 

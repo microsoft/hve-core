@@ -43,7 +43,7 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 
 Install HVE Core and run your first agent interaction.
 
-1. Follow the [installation guide](../getting-started/install.md) to set up your development environment.
+1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
 2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments. For custom installations, use the **hve-core-installer** agent instead.
 3. Open a chat and select the **memory** agent to verify agent responsiveness.
 4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
@@ -167,9 +167,9 @@ for each validator.
 ## Next Steps
 
 > [!TIP]
-> Start with installation: [Install Guide](../getting-started/install.md)
-> Run your first workflow: [First Workflow Guide](../getting-started/first-workflow.md)
-> Explore the RPI methodology: [RPI Documentation](../rpi/README.md)
+> Start with installation: [Install Guide](../../getting-started/install.md)
+> Run your first workflow: [First Workflow Guide](../../getting-started/first-workflow.md)
+> Explore the RPI methodology: [RPI Documentation](../../rpi/README.md)
 > Find your role: [Role Guides Overview](README.md)
 
 ---

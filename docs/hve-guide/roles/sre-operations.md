@@ -50,7 +50,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 
 ## Stage Walkthrough
 
-1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
+1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
 2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-plan-creator** agent for infrastructure security planning.
 3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
 4. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
@@ -100,9 +100,9 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 | Agent                     | Purpose                                        | Docs                                           |
 |---------------------------|------------------------------------------------|------------------------------------------------|
-| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../rpi/task-researcher.md)   |
-| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../rpi/task-implementor.md) |
-| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../rpi/task-reviewer.md)       |
+| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher.md)   |
+| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor.md) |
+| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer.md)       |
 | **security-plan-creator** | Infrastructure security planning               | Agent file                                     |
 | **pr-review**             | Pull request review for infrastructure changes | Agent file                                     |
 | **memory**                | Session context and preference persistence     | Agent file                                     |
