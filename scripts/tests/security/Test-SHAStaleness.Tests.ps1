@@ -136,26 +136,6 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     }
 }
 
-Describe 'Write-SecurityLog' -Tag 'Unit' {
-    Context 'Log output' {
-        It 'Does not throw for Info level' {
-            { Write-SecurityLog -Message 'Test message' -Level Info } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Warning level' {
-            { Write-SecurityLog -Message 'Warning message' -Level Warning } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Error level' {
-            { Write-SecurityLog -Message 'Error message' -Level Error } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Success level' {
-            { Write-SecurityLog -Message 'Success message' -Level Success } | Should -Not -Throw
-        }
-    }
-}
-
 Describe 'Compare-ToolVersion' -Tag 'Unit' {
     Context 'Semantic version comparison' {
         It 'Returns true when latest is newer major version' {
@@ -876,52 +856,6 @@ jobs:
     }
 }
 
-Describe 'Write-OutputResult' -Tag 'Unit' {
-    Context 'JSON output format' {
-        It 'Creates output file with correct structure' {
-            $jsonPath = Join-Path $TestDrive 'output.json'
-            $deps = @(
-                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
-            )
-
-            Write-OutputResult -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
-
-            Test-Path $jsonPath | Should -BeTrue
-            $content = Get-Content $jsonPath | ConvertFrom-Json
-            $content.TotalStaleItems | Should -Be 1
-        }
-    }
-
-    Context 'Console output format' {
-        It 'Writes formatted output via Write-SecurityLog' {
-            Mock Write-SecurityLog { }
-
-            $deps = @(
-                @{ Type = 'GitHubAction'; ActionRepo = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml' }
-            )
-
-            Write-OutputResult -Dependencies $deps -OutputFormat 'console'
-
-            Should -Invoke Write-SecurityLog -Times 1
-        }
-    }
-
-    Context 'Summary output format' {
-        It 'Groups dependencies by type' {
-            Mock Write-Output { }
-
-            $deps = @(
-                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
-                @{ Type = 'Tool'; Name = 'node'; DaysOld = 90; Severity = 'High' }
-            )
-
-            Write-OutputResult -Dependencies $deps -OutputFormat 'Summary'
-
-            Should -Invoke Write-Output -Times 1
-        }
-    }
-}
-
 Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
     BeforeAll {
         Save-CIEnvironment
@@ -937,7 +871,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
 
             Mock Test-GitHubActionsForStaleness { return @() }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
             Mock Write-SecurityLog { }
 
@@ -958,7 +892,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 )
             }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Throw '*Stale dependencies detected*'
@@ -972,7 +906,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 $script:StaleDependencies = @()
             }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Not -Throw
