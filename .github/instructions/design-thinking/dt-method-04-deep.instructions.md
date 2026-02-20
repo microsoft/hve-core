@@ -5,7 +5,8 @@ applyTo: '**/.copilot-tracking/dt/**/method-04*'
 
 # DT Method 04 Deep: Advanced Brainstorming Techniques
 
-On-demand deep reference for Method 4. The coach loads this file when users encounter complex ideation scenarios requiring advanced facilitation techniques, creative block recovery, structured convergence evaluation, or cross-industry solution transfer that exceed the method-tier guidance. The method-tier's Ideation Facilitator and Convergence Guide coaching hats provide foundational divergent and convergent support; this file extends those hats with specialized protocols for challenging brainstorming environments.
+On-demand deep reference for Method 4. The coach loads this file when users encounter complex ideation scenarios requiring advanced facilitation techniques, creative block recovery, structured convergence evaluation, or cross-industry solution transfer that exceed the method-tier guidance.
+The method-tier's Ideation Facilitator and Convergence Guide coaching hats provide foundational divergent and convergent support; this file extends those hats with specialized protocols for challenging brainstorming environments.
 
 ## Advanced Facilitation Techniques
 
