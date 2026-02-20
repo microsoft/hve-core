@@ -16,6 +16,8 @@ items:
     kind: prompt
   - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
     kind: prompt
+  - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    kind: prompt
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
@@ -36,6 +38,8 @@ items:
     kind: instruction
   - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
     kind: instruction
+  - path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
+    kind: instruction
   - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
     kind: instruction
   - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
@@ -53,6 +57,24 @@ items:
   - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
     kind: instruction
   - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
     kind: instruction
 display:
   ordering: alpha
