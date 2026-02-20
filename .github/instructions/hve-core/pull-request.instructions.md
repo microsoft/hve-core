@@ -65,7 +65,7 @@ Entry criteria:
 | `false`       | `true`      | Block and provide remediation: report failed checks with output, provide specific fix guidance, then restart Step 1 |
 | `true`        | `true`      | Block and provide combined remediation for changed files and failed checks in one message, then restart Step 1 |
 
-11. When no template is resolved or no check commands are found, apply Canonical Fallback Rules and continue.
+When no template is resolved or no check commands are found, apply Canonical Fallback Rules and continue.
 
 Exit criteria:
 
@@ -227,7 +227,7 @@ Exit criteria:
 #### Step 7B: Approval Loop
 
 1. Extract the PR title and body from `pr.md`:
-   * Title is the first line of pr.md with the leading `# ` stripped (for example, `# feat(scope): description` becomes `feat(scope): description`).
+   * Title is the first line of pr.md with the leading `#` stripped (for example, `# feat(scope): description` becomes `feat(scope): description`).
    * Body is the full content of pr.md with all markdown formatting preserved, including the H1 line with `#`.
 2. Present the PR title and a summary of the body inline in chat. Reference [pr.md](../../../.copilot-tracking/pr/pr.md) for full content and ask the user to confirm or request changes.
 3. If the user requests updates to title, body, or style, apply changes to `pr.md` and repeat this substep until approved.
