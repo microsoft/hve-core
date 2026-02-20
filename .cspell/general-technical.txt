@@ -1,10 +1,19 @@
 # Industry Standards & Protocols (not covered by public dicts)
 abac
+Andon
+assignedtome
 abap
 abfs
 acrolinx
 Dockerfiles
+edgeai
+gemba
+geofence
+Kaizen
 nant
+pharma
+Poka
+Takt
 upsell
 activex
 acunetix
@@ -1164,6 +1173,9 @@ SECCHECK
 
 # Academic & Technical Terms
 anonymization
+boxplots
+categoricals
+colorbar
 anonymize
 anonymizing
 autoencoders
@@ -1191,7 +1203,16 @@ wmem
 rmem
 datapoints
 chromadb
+disconfirming
+imshow
+lede
+matplotlib
+missingness
+nbins
+seaborn
 timescaledb
+trendline
+underrepresent
 
 # Security & Compliance
 antimalware
@@ -1220,12 +1241,24 @@ redhat
 
 # Programming Languages & Frameworks (not covered by public dicts)
 angularjs
+Browsable
 dotnet
 golang
 javascript
 nodejs
 python
 reactjs
+inheritdoc
+ipykernel
+ipywidgets
+iterdir
+langword
+nums
+returncode
+rglob
+torchaudio
+torchvision
+tqdm
 typescript
 xamarin
 
@@ -1329,12 +1362,21 @@ webhook
 webhooks
 
 # Proper Nouns & Company Names
+Berryiii
+Chronograf
+Kapacitor
 Katello
 Metaverse
+Newtonsoft
+rhysd
+Segoe
 Upselling
 
 # Development & DevOps
+agentskills
 agile
+autolinks
+autobuild
 choco
 chocolatey
 cicd
@@ -1344,8 +1386,22 @@ kanban
 sprint
 backlog
 pipeline
+blockquotes
+deinit
+deprioritized
+deprioritizes
+experim
+kata
+katas
+lofi
+miscategorized
+myactivity
 pipelines
+pullrequest
 pwsh
+pyproject
+reflog
+reprioritize
 shellcheck
 nslookup
 journalctl
@@ -1411,9 +1467,21 @@ reqs
 toplevel
 mapfile
 Hashtable
+MMDD
+Storyboarding
+strikethrough
+sublist
+subshells
+tfstateaccount
+TMPVER
+triaging
+untriaged
+unvalidated
+vscodeignore
 
 # Video & Image Processing
 drawtext
+ffprobe
 fontcolor
 fontsize
 lanczos
@@ -1421,13 +1489,26 @@ lavfi
 libx
 palettegen
 paletteuse
+hable
+libzimg
+mobius
+nullsrc
 posterized
+reinhard
+rolloff
 SMPTE
 smptebars
+steinberg
 testsrc
+tonemap
+tonemapping
+zimg
+zscale
 
 # Hardware & Platforms (not covered by public dicts)
 Jetson
+PLCSIM
+ruggedized
 microcontroller
 microcontrollers
 Mbed
@@ -1479,5 +1560,7 @@ mymodule
 mypy
 sandboxed
 Sigstore
+streamlit
+Streamlit
 Overreliance
 Contestability

@@ -92,9 +92,6 @@ Partial autonomy is the default, applying labels and milestones automatically wh
 
 The GitHub Backlog Manager requires MCP server configuration for GitHub API access. See [MCP Configuration](../../getting-started/mcp-configuration.md) for setup instructions. The GitHub MCP tools (listed in the agent specification) must be available in your VS Code context.
 
-> [!NOTE]
-> The GitHub Backlog Manager replaces the deprecated `github-issue-manager` agent. If you have prompts or workflows referencing `github-issue-manager`, update them to use `github-backlog-manager` instead.
-
 ## Next Steps
 
 * [Discovery](discovery.md) - Find and categorize issues from multiple sources
