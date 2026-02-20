@@ -166,21 +166,41 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
   kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
   kind: instruction

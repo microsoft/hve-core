@@ -30,6 +30,7 @@
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
     ".github/agents/data-science": true,
+    ".github/agents/design-thinking": true,
     ".github/agents/github": true,
     ".github/agents/installer": true,
     ".github/agents/project-planning": true,
@@ -39,6 +40,7 @@
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
+    ".github/prompts/design-thinking": true,
     ".github/prompts/github": true,
     ".github/prompts/hve-core": true,
     ".github/prompts/security-planning": true,
