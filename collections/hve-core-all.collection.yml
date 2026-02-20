@@ -206,6 +206,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
