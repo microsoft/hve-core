@@ -79,6 +79,9 @@ items:
   - path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-09-deep.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
     kind: instruction
     maturity: experimental
