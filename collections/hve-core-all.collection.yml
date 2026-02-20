@@ -222,6 +222,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
+  kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
   kind: instruction
   maturity: experimental
