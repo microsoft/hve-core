@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 700" width="1920" height="700">
+<title>D-RPI Pipeline: Discovery + Research → Plan → Implement → Review</title>
+<defs>
+  <marker id="ah-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0078D4"/></marker>
+  <marker id="ah-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#107C10"/></marker>
+  <marker id="ah-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF8C00"/></marker>
+  <marker id="ah-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#D13438"/></marker>
+  <marker id="ah-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#8864D8"/></marker>
+  <marker id="ah-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#038E8E"/></marker>
+  <marker id="ah-white" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#E0E0E0"/></marker>
+  <marker id="ah-med-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#909090"/></marker>
+  <style>
+    text { font-family: 'Segoe UI', Arial, sans-serif; }
+    .title { font-size: 22px; font-weight: bold; fill: #FFFFFF; }
+    .subtitle { font-size: 14px; fill: #E0E0E0; }
+    .zone-label { font-size: 15px; font-weight: bold; }
+    .node-title { font-size: 12px; font-weight: bold; fill: #FFFFFF; }
+    .node-detail { font-size: 11px; fill: #E0E0E0; }
+    .node-small { font-size: 10px; fill: #909090; }
+    .badge-text { font-size: 10px; font-weight: bold; fill: #FFFFFF; }
+    .type-label { font-size: 11px; font-style: italic; fill: #E0E0E0; }
+  </style>
+</defs>
+<rect width="1920" height="700" fill="#1B1B1B" rx="8"/>
+<text x="960" y="40" text-anchor="middle" font-size="24" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">D-RPI Pipeline: Discovery + RPI</text>
+<text x="960" y="65" text-anchor="middle" font-size="14" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Optional Discovery phase extends the core RPI pipeline for ambiguous or complex projects</text>
+<rect x="80" y="260" width="240" height="140" rx="12" fill="#2D2D2D" stroke="#909090" stroke-width="2" stroke-dasharray="10 6"/>
+<text x="200" y="320" text-anchor="middle" font-size="22" fill="#909090" font-family="'Segoe UI', sans-serif">Discovery</text>
+<text x="200" y="345" text-anchor="middle" font-size="12" fill="#404040" font-family="'Segoe UI', sans-serif">(optional)</text>
+<text x="200" y="235" text-anchor="middle" font-size="11" fill="#909090" font-family="'Segoe UI', sans-serif">Empathize / Define</text>
+<rect x="400" y="260" width="260" height="140" rx="12" fill="#2D2D2D" stroke="#0078D4" stroke-width="3"/>
+<text x="530" y="315" text-anchor="middle" font-size="22" fill="#0078D4" font-family="'Segoe UI', sans-serif">Research</text>
+<text x="530" y="340" text-anchor="middle" font-size="12" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 1</text>
+<text x="530" y="235" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Uncertainty</text>
+<path d="M 678 330 L 712 330" stroke="#0078D4" stroke-width="2" fill="none" marker-end="url(#ah-blue)"/>
+<circle cx="695" cy="330" r="14" fill="#D13438" opacity="0.9"/>
+<text x="695" y="334" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="730" y="260" width="260" height="140" rx="12" fill="#2D2D2D" stroke="#107C10" stroke-width="3"/>
+<text x="860" y="315" text-anchor="middle" font-size="22" fill="#107C10" font-family="'Segoe UI', sans-serif">Plan</text>
+<text x="860" y="340" text-anchor="middle" font-size="12" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 2</text>
+<text x="860" y="235" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Knowledge</text>
+<path d="M 1008 330 L 1042 330" stroke="#107C10" stroke-width="2" fill="none" marker-end="url(#ah-green)"/>
+<circle cx="1025" cy="330" r="14" fill="#D13438" opacity="0.9"/>
+<text x="1025" y="334" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="1060" y="260" width="260" height="140" rx="12" fill="#2D2D2D" stroke="#FF8C00" stroke-width="3"/>
+<text x="1190" y="315" text-anchor="middle" font-size="22" fill="#FF8C00" font-family="'Segoe UI', sans-serif">Implement</text>
+<text x="1190" y="340" text-anchor="middle" font-size="12" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 3</text>
+<text x="1190" y="235" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Strategy</text>
+<path d="M 1338 330 L 1372 330" stroke="#FF8C00" stroke-width="2" fill="none" marker-end="url(#ah-orange)"/>
+<circle cx="1355" cy="330" r="14" fill="#D13438" opacity="0.9"/>
+<text x="1355" y="334" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="1390" y="260" width="260" height="140" rx="12" fill="#2D2D2D" stroke="#8864D8" stroke-width="3"/>
+<text x="1520" y="315" text-anchor="middle" font-size="22" fill="#8864D8" font-family="'Segoe UI', sans-serif">Review</text>
+<text x="1520" y="340" text-anchor="middle" font-size="12" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 4</text>
+<text x="1520" y="235" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Working Code</text>
+<text x="1520" y="235" text-anchor="middle" font-size="11" fill="#8864D8" font-family="'Segoe UI', sans-serif">Validated Code</text>
+<path d="M 330 330 L 390 330" stroke="med-gray" stroke-width="2" fill="none" stroke-dasharray="8 6" marker-end="url(#ah-med-gray)"/>
+<path d="M 1520 400 L 1520 450 L 530 450 L 530 400" stroke="#8864D8" stroke-width="2" fill="none" marker-end="url(#ah-purple)"/>
+<text x="1025" y="442" text-anchor="middle" class="node-small" fill="#8864D8">iteration loops</text>
+<text x="660" y="500" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Dashed border = optional Discovery phase</text>
+<text x="1260" y="500" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Red circles = /clear (context reset)  |  Purple loop = iteration</text>
+</svg>

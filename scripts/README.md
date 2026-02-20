@@ -1,28 +1,32 @@
 ---
 title: Scripts
-description: PowerShell scripts for linting, validation, and security automation
+description: Scripts for linting, validation, security automation, and presentation generation
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-02-20
 ms.topic: reference
 keywords:
   - powershell
+  - python
   - scripts
   - automation
   - linting
   - security
+  - presentation
 estimated_reading_time: 5
 ---
 
-This directory contains PowerShell scripts for automating linting, validation, and security checks in the `hve-core` repository.
+This directory contains PowerShell and Python scripts for automating linting, validation, security checks, and presentation generation in the `hve-core` repository.
 
 ## Directory Structure
 
 ```text
 scripts/
+├── docs/            Generated presentation outputs (PPTX, SVG)
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
 ├── plugins/         Copilot CLI plugin generation and validation
+├── powerpoint/      Python-based presentation generators
 ├── security/        Security scanning and SHA pinning scripts
 └── tests/           Pester test organization
 ```
@@ -43,6 +47,51 @@ Shared utility modules used across scripts.
 | Script                     | Purpose                              |
 |----------------------------|--------------------------------------|
 | `Get-VerifiedDownload.ps1` | Download files with SHA verification |
+
+## Presentation Scripts
+
+The `powerpoint/` directory contains Python scripts that generate PowerPoint (PPTX) and SVG presentations. These scripts use `python-pptx` for slide generation and `Pillow` for embedded diagram rendering.
+
+| Script | Purpose | Output |
+|--------|---------|--------|
+| `generate-hve-core-presentation.py` | HVE-Core RPI dark theme (15 slides) | `docs/hve-core-rpi-presentation.pptx` |
+| `generate-hve-core-presentation-light.py` | HVE-Core RPI light theme (15 slides) | `docs/hve-core-rpi-presentation-light.pptx` |
+| `generate-hve-core-presentation-enhanced.py` | HVE-Core RPI enhanced dark theme (20 slides) | `docs/hve-core-rpi-presentation-enhanced.pptx` |
+| `generate-hve-core-presentation-enhanced-light.py` | HVE-Core RPI enhanced light theme (20 slides) | `docs/hve-core-rpi-presentation-enhanced-light.pptx` |
+| `generate-hve-core-svgs.py` | HVE-Core RPI SVG diagrams (3 files) | `docs/hve-core-*.svg` |
+| `generate-hve-core-enhanced-svgs.py` | HVE-Core RPI enhanced SVG diagrams (4 files) | `docs/hve-core-*-enhanced.svg`, `docs/hve-core-drpi-*.svg` |
+| `generate-leak-detection-presentation.py` | Leak detection dark theme | `docs/` |
+| `generate-leak-detection-svgs.py` | Leak detection SVG diagrams | `docs/` |
+| `generate-poc-presentation.py` | POC dark theme | `docs/` |
+| `generate-poc-svgs.py` | POC SVG diagrams | `docs/` |
+
+Run presentation generators using npm scripts:
+
+```bash
+npm run pptx:hve-core              # Dark theme, 15 slides
+npm run pptx:hve-core:light        # Light theme, 15 slides
+npm run pptx:hve-core:enhanced     # Enhanced dark theme, 20 slides
+npm run pptx:hve-core:enhanced:light  # Enhanced light theme, 20 slides
+npm run svg:hve-core               # Original SVG diagrams
+npm run svg:hve-core:enhanced      # Enhanced SVG diagrams
+```
+
+## Generated Outputs
+
+The `docs/` directory contains generated presentation files. These files are produced by the presentation scripts in `powerpoint/` and committed to the repository for direct use.
+
+**PowerPoint files (PPTX)**:
+
+| File | Theme | Slides |
+|------|-------|-------:|
+| `hve-core-rpi-presentation.pptx` | Dark | 15 |
+| `hve-core-rpi-presentation-light.pptx` | Light | 15 |
+| `hve-core-rpi-presentation-enhanced.pptx` | Dark | 20 |
+| `hve-core-rpi-presentation-enhanced-light.pptx` | Light | 20 |
+
+**SVG diagrams**: RPI pipeline, quality comparison, role mapping, D-RPI pipeline, and enhanced variants.
+
+**Reference documents**: Presentation outlines and speaker scripts used as source material for the generators.
 
 ## Linting Scripts
 

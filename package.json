@@ -25,6 +25,12 @@
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
+    "pptx:hve-core": "python3 scripts/powerpoint/generate-hve-core-presentation.py",
+    "pptx:hve-core:light": "python3 scripts/powerpoint/generate-hve-core-presentation-light.py",
+    "pptx:hve-core:enhanced": "python3 scripts/powerpoint/generate-hve-core-presentation-enhanced.py",
+    "pptx:hve-core:enhanced:light": "python3 scripts/powerpoint/generate-hve-core-presentation-enhanced-light.py",
+    "svg:hve-core": "python3 scripts/powerpoint/generate-hve-core-svgs.py",
+    "svg:hve-core:enhanced": "python3 scripts/powerpoint/generate-hve-core-enhanced-svgs.py",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
     "plugin:validate": "npm run lint:collections-metadata"
   },

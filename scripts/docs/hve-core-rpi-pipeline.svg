@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 600" width="1920" height="600">
+<title>RPI Pipeline: Type Transformation System</title>
+<defs>
+  <marker id="ah-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0078D4"/></marker>
+  <marker id="ah-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#107C10"/></marker>
+  <marker id="ah-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF8C00"/></marker>
+  <marker id="ah-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#D13438"/></marker>
+  <marker id="ah-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#8864D8"/></marker>
+  <marker id="ah-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#038E8E"/></marker>
+  <marker id="ah-white" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#E0E0E0"/></marker>
+  <style>
+    text { font-family: 'Segoe UI', Arial, sans-serif; }
+    .title { font-size: 22px; font-weight: bold; fill: #FFFFFF; }
+    .subtitle { font-size: 14px; fill: #E0E0E0; }
+    .zone-label { font-size: 15px; font-weight: bold; }
+    .node-title { font-size: 12px; font-weight: bold; fill: #FFFFFF; }
+    .node-detail { font-size: 11px; fill: #E0E0E0; }
+    .node-small { font-size: 10px; fill: #909090; }
+    .badge-text { font-size: 10px; font-weight: bold; fill: #FFFFFF; }
+    .type-label { font-size: 11px; font-style: italic; fill: #E0E0E0; }
+  </style>
+</defs>
+<rect width="1920" height="600" fill="#1B1B1B" rx="8"/>
+<text x="960" y="40" text-anchor="middle" font-size="24" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">RPI Pipeline: Type Transformation System</text>
+<text x="960" y="65" text-anchor="middle" font-size="14" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Research  →  Plan  →  Implement  →  Review   ·   Each phase transforms typed artifacts</text>
+<rect x="210" y="220" width="300" height="160" rx="12" fill="#2D2D2D" stroke="#0078D4" stroke-width="3"/>
+<text x="360" y="270" text-anchor="middle" font-size="26" fill="#0078D4" font-family="'Segoe UI', sans-serif">Research</text>
+<text x="360" y="300" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 1</text>
+<text x="360" y="330" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Research findings</text>
+<text x="560" y="190" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Uncertainty → Knowledge</text>
+<text x="360" y="190" text-anchor="middle" font-size="12" fill="#0078D4" font-family="'Segoe UI', sans-serif">Uncertainty</text>
+<path d="M 528 300 L 592 300" stroke="#0078D4" stroke-width="2" fill="none" marker-end="url(#ah-blue)"/>
+<circle cx="560" cy="300" r="14" fill="#D13438" opacity="0.9"/>
+<text x="560" y="304" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="610" y="220" width="300" height="160" rx="12" fill="#2D2D2D" stroke="#107C10" stroke-width="3"/>
+<text x="760" y="270" text-anchor="middle" font-size="26" fill="#107C10" font-family="'Segoe UI', sans-serif">Plan</text>
+<text x="760" y="300" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 2</text>
+<text x="760" y="330" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Implementation plan</text>
+<text x="960" y="190" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Knowledge → Strategy</text>
+<path d="M 928 300 L 992 300" stroke="#107C10" stroke-width="2" fill="none" marker-end="url(#ah-green)"/>
+<circle cx="960" cy="300" r="14" fill="#D13438" opacity="0.9"/>
+<text x="960" y="304" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="1010" y="220" width="300" height="160" rx="12" fill="#2D2D2D" stroke="#FF8C00" stroke-width="3"/>
+<text x="1160" y="270" text-anchor="middle" font-size="26" fill="#FF8C00" font-family="'Segoe UI', sans-serif">Implement</text>
+<text x="1160" y="300" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 3</text>
+<text x="1160" y="330" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Code + tests</text>
+<text x="1360" y="190" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Strategy → Working Code</text>
+<path d="M 1328 300 L 1392 300" stroke="#FF8C00" stroke-width="2" fill="none" marker-end="url(#ah-orange)"/>
+<circle cx="1360" cy="300" r="14" fill="#D13438" opacity="0.9"/>
+<text x="1360" y="304" text-anchor="middle" font-size="8" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">/clear</text>
+<rect x="1410" y="220" width="300" height="160" rx="12" fill="#2D2D2D" stroke="#8864D8" stroke-width="3"/>
+<text x="1560" y="270" text-anchor="middle" font-size="26" fill="#8864D8" font-family="'Segoe UI', sans-serif">Review</text>
+<text x="1560" y="300" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">Phase 4</text>
+<text x="1560" y="330" text-anchor="middle" font-size="11" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Validated output</text>
+<text x="1560" y="190" text-anchor="middle" font-size="12" fill="#8864D8" font-family="'Segoe UI', sans-serif">Validated Code</text>
+<text x="960" y="460" text-anchor="middle" font-size="13" fill="#909090" font-family="'Segoe UI', sans-serif">/clear — Context reset between phases prevents knowledge leakage</text>
+<text x="360" y="495" text-anchor="middle" font-size="10" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Uncertainty → Knowledge</text>
+<text x="760" y="495" text-anchor="middle" font-size="10" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Knowledge → Strategy</text>
+<text x="1160" y="495" text-anchor="middle" font-size="10" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Strategy → Working Code</text>
+<text x="1560" y="495" text-anchor="middle" font-size="10" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Working Code → Validated Code</text>
+</svg>

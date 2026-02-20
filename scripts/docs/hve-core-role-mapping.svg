@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1000" width="1920" height="1000">
+<title>Who Uses HVE-Core? Role → Collection → Workflow</title>
+<defs>
+  <marker id="ah-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#0078D4"/></marker>
+  <marker id="ah-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#107C10"/></marker>
+  <marker id="ah-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#FF8C00"/></marker>
+  <marker id="ah-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#D13438"/></marker>
+  <marker id="ah-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#8864D8"/></marker>
+  <marker id="ah-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#038E8E"/></marker>
+  <marker id="ah-white" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#E0E0E0"/></marker>
+  <style>
+    text { font-family: 'Segoe UI', Arial, sans-serif; }
+    .title { font-size: 22px; font-weight: bold; fill: #FFFFFF; }
+    .subtitle { font-size: 14px; fill: #E0E0E0; }
+    .zone-label { font-size: 15px; font-weight: bold; }
+    .node-title { font-size: 12px; font-weight: bold; fill: #FFFFFF; }
+    .node-detail { font-size: 11px; fill: #E0E0E0; }
+    .node-small { font-size: 10px; fill: #909090; }
+    .badge-text { font-size: 10px; font-weight: bold; fill: #FFFFFF; }
+    .type-label { font-size: 11px; font-style: italic; fill: #E0E0E0; }
+  </style>
+</defs>
+<rect width="1920" height="1000" fill="#1B1B1B" rx="8"/>
+<text x="960" y="40" text-anchor="middle" font-size="24" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Who Uses HVE-Core?  Role → Collection → Workflow</text>
+<text x="960" y="65" text-anchor="middle" font-size="14" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Each role maps to a collection with tailored agents, prompts, and workflows</text>
+<rect x="140" y="185" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#0078D4" stroke-width="2"/>
+<rect x="140" y="185" width="380" height="60" rx="12" fill="#0078D4"/>
+<rect x="140" y="233" width="380" height="12" fill="#0078D4"/>
+<text x="330" y="223" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Developer</text>
+<rect x="282" y="275" width="96" height="28" rx="6" fill="#1B1B1B" stroke="#0078D4" stroke-width="1.5"/>
+<text x="330" y="294" text-anchor="middle" font-size="13" fill="#0078D4" font-family="'Segoe UI', sans-serif">hve-core</text>
+<text x="330" y="325" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="330" y="350" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">RPI Pipeline</text>
+<text x="330" y="372" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="160" y1="490" x2="500" y2="490" stroke="#0078D4" stroke-width="1" opacity="0.3"/>
+<rect x="560" y="185" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#107C10" stroke-width="2"/>
+<rect x="560" y="185" width="380" height="60" rx="12" fill="#107C10"/>
+<rect x="560" y="233" width="380" height="12" fill="#107C10"/>
+<text x="750" y="223" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">TPM / Lead</text>
+<rect x="666" y="275" width="168" height="28" rx="6" fill="#1B1B1B" stroke="#107C10" stroke-width="1.5"/>
+<text x="750" y="294" text-anchor="middle" font-size="13" fill="#107C10" font-family="'Segoe UI', sans-serif">project-planning</text>
+<text x="750" y="325" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="750" y="350" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Reqs → PRD → WIT</text>
+<text x="750" y="372" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="580" y1="490" x2="920" y2="490" stroke="#107C10" stroke-width="1" opacity="0.3"/>
+<rect x="980" y="185" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#FF8C00" stroke-width="2"/>
+<rect x="980" y="185" width="380" height="60" rx="12" fill="#FF8C00"/>
+<rect x="980" y="233" width="380" height="12" fill="#FF8C00"/>
+<text x="1170" y="223" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Platform Engineer</text>
+<rect x="1086" y="275" width="168" height="28" rx="6" fill="#1B1B1B" stroke="#FF8C00" stroke-width="1.5"/>
+<text x="1170" y="294" text-anchor="middle" font-size="13" fill="#FF8C00" font-family="'Segoe UI', sans-serif">coding-standards</text>
+<text x="1170" y="325" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="1170" y="350" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Artifact Authoring</text>
+<text x="1170" y="372" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="1000" y1="490" x2="1340" y2="490" stroke="#FF8C00" stroke-width="1" opacity="0.3"/>
+<rect x="1400" y="185" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#038E8E" stroke-width="2"/>
+<rect x="1400" y="185" width="380" height="60" rx="12" fill="#038E8E"/>
+<rect x="1400" y="233" width="380" height="12" fill="#038E8E"/>
+<text x="1590" y="223" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">OSS Contributor</text>
+<rect x="1551" y="275" width="78" height="28" rx="6" fill="#1B1B1B" stroke="#038E8E" stroke-width="1.5"/>
+<text x="1590" y="294" text-anchor="middle" font-size="13" fill="#038E8E" font-family="'Segoe UI', sans-serif">github</text>
+<text x="1590" y="325" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="1590" y="350" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Backlog Management</text>
+<text x="1590" y="372" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="1420" y1="490" x2="1760" y2="490" stroke="#038E8E" stroke-width="1" opacity="0.3"/>
+<rect x="140" y="555" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#D13438" stroke-width="2"/>
+<rect x="140" y="555" width="380" height="60" rx="12" fill="#D13438"/>
+<rect x="140" y="603" width="380" height="12" fill="#D13438"/>
+<text x="330" y="593" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Security Engineer</text>
+<rect x="241" y="645" width="177" height="28" rx="6" fill="#1B1B1B" stroke="#D13438" stroke-width="1.5"/>
+<text x="329" y="664" text-anchor="middle" font-size="13" fill="#D13438" font-family="'Segoe UI', sans-serif">security-planning</text>
+<text x="330" y="695" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="330" y="720" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Threat Modeling</text>
+<text x="330" y="742" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="160" y1="860" x2="500" y2="860" stroke="#D13438" stroke-width="1" opacity="0.3"/>
+<rect x="560" y="555" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#8864D8" stroke-width="2"/>
+<rect x="560" y="555" width="380" height="60" rx="12" fill="#8864D8"/>
+<rect x="560" y="603" width="380" height="12" fill="#8864D8"/>
+<text x="750" y="593" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Data Scientist</text>
+<rect x="684" y="645" width="132" height="28" rx="6" fill="#1B1B1B" stroke="#8864D8" stroke-width="1.5"/>
+<text x="750" y="664" text-anchor="middle" font-size="13" fill="#8864D8" font-family="'Segoe UI', sans-serif">data-science</text>
+<text x="750" y="695" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="750" y="720" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">Spec → Notebook → Dashboard</text>
+<text x="750" y="742" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="580" y1="860" x2="920" y2="860" stroke="#8864D8" stroke-width="1" opacity="0.3"/>
+<rect x="980" y="555" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#107C10" stroke-width="2"/>
+<rect x="980" y="555" width="380" height="60" rx="12" fill="#107C10"/>
+<rect x="980" y="603" width="380" height="12" fill="#107C10"/>
+<text x="1170" y="593" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">Project Planner</text>
+<rect x="1086" y="645" width="168" height="28" rx="6" fill="#1B1B1B" stroke="#107C10" stroke-width="1.5"/>
+<text x="1170" y="664" text-anchor="middle" font-size="13" fill="#107C10" font-family="'Segoe UI', sans-serif">project-planning</text>
+<text x="1170" y="695" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="1170" y="720" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">PRD / BRD / ADR</text>
+<text x="1170" y="742" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="1000" y1="860" x2="1340" y2="860" stroke="#107C10" stroke-width="1" opacity="0.3"/>
+<rect x="1400" y="555" width="380" height="320" rx="12" fill="#2D2D2D" stroke="#038E8E" stroke-width="2"/>
+<rect x="1400" y="555" width="380" height="60" rx="12" fill="#038E8E"/>
+<rect x="1400" y="603" width="380" height="12" fill="#038E8E"/>
+<text x="1590" y="593" text-anchor="middle" font-size="20" fill="#FFFFFF" font-family="'Segoe UI', sans-serif">UX / DT Practitioner</text>
+<rect x="1510" y="645" width="159" height="28" rx="6" fill="#1B1B1B" stroke="#038E8E" stroke-width="1.5"/>
+<text x="1589" y="664" text-anchor="middle" font-size="13" fill="#038E8E" font-family="'Segoe UI', sans-serif">design-thinking</text>
+<text x="1590" y="695" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Collection</text>
+<text x="1590" y="720" text-anchor="middle" font-size="15" fill="#E0E0E0" font-family="'Segoe UI', sans-serif">9-Method Coaching</text>
+<text x="1590" y="742" text-anchor="middle" font-size="10" fill="#909090" font-family="'Segoe UI', sans-serif">Workflow Pattern</text>
+<line x1="1420" y1="860" x2="1760" y2="860" stroke="#038E8E" stroke-width="1" opacity="0.3"/>
+</svg>
