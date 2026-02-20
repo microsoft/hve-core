@@ -37,6 +37,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot 'shared.psm1') -Force
+
 function Test-GitAvailability {
 <#
 .SYNOPSIS
@@ -50,26 +52,6 @@ Throws a terminating error when git can't be resolved from PATH.
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw "Git is required but was not found on PATH."
     }
-}
-
-function Get-RepositoryRoot {
-<#
-.SYNOPSIS
-Gets the repository root path.
-.DESCRIPTION
-Runs git rev-parse --show-toplevel and throws when the command fails.
-.OUTPUTS
-System.String
-#>
-    [OutputType([string])]
-    param()
-
-    $repoRoot = (& git rev-parse --show-toplevel).Trim()
-    if (-not $repoRoot) {
-        throw "Unable to determine repository root."
-    }
-
-    return $repoRoot
 }
 
 function New-PrDirectory {
@@ -454,7 +436,7 @@ System.IO.FileInfo
 
     Test-GitAvailability
 
-    $repoRoot = Get-RepositoryRoot
+    $repoRoot = Get-RepositoryRoot -Strict
 
     if ($OutputPath) {
         $prReferencePath = $OutputPath

@@ -204,6 +204,10 @@ function Invoke-PluginGeneration {
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
 
+    # Probe symlink capability once for the entire generation run
+    $symlinkCapable = Test-SymlinkCapability
+    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
+
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
 
@@ -240,6 +244,16 @@ function Invoke-PluginGeneration {
         $id = $collection.id
         $pluginDir = Join-Path -Path $pluginsDir -ChildPath $id
 
+        # Skip deprecated collections
+        $collectionMaturity = if ($collection.ContainsKey('maturity') -and $collection.maturity) {
+            [string]$collection.maturity
+        } else { 'stable' }
+
+        if ($collectionMaturity -eq 'deprecated') {
+            Write-Verbose "Skipping deprecated collection: $id"
+            continue
+        }
+
         # Refresh: remove existing plugin directory
         if ($Refresh -and (Test-Path -Path $pluginDir)) {
             if ($DryRun) {
@@ -258,7 +272,9 @@ function Invoke-PluginGeneration {
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
             -Version $repoVersion `
-            -DryRun:$DryRun
+            -Maturity $collectionMaturity `
+            -DryRun:$DryRun `
+            -SymlinkCapable:$symlinkCapable
 
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount
@@ -276,6 +292,15 @@ function Invoke-PluginGeneration {
         -Collections $allCollections `
         -DryRun:$DryRun
 
+    # Fix git index modes for text stubs on non-symlink systems so Linux
+    # checkouts materialize real symbolic links instead of plain files.
+    if (-not $symlinkCapable) {
+        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
+        if ($fixedCount -gt 0) {
+            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
+        }
+    }
+
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"
     Write-Host "  Agents: $totalAgents"
@@ -289,7 +314,50 @@ function Invoke-PluginGeneration {
 #endregion Orchestration
 
 #region Main Execution
-if ($MyInvocation.InvocationName -ne '.') {
+
+function Start-PluginGeneration {
+    <#
+    .SYNOPSIS
+        Entry point for CLI invocation. Returns 0 on success, 1 on failure.
+
+    .PARAMETER ScriptPath
+        Absolute path to this script file, used to resolve the repo root.
+
+    .PARAMETER CollectionIds
+        Optional collection IDs forwarded to Invoke-PluginGeneration.
+
+    .PARAMETER Refresh
+        Forwarded refresh switch.
+
+    .PARAMETER DryRun
+        Forwarded dry-run switch.
+
+    .PARAMETER Channel
+        Forwarded channel parameter.
+
+    .OUTPUTS
+        [int] Exit code: 0 for success, 1 for failure.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptPath,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$CollectionIds,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Refresh,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease'
+    )
+
     try {
         # Verify PowerShell-Yaml module
         if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
@@ -298,7 +366,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         Import-Module PowerShell-Yaml -ErrorAction Stop
 
         # Resolve paths
-        $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        $ScriptDir = Split-Path -Parent $ScriptPath
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
 
         Write-Host 'HVE Core Plugin Generator' -ForegroundColor Cyan
@@ -325,12 +393,21 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host 'Done!' -ForegroundColor Green
         Write-Host "   $($result.PluginCount) plugin(s) generated."
 
-        exit 0
+        return 0
     }
     catch {
         Write-Error "Plugin generation failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
-        exit 1
+        return 1
     }
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    exit (Start-PluginGeneration `
+        -ScriptPath $MyInvocation.MyCommand.Path `
+        -CollectionIds $CollectionIds `
+        -Refresh:$Refresh `
+        -DryRun:$DryRun `
+        -Channel $Channel)
 }
 #endregion
