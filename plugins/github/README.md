@@ -3,6 +3,8 @@
 
 GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
 
+> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
+
 ## Install
 
 ```bash

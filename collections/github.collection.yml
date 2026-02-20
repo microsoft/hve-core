@@ -1,6 +1,7 @@
 id: github
 name: GitHub Backlog Management
 description: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
+maturity: experimental
 tags:
   - github
   - issues

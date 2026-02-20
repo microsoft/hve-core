@@ -6,6 +6,7 @@ tags:
   - coaching
   - methodology
   - ux
+maturity: experimental
 items:
   # Agents
   - path: .github/agents/design-thinking/dt-coach.agent.md
