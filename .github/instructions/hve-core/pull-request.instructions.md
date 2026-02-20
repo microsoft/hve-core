@@ -13,7 +13,8 @@ Instructions for generating pull request descriptions from branch diffs using th
 * Avoid mentioning linting errors or auto-generated documentation.
 * Ask the user for direction when progression is unclear.
 * Check for PR templates before generating content; use the repository template when available.
-* Leave checkboxes requiring manual verification unchecked.
+* Check checkboxes for items the agent completed or verified during PR generation.
+* Leave checkboxes requiring manual human verification unchecked.
 * Preserve template structure and formatting without removing sections.
 
 ## Canonical Fallback Rules
@@ -134,10 +135,12 @@ Follow the PR Writing Standards section for description style and content princi
 
 After generating `pr.md`, run the Security Analysis from `.github/instructions/pull-request.instructions.md`.
 
+After the post-generation checklist review, insert confirmed checklist items into pr.md with their completion status.
+
 Exit criteria:
 
 * `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
-* Post-generation checklist from `.github/instructions/pull-request.instructions.md` is complete when a repository-specific conventions file exists.
+* Post-generation checklist from `.github/instructions/pull-request.instructions.md` is complete and inserted into pr.md when a repository-specific conventions file exists.
 
 ### Step 6: Validate PR Readiness
 
@@ -163,6 +166,7 @@ Exit criteria:
 1. Run all discovered required checks.
 2. Record each check result as `Passed`, `Failed`, or `Skipped` (with reason).
 3. For failures, categorize as `blocking` or `non-blocking` and note the root-cause area and recommended next action.
+4. Update the pr.md checklist checkboxes to reflect results: for each check that passed, replace the matching `- [ ]` with `- [x]` in pr.md.
 
 Exit criteria:
 
@@ -179,7 +183,7 @@ Exit criteria:
 
 #### Step 6D: Readiness Outcome
 
-1. If required checks pass, continue to Step 7 when PR creation was requested.
+1. Confirm all checklist checkbox updates in pr.md are complete. If required checks pass, continue to Step 7 when PR creation was requested.
 2. If required checks remain unresolved, do not proceed with direct PR creation.
 3. When PR creation was not requested, report readiness status and next actions without creating a PR.
 
