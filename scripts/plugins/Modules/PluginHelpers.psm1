@@ -1174,6 +1174,108 @@ function Write-PluginDirectory {
     }
 }
 
+function Repair-PluginSymlinkIndex {
+    <#
+    .SYNOPSIS
+    Fixes git index modes for text stub files so they register as symlinks.
+
+    .DESCRIPTION
+    On systems where symlinks are unavailable (Windows without Developer Mode),
+    New-PluginLink writes text stubs containing relative paths. Git stages
+    these as mode 100644 (regular file). This function re-indexes each text
+    stub as mode 120000 (symlink) so that Linux/macOS checkouts materialize
+    real symbolic links.
+
+    .PARAMETER PluginsDir
+    Absolute path to the plugins output directory.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root (git working tree).
+
+    .PARAMETER DryRun
+    When specified, logs what would be fixed without modifying the index.
+
+    .OUTPUTS
+    [int] Number of index entries corrected.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PluginsDir,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    if (-not (Test-Path -Path $PluginsDir)) {
+        return 0
+    }
+
+    $fixedCount = 0
+    $indexEntries = [System.Collections.Generic.List[string]]::new()
+    $files = Get-ChildItem -Path $PluginsDir -File -Recurse
+
+    foreach ($file in $files) {
+        # Text stubs are small files whose content is a relative path with
+        # forward slashes, no line breaks, starting with ../
+        if ($file.Length -gt 500) {
+            continue
+        }
+
+        $content = [System.IO.File]::ReadAllText($file.FullName)
+
+        if ($content -notmatch '^\.\./') {
+            continue
+        }
+        if ($content.Contains("`n") -or $content.Contains("`r")) {
+            continue
+        }
+
+        $repoRelPath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
+
+        if ($DryRun) {
+            Write-Verbose "DryRun: Would fix index mode for $repoRelPath"
+            $fixedCount++
+            continue
+        }
+
+        $hashOutput = git hash-object -w -- $file.FullName 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Failed to hash-object for $repoRelPath"
+            continue
+        }
+
+        # Extract clean SHA string, filtering out any ErrorRecord objects
+        $sha = @($hashOutput | Where-Object { $_ -is [string] -and $_ -match '^[0-9a-f]{40}' })[0]
+        if (-not $sha) {
+            Write-Warning "No valid SHA returned for $repoRelPath"
+            continue
+        }
+
+        $indexEntries.Add("120000 $sha`t$repoRelPath")
+        $fixedCount++
+        Write-Verbose "Queued index fix: $repoRelPath -> 120000"
+    }
+
+    # Batch update the git index in a single call to avoid index.lock contention
+    if ($indexEntries.Count -gt 0) {
+        $indexResult = $indexEntries | git update-index --index-info 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $errorMsg = @($indexResult | ForEach-Object { $_.ToString() }) -join '; '
+            Write-Warning "Failed to update git index: $errorMsg"
+            return 0
+        }
+    }
+
+    return $fixedCount
+}
+
 Export-ModuleMember -Function @(
     'Get-AllCollections',
     'Get-ArtifactFiles',
@@ -1187,6 +1289,7 @@ Export-ModuleMember -Function @(
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
     'New-PluginLink',
+    'Repair-PluginSymlinkIndex',
     'Test-SymlinkCapability',
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',

@@ -281,6 +281,15 @@ function Invoke-PluginGeneration {
         -Collections $allCollections `
         -DryRun:$DryRun
 
+    # Fix git index modes for text stubs on non-symlink systems so Linux
+    # checkouts materialize real symbolic links instead of plain files.
+    if (-not $symlinkCapable) {
+        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
+        if ($fixedCount -gt 0) {
+            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
+        }
+    }
+
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"
     Write-Host "  Agents: $totalAgents"
