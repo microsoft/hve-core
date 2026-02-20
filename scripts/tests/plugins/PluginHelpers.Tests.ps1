@@ -368,3 +368,127 @@ Describe 'Get-PluginSubdirectory' {
         $result | Should -Be 'skills'
     }
 }
+
+Describe 'Get-ArtifactFrontmatter - YAML parse failure' {
+    It 'Returns fallback when YAML frontmatter is malformed' {
+        $testFile = Join-Path $TestDrive 'bad-yaml.agent.md'
+        # Invalid YAML: tab characters and broken mapping
+        Set-Content -Path $testFile -Value "---`n`t: [invalid: yaml`n---`nBody"
+        $result = Get-ArtifactFrontmatter -FilePath $testFile -FallbackDescription 'fallback-desc'
+        $result.description | Should -Be 'fallback-desc'
+    }
+}
+
+Describe 'Write-PluginDirectory - DryRun mode' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'wpd-repo'
+        $script:pluginsDir = Join-Path $TestDrive 'wpd-plugins'
+        New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:pluginsDir -Force | Out-Null
+
+        # Create a valid agent file with frontmatter
+        $agentDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentDir 'example.agent.md') -Value "---`ndescription: An example agent`n---`nAgent body"
+
+        # Create a valid skill directory with SKILL.md
+        $skillDir = Join-Path $script:repoRoot '.github/skills/test/my-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`ndescription: A skill`n---`nSkill body"
+
+        # Create shared dirs
+        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'docs/templates') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'scripts/lib') -Force | Out-Null
+    }
+
+    It 'Completes DryRun without creating files for agents' {
+        $collection = @{
+            id          = 'dryrun-test'
+            name        = 'DryRun Test'
+            description = 'Testing DryRun mode'
+            items       = @(
+                @{
+                    path = '.github/agents/test/example.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+
+        $result = Write-PluginDirectory -Collection $collection -PluginsDir $script:pluginsDir `
+            -RepoRoot $script:repoRoot -Version '1.0.0' -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.AgentCount | Should -Be 1
+
+        # Verify no actual files were created
+        $pluginDir = Join-Path $script:pluginsDir 'dryrun-test'
+        Test-Path -Path $pluginDir | Should -BeFalse
+    }
+
+    It 'Completes DryRun with skill items' {
+        $collection = @{
+            id          = 'dryrun-skill'
+            name        = 'DryRun Skill'
+            description = 'Testing DryRun with skills'
+            items       = @(
+                @{
+                    path = '.github/skills/test/my-skill'
+                    kind = 'skill'
+                }
+            )
+        }
+
+        $result = Write-PluginDirectory -Collection $collection -PluginsDir $script:pluginsDir `
+            -RepoRoot $script:repoRoot -Version '1.0.0' -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.SkillCount | Should -Be 1
+    }
+
+    It 'Handles source file not found for non-skill items' {
+        $collection = @{
+            id          = 'missing-source'
+            name        = 'Missing Source'
+            description = 'Non-existent source file'
+            items       = @(
+                @{
+                    path = '.github/agents/test/nonexistent.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+
+        $result = Write-PluginDirectory -Collection $collection -PluginsDir $script:pluginsDir `
+            -RepoRoot $script:repoRoot -Version '1.0.0' -DryRun
+
+        $result.Success | Should -BeTrue
+        $result.AgentCount | Should -Be 1
+    }
+
+    It 'Warns when shared directory is missing' {
+        $emptyRepo = Join-Path $TestDrive 'empty-repo'
+        New-Item -ItemType Directory -Path $emptyRepo -Force | Out-Null
+
+        # Create agent file but no shared directories
+        $agentDir = Join-Path $emptyRepo '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentDir 'a.agent.md') -Value "---`ndescription: test`n---"
+
+        $collection = @{
+            id          = 'no-shared'
+            name        = 'No Shared'
+            description = 'Missing shared dirs'
+            items       = @(
+                @{
+                    path = '.github/agents/test/a.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+
+        $result = Write-PluginDirectory -Collection $collection -PluginsDir $script:pluginsDir `
+            -RepoRoot $emptyRepo -Version '1.0.0' -DryRun
+
+        $result.Success | Should -BeTrue
+    }
+}
