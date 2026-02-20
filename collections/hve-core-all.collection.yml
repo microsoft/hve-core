@@ -213,6 +213,9 @@ items:
 - path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
   kind: instruction
   maturity: experimental
@@ -286,3 +289,4 @@ items:
   kind: skill
 display:
   ordering: alpha
+  featured: true

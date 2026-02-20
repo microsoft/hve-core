@@ -2,7 +2,7 @@
 title: Understanding the RPI Workflow
 description: Learn the Research, Plan, Implement, Review workflow for transforming complex tasks into validated code
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-02-18
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -24,11 +24,11 @@ AI coding assistants are brilliant at simple tasks and break everything they tou
 
 RPI solves this through a counterintuitive insight: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
 
-**Key benefits:**
+### Key Benefits
 
-* 🔬 **Pattern matching**: uses verified existing patterns instead of inventing plausible ones.
-* 📋 **Traceability**: every decision traced to specific files and line numbers.
-* 🔄 **Knowledge transfer**: research documents anyone can follow, not tribal knowledge.
+* Uses verified existing patterns instead of inventing plausible ones.
+* Traces every decision to specific files and line numbers.
+* Creates research documents anyone can follow, eliminating tribal knowledge.
 
 > [!TIP]
 > **Want the full explanation?** See [Why the RPI Workflow Works](why-rpi.md) for the psychology, quality comparisons, and guidance on choosing between strict RPI and rpi-agent.
@@ -39,40 +39,40 @@ RPI separates concerns into distinct phases, each with its own specialized custo
 
 ### 🔬 Research Phase (Task Researcher)
 
-**Purpose:** Transform uncertainty into verified knowledge
+This phase transforms uncertainty into verified knowledge.
 
 * Investigates codebase, external APIs, and documentation
 * Documents findings with evidence and sources
 * Creates ONE recommended approach per scenario
-* **Output:** `{{YYYY-MM-DD}}-<topic>-research.md`
+* Output: `{{YYYY-MM-DD}}-<topic>-research.md`
 
 ### 📋 Plan Phase (Task Planner)
 
-**Purpose:** Transform knowledge into actionable strategy
+This phase transforms knowledge into actionable strategy.
 
 * Creates coordinated planning files with checkboxes and details
 * Includes line number references for precision
 * Validates research exists before proceeding
-* **Output:** Plan and details files
+* Output: Plan and details files
 
 ### ⚡ Implement Phase (Task Implementor)
 
-**Purpose:** Transform strategy into working code
+This phase transforms strategy into working code.
 
 * Executes plan task by task with verification
 * Tracks all changes in a changes log
 * Supports stop controls for review
-* **Output:** Working code + `{{YYYY-MM-DD}}-<topic>-changes.md`
+* Output: Working code + `{{YYYY-MM-DD}}-<topic>-changes.md`
 
 ### ✅ Review Phase (Task Reviewer)
 
-**Purpose:** Transform working code into validated code
+This phase transforms working code into validated code.
 
 * Validates implementation against research and plan specifications
 * Checks convention compliance using instruction files
 * Runs validation commands (lint, build, test)
 * Identifies follow-up work and iteration needs
-* **Output:** `{{YYYY-MM-DD}}-<topic>-review.md`
+* Output: `{{YYYY-MM-DD}}-<topic>-review.md`
 
 ## The Critical Rule: Clear Context Between Phases
 
@@ -84,7 +84,9 @@ Each custom agent has different instructions. Accumulated context causes confusi
 Task Researcher → /clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
 ```
 
-Research findings are preserved in files, not chat history. Clean context lets each agent work optimally.
+Research findings are preserved in files, not chat history. Clean context lets each agent work optimally. After clearing, open the relevant `.copilot-tracking/` artifact in your editor so the next agent can see it (for example, open the research document before invoking Task Planner).
+
+For the technical explanation of why this matters, see [Context Engineering](context-engineering.md).
 
 ## When to Use RPI
 
@@ -118,8 +120,15 @@ Research findings are preserved in files, not chat history. Clean context lets e
 * [Task Implementor Guide](task-implementor.md) - Execute with precision
 * [Task Reviewer Guide](task-reviewer.md) - Validate implementations
 * [Using Them Together](using-together.md) - Complete workflow example
+* [Context Engineering](context-engineering.md) - Why context management matters
 * [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available agents
 * [Agent Systems Catalog](../agents/README.md) - Browse all agent families beyond RPI
+
+## See Also
+
+* [Engineer Guide](../hve-guide/roles/engineer.md) - Role-specific guide for engineers using RPI agents
+* [Tech Lead Guide](../hve-guide/roles/tech-lead.md) - Architecture review and prompt engineering workflows
+* [Stage 6: Implementation](../hve-guide/lifecycle/implementation.md) - Where RPI fits in the project lifecycle
 
 ---
 
