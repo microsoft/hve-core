@@ -53,6 +53,9 @@ Plus all the actual code files created or modified during implementation.
 
 🔴 **Start with `/clear` or a new chat** after Task Planner completes.
 
+> [!TIP]
+> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering.md) for the full explanation.
+
 ### Step 2: Select the Custom Agent
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
@@ -154,11 +157,12 @@ When all phases are complete, Task Implementor provides:
 
 ## Common Pitfalls
 
-| Pitfall                 | Solution                                 |
-|-------------------------|------------------------------------------|
-| Plan not found          | Complete Task Planner first              |
-| Skipping reviews        | Use phaseStop=true for important changes |
-| Not running validations | Check lint/test after each phase         |
+| Pitfall                 | Solution                                                                        |
+|-------------------------|---------------------------------------------------------------------------------|
+| Plan not found          | Complete Task Planner first                                                     |
+| Skipping reviews        | Use phaseStop=true for important changes                                        |
+| Not running validations | Check lint/test after each phase                                                |
+| Context issues          | Use `/clear` before starting; see [Context Engineering](context-engineering.md) |
 
 ## Next Steps
 

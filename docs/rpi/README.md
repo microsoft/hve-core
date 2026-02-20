@@ -86,6 +86,8 @@ Task Researcher → /clear → Task Planner → /clear → Task Implementor → 
 
 Research findings are preserved in files, not chat history. Clean context lets each agent work optimally.
 
+For the technical explanation of why this matters, see [Context Engineering](context-engineering.md).
+
 ## When to Use RPI
 
 | Use RPI When...                | Use Quick Edits When... |
@@ -118,6 +120,7 @@ Research findings are preserved in files, not chat history. Clean context lets e
 * [Task Implementor Guide](task-implementor.md) - Execute with precision
 * [Task Reviewer Guide](task-reviewer.md) - Validate implementations
 * [Using Them Together](using-together.md) - Complete workflow example
+* [Context Engineering](context-engineering.md) - Why context management matters
 * [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available agents
 * [Agent Systems Catalog](../agents/README.md) - Browse all agent families beyond RPI
 
