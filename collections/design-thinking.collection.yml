@@ -16,6 +16,8 @@ items:
     kind: prompt
   - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
     kind: prompt
+  - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    kind: prompt
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
