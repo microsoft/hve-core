@@ -211,4 +211,3 @@ A structured process for identifying the abstract principle behind an analogous 
 * Map the principle to the current domain's constraints: what form would this principle take given our materials, users, and environment?
 
 Coaching prompt: "What type of problem is this at its core? What industry solved that same type of problem, and what principle made their solution work?"
-
