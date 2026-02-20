@@ -204,6 +204,10 @@ function Invoke-PluginGeneration {
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
 
+    # Probe symlink capability once for the entire generation run
+    $symlinkCapable = Test-SymlinkCapability
+    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
+
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
 
@@ -269,7 +273,8 @@ function Invoke-PluginGeneration {
             -RepoRoot $RepoRoot `
             -Version $repoVersion `
             -Maturity $collectionMaturity `
-            -DryRun:$DryRun
+            -DryRun:$DryRun `
+            -SymlinkCapable:$symlinkCapable
 
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount
@@ -286,6 +291,15 @@ function Invoke-PluginGeneration {
         -RepoRoot $RepoRoot `
         -Collections $allCollections `
         -DryRun:$DryRun
+
+    # Fix git index modes for text stubs on non-symlink systems so Linux
+    # checkouts materialize real symbolic links instead of plain files.
+    if (-not $symlinkCapable) {
+        $fixedCount = Repair-PluginSymlinkIndex -PluginsDir $pluginsDir -RepoRoot $RepoRoot -DryRun:$DryRun
+        if ($fixedCount -gt 0) {
+            Write-Host "  Symlink index: $fixedCount entries fixed (100644 -> 120000)" -ForegroundColor Green
+        }
+    }
 
     Write-Host "`n--- Summary ---" -ForegroundColor Cyan
     Write-Host "  Plugins generated: $generated"
