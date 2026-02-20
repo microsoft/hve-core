@@ -42,6 +42,7 @@ copilot plugin install hve-core-all@hve-core
 | coding-standards  | Language-specific coding guidelines         |
 | project-planning  | PRDs, BRDs, ADRs, architecture diagrams     |
 | data-science      | Data specs, notebooks, dashboards           |
+| design-thinking   | Design thinking coaching and methodology    |
 | security-planning | Security and incident response              |
 | installer         | HVE Core installation automation            |
 | experimental      | Experimental and preview artifacts          |
