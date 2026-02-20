@@ -204,6 +204,10 @@ function Invoke-PluginGeneration {
     $updateResult = Update-HveCoreAllCollection -RepoRoot $RepoRoot -DryRun:$DryRun
     Write-Verbose "hve-core-all updated: $($updateResult.ItemCount) items ($($updateResult.AddedCount) added, $($updateResult.RemovedCount) removed)"
 
+    # Probe symlink capability once for the entire generation run
+    $symlinkCapable = Test-SymlinkCapability
+    Write-Verbose "Symlink capability: $symlinkCapable ($(if ($symlinkCapable) { 'using symlinks' } else { 'using file copies' }))"
+
     # Load all collection manifests
     $allCollections = Get-AllCollections -CollectionsDir $collectionsDir
 
@@ -258,7 +262,8 @@ function Invoke-PluginGeneration {
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
             -Version $repoVersion `
-            -DryRun:$DryRun
+            -DryRun:$DryRun `
+            -SymlinkCapable:$symlinkCapable
 
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount

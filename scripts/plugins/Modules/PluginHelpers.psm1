@@ -917,21 +917,59 @@ function New-GenerateResult {
 # I/O Functions (file system operations)
 # ---------------------------------------------------------------------------
 
-function New-RelativeSymlink {
+function Test-SymlinkCapability {
     <#
     .SYNOPSIS
-    Creates a relative symlink from destination to source.
+    Probes whether the current process can create symbolic links.
 
     .DESCRIPTION
-    Calculates the relative path from the directory containing the destination
-    to the source path, then creates a symbolic link at the destination
-    pointing to that relative path.
+    Creates a temporary file and attempts to symlink to it. Returns $true
+    when the OS and process privileges allow symlink creation, $false
+    otherwise. The probe directory is cleaned up unconditionally.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $tempDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "hve-symlink-probe-$PID"
+    $targetFile = Join-Path -Path $tempDir -ChildPath 'target.txt'
+    $linkFile = Join-Path -Path $tempDir -ChildPath 'link.txt'
+    try {
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        Set-Content -Path $targetFile -Value 'probe' -NoNewline
+        New-Item -ItemType SymbolicLink -Path $linkFile -Target $targetFile -ErrorAction Stop | Out-Null
+        return $true
+    }
+    catch {
+        return $false
+    }
+    finally {
+        if (Test-Path -Path $tempDir) {
+            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function New-PluginLink {
+    <#
+    .SYNOPSIS
+    Links a source path into a plugin destination via symlink or text stub.
+
+    .DESCRIPTION
+    When SymlinkCapable is set, creates a relative symbolic link from
+    DestinationPath to SourcePath. Otherwise writes a text stub file
+    containing the relative path, matching the format git produces when
+    core.symlinks is false. Text stubs keep git status clean on Windows
+    without Developer Mode or elevated privileges.
 
     .PARAMETER SourcePath
-    Absolute path to the symlink target (the real file or directory).
+    Absolute path to the real file or directory.
 
     .PARAMETER DestinationPath
-    Absolute path where the symlink will be created.
+    Absolute path where the link or text stub will be created.
+
+    .PARAMETER SymlinkCapable
+    When set, create a symbolic link; otherwise write a text stub.
     #>
     [CmdletBinding()]
     param(
@@ -939,17 +977,25 @@ function New-RelativeSymlink {
         [string]$SourcePath,
 
         [Parameter(Mandatory = $true)]
-        [string]$DestinationPath
+        [string]$DestinationPath,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$SymlinkCapable
     )
 
     $destinationDir = Split-Path -Parent $DestinationPath
-    $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath)
-
     if (-not (Test-Path -Path $destinationDir)) {
         New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
     }
 
-    New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    $relativePath = [System.IO.Path]::GetRelativePath($destinationDir, $SourcePath) -replace '\\', '/'
+
+    if ($SymlinkCapable) {
+        New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
+    }
+    else {
+        [System.IO.File]::WriteAllText($DestinationPath, $relativePath)
+    }
 }
 
 function Write-PluginDirectory {
@@ -960,8 +1006,8 @@ function Write-PluginDirectory {
     .DESCRIPTION
     Builds the full plugin layout under the specified plugins directory,
     including subdirectories for agents, commands, instructions, and skills.
-    Each item is symlinked from the plugin directory back to its source in
-    the repository. Generates plugin.json and README.md.
+    Each item is linked or copied from the plugin directory back to its
+    source in the repository. Generates plugin.json and README.md.
 
     .PARAMETER Collection
     Parsed collection manifest hashtable with id, name, description, and items.
@@ -977,6 +1023,9 @@ function Write-PluginDirectory {
 
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
+
+    .PARAMETER SymlinkCapable
+    When specified, creates symbolic links; otherwise copies files.
 
     .OUTPUTS
     [hashtable] Result with Success, AgentCount, CommandCount, InstructionCount,
@@ -998,7 +1047,10 @@ function Write-PluginDirectory {
         [string]$Version,
 
         [Parameter(Mandatory = $false)]
-        [switch]$DryRun
+        [switch]$DryRun,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$SymlinkCapable
     )
 
     $collectionId = $Collection.id
@@ -1057,14 +1109,14 @@ function Write-PluginDirectory {
         }
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create symlink $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would create link $destPath -> $sourcePath"
             continue
         }
 
-        New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
     }
 
-    # Symlink shared resource directories (unconditional, all plugins)
+    # Link shared resource directories (unconditional, all plugins)
     $sharedDirs = @(
         @{ Source = 'docs/templates';    Destination = 'docs/templates' }
         @{ Source = 'scripts/lib';       Destination = 'scripts/lib' }
@@ -1080,11 +1132,11 @@ function Write-PluginDirectory {
         }
 
         if ($DryRun) {
-            Write-Verbose "DryRun: Would create shared directory symlink $destPath -> $sourcePath"
+            Write-Verbose "DryRun: Would create shared directory link $destPath -> $sourcePath"
             continue
         }
 
-        New-RelativeSymlink -SourcePath $sourcePath -DestinationPath $destPath
+        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
     }
 
     # Generate plugin.json
@@ -1134,7 +1186,8 @@ Export-ModuleMember -Function @(
     'New-MarketplaceManifestContent',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
-    'New-RelativeSymlink',
+    'New-PluginLink',
+    'Test-SymlinkCapability',
     'Resolve-CollectionItemMaturity',
     'Test-ArtifactDeprecated',
     'Test-DeprecatedPath',

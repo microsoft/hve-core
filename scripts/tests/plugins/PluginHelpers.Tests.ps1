@@ -322,3 +322,46 @@ Describe 'Get-PluginSubdirectory' {
         $result | Should -Be 'skills'
     }
 }
+
+Describe 'Test-SymlinkCapability' {
+    It 'Returns a boolean' {
+        $result = Test-SymlinkCapability
+        $result | Should -BeOfType [bool]
+    }
+
+    It 'Cleans up probe directory' {
+        $probeDirPattern = Join-Path ([System.IO.Path]::GetTempPath()) "hve-symlink-probe-$PID"
+        Test-SymlinkCapability | Out-Null
+        Test-Path $probeDirPattern | Should -BeFalse
+    }
+}
+
+Describe 'New-PluginLink' {
+    BeforeAll {
+        $script:linkRoot = Join-Path $TestDrive 'link-test'
+        New-Item -ItemType Directory -Path $script:linkRoot -Force | Out-Null
+    }
+
+    It 'Writes text stub when SymlinkCapable is false' {
+        $src = Join-Path $script:linkRoot 'src-stub.txt'
+        Set-Content -Path $src -Value 'content' -NoNewline
+        $dest = Join-Path $script:linkRoot 'dest-stub.txt'
+
+        New-PluginLink -SourcePath $src -DestinationPath $dest
+
+        Test-Path $dest | Should -BeTrue
+        $stubContent = [System.IO.File]::ReadAllText($dest)
+        $expectedPath = [System.IO.Path]::GetRelativePath((Split-Path -Parent $dest), $src) -replace '\\', '/'
+        $stubContent | Should -Be $expectedPath
+    }
+
+    It 'Creates parent directory when destination parent does not exist' {
+        $src = Join-Path $script:linkRoot 'src-parent.txt'
+        Set-Content -Path $src -Value 'data' -NoNewline
+        $dest = Join-Path $script:linkRoot 'nested/deep/dest-parent.txt'
+
+        New-PluginLink -SourcePath $src -DestinationPath $dest
+
+        Test-Path $dest | Should -BeTrue
+    }
+}
