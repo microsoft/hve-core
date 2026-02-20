@@ -1,4 +1,5 @@
 ---
+name: DS Gen Jupyter Notebook
 description: 'Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries'
 ---
 

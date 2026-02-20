@@ -1,45 +1,45 @@
 ---
-name: rpi-agent
+name: RPI Agent
 description: 'Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core'
 argument-hint: 'Autonomous RPI agent. Requires a subagent tool.'
 disable-model-invocation: true
 agents:
-  - researcher-subagent
-  - plan-validator
-  - phase-implementor
-  - rpi-validator
-  - implementation-validator
+  - Researcher Subagent
+  - Plan Validator
+  - Phase Implementor
+  - RPI Validator
+  - Implementation Validator
 handoffs:
   - label: "Compact"
-    agent: rpi-agent
+    agent: RPI Agent
     send: true
     prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include executive details for each of the `Phase 4: Review` findings. Must include all of the `Phase 5: Discover` follow up work items and their order with complete and consistent details."
   - label: "1️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=1"
     send: true
   - label: "2️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=2"
     send: true
   - label: "3️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=3"
     send: true
   - label: "▶️ All"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=all"
     send: true
   - label: "🔄 Suggest"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi suggest"
     send: true
   - label: "🤖 Auto"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi auto=true"
     send: true
   - label: "💾 Save"
-    agent: memory
+    agent: Memory
     prompt: /checkpoint
     send: true
 ---

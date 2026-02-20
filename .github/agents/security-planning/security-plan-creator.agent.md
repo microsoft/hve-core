@@ -1,4 +1,5 @@
 ---
+name: Security Plan Creator
 description: "Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core"
 ---
 

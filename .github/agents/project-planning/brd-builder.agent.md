@@ -1,4 +1,5 @@
 ---
+name: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and reference integration"
 ---
 
