@@ -19,37 +19,64 @@ Instructions for generating pull request descriptions from branch diffs using th
 * Leave checkboxes requiring manual verification unchecked.
 * Preserve template structure and formatting without removing sections.
 
+## Canonical Fallback Rules
+
+Apply these fallback rules whenever a step references this section:
+
+1. If no PR template is resolved, use the standard format in the PR Description Format section.
+2. If a template is resolved but mapping details are ambiguous, preserve section order and map by closest semantic match.
+3. If no required check commands are discovered, skip command execution and continue.
+4. If no issue references are discovered, use `None` in the related issues section.
+5. If PR creation fails, apply Step 7 shared error handling in order: branch readiness, permissions, duplicate PR handling.
+
 ## Required Steps
 
 ### Step 1: Pre-requisite Validation
 
-Run required checks before generating the PR reference. This step discovers the PR template inline to extract check commands from checklist items; the later template discovery step (Step 5) performs full parsing for PR content generation.
+Entry criteria:
 
-1. Search for the PR template: check `**/PULL_REQUEST_TEMPLATE.md` and `.github/PULL_REQUEST_TEMPLATE/` directory. Follow location priority (case-insensitive match):
+* Repository context is available and the target branch is known.
+
+1. Resolve PR template candidates once by searching `**/PULL_REQUEST_TEMPLATE.md` and `.github/PULL_REQUEST_TEMPLATE/`.
+2. Apply location priority (case-insensitive match):
    1. `.github/PULL_REQUEST_TEMPLATE.md`
    2. `docs/PULL_REQUEST_TEMPLATE.md`
    3. `PULL_REQUEST_TEMPLATE.md`
-2. If a template is found, read it and extract required check commands. Parse checklist items containing backtick-wrapped commands under headings such as "Required Automated Checks."
-3. If no template is found or no check commands exist in the template, proceed to Step 2.
-4. Capture the current working tree state by running `git status --porcelain` and saving the output.
-5. Run each extracted check command via terminal and record the result (pass or fail) along with a summary of the output.
-6. Capture the working tree state again by running `git status --porcelain` after all checks complete.
-7. Compare the two working tree snapshots and evaluate check results together:
-   * Identify check-introduced changes: new files or modifications that were not present before checks ran (such as auto-formatting fixes).
-   * Identify check failures: commands that returned a non-zero exit code.
-   * If both check-introduced changes and check failures exist, report everything in a single message before blocking.
-   * If check-introduced changes exist, provide remediation guidance:
-     * List the specific files that changed.
-     * Stage and commit only the check-introduced files: `git add <changed-files> && git commit -m "style: apply lint fixes"`
-     * Re-run the failing checks to confirm they pass.
-   * If check failures exist without new changes, provide:
-     * Which checks failed and their output.
-     * Specific remediation guidance (for example, "Run `npm run lint:md` locally and fix reported issues").
-     * Instructions to stage and commit fixes before retrying.
-   * After the user addresses all issues, re-run this step from the beginning.
-   * If the snapshots are identical and all checks pass, proceed to Step 2.
+3. If multiple templates exist at the same priority level, list candidates and ask the user to choose one.
+4. Persist template state for later steps:
+   * `templatePath`: chosen template path, or `None`.
+   * `templateSections`: parsed H2 section structure when a template exists.
+   * `checkCommands`: backtick-wrapped required check commands from checklist items (for example, under "Required Automated Checks").
+5. Capture pre-check snapshot with `git status --porcelain`.
+6. Apply sandbox-safe check execution rules when required:
+   * In sandbox or no-side-effect contexts, run only checks that do not write outside the allowed workspace.
+   * When a required check cannot be run safely, record it as `Not Run (sandbox-safe restriction)` with the reason and continue using available check results.
+7. Run each command in `checkCommands` and record pass/fail status with a concise output summary.
+8. Capture post-check snapshot with `git status --porcelain`.
+9. Compute decision flags:
+   * `hasNewChanges`: post-check snapshot introduced new or modified files not present before checks.
+   * `hasFailures`: any check command returned a non-zero exit code.
+10. Apply this decision matrix:
+
+| hasNewChanges | hasFailures | Outcome |
+|---------------|-------------|---------|
+| `false`       | `false`     | Continue to Step 2 |
+| `true`        | `false`     | Block and provide remediation: list changed files, stage and commit only check-introduced files with `git add <changed-files> && git commit -m "style: apply lint fixes"`, then restart Step 1 |
+| `false`       | `true`      | Block and provide remediation: report failed checks with output, provide specific fix guidance, then restart Step 1 |
+| `true`        | `true`      | Block and provide combined remediation for changed files and failed checks in one message, then restart Step 1 |
+
+11. When no template is resolved or no check commands are found, apply Canonical Fallback Rules and continue.
+
+Exit criteria:
+
+* Template state is resolved and persisted for reuse.
+* Either Step 2 is reached or a single blocking remediation message is provided and Step 1 restarts after fixes.
 
 ### Step 2: Generate PR Reference
+
+Entry criteria:
+
+* Step 1 completed with no blocking check outcome.
 
 Generate the PR reference XML file using the pr-reference skill:
 
@@ -59,12 +86,23 @@ Generate the PR reference XML file using the pr-reference skill:
 4. Use the pr-reference skill to generate the XML file with the provided base branch and any requested options (such as excluding markdown diffs).
 5. Note the size of the generated output in the chat.
 
+Exit criteria:
+
+* `.copilot-tracking/pr/pr-reference.xml` exists and is ready for chunk review.
+
 ### Step 3: Parallel Subagent Review
+
+Entry criteria:
+
+* `.copilot-tracking/pr/pr-reference.xml` exists.
 
 Analyze the pr-reference.xml using parallel subagents:
 
 1. Get chunk information from the PR reference XML to determine how many chunks exist and their line ranges.
 2. Launch parallel subagents via `runSubagent` or `task` tools, one per chunk (or groups of chunks for very large diffs).
+3. If `runSubagent` and `task` are unavailable, review chunks sequentially in the parent agent while preserving the same output contract:
+   * Create `.copilot-tracking/pr/subagents/NN-pr-reference-log.md` for each chunk using the same template and numbering rules.
+   * Record the same completion details expected from subagent runs, including clarifying questions when analysis is ambiguous.
 
 Each subagent invocation provides these inputs:
 
@@ -85,7 +123,15 @@ Each subagent returns: output file path, completion status, and any clarifying q
 * Repeat subagent invocations with answers to clarifying questions until all chunks are reviewed.
 * Wait for all subagents to complete before proceeding.
 
+Exit criteria:
+
+* All chunks are reviewed and each subagent produced an output file or a resolved clarification.
+
 ### Step 4: Merge and Verify Findings
+
+Entry criteria:
+
+* Step 3 outputs exist for all assigned chunk ranges.
 
 Merge subagent findings into a unified analysis:
 
@@ -97,26 +143,37 @@ Merge subagent findings into a unified analysis:
 6. Ensure what's captured represents the current state of the codebase being merged (not intermediate changes that were later replaced on the same branch).
 7. The finished `pr-reference-log.md` serves as the single source of truth for PR generation.
 
-### Step 5: Discover PR Templates
+Exit criteria:
 
-Search for PR templates and decide whether to use the repository template:
+* `.copilot-tracking/pr/pr-reference-log.md` is complete and verified as the source of truth.
 
-1. Search for template files using `**/PULL_REQUEST_TEMPLATE.md` and check `.github/PULL_REQUEST_TEMPLATE/` directory.
-2. Follow location priority (case-insensitive match):
-   1. `.github/PULL_REQUEST_TEMPLATE.md`
-   2. `docs/PULL_REQUEST_TEMPLATE.md`
-   3. `PULL_REQUEST_TEMPLATE.md`
-3. If found, read the entire template, parse H2 sections, and store the structure for Step 6.
-4. If multiple templates exist, list them and ask the user to choose.
-5. If none found, report that a standard format is used (see the PR Description Format section).
+### Step 5: Prepare Template Mapping
+
+Entry criteria:
+
+* `templatePath` and related template state from Step 1 are available.
+* `.copilot-tracking/pr/pr-reference-log.md` is complete.
+
+1. Reuse `templatePath` and `templateSections` resolved in Step 1.
+2. If `templatePath` is set, confirm that template mapping data is available for Step 6.
+3. If `templatePath` is `None`, apply Canonical Fallback Rules and use the PR Description Format.
+
+Exit criteria:
+
+* Step 6 has an explicit mapping strategy: repository template mapping or fallback format.
 
 ### Step 6: Generate PR Description
+
+Entry criteria:
+
+* `.copilot-tracking/pr/pr-reference-log.md` is complete.
+* Template mapping strategy is set from Step 5.
 
 Create `.copilot-tracking/pr/pr.md` from interpreting `pr-reference-log.md`:
 
 1. Delete `pr.md` before writing a new version if it already exists; do not read the old file.
-2. If a PR template was found, map content to the template structure (follow template integration instructions from the repository's `pull-request.instructions.md` if available).
-3. If no PR template was found, use the PR Description Format defined below.
+2. If `templatePath` is set, map content to `templateSections` (follow template integration instructions from the repository's `pull-request.instructions.md` if available).
+3. If `templatePath` is `None`, apply Canonical Fallback Rules and use the PR Description Format defined below.
 
 Title:
 
@@ -145,18 +202,44 @@ Issue references:
 * Place issue references in the designated template section (for example, "Related Issue(s)") when a template exists, otherwise include them in the description.
 * Deduplicate issue numbers and preserve the action prefix from the first occurrence.
 
-### Step 7: Create Pull Request When Requested By User
+Exit criteria:
+
+* `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
+
+### Step 7: Create Pull Request When Requested by User
+
+Entry criteria:
+
+* `.copilot-tracking/pr/pr.md` exists.
+* User explicitly requested PR creation.
 
 Create a pull request using MCP tools. Skip this step when the user has not requested PR creation and proceed to Step 8.
 
-1. Check whether the current branch is pushed to the remote. If not, push it.
-2. Extract the PR title and body from `pr.md`:
+#### Step 7A: Branch Readiness
+
+1. Check whether the current branch is pushed to the remote.
+2. If not pushed, push the current branch before continuing.
+
+Exit criteria:
+
+* The head branch exists on the remote and is ready for PR creation.
+
+#### Step 7B: Approval Loop
+
+1. Extract the PR title and body from `pr.md`:
    * Title is the first line of pr.md with the leading `# ` stripped (for example, `# feat(scope): description` becomes `feat(scope): description`).
    * Body is the full content of pr.md with all markdown formatting preserved, including the H1 line with `#`.
-3. Present the PR title and a summary of the body inline in chat. Reference [pr.md](.copilot-tracking/pr/pr.md) for the full content and ask the user to confirm or request changes.
-4. If the user requests changes to the title, body content, or styling, apply the changes to `pr.md` and re-present the updated title and summary. Repeat until the user approves.
-5. Prepare the base branch reference by stripping any remote prefix (for example, `origin/main` becomes `main`).
-6. Create the pull request by calling `mcp_github_create_pull_request` with these parameters:
+2. Present the PR title and a summary of the body inline in chat. Reference [pr.md](../../../.copilot-tracking/pr/pr.md) for full content and ask the user to confirm or request changes.
+3. If the user requests updates to title, body, or style, apply changes to `pr.md` and repeat this substep until approved.
+
+Exit criteria:
+
+* User has approved the PR title and body.
+
+#### Step 7C: PR Creation and Error Handling
+
+1. Prepare the base branch reference by stripping any remote prefix (for example, `origin/main` becomes `main`).
+2. Create the pull request by calling `mcp_github_create_pull_request` with these parameters:
    * `owner`: Repository owner derived from the git remote URL.
    * `repo`: Repository name derived from the git remote URL.
    * `title`: Extracted title without the leading `#`.
@@ -164,16 +247,33 @@ Create a pull request using MCP tools. Skip this step when the user has not requ
    * `head`: Current branch name.
    * `base`: Target branch with remote prefix stripped.
    * `draft`: Set when the user requests a draft PR.
-7. Handle errors during creation:
-   * Branch not found: Verify the branch was pushed to the remote.
-   * Permission denied: Inform the user of the permission requirements.
-   * Duplicate PR: Check for an existing PR on the same branch and offer to update it using `mcp_github_update_pull_request`.
-8. Share the PR URL with the user after successful creation.
+3. If creation fails, apply Canonical Fallback Rules and then apply the Step 7 Shared Error Handling subsection.
+4. Share the PR URL after successful creation.
+
+Exit criteria:
+
+* Pull request is created successfully and URL is shared, or a clear next action is provided for a blocking error.
+
+#### Step 7 Shared Error Handling
+
+Apply this ordered error handling when PR creation fails:
+
+1. Branch not found: verify Step 7A completed and the branch is present on remote.
+2. Permission denied: inform the user about required repository permissions.
+3. Duplicate PR: check for an existing PR on the same branch and offer to update it with `mcp_github_update_pull_request`.
 
 ### Step 8: Cleanup
 
+Entry criteria:
+
+* PR content generation is complete, and Step 7 is complete or skipped.
+
 1. Delete `.copilot-tracking/pr/pr-reference.xml` after the analysis is complete.
 2. Delete the `.copilot-tracking/pr/subagents/` directory and its contents.
+
+Exit criteria:
+
+* Temporary PR analysis artifacts are removed.
 
 ## Issue Reference Extraction
 
