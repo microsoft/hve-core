@@ -282,6 +282,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/prompt-builder.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/pull-request.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
