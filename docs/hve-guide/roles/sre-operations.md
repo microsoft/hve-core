@@ -98,14 +98,14 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 ## Key Agents and Workflows
 
-| Agent                     | Purpose                                        | Docs                                           |
-|---------------------------|------------------------------------------------|------------------------------------------------|
+| Agent                     | Purpose                                        | Docs                                              |
+|---------------------------|------------------------------------------------|---------------------------------------------------|
 | **task-researcher**       | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher.md)   |
 | **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor.md) |
 | **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **security-plan-creator** | Infrastructure security planning               | Agent file                                     |
-| **pr-review**             | Pull request review for infrastructure changes | Agent file                                     |
-| **memory**                | Session context and preference persistence     | Agent file                                     |
+| **security-plan-creator** | Infrastructure security planning               | Agent file                                        |
+| **pr-review**             | Pull request review for infrastructure changes | Agent file                                        |
+| **memory**                | Session context and preference persistence     | Agent file                                        |
 
 Prompts complement the agents for operational workflows:
 

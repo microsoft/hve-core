@@ -95,18 +95,18 @@ Set iteration path to Sprint 24.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                       | Docs                                         |
-|-----------------------------|-----------------------------------------------|----------------------------------------------|
-| **brd-builder**             | Business requirements document creation       | Agent file                                   |
-| **prd-builder**             | Product requirements document generation      | Agent file                                   |
-| **agile-coach**             | Sprint planning and agile methodology         | Agent file                                   |
-| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion      | Agent file                                   |
+| Agent                       | Purpose                                       | Docs                                            |
+|-----------------------------|-----------------------------------------------|-------------------------------------------------|
+| **brd-builder**             | Business requirements document creation       | Agent file                                      |
+| **prd-builder**             | Product requirements document generation      | Agent file                                      |
+| **agile-coach**             | Sprint planning and agile methodology         | Agent file                                      |
+| **ado-prd-to-wit**          | PRD to Azure DevOps work item conversion      | Agent file                                      |
 | **github-backlog-manager**  | GitHub issue discovery and backlog automation | [GitHub Backlog](../../agents/github-backlog/)  |
-| **product-manager-advisor** | Product strategy and prioritization guidance  | Agent file                                   |
-| **ux-ui-designer**          | UX/UI design guidance and review              | Agent file                                   |
+| **product-manager-advisor** | Product strategy and prioritization guidance  | Agent file                                      |
+| **ux-ui-designer**          | UX/UI design guidance and review              | Agent file                                      |
 | **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../../rpi/task-researcher.md) |
 | **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../../rpi/README.md)                 |
-| **memory**                  | Session context and preference persistence    | Agent file                                   |
+| **memory**                  | Session context and preference persistence    | Agent file                                      |
 
 ## Tips
 

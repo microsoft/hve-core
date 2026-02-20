@@ -97,15 +97,15 @@ granularity, and GDPR privacy constraints for EU customer data.
 
 ## Key Agents and Workflows
 
-| Agent                        | Purpose                                    | Docs                                         |
-|------------------------------|--------------------------------------------|----------------------------------------------|
-| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                   |
-| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                   |
-| **gen-data-spec**            | Data specification document creation       | Agent file                                   |
-| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                   |
+| Agent                        | Purpose                                    | Docs                                            |
+|------------------------------|--------------------------------------------|-------------------------------------------------|
+| **gen-jupyter-notebook**     | Jupyter notebook generation                | Agent file                                      |
+| **gen-streamlit-dashboard**  | Streamlit dashboard creation               | Agent file                                      |
+| **gen-data-spec**            | Data specification document creation       | Agent file                                      |
+| **test-streamlit-dashboard** | Dashboard functional testing               | Agent file                                      |
 | **task-researcher**          | Data source and pattern research           | [Task Researcher](../../rpi/task-researcher.md) |
 | **task-planner**             | Analytics pipeline planning                | [Task Planner](../../rpi/task-planner.md)       |
-| **memory**                   | Session context and preference persistence | Agent file                                   |
+| **memory**                   | Session context and preference persistence | Agent file                                      |
 
 Prompts complement the agents for cross-cutting workflows:
 

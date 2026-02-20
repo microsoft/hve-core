@@ -84,7 +84,7 @@ Each custom agent has different instructions. Accumulated context causes confusi
 Task Researcher → /clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
 ```
 
-Research findings are preserved in files, not chat history. Clean context lets each agent work optimally.
+Research findings are preserved in files, not chat history. Clean context lets each agent work optimally. After clearing, open the relevant `.copilot-tracking/` artifact in your editor so the next agent can see it (for example, open the research document before invoking Task Planner).
 
 For the technical explanation of why this matters, see [Context Engineering](context-engineering.md).
 

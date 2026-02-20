@@ -60,6 +60,29 @@ Four concepts define the discipline:
 
 Starting a new chat achieves the same result through a different mechanism. Both approaches reset the token ratio. `/clear` keeps you in the same editor window. A new chat creates a fresh session. The outcome is identical: the model sees instructions clearly because nothing competes for attention.
 
+## Restoring Context After /clear
+
+`/clear` removes chat history, but agents still need the artifacts from prior phases. Those artifacts live in `.copilot-tracking/` (gitignored), not in chat history, so they survive the clear. You need to bring them back into the agent's view.
+
+Two mechanisms work reliably:
+
+* Open the file in the editor before invoking the next agent. Copilot Chat reads files visible in the active editor tab.
+* Reference the file path explicitly in your prompt message so the agent knows where to look.
+
+### What to Open at Each Transition
+
+| Transition              | Open or Reference                                                       |
+|-------------------------|-------------------------------------------------------------------------|
+| Research → Plan         | `.copilot-tracking/research/<topic>-research.md`                        |
+| Plan → Implement        | `.copilot-tracking/plans/<topic>-plan.instructions.md`                  |
+| Implement → Review      | `.copilot-tracking/changes/<topic>-changes.md` (plan and research help) |
+| Review → Rework/Iterate | `.copilot-tracking/reviews/<topic>-review.md`                           |
+
+The `/task-*` prompts attempt to auto-discover recent artifacts in `.copilot-tracking/`, but opening the file in the editor is more reliable, especially when multiple artifacts exist for different topics.
+
+> [!TIP]
+> For longer workflows spanning multiple sessions, use the **memory** agent to persist working state (file paths, decisions, progress) and the `/checkpoint` prompt to save and restore session context.
+
 ## The /compact Alternative
 
 `/compact` takes a different approach. Instead of removing conversation history entirely, it summarizes the history into a condensed form that preserves key context while reducing the token count.

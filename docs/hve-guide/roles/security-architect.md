@@ -89,12 +89,12 @@ arguments.
 
 ## Key Agents and Workflows
 
-| Agent                     | Purpose                                       | Docs                                         |
-|---------------------------|-----------------------------------------------|----------------------------------------------|
-| **security-plan-creator** | Security plan and threat model generation     | Agent file                                   |
+| Agent                     | Purpose                                       | Docs                                            |
+|---------------------------|-----------------------------------------------|-------------------------------------------------|
+| **security-plan-creator** | Security plan and threat model generation     | Agent file                                      |
 | **task-researcher**       | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher.md) |
 | **task-reviewer**         | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **memory**                | Session context and preference persistence    | Agent file                                   |
+| **memory**                | Session context and preference persistence    | Agent file                                      |
 
 Prompts complement the agents for targeted security workflows:
 

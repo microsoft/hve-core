@@ -101,16 +101,16 @@ with coding standards.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                        | Docs                                           |
-|----------------------|------------------------------------------------|------------------------------------------------|
+| Agent                | Purpose                                        | Docs                                              |
+|----------------------|------------------------------------------------|---------------------------------------------------|
 | **task-researcher**  | Deep codebase and API research                 | [Task Researcher](../../rpi/task-researcher.md)   |
 | **task-planner**     | Structured implementation planning             | [Task Planner](../../rpi/task-planner.md)         |
 | **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor.md) |
 | **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer.md)       |
 | **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/README.md)               |
-| **pr-review**        | Pull request review automation                 | Agent file                                     |
-| **memory**           | Session context and preference persistence     | Agent file                                     |
-| **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                     |
+| **pr-review**        | Pull request review automation                 | Agent file                                        |
+| **memory**           | Session context and preference persistence     | Agent file                                        |
+| **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                        |
 
 Auto-activated instructions apply coding standards based on file type: C# (`*.cs`), Python (`*.py`), Bash (`*.sh`), Bicep (`bicep/**`), Terraform (`*.tf`), and GitHub Actions workflows (`*.yml`).
 
