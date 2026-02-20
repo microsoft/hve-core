@@ -15,6 +15,8 @@ Instructions for generating pull request descriptions from branch diffs using th
 * Check for PR templates before generating content; use the repository template when available.
 * Check checkboxes for items the agent completed or verified during PR generation.
 * Leave checkboxes requiring manual human verification unchecked.
+* Evaluate template checkboxes against the diff. Check items with confident evidence from changed files. Leave unchecked when assessment requires human judgment.
+* When the repository conventions file defines section-level handling modes or manual-only exceptions, those take precedence over general checkbox guidance for the specified sections.
 * Preserve template structure and formatting without removing sections.
 
 ## Canonical Fallback Rules
@@ -118,7 +120,11 @@ Entry criteria:
 
 Create `.copilot-tracking/pr/pr.md` from interpreting `pr-reference-log.md`:
 
-1. If `templatePath` from Step 1 is set, map content to `templateSections`. Apply Template Integration, Change Type Detection, and GHCP Maturity Detection from `.github/instructions/pull-request.instructions.md`.
+1. If `templatePath` from Step 1 is set, apply repo-specific conventions from the attached instructions file matching `pull-request.instructions.md` to populate all template sections from pr-reference-log.md analysis. If no repo-specific conventions file exists, fill the PR template by semantic match to section headings. Apply these generic principles:
+   * Check checkboxes when the diff provides confident evidence.
+   * Leave checkboxes unchecked when human judgment is required.
+   * Preserve placeholder comments in sections that cannot be auto-populated.
+   * Process sections in document order.
 2. If `templatePath` is `None`, apply Canonical Fallback Rules and use the PR Description Format defined below.
 3. Delete `pr.md` before writing a new version if it already exists; do not read the old file.
 
@@ -133,14 +139,46 @@ Extract and place issue references following the Issue Reference Extraction sect
 
 Follow the PR Writing Standards section for description style and content principles.
 
-After generating `pr.md`, run the Security Analysis from `.github/instructions/pull-request.instructions.md`.
+After generating pr.md, run the security analysis, post-generation checklist, and assessable required checks defined below.
 
-After the post-generation checklist review, insert confirmed checklist items into pr.md with their completion status.
+#### Security Analysis
+
+Analyze pr-reference-log.md for security concerns using two approaches:
+
+Checkbox-mapped analysis:
+
+* When the PR template contains security-related checkboxes, analyze the diff for security concerns including sensitive data exposure, dependency vulnerabilities, and privilege escalation.
+* Check matching security checkboxes based on semantic match between the checkbox label and the analysis result.
+* Leave checkboxes unchecked when assessment is uncertain.
+
+Supplementary analysis:
+
+* Non-compliant language: Flag terms that violate inclusive language guidelines.
+* Unintended changes: Identify files modified without clear intent from commits or branch context.
+* Missing referenced files: Verify that files referenced in code or documentation exist in the repository.
+* Conventional commits compliance: Confirm commit messages follow the conventional commits format.
+
+Report supplementary findings in chat and note issues in Additional Notes.
+
+#### Post-generation Checklist
+
+Review pr.md against these criteria and insert a PR Generation Validation subsection under the template's checklist section with confirmed items checked:
+
+1. PR description preserves all template sections.
+2. pr-reference-log.md analysis is accurately reflected in the description.
+3. Description uses past tense and follows writing-style conventions.
+4. All significant changes from the diff are included.
+5. Referenced files are accurate and exist in the repository.
+6. Follow-up tasks are actionable and tied to specific code, files, or components.
+
+#### Assessable Required Checks
+
+Assess non-automated checklist items from the template using diff analysis. For each assessable item, verify the claim against changed files. Check items where the diff provides confident evidence. Leave items unchecked when confident assessment is not possible.
 
 Exit criteria:
 
 * `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
-* Post-generation checklist from `.github/instructions/pull-request.instructions.md` is complete and inserted into pr.md when a repository-specific conventions file exists.
+* Security analysis, post-generation checklist, and assessable required checks are complete and reflected in pr.md.
 
 ### Step 6: Validate PR Readiness
 
@@ -262,7 +300,7 @@ Extract issue references from commit messages and branch names using these patte
 | `Resolves #(\d+)`      | Commit message   | `Resolves #123`    |
 | `#(\d+)` (standalone)  | Commit message   | `Related to #123`  |
 | `/(\d+)-`              | Branch name      | `Related to #123`  |
-| `AB#(\d+)`             | Commit or branch | `AB#12345` (ADO)   |
+| `AB#(\d+)` (Azure DevOps convention) | Commit or branch | `AB#12345` (ADO)   |
 
 Deduplicate issue numbers and preserve the action prefix from the first occurrence.
 

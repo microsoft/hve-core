@@ -9,52 +9,87 @@ Repository-specific conventions for pull request generation in hve-core. Follow 
 
 ## Template Integration
 
-Map PR content to the repository template at `.github/PULL_REQUEST_TEMPLATE.md`. The template defines these H2 sections:
+When a repository template exists, keep unfilled placeholders for manual completion.
 
-| pr.md Component       | Template Section           | Mode   | Guidance                                          |
-|-----------------------|----------------------------|--------|---------------------------------------------------|
-| H1 Title              | Document title             | Map    | Replace the existing title with the generated one |
-| Summary paragraph     | ## Description             | Map    | Add after the placeholder comment if present      |
-| Change bullets        | ## Description             | Map    | Append after the summary                          |
-| Detected issue refs   | ## Related Issue(s)        | Map    | Replace placeholder comment if present            |
-| Detected change types | ## Type of Change          | Map    | Check matching `- [ ]` boxes                      |
-| Security analysis     | ## Security Considerations | Map    | Check boxes and add notes when issues exist       |
-| Automated check results | ## Checklist > ### Required Automated Checks | Map | Check `- [x]` for each validation command that passed in Step 6 |
-| Assessable required checks | ## Checklist > ### Required Checks | Map | Check items the agent can confidently verify from diff analysis; leave others unchecked |
-| Post-generation validation | ## Checklist | Insert | Insert `### PR Generation Validation` subsection with confirmed items checked |
-| GHCP Maturity section | (new section)              | Insert | Insert before ## Additional Notes when non-stable GHCP files detected |
-| Notes or Important    | ## Additional Notes        | Map    | Insert content                                    |
-| Sample prompts        | ## Sample Prompts          | Preserve | Left for manual completion; do not modify       |
-| Testing               | ## Testing                 | Preserve | Left for manual completion; do not modify       |
-| AI Artifact checks    | ## Checklist > ### AI Artifact Contributions | Preserve | Left for manual completion; do not modify |
+Rich markdown formatting is permitted within all sections, including `###` sub-headings, bold, italics, blockquotes, and prose paragraphs.
 
-`Map` mode defines where content goes, not how it is formatted. Rich markdown formatting is permitted within mapped sections, including `###` sub-headings, bold, italics, blockquotes, and prose paragraphs.
+Report that the repository template was used once generation completes.
 
-* Preserve template formatting and remove only placeholder comments that were filled.
-* Keep unfilled placeholders for manual completion.
-* Report that the repository template was used once generation completes.
+### Manual-Only Sections
+
+These sections require human verification. The agent does not modify them:
+
+* AI artifact contribution verification checkboxes (under the checklist section)
+* Prompt-builder review attestation checkbox (under type of change)
+* Free-form other type checkbox (under type of change)
+
+### Section Fill Guidance
+
+#### Sample Prompts
+
+When AI artifact changes are detected (`.instructions.md`, `.prompt.md`, `.agent.md`, `SKILL.md`), fill sub-sections from pr-reference-log.md analysis:
+
+| Sub-section        | Content Source                                              |
+|--------------------|-------------------------------------------------------------|
+| User Request       | Describe how to trigger or invoke the modified artifact     |
+| Execution Flow     | Summarize key steps, tool usage, and decision points        |
+| Output Artifacts   | List files or content created with brief previews           |
+| Success Indicators | Describe how users verify correct operation                 |
+
+> [!NOTE]
+> Human review is recommended for agent-populated Sample Prompts content.
+
+Leave the section empty with placeholder comments intact when the PR does not include AI artifact changes.
+
+#### Testing
+
+Document all testing performed by the agent:
+
+* List each automated validation command run in Step 6 and its pass/fail status.
+* Summarize security analysis findings.
+* Summarize diff-based assessments performed.
+* Note that manual testing was not performed when applicable.
+
+> [!NOTE]
+> Add manual testing descriptions when applicable.
+
+### Special Insertion Rules
+
+* Insert a GHCP Maturity section before `## Additional Notes` when non-stable GHCP artifacts are detected.
+* Insert a `### PR Generation Validation` subsection under `## Checklist` with post-generation validation results.
 
 ## Checkbox Reference
 
-Single authoritative reference for all checkbox handling in PULL_REQUEST_TEMPLATE.md. All other sections that mention checkboxes defer to this table.
+Single authoritative reference for all checkbox handling in the PR template. All other sections that mention checkboxes defer to this table.
 
-| Template Location                          | Checkbox Group                    | Handling     | Step   | Rule Summary                                                                 |
-|--------------------------------------------|-----------------------------------|--------------|--------|------------------------------------------------------------------------------|
-| ## Type of Change                          | All detection-matched types (Code & Documentation, Infrastructure & Configuration, AI Artifacts, Script/automation) | Agent (auto) | Step 5 | Check via Change Type Detection pattern match                                |
-| ## Type of Change                          | Reviewed contribution with `prompt-builder` | Manual       | N/A    | Human verification; never checked by agent                                   |
-| ## Type of Change                          | Other (please describe)           | Manual       | N/A    | Human verification; never checked by agent                                   |
-| ## Security Considerations                 | No sensitive or NDA information   | Agent (auto) | Step 5 | Check when customer data and secrets analysis both pass                      |
-| ## Security Considerations                 | Dependencies reviewed             | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist; check if appropriate            |
-| ## Security Considerations                 | Least privilege                   | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified; check if appropriate       |
-| ## Checklist > ### Required Checks         | Documentation, naming, backwards-compat, tests | Agent (assessed) | Step 5 | Diff-based assessment with confidence threshold; leave unchecked when uncertain |
-| ## Checklist > ### AI Artifact Contributions | All items                        | Manual       | N/A    | Human verification; never checked by agent                                   |
-| ## Checklist > ### Required Automated Checks | Each validation command         | Agent (automated) | Step 6 | Check for each command that passed in Step 6B                                |
-| ## Checklist > ### PR Generation Validation | Self-audit items                 | Agent (self-audit) | Step 5 | Insert subsection; check confirmed items after post-generation review        |
-| GHCP Maturity Acknowledgment               | Non-stable artifact acknowledgment | Manual      | N/A    | Inserted only when non-stable GHCP artifacts detected; left unchecked        |
+> [!NOTE]
+> Review this table when the PR template changes to ensure checkbox purposes and template locations remain accurate.
+
+| Template Location | Checkbox Purpose | Handling | Step | Rule Summary |
+|---|---|---|---|---|
+| Type of Change | Auto-detected change type categories | Agent (auto) | Step 5 | Check via Change Type Detection pattern match |
+| Type of Change | Prompt-builder review attestation | Manual | N/A | Human verification; never checked by agent |
+| Type of Change | Free-form other type | Manual | N/A | Human verification; never checked by agent |
+| Security Considerations | Sensitive data attestation | Agent (auto) | Step 5 | Check when customer data and secrets analysis both pass |
+| Security Considerations | Dependency security review | Agent (conditional) | Step 5 | Evaluate only when dependency changes exist |
+| Security Considerations | Privilege scope attestation | Agent (conditional) | Step 5 | Evaluate only when security scripts are modified |
+| Checklist > Required Checks | Documentation update verification | Agent (assessed) | Step 5 | Check when docs/ changes accompany code changes |
+| Checklist > Required Checks | Naming convention compliance | Agent (assessed) | Step 5 | Check when changed files follow repository patterns |
+| Checklist > Required Checks | Backwards compatibility verification | Agent (assessed) | Step 5 | Check only when diff shows no removal of public API surfaces |
+| Checklist > Required Checks | Test coverage verification | Agent (assessed) | Step 5 | Check only when test files are in changes |
+| Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual | N/A | Human verification; never checked by agent |
+| Checklist > Required Automated Checks | Validation command results | Agent (automated) | Step 6 | Check for each command that passed in Step 6B |
+| Checklist > PR Generation Validation | Self-audit items | Agent (self-audit) | Step 5 | Insert subsection; check confirmed items after post-generation review |
+| GHCP Maturity (inserted) | Non-stable artifact acknowledgment | Manual | N/A | Inserted only when non-stable GHCP artifacts detected; left unchecked |
+
+When a conditional checkbox's trigger condition is not met, annotate the checkbox inline with `(N/A — {brief reason})` to distinguish skipped-as-not-applicable from evaluated-and-failed.
 
 ## Change Type Detection Patterns
 
 Analyze changed files from the pr-reference-log.md analysis. This table maps file patterns, branch patterns, and commit patterns to the change type checkboxes in the PR template.
+
+> [!NOTE]
+> Detection pattern values are matched against PR template checkbox labels. Synchronize this table when template checkbox text changes.
 
 | Change Type                | File Pattern             | Branch Pattern            | Commit Pattern            |
 |----------------------------|--------------------------|---------------------------|---------------------------|
@@ -139,48 +174,3 @@ If any non-stable files detected, add:
 - [ ] I acknowledge this PR includes non-stable GHCP artifacts
 - [ ] Non-stable artifacts are intentional for this change
 ```
-
-## Security Analysis
-
-After PR generation, analyze the pr-reference-log.md for security and compliance issues. Report results in chat, then update pr.md checkboxes per the Checkbox Reference table.
-
-### Checkbox-Mapped Analysis
-
-These items determine Security Considerations checkbox state:
-
-* **Customer information leaks** and **secrets or credentials**: When both pass, check the "no sensitive or NDA information" checkbox.
-* **Dependency changes**: When dependency changes exist, evaluate and check the "dependencies reviewed" checkbox if appropriate.
-* **Security scripts modified**: When security scripts are modified, evaluate and check the "least privilege" checkbox if appropriate.
-
-### Supplementary Analysis
-
-These items do not map to checkboxes. Report findings in chat and note issues in pr.md's Additional Notes:
-
-* Non-compliant language (FIXME, WIP, or to-do language in committed code)
-* Unintended changes or accidental inclusion of files
-* Missing referenced files
-* Conventional commits compliance for title and reviewed commit messages
-
-## Post-generation Checklist
-
-After generating the PR, review pr.md and confirm:
-
-* [ ] PR description preserves all template sections
-* [ ] pr-reference-log.md analysis is reflected in the description
-* [ ] Description uses past tense, avoids conventional commit style in body, and follows writing-style conventions
-* [ ] PR description includes all significant changes and omits trivial or auto-generated ones
-* [ ] Referenced files and paths are accurate
-* [ ] Follow-up tasks are actionable and clearly scoped
-
-Insert a `### PR Generation Validation` subsection under `## Checklist` in pr.md with confirmed items checked `[x]` and unconfirmed items left unchecked `[ ]`. This subsection must be finalized before PR creation in Step 7.
-
-## Assessable Required Checks
-
-When populating `## Checklist > ### Required Checks` in pr.md during Step 5, evaluate the non-automated required checks that the agent can assess with high confidence. Refer to the Checkbox Reference table for handling rules.
-
-* **Documentation is updated**: Verify docs/ changes accompany code changes that affect documented behavior. Check the box when documentation changes are present or when the PR does not affect documented behavior.
-* **Files follow existing naming conventions**: Verify new or renamed files match the naming patterns established in the repository. Check the box when all files follow conventions.
-* **Changes are backwards compatible**: Check only when the diff clearly shows no removal or modification of public API surfaces, exported interfaces, or shared contracts. Leave unchecked when assessment requires domain judgment beyond diff analysis.
-* **Tests added for new functionality**: Check only when test files are included for new feature code. Leave unchecked when tests are not applicable or when the assessment is uncertain.
-
-Leave items unchecked when the agent cannot make a confident assessment.
