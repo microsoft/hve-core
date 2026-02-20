@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.0.1](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.0...hve-core-v3.0.1) (2026-02-20)
+
+
+### 🐛 Bug Fixes
+
+* **scripts:** add marketplace manifest validation and standardize source format ([#711](https://github.com/microsoft/hve-core/issues/711)) ([c5ac616](https://github.com/microsoft/hve-core/commit/c5ac616f3b255e17caa187f7a0b585540b9f8999))
+
 ## [3.0.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.10...hve-core-v3.0.0) (2026-02-20)
 
 
