@@ -1,0 +1,11 @@
+{
+  "label": "Workflows",
+  "position": 4,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Workflows",
+    "description": "The RPI workflow and structured patterns for AI-assisted development"
+  }
+}

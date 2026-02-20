@@ -1,0 +1,37 @@
+.hero {
+  background: var(--ms-learn-hero-gradient);
+  position: relative;
+  padding: 0 24px;
+  overflow: hidden;
+}
+
+.heroPattern {
+  position: absolute;
+  inset: 0;
+  background-image: var(--ms-learn-hero-pattern);
+  background-repeat: repeat;
+  background-size: 50px;
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  max-width: 800px;
+  padding: 32px 48px 32px 0;
+  z-index: 1;
+}
+
+.heroTitle {
+  color: var(--ms-learn-hero-text);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 45px;
+  margin: 0 0 24px;
+}
+
+.heroSubtitle {
+  color: var(--ms-learn-hero-text);
+  font-size: 16px;
+  line-height: 25.6px;
+  margin: 0;
+}

@@ -1,0 +1,11 @@
+{
+  "label": "Design Thinking",
+  "position": 5,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Design Thinking",
+    "description": "Plan, specify, and architect features before implementation"
+  }
+}

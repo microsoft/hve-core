@@ -1,0 +1,12 @@
+{
+  "label": "Instructions & Skills",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Instructions & Skills",
+    "slug": "/category/instructions-and-skills",
+    "description": "Auto-applied coding guidelines and reusable skill packages"
+  }
+}
