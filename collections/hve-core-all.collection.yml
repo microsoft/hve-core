@@ -228,6 +228,9 @@ items:
 - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/design-thinking/dt-method-04-deep.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
   kind: instruction
   maturity: experimental
