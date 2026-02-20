@@ -95,8 +95,6 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/git-merge.instructions.md
     kind: instruction
-  - path: .github/instructions/hve-core/wsl-symlink-test.instructions.md
-    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills

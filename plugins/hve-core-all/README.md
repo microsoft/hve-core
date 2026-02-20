@@ -141,7 +141,6 @@ copilot plugin install hve-core-all@hve-core
 | markdown                             | Required instructions for creating or editing any Markdown (.md) files                                                                                                                                                                                      |
 | prompt-builder                       | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
 | writing-style                        | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
-| wsl-symlink-test                     | Temporary test instruction for WSL symlink verification — remove after testing                                                                                                                                                                              |
 | hve-core-location                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills

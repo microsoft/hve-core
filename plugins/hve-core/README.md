@@ -60,7 +60,6 @@ copilot plugin install hve-core@hve-core
 | commit-message    | Required instructions for creating all commit messages - Brought to you by microsoft/hve-core                                                                                                                                                               |
 | prompt-builder    | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
 | git-merge         | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls.                                                                                                                                              |
-| wsl-symlink-test  | Temporary test instruction for WSL symlink verification — remove after testing                                                                                                                                                                              |
 | hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills
