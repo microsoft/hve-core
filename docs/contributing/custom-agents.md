@@ -264,14 +264,15 @@ items:
 
 Choose collections based on who benefits most from your agent:
 
-| Agent Type           | Recommended Collections                   |
-|----------------------|-------------------------------------------|
-| Task workflow agents | `hve-core-all`, `hve-core`                |
-| Architecture agents  | `hve-core-all`, `project-planning`        |
-| Documentation agents | `hve-core-all`, `hve-core`                |
-| Data science agents  | `hve-core-all`, `data-science`            |
-| ADO/work item agents | `hve-core-all`, `ado`, `project-planning` |
-| Code review agents   | `hve-core-all`, `hve-core`                |
+| Agent Type             | Recommended Collections                   |
+|------------------------|-------------------------------------------|
+| Task workflow agents   | `hve-core-all`, `hve-core`                |
+| Architecture agents    | `hve-core-all`, `project-planning`        |
+| Documentation agents   | `hve-core-all`, `hve-core`                |
+| Data science agents    | `hve-core-all`, `data-science`            |
+| Design thinking agents | `hve-core-all`, `design-thinking`         |
+| ADO/work item agents   | `hve-core-all`, `ado`, `project-planning` |
+| Code review agents     | `hve-core-all`, `hve-core`                |
 
 ### Declaring Agent Dependencies
 
