@@ -54,5 +54,23 @@ items:
     kind: instruction
   - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
     kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
+    kind: instruction
+  - path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
+    kind: instruction
 display:
   ordering: alpha
