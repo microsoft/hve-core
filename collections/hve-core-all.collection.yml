@@ -182,6 +182,8 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
@@ -228,5 +230,5 @@ items:
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
-  ordering: alpha
   featured: true
+  ordering: alpha
