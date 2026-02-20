@@ -9,6 +9,10 @@ tools:
   - runSubagent
 handoffs:
 
+  - label: "🎯 Method Next"
+    agent: dt-coach
+    prompt: /dt-method-next
+    send: false
   - label: "🔬 Research"
     agent: task-researcher
     prompt: /task-research
