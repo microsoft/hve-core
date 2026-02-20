@@ -75,11 +75,6 @@ Engineers merge their approved PRs and verify builds. TPMs update work item stat
 
 Delivery produces merged code on the target branch, updated work items, and verified build results. Transition to [Stage 6: Implementation](implementation.md) for the next sprint, or to [Stage 9: Operations](operations.md) when the final sprint is complete.
 
-## Coverage Notes
-
-> [!NOTE]
-> GAP-20: A release readiness prompt to verify all pre-release criteria is missing. GAP-13: An OpenSSF compliance validation agent is not yet available. GAP-08: A maturity promotion prompt for advancing project maturity levels does not exist. Stage 8 is the only lifecycle stage with zero agents.
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

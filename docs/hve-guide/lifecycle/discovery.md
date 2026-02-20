@@ -26,18 +26,19 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 ## Available Tools
 
-| Tool                  | Type   | How to Invoke            | Purpose                                           |
-|-----------------------|--------|--------------------------|---------------------------------------------------|
-| task-researcher       | Agent  | `@task-researcher`       | Research best practices and technical topics      |
-| brd-builder           | Agent  | `@brd-builder`           | Create business requirements documents            |
-| security-plan-creator | Agent  | `@security-plan-creator` | Generate security plans and threat models         |
-| gen-data-spec         | Agent  | `@gen-data-spec`         | Generate data specifications and schemas          |
-| adr-creation          | Agent  | `@adr-creation`          | Document architecture decisions                   |
-| arch-diagram-builder  | Agent  | `@arch-diagram-builder`  | Generate architecture diagrams                    |
-| ux-ui-designer        | Agent  | `@ux-ui-designer`        | Design user experience and interface concepts     |
-| memory                | Agent  | `@memory`                | Store research findings for later reference       |
-| risk-register         | Prompt | `/risk-register`         | Identify and track project risks                  |
-| task-research         | Prompt | `/task-research`         | Quick research queries without full agent context |
+| Tool                   | Type   | How to Invoke                           | Purpose                                           |
+|------------------------|--------|-----------------------------------------|---------------------------------------------------|
+| task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics      |
+| brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents            |
+| security-plan-creator  | Agent  | Select **security-plan-creator** agent  | Generate security plans and threat models         |
+| gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas          |
+| adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                   |
+| arch-diagram-builder   | Agent  | Select **arch-diagram-builder** agent   | Generate architecture diagrams                    |
+| ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts     |
+| github-backlog-manager | Agent  | Select **github-backlog-manager** agent | Discover and triage existing GitHub issues        |
+| memory                 | Agent  | Select **memory** agent                 | Store research findings for later reference       |
+| risk-register          | Prompt | `/risk-register`                        | Identify and track project risks                  |
+| task-research          | Prompt | `/task-research`                        | Quick research queries without full agent context |
 
 ## Role-Specific Guidance
 
@@ -51,26 +52,37 @@ TPMs lead Discovery, producing BRDs and coordinating research across disciplines
 
 ## Starter Prompts
 
-```text
-@task-researcher Research best practices for {topic}
-```
+Select **task-researcher** agent:
 
 ```text
-@brd-builder Create a business requirements document for {project}
+Research best practices for container orchestration with Kubernetes,
+focusing on namespace isolation for multi-tenant environments, resource
+quota configuration, and secret management approaches like external
+secrets operator vs sealed secrets.
 ```
 
+Select **brd-builder** agent:
+
 ```text
-@security-plan-creator Generate a security plan for {system}
+Create a business requirements document for the customer onboarding portal.
+Target enterprise customers with 500+ seats, with the objective of reducing
+onboarding time from 2 weeks to 3 days. Include integration requirements
+for existing SSO and billing systems and SOC 2 Type II compliance constraints.
+```
+
+Select **security-plan-creator** agent:
+
+```text
+Generate a security plan for the /api/payments endpoint in our
+customer-facing REST API. Scope the plan to authentication via
+OAuth 2.0 with Azure AD B2C, PCI DSS compliance for payment
+tokenization, and a threat model covering injection and broken
+access control. Exclude infrastructure and network-level controls.
 ```
 
 ## Stage Outputs and Next Stage
 
 Discovery produces BRDs, research summaries, security plans, data specifications, and architecture decision records. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
-
-## Coverage Notes
-
-> [!NOTE]
-> NEW-GAP-D: Six agents operate at Stage 2 without orchestration guidance connecting them into a coherent discovery workflow. GAP-14: A Project Envisioning agent for pre-Stage 2 ideation is not yet available.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -28,28 +28,34 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Primary Agents
 
-| Tool                    | Type  | How to Invoke              | Purpose                                        |
-|-------------------------|-------|----------------------------|------------------------------------------------|
-| task-implementor        | Agent | `@task-implementor`        | Build components following plans               |
-| rpi-agent               | Agent | `@rpi-agent`               | Orchestrate research-plan-implement workflow   |
-| gen-jupyter-notebook    | Agent | `@gen-jupyter-notebook`    | Create data analysis notebooks                 |
-| gen-streamlit-dashboard | Agent | `@gen-streamlit-dashboard` | Generate Streamlit dashboards                  |
-| prompt-builder          | Agent | `@prompt-builder`          | Create and refine prompt engineering artifacts |
+| Tool                    | Type  | How to Invoke                            | Purpose                                               |
+|-------------------------|-------|------------------------------------------|-------------------------------------------------------|
+| rpi-agent               | Agent | Select **rpi-agent** agent               | Orchestrate the full research-plan-implement workflow |
+| task-researcher         | Agent | Select **task-researcher** agent         | Research requirements and gather codebase evidence    |
+| task-planner            | Agent | Select **task-planner** agent            | Create implementation plans from research findings    |
+| task-implementor        | Agent | Select **task-implementor** agent        | Build components following plans                      |
+| task-reviewer           | Agent | Select **task-reviewer** agent           | Validate implementation against plan and research     |
+| gen-jupyter-notebook    | Agent | Select **gen-jupyter-notebook** agent    | Create data analysis notebooks                        |
+| gen-streamlit-dashboard | Agent | Select **gen-streamlit-dashboard** agent | Generate Streamlit dashboards                         |
+| prompt-builder          | Agent | Select **prompt-builder** agent          | Create and refine prompt engineering artifacts        |
 
 ### Supporting Agents
 
-| Tool                | Type  | How to Invoke          | Purpose                                  |
-|---------------------|-------|------------------------|------------------------------------------|
-| phase-implementor   | Agent | `@phase-implementor`   | Execute individual implementation phases |
-| prompt-updater      | Agent | `@prompt-updater`      | Update existing prompts and instructions |
-| researcher-subagent | Agent | `@researcher-subagent` | Conduct focused research within tasks    |
+| Tool                | Type  | How to Invoke                        | Purpose                                  |
+|---------------------|-------|--------------------------------------|------------------------------------------|
+| phase-implementor   | Agent | Select **phase-implementor** agent   | Execute individual implementation phases |
+| prompt-updater      | Agent | Select **prompt-updater** agent      | Update existing prompts and instructions |
+| researcher-subagent | Agent | Select **researcher-subagent** agent | Conduct focused research within tasks    |
 
 ### Prompts
 
 | Tool               | Type   | How to Invoke         | Purpose                                      |
 |--------------------|--------|-----------------------|----------------------------------------------|
 | rpi                | Prompt | `/rpi`                | Start the full RPI workflow                  |
+| task-research      | Prompt | `/task-research`      | Research requirements for a task             |
+| task-plan          | Prompt | `/task-plan`          | Create an implementation plan from research  |
 | task-implement     | Prompt | `/task-implement`     | Begin implementation of a specific task      |
+| task-review        | Prompt | `/task-review`        | Review implementation against the plan       |
 | prompt-build       | Prompt | `/prompt-build`       | Create a new prompt engineering artifact     |
 | prompt-analyze     | Prompt | `/prompt-analyze`     | Analyze prompt quality and effectiveness     |
 | prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts        |
@@ -91,26 +97,64 @@ Engineers are the primary users of Implementation, spending the majority of thei
 
 ## Starter Prompts
 
-```text
-/rpi Implement the feature described in work item #{id}
-```
+### Full RPI Workflow
 
 ```text
-@task-implementor Build the {component} following the plan in .copilot-tracking/plans/
+/rpi Implement the pagination logic for the /api/v2/search endpoint.
+Add cursor-based pagination with a default page size of 50 and a maximum
+of 200 results per request. Follow the existing pagination pattern in
+src/api/handlers/list-resources.py.
 ```
 
+### Step-by-Step RPI Agents
+
+Use individual task agents when you want more control over each phase.
+
 ```text
-@gen-jupyter-notebook Create a data analysis notebook for {dataset}
+/task-research Investigate how the existing list-resources handler in
+src/api/handlers/list-resources.py implements pagination. Identify the
+cursor encoding strategy, default and maximum page sizes, and response
+envelope structure.
+```
+
+After research completes, plan the implementation:
+
+```text
+/task-plan Create an implementation plan for adding cursor-based pagination
+to the /api/v2/search endpoint following the patterns documented in the
+research output.
+```
+
+Execute the plan:
+
+Select **task-implementor** agent:
+
+```text
+Build the webhook delivery system following the plan in
+.copilot-tracking/plans/webhook-delivery-plan.md. Start with the event
+dispatcher component and implement the retry queue second.
+```
+
+Select **gen-jupyter-notebook** agent:
+
+```text
+Create a data analysis notebook for the Q4 sales transactions dataset in
+data/sales-q4-2025.parquet. Include data quality assessment, revenue trend
+analysis by product category and region, and customer cohort segmentation
+using RFM scoring with matplotlib visualizations.
+```
+
+After implementation, validate the changes:
+
+```text
+/task-review Validate the pagination implementation against the plan.
+Check cursor encoding, page size limits, response envelope consistency,
+and error handling for invalid cursor values.
 ```
 
 ## Stage Outputs and Next Stage
 
 Implementation produces source code, documentation, notebooks, dashboards, prompt artifacts, and infrastructure definitions. Transition to [Stage 7: Review](review.md) when implementation is complete. Use `/clear` to reset context before starting the review cycle.
-
-## Coverage Notes
-
-> [!NOTE]
-> GAP-02: Pre-submit validation is not automated. GAP-11: Rust language instructions are missing. GAP-12: GitHub Actions workflow instructions need expansion. GAP-04: An artifact type advisor to guide users toward the right artifact kind does not exist yet. GAP-05: Duplicate detection across prompt engineering artifacts is not available.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

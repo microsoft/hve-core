@@ -26,16 +26,16 @@ You enter Setup when starting a new project or joining an existing engagement th
 
 ## Available Tools
 
-| Tool               | Type        | How to Invoke                  | Purpose                                         |
-|--------------------|-------------|--------------------------------|-------------------------------------------------|
-| hve-core-installer | Agent       | `@hve-core-installer`          | Install and configure HVE Core for your project |
-| memory             | Agent       | `@memory`                      | Store persistent preferences and conventions    |
-| checkpoint         | Prompt      | `/checkpoint`                  | Save current environment state                  |
-| git-setup          | Prompt      | `/git-setup`                   | Configure Git settings for the project          |
-| writing-style      | Instruction | Auto-activated on `**/*.md`    | Enforces voice and tone conventions             |
-| markdown           | Instruction | Auto-activated on `**/*.md`    | Enforces Markdown formatting rules              |
-| prompt-builder     | Instruction | Auto-activated on AI artifacts | Enforces authoring standards                    |
-| hve-core-location  | Instruction | Auto-activated on `**`         | Resolves missing references to hve-core paths   |
+| Tool               | Type        | How to Invoke                       | Purpose                                         |
+|--------------------|-------------|-------------------------------------|-------------------------------------------------|
+| hve-core-installer | Agent       | Select **hve-core-installer** agent | Install and configure HVE Core for your project |
+| memory             | Agent       | Select **memory** agent             | Store persistent preferences and conventions    |
+| checkpoint         | Prompt      | `/checkpoint`                       | Save current environment state                  |
+| git-setup          | Prompt      | `/git-setup`                        | Configure Git settings for the project          |
+| writing-style      | Instruction | Auto-activated on `**/*.md`         | Enforces voice and tone conventions             |
+| markdown           | Instruction | Auto-activated on `**/*.md`         | Enforces Markdown formatting rules              |
+| prompt-builder     | Instruction | Auto-activated on AI artifacts      | Enforces authoring standards                    |
+| hve-core-location  | Instruction | Auto-activated on `**`              | Resolves missing references to hve-core paths   |
 
 ## Role-Specific Guidance
 
@@ -45,26 +45,33 @@ For role-specific onboarding paths, see the [Role Guides](../roles/).
 
 ## Starter Prompts
 
+Select **hve-core-installer** agent:
+
 ```text
-@hve-core-installer Set up HVE Core for my project
+Set up HVE Core for my Python microservices project. Install the rpi and
+coding-standards collections. Configure .copilot-tracking/ in .gitignore
+and verify agents appear in the Copilot Chat picker.
 ```
 
 ```text
-/checkpoint Save my current environment configuration
+/checkpoint mode=save description=python-microservices-setup
 ```
 
 ```text
-@memory Store my preferred coding conventions
+/git-setup
+```
+
+Select **memory** agent:
+
+```text
+Store my coding conventions: use 4-space indentation for Python, enforce
+type hints on all public functions, and prefer pytest over unittest for
+test files under tests/.
 ```
 
 ## Stage Outputs and Next Stage
 
 Setup produces a configured development environment with HVE Core collections installed and user preferences stored. Transition to [Stage 2: Discovery](discovery.md) when installation is complete.
-
-## Coverage Notes
-
-> [!NOTE]
-> GAP-07: Environment validation for new contributors is missing. No automated check confirms that all required tools and extensions are properly installed after Setup completes. Setup also has no dedicated instruction assets beyond the globally auto-activated ones.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

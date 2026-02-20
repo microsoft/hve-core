@@ -28,20 +28,20 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Primary Agents
 
-| Tool                     | Type  | How to Invoke               | Purpose                                  |
-|--------------------------|-------|-----------------------------|------------------------------------------|
-| task-reviewer            | Agent | `@task-reviewer`            | Review implementation against the plan   |
-| pr-review                | Agent | `@pr-review`                | Evaluate pull requests for quality       |
-| test-streamlit-dashboard | Agent | `@test-streamlit-dashboard` | Test Streamlit dashboard implementations |
+| Tool                     | Type  | How to Invoke                             | Purpose                                  |
+|--------------------------|-------|-------------------------------------------|------------------------------------------|
+| task-reviewer            | Agent | Select **task-reviewer** agent            | Review implementation against the plan   |
+| pr-review                | Agent | Select **pr-review** agent                | Evaluate pull requests for quality       |
+| test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
 
 ### Supporting Agents
 
-| Tool                     | Type  | How to Invoke               | Purpose                                     |
-|--------------------------|-------|-----------------------------|---------------------------------------------|
-| rpi-validator            | Agent | `@rpi-validator`            | Validate RPI workflow compliance            |
-| implementation-validator | Agent | `@implementation-validator` | Check implementation against specifications |
-| prompt-tester            | Agent | `@prompt-tester`            | Test prompt engineering artifacts           |
-| prompt-evaluator         | Agent | `@prompt-evaluator`         | Evaluate prompt quality and effectiveness   |
+| Tool                     | Type  | How to Invoke                             | Purpose                                     |
+|--------------------------|-------|-------------------------------------------|---------------------------------------------|
+| rpi-validator            | Agent | Select **rpi-validator** agent            | Validate RPI workflow compliance            |
+| implementation-validator | Agent | Select **implementation-validator** agent | Check implementation against specifications |
+| prompt-tester            | Agent | Select **prompt-tester** agent            | Test prompt engineering artifacts           |
+| prompt-evaluator         | Agent | Select **prompt-evaluator** agent         | Evaluate prompt quality and effectiveness   |
 
 ### Prompts and Instructions
 
@@ -65,26 +65,81 @@ Engineers submit work for review and participate as peer reviewers. Tech Leads s
 
 ## Starter Prompts
 
+### Implementation Review
+
+Select **task-reviewer** agent:
+
 ```text
-@task-reviewer Review the implementation against the plan
+Review today's changes to the authentication service against .copilot-tracking/plans/2025-01-15/auth-refactor-plan.instructions.md and check for missing input validation on the new endpoints
 ```
 
 ```text
-/pull-request Create a PR for the current changes
+/task-review scope=today
 ```
 
 ```text
-@pr-review Evaluate the open pull request for quality and completeness
+/task-review plan=.copilot-tracking/plans/2025-01-15/pagination-plan.instructions.md changes=.copilot-tracking/changes/2025-01-15/pagination-changes.md research=.copilot-tracking/research/2025-01-15/pagination-research.md
+```
+
+### Pull Request Workflow
+
+```text
+/pull-request branch=origin/main excludeMarkdown=true
+```
+
+```text
+/ado-create-pull-request adoProject=hve-core baseBranch=origin/main isDraft=true workItemIds=54321,54322
+```
+
+Select **pr-review** agent:
+
+```text
+Review the open PR for the payment processing refactor, focusing on breaking changes to the /api/payments endpoint and any exposed credentials in configuration files
+```
+
+### Dashboard Testing
+
+Select **test-streamlit-dashboard** agent:
+
+```text
+Test the sensor monitoring dashboard at src/dashboards/sensor_monitor.py, verifying that temperature readings render within the 15-45°C expected range and all navigation links resolve correctly
+```
+
+### Quality Validation
+
+Select **rpi-validator** agent:
+
+```text
+Validate phase 2 of .copilot-tracking/plans/2025-01-15/api-redesign-plan.instructions.md against .copilot-tracking/changes/2025-01-15/api-redesign-changes.md
+```
+
+Select **implementation-validator** agent:
+
+```text
+Run full-quality validation on the files changed in src/services/auth/ against the architecture requirements in docs/architecture/auth-design.md
+```
+
+Select **prompt-tester** agent:
+
+```text
+Execute .github/prompts/rpi/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
+```
+
+Select **prompt-evaluator** agent:
+
+```text
+Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/rpi/prompt-builder.instructions.md
+```
+
+### Documentation Review
+
+```text
+/doc-ops-update scope=docs/hve-guide/lifecycle validateOnly=true focus=accuracy
 ```
 
 ## Stage Outputs and Next Stage
 
 Review produces reviewed pull requests with feedback, validation reports, and approval decisions. Transition to [Stage 8: Delivery](delivery.md) when the PR is approved. Return to [Stage 6: Implementation](implementation.md) when rework is needed.
-
-## Coverage Notes
-
-> [!NOTE]
-> GAP-03: CI failure diagnosis tooling is not available. GAP-06: A review feedback assistant to help authors address reviewer comments does not exist. GAP-18: Security review at the delivery boundary is not yet integrated into the review workflow.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

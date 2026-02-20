@@ -26,13 +26,13 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 
 ## Available Tools
 
-| Tool                    | Type  | How to Invoke              | Purpose                                         |
-|-------------------------|-------|----------------------------|-------------------------------------------------|
-| prd-builder             | Agent | `@prd-builder`             | Create product requirements documents from BRDs |
-| product-manager-advisor | Agent | `@product-manager-advisor` | Get product management guidance and feedback    |
-| adr-creation            | Agent | `@adr-creation`            | Document architecture decisions formally        |
-| arch-diagram-builder    | Agent | `@arch-diagram-builder`    | Generate architecture diagrams for PRDs         |
-| security-plan-creator   | Agent | `@security-plan-creator`   | Validate security requirements in product specs |
+| Tool                    | Type  | How to Invoke                            | Purpose                                         |
+|-------------------------|-------|------------------------------------------|-------------------------------------------------|
+| prd-builder             | Agent | Select **prd-builder** agent             | Create product requirements documents from BRDs |
+| product-manager-advisor | Agent | Select **product-manager-advisor** agent | Get product management guidance and feedback    |
+| adr-creation            | Agent | Select **adr-creation** agent            | Document architecture decisions formally        |
+| arch-diagram-builder    | Agent | Select **arch-diagram-builder** agent    | Generate architecture diagrams for PRDs         |
+| security-plan-creator   | Agent | Select **security-plan-creator** agent   | Validate security requirements in product specs |
 
 ## Role-Specific Guidance
 
@@ -43,26 +43,36 @@ TPMs own Product Definition, translating BRDs into PRDs with clear acceptance cr
 
 ## Starter Prompts
 
-```text
-@prd-builder Create a PRD from our BRD at docs/brds/{name}.md
-```
+Select **prd-builder** agent:
 
 ```text
-@adr-creation Document the architecture decision for {topic}
+Create a PRD from the BRD at docs/brds/fleet-management-v1.md. Define
+the vehicle tracking dashboard requirements with acceptance criteria for
+real-time GPS updates, geofence alerting, and non-functional requirements
+for sub-500ms map tile rendering at 10,000 concurrent sessions.
 ```
 
+Select **adr-creation** agent:
+
 ```text
-@arch-diagram-builder Generate an architecture diagram for {system}
+Document the architecture decision for choosing PostgreSQL over CosmosDB
+for the order management service. Include decision drivers around query
+complexity and transaction support, alternatives considered, and the
+migration path from the existing MongoDB deployment.
+```
+
+Select **arch-diagram-builder** agent:
+
+```text
+Generate an architecture diagram for the event-driven order processing
+pipeline. Show the message flow from API gateway through the event bus
+to worker services, including the dead-letter queue and monitoring
+integration. Use mermaid flowchart syntax.
 ```
 
 ## Stage Outputs and Next Stage
 
 Product Definition produces PRDs, ADRs, and architecture diagrams. Transition to [Stage 4: Decomposition](decomposition.md) when PRDs and ADRs are finalized.
-
-## Coverage Notes
-
-> [!NOTE]
-> GAP-15a: BRD-to-PRD traceability is not automated. Requirements from the BRD must be manually tracked through to PRD acceptance criteria. GAP-15b: Agent schema alignment between `@brd-builder` and `@prd-builder` has not been standardized.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

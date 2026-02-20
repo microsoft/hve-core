@@ -26,17 +26,17 @@ You enter Sprint Planning after completing [Stage 4: Decomposition](decompositio
 
 ## Available Tools
 
-| Tool                    | Type        | How to Invoke             | Purpose                                          |
-|-------------------------|-------------|---------------------------|--------------------------------------------------|
-| github-backlog-manager  | Agent       | `@github-backlog-manager` | Manage GitHub issue backlog end-to-end           |
-| agile-coach             | Agent       | `@agile-coach`            | Get agile methodology guidance and sprint advice |
-| github-discover-issues  | Prompt      | `/github-discover-issues` | Find open issues for sprint planning             |
-| github-triage-issues    | Prompt      | `/github-triage-issues`   | Triage and label unprocessed issues              |
-| github-sprint-plan      | Prompt      | `/github-sprint-plan`     | Create a sprint plan from backlog priorities     |
-| github-execute-backlog  | Prompt      | `/github-execute-backlog` | Execute planned backlog operations               |
-| github-add-issue        | Prompt      | `/github-add-issue`       | Add new issues to the backlog                    |
-| github-backlog-planning | Instruction | Auto-activated on issues  | Enforces backlog planning conventions            |
-| github-backlog-triage   | Instruction | Auto-activated on triage  | Enforces triage workflow standards               |
+| Tool                    | Type        | How to Invoke                           | Purpose                                          |
+|-------------------------|-------------|-----------------------------------------|--------------------------------------------------|
+| github-backlog-manager  | Agent       | Select **github-backlog-manager** agent | Manage GitHub issue backlog end-to-end           |
+| agile-coach             | Agent       | Select **agile-coach** agent            | Get agile methodology guidance and sprint advice |
+| github-discover-issues  | Prompt      | `/github-discover-issues`               | Find open issues for sprint planning             |
+| github-triage-issues    | Prompt      | `/github-triage-issues`                 | Triage and label unprocessed issues              |
+| github-sprint-plan      | Prompt      | `/github-sprint-plan`                   | Create a sprint plan from backlog priorities     |
+| github-execute-backlog  | Prompt      | `/github-execute-backlog`               | Execute planned backlog operations               |
+| github-add-issue        | Prompt      | `/github-add-issue`                     | Add new issues to the backlog                    |
+| github-backlog-planning | Instruction | Auto-activated on issues                | Enforces backlog planning conventions            |
+| github-backlog-triage   | Instruction | Auto-activated on triage                | Enforces triage workflow standards               |
 
 ## Role-Specific Guidance
 
@@ -47,26 +47,75 @@ TPMs lead Sprint Planning, balancing priorities across the backlog and coordinat
 
 ## Starter Prompts
 
-```text
-/github-discover-issues Find open issues for sprint planning
-```
+### Issue Discovery
+
+Search for open issues by keyword to surface work items for the upcoming sprint:
 
 ```text
-/github-triage-issues Triage and label unprocessed issues
+/github-discover-issues searchTerms=authentication milestone=v2.4.0
 ```
 
+Extract issues from a requirements document and match them against the existing backlog:
+
 ```text
-@agile-coach Help plan the next sprint with backlog priorities
+/github-discover-issues documents=docs/architecture/prd-notifications.md milestone=v2.4.0 autonomy=partial
+```
+
+### Backlog Triage
+
+Triage untriaged issues with label suggestions, milestone assignment, and duplicate detection:
+
+```text
+/github-triage-issues milestone=v2.4.0 maxIssues=15
+```
+
+### Sprint Planning
+
+Build a prioritized sprint plan from a milestone with capacity constraints and a sprint goal:
+
+```text
+/github-sprint-plan milestone=v2.4.0 sprintGoal=complete authentication module capacity=12
+```
+
+### Backlog Execution
+
+Dry-run a handoff plan to preview issue operations before committing changes:
+
+```text
+/github-execute-backlog handoff=.copilot-tracking/github-issues/sprint/v2-4-0/handoff.md dryRun=true
+```
+
+Create a new issue using repository templates and conversational field collection:
+
+```text
+/github-add-issue title=feat(agents): add retry logic for rate-limited API calls labels=enhancement,agents
+```
+
+### User Story Coaching
+
+Select **agile-coach** agent to create a new story from a rough idea:
+
+```text
+I need a story for adding webhook notifications when deployment status changes. The platform team needs real-time alerts in their monitoring dashboard.
+```
+
+Select **agile-coach** agent to refine a vague existing story:
+
+```text
+Help me refine this story: Title: Improve error handling, Description: Handle errors better, AC: Errors are handled
+```
+
+### Full Backlog Orchestration
+
+Select **github-backlog-manager** agent to coordinate triage and sprint planning end-to-end:
+
+```text
+Prepare the v2.4.0 milestone for sprint planning. Triage any needs-triage issues first, then build a prioritized sprint plan with a 15-issue capacity.
 ```
 
 ## Stage Outputs and Next Stage
 
 Sprint Planning produces a scoped sprint with prioritized issues, assigned owners, and milestone targets. Transition to [Stage 6: Implementation](implementation.md) when the sprint is planned and work items are assigned.
-
-## Coverage Notes
-
-> [!NOTE]
-> GAP-10: Good-First-Issue discovery for new contributors is not yet available. GAP-19: No sprint retrospective tooling exists for end-of-sprint reflection. Sprint Planning currently has no skills or templates.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
