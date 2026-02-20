@@ -407,3 +407,57 @@ items:
         $warnings[0].Message | Should -Match 'No collection manifests found'
     }
 }
+
+Describe 'Start-PluginGeneration' {
+    It 'Returns 0 on successful generation' {
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 2 } }
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $exitCode = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease'
+        $exitCode | Should -Be 0
+    }
+
+    It 'Returns 1 when Invoke-PluginGeneration reports failure' {
+        Mock Invoke-PluginGeneration { return @{ Success = $false; PluginCount = 0; ErrorMessage = 'Generation failed' } }
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $output = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' -ErrorAction SilentlyContinue
+        $exitCode = @($output) | Where-Object { $_ -is [int] } | Select-Object -Last 1
+        $exitCode | Should -Be 1
+    }
+
+    It 'Returns 1 when PowerShell-Yaml module is missing' {
+        Mock Get-Module { return $null } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $output = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' -ErrorAction SilentlyContinue
+        $exitCode = @($output) | Where-Object { $_ -is [int] } | Select-Object -Last 1
+        $exitCode | Should -Be 1
+    }
+
+    It 'Defaults to refresh when no CollectionIds, Refresh, or DryRun provided' {
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 1 } }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' | Out-Null
+
+        Should -Invoke Invoke-PluginGeneration -Times 1 -ParameterFilter { $Refresh -eq $true }
+    }
+
+    It 'Does not force refresh when CollectionIds are provided' {
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 1 } }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        Start-PluginGeneration -ScriptPath $scriptPath -CollectionIds @('test') -Channel 'PreRelease' | Out-Null
+
+        Should -Invoke Invoke-PluginGeneration -Times 1 -ParameterFilter { $Refresh -eq $false }
+    }
+}
