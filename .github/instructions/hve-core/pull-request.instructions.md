@@ -37,11 +37,11 @@ Entry criteria:
 
 * Repository context is available and the target branch is known.
 
-1. Resolve PR template candidates once by searching `**/PULL_REQUEST_TEMPLATE.md` and `.github/PULL_REQUEST_TEMPLATE/`.
+1. Resolve PR template candidates using a case-insensitive file name search for `pull_request_template.md` and the directory `.github/pull_request_template/`. Match any casing variation for both file names and directory names (for example, `PULL_REQUEST_TEMPLATE.md`, `Pull_Request_Template.md`, `pull_request_template.md`).
 2. Apply location priority (case-insensitive match):
-   1. `.github/PULL_REQUEST_TEMPLATE.md`
-   2. `docs/PULL_REQUEST_TEMPLATE.md`
-   3. `PULL_REQUEST_TEMPLATE.md`
+   1. `.github/pull_request_template.md`
+   2. `docs/pull_request_template.md`
+   3. `pull_request_template.md`
 3. If multiple templates exist at the same priority level, list candidates and ask the user to choose one.
 4. Persist template state for later steps:
    * `templatePath`: chosen template path, or `None`.
@@ -162,7 +162,7 @@ Report supplementary findings in chat and note issues in Additional Notes.
 
 #### Post-generation Checklist
 
-Review pr.md against these criteria and insert a PR Generation Validation subsection under the template's checklist section with confirmed items checked:
+Review pr.md against these criteria as an internal self-audit. Do not insert this checklist into pr.md or the pull request body:
 
 1. PR description preserves all template sections.
 2. pr-reference-log.md analysis is accurately reflected in the description.
@@ -171,6 +171,8 @@ Review pr.md against these criteria and insert a PR Generation Validation subsec
 5. Referenced files are accurate and exist in the repository.
 6. Follow-up tasks are actionable and tied to specific code, files, or components.
 
+Report any failed criteria in chat for user awareness. Correct issues in pr.md before proceeding.
+
 #### Assessable Required Checks
 
 Assess non-automated checklist items from the template using diff analysis. For each assessable item, verify the claim against changed files. Check items where the diff provides confident evidence. Leave items unchecked when confident assessment is not possible.
@@ -178,7 +180,7 @@ Assess non-automated checklist items from the template using diff analysis. For 
 Exit criteria:
 
 * `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
-* Security analysis, post-generation checklist, and assessable required checks are complete and reflected in pr.md.
+* Security analysis, post-generation checklist, and assessable required checks are complete. Post-generation checklist findings are addressed in pr.md without inserting the checklist itself.
 
 ### Step 6: Validate PR Readiness
 

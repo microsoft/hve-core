@@ -56,7 +56,6 @@ Document all testing performed by the agent:
 ### Special Insertion Rules
 
 * Insert a GHCP Maturity section before `## Additional Notes` when non-stable GHCP artifacts are detected.
-* Insert a `### PR Generation Validation` subsection under `## Checklist` with post-generation validation results.
 
 ## Checkbox Reference
 
@@ -79,7 +78,6 @@ Single authoritative reference for all checkbox handling in the PR template. All
 | Checklist > Required Checks | Test coverage verification | Agent (assessed) | Step 5 | Check only when test files are in changes |
 | Checklist > AI Artifact Contributions | AI artifact contribution verification | Manual | N/A | Human verification; never checked by agent |
 | Checklist > Required Automated Checks | Validation command results | Agent (automated) | Step 6 | Check for each command that passed in Step 6B |
-| Checklist > PR Generation Validation | Self-audit items | Agent (self-audit) | Step 5 | Insert subsection; check confirmed items after post-generation review |
 | GHCP Maturity (inserted) | Non-stable artifact acknowledgment | Manual | N/A | Inserted only when non-stable GHCP artifacts detected; left unchecked |
 
 When a conditional checkbox's trigger condition is not met, annotate the checkbox inline with `(N/A — {brief reason})` to distinguish skipped-as-not-applicable from evaluated-and-failed.
