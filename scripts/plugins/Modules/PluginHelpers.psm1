@@ -1217,8 +1217,21 @@ function Repair-PluginSymlinkIndex {
         return 0
     }
 
+    # Build a set of paths already tracked in the git index under plugins/.
+    # --index-info silently ignores untracked paths (PowerShell pipe encoding
+    # issue), so new files must be added individually via --cacheinfo.
+    $trackedPaths = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $pluginsRel = [System.IO.Path]::GetRelativePath($RepoRoot, $PluginsDir) -replace '\\', '/'
+    $lsOutput = git ls-files -- $pluginsRel 2>$null
+    if ($lsOutput) {
+        foreach ($p in @($lsOutput)) { [void]$trackedPaths.Add($p) }
+    }
+
     $fixedCount = 0
-    $indexEntries = [System.Collections.Generic.List[string]]::new()
+    $newEntries = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $batchEntries = [System.Collections.Generic.List[string]]::new()
     $files = Get-ChildItem -Path $PluginsDir -File -Recurse
 
     foreach ($file in $files) {
@@ -1258,14 +1271,28 @@ function Repair-PluginSymlinkIndex {
             continue
         }
 
-        $indexEntries.Add("120000 $sha`t$repoRelPath")
+        if ($trackedPaths.Contains($repoRelPath)) {
+            $batchEntries.Add("120000 $sha`t$repoRelPath")
+        } else {
+            $newEntries.Add([PSCustomObject]@{ Sha = $sha; Path = $repoRelPath })
+        }
         $fixedCount++
         Write-Verbose "Queued index fix: $repoRelPath -> 120000"
     }
 
-    # Batch update the git index in a single call to avoid index.lock contention
-    if ($indexEntries.Count -gt 0) {
-        $indexResult = $indexEntries | git update-index --index-info 2>&1
+    # Add new/untracked files individually (typically few per run)
+    foreach ($entry in $newEntries) {
+        $cacheResult = git update-index --add --cacheinfo "120000,$($entry.Sha),$($entry.Path)" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $errorMsg = @($cacheResult | ForEach-Object { $_.ToString() }) -join '; '
+            Write-Warning "Failed to add index entry for $($entry.Path): $errorMsg"
+            $fixedCount--
+        }
+    }
+
+    # Batch update existing entries in a single call to avoid index.lock contention
+    if ($batchEntries.Count -gt 0) {
+        $indexResult = $batchEntries | git update-index --index-info 2>&1
         if ($LASTEXITCODE -ne 0) {
             $errorMsg = @($indexResult | ForEach-Object { $_.ToString() }) -join '; '
             Write-Warning "Failed to update git index: $errorMsg"
