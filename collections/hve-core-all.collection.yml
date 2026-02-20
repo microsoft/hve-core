@@ -166,6 +166,10 @@ items:
   kind: instruction
 - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
+  kind: instruction
 - path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
@@ -189,6 +193,8 @@ items:
 - path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
+  kind: instruction
+- path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
   kind: instruction
 - path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
   kind: instruction
