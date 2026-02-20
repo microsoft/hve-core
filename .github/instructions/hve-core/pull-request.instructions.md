@@ -264,7 +264,7 @@ Deduplicate issue numbers and preserve the action prefix from the first occurren
 
 ## PR Writing Standards
 
-Apply these standards when writing PR descriptions in Step 5 and when subagents document findings in Step 3. Follow `writing-style.instructions.md` for general voice and tone.
+Apply these standards when writing PR descriptions in Step 5 and when subagents document findings in Step 3. Follow `writing-style.instructions.md` for general voice and tone, targeting "Medium" formality from the Adaptability table: conversational yet technical, matching how engineers naturally describe their work to peers.
 
 * Ground all content in the pr-reference-log.md analysis; include only verified changes.
 * Describe what changed without speculating on why.
@@ -273,13 +273,19 @@ Apply these standards when writing PR descriptions in Step 5 and when subagents 
 * Write for people familiar with the codebase in neutral, conversational language that unfamiliar readers also understand.
 * Match tone and terminology from commit messages.
 * Do not use conventional commit style lists (for example, `feat(scope): description`) in the body.
+* Bold is permitted throughout the PR body for emphasizing key terms, file paths, components, or outcomes within natural prose. This overrides the writing-style prohibition on bolded-prefix list items for PR descriptions specifically. Use emphasis naturally (for example, "Updated **skill validation** to handle nested references"), not the `**Term:** description` glossary pattern.
+* Use *italics* for file names, technical terms, and qualitative descriptors.
+* Use blockquotes for motivation, context, or key decisions when they add clarity for reviewers.
+* Include brief prose paragraphs between groups to provide narrative transitions.
 * Include high-level context that helps reviewers understand scope and impact.
 * Describe the final state of the code rather than intermediate steps.
-* Combine related changes into single descriptive points.
+* For focused PRs, combine related changes into single descriptive points. For multi-area PRs, group related changes under thematic sub-headings with concise bullets rather than condensing into fewer dense points.
+* When a PR spans multiple distinct areas, use `###` sub-headings within the Description section to group changes by category. Use judgment based on the scope and variety of changes rather than a fixed threshold. Small, focused PRs keep flat lists.
+* Detected change types from the Change Type Detection Patterns table inform the organizational structure of the Description section. When multiple distinct types are detected, use them as category labels for sub-headings or thematic groupings.
 * Group changes by significance; place the most significant changes first.
 * Rank significance by cross-checking branch name, commit count, and changed line volume.
 * Include essential context directly in the main bullet point.
-* Add sub-bullets only when they add clarifying or critical context.
+* Use sub-bullets for clarifying details, related file references, or supporting context.
 * Include Notes, Important, or Follow-up sections only when supported by commit messages or code comments.
 * Identify follow-up tasks only when evidenced in the analysis; keep them specific, actionable, and tied to code, files, folders, components, or blueprints.
 
@@ -290,14 +296,29 @@ When no PR template is found in the repository, use this format:
 ```markdown
 # {type}({scope}): {concise description}
 
-{Summary paragraph of overall changes in natural, human-friendly language. Explain what this pull request does and what it offers to the codebase. Write for both familiar and unfamiliar readers.}
+{Summary paragraph in natural, conversational language. Explain what this PR does and its impact on the codebase. Write for both familiar and unfamiliar readers.}
 
 ## Changes
 
-- {Description of the most significant change with key context}
-- {Description of the next change}
-  - {Sub-bullet only when it adds essential clarification}
-- {Description of additional changes}
+<!-- Focused PRs: use a flat bullet list. Multi-area PRs: replace with ### sub-headings grouping changes by category. -->
+
+- {Most significant change with **bold emphasis** on key terms}
+- {Next change referencing *file names* or technical terms}
+  - {Sub-bullet for clarifying details or related references}
+- {Additional changes}
+
+### {Category Name} (for multi-area PRs)
+
+{Brief prose paragraph providing context for this group of changes.}
+
+- {Change in this category}
+- {Another related change}
+
+### {Another Category}
+
+> {Optional blockquote for motivation or key decisions}
+
+- {Changes in this area}
 
 ## Related Issues
 

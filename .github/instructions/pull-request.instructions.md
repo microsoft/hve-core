@@ -22,6 +22,8 @@ Map PR content to the repository template at `.github/PULL_REQUEST_TEMPLATE.md`.
 | GHCP Maturity section | (new section)              | Insert | Insert before ## Additional Notes when non-stable GHCP files detected |
 | Notes or Important    | ## Additional Notes        | Map    | Insert content                                    |
 
+`Map` mode defines where content goes, not how it is formatted. Rich markdown formatting is permitted within mapped sections, including `###` sub-headings, bold, italics, blockquotes, and prose paragraphs.
+
 * For each detected change type, replace the matching `- [ ]` checkbox with `- [x]`.
 * Extract related issues using patterns from the shared instructions and place them in the Related Issue(s) section.
 * Check the security section checkbox that confirms no secrets or sensitive data when applicable.
