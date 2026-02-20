@@ -39,6 +39,10 @@ transition_log:
     rationale: "Project initialized"
     date: "YYYY-MM-DD"
 
+hint_calibration:
+  level: 1              # integer 1-4 matching Progressive Hint Engine levels
+  pattern_notes: ""     # free-text observations about user's hint responsiveness
+
 session_log:
   - date: "YYYY-MM-DD"
     method: 1
@@ -65,6 +69,11 @@ artifacts: []
 * `method`: integer 1-9 indicating the active method.
 * `space`: derived from method number. Methods 1-3 map to `problem`, 4-6 to `solution`, 7-9 to `implementation`.
 * `phase`: free-text label describing the current step within the method (e.g., "stakeholder mapping", "interview planning", "theme clustering", "prototype testing").
+
+#### Hint Calibration
+
+* `level`: integer 1-4 indicating the current Progressive Hint Engine level for this team. Start at 1; increase when the team needs more direct guidance and decrease when the team demonstrates self-direction. Levels match the coaching identity's Progressive Hint Engine (Broad Direction, Contextual Focus, Specific Area, Direct Detail).
+* `pattern_notes`: free-text observations about the team's hint responsiveness, learning pace, and coaching style preferences. Updated as patterns emerge across sessions.
 
 #### Methods Completed
 
@@ -111,6 +120,7 @@ Update the state file at these events:
 * Session start: append to `session_log` with current date and active method.
 * Artifact creation: append to `artifacts` list.
 * Phase change within a method: update `current.phase`.
+* Hint calibration shift: update `hint_calibration.level` when the team's responsiveness to hints changes. Record observations in `hint_calibration.pattern_notes`.
 
 ### Space Derivation
 
