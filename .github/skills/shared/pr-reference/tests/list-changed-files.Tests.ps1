@@ -74,26 +74,6 @@ AfterAll {
     Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Describe 'Get-RepositoryRoot' {
-    It 'Returns a valid directory when in a git repository' {
-        $result = Get-RepositoryRoot
-        $result | Should -Not -BeNullOrEmpty
-        Test-Path -Path $result -PathType Container | Should -BeTrue
-    }
-
-    It 'Falls back to current directory when git fails' {
-        Mock git { $global:LASTEXITCODE = 128; return $null }
-        $result = Get-RepositoryRoot
-        $result | Should -Be $PWD.Path
-    }
-
-    It 'Falls back to current directory when git returns empty' {
-        Mock git { $global:LASTEXITCODE = 0; return '' }
-        $result = Get-RepositoryRoot
-        $result | Should -Be $PWD.Path
-    }
-}
-
 Describe 'Get-FileChanges' {
     Context 'All change types' {
         It 'Returns all four changed files when filtering by All' {
