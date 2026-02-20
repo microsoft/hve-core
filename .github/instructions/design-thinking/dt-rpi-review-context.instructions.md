@@ -19,15 +19,15 @@ When task-reviewer (see `docs/rpi/task-reviewer.md`) operates on DT artifacts, t
 
 ## Quality Criteria by Artifact Type
 
-| Artifact Type           | Key Quality Criteria                                                                                      |
-|-------------------------|-----------------------------------------------------------------------------------------------------------|
-| Coaching instructions   | Think/Speak/Empower structure; coaching boundaries maintained; no directive language; progressive hints   |
-| Method instructions     | Correct space assignment; exit signals defined; coaching hat triggers; non-linear iteration support       |
-| Deep instructions       | Advanced techniques beyond base method; domain expertise depth; fidelity appropriate to space             |
-| Industry context        | Domain vocabulary mapping; industry-specific constraints; stakeholder archetypes; reference scenarios     |
-| Handoff artifacts       | Confidence markers applied (validated/assumed/unknown/conflicting); exit point and target agent alignment |
-| Agent definitions       | Subagent delegation patterns; handoff labels; core principles aligned with coaching identity              |
-| Method output artifacts | Fidelity matches current space; multi-source evidence; stakeholder coverage across identified groups      |
+| Artifact Type            | Key Quality Criteria                                                                                                   |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Coaching instructions    | Think/Speak/Empower structure; coaching boundaries maintained; no directive language; progressive hints                |
+| Method instructions      | Correct space assignment; exit signals defined; coaching hat triggers; non-linear iteration support                    |
+| Deep instructions        | Advanced techniques beyond base method; domain expertise depth; fidelity appropriate to space                          |
+| Industry context         | Domain vocabulary mapping; industry-specific constraints; stakeholder archetypes; reference scenarios                  |
+| Handoff artifacts        | Confidence markers applied (validated/assumed/unknown/conflicting); exit point and target agent alignment              |
+| Agent definitions        | Subagent delegation patterns; handoff labels; core principles aligned with coaching identity                           |
+| Method output artifacts  | Fidelity matches current space; multi-source evidence; stakeholder coverage across identified groups                   |
 | Coaching state artifacts | Session continuity maintained; method progress accurately tracked; recovery points clearly marked; no stale references |
 
 ## DT Review Checklist Additions
@@ -43,22 +43,22 @@ When reviewing DT artifacts, add these checks to the standard review checklist:
 
 ## Anti-Patterns to Flag
 
-| Anti-Pattern                                      | Severity | Rationale                                               |
-|---------------------------------------------------|----------|---------------------------------------------------------|
-| Directive coaching language ("You must...")       | Major    | Violates Think/Speak/Empower identity                   |
-| Production-quality output in early methods        | Major    | Violates anti-polish stance and space fidelity rules    |
-| Missing stakeholder perspectives                  | Major    | Violates multi-stakeholder requirement                  |
-| Single-source conclusions                         | Major    | Violates multi-source validation rule                   |
-| Skipped method exit signals                       | Critical | Invalidates downstream work; violates method sequencing |
-| Confidence markers missing from handoff artifacts | Major    | Downstream agents cannot assess artifact reliability    |
-| Unresolved conflicting markers passed downstream   | Critical | Invalidates downstream work; violates handoff contract reliability |
+| Anti-Pattern                                      | Severity | Rationale                                                          |
+|---------------------------------------------------|----------|--------------------------------------------------------------------|
+| Directive coaching language ("You must...")       | Major    | Violates Think/Speak/Empower identity                              |
+| Production-quality output in early methods        | Major    | Violates anti-polish stance and space fidelity rules               |
+| Missing stakeholder perspectives                  | Major    | Violates multi-stakeholder requirement                             |
+| Single-source conclusions                         | Major    | Violates multi-source validation rule                              |
+| Skipped method exit signals                       | Critical | Invalidates downstream work; violates method sequencing            |
+| Confidence markers missing from handoff artifacts | Major    | Downstream agents cannot assess artifact reliability               |
+| Unresolved conflicting markers passed downstream  | Critical | Invalidates downstream work; violates handoff contract reliability |
 
 ## Severity Mapping
 
-| Severity | Description                                  | Examples                                                                                         |
-|----------|----------------------------------------------|--------------------------------------------------------------------------------------------------|
-| Critical | Violations that invalidate downstream work   | Skipped exit signals, wrong space assignment, unresolved conflicting markers passed downstream   |
-| Major    | Violations that degrade artifact quality      | Directive language, missing stakeholders, single-source conclusions, missing confidence markers, over-polished prototypes |
-| Minor    | Stylistic or structural issues               | Leaked internal reasoning in Speak layer, ideal-only testing conditions, token budget slightly exceeded |
+| Severity | Description                                | Examples                                                                                                                  |
+|----------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Critical | Violations that invalidate downstream work | Skipped exit signals, wrong space assignment, unresolved conflicting markers passed downstream                            |
+| Major    | Violations that degrade artifact quality   | Directive language, missing stakeholders, single-source conclusions, missing confidence markers, over-polished prototypes |
+| Minor    | Stylistic or structural issues             | Leaked internal reasoning in Speak layer, ideal-only testing conditions, token budget slightly exceeded                   |
 
 These criteria complement co-loaded instruction files (`dt-quality-constraints`, `dt-coaching-identity`, `dt-method-sequencing`, `dt-rpi-handoff-contract`): reference their content during review rather than duplicating it.
