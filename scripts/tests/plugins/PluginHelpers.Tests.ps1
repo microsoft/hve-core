@@ -506,6 +506,142 @@ Describe 'Test-SymlinkCapability' {
     }
 }
 
+Describe 'Update-HveCoreAllCollection - display key ordering' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-display-order'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        # Create a minimal artifact so discovery finds at least one item
+        $agentsDir = Join-Path $ghDir 'agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'sample.agent.md') -Value "---`ndescription: sample agent`n---`nBody"
+    }
+
+    It 'Preserves featured-then-ordering key order when both keys exist' {
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        # Write manifest with ordering BEFORE featured (reversed)
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/sample.agent.md
+  kind: agent
+display:
+  ordering: alpha
+  featured:
+  - sample.agent.md
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Raw
+        # featured must appear before ordering in the output
+        $featuredIndex = $output.IndexOf('featured:')
+        $orderingIndex = $output.IndexOf('ordering:')
+        $featuredIndex | Should -BeLessThan $orderingIndex -Because 'featured key should precede ordering key in display section'
+    }
+
+    It 'Handles display with only ordering key' {
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/sample.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'ordering: alpha'
+        $output | Should -Not -Match 'featured:'
+    }
+
+    It 'Handles display with only featured key' {
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/sample.agent.md
+  kind: agent
+display:
+  featured:
+  - sample.agent.md
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'featured:'
+        $output | Should -Not -Match 'ordering:'
+    }
+
+    It 'Returns expected result hashtable' {
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/sample.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        $result = Update-HveCoreAllCollection -RepoRoot $script:repoRoot
+
+        $result.ItemCount | Should -BeGreaterOrEqual 1
+        $result.Keys | Should -Contain 'AddedCount'
+        $result.Keys | Should -Contain 'RemovedCount'
+        $result.Keys | Should -Contain 'DeprecatedCount'
+    }
+
+    It 'Does not write to disk in DryRun mode' {
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items: []
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot -DryRun | Out-Null
+
+        $output = Get-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'items: \[\]' -Because 'DryRun should not modify the file'
+    }
+}
+
 Describe 'New-PluginLink' {
     BeforeAll {
         $script:linkRoot = Join-Path $TestDrive 'link-test'

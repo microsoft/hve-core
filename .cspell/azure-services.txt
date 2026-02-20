@@ -35,6 +35,10 @@ azmon
 azuredevops
 azuremonitor
 azureml
+bicepconfig
+bicepparam
+centralus
+connectedk
 cosmosdb
 deviceregistry
 eastus

@@ -50,8 +50,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Import CIHelpers for workflow command escaping
+# Import shared modules
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
@@ -339,172 +340,87 @@ $ActionSHAMap = @{
     "azure/get-keyvault-secrets@v1"        = "azure/get-keyvault-secrets@b5c723b9ac7870c022b8c35befe620b7009b336f" # v1.2
 }
 
-function Write-SecurityLog {
+# Initialize security issues collection
+$SecurityIssues = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+function Write-SecurityOutput {
+    <#
+    .SYNOPSIS
+        Formats and emits security scan results in the requested CI or local format.
+    #>
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [string]$Message,
-        [ValidateSet('Info', 'Warning', 'Error', 'Success')]
-        [string]$Level = 'Info'
-    )
-
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $prefix = "[$timestamp] [$Level]"
-
-    # Handle empty strings for formatting (blank lines)
-    if ([string]::IsNullOrWhiteSpace($Message)) {
-        Write-Host ""
-        return
-    }
-
-    Write-Host "$prefix $Message"
-}
-
-# Initialize security issues array at script scope
-$script:SecurityIssues = @()
-
-function Add-SecurityIssue {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Type,
-
-        [Parameter(Mandatory)]
-        [string]$Severity,
-
-        [Parameter(Mandatory)]
-        [string]$Title,
-
-        [Parameter(Mandatory)]
-        [string]$Description,
-
-        [Parameter()]
-        [string]$File,
-
-        [Parameter()]
-        [string]$Line,
-
-        [Parameter()]
-        [string]$Recommendation
-    )
-
-    $issue = @{
-        Type           = $Type
-        Severity       = $Severity
-        Title          = $Title
-        Description    = $Description
-        File           = $File
-        Line           = $Line
-        Recommendation = $Recommendation
-        Timestamp      = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    }
-
-    $script:SecurityIssues += $issue
-}
-
-function Write-OutputResult {
-    param(
-        [Parameter(Mandatory)]
-        [ValidateSet("json", "azdo", "github", "console", "BuildWarning", "Summary")]
+        [ValidateSet('json', 'azdo', 'github', 'console', 'BuildWarning', 'Summary')]
         [string]$OutputFormat,
 
         [Parameter()]
         [array]$Results = @(),
 
         [Parameter()]
-        [string]$Summary = "",
+        [string]$Summary = '',
 
         [Parameter()]
         [string]$OutputPath
     )
 
     switch ($OutputFormat) {
-        "json" {
-            $output = @{
-                Summary   = $Summary
-                Issues    = $Results
-                Timestamp = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-            }
-            $jsonOutput = $output | ConvertTo-Json -Depth 5
-            if ($OutputPath) {
-                $OutputDir = Split-Path -Parent $OutputPath
-                if (!(Test-Path $OutputDir)) {
-                    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-                }
-                Set-Content -Path $OutputPath -Value $jsonOutput
-                Write-SecurityLog "JSON security report written to: $OutputPath" -Level Success
-            }
-            return $jsonOutput
+        'json' {
+            Write-SecurityReport -Results $Results -Summary $Summary -OutputFormat json -OutputPath $OutputPath
+            return
         }
-        "BuildWarning" {
+        'console' {
+            Write-SecurityReport -Results $Results -Summary $Summary -OutputFormat console
+            return
+        }
+        'BuildWarning' {
             if (@($Results).Count -eq 0) {
-                Write-Output "##[section]No GitHub Actions security issues found"
+                Write-Output '##[section]No GitHub Actions security issues found'
                 return
             }
-
-            Write-Output "##[section]GitHub Actions Security Issues Found:"
+            Write-Output '##[section]GitHub Actions Security Issues Found:'
             foreach ($issue in $Results) {
                 $message = "$($issue.Title) - $($issue.Description)"
-                $fileValue = $null
-                $recommendationValue = $null
-                if ($issue -is [hashtable]) {
-                    if ($issue.ContainsKey('File')) {
-                        $fileValue = $issue['File']
-                    }
-                    if ($issue.ContainsKey('Recommendation')) {
-                        $recommendationValue = $issue['Recommendation']
-                    }
-                }
-                else {
-                    if ($issue.PSObject.Properties.Name -contains 'File') {
-                        $fileValue = $issue.File
-                    }
-                    if ($issue.PSObject.Properties.Name -contains 'Recommendation') {
-                        $recommendationValue = $issue.Recommendation
-                    }
-                }
-                if ($fileValue) {
-                    $message += " (File: $fileValue)"
-                }
-                if ($recommendationValue) {
-                    $message += " Recommendation: $recommendationValue"
-                }
+                if ($issue.File) { $message += " (File: $($issue.File))" }
+                if ($issue.Recommendation) { $message += " Recommendation: $($issue.Recommendation)" }
                 Write-Output "##[warning]$message"
             }
             return
         }
-        "github" {
+        'github' {
             if (@($Results).Count -eq 0) {
-                Write-Output "::notice::No GitHub Actions security issues found"
+                Write-CIAnnotation -Message 'No GitHub Actions security issues found' -Level Notice
                 return
             }
-
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                $fileParam = if ($issue.File) { " file=$($issue.File -replace '\\', '/')" } else { "" }
-                Write-Output "::warning$fileParam::$message"
+                $file = if ($issue.File) { $issue.File -replace '\\', '/' } else { $null }
+                Write-CIAnnotation -Message $message -Level Warning -File $file
             }
             return
         }
-        "azdo" {
+        'azdo' {
             if (@($Results).Count -eq 0) {
-                Write-Output "##vso[task.logissue type=info]No GitHub Actions security issues found"
+                Write-CIAnnotation -Message 'No GitHub Actions security issues found' -Level Notice
                 return
             }
-
             foreach ($issue in $Results) {
                 $message = "[$($issue.Severity)] $($issue.Title) - $($issue.Description)"
-                $fileParam = if ($issue.File) { ";sourcepath=$($issue.File)" } else { "" }
-                Write-Output "##vso[task.logissue type=warning$fileParam]$message"
+                $file = if ($issue.File) { $issue.File } else { $null }
+                Write-CIAnnotation -Message $message -Level Warning -File $file
             }
-            Write-Output "##vso[task.complete result=SucceededWithIssues]Security issues found"
+            Set-CITaskResult -Result SucceededWithIssues
             return
         }
-        default {
-            # Console format - existing behavior maintained
-            if (@($script:SecurityIssues).Count -gt 0) {
-                Write-SecurityLog "Security Issues Summary:" -Level 'Warning'
-                foreach ($issue in $script:SecurityIssues) {
-                    Write-SecurityLog "  $($issue.Title): $($issue.Description)" -Level 'Warning'
+        'Summary' {
+            if (@($Results).Count -eq 0) {
+                Write-SecurityLog -Message 'No security issues found' -Level Success
+                return
+            }
+            $Results | Group-Object -Property Type | ForEach-Object {
+                Write-Output "=== $($_.Name) ==="
+                foreach ($issue in $_.Group) {
+                    Write-Output "  [$($issue.Severity)] $($issue.Title): $($issue.Description)"
                 }
             }
             return
@@ -993,18 +909,18 @@ function Invoke-ActionSHAPinningUpdate {
         foreach ($action in $manualReviewActions) {
             Write-SecurityLog "  - $($action.Original)" -Level 'Warning'
 
-            Add-SecurityIssue -Type "GitHub Actions Security" `
+            $SecurityIssues.Add((New-SecurityIssue -Type "GitHub Actions Security" `
                 -Severity "Medium" `
                 -Title "Unpinned GitHub Action" `
                 -Description "Action '$($action.Original)' requires manual SHA pinning for supply chain security" `
                 -File $action.WorkflowFile `
-                -Recommendation "Research the action's repository and add SHA mapping to ActionSHAMap"
+                -Recommendation "Research the action's repository and add SHA mapping to ActionSHAMap"))
         }
         Write-SecurityLog "Please research and add SHA mappings for these actions manually." -Level 'Warning'
     }
 
     $summaryText = "Processed $(@($workflowFiles).Count) workflows, pinned $totalPinned actions, $totalSkipped require manual review"
-    Write-OutputResult -OutputFormat $OutputFormat -Results $script:SecurityIssues -Summary $summaryText
+    Write-SecurityOutput -OutputFormat $OutputFormat -Results $SecurityIssues -Summary $summaryText
 
     if ($WhatIfPreference) {
         Write-SecurityLog "" -Level 'Info'

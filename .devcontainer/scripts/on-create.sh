@@ -40,6 +40,8 @@ main() {
 
   echo "Installing PowerShell modules..."
   pwsh -NoProfile -Command "Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser -Repository PSGallery"
+  pwsh -NoProfile -Command "Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery"
+  pwsh -NoProfile -Command "Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository PSGallery"
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
