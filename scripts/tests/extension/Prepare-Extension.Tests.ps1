@@ -2581,7 +2581,7 @@ Describe 'New-CollectionReadme - maturity notice' {
             -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
 
         $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Match '⚠️ Experimental'
+        $content | Should -Match '\u26A0' # warning sign emoji
         $content | Should -Match 'Pre-Release channel'
     }
 
@@ -2597,7 +2597,7 @@ Describe 'New-CollectionReadme - maturity notice' {
             -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
 
         $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Not -Match '⚠️ Experimental'
+        $content | Should -Not -Match '\u26A0'
     }
 
     It 'Has no notice for explicit stable maturity' {
@@ -2613,7 +2613,7 @@ Describe 'New-CollectionReadme - maturity notice' {
             -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
 
         $content = Get-Content -Path $outputPath -Raw
-        $content | Should -Not -Match '⚠️ Experimental'
+        $content | Should -Not -Match '\u26A0'
     }
 }
 

@@ -705,7 +705,7 @@ function New-PluginReadmeContent {
     $effectiveMaturity = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity }
     if ($effectiveMaturity -eq 'experimental') {
         [void]$sb.AppendLine()
-        [void]$sb.AppendLine('> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.')
+        [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Experimental** `u{2014} This collection is experimental. Contents and behavior may change or be removed without notice.")
     }
 
     [void]$sb.AppendLine()

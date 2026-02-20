@@ -288,7 +288,7 @@ Describe 'New-PluginReadmeContent - maturity notice' {
         }
         $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
         $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity 'experimental'
-        $result | Should -Match '⚠️ Experimental'
+        $result | Should -Match '\u26A0' # warning sign emoji
     }
 
     It 'Has no notice when maturity is stable' {
@@ -299,7 +299,7 @@ Describe 'New-PluginReadmeContent - maturity notice' {
         }
         $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
         $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity 'stable'
-        $result | Should -Not -Match '⚠️ Experimental'
+        $result | Should -Not -Match '\u26A0'
     }
 
     It 'Has no notice when maturity is omitted' {
@@ -310,7 +310,7 @@ Describe 'New-PluginReadmeContent - maturity notice' {
         }
         $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
         $result = New-PluginReadmeContent -Collection $collection -Items $items
-        $result | Should -Not -Match '⚠️ Experimental'
+        $result | Should -Not -Match '\u26A0'
     }
 
     It 'Has no notice when maturity is null' {
@@ -321,7 +321,7 @@ Describe 'New-PluginReadmeContent - maturity notice' {
         }
         $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
         $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity $null
-        $result | Should -Not -Match '⚠️ Experimental'
+        $result | Should -Not -Match '\u26A0'
     }
 }
 
