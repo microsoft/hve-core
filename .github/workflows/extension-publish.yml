@@ -25,6 +25,8 @@ jobs:
   prepare-changelog:
     name: Prepare Changelog
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       changelog-path: ${{ steps.create-changelog.outputs.path }}
     steps:
@@ -58,6 +60,7 @@ jobs:
   normalize-version:
     name: Normalize Version
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       version: ${{ steps.normalize.outputs.version }}
     steps:
@@ -110,8 +113,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -123,7 +126,7 @@ jobs:
         run: |
           VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
           echo "📦 Publishing: $VSIX_FILE"
-          vsce publish --packagePath "$VSIX_FILE" --azure-credential
+          npx vsce publish --packagePath "$VSIX_FILE" --azure-credential
 
       - name: Summary
         run: |

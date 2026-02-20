@@ -20,6 +20,7 @@ jobs:
   validate-version:
     name: Validate Pre-Release Version
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       version: ${{ steps.validate.outputs.version }}
     steps:
@@ -53,6 +54,8 @@ jobs:
     name: Package Pre-Release Extension
     needs: validate-version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.package.outputs.version }}
       vsix-file: ${{ steps.package.outputs.vsix-file }}
@@ -67,8 +70,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
+      - name: Install dependencies
+        run: npm ci
 
       - name: Setup PowerShell
         shell: pwsh
@@ -125,8 +128,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
+      - name: Install dependencies
+        run: npm ci
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -138,7 +141,7 @@ jobs:
         run: |
           VSIX_FILE=$(find extension -name 'hve-core-*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
           echo "📦 Publishing pre-release: $VSIX_FILE"
-          vsce publish --packagePath "$VSIX_FILE" --pre-release --azure-credential
+          npx vsce publish --packagePath "$VSIX_FILE" --pre-release --azure-credential
 
       - name: Summary
         run: |
