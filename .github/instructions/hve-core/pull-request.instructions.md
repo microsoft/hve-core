@@ -223,13 +223,28 @@ Exit criteria:
 
 #### Step 6D: Readiness Outcome
 
-1. Confirm all checklist checkbox updates in pr.md are complete. If required checks pass, continue to Step 7 when PR creation was requested.
+1. Confirm all checklist checkbox updates in pr.md are complete. If required checks pass, continue to Step 6E when PR creation was requested.
 2. If required checks remain unresolved, do not proceed with direct PR creation.
 3. When PR creation was not requested, report readiness status and next actions without creating a PR.
 
 Exit criteria:
 
 * PR readiness status is explicit and next actions are clear.
+
+#### Step 6E: PR Creation Approval
+
+Entry criteria:
+
+* Step 6D completed with passing checks and user requested PR creation.
+
+1. Present the PR title and a link to `.copilot-tracking/pr/pr.md` in conversation.
+2. When an `ask questions` tool is available, use it to present "Continue to create the pull request" (recommended) and "Cancel creating pull request" options. Otherwise, ask the user inline to confirm or cancel.
+3. If Continue: proceed to Step 7.
+4. If Cancel: skip to Step 8.
+
+Exit criteria:
+
+* User confirmed or declined PR creation.
 
 ### Step 7: Create Pull Request When Requested by User
 
@@ -238,8 +253,9 @@ Entry criteria:
 * `.copilot-tracking/pr/pr.md` exists.
 * User explicitly requested PR creation.
 * Step 6 completed with required checks passing.
+* User confirmed PR creation via Step 6E approval.
 
-Create a pull request using MCP tools. Skip this step when the user has not requested PR creation and proceed to Step 8.
+Create a pull request using MCP tools. Skip this step when the user has not requested PR creation or declined via the Step 6E approval, and proceed to Step 8.
 
 #### Step 7A: Branch Freshness Gate
 
