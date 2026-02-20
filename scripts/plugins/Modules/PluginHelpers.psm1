@@ -809,7 +809,7 @@ function New-MarketplaceManifestContent {
     foreach ($plugin in $Plugins) {
         $pluginEntries += [ordered]@{
             name        = $plugin.name
-            source      = "./plugins/$($plugin.name)"
+            source      = $plugin.name
             description = $plugin.description
             version     = $plugin.version
         }

@@ -11,67 +11,67 @@
   "plugins": [
     {
       "name": "ado",
-      "source": "./plugins/ado",
+      "source": "ado",
       "description": "Azure DevOps work item management, build monitoring, and pull request creation",
       "version": "3.0.0"
     },
     {
       "name": "coding-standards",
-      "source": "./plugins/coding-standards",
+      "source": "coding-standards",
       "description": "Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform projects",
       "version": "3.0.0"
     },
     {
       "name": "data-science",
-      "source": "./plugins/data-science",
+      "source": "data-science",
       "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
       "version": "3.0.0"
     },
     {
       "name": "design-thinking",
-      "source": "./plugins/design-thinking",
+      "source": "design-thinking",
       "description": "Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods",
       "version": "3.0.0"
     },
     {
       "name": "experimental",
-      "source": "./plugins/experimental",
+      "source": "experimental",
       "description": "Experimental and preview artifacts not yet promoted to stable collections",
       "version": "3.0.0"
     },
     {
       "name": "github",
-      "source": "./plugins/github",
+      "source": "github",
       "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
       "version": "3.0.0"
     },
     {
       "name": "hve-core",
-      "source": "./plugins/hve-core",
+      "source": "hve-core",
       "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
       "version": "3.0.0"
     },
     {
       "name": "hve-core-all",
-      "source": "./plugins/hve-core-all",
+      "source": "hve-core-all",
       "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
       "version": "3.0.0"
     },
     {
       "name": "installer",
-      "source": "./plugins/installer",
+      "source": "installer",
       "description": "Interactive installer agent for deploying HVE Core artifacts across workspace configurations",
       "version": "3.0.0"
     },
     {
       "name": "project-planning",
-      "source": "./plugins/project-planning",
+      "source": "project-planning",
       "description": "PRDs, BRDs, ADRs, and architecture diagrams",
       "version": "3.0.0"
     },
     {
       "name": "security-planning",
-      "source": "./plugins/security-planning",
+      "source": "security-planning",
       "description": "Security plan creation, incident response, and risk assessment",
       "version": "3.0.0"
     }
