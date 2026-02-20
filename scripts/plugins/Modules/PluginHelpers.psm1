@@ -672,6 +672,10 @@ function New-PluginReadmeContent {
     Array of processed item objects. Each object must have Name, Description,
     and Kind properties.
 
+    .PARAMETER Maturity
+        Optional collection-level maturity string. When 'experimental', an
+        experimental notice is injected after the description.
+
     .OUTPUTS
     [string] Complete README markdown content.
     #>
@@ -683,7 +687,12 @@ function New-PluginReadmeContent {
 
         [Parameter(Mandatory = $true)]
         [AllowEmptyCollection()]
-        [array]$Items
+        [array]$Items,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity
     )
 
     $sb = [System.Text.StringBuilder]::new()
@@ -691,6 +700,14 @@ function New-PluginReadmeContent {
     [void]$sb.AppendLine("# $($Collection.name)")
     [void]$sb.AppendLine()
     [void]$sb.AppendLine($Collection.description)
+
+    # Inject experimental notice when collection is experimental
+    $effectiveMaturity = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity }
+    if ($effectiveMaturity -eq 'experimental') {
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Experimental** `u{2014} This collection is experimental. Contents and behavior may change or be removed without notice.")
+    }
+
     [void]$sb.AppendLine()
     [void]$sb.AppendLine('## Install')
     [void]$sb.AppendLine()
@@ -1021,6 +1038,10 @@ function Write-PluginDirectory {
     .PARAMETER Version
     Semantic version string from the repository package.json.
 
+    .PARAMETER Maturity
+        Optional collection-level maturity string. Forwarded to
+        New-PluginReadmeContent for experimental notice injection.
+
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
 
@@ -1045,6 +1066,11 @@ function Write-PluginDirectory {
 
         [Parameter(Mandatory = $true)]
         [string]$Version,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity,
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
@@ -1156,7 +1182,7 @@ function Write-PluginDirectory {
 
     # Generate README.md
     $readmePath = Join-Path -Path $pluginRoot -ChildPath 'README.md'
-    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems
+    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write README.md at $readmePath"

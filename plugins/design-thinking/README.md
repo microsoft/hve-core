@@ -3,6 +3,8 @@
 
 Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
 
+> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
+
 ## Install
 
 ```bash

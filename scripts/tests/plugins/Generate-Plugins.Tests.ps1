@@ -103,6 +103,95 @@ Describe 'Select-CollectionItemsByChannel' {
     }
 }
 
+Describe 'Invoke-PluginGeneration - collection-level maturity' {
+    BeforeAll {
+        $script:maturityDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:maturityDir -Force | Out-Null
+
+        # Create package.json
+        @{
+            name        = 'hve-core'
+            version     = '1.0.0'
+            description = 'test'
+            author      = 'test-author'
+        } | ConvertTo-Json | Set-Content -Path (Join-Path $script:maturityDir 'package.json')
+
+        # Create collections directory
+        $collectionsDir = Join-Path $script:maturityDir 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        # Create .github structure with a test artifact
+        $ghDir = Join-Path $script:maturityDir '.github'
+        $agentsDir = Join-Path $ghDir 'agents/col'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        @'
+---
+description: "Test agent"
+---
+'@ | Set-Content -Path (Join-Path $agentsDir 'test.agent.md')
+
+        # Create shared directories for symlinks
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'docs/templates') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'scripts/lib') -Force | Out-Null
+
+        # Create plugins directory
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'plugins') -Force | Out-Null
+
+        # Create .github/plugin directory
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir '.github/plugin') -Force | Out-Null
+
+        # hve-core-all collection (required by Update-HveCoreAllCollection)
+        @"
+id: hve-core-all
+name: hve-core
+description: All artifacts
+tags: []
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+display: {}
+"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+        # Deprecated collection
+        @"
+id: deprecated-col
+name: Deprecated Collection
+description: A deprecated collection
+maturity: deprecated
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+"@ | Set-Content -Path (Join-Path $collectionsDir 'deprecated-col.collection.yml')
+
+        # Experimental collection
+        @"
+id: experimental-col
+name: Experimental Collection
+description: An experimental collection
+maturity: experimental
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+"@ | Set-Content -Path (Join-Path $collectionsDir 'experimental-col.collection.yml')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:maturityDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Skips deprecated collection during generation' {
+        Invoke-PluginGeneration -RepoRoot $script:maturityDir -CollectionIds @('deprecated-col') -Refresh -Channel 'PreRelease' | Out-Null
+        $pluginDir = Join-Path $script:maturityDir 'plugins/deprecated-col'
+        Test-Path $pluginDir | Should -BeFalse
+    }
+
+    It 'Generates experimental collection on PreRelease channel' {
+        Invoke-PluginGeneration -RepoRoot $script:maturityDir -CollectionIds @('experimental-col') -Refresh -Channel 'PreRelease' | Out-Null
+        $pluginDir = Join-Path $script:maturityDir 'plugins/experimental-col'
+        Test-Path $pluginDir | Should -BeTrue
+    }
+}
+
 Describe 'Invoke-PluginGeneration' {
     BeforeAll {
         $script:tempDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
@@ -325,5 +414,59 @@ items:
 
         $capMsg = @($output | Where-Object { "$_" -match 'Symlink capability' })
         $capMsg.Count | Should -BeGreaterOrEqual 1
+    }
+}
+
+Describe 'Start-PluginGeneration' {
+    It 'Returns 0 on successful generation' {
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 2 } }
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $exitCode = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease'
+        $exitCode | Should -Be 0
+    }
+
+    It 'Returns 1 when Invoke-PluginGeneration reports failure' {
+        Mock Invoke-PluginGeneration { return @{ Success = $false; PluginCount = 0; ErrorMessage = 'Generation failed' } }
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $output = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' -ErrorAction SilentlyContinue
+        $exitCode = @($output) | Where-Object { $_ -is [int] } | Select-Object -Last 1
+        $exitCode | Should -Be 1
+    }
+
+    It 'Returns 1 when PowerShell-Yaml module is missing' {
+        Mock Get-Module { return $null } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        $output = Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' -ErrorAction SilentlyContinue
+        $exitCode = @($output) | Where-Object { $_ -is [int] } | Select-Object -Last 1
+        $exitCode | Should -Be 1
+    }
+
+    It 'Defaults to refresh when no CollectionIds, Refresh, or DryRun provided' {
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 1 } }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        Start-PluginGeneration -ScriptPath $scriptPath -Channel 'PreRelease' | Out-Null
+
+        Should -Invoke Invoke-PluginGeneration -Times 1 -ParameterFilter { $Refresh -eq $true }
+    }
+
+    It 'Does not force refresh when CollectionIds are provided' {
+        Mock Get-Module { return @{ Name = 'PowerShell-Yaml' } } -ParameterFilter { $ListAvailable -and $Name -eq 'PowerShell-Yaml' }
+        Mock Import-Module {}
+        Mock Invoke-PluginGeneration { return @{ Success = $true; PluginCount = 1 } }
+
+        $scriptPath = "$PSScriptRoot/../../plugins/Generate-Plugins.ps1"
+        Start-PluginGeneration -ScriptPath $scriptPath -CollectionIds @('test') -Channel 'PreRelease' | Out-Null
+
+        Should -Invoke Invoke-PluginGeneration -Times 1 -ParameterFilter { $Refresh -eq $false }
     }
 }
