@@ -2,7 +2,6 @@
 description: 'Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher'
 mode: 'agent'
 tools: ['read_file', 'create_file']
-maturity: stable
 argument-hint: "projectName=..."
 ---
 
