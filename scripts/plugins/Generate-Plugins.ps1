@@ -240,6 +240,16 @@ function Invoke-PluginGeneration {
         $id = $collection.id
         $pluginDir = Join-Path -Path $pluginsDir -ChildPath $id
 
+        # Skip deprecated collections
+        $collectionMaturity = if ($collection.ContainsKey('maturity') -and $collection.maturity) {
+            [string]$collection.maturity
+        } else { 'stable' }
+
+        if ($collectionMaturity -eq 'deprecated') {
+            Write-Verbose "Skipping deprecated collection: $id"
+            continue
+        }
+
         # Refresh: remove existing plugin directory
         if ($Refresh -and (Test-Path -Path $pluginDir)) {
             if ($DryRun) {
@@ -258,6 +268,7 @@ function Invoke-PluginGeneration {
             -PluginsDir $pluginsDir `
             -RepoRoot $RepoRoot `
             -Version $repoVersion `
+            -Maturity $collectionMaturity `
             -DryRun:$DryRun
 
         $itemCount = $filteredCollection.items.Count

@@ -103,6 +103,95 @@ Describe 'Select-CollectionItemsByChannel' {
     }
 }
 
+Describe 'Invoke-PluginGeneration - collection-level maturity' {
+    BeforeAll {
+        $script:maturityDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:maturityDir -Force | Out-Null
+
+        # Create package.json
+        @{
+            name        = 'hve-core'
+            version     = '1.0.0'
+            description = 'test'
+            author      = 'test-author'
+        } | ConvertTo-Json | Set-Content -Path (Join-Path $script:maturityDir 'package.json')
+
+        # Create collections directory
+        $collectionsDir = Join-Path $script:maturityDir 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        # Create .github structure with a test artifact
+        $ghDir = Join-Path $script:maturityDir '.github'
+        $agentsDir = Join-Path $ghDir 'agents/col'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        @'
+---
+description: "Test agent"
+---
+'@ | Set-Content -Path (Join-Path $agentsDir 'test.agent.md')
+
+        # Create shared directories for symlinks
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'docs/templates') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'scripts/lib') -Force | Out-Null
+
+        # Create plugins directory
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir 'plugins') -Force | Out-Null
+
+        # Create .github/plugin directory
+        New-Item -ItemType Directory -Path (Join-Path $script:maturityDir '.github/plugin') -Force | Out-Null
+
+        # hve-core-all collection (required by Update-HveCoreAllCollection)
+        @"
+id: hve-core-all
+name: hve-core
+description: All artifacts
+tags: []
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+display: {}
+"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+        # Deprecated collection
+        @"
+id: deprecated-col
+name: Deprecated Collection
+description: A deprecated collection
+maturity: deprecated
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+"@ | Set-Content -Path (Join-Path $collectionsDir 'deprecated-col.collection.yml')
+
+        # Experimental collection
+        @"
+id: experimental-col
+name: Experimental Collection
+description: An experimental collection
+maturity: experimental
+items:
+  - path: .github/agents/col/test.agent.md
+    kind: agent
+"@ | Set-Content -Path (Join-Path $collectionsDir 'experimental-col.collection.yml')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:maturityDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Skips deprecated collection during generation' {
+        Invoke-PluginGeneration -RepoRoot $script:maturityDir -CollectionIds @('deprecated-col') -Refresh -Channel 'PreRelease' | Out-Null
+        $pluginDir = Join-Path $script:maturityDir 'plugins/deprecated-col'
+        Test-Path $pluginDir | Should -BeFalse
+    }
+
+    It 'Generates experimental collection on PreRelease channel' {
+        Invoke-PluginGeneration -RepoRoot $script:maturityDir -CollectionIds @('experimental-col') -Refresh -Channel 'PreRelease' | Out-Null
+        $pluginDir = Join-Path $script:maturityDir 'plugins/experimental-col'
+        Test-Path $pluginDir | Should -BeTrue
+    }
+}
+
 Describe 'Invoke-PluginGeneration' {
     BeforeAll {
         $script:tempDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())

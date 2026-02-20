@@ -230,6 +230,14 @@ function Invoke-CollectionValidation {
             $seenIds[$id] = $file.Name
         }
 
+        # Validate collection-level maturity if present
+        if ($manifest.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$manifest.maturity)) {
+            $collMaturity = [string]$manifest.maturity
+            if ($allowedMaturities -notcontains $collMaturity) {
+                $fileErrors += "invalid collection maturity '$collMaturity' (allowed: $($allowedMaturities -join ', '))"
+            }
+        }
+
         # Validate each item
         $itemCount = $manifest.items.Count
         foreach ($item in $manifest.items) {

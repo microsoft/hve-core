@@ -279,6 +279,52 @@ Describe 'Test-ArtifactDeprecated' {
     }
 }
 
+Describe 'New-PluginReadmeContent - maturity notice' {
+    It 'Includes experimental notice when maturity is experimental' {
+        $collection = @{
+            id          = 'test-exp'
+            name        = 'Test Experimental'
+            description = 'An experimental collection'
+        }
+        $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
+        $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity 'experimental'
+        $result | Should -Match '⚠️ Experimental'
+    }
+
+    It 'Has no notice when maturity is stable' {
+        $collection = @{
+            id          = 'test-stable'
+            name        = 'Test Stable'
+            description = 'A stable collection'
+        }
+        $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
+        $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity 'stable'
+        $result | Should -Not -Match '⚠️ Experimental'
+    }
+
+    It 'Has no notice when maturity is omitted' {
+        $collection = @{
+            id          = 'test-default'
+            name        = 'Test Default'
+            description = 'A default collection'
+        }
+        $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
+        $result = New-PluginReadmeContent -Collection $collection -Items $items
+        $result | Should -Not -Match '⚠️ Experimental'
+    }
+
+    It 'Has no notice when maturity is null' {
+        $collection = @{
+            id          = 'test-null'
+            name        = 'Test Null'
+            description = 'A null maturity collection'
+        }
+        $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
+        $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity $null
+        $result | Should -Not -Match '⚠️ Experimental'
+    }
+}
+
 Describe 'Get-PluginItemName' {
     It 'Strips .agent.md suffix' {
         $result = Get-PluginItemName -FileName 'task-researcher.agent.md' -Kind 'agent'

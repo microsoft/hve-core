@@ -202,3 +202,144 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
         $result.Success | Should -BeTrue
     }
 }
+
+Describe 'Invoke-CollectionValidation - collection-level maturity' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'maturity-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Create a valid artifact for items to reference
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'test.agent.md') -Value '---\ndescription: test agent\n---'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Passes validation for collection with maturity: experimental' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-experimental'
+            name        = 'Test'
+            description = 'Tests experimental maturity'
+            maturity    = 'experimental'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-experimental.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    It 'Passes validation for collection with maturity: stable' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-stable'
+            name        = 'Test'
+            description = 'Tests stable maturity'
+            maturity    = 'stable'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-stable.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    It 'Passes validation for collection with maturity: preview' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-preview'
+            name        = 'Test'
+            description = 'Tests preview maturity'
+            maturity    = 'preview'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-preview.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    It 'Passes validation for collection with maturity: deprecated' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-deprecated'
+            name        = 'Test'
+            description = 'Tests deprecated maturity'
+            maturity    = 'deprecated'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-deprecated.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    It 'Fails validation for collection with invalid maturity: beta' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-beta'
+            name        = 'Test'
+            description = 'Tests invalid maturity'
+            maturity    = 'beta'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-beta.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Passes validation for collection with omitted maturity' {
+        $manifest = [ordered]@{
+            id          = 'test-maturity-omitted'
+            name        = 'Test'
+            description = 'Tests omitted maturity'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/test.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-omitted.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+}

@@ -3,7 +3,12 @@
   "title": "Collection Manifest",
   "description": "Schema for hve-core Copilot CLI plugin collection manifests",
   "type": "object",
-  "required": ["id", "name", "description", "items"],
+  "required": [
+    "id",
+    "name",
+    "description",
+    "items"
+  ],
   "properties": {
     "id": {
       "type": "string",
@@ -20,9 +25,21 @@
       "minLength": 1,
       "description": "Brief description of the collection purpose."
     },
+    "maturity": {
+      "type": "string",
+      "enum": [
+        "stable",
+        "preview",
+        "experimental",
+        "deprecated"
+      ],
+      "description": "Optional release channel eligibility. Defaults to stable when omitted. Experimental collections are excluded from Stable (Release) channel."
+    },
     "tags": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Discovery tags for filtering and search."
     },
     "items": {
@@ -30,7 +47,10 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["path", "kind"],
+        "required": [
+          "path",
+          "kind"
+        ],
         "properties": {
           "path": {
             "type": "string",
@@ -38,7 +58,13 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["prompt", "agent", "instruction", "skill", "hook"],
+            "enum": [
+              "prompt",
+              "agent",
+              "instruction",
+              "skill",
+              "hook"
+            ],
             "description": "Artifact type."
           },
           "usage": {
@@ -47,7 +73,12 @@
           },
           "maturity": {
             "type": "string",
-            "enum": ["stable", "preview", "experimental", "deprecated"],
+            "enum": [
+              "stable",
+              "preview",
+              "experimental",
+              "deprecated"
+            ],
             "description": "Optional release maturity for this item. Defaults to stable when omitted."
           }
         },
@@ -59,7 +90,10 @@
       "properties": {
         "ordering": {
           "type": "string",
-          "enum": ["alpha", "manual"],
+          "enum": [
+            "alpha",
+            "manual"
+          ],
           "default": "alpha"
         },
         "featured": {
