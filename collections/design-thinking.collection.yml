@@ -55,6 +55,9 @@ items:
   - path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/design-thinking/dt-rpi-review-context.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
     kind: instruction
     maturity: experimental
