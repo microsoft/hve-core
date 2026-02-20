@@ -84,7 +84,7 @@ $PSDefaultParameterValues['Write-SecurityLog:OutputFormat'] = $OutputFormat
 $PSDefaultParameterValues['Write-SecurityLog:LogPath'] = $LogPath
 
 # Script-scope collection of stale dependencies (used by multiple functions)
-$script:StaleDependencies = @()
+$script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
 
 function Test-GitHubToken {
     param(
@@ -509,7 +509,7 @@ function Test-GitHubActionsForStaleness {
 
         foreach ($result in $bulkResults) {
             if ($result.IsStale) {
-                $script:StaleDependencies += [PSCustomObject]@{
+                $script:StaleDependencies.Add([PSCustomObject]@{
                     Type           = "GitHubAction"
                     File           = $result.File
                     Name           = $result.ActionRepo
@@ -518,7 +518,7 @@ function Test-GitHubActionsForStaleness {
                     DaysOld        = $result.DaysOld
                     Severity       = if ($result.DaysOld -gt 90) { "High" } elseif ($result.DaysOld -gt 60) { "Medium" } else { "Low" }
                     Message        = "GitHub Action is $($result.DaysOld) days old (current: $($result.CurrentSHA.Substring(0,8)), latest: $($result.LatestSHA.Substring(0,8)))"
-                }
+                })
 
                 Write-SecurityLog "Found stale GitHub Action: $($result.ActionRepo) ($($result.DaysOld) days old)" -Level Warning
             }
@@ -578,7 +578,7 @@ function Test-GitHubActionsForStaleness {
                     $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
 
                     if ($DaysOld -gt $MaxAge) {
-                        $script:StaleDependencies += [PSCustomObject]@{
+                        $script:StaleDependencies.Add([PSCustomObject]@{
                             Type           = "GitHubAction"
                             File           = $action.File
                             Name           = $action.Repo
@@ -587,7 +587,7 @@ function Test-GitHubActionsForStaleness {
                             DaysOld        = $DaysOld
                             Severity       = if ($DaysOld -gt 90) { "High" } elseif ($DaysOld -gt 60) { "Medium" } else { "Low" }
                             Message        = "GitHub Action is $DaysOld days old (current: $($action.SHA.Substring(0,8)), latest: $($LatestSHA.Substring(0,8)))"
-                        }
+                        })
 
                         Write-SecurityLog "Found stale GitHub Action (fallback): $($action.Repo) ($DaysOld days old)" -Level Warning
                     }
@@ -622,7 +622,7 @@ function Test-GitHubActionsForStaleness {
     }
 }
 
-function Write-OutputResult {
+function Write-SecurityOutput {
     param(
         [Parameter(Mandatory = $false)]
         [array]$Dependencies = @(),
@@ -645,7 +645,6 @@ function Write-OutputResult {
             } | ConvertTo-Json -Depth 10
 
             try {
-                # Ensure output directory exists
                 $OutputDir = Split-Path -Parent $OutputPath
                 if (!(Test-Path $OutputDir)) {
                     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
@@ -876,7 +875,7 @@ function Invoke-SHAStalenessCheck {
     Write-SecurityLog "Output format: $OutputFormat" -Level Info
 
     # Reset stale dependencies for this run
-    $script:StaleDependencies = @()
+    $script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     # Run staleness check for GitHub Actions
     Test-GitHubActionsForStaleness
@@ -892,7 +891,7 @@ function Invoke-SHAStalenessCheck {
             foreach ($tool in $staleTools) {
                 Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
 
-                $script:StaleDependencies += [PSCustomObject]@{
+                $script:StaleDependencies.Add([PSCustomObject]@{
                     Type           = "Tool"
                     File           = "scripts/security/tool-checksums.json"
                     Name           = $tool.Tool
@@ -901,7 +900,7 @@ function Invoke-SHAStalenessCheck {
                     DaysOld        = $null
                     Severity       = "Medium"
                     Message        = "Tool has newer version available: $($tool.CurrentVersion) -> $($tool.LatestVersion)"
-                }
+                })
             }
         }
         else {
@@ -914,7 +913,7 @@ function Invoke-SHAStalenessCheck {
         }
     }
 
-    Write-OutputResult -Dependencies $script:StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
+    Write-SecurityOutput -Dependencies $script:StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
 
     Write-SecurityLog "SHA staleness monitoring completed" -Level Success
     Write-SecurityLog "Stale dependencies found: $(@($script:StaleDependencies).Count)" -Level Info

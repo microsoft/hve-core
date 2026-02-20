@@ -255,6 +255,237 @@ function Get-SchemaForFile {
     return $null
 }
 
+function ConvertTo-ObjectArray {
+    <#
+    .SYNOPSIS
+        Converts an enumerable to an object array, converting nested objects to hashtables.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IEnumerable]$Enumerable
+    )
+
+    $list = [System.Collections.Generic.List[object]]::new()
+    foreach ($item in $Enumerable) {
+        if ($item -is [pscustomobject] -or $item -is [hashtable]) {
+            $list.Add((ConvertTo-HashTable -InputObject $item))
+        }
+        else {
+            $list.Add($item)
+        }
+    }
+
+    # Prevent PowerShell from unrolling single-element arrays when used in expressions/assignments.
+    return ,$list.ToArray()
+}
+
+function ConvertTo-HashTable {
+    <#
+    .SYNOPSIS
+        Converts a PSCustomObject or hashtable to a hashtable recursively.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({ $_ -is [hashtable] -or $_ -is [pscustomobject] })]
+        [object]$InputObject
+    )
+
+    if ($InputObject -is [hashtable]) {
+        $out = @{}
+        foreach ($k in $InputObject.Keys) {
+            $v = $InputObject[$k]
+            if ($v -is [pscustomobject] -or $v -is [hashtable]) {
+                $out[$k] = ConvertTo-HashTable -InputObject $v
+            }
+            elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
+                $out[$k] = ConvertTo-ObjectArray -Enumerable $v
+            }
+            else {
+                $out[$k] = $v
+            }
+        }
+        return $out
+    }
+
+    if ($InputObject -is [pscustomobject]) {
+        $out = @{}
+        foreach ($p in $InputObject.PSObject.Properties) {
+            $v = $p.Value
+            if ($v -is [pscustomobject] -or $v -is [hashtable]) {
+                $out[$p.Name] = ConvertTo-HashTable -InputObject $v
+            }
+            elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
+                $out[$p.Name] = ConvertTo-ObjectArray -Enumerable $v
+            }
+            else {
+                $out[$p.Name] = $v
+            }
+        }
+        return $out
+    }
+}
+
+function Test-ValueAgainstSchema {
+    <#
+    .SYNOPSIS
+        Validates a value against a (subset of) JSON schema.
+    .DESCRIPTION
+        Supports: type (string/array/boolean/object), required, properties, items, enum, pattern, minLength, oneOf.
+        Designed for "soft" schema validation; does not implement full JSON Schema.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Value,
+
+        [Parameter(Mandatory = $true)]
+        [object]$Schema,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $localErrors = [List[string]]::new()
+
+    # Handle oneOf by validating against each subschema.
+    if ($Schema.oneOf) {
+        $passCount = 0
+        $subschemaErrors = [System.Collections.Generic.List[object]]::new()
+
+        $i = 0
+        foreach ($sub in $Schema.oneOf) {
+            $subErrs = Test-ValueAgainstSchema -Value $Value -Schema $sub -Path $Path
+            if ($subErrs.Count -eq 0) {
+                $passCount++
+                if ($passCount -gt 1) { break }
+            }
+            else {
+                # Capture errors per subschema so failures are stable and actionable (not dependent on ordering).
+                $subschemaErrors.Add(@{ Index = $i; Errors = $subErrs })
+            }
+
+            $i++
+        }
+
+        if ($passCount -ne 1) {
+            # oneOf semantics: exactly one schema must match
+            if ($passCount -eq 0) {
+                $localErrors.Add("Field '$Path' must match one of the allowed schemas")
+
+                foreach ($entry in $subschemaErrors) {
+                    $idx = $entry.Index
+                    foreach ($e in $entry.Errors) {
+                        $localErrors.Add("oneOf[$idx]: $e")
+                    }
+                }
+            }
+            else {
+                $localErrors.Add("Field '$Path' must match exactly one of the allowed schemas")
+            }
+        }
+
+        return $localErrors.ToArray()
+    }
+
+    # Type validation.
+    if ($Schema.type) {
+        switch ($Schema.type) {
+            'string' {
+                if ($Value -isnot [string]) {
+                    $localErrors.Add("Field '$Path' must be a string")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.pattern -and $Value -notmatch $Schema.pattern) {
+                    $localErrors.Add("Field '$Path' does not match required pattern: $($Schema.pattern)")
+                }
+
+                if ($Schema.minLength -and $Value.Length -lt $Schema.minLength) {
+                    $localErrors.Add("Field '$Path' must have minimum length of $($Schema.minLength)")
+                }
+            }
+            'boolean' {
+                if ($Value -isnot [bool] -and $Value -notin @('true', 'false', 'True', 'False')) {
+                    $localErrors.Add("Field '$Path' must be a boolean")
+                }
+            }
+            'array' {
+                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays.
+                # Also exclude dictionaries/hashtables: they are IEnumerable, but semantically map to objects, not arrays.
+                if (
+                    $Value -is [string] -or
+                    $Value -is [System.Collections.IDictionary] -or
+                    ($Value -isnot [array] -and $Value -isnot [System.Collections.IEnumerable])
+                ) {
+                    $localErrors.Add("Field '$Path' must be an array")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.items) {
+                    $i = 0
+                    foreach ($item in $Value) {
+                        $itemErrors = Test-ValueAgainstSchema -Value $item -Schema $Schema.items -Path "$Path[$i]"
+                        foreach ($e in $itemErrors) { $localErrors.Add($e) }
+                        $i++
+                    }
+                }
+            }
+            'object' {
+                $obj = $Value
+                if ($obj -is [pscustomobject] -or $obj -is [hashtable]) {
+                    $obj = ConvertTo-HashTable -InputObject $obj
+                }
+                else {
+                    $localErrors.Add("Field '$Path' must be an object")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.required) {
+                    foreach ($req in $Schema.required) {
+                        if (-not $obj.ContainsKey($req)) {
+                            $localErrors.Add("Missing required field: $Path.$req")
+                        }
+                    }
+                }
+
+                if ($Schema.properties) {
+                    foreach ($p in $Schema.properties.PSObject.Properties) {
+                        $propName = $p.Name
+                        $propSchema = $p.Value
+                        if ($obj.ContainsKey($propName)) {
+                            $propErrors = Test-ValueAgainstSchema -Value $obj[$propName] -Schema $propSchema -Path "$Path.$propName"
+                            foreach ($e in $propErrors) { $localErrors.Add($e) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Enum validation.
+    if ($Schema.enum) {
+        if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string]) {
+            foreach ($item in $Value) {
+                if ($item -notin $Schema.enum) {
+                    $localErrors.Add("Field '$Path' contains invalid value: $item. Allowed: $($Schema.enum -join ', ')")
+                }
+            }
+        }
+        else {
+            if ($Value -notin $Schema.enum) {
+                $localErrors.Add("Field '$Path' must be one of: $($Schema.enum -join ', '). Got: $Value")
+            }
+        }
+    }
+
+    return $localErrors.ToArray()
+}
+
 function Test-JsonSchemaValidation {
     <#
     .SYNOPSIS
@@ -266,16 +497,19 @@ function Test-JsonSchemaValidation {
     pattern matching, enum values, and minimum length requirements.
 
     Validation coverage:
-    - required: Field presence validation
-    - type: string, array, boolean type checking
+    - required: Field presence validation (root + nested objects)
+    - type: string, array, boolean, object type checking
+    - properties: Nested object property validation
+    - items: Array item validation
+    - oneOf: Composition keyword support (exactly one subschema must match)
     - pattern: Regex pattern matching for strings
     - enum: Allowed value constraints
     - minLength: Minimum string length validation
 
     Limitations (intentional for soft validation):
     - $ref: Schema references not resolved
-    - allOf/anyOf/oneOf: Composition keywords not supported
-    - object: Nested object validation not implemented
+    - allOf/anyOf: Composition keywords not supported
+    - additionalProperties: Not enforced
 
     .PARAMETER Frontmatter
     Hashtable containing parsed frontmatter key-value pairs.
@@ -382,54 +616,8 @@ function Test-JsonSchemaValidation {
 
                 if ($Frontmatter.ContainsKey($fieldName)) {
                     $value = $Frontmatter[$fieldName]
-
-                    if ($fieldSchema.type) {
-                        switch ($fieldSchema.type) {
-                            'string' {
-                                if ($value -isnot [string]) {
-                                    $errors.Add("Field '$fieldName' must be a string")
-                                }
-                            }
-                            'array' {
-                                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays
-                                if ($value -is [string] -or ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable])) {
-                                    $errors.Add("Field '$fieldName' must be an array")
-                                }
-                            }
-                            'boolean' {
-                                if ($value -isnot [bool] -and $value -notin @('true', 'false', 'True', 'False')) {
-                                    $errors.Add("Field '$fieldName' must be a boolean")
-                                }
-                            }
-                        }
-                    }
-
-                    if ($fieldSchema.pattern -and $value -is [string]) {
-                        if ($value -notmatch $fieldSchema.pattern) {
-                            $errors.Add("Field '$fieldName' does not match required pattern: $($fieldSchema.pattern)")
-                        }
-                    }
-
-                    if ($fieldSchema.enum) {
-                        if ($value -is [array]) {
-                            foreach ($item in $value) {
-                                if ($item -notin $fieldSchema.enum) {
-                                    $errors.Add("Field '$fieldName' contains invalid value: $item. Allowed: $($fieldSchema.enum -join ', ')")
-                                }
-                            }
-                        }
-                        else {
-                            if ($value -notin $fieldSchema.enum) {
-                                $errors.Add("Field '$fieldName' must be one of: $($fieldSchema.enum -join ', '). Got: $value")
-                            }
-                        }
-                    }
-
-                    if ($fieldSchema.minLength -and $value -is [string]) {
-                        if ($value.Length -lt $fieldSchema.minLength) {
-                            $errors.Add("Field '$fieldName' must have minimum length of $($fieldSchema.minLength)")
-                        }
-                    }
+                    $validationErrors = Test-ValueAgainstSchema -Value $value -Schema $fieldSchema -Path $fieldName
+                    foreach ($e in $validationErrors) { $errors.Add($e) }
                 }
             }
         }
