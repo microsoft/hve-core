@@ -51,6 +51,7 @@
     "docker",
     "rust",
     "data-science",
+    "design-thinking",
     "aws",
     "terraform",
     "azure-services",
@@ -65,9 +66,9 @@
     "Browsable",
     "Chronograf",
     "edgeai",
+    "gemba",
     "GHCP",
     "GHSA",
-
     "Kapacitor",
     "kata",
     "katas",
