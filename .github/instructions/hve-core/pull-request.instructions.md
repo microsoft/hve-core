@@ -293,14 +293,14 @@ Apply this ordered error handling when PR creation fails:
 
 Extract issue references from commit messages and branch names using these patterns:
 
-| Pattern                 | Source           | Output Format      |
-|-------------------------|------------------|--------------------|
-| `Fixes #(\d+)`         | Commit message   | `Fixes #123`       |
-| `Closes #(\d+)`        | Commit message   | `Closes #123`      |
-| `Resolves #(\d+)`      | Commit message   | `Resolves #123`    |
-| `#(\d+)` (standalone)  | Commit message   | `Related to #123`  |
-| `/(\d+)-`              | Branch name      | `Related to #123`  |
-| `AB#(\d+)` (Azure DevOps convention) | Commit or branch | `AB#12345` (ADO)   |
+| Pattern                              | Source           | Output Format     |
+|--------------------------------------|------------------|-------------------|
+| `Fixes #(\d+)`                       | Commit message   | `Fixes #123`      |
+| `Closes #(\d+)`                      | Commit message   | `Closes #123`     |
+| `Resolves #(\d+)`                    | Commit message   | `Resolves #123`   |
+| `#(\d+)` (standalone)                | Commit message   | `Related to #123` |
+| `/(\d+)-`                            | Branch name      | `Related to #123` |
+| `AB#(\d+)` (Azure DevOps convention) | Commit or branch | `AB#12345` (ADO)  |
 
 Deduplicate issue numbers and preserve the action prefix from the first occurrence.
 
