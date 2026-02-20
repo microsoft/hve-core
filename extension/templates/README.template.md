@@ -2,6 +2,8 @@
 
 > {{DESCRIPTION}}
 
+{{MATURITY_NOTICE}}
+
 {{BODY}}
 
 ## Included Artifacts

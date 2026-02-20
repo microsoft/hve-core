@@ -415,6 +415,14 @@ function New-CollectionReadme {
     }
     $description = if ($Collection.ContainsKey('description')) { [string]$Collection.description } else { '' }
 
+    $collectionMaturity = if ($Collection.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$Collection.maturity)) {
+        [string]$Collection.maturity
+    } else { 'stable' }
+
+    $maturityNotice = if ($collectionMaturity -eq 'experimental') {
+        '> **⚠️ Experimental** — This collection is experimental and available only in the Pre-Release channel. Contents may change or be removed without notice.'
+    } else { '' }
+
     $bodyContent = (Get-Content -Path $CollectionMdPath -Raw).Trim()
 
     # Collect artifacts with descriptions grouped by kind
@@ -482,6 +490,7 @@ function New-CollectionReadme {
     $readmeContent = $template `
         -replace '\{\{DISPLAY_NAME\}\}', $displayName `
         -replace '\{\{DESCRIPTION\}\}', $description `
+        -replace '\{\{MATURITY_NOTICE\}\}', $maturityNotice `
         -replace '\{\{BODY\}\}', $bodyContent `
         -replace '\{\{ARTIFACTS\}\}', $artifactSections.ToString().TrimEnd() `
         -replace '\{\{FULL_EDITION\}\}', $fullEdition
