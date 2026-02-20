@@ -28,7 +28,7 @@ Type `/plugin` in a Copilot CLI chat session to browse available plugins.
 ## Install a Plugin
 
 ```bash
-copilot plugin install rpi@hve-core
+copilot plugin install hve-core@hve-core
 copilot plugin install hve-core-all@hve-core
 ```
 
@@ -36,12 +36,13 @@ copilot plugin install hve-core-all@hve-core
 
 | Plugin            | Description                                 |
 |-------------------|---------------------------------------------|
-| rpi               | Research, Plan, Implement, Review lifecycle |
+| hve-core          | Research, Plan, Implement, Review lifecycle |
 | github            | GitHub issue management                     |
 | ado               | Azure DevOps integration                    |
 | coding-standards  | Language-specific coding guidelines         |
 | project-planning  | PRDs, BRDs, ADRs, architecture diagrams     |
 | data-science      | Data specs, notebooks, dashboards           |
+| design-thinking   | Design thinking coaching and methodology    |
 | security-planning | Security and incident response              |
 | installer         | HVE Core installation automation            |
 | experimental      | Experimental and preview artifacts          |

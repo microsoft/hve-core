@@ -1,1 +1,0 @@
-../../../.github/agents/rpi/doc-ops.agent.md

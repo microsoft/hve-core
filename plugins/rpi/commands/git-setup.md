@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/git-setup.prompt.md

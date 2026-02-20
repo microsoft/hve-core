@@ -1,1 +1,0 @@
-../../../.github/instructions/rpi/commit-message.instructions.md

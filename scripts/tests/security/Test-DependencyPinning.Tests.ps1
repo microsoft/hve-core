@@ -4,6 +4,9 @@
 
 BeforeAll {
     . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+    # Re-import CIHelpers so Pester can resolve its commands for mocking;
+    # the nested-module import inside SecurityHelpers shadows the standalone copy.
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -16,6 +19,10 @@ BeforeAll {
     Mock Write-Host {}
     Mock Write-CIAnnotation {}
     Mock Write-CIStepSummary {}
+    # Module-scoped mocks — intercept calls from within SecurityHelpers module
+    Mock Write-Host {} -ModuleName SecurityHelpers
+    Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+    Mock Write-CIStepSummary {} -ModuleName SecurityHelpers
 }
 
 Describe 'Test-SHAPinning' -Tag 'Unit' {
@@ -729,7 +736,7 @@ Describe 'Get-RemediationSuggestion' -Tag 'Unit' {
             $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
             $v.Version = 'v4'
             Mock Invoke-RestMethod { throw 'API error' }
-            Mock Write-PinningLog {}
+            Mock Write-SecurityLog {}
             $result = Get-RemediationSuggestion -Violation $v -Remediate
             $result | Should -Be 'Manually research and pin to immutable reference'
         }
@@ -924,6 +931,8 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         BeforeAll {
             Mock Write-CIAnnotation {}
             Mock Write-Host {}
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
         }
 
         It 'Emits Write-CIAnnotation per violation' {
@@ -1061,10 +1070,10 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         }
     }
 
-    Context 'Write-PinningLog CI annotation forwarding' {
+    Context 'Write-SecurityLog CI annotation forwarding' {
         BeforeAll {
-            Mock Write-CIAnnotation {}
-            Mock Write-Host {}
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
         }
 
         It 'Forwards Warning-level log messages as CI Warning annotations' {
@@ -1084,8 +1093,8 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            # Write-PinningLog "N dependencies require SHA pinning..." emits a Warning annotation
-            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'SHA pinning' }
+            # Write-SecurityLog -CIAnnotation "N dependencies require SHA pinning..." emits a Warning annotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'SHA pinning' }
         }
 
         It 'Forwards Error-level log messages as CI Error annotations' {
@@ -1105,8 +1114,8 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            # Write-PinningLog "Compliance score ... below threshold" emits an Error annotation
-            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' -and $null -eq $File -and $Message -match 'below threshold' }
+            # Write-SecurityLog -CIAnnotation "Compliance score ... below threshold" emits an Error annotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Error' -and $null -eq $File -and $Message -match 'below threshold' }
         }
 
         It 'Does not forward Info-level log messages as annotations' {
@@ -1118,7 +1127,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
             # Info and Success levels should not produce CI annotations
-            Should -Invoke Write-CIAnnotation -ParameterFilter { $null -eq $File } -Times 0
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $null -eq $File } -Times 0
         }
     }
 
@@ -1126,6 +1135,8 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         BeforeAll {
             Mock Write-CIAnnotation {}
             Mock Write-Host {}
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
         }
 
         It 'Writes colored output for High severity violations' {

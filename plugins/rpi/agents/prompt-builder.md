@@ -1,1 +1,0 @@
-../../../.github/agents/rpi/prompt-builder.agent.md

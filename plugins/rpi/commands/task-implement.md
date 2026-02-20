@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/task-implement.prompt.md

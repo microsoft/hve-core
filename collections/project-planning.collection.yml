@@ -23,6 +23,10 @@ items:
     kind: agent
   - path: .github/agents/project-planning/brd-builder.agent.md
     kind: agent
+  - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/rpi-agent.agent.md
+    kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
   # Instructions

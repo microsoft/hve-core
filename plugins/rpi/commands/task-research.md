@@ -1,1 +1,0 @@
-../../../.github/prompts/rpi/task-research.prompt.md
