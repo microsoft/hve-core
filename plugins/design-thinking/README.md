@@ -41,6 +41,7 @@ copilot plugin install design-thinking@hve-core
 | dt-method-03-synthesis       | Method 3 Input Synthesis coaching knowledge: pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness                                                                              |
 | dt-method-08-deep            | Deep expertise for Method 8: Test and Validate — advanced test design, small-sample analysis, iteration triggers, and bias mitigation                                                                                                      |
 | dt-industry-manufacturing    | Manufacturing industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                           |
+| dt-industry-energy           | Energy industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                                  |
 
 ---
 
