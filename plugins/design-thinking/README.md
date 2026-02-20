@@ -43,6 +43,7 @@ copilot plugin install design-thinking@hve-core
 | dt-method-08-deep            | Deep expertise for Method 8: Test and Validate — advanced test design, small-sample analysis, iteration triggers, and bias mitigation                                                                                                      |
 | dt-method-09-iteration       | Design Thinking Method 9: Iteration at Scale — systematic refinement, scaling patterns, and organizational deployment                                                                                                                      |
 | dt-industry-manufacturing    | Manufacturing industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                           |
+| dt-industry-energy           | Energy industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                                  |
 
 ---
 

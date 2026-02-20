@@ -21,6 +21,8 @@ MTTD
 MTTR
 MSRC
 msrc
+NERC
+nerc
 NNPI
 NUMA
 openssf
@@ -44,6 +46,8 @@ WCAG
 wcag
 XBRL
 ZTNA
+FERC
+ferc
 FIPS
 fips
 ITAR
