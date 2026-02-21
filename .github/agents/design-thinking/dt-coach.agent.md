@@ -4,6 +4,10 @@ description: 'Design Thinking coach guiding teams through the 9-method HVE frame
 tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read, agent, edit, search, web]
 handoffs:
 
+  - label: "🎯 Method Next"
+    agent: dt-coach
+    prompt: /dt-method-next
+    send: false
   - label: "🔬 Research"
     agent: Task Researcher
     prompt: /task-research
