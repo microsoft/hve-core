@@ -166,21 +166,43 @@ jobs:
           name: extension-vsix-${{ matrix.id }}
           path: ./dist
 
+      - name: Resolve VSIX filename
+        id: vsix
+        run: |
+          VSIX_FILE=$(ls dist/*.vsix)
+          VSIX_NAME=$(basename "$VSIX_FILE")
+          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+        with:
+          file: ${{ steps.vsix.outputs.file }}
+          format: spdx-json
+          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
+          artifact-name: sbom-${{ matrix.id }}
+          upload-release-assets: false
+          upload-artifact: true
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
-          subject-path: "dist/*.vsix"
+          subject-path: ${{ steps.vsix.outputs.file }}
 
-      - name: Upload VSIX to GitHub Release
+      - name: Attest SBOM
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
+        with:
+          subject-path: ${{ steps.vsix.outputs.file }}
+          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
+
+      - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
-            exit 1
-          fi
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$VSIX_FILE" --clobber -R "${{ github.repository }}"
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
+            "${{ steps.vsix.outputs.file }}" \
+            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:
     name: Upload Plugin Package (${{ matrix.id }})
