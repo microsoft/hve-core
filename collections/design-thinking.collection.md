@@ -5,6 +5,13 @@ This collection includes agents, prompts, and instructions for:
 - **DT Start Project** — Initializes a new Design Thinking coaching project with state file creation, frozen/fluid classification, and first Method 1 coaching interaction
 - **DT Resume Coaching** — Resumes an existing coaching session from saved state, restoring context from the project's coaching state file
 - **DT Handoff Problem Space** — Problem Space exit handoff that compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting task-researcher, with readiness assessment and quality markers
+- **DT Method 4: Ideation** — Divergent idea generation with constraint-informed creativity for Method 4b brainstorming
+- **DT Method 4: Convergence** — Theme discovery through philosophy-based clustering for Method 4c brainstorming
+- **DT Method 5: Concepts** — Concept articulation from brainstorming themes for Method 5b user concepts
+- **DT Method 5: Evaluation** — Stakeholder alignment and three-lens evaluation for Method 5c user concepts
+- **DT Method 6: Planning** — Concept analysis and prototype approach design for Method 6a lo-fi prototyping
+- **DT Method 6: Building** — Scrappy prototype building with fidelity enforcement for Method 6b
+- **DT Method 6: Testing** — Hypothesis-driven testing and constraint validation for Method 6c
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
 - **DT Coach**: Conversational coaching agent that guides teams through all 9 methods with Think/Speak/Empower philosophy
 - **DT Coaching State** — Session persistence schema, method progress tracking, and session recovery protocol enabling the coach to resume seamlessly across conversations
