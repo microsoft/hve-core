@@ -1,6 +1,6 @@
 ---
 description: 'Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core'
-agent: dt-coach
+agent: DT Coach
 argument-hint: "projectName=..."
 ---
 

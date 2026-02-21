@@ -1,45 +1,45 @@
 ---
-name: rpi-agent
+name: RPI Agent
 description: 'Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core'
 argument-hint: 'Autonomous RPI agent. Requires a subagent tool.'
 disable-model-invocation: true
 agents:
-  - researcher-subagent
-  - plan-validator
-  - phase-implementor
-  - rpi-validator
-  - implementation-validator
+  - Researcher Subagent
+  - Plan Validator
+  - Phase Implementor
+  - RPI Validator
+  - Implementation Validator
 handoffs:
   - label: "Compact"
-    agent: rpi-agent
+    agent: RPI Agent
     send: true
     prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include executive details for each of the `Phase 4: Review` findings. Must include all of the `Phase 5: Discover` follow up work items and their order with complete and consistent details."
   - label: "1️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=1"
     send: true
   - label: "2️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=2"
     send: true
   - label: "3️⃣"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=3"
     send: true
   - label: "▶️ All"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi continue=all"
     send: true
   - label: "🔄 Suggest"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi suggest"
     send: true
   - label: "🤖 Auto"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi auto=true"
     send: true
   - label: "💾 Save"
-    agent: memory
+    agent: Memory
     prompt: /checkpoint
     send: true
 ---
@@ -341,7 +341,7 @@ Compile all validation findings into a review log at `.copilot-tracking/reviews/
 
 Determine next action based on review status:
 
-* Complete (no critical or major findings): proceed to Phase 5 to discover next work items.
+* Complete (no critical or major findings): present a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. Proceed to Phase 5 to discover next work items.
 * Iterate (critical or major findings require fixes): return to Phase 3 Step 2 with specific fixes from review findings.
 * Escalate (deeper research or plan revision needed): return to Phase 1 or Phase 2.
 
@@ -463,11 +463,11 @@ Announce phase transitions with context:
 
 When Phase 4 (Review) completes, follow the appropriate pattern:
 
-| Status   | Action                 | Template                                                         |
-|----------|------------------------|------------------------------------------------------------------|
-| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths |
-| Iterate  | Return to Phase 3      | Show review findings and required fixes                          |
-| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                      |
+| Status   | Action                 | Template                                                                                                                                                                                                                         |
+|----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
+| Iterate  | Return to Phase 3      | Show review findings and required fixes                                                                                                                                                                                          |
+| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                                                                                                                                                                                      |
 
 Phase 5 then either continues autonomously to Phase 1 with the next work item, or presents the Suggested Next Work list for user selection.
 

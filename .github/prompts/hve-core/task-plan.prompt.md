@@ -1,6 +1,6 @@
 ---
 description: "Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core"
-agent: task-planner
+agent: Task Planner
 argument-hint: "[research=...] [chat={true|false}]"
 ---
 

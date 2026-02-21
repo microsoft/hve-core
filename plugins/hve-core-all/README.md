@@ -81,7 +81,7 @@ copilot plugin install hve-core-all@hve-core
 | prompt-analyze | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core |
 | prompt-build | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core |
 | prompt-refactor | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core |
-| pull-request | Provides prompt instructions for pull request (PR) generation - Brought to you by microsoft/edge-ai |
+| pull-request | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core |
 | rpi | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core |
 | task-implement | Locates and executes implementation plans using task-implementor - Brought to you by microsoft/hve-core |
 | task-plan | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core |
@@ -118,6 +118,7 @@ copilot plugin install hve-core-all@hve-core
 | dt-curriculum-08-iteration | DT Curriculum Module 8: User Testing — concepts, techniques, checks, and exercises |
 | dt-curriculum-09-handoff | DT Curriculum Module 9: Iteration at Scale — concepts, techniques, checks, and exercises |
 | dt-curriculum-scenario-manufacturing | Manufacturing reference scenario for DT learning — factory floor improvement project used across all 9 curriculum modules |
+| dt-image-prompt-generation | M365 Copilot image prompt generation techniques for Design Thinking Method 5 concept visualization with lo-fi enforcement |
 | dt-industry-energy | Energy industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios |
 | dt-industry-healthcare | Healthcare industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios |
 | dt-industry-manufacturing | Manufacturing industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios |
@@ -134,6 +135,7 @@ copilot plugin install hve-core-all@hve-core
 | dt-method-07-hifi-prototypes | Design Thinking Method 7: High-Fidelity Prototypes; technical translation, functional prototypes, and specifications |
 | dt-method-08-deep | Deep expertise for Method 8: Test and Validate — advanced test design, small-sample analysis, iteration triggers, and bias mitigation |
 | dt-method-08-testing | Design Thinking Method 8: User Testing - evidence-based evaluation, test protocols, and non-linear iteration support |
+| dt-method-09-deep | Deep expertise for Method 9: Iteration at Scale — change management, scaling, and adoption measurement |
 | dt-method-09-iteration | Design Thinking Method 9: Iteration at Scale — systematic refinement, scaling patterns, and organizational deployment |
 | dt-method-sequencing | Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching |
 | dt-quality-constraints | Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods |
@@ -148,6 +150,7 @@ copilot plugin install hve-core-all@hve-core
 | git-merge | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls. |
 | markdown | Required instructions for creating or editing any Markdown (.md) files |
 | prompt-builder | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills |
+| pull-request | Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core |
 | writing-style | Required writing style conventions for voice, tone, and language in all markdown content |
 | hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 

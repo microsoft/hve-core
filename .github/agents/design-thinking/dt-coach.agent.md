@@ -1,24 +1,19 @@
 ---
-name: dt-coach
+name: DT Coach
 description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core'
-tools:
-  - read_file
-  - list_dir
-  - create_file
-  - replace_string_in_file
-  - runSubagent
+tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read, agent, edit, search, web]
 handoffs:
 
   - label: "🔬 Research"
-    agent: task-researcher
+    agent: Task Researcher
     prompt: /task-research
     send: true
   - label: "📋 Plan"
-    agent: task-planner
+    agent: Task Planner
     prompt: /task-plan
     send: true
   - label: "🛠️ Implement"
-    agent: task-implementor
+    agent: Task Implementor
     prompt: /task-implement
     send: true
 ---

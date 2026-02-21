@@ -1,17 +1,17 @@
 ---
-name: task-planner
+name: Task Planner
 description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
 disable-model-invocation: true
 agents:
-  - researcher-subagent
-  - plan-validator
+  - Researcher Subagent
+  - Plan Validator
 handoffs:
   - label: "Compact"
-    agent: task-planner
+    agent: Task Planner
     send: true
     prompt: "/compact  make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Implementor and the user will switch to it when they are done with Task Planner"
   - label: "⚡ Implement"
-    agent: task-implementor
+    agent: Task Implementor
     prompt: /task-implement
     send: true
 ---

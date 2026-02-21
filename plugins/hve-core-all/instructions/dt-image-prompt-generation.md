@@ -1,0 +1,1 @@
+../../../.github/instructions/design-thinking/dt-image-prompt-generation.instructions.md

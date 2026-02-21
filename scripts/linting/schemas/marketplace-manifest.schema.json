@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Marketplace Manifest",
+  "description": "Schema for hve-core Copilot CLI marketplace.json plugin manifest",
+  "type": "object",
+  "required": [
+    "name",
+    "metadata",
+    "owner",
+    "plugins"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Repository name used as the marketplace identifier."
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "description",
+        "version",
+        "pluginRoot"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short description of the marketplace."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+",
+          "description": "Semantic version string from package.json."
+        },
+        "pluginRoot": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Relative path to the plugins directory."
+        }
+      },
+      "additionalProperties": false
+    },
+    "owner": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Organization or individual owning the repository."
+        }
+      },
+      "additionalProperties": false
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "source",
+          "description",
+          "version"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Plugin identifier. Lowercase letters, digits, and hyphens only."
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Plugin directory name within pluginRoot. Must not contain path separators."
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Short description of the plugin."
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+",
+            "description": "Semantic version string matching the marketplace version."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
