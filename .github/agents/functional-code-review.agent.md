@@ -41,6 +41,17 @@ Race conditions, deadlock potential, shared mutable state without synchronizatio
 
 API misuse, incorrect parameter passing, violated preconditions or postconditions, type mismatches at boundaries, interface non-compliance, schema violations.
 
+## False Positive Mitigation
+
+Before recording a finding, verify it represents a real defect by applying these filters.
+
+* **Understand intent before flagging.** Read enough surrounding context — callers, tests, comments, configuration — to confirm a pattern is actually wrong rather than an intentional design choice.
+* **Respect scope narrowing.** Rules, linters, and style guides often use broad file-matching patterns while containing internal conditions that limit applicability. Apply the narrowest applicable rule, not every rule whose glob matches.
+* **Distinguish conventions from defects.** Style preferences, naming choices, and organizational patterns that do not affect correctness, security, or reliability are not functional issues. Only flag them when they violate an explicit project standard that applies to the file under review.
+* **Account for file purpose.** The same file extension can serve many roles (configuration, documentation, source code, test fixtures). Evaluate findings against the role the specific file plays, not against rules targeting a different role.
+* **Require evidence of harm.** Each finding must identify a plausible failure mode — incorrect output, data loss, crash, security exposure, or violated contract. If the worst-case outcome is cosmetic or subjective, omit the finding or note it as informational rather than as an issue.
+* **Prefer omission over noise.** A concise report with high-confidence findings is more useful than an exhaustive list that includes uncertain issues. When applicability is ambiguous, leave the finding out.
+
 ## Issue Template
 
 Use the following format for each finding:
