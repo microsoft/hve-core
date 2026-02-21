@@ -37,11 +37,14 @@ Entry criteria:
 
 * Repository context is available and the target branch is known.
 
-1. Resolve PR template candidates using a case-insensitive file name search for `pull_request_template.md` and the directory `.github/pull_request_template/`. Match any casing variation for both file names and directory names (for example, `PULL_REQUEST_TEMPLATE.md`, `Pull_Request_Template.md`, `pull_request_template.md`).
-2. Apply location priority, matching any casing variation at each location:
-   1. `.github/PULL_REQUEST_TEMPLATE.md` or `.github/pull_request_template.md`
-   2. `docs/PULL_REQUEST_TEMPLATE.md` or `docs/pull_request_template.md`
-   3. `PULL_REQUEST_TEMPLATE.md` or `pull_request_template.md`
+1. Resolve PR template candidates:
+   1. Search tools for files are case-sensitive.
+   2. Search for `pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template/`, `.github/PULL_REQUEST_TEMPLATE/`.
+   3. Search for any casing variation for both file names and directory names (for example, `PULL_REQUEST_TEMPLATE.md`, `Pull_Request_Template.md`, `pull_request_template.md`).
+2. Apply location priority, based on location:
+   1. `.github/` folder.
+   2. `docs/` folder.
+   3. Anywhere else found.
 3. If multiple templates exist at the same priority level, list candidates and ask the user to choose one.
 4. Persist template state for later steps:
    * `templatePath`: chosen template path, or `None`.
