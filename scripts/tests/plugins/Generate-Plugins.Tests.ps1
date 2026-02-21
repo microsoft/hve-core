@@ -4,6 +4,9 @@
 
 BeforeAll {
     . $PSScriptRoot/../../plugins/Generate-Plugins.ps1
+    # Re-import CollectionHelpers after dot-sourcing because PluginHelpers internally
+    # imports CollectionHelpers with -Force, removing it from the caller's scope.
+    Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
 }
 
 Describe 'Get-AllowedCollectionMaturities' {

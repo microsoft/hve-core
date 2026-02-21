@@ -19,10 +19,11 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── collections/     Collection validation and shared helpers
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
-├── plugins/         Copilot CLI plugin generation and validation
+├── plugins/         Copilot CLI plugin generation
 ├── security/        Security scanning and SHA pinning scripts
 └── tests/           Pester test organization
 ```
@@ -69,12 +70,13 @@ The `security/` directory contains scripts for security scanning and dependency 
 
 Pester test organization matching the scripts structure.
 
-| Directory    | Tests For                 |
-|--------------|---------------------------|
-| `extension/` | Extension packaging tests |
-| `lib/`       | Library utility tests     |
-| `linting/`   | Linting script tests      |
-| `security/`  | Security validation tests |
+| Directory      | Tests For                 |
+|----------------|---------------------------|
+| `collections/` | Collection helpers tests  |
+| `extension/`   | Extension packaging tests |
+| `lib/`         | Library utility tests     |
+| `linting/`     | Linting script tests      |
+| `security/`    | Security validation tests |
 
 Run all tests:
 
