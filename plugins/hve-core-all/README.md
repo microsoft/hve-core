@@ -57,6 +57,7 @@ copilot plugin install hve-core-all@hve-core
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                                 |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
+| dt-handoff-implementation-space             | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact with tiered routing                                                              |
 | dt-handoff-problem-space                    | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                                   |
 | dt-resume-coaching                          | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core               |
 | dt-start-project                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core     |

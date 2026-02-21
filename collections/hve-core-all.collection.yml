@@ -85,6 +85,9 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
+- path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
   kind: prompt
   maturity: experimental
