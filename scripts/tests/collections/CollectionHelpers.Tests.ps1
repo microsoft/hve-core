@@ -289,6 +289,144 @@ Describe 'Get-ArtifactFrontmatter - YAML parse failure' {
     }
 }
 
+Describe 'Update-HveCoreAllCollection - deprecated item exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-deprecated-exclusion'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        # Create two artifacts: one active, one that will be marked deprecated in the manifest
+        $agentsDir = Join-Path $ghDir 'agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'active.agent.md') -Value "---`ndescription: active agent`n---`nBody"
+        Set-Content -Path (Join-Path $agentsDir 'old.agent.md') -Value "---`ndescription: old agent`n---`nBody"
+
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+    }
+
+    It 'Excludes items marked deprecated in existing manifest and reports count' {
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/active.agent.md
+  kind: agent
+- path: .github/agents/test-collection/old.agent.md
+  kind: agent
+  maturity: deprecated
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        $result = Update-HveCoreAllCollection -RepoRoot $script:repoRoot
+
+        $result.DeprecatedCount | Should -BeGreaterOrEqual 1
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Not -Match 'old\.agent\.md'
+    }
+}
+
+Describe 'Update-HveCoreAllCollection - non-stable maturity key' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-maturity-key'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        $agentsDir = Join-Path $ghDir 'agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'preview.agent.md') -Value "---`ndescription: preview agent`n---`nBody"
+
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+    }
+
+    It 'Includes maturity key in output for non-stable items' {
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+  maturity: preview
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: preview'
+    }
+
+    It 'Omits maturity key for stable items' {
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Not -Match 'maturity:'
+    }
+}
+
+Describe 'Update-HveCoreAllCollection - new item detection' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-new-item'
+        $ghDir = Join-Path $script:repoRoot '.github'
+
+        $agentsDir = Join-Path $ghDir 'agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'existing.agent.md') -Value "---`ndescription: existing agent`n---`nBody"
+        Set-Content -Path (Join-Path $agentsDir 'new.agent.md') -Value "---`ndescription: new agent`n---`nBody"
+
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+    }
+
+    It 'Reports added items when new artifacts are discovered' {
+        # Manifest only has the existing agent, discovery will find both
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/existing.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        $result = Update-HveCoreAllCollection -RepoRoot $script:repoRoot
+
+        $result.AddedCount | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Reports zero added when manifest already contains all artifacts' {
+        # Run update first to sync, then run again
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+        $result = Update-HveCoreAllCollection -RepoRoot $script:repoRoot
+
+        $result.AddedCount | Should -Be 0
+    }
+}
+
 Describe 'Update-HveCoreAllCollection - display key ordering' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo-display-order'
