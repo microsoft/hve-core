@@ -23,6 +23,27 @@ items:
   - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
     kind: prompt
     maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-04-ideation.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-04-convergence.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-05-concepts.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-05-evaluation.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-06-planning.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-06-building.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-06-testing.prompt.md
+    kind: prompt
+    maturity: experimental
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md

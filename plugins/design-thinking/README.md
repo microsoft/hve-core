@@ -24,6 +24,13 @@ copilot plugin install design-thinking@hve-core
 | dt-start-project         | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
 | dt-resume-coaching       | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core           |
 | dt-handoff-problem-space | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                               |
+| dt-method-04-ideation    | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core         |
+| dt-method-04-convergence | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                     |
+| dt-method-05-concepts    | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                          |
+| dt-method-05-evaluation  | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                         |
+| dt-method-06-planning    | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                          |
+| dt-method-06-building    | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                    |
+| dt-method-06-testing     | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                     |
 
 ## Instructions
 
