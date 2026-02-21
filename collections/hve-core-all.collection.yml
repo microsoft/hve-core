@@ -88,6 +88,9 @@ items:
 - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
   kind: prompt
   maturity: experimental
