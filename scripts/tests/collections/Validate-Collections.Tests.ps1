@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    . $PSScriptRoot/../../plugins/Validate-Collections.ps1
+    . $PSScriptRoot/../../collections/Validate-Collections.ps1
 }
 
 Describe 'Test-KindSuffix' {
@@ -47,33 +47,6 @@ Describe 'Test-KindSuffix' {
 
         $result = Test-KindSuffix -Kind 'skill' -ItemPath '.github/skills/no-skill' -RepoRoot $TestDrive
         $result | Should -Match "kind 'skill' expects SKILL.md"
-    }
-}
-
-Describe 'Resolve-ItemMaturity' {
-    It 'Returns stable for null maturity' {
-        $result = Resolve-ItemMaturity -Maturity $null
-        $result | Should -Be 'stable'
-    }
-
-    It 'Returns stable for empty string' {
-        $result = Resolve-ItemMaturity -Maturity ''
-        $result | Should -Be 'stable'
-    }
-
-    It 'Returns stable for whitespace' {
-        $result = Resolve-ItemMaturity -Maturity '   '
-        $result | Should -Be 'stable'
-    }
-
-    It 'Passes through explicit value' {
-        $result = Resolve-ItemMaturity -Maturity 'preview'
-        $result | Should -Be 'preview'
-    }
-
-    It 'Passes through experimental value' {
-        $result = Resolve-ItemMaturity -Maturity 'experimental'
-        $result | Should -Be 'experimental'
     }
 }
 
