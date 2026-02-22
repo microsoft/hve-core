@@ -136,8 +136,8 @@ action_mappings:
       version: "v0.22.2"
       sha: "28d71544de8eaf1b958d335707167c5f783590ad"
     - name: "actions/attest-sbom"
-      version: "v2.4.0"
-      sha: "bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b"
+      version: "v3.0.0"
+      sha: "4651f806c01d8637787e274ac3bdf724ef169f34"
 
 # Storage optimization recommendations
 optimization:
