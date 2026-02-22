@@ -3,11 +3,6 @@ name: Gitleaks Secret Scan
 on:
   workflow_call:
     inputs:
-      scan-mode:
-        description: 'Scan mode: full (entire history) or diff (PR changes only)'
-        required: false
-        type: string
-        default: 'full'
       soft-fail:
         description: 'Whether to continue on secret detection'
         required: false
@@ -137,6 +132,5 @@ jobs:
           | Metric | Value |
           |--------|-------|
           | Status | $STATUS |
-          | Scan Mode | ${{ inputs.scan-mode }} |
 
           EOF
