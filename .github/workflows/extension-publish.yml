@@ -25,6 +25,8 @@ jobs:
   prepare-changelog:
     name: Prepare Changelog
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       changelog-path: ${{ steps.create-changelog.outputs.path }}
     steps:
@@ -58,6 +60,8 @@ jobs:
   normalize-version:
     name: Normalize Version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.normalize.outputs.version }}
     steps:
