@@ -1,12 +1,13 @@
 ---
+name: UX UI Designer
 description: 'UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements'
 handoffs:
   - label: "📋 Product Review"
-    agent: product-manager-advisor
+    agent: Product Manager Advisor
     prompt: "Review this work from a product management perspective and identify any scope, risk, or alignment issues."
     send: true
   - label: "🔍 Research Topic"
-    agent: task-researcher
+    agent: Task Researcher
     prompt: /task-research
     send: true
 ---

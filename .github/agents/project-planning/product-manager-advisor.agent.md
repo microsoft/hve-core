@@ -1,20 +1,21 @@
 ---
+name: Product Manager Advisor
 description: 'Product management advisor for requirements discovery, validation, and issue creation'
 handoffs:
   - label: "📄 Build PRD"
-    agent: prd-builder
+    agent: PRD Builder
     prompt: "Create or refine a Product Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "📋 Build BRD"
-    agent: brd-builder
+    agent: BRD Builder
     prompt: "Create or refine a Business Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "🔍 Research Topic"
-    agent: task-researcher
+    agent: Task Researcher
     prompt: /task-research
     send: true
   - label: "🎨 UX Review"
-    agent: ux-ui-designer
+    agent: UX UI Designer
     prompt: "Run a UX and UI review of the proposed solution and suggest improvements."
     send: true
 ---

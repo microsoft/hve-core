@@ -1,5 +1,5 @@
 ---
-name: prompt-updater
+name: Prompt Updater
 description: 'Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research'
 user-invocable: false
 ---

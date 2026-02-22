@@ -1,5 +1,5 @@
 ---
-name: plan-validator
+name: Plan Validator
 description: 'Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core'
 user-invocable: false
 ---

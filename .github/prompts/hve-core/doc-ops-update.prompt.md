@@ -1,6 +1,6 @@
 ---
 description: 'Invoke doc-ops agent for documentation quality assurance and updates'
-agent: 'doc-ops'
+agent: Doc Ops
 argument-hint: '[scope=all|docs|root|scripts] [validate-only={true|false}]'
 ---
 

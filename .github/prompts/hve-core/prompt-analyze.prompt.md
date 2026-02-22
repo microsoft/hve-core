@@ -1,6 +1,6 @@
 ---
 description: "Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core"
-agent: 'prompt-builder'
+agent: Prompt Builder
 argument-hint: "[promptFiles=...]"
 ---
 

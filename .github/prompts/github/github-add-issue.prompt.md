@@ -1,6 +1,6 @@
 ---
 description: 'Create a GitHub issue using discovered repository templates and conversational field collection'
-agent: 'github-backlog-manager'
+agent: GitHub Backlog Manager
 argument-hint: "[templateName=...] [title=...] [labels=...]"
 ---
 

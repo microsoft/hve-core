@@ -1,4 +1,5 @@
 ---
+name: DS Test Streamlit Dashboard
 description: 'Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting'
 ---
 

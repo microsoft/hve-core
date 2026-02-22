@@ -52,10 +52,12 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Git and Workflow
 
-| File                                                                      | Applies To     | Purpose                              |
-|---------------------------------------------------------------------------|----------------|---------------------------------------|
-| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions | Conventional commit message format    |
-| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations | Merge, rebase, and conflict handling  |
+| File                                                                      | Applies To                       | Purpose                               |
+|---------------------------------------------------------------------------|----------------------------------|---------------------------------------|
+| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md)       | Commit actions                   | Conventional commit message format    |
+| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)                 | Git operations                   | Merge, rebase, and conflict handling  |
+| [hve-core/pull-request.instructions.md](hve-core/pull-request.instructions.md)           | `**/.copilot-tracking/pr/**`     | PR generation workflow with subagents |
+| [pull-request.instructions.md](pull-request.instructions.md)                             | `**/.copilot-tracking/pr/**`     | Repo-specific PR conventions          |
 
 ### Azure DevOps Integration
 

@@ -1,4 +1,5 @@
 ---
+name: PRD Builder
 description: "Product Requirements Document builder with guided Q&A and reference integration"
 ---
 
