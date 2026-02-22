@@ -966,109 +966,6 @@ Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {
 
 #endregion
 
-#region Get-ChangedMarkdownFileGroup Tests
-
-Describe 'Get-ChangedMarkdownFileGroup' -Tag 'Unit' {
-    BeforeAll {
-        Save-CIEnvironment
-    }
-
-    AfterAll {
-        Restore-CIEnvironment
-    }
-
-    Context 'Merge-base succeeds' {
-        BeforeEach {
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return 'abc123def456789'
-            } -ParameterFilter { $args[0] -eq 'merge-base' }
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @('docs/test.md', 'README.md', 'scripts/README.md')
-            } -ParameterFilter { $args[0] -eq 'diff' }
-
-            Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Leaf' }
-        }
-
-        It 'Returns changed markdown files' {
-            $result = Get-ChangedMarkdownFileGroup
-            $result | Should -BeOfType [string]
-            $result | Should -Contain 'docs/test.md'
-            $result | Should -Contain 'README.md'
-        }
-
-        It 'Filters to markdown files only' {
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @('test.md', 'test.ps1', 'test.json')
-            } -ParameterFilter { $args[0] -eq 'diff' }
-
-            $result = Get-ChangedMarkdownFileGroup
-            $result | Should -Contain 'test.md'
-            $result | Should -Not -Contain 'test.ps1'
-            $result | Should -Not -Contain 'test.json'
-        }
-
-        It 'Returns array of strings' {
-            $result = Get-ChangedMarkdownFileGroup
-            $result.Count | Should -BeGreaterOrEqual 0
-        }
-    }
-
-    Context 'Fallback scenarios' {
-        BeforeEach {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            } -ParameterFilter { $args[0] -eq 'merge-base' }
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return 'HEAD~1-sha'
-            } -ParameterFilter { $args[0] -eq 'rev-parse' }
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @('fallback.md')
-            } -ParameterFilter { $args[0] -eq 'diff' }
-
-            Mock Test-Path { return $true } -ParameterFilter { $PathType -eq 'Leaf' }
-        }
-
-        It 'Falls back to HEAD~1 when merge-base fails' {
-            $result = Get-ChangedMarkdownFileGroup
-            $result | Should -Contain 'fallback.md'
-        }
-
-        It 'Returns files when fallback succeeds' {
-            $result = Get-ChangedMarkdownFileGroup
-            $result.Count | Should -BeGreaterOrEqual 1
-        }
-    }
-
-    Context 'No changes detected' {
-        BeforeEach {
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return 'abc123'
-            } -ParameterFilter { $args[0] -eq 'merge-base' }
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @()
-            } -ParameterFilter { $args[0] -eq 'diff' }
-        }
-
-        It 'Returns empty array when no changes' {
-            $result = Get-ChangedMarkdownFileGroup
-            $result.Count | Should -Be 0
-        }
-    }
-}
-
-#endregion
 
 #region Test-FrontmatterValidation Integration Tests
 
@@ -1258,8 +1155,8 @@ Content
         }
 
         It 'Returns success ValidationSummary when no changed files found' {
-            # Mock Get-ChangedMarkdownFileGroup to return empty
-            Mock Get-ChangedMarkdownFileGroup { return @() }
+            # Mock Get-ChangedFilesFromGit to return empty
+            Mock Get-ChangedFilesFromGit { return @() } -ParameterFilter { $FileExtensions -contains '*.md' }
 
             $result = Test-FrontmatterValidation -ChangedFilesOnly
 
@@ -1271,25 +1168,25 @@ Content
             $result.Duration | Should -Not -BeNullOrEmpty
         }
 
-        It 'Validates only files returned by Get-ChangedMarkdownFileGroup' {
-            # Mock Get-ChangedMarkdownFileGroup to return specific file
-            Mock Get-ChangedMarkdownFileGroup {
+        It 'Validates only files returned by Get-ChangedFilesFromGit' {
+            # Mock Get-ChangedFilesFromGit to return specific file
+            Mock Get-ChangedFilesFromGit {
                 return @("$script:TestRepoRoot/docs/changed.md")
-            }
+            } -ParameterFilter { $FileExtensions -contains '*.md' }
 
             $result = Test-FrontmatterValidation -ChangedFilesOnly
 
             $result.TotalFiles | Should -Be 1
         }
 
-        It 'Passes BaseBranch parameter to Get-ChangedMarkdownFileGroup' {
-            Mock Get-ChangedMarkdownFileGroup {
+        It 'Passes BaseBranch parameter to Get-ChangedFilesFromGit' {
+            Mock Get-ChangedFilesFromGit {
                 return @()
-            } -ParameterFilter { $BaseBranch -eq 'develop' }
+            } -ParameterFilter { $BaseBranch -eq 'develop' -and $FileExtensions -contains '*.md' }
 
             $null = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch 'develop'
 
-            Should -Invoke Get-ChangedMarkdownFileGroup -ParameterFilter { $BaseBranch -eq 'develop' }
+            Should -Invoke Get-ChangedFilesFromGit -ParameterFilter { $BaseBranch -eq 'develop' -and $FileExtensions -contains '*.md' }
         }
     }
 
@@ -1630,208 +1527,6 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
 
 #endregion
 
-#region Git Fallback Strategy Tests
-
-Describe 'Git Fallback Strategies' -Tag 'Unit' {
-    BeforeAll {
-        . $PSScriptRoot/../../linting/Validate-MarkdownFrontmatter.ps1
-    }
-
-    Context 'FallbackStrategy None behavior' {
-        It 'Returns empty array when merge-base fails with FallbackStrategy None' {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            }
-
-            $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main' -FallbackStrategy 'None'
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Emits warning when merge-base fails with FallbackStrategy None' {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            }
-
-            $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'None' -WarningVariable warnings 3>$null
-            $warnings | Should -Not -BeNullOrEmpty
-            $warnings[0] | Should -Match 'no fallback enabled'
-        }
-    }
-
-    Context 'FallbackStrategy HeadOnly behavior' {
-        It 'Falls back to HEAD~1 when merge-base fails' {
-            # The implementation uses $(git merge-base) inside git diff, so first call has 2 git invocations
-            # Then fallback to HEAD~1 is another git diff call
-            $callCount = 0
-            Mock git {
-                $callCount++
-                # First two calls are merge-base + diff (which fails)
-                if ($callCount -le 2) {
-                    $global:LASTEXITCODE = 128
-                    return $null
-                }
-                # Third call is HEAD~1 fallback
-                $global:LASTEXITCODE = 0
-                return @()
-            }
-
-            $result = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly'
-            $result | Should -BeNullOrEmpty
-            # merge-base subexpression + diff + fallback HEAD~1 = 3 calls minimum
-            Should -Invoke git -Times 3 -Exactly
-        }
-
-        It 'Returns empty with warning when HEAD~1 also fails for HeadOnly' {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            }
-
-            $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly' -WarningVariable warnings 3>$null
-            $warnings | Should -Not -BeNullOrEmpty
-            $warnings[0] | Should -Match 'Unable to determine changed files'
-        }
-
-        It 'Emits verbose message when merge-base comparison fails' {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            }
-
-            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly' -Verbose 4>&1
-            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
-            $messages = @($verbose | ForEach-Object { $_.Message })
-            ($messages -match 'Merge base comparison.*failed').Count | Should -BeGreaterThan 0
-        }
-
-        It 'Emits verbose message when attempting HEAD~1 fallback' {
-            $callCount = 0
-            Mock git {
-                $callCount++
-                if ($callCount -le 2) {
-                    $global:LASTEXITCODE = 128
-                    return $null
-                }
-                $global:LASTEXITCODE = 0
-                return @('test.md')
-            }
-
-            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'HeadOnly' -Verbose 4>&1
-            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
-            $messages = @($verbose | ForEach-Object { $_.Message })
-            ($messages -match 'Attempting fallback.*HEAD~1').Count | Should -BeGreaterThan 0
-        }
-
-        It 'Emits verbose count message when files found' {
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @('docs/test.md', 'src/readme.md')
-            }
-
-            $output = Get-ChangedMarkdownFileGroup -Verbose 4>&1
-            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
-            $messages = @($verbose | ForEach-Object { $_.Message })
-            ($messages -match 'Found.*changed markdown files').Count | Should -BeGreaterThan 0
-        }
-    }
-
-    Context 'FallbackStrategy Auto cascading behavior' {
-        It 'Cascades through all fallback strategies when Auto' {
-            # merge-base (1) + diff (2) fail, then HEAD~1 diff (3) fail, then HEAD diff (4) fail
-            $callCount = 0
-            Mock git {
-                $callCount++
-                if ($callCount -le 3) {
-                    $global:LASTEXITCODE = 128
-                    return $null
-                }
-                $global:LASTEXITCODE = 0
-                return @()
-            }
-
-            $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto'
-            # merge-base (1) + diff (2) + HEAD~1 fallback (3) + HEAD fallback (4) = 4 calls
-            Should -Invoke git -Times 4 -Exactly
-        }
-
-        It 'Returns empty with warning when all Auto fallbacks fail' {
-            Mock git {
-                $global:LASTEXITCODE = 128
-                return $null
-            }
-
-            $null = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto' -WarningVariable warnings 3>$null
-            $warnings | Should -Not -BeNullOrEmpty
-        }
-
-        It 'Emits verbose message when HEAD~1 fails and falls back to staged' {
-            $callCount = 0
-            Mock git {
-                $callCount++
-                # merge-base (1) + diff (2) + HEAD~1 (3) all fail
-                if ($callCount -le 3) {
-                    $global:LASTEXITCODE = 128
-                    return $null
-                }
-                # HEAD (staged/unstaged) succeeds
-                $global:LASTEXITCODE = 0
-                return @('staged.md')
-            }
-
-            $output = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto' -Verbose 4>&1
-            $verbose = $output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
-            $verboseMessages = $verbose.Message -join "`n"
-            $verboseMessages | Should -Match 'staged|unstaged'
-        }
-
-        It 'Succeeds when second fallback works' {
-            $script:TestFilePath = Join-Path $TestDrive 'changed.md'
-            @"
----
-title: Test
-description: Changed file
----
-"@ | Set-Content -Path $script:TestFilePath -Encoding UTF8
-
-            $script:gitCallCount = 0
-            Mock git {
-                $script:gitCallCount++
-                # First 2 calls (merge-base + diff) fail
-                if ($script:gitCallCount -le 2) {
-                    $global:LASTEXITCODE = 128
-                    return $null
-                }
-                # Third call (HEAD~1 fallback) succeeds
-                $global:LASTEXITCODE = 0
-                return @($script:TestFilePath)
-            }
-
-            $result = Get-ChangedMarkdownFileGroup -FallbackStrategy 'Auto'
-            $result | Should -Contain $script:TestFilePath
-        }
-    }
-
-    Context 'Git exception handling' {
-        It 'Returns empty array when git throws exception' {
-            Mock git { throw 'fatal: not a git repository' }
-
-            $result = Get-ChangedMarkdownFileGroup
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Emits warning with exception message when git fails' {
-            Mock git { throw 'fatal: not a git repository' }
-
-            $null = Get-ChangedMarkdownFileGroup -WarningVariable warnings 3>$null
-            $warnings | Should -Not -BeNullOrEmpty
-            $warnings[0] | Should -Match 'Error getting changed files'
-        }
-    }
-}
-
-#endregion
 
 #region Integration Modes Tests
 
@@ -1936,77 +1631,6 @@ Describe 'Empty Input Handling' -Tag 'Unit' {
     }
 }
 
-Describe 'ChangedFilesOnly Integration' -Tag 'Unit' {
-    BeforeAll {
-        $script:TestRoot = Join-Path $TestDrive 'changed-files-test'
-        New-Item -ItemType Directory -Path $script:TestRoot -Force | Out-Null
-    }
-
-    Context 'Git diff filtering' {
-        It 'Returns only markdown files from git diff output' {
-            # Arrange
-            $mdFile = Join-Path $script:TestRoot 'readme.md'
-            Set-Content -Path $mdFile -Value "---`ndescription: test`n---"
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                # Git returns multiple file types
-                return @('readme.md', 'script.ps1', 'config.json')
-            }
-
-            # Change to TestRoot so Test-Path resolves relative paths correctly
-            Push-Location $script:TestRoot
-            try {
-                # Act
-                $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main'
-
-                # Assert - Should filter to only .md files
-                $result | Should -Contain 'readme.md'
-                $result | Should -Not -Contain 'script.ps1'
-                $result | Should -Not -Contain 'config.json'
-            }
-            finally {
-                Pop-Location
-            }
-        }
-
-        It 'Returns empty array when git diff returns no files' {
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @()
-            }
-
-            # Act
-            $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main'
-
-            # Assert
-            $result | Should -BeNullOrEmpty
-        }
-
-        It 'Handles mixed path separators in git output' {
-            # Create test files that match git output paths
-            $docsPath = Join-Path $TestDrive 'docs'
-            $srcPath = Join-Path $TestDrive 'src' 'api'
-            New-Item -Path $docsPath -ItemType Directory -Force | Out-Null
-            New-Item -Path $srcPath -ItemType Directory -Force | Out-Null
-            $file1 = Join-Path $docsPath 'readme.md'
-            $file2 = Join-Path $srcPath 'guide.md'
-            '---' + "`ntitle: Test`n---" | Set-Content -Path $file1 -Encoding UTF8
-            '---' + "`ntitle: Test`n---" | Set-Content -Path $file2 -Encoding UTF8
-
-            Mock git {
-                $global:LASTEXITCODE = 0
-                return @($file1, $file2)
-            }
-
-            # Act
-            $result = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/main'
-
-            # Assert - Should handle both path separators
-            $result.Count | Should -Be 2
-        }
-    }
-}
 
 #region Schema Pattern Matching Tests
 

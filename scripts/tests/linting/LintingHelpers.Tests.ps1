@@ -220,6 +220,134 @@ Describe 'Get-ChangedFilesFromGit' {
             $result | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Warning and verbose output' {
+        It 'Emits warning when git diff returns non-zero exit code' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 1
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            $output = Get-ChangedFilesFromGit 3>&1
+            $warnings = @($output | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $warnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits warning when exception occurs' {
+            Mock git {
+                throw "Simulated git failure"
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            $warnings = Get-ChangedFilesFromGit 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
+            $warnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits verbose message when merge-base succeeds' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+
+            $verbose = Get-ChangedFilesFromGit -Verbose 4>&1 | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $verbose | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits verbose message when falling back to HEAD~1' {
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'HEAD~1-sha'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+
+            $verbose = Get-ChangedFilesFromGit -Verbose 4>&1 | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $verbose | Should -Not -BeNullOrEmpty
+            ($verbose | Where-Object { $_.Message -match 'HEAD~1' }) | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Custom BaseBranch parameter' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.md')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Passes custom BaseBranch to merge-base' {
+            Get-ChangedFilesFromGit -BaseBranch 'origin/develop' -FileExtensions @('*.md')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'merge-base' -and $args -contains 'origin/develop'
+            }
+        }
+
+        It 'Uses default BaseBranch when not specified' {
+            Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'merge-base' -and $args -contains 'origin/main'
+            }
+        }
+    }
+
+    Context 'Mixed path separators' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/docs/readme.md', 'src\tests\test.md', 'docs/guide.md')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Handles files with forward slashes' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result | Should -Contain 'src/docs/readme.md'
+        }
+
+        It 'Handles files with backslashes' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result | Should -Contain 'src\tests\test.md'
+        }
+
+        It 'Returns correct count with mixed separators' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result.Count | Should -Be 3
+        }
+    }
 }
 
 #endregion
