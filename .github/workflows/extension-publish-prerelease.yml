@@ -21,6 +21,7 @@ jobs:
   validate-version:
     name: Validate Pre-Release Version
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       version: ${{ steps.validate.outputs.version }}
     steps:
