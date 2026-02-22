@@ -102,16 +102,38 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
   ],
   "settings": {
     "chat.agentFilesLocations": {
-      "HVE-Core Fork/.github/agents": true,
+      "HVE-Core Fork/.github/agents/ado": true,
+      "HVE-Core Fork/.github/agents/data-science": true,
+      "HVE-Core Fork/.github/agents/design-thinking": true,
+      "HVE-Core Fork/.github/agents/github": true,
+      "HVE-Core Fork/.github/agents/installer": true,
+      "HVE-Core Fork/.github/agents/project-planning": true,
+      "HVE-Core Fork/.github/agents/hve-core": true,
+      "HVE-Core Fork/.github/agents/hve-core/subagents": true,
+      "HVE-Core Fork/.github/agents/security-planning": true,
       "My Project/.github/agents": true
     },
     "chat.promptFilesLocations": {
-      "HVE-Core Fork/.github/prompts": true,
+      "HVE-Core Fork/.github/prompts/ado": true,
+      "HVE-Core Fork/.github/prompts/design-thinking": true,
+      "HVE-Core Fork/.github/prompts/github": true,
+      "HVE-Core Fork/.github/prompts/hve-core": true,
+      "HVE-Core Fork/.github/prompts/security-planning": true,
       "My Project/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {
-      "HVE-Core Fork/.github/instructions": true,
+      "HVE-Core Fork/.github/instructions/ado": true,
+      "HVE-Core Fork/.github/instructions/coding-standards": true,
+      "HVE-Core Fork/.github/instructions/design-thinking": true,
+      "HVE-Core Fork/.github/instructions/github": true,
+      "HVE-Core Fork/.github/instructions/hve-core": true,
+      "HVE-Core Fork/.github/instructions/shared": true,
       "My Project/.github/instructions": true
+    },
+    "chat.agentSkillsLocations": {
+      "HVE-Core Fork/.github/skills": true,
+      "HVE-Core Fork/.github/skills/shared": true,
+      "My Project/.github/skills": true
     }
   },
   "extensions": {

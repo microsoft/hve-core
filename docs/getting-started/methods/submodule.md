@@ -81,16 +81,38 @@ Create or update `.vscode/settings.json`:
 ```jsonc
 {
   "chat.agentFilesLocations": {
-    "lib/hve-core/.github/agents": true,
+    "lib/hve-core/.github/agents/ado": true,
+    "lib/hve-core/.github/agents/data-science": true,
+    "lib/hve-core/.github/agents/design-thinking": true,
+    "lib/hve-core/.github/agents/github": true,
+    "lib/hve-core/.github/agents/installer": true,
+    "lib/hve-core/.github/agents/project-planning": true,
+    "lib/hve-core/.github/agents/hve-core": true,
+    "lib/hve-core/.github/agents/hve-core/subagents": true,
+    "lib/hve-core/.github/agents/security-planning": true,
     ".github/agents": true
   },
   "chat.promptFilesLocations": {
-    "lib/hve-core/.github/prompts": true,
+    "lib/hve-core/.github/prompts/ado": true,
+    "lib/hve-core/.github/prompts/design-thinking": true,
+    "lib/hve-core/.github/prompts/github": true,
+    "lib/hve-core/.github/prompts/hve-core": true,
+    "lib/hve-core/.github/prompts/security-planning": true,
     ".github/prompts": true
   },
   "chat.instructionsFilesLocations": {
-    "lib/hve-core/.github/instructions": true,
+    "lib/hve-core/.github/instructions/ado": true,
+    "lib/hve-core/.github/instructions/coding-standards": true,
+    "lib/hve-core/.github/instructions/design-thinking": true,
+    "lib/hve-core/.github/instructions/github": true,
+    "lib/hve-core/.github/instructions/hve-core": true,
+    "lib/hve-core/.github/instructions/shared": true,
     ".github/instructions": true
+  },
+  "chat.agentSkillsLocations": {
+    "lib/hve-core/.github/skills": true,
+    "lib/hve-core/.github/skills/shared": true,
+    ".github/skills": true
   }
 }
 ```
