@@ -8,15 +8,23 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (leave empty to auto-detect from latest release)'
+        description: "Version to publish (leave empty to auto-detect from latest release)"
         required: false
         type: string
-        default: ''
+        default: ""
       dry-run:
-        description: 'Dry run (package only, do not publish)'
+        description: "Dry run (package only, do not publish)"
         required: false
         type: boolean
         default: false
+      channel:
+        description: "Release channel (Stable or PreRelease)"
+        required: false
+        type: choice
+        options:
+          - Stable
+          - PreRelease
+        default: "Stable"
 
 permissions:
   contents: read
@@ -91,6 +99,7 @@ jobs:
     with:
       version: ${{ needs.normalize-version.outputs.version }}
       use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
+      channel: ${{ inputs.channel || 'Stable' }}
     permissions:
       contents: read
 
@@ -122,7 +131,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install VSCE
         run: npm install -g @vscode/vsce@3.7.1
@@ -141,19 +150,32 @@ jobs:
             echo "::error::No VSIX file found for collection ${{ matrix.id }}"
             exit 1
           fi
-          # Extract version from VSIX filename to avoid depending on matrix job output
           VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
           echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
-          echo "📦 Publishing ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
-          vsce publish --packagePath "$VSIX_FILE" --azure-credential
+
+          CHANNEL="${{ inputs.channel || 'Stable' }}"
+          PRE_RELEASE_FLAG=""
+          if [ "$CHANNEL" = "PreRelease" ]; then
+            PRE_RELEASE_FLAG="--pre-release"
+            echo "📦 Publishing PRE-RELEASE ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
+          else
+            echo "📦 Publishing ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
+          fi
+          vsce publish --packagePath "$VSIX_FILE" --azure-credential $PRE_RELEASE_FLAG
 
       - name: Summary
         run: |
+          CHANNEL="${{ inputs.channel || 'Stable' }}"
+          CHANNEL_LABEL=""
+          if [ "$CHANNEL" = "PreRelease" ]; then
+            CHANNEL_LABEL=" (Pre-Release)"
+          fi
           {
-            echo "## 🎉 Extension Published: ${{ matrix.name }}"
+            echo "## 🎉 Extension Published: ${{ matrix.name }}${CHANNEL_LABEL}"
             echo ""
             echo "**Collection:** ${{ matrix.id }}"
             echo "**Version:** ${{ steps.publish.outputs.version }}"
+            echo "**Channel:** $CHANNEL"
             echo ""
             echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${{ matrix.name }})"
           } >> "$GITHUB_STEP_SUMMARY"
