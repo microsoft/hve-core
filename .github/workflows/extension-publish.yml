@@ -85,7 +85,7 @@ jobs:
 
           # Auto-detect from latest release tag when no version specified
           if [ -z "$VERSION" ]; then
-            TAG=$(gh release view --json tagName -q '.tagName' -R "${{ github.repository }}")
+            TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "${{ github.repository }}")
             VERSION="${TAG#hve-core-v}"
             echo "📦 Auto-detected version from latest release: $VERSION"
           fi

@@ -158,6 +158,8 @@ jobs:
           fi
 
       - name: Update pre-release PR version
+        # Placeholder version computation — prerelease.yml is the authoritative source.
+        # This provides an interim PR title until the next push to main triggers prerelease.yml.
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |

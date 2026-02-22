@@ -17,7 +17,7 @@ jobs:
         name: Tag and Create Pre-Release
         if: >
             github.event.pull_request.merged == true
-            && startsWith(github.event.pull_request.head.ref, 'prerelease/')
+            && github.event.pull_request.head.ref == 'prerelease/next'
         runs-on: ubuntu-latest
         permissions:
             contents: write
@@ -43,6 +43,14 @@ jobs:
                     echo "::error::Could not extract version from PR title: $PR_TITLE"
                     exit 1
                   fi
+
+                  # Validate odd minor version (pre-release convention)
+                  MINOR=$(echo "$VERSION" | cut -d. -f2)
+                  if [ $((MINOR % 2)) -eq 0 ]; then
+                    echo "::error::Pre-release version $VERSION has even minor ($MINOR). Pre-release versions must have odd minor."
+                    exit 1
+                  fi
+
                   TAG="hve-core-v${VERSION}"
 
                   echo "version=$VERSION" >> "$GITHUB_OUTPUT"

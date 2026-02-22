@@ -72,7 +72,6 @@ jobs:
             - name: Generate changelog
               id: changelog
               run: |
-                  # shellcheck disable=SC2001
                   LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
                   if [ -z "$LAST_TAG" ]; then
                     RANGE="HEAD"
@@ -198,6 +197,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ steps.app-token.outputs.token }}
                   PRE_VERSION: ${{ steps.version.outputs.version }}
+                  PR_BODY: ${{ steps.changelog.outputs.body }}
               run: |
                   BRANCH="prerelease/next"
                   REPO="${{ github.repository }}"
@@ -211,7 +211,7 @@ jobs:
                   if [ -n "$PR_NUMBER" ]; then
                     gh pr edit "$PR_NUMBER" \
                       --title "$TITLE" \
-                      --body "${{ steps.changelog.outputs.body }}" \
+                      --body "$PR_BODY" \
                       -R "$REPO"
                     echo "Updated PR #$PR_NUMBER"
                   else
@@ -219,7 +219,7 @@ jobs:
                       --head "$BRANCH" \
                       --base main \
                       --title "$TITLE" \
-                      --body "${{ steps.changelog.outputs.body }}" \
+                      --body "$PR_BODY" \
                       --label "autorelease: prerelease" \
                       -R "$REPO"
                     echo "Created new pre-release PR"
