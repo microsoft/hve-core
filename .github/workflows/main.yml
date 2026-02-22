@@ -51,6 +51,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: ./.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
   pester-tests:
     name: PowerShell Tests
     uses: ./.github/workflows/pester-tests.yml
@@ -69,6 +80,7 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
+      - gitleaks-scan
       - pester-tests
     runs-on: ubuntu-latest
     outputs:
