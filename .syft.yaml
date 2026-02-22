@@ -1,0 +1,4 @@
+javascript:
+  include-dev-dependencies: true
+  search-remote-licenses: true
+  npm-base-url: https://registry.npmjs.org
