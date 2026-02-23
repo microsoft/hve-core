@@ -69,12 +69,12 @@ jobs:
       - name: Create draft pre-release GitHub Release
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ steps.tag.outputs.tag_name }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="${{ steps.tag.outputs.tag_name }}"
-          VERSION="${{ steps.tag.outputs.version }}"
-          REPO="${{ github.repository }}"
-
-          BODY=$(gh pr view "${{ github.event.pull_request.number }}" \
+          BODY=$(gh pr view "$PR_NUMBER" \
             --json body --jq '.body' \
             -R "$REPO")
 
