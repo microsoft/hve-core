@@ -706,7 +706,7 @@ function Test-FrontmatterValidation {
     # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $Files = @(Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch)
+        $Files = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.md'))
         if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
             # Return empty summary with TotalFiles=0 to accurately represent no files validated
@@ -831,110 +831,6 @@ All frontmatter fields are valid and properly formatted. Great job! 🎉
     }
 
     return $summary
-}
-
-function Get-ChangedMarkdownFileGroup {
-    <#
-    .SYNOPSIS
-    Retrieves changed markdown files from git diff comparison.
-
-    .DESCRIPTION
-    Uses git diff to identify markdown files that have changed between the current
-    HEAD and a base branch. Implements a fallback strategy when standard comparison
-    methods fail:
-
-    1. First attempts: git merge-base comparison with specified base branch
-    2. Fallback 1: Comparison with HEAD~1 (previous commit)
-    3. Fallback 2: Staged and unstaged files against HEAD
-
-    .PARAMETER BaseBranch
-    Git reference for the base branch to compare against. Defaults to 'origin/main'.
-    Can be any valid git ref (branch name, tag, commit SHA).
-
-    .PARAMETER FallbackStrategy
-    Controls fallback behavior when primary comparison fails.
-    - 'Auto' (default): Tries all fallback strategies automatically
-    - 'HeadOnly': Only uses HEAD~1 fallback
-    - 'None': No fallback, returns empty on failure
-
-    .INPUTS
-    None. Does not accept pipeline input.
-
-    .OUTPUTS
-    [string[]] Array of relative file paths for changed markdown files.
-    Returns empty array if no changes detected or git operations fail.
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup
-    # Returns markdown files changed compared to origin/main
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/develop'
-    # Returns markdown files changed compared to develop branch
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup -FallbackStrategy 'None'
-    # Returns empty array if merge-base comparison fails
-
-    .NOTES
-    Requires git to be available in PATH. Files must exist on disk to be included
-    in the result (deleted files are excluded).
-    #>
-    [CmdletBinding()]
-    [OutputType([string[]])]
-    param(
-        [Parameter(Mandatory = $false, Position = 0)]
-        [ValidateNotNullOrEmpty()]
-        [string]$BaseBranch = "origin/main",
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Auto', 'HeadOnly', 'None')]
-        [string]$FallbackStrategy = 'Auto'
-    )
-
-    try {
-        $changedFiles = git diff --name-only $(git merge-base HEAD $BaseBranch) HEAD 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Verbose "Merge base comparison with '$BaseBranch' failed"
-
-            if ($FallbackStrategy -eq 'None') {
-                Write-Warning "Unable to determine changed files from git (no fallback enabled)"
-                return @()
-            }
-
-            Write-Verbose "Attempting fallback: HEAD~1 comparison"
-            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-
-            if ($LASTEXITCODE -ne 0 -and $FallbackStrategy -eq 'Auto') {
-                Write-Verbose "HEAD~1 comparison failed, attempting staged/unstaged files"
-                $changedFiles = git diff --name-only HEAD 2>$null
-
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "Unable to determine changed files from git"
-                    return @()
-                }
-            }
-            elseif ($LASTEXITCODE -ne 0) {
-                Write-Warning "Unable to determine changed files from git"
-                return @()
-            }
-        }
-
-        [string[]]$changedMarkdownFiles = $changedFiles | Where-Object {
-            -not [string]::IsNullOrEmpty($_) -and
-            $_ -match '\.md$' -and
-            (Test-Path $_ -PathType Leaf)
-        }
-
-        Write-Verbose "Found $($changedMarkdownFiles.Count) changed markdown files from git diff"
-        $changedMarkdownFiles | ForEach-Object { Write-Verbose "  Changed: $_" }
-
-        return $changedMarkdownFiles
-    }
-    catch {
-        Write-Warning "Error getting changed files from git: $($_.Exception.Message)"
-        return @()
-    }
 }
 
 #region Main Execution

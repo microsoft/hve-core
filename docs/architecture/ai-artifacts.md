@@ -27,7 +27,7 @@ Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent 
 ```yaml
 ---
 description: 'Protocol for creating ADO pull requests'
-agent: 'task-planner'
+agent: Task Planner
 ---
 ```
 
@@ -50,7 +50,15 @@ Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools
 ---
 description: 'Orchestrates task planning with research integration'
 tools: ['codebase', 'search', 'editFiles', 'changes']
-handoffs: ['task-implementor', 'task-researcher']
+handoffs:
+  - label: "⚡ Implement"
+    agent: Task Implementor
+    prompt: /task-implement
+    send: true
+  - label: "🔬 Research"
+    agent: Task Researcher
+    prompt: /task-research
+    send: true
 ---
 ```
 

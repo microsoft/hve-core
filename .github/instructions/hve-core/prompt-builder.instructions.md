@@ -20,7 +20,7 @@ Purpose: Single-session workflows where users invoke a prompt and Copilot execut
 Characteristics:
 
 * Single invocation completes the workflow.
-* Frontmatter includes `agent: agent-name` to delegate to an agent. Quote the value only when the agent name contains spaces.
+* Frontmatter includes `agent:` to delegate to a custom agent using the human-readable name from the agent's `name:` frontmatter (for example, `agent: Prompt Builder`). Quote the value when the agent name contains spaces.
 * Activation lines are optional and apply only to prompt files; agent files and instructions files do not include them. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
 * When the full contents are not required, refer to the file by path or to the relevant section.
@@ -44,7 +44,7 @@ Prompts extending agent behavior focus on what differs from the default: scoped 
 ```markdown
 ---
 description: "Refactors prompt files through iterative improvement"
-agent: prompt-builder
+agent: Prompt Builder
 argument-hint: "[promptFiles=...] [requirements=...]"
 ---
 
@@ -109,7 +109,7 @@ Validation guidelines:
 
 Purpose: Agent files support both conversational workflows (multi-turn interactions with a specialized assistant) and autonomous workflows (task execution with minimal user interaction).
 
-*Naming*: Use lowercase kebab-case matching the agent's role (for example, `task-planner.agent.md`, `prompt-builder.agent.md`). The `name:` frontmatter field matches the filename without extension.
+*Naming*: Use lowercase kebab-case matching the agent's role (for example, `task-planner.agent.md`, `prompt-builder.agent.md`). The `name:` frontmatter field is a human-readable identifier for the agent (for example, `Prompt Builder` for `prompt-builder.agent.md`).
 
 Frontmatter defines available `tools` and optional `handoffs` to other agents.
 
@@ -144,7 +144,7 @@ Characteristics:
 * Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
 * Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/hve-core/subagents/`) to separate them from user-facing agents.
-* Parent agents declare subagent dependencies in their `agents:` frontmatter.
+* Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Cannot run their own subagents; only the parent agent orchestrates subagent calls.
 
@@ -398,19 +398,19 @@ All prompt engineering artifacts include this frontmatter field:
 
 These fields are required depending on the file type:
 
-* `name:` - Artifact identifier. Required for agent files and skill files. For agents, use lowercase kebab-case matching the filename without extension. For skills, match the skill directory name using lowercase kebab-case.
+* `name:` - Artifact identifier. Optional but preferred for agent files; required for skill files. For agents, use a human-readable name (for example, `Prompt Builder`). For skills, match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns defining which files trigger the instructions. Required for instructions files only.
-* `agents:` - List of subagent dependencies. Required for parent agents that run subagents. Each entry is the subagent name without path or extension (for example, `codebase-researcher`).
+* `agents:` - List of subagent dependencies. Required for parent agents that run subagents. Each entry is the human-readable name from the subagent's `name:` frontmatter (for example, `Codebase Researcher`).
 
 ### Optional Fields
 
 Optional fields available by file type:
 
 * `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
-* `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (target agent name), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
+* `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (human-readable name from the target agent's `name:` frontmatter), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
 * `user-invocable:` - Boolean. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker or background-only skills that should not appear in the slash command menu.
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
-* `agent:` - Agent delegation for prompt files.
+* `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Model specification. Accepts any valid model identifier string (for example, `gpt-4o`, `claude-sonnet-4`). When omitted, the default model is used.
 
@@ -420,16 +420,16 @@ Agent with tools and subagents:
 
 ```yaml
 ---
-name: prompt-builder
+name: Prompt Builder
 description: 'Orchestrates prompt engineering workflows'
 disable-model-invocation: true
 agents:
-  - prompt-tester
-  - prompt-evaluator
-  - researcher-subagent
+  - Prompt Tester
+  - Prompt Evaluator
+  - Researcher Subagent
 handoffs:
   - label: "💡 Update/Create"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: "/prompt-build "
     send: false
 ---
@@ -439,7 +439,7 @@ Subagent with tool restrictions:
 
 ```yaml
 ---
-name: prompt-tester
+name: Prompt Tester
 description: 'Tests prompt files in a sandbox environment'
 user-invocable: false
 tools:
@@ -454,7 +454,7 @@ Prompt file with agent delegation:
 ```yaml
 ---
 description: 'Builds and validates prompt engineering artifacts'
-agent: prompt-builder
+agent: Prompt Builder
 argument-hint: "files=... [promptFiles=...] [requirements=...]"
 ---
 ```
@@ -691,6 +691,7 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 Tool invocation:
 
 * Run the named agent with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
+* When describing which agent to invoke in body text, use the filename without extension (for example, "Run a `prompt-tester` agent" or "Run a `codebase-researcher` agent"). Frontmatter fields (`agents:`, `agent:`) use the human-readable name instead.
 * Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Subagents do not run their own subagents (see the Subagents section).
 

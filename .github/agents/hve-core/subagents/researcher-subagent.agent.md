@@ -1,5 +1,5 @@
 ---
-name: researcher-subagent
+name: Researcher Subagent
 description: 'Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools'
 user-invocable: false
 ---

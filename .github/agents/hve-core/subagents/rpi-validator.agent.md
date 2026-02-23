@@ -1,13 +1,7 @@
 ---
-name: rpi-validator
+name: RPI Validator
 description: 'Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core'
 user-invocable: false
-tools:
-  - read_file
-  - grep_search
-  - file_search
-  - semantic_search
-  - list_dir
 ---
 
 # RPI Validator

@@ -1,17 +1,17 @@
 ---
-name: task-implementor
+name: Task Implementor
 description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core'
 disable-model-invocation: true
 agents:
-  - phase-implementor
-  - researcher-subagent
+  - Phase Implementor
+  - Researcher Subagent
 handoffs:
   - label: "Compact"
-    agent: task-implementor
+    agent: Task Implementor
     send: true
     prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
   - label: "✅ Review"
-    agent: task-reviewer
+    agent: Task Reviewer
     prompt: /task-review
     send: true
 ---

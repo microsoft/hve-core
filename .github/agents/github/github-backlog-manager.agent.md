@@ -1,4 +1,5 @@
 ---
+name: GitHub Backlog Manager
 description: "Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core"
 tools:
   - github/*
@@ -11,19 +12,19 @@ tools:
   - agent
 handoffs:
   - label: "Discover"
-    agent: github-backlog-manager
+    agent: GitHub Backlog Manager
     prompt: /github-discover-issues
   - label: "Triage"
-    agent: github-backlog-manager
+    agent: GitHub Backlog Manager
     prompt: /github-triage-issues
   - label: "Sprint"
-    agent: github-backlog-manager
+    agent: GitHub Backlog Manager
     prompt: /github-sprint-plan
   - label: "Execute"
-    agent: github-backlog-manager
+    agent: GitHub Backlog Manager
     prompt: /github-execute-backlog
   - label: "Save"
-    agent: memory
+    agent: Memory
     prompt: /checkpoint
 ---
 
