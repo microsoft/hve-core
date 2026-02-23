@@ -1,0 +1,230 @@
+name: Pre-Release Companion
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: prerelease-pr
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  prerelease:
+    name: Pre-Release PR
+    # Skip release-please merge commits and pre-release merge commits.
+    # Both contain no new developer changes and would re-trigger needlessly.
+    if: >
+      !startsWith(github.event.head_commit.message, 'chore(main): release')
+      && !startsWith(github.event.head_commit.message, 'chore(main): pre-release')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.0.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Compute pre-release version
+        id: version
+        run: |
+          CURRENT=$(jq -r '.["."]//"0.0.0"' .release-please-manifest.json)
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+
+          # Next ODD minor version
+          NEXT_MINOR=$((MINOR + 1))
+          if [ $((NEXT_MINOR % 2)) -eq 0 ]; then
+            NEXT_MINOR=$((NEXT_MINOR + 1))
+          fi
+
+          # Check for breaking changes since last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
+          HAS_BREAKING=0
+          if [ -n "$LAST_TAG" ]; then
+            HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s%n%b' | \
+              grep -cE '^[a-z]+(\(.+\))?!:|BREAKING[ -]CHANGE' || true)
+          fi
+
+          if [ "$HAS_BREAKING" -gt 0 ]; then
+            PRE_VERSION="$((MAJOR + 1)).1.0"
+          else
+            PRE_VERSION="${MAJOR}.${NEXT_MINOR}.0"
+          fi
+
+          echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Computed pre-release version: $PRE_VERSION (current: $CURRENT)"
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          PRE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
+          MAX_COUNT_ARG=""
+          if [ -z "$LAST_TAG" ]; then
+            RANGE="HEAD"
+            MAX_COUNT_ARG="--max-count=100"
+          else
+            RANGE="${LAST_TAG}..HEAD"
+          fi
+
+          format_entries() {
+            local prefix="$1"
+            while IFS= read -r line; do
+              echo "- ${line#*: }"
+            done < <(git log $MAX_COUNT_ARG "$RANGE" --format='%s' | grep -E "^${prefix}(\\(.+\\))?[!]?:" || true)
+          }
+
+          {
+            echo 'body<<CHANGELOG_EOF'
+            echo "## Pre-Release ${PRE_VERSION}"
+            echo ""
+
+            FEATS=$(format_entries "feat")
+            if [ -n "$FEATS" ]; then
+              echo "### ✨ Features"
+              echo ""
+              echo "$FEATS"
+              echo ""
+            fi
+
+            FIXES=$(format_entries "fix")
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo ""
+              echo "$FIXES"
+              echo ""
+            fi
+
+            DOCS=$(format_entries "docs")
+            if [ -n "$DOCS" ]; then
+              echo "### 📚 Documentation"
+              echo ""
+              echo "$DOCS"
+              echo ""
+            fi
+
+            REFACTORS=$(format_entries "refactor")
+            if [ -n "$REFACTORS" ]; then
+              echo "### ♻️ Refactoring"
+              echo ""
+              echo "$REFACTORS"
+              echo ""
+            fi
+
+            CHORES=$(format_entries "chore")
+            if [ -n "$CHORES" ]; then
+              echo "### 🔧 Maintenance"
+              echo ""
+              echo "$CHORES"
+              echo ""
+            fi
+
+            echo "---"
+            echo "*Managed automatically by pre-release workflow.*"
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update prerelease/next branch with version files
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PRE_VERSION: ${{ steps.version.outputs.version }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          BRANCH="prerelease/next"
+
+          # Force-update or create prerelease/next branch to current HEAD
+          if gh api "/repos/$REPO/git/refs/heads/$BRANCH" --silent 2>/dev/null; then
+            gh api "/repos/$REPO/git/refs/heads/$BRANCH" \
+              -X PATCH \
+              -f sha="$SHA" \
+              -F force=true
+            echo "Force-updated $BRANCH to $SHA"
+          else
+            gh api "/repos/$REPO/git/refs" \
+              -f "ref=refs/heads/$BRANCH" \
+              -f "sha=$SHA"
+            echo "Created $BRANCH at $SHA"
+          fi
+
+          # Configure git for commits on prerelease/next
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          git fetch origin "$BRANCH"
+          git checkout "$BRANCH"
+
+          # Update package.json
+          jq --arg v "$PRE_VERSION" '.version = $v' package.json > package.json.tmp \
+            && mv package.json.tmp package.json
+
+          # Update extension/templates/package.template.json
+          jq --arg v "$PRE_VERSION" '.version = $v' extension/templates/package.template.json > tmp.json \
+            && mv tmp.json extension/templates/package.template.json
+
+          # Update .github/plugin/marketplace.json (metadata.version and plugins[*].version)
+          jq --arg v "$PRE_VERSION" '
+            .metadata.version = $v |
+            .plugins[].version = $v
+          ' .github/plugin/marketplace.json > tmp.json \
+            && mv tmp.json .github/plugin/marketplace.json
+
+          # Update plugins/*/.github/plugin/plugin.json (glob)
+          for f in plugins/*/.github/plugin/plugin.json; do
+            if [ -f "$f" ]; then
+              jq --arg v "$PRE_VERSION" '.version = $v' "$f" > tmp.json \
+                && mv tmp.json "$f"
+            fi
+          done
+
+          git add -A
+          git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
+          git push origin "$BRANCH"
+
+      - name: Create or update pre-release PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PRE_VERSION: ${{ steps.version.outputs.version }}
+          PR_BODY: ${{ steps.changelog.outputs.body }}
+          REPO: ${{ github.repository }}
+        run: |
+          BRANCH="prerelease/next"
+          TITLE="chore(main): pre-release ${PRE_VERSION}"
+
+          # Check for existing open PR from prerelease/next
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "$REPO")
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --title "$TITLE" \
+              --body "$PR_BODY" \
+              -R "$REPO"
+            echo "Updated PR #$PR_NUMBER"
+          else
+            gh pr create \
+              --head "$BRANCH" \
+              --base main \
+              --title "$TITLE" \
+              --body "$PR_BODY" \
+              --label "autorelease: prerelease" \
+              -R "$REPO"
+            echo "Created new pre-release PR"
+          fi

@@ -62,7 +62,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
-Import-Module (Join-Path $PSScriptRoot "../plugins/Modules/PluginHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../collections/Modules/CollectionHelpers.psm1") -Force
 
 #region Pure Functions
 
@@ -693,12 +693,16 @@ function Resolve-HandoffDependencies {
         Starting from seed agents, performs breadth-first traversal of agent handoff
         declarations in YAML frontmatter to compute the transitive closure of
         all agents reachable through handoff chains.
+
+        Handoff targets in frontmatter use display names (e.g., "Task Planner")
+        while agent files use kebab-case stems (e.g., task-planner.agent.md).
+        This function builds a name index to resolve both formats.
     .PARAMETER SeedAgents
-        Initial agent names to start BFS from.
+        Initial agent names (file stems) to start BFS from.
     .PARAMETER AgentsDir
         Path to the agents directory containing .agent.md files.
     .OUTPUTS
-        [string[]] Complete set of agent names including seed agents and all transitive handoff targets.
+        [string[]] Complete set of agent file stems including seed agents and all transitive handoff targets.
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
@@ -709,6 +713,32 @@ function Resolve-HandoffDependencies {
         [Parameter(Mandatory = $true)]
         [string]$AgentsDir
     )
+
+    # Build index: map display names and file stems to agent file objects.
+    # Handoff targets use display names from frontmatter (e.g., "RPI Agent")
+    # while seed agents and collection keys use file stems (e.g., "rpi-agent").
+    $agentIndex = @{}
+    $allAgentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse -File
+    foreach ($af in $allAgentFiles) {
+        $stem = $af.BaseName -replace '\.agent$', ''
+        $agentIndex[$stem] = $af
+
+        $fc = Get-Content -Path $af.FullName -Raw
+        if ($fc -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+            $yml = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
+            try {
+                $meta = ConvertFrom-Yaml -Yaml $yml
+                if ($meta.ContainsKey('name') -and $meta.name -is [string] -and $meta.name -ne '') {
+                    if (-not $agentIndex.ContainsKey($meta.name)) {
+                        $agentIndex[$meta.name] = $af
+                    }
+                }
+            }
+            catch {
+                Write-Verbose "Skipping display name index for $($af.Name): $_"
+            }
+        }
+    }
 
     $visited = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     $queue = [System.Collections.Generic.Queue[string]]::new()
@@ -721,12 +751,17 @@ function Resolve-HandoffDependencies {
 
     while ($queue.Count -gt 0) {
         $current = $queue.Dequeue()
-        $agentFileMatches = Get-ChildItem -Path $AgentsDir -Filter "$current.agent.md" -Recurse -File
-        $agentFile = $agentFileMatches | Select-Object -First 1
+        $agentFile = $agentIndex[$current]
 
         if (-not $agentFile) {
-            Write-Warning "Handoff target agent file not found: $current.agent.md"
+            Write-Warning "Handoff target agent file not found: $current"
             continue
+        }
+
+        # Normalize visited entry to file stem for consistent collection filtering
+        $fileStem = $agentFile.BaseName -replace '\.agent$', ''
+        if ($fileStem -ne $current) {
+            $visited.Add($fileStem) | Out-Null
         }
 
         # Parse handoffs from frontmatter
@@ -754,7 +789,7 @@ function Resolve-HandoffDependencies {
                 }
             }
             catch {
-                Write-Warning "Failed to parse handoffs from $current.agent.md: $_"
+                Write-Warning "Failed to parse handoffs from $($agentFile.Name): $_"
             }
         }
     }

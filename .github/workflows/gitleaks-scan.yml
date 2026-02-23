@@ -1,0 +1,147 @@
+name: Gitleaks Secret Scan
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on secret detection'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Whether to upload SARIF results to Security tab'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact:
+        description: 'Whether to upload results as artifact'
+        required: false
+        type: boolean
+        default: true
+      log-opts:
+        description: 'Extra git log options passed to gitleaks (e.g. a revision range to scope the scan)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download and verify gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GITLEAKS_VERSION="8.30.0"
+          GITLEAKS_SHA256="79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e"
+          GITLEAKS_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          GITLEAKS_TARBALL="gitleaks.tar.gz"
+
+          echo "Downloading gitleaks v${GITLEAKS_VERSION}..."
+          curl -fsSL -o "${GITLEAKS_TARBALL}" "${GITLEAKS_URL}"
+
+          echo "Verifying SHA256 checksum..."
+          echo "${GITLEAKS_SHA256}  ${GITLEAKS_TARBALL}" | sha256sum -c -
+
+          echo "Extracting gitleaks binary..."
+          tar -xzf "${GITLEAKS_TARBALL}" gitleaks
+          chmod +x gitleaks
+
+          echo "Gitleaks version:"
+          ./gitleaks version
+
+      - name: Run gitleaks scan
+        id: gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p logs
+
+          SCAN_ARGS=(
+            "git"
+            "--report-format" "sarif"
+            "--report-path" "logs/gitleaks-results.sarif"
+            "--redact"
+            "--log-level" "info"
+          )
+
+          LOG_OPTS="${{ inputs.log-opts }}"
+          if [ -n "$LOG_OPTS" ]; then
+            SCAN_ARGS+=("--log-opts=$LOG_OPTS")
+            echo "Scoping scan with log-opts: $LOG_OPTS"
+          fi
+
+          # Respect .gitleaksignore for pre-existing secrets
+          if [ -f ".gitleaksignore" ]; then
+            echo "Found .gitleaksignore — known secrets will be suppressed."
+          fi
+
+          echo "Running gitleaks scan..."
+          EXIT_CODE=0
+          ./gitleaks "${SCAN_ARGS[@]}" || EXIT_CODE=$?
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "No secrets detected."
+            echo "leaks-found=false" >> "$GITHUB_OUTPUT"
+          elif [ "$EXIT_CODE" -eq 1 ]; then
+            echo "::warning::Gitleaks detected secrets in the repository."
+            echo "leaks-found=true" >> "$GITHUB_OUTPUT"
+            if [ "${{ inputs.soft-fail }}" != "true" ]; then
+              echo "::error::Secret scanning failed. Review detected secrets in logs/gitleaks-results.sarif"
+              exit 1
+            fi
+          else
+            echo "::error::Gitleaks encountered an unexpected error (exit code: $EXIT_CODE)"
+            exit "$EXIT_CODE"
+          fi
+
+      - name: Upload SARIF to Security tab
+        if: inputs.upload-sarif && always()
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/gitleaks-results.sarif
+          category: gitleaks
+        continue-on-error: true
+
+      - name: Upload scan results
+        if: inputs.upload-artifact && always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: gitleaks-results
+          path: logs/gitleaks-results.sarif
+          retention-days: 90
+
+      - name: Add job summary
+        if: always()
+        shell: bash
+        run: |
+          LEAKS_FOUND="${{ steps.gitleaks.outputs.leaks-found }}"
+          if [ "$LEAKS_FOUND" = "true" ]; then
+            STATUS="⚠️ Secrets Detected"
+          else
+            STATUS="✅ No Secrets Found"
+          fi
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Gitleaks Secret Scan Results
+
+          | Metric | Value |
+          |--------|-------|
+          | Status | $STATUS |
+
+          EOF

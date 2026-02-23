@@ -1,0 +1,158 @@
+name: Pre-Release Publish
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prerelease-tag:
+    name: Tag and Create Pre-Release
+    if: >
+      github.event.pull_request.merged == true
+      && github.event.pull_request.head.ref == 'prerelease/next'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.0.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Extract version and create tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPO: ${{ github.repository }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          VERSION=$(echo "$PR_TITLE" | grep -oE 'pre-release [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          if [ -z "$VERSION" ]; then
+            echo "⚠️ Could not extract version from PR title, falling back to manifest"
+            VERSION=$(jq -r '.["."]//"0.0.0"' .release-please-manifest.json 2>/dev/null || echo "")
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract version from PR title or manifest: $PR_TITLE"
+            exit 1
+          fi
+
+          # Validate odd minor version (pre-release convention)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if [ $((MINOR % 2)) -eq 0 ]; then
+            echo "::error::Pre-release version $VERSION has even minor ($MINOR). Pre-release versions must have odd minor."
+            exit 1
+          fi
+
+          TAG="hve-core-v${VERSION}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+
+          if ! gh api "/repos/$REPO/git/refs/tags/$TAG" --silent 2>/dev/null; then
+            gh api "/repos/$REPO/git/refs" \
+              -f "ref=refs/tags/$TAG" \
+              -f "sha=$MERGE_SHA"
+            echo "Created tag $TAG"
+          else
+            echo "Tag $TAG already exists"
+          fi
+
+      - name: Create draft pre-release GitHub Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ steps.tag.outputs.tag_name }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          BODY=$(gh pr view "$PR_NUMBER" \
+            --json body --jq '.body' \
+            -R "$REPO")
+
+          gh release create "$TAG" \
+            --title "hve-core $VERSION (pre-release)" \
+            --prerelease \
+            --draft \
+            --notes "$BODY" \
+            -R "$REPO"
+
+  extension-package-prerelease:
+    name: Package VS Code Extensions (Pre-Release)
+    needs: [prerelease-tag]
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.prerelease-tag.outputs.version }}
+      channel: PreRelease
+    permissions:
+      contents: read
+
+  attest-and-upload:
+    name: Attest and Upload (${{ matrix.id }})
+    needs: [prerelease-tag, extension-package-prerelease]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.extension-package-prerelease.outputs.collections-matrix) }}
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: extension-vsix-${{ matrix.id }}
+          path: ./dist
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-path: "dist/*.vsix"
+
+      - name: Upload VSIX to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.prerelease-tag.outputs.tag_name }}
+          REPO: ${{ github.repository }}
+          COLLECTION_ID: ${{ matrix.id }}
+        run: |
+          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX file found for collection $COLLECTION_ID"
+            exit 1
+          fi
+          gh release upload "$TAG_NAME" "$VSIX_FILE" --clobber -R "$REPO"
+
+  publish-release:
+    name: Publish Pre-Release
+    needs: [prerelease-tag, attest-and-upload]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prerelease-tag.outputs.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release edit "$TAG" --draft=false -R "$REPO"

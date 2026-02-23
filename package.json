@@ -14,7 +14,7 @@
     "lint:links": "pwsh -NoProfile -Command \"& scripts/linting/Invoke-LinkLanguageCheck.ps1 -ExcludePaths 'scripts/tests/**'\"",
     "lint:md-links": "pwsh -File scripts/linting/Markdown-Link-Check.ps1",
     "lint:frontmatter": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-MarkdownFrontmatter.ps1' -WarningsAsErrors -EnableSchemaValidation\"",
-    "lint:collections-metadata": "pwsh -File scripts/plugins/Validate-Collections.ps1",
+    "lint:collections-metadata": "pwsh -File scripts/collections/Validate-Collections.ps1",
     "lint:marketplace": "pwsh -File scripts/plugins/Validate-Marketplace.ps1",
     "lint:version-consistency": "pwsh -NoProfile -Command \"./scripts/security/Test-ActionVersionConsistency.ps1 -FailOnMismatch\"",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run validate:skills",

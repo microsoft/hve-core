@@ -20,7 +20,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-Import-Module (Join-Path $PSScriptRoot 'Modules/PluginHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Validation Helpers
@@ -86,36 +86,6 @@ function Test-KindSuffix {
     }
 
     return ''
-}
-
-function Resolve-ItemMaturity {
-    <#
-    .SYNOPSIS
-        Resolves an item's effective maturity value.
-
-    .DESCRIPTION
-        Returns 'stable' when maturity is omitted; otherwise returns the
-        provided maturity string.
-
-    .PARAMETER Maturity
-        Optional maturity string from collection item metadata.
-
-    .OUTPUTS
-        [string] Effective maturity value.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter()]
-        [AllowNull()]
-        [string]$Maturity
-    )
-
-    if ([string]::IsNullOrWhiteSpace($Maturity)) {
-        return 'stable'
-    }
-
-    return $Maturity
 }
 
 function Get-CollectionItemKey {
@@ -248,7 +218,7 @@ function Invoke-CollectionValidation {
             if ($item.ContainsKey('maturity')) {
                 $itemMaturity = [string]$item.maturity
             }
-            $effectiveMaturity = Resolve-ItemMaturity -Maturity $itemMaturity
+            $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $itemMaturity
 
             # Repo-specific path exclusion
             if (Test-HveCoreRepoRelativePath -Path $itemPath) {

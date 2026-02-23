@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (leave empty to auto-detect from latest release)'
+        description: "Version to publish (leave empty to auto-detect from latest release)"
         required: false
         type: string
-        default: ''
+        default: ""
       dry-run:
-        description: 'Dry run (package only, do not publish)'
+        description: "Dry run (package only, do not publish)"
         required: false
         type: boolean
         default: false
@@ -21,43 +21,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  prepare-changelog:
-    name: Prepare Changelog
-    runs-on: ubuntu-latest
-    outputs:
-      changelog-path: ${{ steps.create-changelog.outputs.path }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Create changelog file
-        id: create-changelog
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            cat > CHANGELOG.md << 'EOF'
-          ${{ github.event.release.body }}
-          EOF
-            echo "path=CHANGELOG.md" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "path=" >> "$GITHUB_OUTPUT"
-          else
-            echo "path=" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload changelog
-        if: steps.create-changelog.outputs.path != ''
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
-        with:
-          name: changelog
-          path: CHANGELOG.md
-          retention-days: 1
-
   normalize-version:
     name: Normalize Version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.normalize.outputs.version }}
     steps:
@@ -65,95 +38,55 @@ jobs:
         id: normalize
         env:
           GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-          else
-            VERSION="${{ inputs.version }}"
-          fi
+          VERSION="$INPUT_VERSION"
           # Strip leading 'v' and component prefix if present
           VERSION="${VERSION#v}"
           VERSION="${VERSION#hve-core-v}"
 
           # Auto-detect from latest release tag when no version specified
           if [ -z "$VERSION" ]; then
-            TAG=$(gh release view --json tagName -q '.tagName' -R "${{ github.repository }}")
+            TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "${{ github.repository }}")
             VERSION="${TAG#hve-core-v}"
             echo "📦 Auto-detected version from latest release: $VERSION"
+          fi
+
+          # Validate semver format
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 2.0.0)"
+            exit 1
+          fi
+
+          # Validate even minor version (stable channel convention)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( MINOR % 2 != 0 )); then
+            echo "::error::Stable channel requires EVEN minor version. Got: $VERSION (minor=$MINOR is ODD)"
+            echo "::error::Use extension-publish-prerelease workflow for ODD minor (pre-release) versions"
+            exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Extensions
-    needs: [prepare-changelog, normalize-version]
+    needs: [normalize-version]
     uses: ./.github/workflows/extension-package.yml
     with:
       version: ${{ needs.normalize-version.outputs.version }}
-      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
+      channel: Stable
     permissions:
       contents: read
 
   publish:
-    name: Publish ${{ matrix.id }}
+    name: Publish Extensions
     needs: [package]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
-    environment: marketplace
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.package.outputs.collections-matrix) }}
+    uses: ./.github/workflows/extension-publish-marketplace.yml
+    with:
+      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      pre-release: false
     permissions:
       contents: read
       id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
-        with:
-          node-version: '20'
-
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Publish to VS Code Marketplace
-        id: publish
-        run: |
-          VSIX_FILE=$(find dist -name '*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
-            exit 1
-          fi
-          # Extract version from VSIX filename to avoid depending on matrix job output
-          VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
-          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
-          echo "📦 Publishing ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
-          vsce publish --packagePath "$VSIX_FILE" --azure-credential
-
-      - name: Summary
-        run: |
-          {
-            echo "## 🎉 Extension Published: ${{ matrix.name }}"
-            echo ""
-            echo "**Collection:** ${{ matrix.id }}"
-            echo "**Version:** ${{ steps.publish.outputs.version }}"
-            echo ""
-            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${{ matrix.name }})"
-          } >> "$GITHUB_STEP_SUMMARY"
+    secrets: inherit
