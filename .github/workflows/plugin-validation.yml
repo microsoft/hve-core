@@ -43,6 +43,9 @@ jobs:
       - name: Validate collection metadata
         run: npm run lint:collections-metadata
 
+      - name: Validate marketplace manifest
+        run: npm run lint:marketplace
+
       - name: Check plugin freshness
         run: |
           npm run plugin:generate

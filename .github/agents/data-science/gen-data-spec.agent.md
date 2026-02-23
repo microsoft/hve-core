@@ -1,6 +1,6 @@
 ---
+name: DS Gen Data Spec
 description: "Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery"
-tools: ['runCommands', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles', 'search', 'think', 'todos']
 ---
 
 # Data Dictionary & Data Profile Generator

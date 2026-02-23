@@ -1,12 +1,13 @@
 ---
+name: Memory
 description: "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
 handoffs:
   - label: "🗑️ Clear"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/clear"
     send: true
   - label: "🚀 Continue with RPI"
-    agent: rpi-agent
+    agent: RPI Agent
     prompt: "/rpi suggest"
     send: true
 ---

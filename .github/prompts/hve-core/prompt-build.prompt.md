@@ -1,6 +1,6 @@
 ---
 description: "Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core"
-agent: prompt-builder
+agent: Prompt Builder
 argument-hint: "[files=...] [promptFiles=...] [create or update based on target files otherwise improve and cleanup existing promptFiles]"
 ---
 
