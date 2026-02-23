@@ -230,6 +230,7 @@ items:
   maturity: experimental
 - path: .github/instructions/design-thinking/dt-image-prompt-generation.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
   kind: instruction
   maturity: experimental
