@@ -5,7 +5,7 @@ description: 'Coordinate Git merge, rebase, and rebase --onto workflows with con
 
 # Git Merge & Rebase Orchestrator
 
-Follow all instructions from #file:../instructions/git-merge.instructions.md
+Follow all instructions from #file:../../instructions/hve-core/git-merge.instructions.md
 
 ## Overview
 

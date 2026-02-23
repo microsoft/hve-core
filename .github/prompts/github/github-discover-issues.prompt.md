@@ -8,8 +8,8 @@ argument-hint: "documents=... [milestone=...] [searchTerms=...]"
 
 Classify the discovery path based on user intent and available inputs, execute the appropriate discovery workflow, assess similarity against existing issues, and produce planning files for review. Three discovery paths are supported: user-centric queries (Path A), artifact-driven analysis from documents (Path B), and search-based exploration (Path C).
 
-Follow all instructions from #file:../instructions/github-backlog-discovery.instructions.md while executing this workflow.
-Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md for shared conventions.
+Follow all instructions from #file:../../instructions/github/github-backlog-discovery.instructions.md while executing this workflow.
+Follow all instructions from #file:../../instructions/github/github-backlog-planning.instructions.md for shared conventions.
 
 ## Inputs
 

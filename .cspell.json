@@ -22,6 +22,7 @@
     "**/package-lock.json",
     "Cargo.lock",
     "**/Cargo.lock",
+    "CHANGELOG.md",
     "logs/**"
   ],
   "ignoreRegExpList": [
