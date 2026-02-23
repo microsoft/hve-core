@@ -4,7 +4,7 @@ description: "Generate pull request description, discover related work items, id
 
 # Create Azure DevOps Pull Request with Work Item & Reviewer Discovery
 
-Follow all instructions from #file:../instructions/ado-create-pull-request.instructions.md
+Follow all instructions from #file:../../instructions/ado/ado-create-pull-request.instructions.md
 
 ## Inputs
 

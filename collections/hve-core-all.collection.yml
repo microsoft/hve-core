@@ -300,6 +300,9 @@ items:
 - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/design-thinking/dt-rpi-implement-context.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/design-thinking/dt-rpi-planning-context.instructions.md
   kind: instruction
   maturity: experimental

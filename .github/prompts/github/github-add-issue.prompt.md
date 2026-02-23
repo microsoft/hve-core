@@ -8,7 +8,7 @@ argument-hint: "[templateName=...] [title=...] [labels=...]"
 
 Discover available issue templates from the repository, collect required and optional fields through conversation, create the issue via GitHub MCP tools, and log the result for tracking.
 
-Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md for shared conventions and the GitHub MCP Tool Catalog.
+Follow all instructions from #file:../../instructions/github/github-backlog-planning.instructions.md for shared conventions and the GitHub MCP Tool Catalog.
 
 ## Inputs
 
