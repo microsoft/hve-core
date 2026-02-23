@@ -8,8 +8,8 @@ argument-hint: "handoff=... [autonomy={full|partial|manual}] [dryRun={true|false
 
 Process a handoff plan file to execute planned issue operations against the GitHub API. The workflow initializes (or resumes) execution state, processes operations in hierarchy order, and produces a completion report with issue numbers.
 
-Follow all instructions from #file:../instructions/github-backlog-update.instructions.md while executing this workflow.
-Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md for shared conventions.
+Follow all instructions from #file:../../instructions/github/github-backlog-update.instructions.md while executing this workflow.
+Follow all instructions from #file:../../instructions/github/github-backlog-planning.instructions.md for shared conventions.
 
 ## Inputs
 

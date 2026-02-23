@@ -5,7 +5,7 @@ description: 'Generates a commit message following the commit-message.instructio
 
 # Generate Commit Message
 
-Follow all instructions from #file:../instructions/commit-message.instructions.md
+Follow all instructions from #file:../../instructions/hve-core/commit-message.instructions.md
 
 ## Input
 

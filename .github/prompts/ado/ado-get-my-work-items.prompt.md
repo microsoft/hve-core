@@ -4,7 +4,7 @@ description: "Retrieve user's current Azure DevOps work items and organize them 
 
 # Get My Work Items and Create Planning Files
 
-Follow all instructions from #file:../instructions/ado-wit-planning.instructions.md for work item planning and planning file definitions.
+Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.
 
 You WILL retrieve all work items assigned to the current user (`@Me`) within the specified Azure DevOps project using Azure DevOps tools, then organize them into the standardized planning file structure. This creates a foundation for future work item planning and execution.
 

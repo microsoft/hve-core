@@ -4,7 +4,7 @@ description: "Process retrieved work items for task planning and generate task-p
 
 # Process My Work Items for Task Planning
 
-Follow all instructions from #file:../instructions/ado-wit-planning.instructions.md for work item planning and planning file definitions.
+Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.
 
 You WILL process work items from the planning file structure created by `ado-get-my-work-items.prompt.md` and generate a comprehensive task planning handoff file. This creates enriched work item documentation ready for task research and detailed implementation planning.
 

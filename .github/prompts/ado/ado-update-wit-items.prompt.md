@@ -4,7 +4,7 @@ description: "Prompt to update work items based on planning files"
 
 # Update Work Items
 
-Follow all instructions from #file:../instructions/ado-update-wit-items.instructions.md for work item planning and planning files.
+Follow all instructions from #file:../../instructions/ado/ado-update-wit-items.instructions.md for work item planning and planning files.
 
 ## Inputs
 
