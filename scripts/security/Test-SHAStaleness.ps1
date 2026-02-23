@@ -678,21 +678,21 @@ function Write-SecurityOutput {
 
             if ($totalCount -eq 0) {
                 $summaryContent = @"
-# 🔒 SHA Staleness Analysis
+# SHA Staleness Analysis
 
-✅ **All Clear:** No stale dependencies detected.
+**All Clear:** No stale dependencies detected.
 
 **Found:** 0 | **Stale:** 0
 "@
             }
             else {
                 $tableRows = foreach ($Dep in $Dependencies) {
-                    $status = '⚠️ Stale'
+                    $status = 'Stale'
                     "| $($Dep.Name) | $($Dep.DaysOld) | $MaxAge | $status |"
                 }
 
                 $summaryContent = @"
-# 🔒 SHA Staleness Analysis
+# SHA Staleness Analysis
 
 **Found:** $totalCount | **Stale:** $totalCount
 

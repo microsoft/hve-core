@@ -717,7 +717,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
                 }
             } -ParameterFilter { $Body -match 'defaultBranchRef' }
 
-            # Commit query — use [PSCustomObject] so PSObject.Properties iteration works
+            # Commit query - use [PSCustomObject] so PSObject.Properties iteration works
             Mock Invoke-GitHubAPIWithRetry {
                 return [PSCustomObject]@{
                     data = [PSCustomObject]@{
@@ -856,7 +856,7 @@ jobs:
     }
 }
 
-Describe 'Write-OutputResult' -Tag 'Unit' {
+Describe 'Write-SecurityOutput' -Tag 'Unit' {
     Context 'JSON output format' {
         It 'Creates output file with correct structure' {
             $jsonPath = Join-Path $TestDrive 'output.json'
@@ -864,7 +864,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
 
             Test-Path $jsonPath | Should -BeTrue
             $content = Get-Content $jsonPath | ConvertFrom-Json
@@ -880,7 +880,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'GitHubAction'; ActionRepo = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'console'
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'console'
 
             Should -Invoke Write-SecurityLog -Times 1
         }
@@ -895,7 +895,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'Tool'; Name = 'node'; DaysOld = 90; Severity = 'High' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'Summary'
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'Summary'
 
             Should -Invoke Write-Output -Times 1
         }
@@ -903,7 +903,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
 
     Context 'GitHub output format with stale dependencies' {
         BeforeAll {
-            # Write-OutputResult receives pre-filtered stale items; all entries are stale by definition
+            # Write-SecurityOutput receives pre-filtered stale items; all entries are stale by definition
             $script:githubDeps = @(
                 @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml'; Message = 'GitHub Action is 45 days old' }
                 @{ Type = 'GitHubAction'; Name = 'actions/setup-node'; DaysOld = 90; Severity = 'High'; File = 'build.yml'; Message = 'GitHub Action is 90 days old' }
@@ -913,7 +913,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
         BeforeEach {
             Mock Write-CIAnnotation { }
             Mock Write-CIStepSummary { }
-            Write-OutputResult -Dependencies $script:githubDeps -OutputFormat 'github'
+            Write-SecurityOutput -Dependencies $script:githubDeps -OutputFormat 'github'
         }
 
         It 'Calls Write-CIAnnotation for each dependency with Warning level' {
@@ -961,7 +961,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
         BeforeEach {
             Mock Write-CIAnnotation { }
             Mock Write-CIStepSummary { }
-            Write-OutputResult -Dependencies @() -OutputFormat 'github'
+            Write-SecurityOutput -Dependencies @() -OutputFormat 'github'
         }
 
         It 'Calls Write-CIAnnotation with Notice level for no stale deps' {
