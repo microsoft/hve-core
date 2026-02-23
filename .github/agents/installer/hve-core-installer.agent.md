@@ -533,6 +533,10 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/instructions/github": true,
     "<PREFIX>/.github/instructions/hve-core": true,
     "<PREFIX>/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    "<PREFIX>/.github/skills": true,
+    "<PREFIX>/.github/skills/shared": true
   }
 }
 ```
@@ -618,6 +622,10 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
         }
       }
     }
