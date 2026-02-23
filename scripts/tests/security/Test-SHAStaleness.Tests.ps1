@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -717,7 +717,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
                 }
             } -ParameterFilter { $Body -match 'defaultBranchRef' }
 
-            # Commit query — use [PSCustomObject] so PSObject.Properties iteration works
+            # Commit query - use [PSCustomObject] so PSObject.Properties iteration works
             Mock Invoke-GitHubAPIWithRetry {
                 return [PSCustomObject]@{
                     data = [PSCustomObject]@{
@@ -851,6 +851,134 @@ jobs:
             }
             finally {
                 Pop-Location
+            }
+        }
+    }
+}
+
+Describe 'Write-SecurityOutput' -Tag 'Unit' {
+    Context 'JSON output format' {
+        It 'Creates output file with correct structure' {
+            $jsonPath = Join-Path $TestDrive 'output.json'
+            $deps = @(
+                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
+            )
+
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
+
+            Test-Path $jsonPath | Should -BeTrue
+            $content = Get-Content $jsonPath | ConvertFrom-Json
+            $content.TotalStaleItems | Should -Be 1
+        }
+    }
+
+    Context 'Console output format' {
+        It 'Writes formatted output via Write-SecurityLog' {
+            Mock Write-SecurityLog { }
+
+            $deps = @(
+                @{ Type = 'GitHubAction'; ActionRepo = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml' }
+            )
+
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'console'
+
+            Should -Invoke Write-SecurityLog -Times 1
+        }
+    }
+
+    Context 'Summary output format' {
+        It 'Groups dependencies by type' {
+            Mock Write-Output { }
+
+            $deps = @(
+                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
+                @{ Type = 'Tool'; Name = 'node'; DaysOld = 90; Severity = 'High' }
+            )
+
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'Summary'
+
+            Should -Invoke Write-Output -Times 1
+        }
+    }
+
+    Context 'GitHub output format with stale dependencies' {
+        BeforeAll {
+            # Write-SecurityOutput receives pre-filtered stale items; all entries are stale by definition
+            $script:githubDeps = @(
+                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml'; Message = 'GitHub Action is 45 days old' }
+                @{ Type = 'GitHubAction'; Name = 'actions/setup-node'; DaysOld = 90; Severity = 'High'; File = 'build.yml'; Message = 'GitHub Action is 90 days old' }
+            )
+        }
+
+        BeforeEach {
+            Mock Write-CIAnnotation { }
+            Mock Write-CIStepSummary { }
+            Write-SecurityOutput -Dependencies $script:githubDeps -OutputFormat 'github'
+        }
+
+        It 'Calls Write-CIAnnotation for each dependency with Warning level' {
+            Should -Invoke Write-CIAnnotation -Times 2 -ParameterFilter { $Level -eq 'Warning' }
+        }
+
+        It 'Calls Write-CIAnnotation aggregate with Error level' {
+            Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter { $Level -eq 'Error' }
+        }
+
+        It 'Calls Write-CIAnnotation total of 3 times (2 per-item + 1 aggregate)' {
+            Should -Invoke Write-CIAnnotation -Times 3 -Exactly
+        }
+
+        It 'Calls Write-CIStepSummary exactly once' {
+            Should -Invoke Write-CIStepSummary -Times 1 -Exactly
+        }
+
+        It 'Passes markdown containing the summary table header' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match '\| Dependency \| SHA Age \(days\) \| Threshold \(days\) \| Status \|'
+            }
+        }
+
+        It 'Includes dependency names in summary content' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'actions/checkout' -and $Content -match 'actions/setup-node'
+            }
+        }
+
+        It 'Shows stale status for all dependencies' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'Stale'
+            }
+        }
+
+        It 'Includes totals in summary content' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'Found:.+2' -and $Content -match 'Stale:.+2'
+            }
+        }
+    }
+
+    Context 'GitHub output format with no stale dependencies' {
+        BeforeEach {
+            Mock Write-CIAnnotation { }
+            Mock Write-CIStepSummary { }
+            Write-SecurityOutput -Dependencies @() -OutputFormat 'github'
+        }
+
+        It 'Calls Write-CIAnnotation with Notice level for no stale deps' {
+            Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter { $Level -eq 'Notice' }
+        }
+
+        It 'Calls Write-CIAnnotation exactly once' {
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly
+        }
+
+        It 'Calls Write-CIStepSummary exactly once' {
+            Should -Invoke Write-CIStepSummary -Times 1 -Exactly
+        }
+
+        It 'Passes all-clear summary when no dependencies' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'All Clear' -and $Content -match 'No stale dependencies detected'
             }
         }
     }
