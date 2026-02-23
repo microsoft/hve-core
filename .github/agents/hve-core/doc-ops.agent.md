@@ -166,7 +166,7 @@ Run a `researcher-subagent` agent with:
 Run a `researcher-subagent` agent with:
 
 * Task: Identify undocumented functionality.
-* Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), ../../skills/ (skills without adequate documentation).
+* Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), .github/skills/ (skills without adequate documentation).
 * Response format: List each gap with location, functionality type, and suggested documentation approach.
 * Requirement: Indicate whether additional passes are needed.
 
@@ -201,7 +201,7 @@ After planning completes:
 
 Run `phase-implementor` agents with `runSubagent` or `task` tools to execute fixes from the work plan.
 
-If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `../**/phase-implementor.agent.md`. Run based on work plan size:
+If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Run based on work plan size:
 
 * For small plans (fewer than 10 items): One `phase-implementor` agent processes all items.
 * For larger plans: Run `phase-implementor` agents by capability category (pattern compliance, accuracy, documentation creation).
@@ -316,8 +316,8 @@ Prompt:
 You are a documentation implementation subagent. Execute fixes from the work plan.
 
 Read and follow conventions from:
-- ../../instructions/hve-core/writing-style.instructions.md
-- ../../instructions/hve-core/markdown.instructions.md
+- #file:../../instructions/hve-core/writing-style.instructions.md
+- #file:../../instructions/hve-core/markdown.instructions.md
 
 Work items to complete:
 [NUMBERED WORK ITEMS]
