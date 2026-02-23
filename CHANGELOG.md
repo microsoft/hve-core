@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.0.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.1...hve-core-v3.0.2) (2026-02-21)
+
+
+### 🐛 Bug Fixes
+
+* **agents:** add commit message presentation to RPI agent review completion ([#721](https://github.com/microsoft/hve-core/issues/721)) ([a063996](https://github.com/microsoft/hve-core/commit/a06399696275e92b6d76b04421f70f8df43e8f8c))
+* **agents:** standardize name frontmatter to human-readable format ([#716](https://github.com/microsoft/hve-core/issues/716)) ([f3e05d8](https://github.com/microsoft/hve-core/commit/f3e05d8bfd2fdffd564a003bf162f24d3a3ca44c))
+* **extension:** preserve artifact directory structure in collection packaging ([#725](https://github.com/microsoft/hve-core/issues/725)) ([4fa94e0](https://github.com/microsoft/hve-core/commit/4fa94e041749a231e5148b6c3054197c389d30bf))
+* **instructions:** pull request template body case-insensitive ([#719](https://github.com/microsoft/hve-core/issues/719)) ([4cc2a5c](https://github.com/microsoft/hve-core/commit/4cc2a5c98f987cd29dc4c9d52463246cf5796101))
+* **instructions:** reorder branch freshness gate before diff generation ([#723](https://github.com/microsoft/hve-core/issues/723)) ([23b457c](https://github.com/microsoft/hve-core/commit/23b457c0e7643629b8438497895e7cf9c2609566))
+
 ## [3.0.1](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.0...hve-core-v3.0.1) (2026-02-20)
 
 

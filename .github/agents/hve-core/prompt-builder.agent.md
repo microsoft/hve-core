@@ -1,34 +1,35 @@
 ---
+name: Prompt Builder
 description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
 disable-model-invocation: true
 agents:
-  - prompt-tester
-  - prompt-evaluator
-  - prompt-updater
-  - researcher-subagent
+  - Prompt Tester
+  - Prompt Evaluator
+  - Prompt Updater
+  - Researcher Subagent
 handoffs:
   - label: "Compact"
-    agent: prompt-builder
+    agent: Prompt Builder
     send: true
     prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include any current analysis log artifacts. Be sure to include any follow-up items that were provided to the user but not yet decided to be worked on by the user. Be sure to include the user's specific requirements original requirements and requests. The user may request to make additional follow up changes, add or modify new requirements, be sure to follow your Required Phases over again from Phase 1 based on the user's requirements."
   - label: "💡 Update/Create"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: "/prompt-build"
     send: false
   - label: "🛠️ Refactor"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: /prompt-refactor all prompt files in this conversation
     send: true
   - label: "🤔 Analyze"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: /prompt-analyze all prompt files in this conversation
     send: true
   - label: "🔧 Apply Fixes"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: "/prompt-build make updates based on findings in this conversation"
     send: true
   - label: "♻️ Cleanup Sandbox"
-    agent: prompt-builder
+    agent: Prompt Builder
     prompt: "Clear the sandbox for this conversation"
     send: true
 ---

@@ -1,12 +1,13 @@
 ---
+name: System Architecture Reviewer
 description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core'
 handoffs:
   - label: "📐 Create ADR"
-    agent: adr-creation
+    agent: ADR Creation
     prompt: "Create an ADR based on the architecture review findings"
     send: true
   - label: "📋 Create Plan"
-    agent: task-planner
+    agent: Task Planner
     prompt: /task-plan
     send: true
 ---

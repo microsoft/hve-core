@@ -1,5 +1,5 @@
 ---
-name: phase-implementor
+name: Phase Implementor
 description: 'Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core'
 user-invocable: false
 ---

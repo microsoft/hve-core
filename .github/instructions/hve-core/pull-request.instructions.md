@@ -27,7 +27,7 @@ Apply these fallback rules whenever a step references this section:
 2. If a template is resolved but mapping details are ambiguous, preserve section order and map by closest semantic match.
 3. If required checks cannot be discovered confidently, ask the user for direction before running commands.
 4. If no issue references are discovered, use `None` in the related issues section.
-5. If PR creation fails, apply Step 7 Shared Error Handling in order: branch readiness, permissions, duplicate PR handling.
+5. If PR creation fails, apply Step 8 Shared Error Handling in order: branch readiness, permissions, duplicate PR handling.
 
 ## Required Steps
 
@@ -37,11 +37,14 @@ Entry criteria:
 
 * Repository context is available and the target branch is known.
 
-1. Resolve PR template candidates once by searching `**/PULL_REQUEST_TEMPLATE.md` and `.github/PULL_REQUEST_TEMPLATE/`.
-2. Apply location priority (case-insensitive match):
-   1. `.github/PULL_REQUEST_TEMPLATE.md`
-   2. `docs/PULL_REQUEST_TEMPLATE.md`
-   3. `PULL_REQUEST_TEMPLATE.md`
+1. Resolve PR template candidates:
+   1. Search tools for files are case-sensitive.
+   2. Search for `pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template/`, `.github/PULL_REQUEST_TEMPLATE/`.
+   3. Search for any casing variation for both file names and directory names (for example, `PULL_REQUEST_TEMPLATE.md`, `Pull_Request_Template.md`, `pull_request_template.md`).
+2. Apply location priority, based on location:
+   1. `.github/` folder.
+   2. `docs/` folder.
+   3. Anywhere else found.
 3. If multiple templates exist at the same priority level, list candidates and ask the user to choose one.
 4. Persist template state for later steps:
    * `templatePath`: chosen template path, or `None`.
@@ -54,17 +57,37 @@ Exit criteria:
 
 * Template state is resolved and persisted for reuse.
 
-### Step 2: Generate PR Reference
+### Step 2: Branch Freshness Gate
+
+Entry criteria:
+
+* Step 1 completed. Repository context is available and the target branch is known.
+
+Validate that the working branch is current with the base branch before generating diffs or analysis:
+
+1. Resolve the base branch ref, defaulting to `origin/main` if not provided. Convert plain branch names (for example, `main`) to `origin/<branch>` form.
+2. Fetch the base branch ref before comparison.
+3. Compute ahead/behind counts with `git rev-list --left-right --count "${baseRef}...HEAD"`.
+4. If the branch is behind, ask the user whether to update using `merge` or `rebase` before proceeding.
+5. Execute the selected strategy:
+   * Merge: `git merge --no-edit ${baseRef}`
+   * Rebase: `git rebase --empty=drop --reapply-cherry-picks ${baseRef}`
+6. If conflicts occur, follow `.github/instructions/hve-core/git-merge.instructions.md` before continuing.
+
+Exit criteria:
+
+* Branch is current with the base branch, or the user declined the update.
+
+### Step 3: Generate PR Reference
 
 Generate the PR reference XML file using the pr-reference skill:
 
 1. If `.copilot-tracking/pr/pr-reference.xml` already exists, confirm with the user whether to use it before proceeding.
 2. If the user declines, delete the file before continuing.
-3. If not present, run `git fetch` for the target branch.
-4. Use the pr-reference skill to generate the XML file with the provided base branch and any requested options (such as excluding markdown diffs).
-5. Note the size of the generated output in the chat.
+3. Use the pr-reference skill to generate the XML file with the provided base branch and any requested options (such as excluding markdown diffs).
+4. Note the size of the generated output in the chat.
 
-### Step 3: Parallel Subagent Review
+### Step 4: Parallel Subagent Review
 
 Entry criteria:
 
@@ -93,11 +116,11 @@ Exit criteria:
 
 * All chunks are reviewed and each subagent produced an output file or a resolved clarification.
 
-### Step 4: Merge and Verify Findings
+### Step 5: Merge and Verify Findings
 
 Entry criteria:
 
-* Step 3 outputs exist for all assigned chunk ranges.
+* Step 4 outputs exist for all assigned chunk ranges.
 
 Merge subagent findings into a unified analysis:
 
@@ -112,7 +135,7 @@ Exit criteria:
 
 * `.copilot-tracking/pr/pr-reference-log.md` is complete and verified as the source of truth.
 
-### Step 5: Generate PR Description
+### Step 6: Generate PR Description
 
 Entry criteria:
 
@@ -162,7 +185,7 @@ Report supplementary findings in chat and note issues in Additional Notes.
 
 #### Post-generation Checklist
 
-Review pr.md against these criteria and insert a PR Generation Validation subsection under the template's checklist section with confirmed items checked:
+Review pr.md against these criteria as an internal self-audit. Do not insert this checklist into pr.md or the pull request body:
 
 1. PR description preserves all template sections.
 2. pr-reference-log.md analysis is accurately reflected in the description.
@@ -171,6 +194,8 @@ Review pr.md against these criteria and insert a PR Generation Validation subsec
 5. Referenced files are accurate and exist in the repository.
 6. Follow-up tasks are actionable and tied to specific code, files, or components.
 
+Report any failed criteria in chat for user awareness. Correct issues in pr.md before proceeding.
+
 #### Assessable Required Checks
 
 Assess non-automated checklist items from the template using diff analysis. For each assessable item, verify the claim against changed files. Check items where the diff provides confident evidence. Leave items unchecked when confident assessment is not possible.
@@ -178,9 +203,9 @@ Assess non-automated checklist items from the template using diff analysis. For 
 Exit criteria:
 
 * `.copilot-tracking/pr/pr.md` exists with title and body aligned to template mapping or fallback format.
-* Security analysis, post-generation checklist, and assessable required checks are complete and reflected in pr.md.
+* Security analysis, post-generation checklist, and assessable required checks are complete. Post-generation checklist findings are addressed in pr.md without inserting the checklist itself.
 
-### Step 6: Validate PR Readiness
+### Step 7: Validate PR Readiness
 
 Entry criteria:
 
@@ -188,7 +213,7 @@ Entry criteria:
 
 Run PR-readiness validation even when the user has not explicitly requested direct PR creation.
 
-#### Step 6A: Discover Required Checks
+#### Step 7A: Discover Required Checks
 
 1. Start with `checkCommands` captured from the selected PR template in Step 1.
 2. Expand required checks by reading instruction files whose `applyTo` patterns match the changed files, looking for validation commands or required check references.
@@ -199,7 +224,7 @@ Exit criteria:
 
 * Required checks are either confidently discovered, or user direction is requested before continuing.
 
-#### Step 6B: Run and Triage Validation
+#### Step 7B: Run and Triage Validation
 
 1. Run all discovered required checks.
 2. Record each check result as `Passed`, `Failed`, or `Skipped` (with reason).
@@ -210,7 +235,7 @@ Exit criteria:
 
 * Validation results are captured and failed checks are triaged.
 
-#### Step 6C: Remediation Routing
+#### Step 7C: Remediation Routing
 
 1. If fixes are bounded and localized, implement accurate direct fixes and rerun relevant failed checks.
 2. If fixes require broader rewrites or refactors (cross-cutting changes, multi-area redesign, or architecture-impacting updates), stop direct remediation and recommend the RPI workflow (Research, Plan, Implement) for larger scope work.
@@ -219,9 +244,9 @@ Exit criteria:
 
 * Validation failures are either resolved with direct fixes, or RPI is recommended for larger scope.
 
-#### Step 6D: Readiness Outcome
+#### Step 7D: Readiness Outcome
 
-1. Confirm all checklist checkbox updates in pr.md are complete. If required checks pass, continue to Step 7 when PR creation was requested.
+1. Confirm all checklist checkbox updates in pr.md are complete. If required checks pass, continue to Step 7E when PR creation was requested.
 2. If required checks remain unresolved, do not proceed with direct PR creation.
 3. When PR creation was not requested, report readiness status and next actions without creating a PR.
 
@@ -229,39 +254,44 @@ Exit criteria:
 
 * PR readiness status is explicit and next actions are clear.
 
-### Step 7: Create Pull Request When Requested by User
+#### Step 7E: PR Creation Approval
+
+Entry criteria:
+
+* Step 7D completed with passing checks and user requested PR creation.
+
+1. Present the PR title and a link to `.copilot-tracking/pr/pr.md` in conversation.
+2. When an `ask questions` tool is available, use it to present "Continue to create the pull request" (recommended) and "Cancel creating pull request" options. Otherwise, ask the user inline to confirm or cancel.
+3. If Continue: proceed to Step 8.
+4. If Cancel: skip to Step 9.
+
+Exit criteria:
+
+* User confirmed or declined PR creation.
+
+### Step 8: Create Pull Request When Requested by User
 
 Entry criteria:
 
 * `.copilot-tracking/pr/pr.md` exists.
 * User explicitly requested PR creation.
-* Step 6 completed with required checks passing.
+* Step 7 completed with required checks passing.
+* User confirmed PR creation via Step 7E approval.
 
-Create a pull request using MCP tools. Skip this step when the user has not requested PR creation and proceed to Step 8.
+Create a pull request using MCP tools. Skip this step when the user has not requested PR creation or declined via the Step 7E approval, and proceed to Step 9.
 
-#### Step 7A: Branch Freshness Gate
-
-1. Resolve the base branch ref, defaulting to `origin/main` if not provided. Convert plain branch names (for example, `main`) to `origin/<branch>` form.
-2. Fetch the base branch ref before comparison.
-3. Compute ahead/behind counts with `git rev-list --left-right --count "${baseRef}...HEAD"`.
-4. If the branch is behind, ask the user whether to update using `merge` or `rebase` before PR creation.
-5. Execute the selected strategy:
-   * Merge: `git merge --no-edit ${baseRef}`
-   * Rebase: `git rebase --empty=drop --reapply-cherry-picks ${baseRef}`
-6. If conflicts occur, follow `.github/instructions/hve-core/git-merge.instructions.md` before continuing.
-
-#### Step 7B: Branch Pushed Readiness
+#### Step 8A: Branch Pushed Readiness
 
 1. Check whether the current branch is pushed to the remote.
 2. If not pushed, push the current branch before continuing.
 
-#### Step 7C: Approval Loop
+#### Step 8B: Approval Loop
 
-1. Extract the PR title and body from `pr.md` following the format defined in Step 5.
+1. Extract the PR title and body from `pr.md` following the format defined in Step 6.
 2. Present the PR title and a summary of the body inline in chat. Reference [pr.md](../../../.copilot-tracking/pr/pr.md) for full content and ask the user to confirm or request changes.
 3. If the user requests updates, apply changes to `pr.md` and repeat until approved.
 
-#### Step 7D: PR Creation and Error Handling
+#### Step 8C: PR Creation and Error Handling
 
 1. Prepare the base branch reference by stripping any remote prefix (for example, `origin/main` becomes `main`).
 2. Create the pull request by calling `mcp_github_create_pull_request` with these parameters:
@@ -272,18 +302,18 @@ Create a pull request using MCP tools. Skip this step when the user has not requ
    * `head`: Current branch name.
    * `base`: Target branch with remote prefix stripped.
    * `draft`: Set when the user requests a draft PR.
-3. If creation fails, apply Step 7 Shared Error Handling below.
+3. If creation fails, apply Step 8 Shared Error Handling below.
 4. Share the PR URL after successful creation.
 
-#### Step 7 Shared Error Handling
+#### Step 8 Shared Error Handling
 
 Apply this ordered error handling when PR creation fails:
 
-1. Branch not found: verify Step 7B completed and the branch is present on remote.
+1. Branch not found: verify Step 8A completed and the branch is present on remote.
 2. Permission denied: inform the user about required repository permissions.
 3. Duplicate PR: check for an existing PR on the same branch and offer to update it with `mcp_github_update_pull_request`.
 
-### Step 8: Cleanup
+### Step 9: Cleanup
 
 1. Delete `.copilot-tracking/pr/pr-reference.xml` after the analysis is complete.
 2. Delete the `.copilot-tracking/pr/subagents/` directory and its contents.
@@ -306,7 +336,7 @@ Deduplicate issue numbers and preserve the action prefix from the first occurren
 
 ## PR Writing Standards
 
-Apply these standards when writing PR descriptions in Step 5 and when subagents document findings in Step 3. Follow `writing-style.instructions.md` for general voice and tone, targeting "Medium" formality from the Adaptability table: conversational yet technical, matching how engineers naturally describe their work to peers.
+Apply these standards when writing PR descriptions in Step 6 and when subagents document findings in Step 4. Follow `writing-style.instructions.md` for general voice and tone, targeting "Medium" formality from the Adaptability table: conversational yet technical, matching how engineers naturally describe their work to peers.
 
 * Ground all content in the pr-reference-log.md analysis; include only verified changes.
 * Describe what changed without speculating on why.

@@ -499,15 +499,16 @@ function Copy-CollectionArtifacts {
 
     # Copy filtered agents
     if ($preparedPkgJson.contributes.chatAgents) {
-        $agentsDestDir = Join-Path $ExtensionDirectory ".github/agents"
-        New-Item -Path $agentsDestDir -ItemType Directory -Force | Out-Null
         foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
             $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
             if (-not (Test-Path $srcPath)) {
                 Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatAgents in package.json)"
                 continue
             }
-            Copy-Item -Path $srcPath -Destination $agentsDestDir -Force
+            $destPath = Join-Path $ExtensionDirectory ($agent.path -replace '^\.[\\/]', '')
+            $destDir = Split-Path $destPath -Parent
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $srcPath -Destination $destPath -Force
         }
     }
 
@@ -549,13 +550,16 @@ function Copy-CollectionArtifacts {
                 Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatSkills in package.json)"
                 continue
             }
+            # Copy the full skill directory, not just SKILL.md
+            $srcDir = Split-Path $srcPath -Parent
             $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Recurse -Force
+            $destParent = Split-Path $destDir -Parent
+            New-Item -Path $destParent -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $srcDir -Destination $destParent -Recurse -Force
 
             # Remove co-located test directories from packaged skills
-            Get-ChildItem -Path $destPath -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
+            Get-ChildItem -Path $destDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
                 Remove-Item -Recurse -Force
         }
     }
