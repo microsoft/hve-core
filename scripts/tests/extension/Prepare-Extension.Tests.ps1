@@ -1996,6 +1996,70 @@ handoffs:
     }
 }
 
+Describe 'Resolve-HandoffDependencies - display name resolution' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:agentsDir = Join-Path $script:tempDir 'agents'
+        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
+
+        # Agent whose handoffs use display names instead of file stems
+        @'
+---
+name: Parent Agent
+description: "Agent with display-name handoffs"
+handoffs:
+  - label: "Go to child"
+    agent: Child Agent
+    prompt: Continue
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'parent-agent.agent.md')
+
+        @'
+---
+name: Child Agent
+description: "Child with display name"
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'child-agent.agent.md')
+
+        # Chain using display names: Planner -> Implementor (mimics real hve-core agents)
+        @'
+---
+name: Task Planner
+description: "Planner agent"
+handoffs:
+  - label: "Implement"
+    agent: Task Implementor
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-planner.agent.md')
+
+        @'
+---
+name: Task Implementor
+description: "Implementor agent"
+handoffs:
+  - label: "Review"
+    agent: Task Planner
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-implementor.agent.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Resolves handoff targets specified by display name' {
+        $result = Resolve-HandoffDependencies -SeedAgents @('parent-agent') -AgentsDir $script:agentsDir
+        $result | Should -Contain 'parent-agent'
+        $result | Should -Contain 'child-agent'
+    }
+
+    It 'Resolves circular display-name handoff chains' {
+        $result = Resolve-HandoffDependencies -SeedAgents @('task-planner') -AgentsDir $script:agentsDir
+        $result | Should -Contain 'task-planner'
+        $result | Should -Contain 'task-implementor'
+    }
+}
+
 Describe 'Get-DiscoveredPrompts - maturity filtering' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
