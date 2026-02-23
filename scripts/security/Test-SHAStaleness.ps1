@@ -672,6 +672,37 @@ function Write-SecurityOutput {
             else {
                 Write-CIAnnotation -Message "Found $(@($Dependencies).Count) stale dependencies that may pose security risks" -Level Error
             }
+
+            # Build step summary markdown table
+            $totalCount = @($Dependencies).Count
+
+            if ($totalCount -eq 0) {
+                $summaryContent = @"
+# SHA Staleness Analysis
+
+**All Clear:** No stale dependencies detected.
+
+**Found:** 0 | **Stale:** 0
+"@
+            }
+            else {
+                $tableRows = foreach ($Dep in $Dependencies) {
+                    $status = 'Stale'
+                    "| $($Dep.Name) | $($Dep.DaysOld) | $MaxAge | $status |"
+                }
+
+                $summaryContent = @"
+# SHA Staleness Analysis
+
+**Found:** $totalCount | **Stale:** $totalCount
+
+| Dependency | SHA Age (days) | Threshold (days) | Status |
+|------------|----------------|-------------------|--------|
+$($tableRows -join "`n")
+"@
+            }
+
+            Write-CIStepSummary -Content $summaryContent
         }
 
         "azdo" {
