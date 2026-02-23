@@ -463,11 +463,11 @@ Announce phase transitions with context:
 
 When Phase 4 (Review) completes, follow the appropriate pattern:
 
-| Status   | Action                 | Template                                                                                                                                                                                                                         |
-|----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Status   | Action                 | Template                                                                                                                                                                                                                              |
+|----------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following #file:../../instructions/hve-core/commit-message.instructions.md and excluding `.copilot-tracking` files. |
-| Iterate  | Return to Phase 3      | Show review findings and required fixes                                                                                                                                                                                          |
-| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                                                                                                                                                                                      |
+| Iterate  | Return to Phase 3      | Show review findings and required fixes                                                                                                                                                                                               |
+| Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                                                                                                                                                                                           |
 
 Phase 5 then either continues autonomously to Phase 1 with the next work item, or presents the Suggested Next Work list for user selection.
 

@@ -1,5 +1,5 @@
 ---
-description: "Path resolution rules for hve-core artifacts and workspace tracking files"
+description: "Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree."
 applyTo: "**"
 ---
 
@@ -15,12 +15,12 @@ an `instructions/` folder.
 The hve-core root varies by installation context, and the artifact subtree
 may or may not sit inside a `.github/` directory:
 
-| Context              | HVE core root                                          | Artifact prefix |
-|----------------------|--------------------------------------------------------|-----------------|
-| In-repo              | Workspace root (e.g., `/workspaces/hve-core/`)        | `.github/`      |
-| VS Code extension    | Extension install (e.g., `~/.vscode-server-insiders/extensions/ise-hve-essentials.hve-**-<version>/`) | `.github/` |
-| Copilot CLI plugin   | Plugin directory (e.g., `~/.copilot/installed-plugins/_direct/hve-**/`) | *(none)* |
-| Peer clone           | Sibling directory (e.g., `../hve-core/`)               | `.github/`      |
+| Context            | HVE core root                                                                                         | Artifact prefix |
+|--------------------|-------------------------------------------------------------------------------------------------------|-----------------|
+| In-repo            | Workspace root (e.g., `/workspaces/hve-core/`)                                                        | `.github/`      |
+| VS Code extension  | Extension install (e.g., `~/.vscode-server-insiders/extensions/ise-hve-essentials.hve-**-<version>/`) | `.github/`      |
+| Copilot CLI plugin | Plugin directory (e.g., `~/.copilot/installed-plugins/_direct/hve-**/`)                               | *(none)*        |
+| Peer clone         | Sibling directory (e.g., `../hve-core/`)                                                              | `.github/`      |
 
 In the CLI plugin context, artifacts like skills and agents live directly
 under the plugin root (`skills/`, `agents/`) without a `.github/` parent.
