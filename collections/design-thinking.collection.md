@@ -4,7 +4,16 @@ This collection includes agents, prompts, and instructions for:
 
 - **DT Start Project** — Initializes a new Design Thinking coaching project with state file creation, frozen/fluid classification, and first Method 1 coaching interaction
 - **DT Resume Coaching** — Resumes an existing coaching session from saved state, restoring context from the project's coaching state file
+- **DT Method Next** — Assesses current coaching state and recommends the next method with sequencing validation, handling edge cases for no project, all methods complete, and iteration loops
+- **DT Handoff Implementation Space** — Implementation Space exit handoff that compiles DT Methods 7-9 outputs into an RPI-ready artifact with tiered routing to task-planner or task-implementor, handoff lineage from all nine methods, content sanitization, and a completion ceremony
 - **DT Handoff Problem Space** — Problem Space exit handoff that compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting task-researcher, with readiness assessment and quality markers
+- **DT Method 4: Ideation** — Divergent idea generation with constraint-informed creativity for Method 4b brainstorming
+- **DT Method 4: Convergence** — Theme discovery through philosophy-based clustering for Method 4c brainstorming
+- **DT Method 5: Concepts** — Concept articulation from brainstorming themes for Method 5b user concepts
+- **DT Method 5: Evaluation** — Stakeholder alignment and three-lens evaluation for Method 5c user concepts
+- **DT Method 6: Planning** — Concept analysis and prototype approach design for Method 6a lo-fi prototyping
+- **DT Method 6: Building** — Scrappy prototype building with fidelity enforcement for Method 6b
+- **DT Method 6: Testing** — Hypothesis-driven testing and constraint validation for Method 6c
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
 - **DT Coach**: Conversational coaching agent that guides teams through all 9 methods with Think/Speak/Empower philosophy
 - **DT Coaching State** — Session persistence schema, method progress tracking, and session recovery protocol enabling the coach to resume seamlessly across conversations
@@ -16,9 +25,12 @@ This collection includes agents, prompts, and instructions for:
 - **DT Method 02 Deep: Advanced Design Research** — On-demand deep reference covering advanced interview techniques, ethnographic observation methods, evidence triangulation, and manufacturing research patterns; loaded by the coach for complex research scenarios requiring specialist guidance
 - **DT Method 03: Input Synthesis** — Pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness for transforming fragmented research data into unified problem understanding
 - **DT Method 03 Deep** — Advanced affinity analysis with multi-pass clustering, insight frameworks with observation-inference-insight formula, HMW question scaffolding, problem statement articulation, and manufacturing synthesis patterns
+- **DT Method 04 Deep: Advanced Brainstorming Techniques** — Advanced facilitation techniques (brainwriting, morphological analysis, provocation), creative block recovery, convergence frameworks (impact/effort matrix, weighted D/F/V scoring), and cross-pollination from analogous industries loaded on-demand for complex Method 4 coaching scenarios
 - **DT Industry: Healthcare** — Healthcare-specific vocabulary mapping, constraints (HIPAA, patient safety, clinical workflow), empathy tools (patient journey mapping, clinician shadow), and an ED wait-time reference scenario for on-demand industry context loading
 - **DT→RPI Handoff Contract** — Exit-point definitions, artifact schemas, per-agent input contracts, graduation awareness behavior, and quality markers for lateral transitions from Design Thinking coaching into the RPI workflow
+- **DT RPI Planning Context** — DT-aware task-planner augmentation that shapes implementation planning around fidelity constraints, iteration support, confidence-informed risk assessment, and stakeholder-segmented success criteria when operating on DT artifacts
 - **DT RPI Research Context** — DT-aware task-researcher augmentation that frames research around stakeholder needs, quality-marked findings, assumption validation, and return path triggers when operating on DT artifacts
+- **DT RPI Review Context** — DT-aware task-reviewer augmentation that defines quality criteria per artifact type (coaching, method, deep, industry, handoff, agent, output), review checklist additions for coaching tone and fidelity enforcement, anti-patterns to flag, and severity mapping for Design Thinking artifacts
 - **DT Method 07: High-Fidelity Prototypes** — Technical translation, functional prototypes, and specifications for Implementation Space entry with three-hat architecture and progressive fidelity modeling
 - **DT Method 07: Deep Expertise** — On-demand fidelity translation, architecture trade-off analysis, specification writing patterns, and manufacturing-specific prototyping guidance for complex Method 7 coaching scenarios
 - **DT Method 08: User Testing** — Evidence-based evaluation, test protocols, and non-linear iteration support for structured user testing of hi-fi prototypes with leap-enabling questioning and loop decision coaching

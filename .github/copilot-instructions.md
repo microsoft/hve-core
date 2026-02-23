@@ -50,6 +50,7 @@ The project is organized into these main areas:
 
 Scripts are organized by function:
 
+* Collections (`scripts/collections/`) - Collection validation and shared helper modules.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, and PowerShell analysis.
 * Security (`scripts/security/`) - Dependency pinning validation and SHA staleness checks.

@@ -1,0 +1,25 @@
+# False positives: fake GitHub PAT 'ghp_test123456789' used as test fixture data
+# in Pester security test files for SHA pinning and staleness validation.
+# Rule: generic-api-key
+
+# Test-SHAStaleness.Tests.ps1
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Test-SHAStaleness.Tests.ps1:generic-api-key:33
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Test-SHAStaleness.Tests.ps1:generic-api-key:38
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Test-SHAStaleness.Tests.ps1:generic-api-key:55
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Test-SHAStaleness.Tests.ps1:generic-api-key:105
+
+# Update-ActionSHAPinning.Tests.ps1
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:60
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:92
+1c9634d8334ebe8e88513f9a531b49d03590c307:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:143
+3a11b26086c43b9551e6a7b666ffb6aa5dd8a8d7:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:93
+3a11b26086c43b9551e6a7b666ffb6aa5dd8a8d7:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:127
+3a11b26086c43b9551e6a7b666ffb6aa5dd8a8d7:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:193
+4ef6d20475e42b753c29846aa28489843e70a8ed:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:256
+4ef6d20475e42b753c29846aa28489843e70a8ed:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:488
+a02335e7c98e5f2e22b1921442e99f01c6781a19:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:280
+a02335e7c98e5f2e22b1921442e99f01c6781a19:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:511
+f7c9b9a6f776e6403f393adf90a67127f3fc3405:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:791
+f7c9b9a6f776e6403f393adf90a67127f3fc3405:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:869
+6b84a8e49193d266411df9e4b8e8b1be2369eed2:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:792
+6b84a8e49193d266411df9e4b8e8b1be2369eed2:scripts/tests/security/Update-ActionSHAPinning.Tests.ps1:generic-api-key:874

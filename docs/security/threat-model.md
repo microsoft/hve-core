@@ -723,11 +723,11 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 ### Vulnerability Management Controls
 
-| ID   | Control                         | Implementation             | Validates Against |
-|------|---------------------------------|----------------------------|-------------------|
-| VM-1 | Coordinated Disclosure          | SECURITY.md                | I-1               |
-| VM-2 | Secret Scanning                 | GitHub native              | I-1, I-2          |
-| VM-3 | Credential Persistence Disabled | persist-credentials: false | I-1, E-1          |
+| ID   | Control                         | Implementation                                      | Validates Against |
+|------|---------------------------------|-----------------------------------------------------|-------------------|
+| VM-1 | Coordinated Disclosure          | SECURITY.md                                         | I-1               |
+| VM-2 | Secret Scanning                 | GitHub native, gitleaks PR gate (gitleaks-scan.yml) | I-1, I-2          |
+| VM-3 | Credential Persistence Disabled | persist-credentials: false                          | I-1, E-1          |
 
 ## Assurance Argument
 
@@ -863,12 +863,13 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Validation Workflow Coverage
 
-| Workflow                        | Trigger            | Security Checks            |
-|---------------------------------|--------------------|----------------------------|
-| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL |
-| codeql-analysis.yml             | Push, PR, weekly   | Static analysis            |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning     |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL |
+| Workflow                        | Trigger            | Security Checks                      |
+|---------------------------------|--------------------|--------------------------------------|
+| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks |
+| main.yml                        | Push to main       | Pinning, gitleaks                    |
+| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                      |
+| dependency-review.yml           | PR to main/develop | Vulnerability scanning               |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL           |
 
 ## References
 
