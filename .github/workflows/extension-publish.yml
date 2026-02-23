@@ -17,52 +17,15 @@ on:
         required: false
         type: boolean
         default: false
-      channel:
-        description: "Release channel (Stable or PreRelease)"
-        required: false
-        type: choice
-        options:
-          - Stable
-          - PreRelease
-        default: "Stable"
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  prepare-changelog:
-    name: Prepare Changelog
-    runs-on: ubuntu-latest
-    outputs:
-      changelog-path: ${{ steps.create-changelog.outputs.path }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Create changelog file
-        id: create-changelog
-        env:
-          RELEASE_BODY: ${{ github.event.release.body }}
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            printf '%s\n' "$RELEASE_BODY" > CHANGELOG.md
-            echo "path=CHANGELOG.md" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "path=" >> "$GITHUB_OUTPUT"
-          else
-            echo "path=" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload changelog
-        if: steps.create-changelog.outputs.path != ''
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
-        with:
-          name: changelog
-          path: CHANGELOG.md
-          retention-days: 1
-
   normalize-version:
     name: Normalize Version
     runs-on: ubuntu-latest
@@ -74,13 +37,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_VERSION: ${{ inputs.version }}
-          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="$RELEASE_TAG_NAME"
-          else
-            VERSION="$INPUT_VERSION"
-          fi
+          VERSION="$INPUT_VERSION"
           # Strip leading 'v' and component prefix if present
           VERSION="${VERSION#v}"
           VERSION="${VERSION#hve-core-v}"
@@ -92,92 +50,41 @@ jobs:
             echo "📦 Auto-detected version from latest release: $VERSION"
           fi
 
+          # Validate semver format
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 2.0.0)"
+            exit 1
+          fi
+
+          # Validate even minor version (stable channel convention)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( MINOR % 2 != 0 )); then
+            echo "::error::Stable channel requires EVEN minor version. Got: $VERSION (minor=$MINOR is ODD)"
+            echo "::error::Use extension-publish-prerelease workflow for ODD minor (pre-release) versions"
+            exit 1
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
     name: Package Extensions
-    needs: [prepare-changelog, normalize-version]
+    needs: [normalize-version]
     uses: ./.github/workflows/extension-package.yml
     with:
       version: ${{ needs.normalize-version.outputs.version }}
-      use-changelog: ${{ needs.prepare-changelog.outputs.changelog-path != '' }}
-      channel: ${{ inputs.channel || 'Stable' }}
+      channel: Stable
     permissions:
       contents: read
 
   publish:
-    name: Publish ${{ matrix.id }}
+    name: Publish Extensions
     needs: [package]
     if: ${{ !inputs.dry-run }}
-    runs-on: ubuntu-latest
-    environment: marketplace
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.package.outputs.collections-matrix) }}
+    uses: ./.github/workflows/extension-publish-marketplace.yml
+    with:
+      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      pre-release: false
     permissions:
       contents: read
       id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
-        with:
-          node-version: "20"
-
-      - name: Install VSCE
-        run: npm install -g @vscode/vsce@3.7.1
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: extension-vsix-${{ matrix.id }}
-          path: ./dist
-
-      - name: Publish to VS Code Marketplace
-        id: publish
-        run: |
-          VSIX_FILE=$(find dist -name '*.vsix' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
-            exit 1
-          fi
-          VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
-          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
-
-          CHANNEL="${{ inputs.channel || 'Stable' }}"
-          PRE_RELEASE_FLAG=""
-          if [ "$CHANNEL" = "PreRelease" ]; then
-            PRE_RELEASE_FLAG="--pre-release"
-            echo "📦 Publishing PRE-RELEASE ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
-          else
-            echo "📦 Publishing ${{ matrix.id }}: $VSIX_FILE (v$VSIX_VERSION)"
-          fi
-          vsce publish --packagePath "$VSIX_FILE" --azure-credential $PRE_RELEASE_FLAG
-
-      - name: Summary
-        run: |
-          CHANNEL="${{ inputs.channel || 'Stable' }}"
-          CHANNEL_LABEL=""
-          if [ "$CHANNEL" = "PreRelease" ]; then
-            CHANNEL_LABEL=" (Pre-Release)"
-          fi
-          {
-            echo "## 🎉 Extension Published: ${{ matrix.name }}${CHANNEL_LABEL}"
-            echo ""
-            echo "**Collection:** ${{ matrix.id }}"
-            echo "**Version:** ${{ steps.publish.outputs.version }}"
-            echo "**Channel:** $CHANNEL"
-            echo ""
-            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${{ matrix.name }})"
-          } >> "$GITHUB_STEP_SUMMARY"
+    secrets: inherit
