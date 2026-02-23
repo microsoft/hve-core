@@ -19,18 +19,21 @@ copilot plugin install design-thinking@hve-core
 
 ## Commands
 
-| Command                  | Description                                                                                                                                  |
-|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| dt-start-project         | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
-| dt-resume-coaching       | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core           |
-| dt-handoff-problem-space | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                               |
-| dt-method-04-ideation    | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core         |
-| dt-method-04-convergence | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                     |
-| dt-method-05-concepts    | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                          |
-| dt-method-05-evaluation  | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                         |
-| dt-method-06-planning    | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                          |
-| dt-method-06-building    | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                    |
-| dt-method-06-testing     | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                     |
+| Command                         | Description                                                                                                                                  |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
+| dt-resume-coaching              | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core           |
+| dt-method-next                  | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                          |
+| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact with tiered routing                                                          |
+| dt-handoff-problem-space        | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                               |
+| dt-handoff-solution-space       | Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-planner                                 |
+| dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core         |
+| dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                     |
+| dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                          |
+| dt-method-05-evaluation         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                         |
+| dt-method-06-planning           | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                          |
+| dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                    |
+| dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                     |
 
 ## Instructions
 
@@ -45,10 +48,13 @@ copilot plugin install design-thinking@hve-core
 | dt-coaching-state                    | Coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery                                                                                                                              |
 | dt-industry-healthcare               | Healthcare industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                              |
 | dt-rpi-handoff-contract              | DT-to-RPI handoff contract defining exit points, artifact schemas, and per-agent input requirements for lateral transitions from Design Thinking to RPI workflow                                                                           |
+| dt-rpi-planning-context              | DT-aware task-planner context: fidelity constraints, iteration support, and confidence-informed planning for DT artifacts                                                                                                                  |
 | dt-rpi-research-context              | DT-aware task-researcher context — frames research around DT methods, stakeholder needs, and empathy-driven inquiry                                                                                                                        |
+| dt-rpi-review-context                | DT-aware task-reviewer context: quality criteria for Design Thinking artifacts                                                                                                                                                             |
 | dt-method-01-deep                    | Deep expertise for Method 1: Scope Conversations, covering advanced stakeholder analysis, power dynamics, and scope negotiation                                                                                                            |
 | dt-method-01-scope                   | Method 1 Scope Conversations coaching knowledge for Design Thinking: frozen vs fluid assessment, stakeholder discovery, constraint patterns, and conversation navigation                                                                   |
 | dt-method-03-deep                    | Deep expertise for Method 3: Input Synthesis — advanced affinity analysis, insight frameworks, and problem statement articulation                                                                                                          |
+| dt-method-04-deep                    | Deep expertise for Method 4: Brainstorming — advanced facilitation techniques, creative block recovery, and convergence frameworks                                                                                                         |
 | dt-method-02-research                | Method 2 Design Research coaching knowledge: interview techniques, research planning, environmental observation, and insight extraction patterns                                                                                           |
 | dt-method-02-deep                    | Deep expertise for Method 2: Design Research, covering advanced interview techniques, ethnographic observation, and evidence triangulation                                                                                                 |
 | dt-method-03-synthesis               | Method 3 Input Synthesis coaching knowledge: pattern recognition, theme development, synthesis validation, and Problem-to-Solution Space transition readiness                                                                              |

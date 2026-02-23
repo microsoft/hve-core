@@ -20,7 +20,16 @@ items:
   - path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
     kind: prompt
     maturity: experimental
+  - path: .github/prompts/design-thinking/dt-method-next.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md
     kind: prompt
     maturity: experimental
   - path: .github/prompts/design-thinking/dt-method-04-ideation.prompt.md
@@ -73,7 +82,13 @@ items:
   - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/design-thinking/dt-rpi-planning-context.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-rpi-review-context.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
@@ -83,6 +98,9 @@ items:
     kind: instruction
     maturity: experimental
   - path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/design-thinking/dt-method-04-deep.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
