@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
