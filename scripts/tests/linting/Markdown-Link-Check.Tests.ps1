@@ -472,7 +472,7 @@ Describe 'Invoke-MarkdownLinkCheck Extended' -Tag 'Unit' {
         }
 
         It 'Returns 1 when no files found' {
-            $result = Invoke-MarkdownLinkCheck -Path $script:TestDir -ConfigPath $script:ConfigFile 2>&1
+            Invoke-MarkdownLinkCheck -Path $script:TestDir -ConfigPath $script:ConfigFile 2>&1
             # Should error when no files found
             Should -Invoke Write-Error -Times 1
         }
@@ -714,9 +714,6 @@ Describe 'Invoke-MarkdownLinkCheck Detailed' -Tag 'Unit' {
     Context 'GitHub summary content' {
         It 'Generates failure summary with correct format' {
             $failedFiles = @('test1.md', 'test2.md')
-            $brokenLinks = @(
-                @{ File = 'test1.md'; Link = 'http://broken1.com'; Status = '404' }
-            )
             $totalFiles = 10
 
             $summary = "Files with broken links: $($failedFiles.Count) / $totalFiles"
@@ -798,7 +795,7 @@ Describe 'Get-MarkdownTarget Detailed' -Tag 'Unit' {
         }
 
         It 'Uses git ls-files for tracked files' {
-            $result = Get-MarkdownTarget -InputPath (Join-Path $script:TestRoot 'docs')
+            $null = Get-MarkdownTarget -InputPath (Join-Path $script:TestRoot 'docs')
             Should -Invoke git -ParameterFilter { $args -contains 'ls-files' }
         }
     }
@@ -1117,7 +1114,7 @@ Describe 'Get-MarkdownTarget Additional Edge Cases' -Tag 'Unit' {
                 }
             }
             # Should have warned about untracked file or returned empty
-            ($warnings -match 'not tracked' -or $result.Count -eq 0) | Should -BeTrue
+            ($null -ne $warnings -and $warnings -match 'not tracked' -or $result.Count -eq 0) | Should -BeTrue
         }
 
         It 'Returns empty for directory with no tracked markdown files' {
