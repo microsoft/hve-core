@@ -12,6 +12,10 @@ name: "Copilot Setup Steps"
 on:
   workflow_dispatch:
 
+# Minimal permissions
+permissions:
+  contents: read
+
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
