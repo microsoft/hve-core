@@ -1104,17 +1104,11 @@ Describe 'Get-MarkdownTarget Additional Edge Cases' -Tag 'Unit' {
                 }
             }
 
-            $warnings = $null
-            $result = Get-MarkdownTarget -InputPath @($script:UntrackedFile) 3>&1 | ForEach-Object {
-                if ($_ -is [System.Management.Automation.WarningRecord]) {
-                    $warnings = $_
-                }
-                else {
-                    $_
-                }
-            }
+            $allOutput = Get-MarkdownTarget -InputPath @($script:UntrackedFile) 3>&1
+            $warnings = @($allOutput | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $result = @($allOutput | Where-Object { $_ -isnot [System.Management.Automation.WarningRecord] })
             # Should have warned about untracked file or returned empty
-            ($null -ne $warnings -and $warnings -match 'not tracked' -or $result.Count -eq 0) | Should -BeTrue
+            ($warnings -match 'not tracked' -or $result.Count -eq 0) | Should -BeTrue
         }
 
         It 'Returns empty for directory with no tracked markdown files' {
@@ -1142,15 +1136,9 @@ Describe 'Get-MarkdownTarget Additional Edge Cases' -Tag 'Unit' {
             }
 
             $nonExistent = '/this/path/does/not/exist/12345'
-            $warnings = @()
-            $result = Get-MarkdownTarget -InputPath @($nonExistent) 3>&1 | ForEach-Object {
-                if ($_ -is [System.Management.Automation.WarningRecord]) {
-                    $warnings += $_
-                }
-                else {
-                    $_
-                }
-            }
+            $allOutput = Get-MarkdownTarget -InputPath @($nonExistent) 3>&1
+            $warnings = @($allOutput | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $result = @($allOutput | Where-Object { $_ -isnot [System.Management.Automation.WarningRecord] })
             # Should warn about unresolvable path or return empty
             ($warnings.Count -gt 0 -or $null -eq $result -or $result.Count -eq 0) | Should -BeTrue
         }
