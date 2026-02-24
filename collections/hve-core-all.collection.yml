@@ -306,9 +306,6 @@ items:
 - path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/design-thinking/dt-rpi-implement-context.instructions.md
   kind: instruction
   maturity: experimental
@@ -319,6 +316,9 @@ items:
   kind: instruction
   maturity: experimental
 - path: .github/instructions/design-thinking/dt-rpi-review-context.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/github/community-interaction.instructions.md
