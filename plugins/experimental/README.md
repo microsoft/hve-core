@@ -3,6 +3,8 @@
 
 Experimental and preview artifacts not yet promoted to stable collections
 
+> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
+
 ## Install
 
 ```bash

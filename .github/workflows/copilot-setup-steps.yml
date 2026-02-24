@@ -61,6 +61,7 @@ jobs:
         run: |
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
       - name: Verify tool availability
         run: |

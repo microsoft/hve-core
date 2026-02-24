@@ -1,5 +1,5 @@
 ---
-title: Plugin Engineering Scripts
+title: Plugin Generation Scripts
 description: PowerShell tooling for generating Copilot CLI plugins from collection manifests
 ---
 
@@ -8,16 +8,15 @@ manifests.
 
 ## Scripts
 
-| Script                     | npm Command               | Description                                   |
-|----------------------------|---------------------------|-----------------------------------------------|
-| Generate-Plugins.ps1       | `npm run plugin:generate` | Generate plugin directories from collections  |
-| Validate-Collections.ps1   | `npm run plugin:validate` | Validate collection manifests                 |
-| Modules/PluginHelpers.psm1 | (library)                 | Shared YAML parsing, symlink, and frontmatter |
+| Script                     | npm Command               | Description                                  |
+|----------------------------|---------------------------|----------------------------------------------|
+| Generate-Plugins.ps1       | `npm run plugin:generate` | Generate plugin directories from collections |
+| Modules/PluginHelpers.psm1 | (library)                 | Plugin symlink, manifest, and packaging      |
 
 ## Prerequisites
 
-- PowerShell 7.0+
-- PowerShell-Yaml module (`Install-Module PowerShell-Yaml`)
+* PowerShell 7.0+
+* PowerShell-Yaml module (`Install-Module PowerShell-Yaml`)
 
 ## Collection to Plugin Pipeline
 
@@ -25,14 +24,6 @@ manifests.
 2. Define collections in `collections/*.collection.yml`
 3. Run `npm run plugin:generate` to produce `plugins/`
 4. Commit generated `plugins/` to the repository
-
-## Adding a New Collection
-
-1. Create `collections/<id>.collection.yml` (see existing collections for
-   format)
-2. Run `npm run plugin:validate` to check the manifest
-3. Run `npm run plugin:generate` to generate the plugin
-4. Commit both the collection and generated plugin
 
 ## Refreshing Plugins After Artifact Changes
 

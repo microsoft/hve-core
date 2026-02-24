@@ -79,16 +79,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Get-RepositoryRoot {
-    [OutputType([string])]
-    param()
-
-    $root = & git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -eq 0 -and $root) {
-        return $root.Trim()
-    }
-    return $PWD.Path
-}
+Import-Module (Join-Path $PSScriptRoot 'shared.psm1') -Force
 
 function Get-ChunkInfo {
     [OutputType([PSCustomObject])]

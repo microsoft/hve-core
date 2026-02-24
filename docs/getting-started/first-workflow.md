@@ -1,8 +1,8 @@
 ---
-title: Your First RPI Workflow
+title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-02-18
 ms.topic: tutorial
 keywords:
   - getting started
@@ -13,7 +13,17 @@ keywords:
 estimated_reading_time: 10
 ---
 
+> [!NOTE]
+> Step 3 of 4 in the [Getting Started Journey](README.md).
+
 Build a real validation script using the Research → Plan → Implement workflow. You'll create a PowerShell script that checks that every docs subfolder has a `README.md` file.
+
+> [!TIP]
+> This tutorial uses a PowerShell script as the example task. The RPI
+> methodology works identically with any language. If PowerShell isn't
+> relevant to you, substitute your own small task: a utility function,
+> a configuration validator, a documentation checker. The prompts
+> adapt to whatever you describe.
 
 ## Prerequisites
 
@@ -29,14 +39,25 @@ You'll create:
 * `scripts/linting/Test-DocsReadme.ps1` - validation script
 * npm script entry in `package.json`
 
-**Why use RPI for this?** Multiple unknowns: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
+Multiple unknowns make RPI a good fit for this task: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
 
 > [!IMPORTANT]
-> **Why this matters:** AI can't tell the difference between investigating and implementing. When you ask for code, it writes code—patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
+> AI can't tell the difference between investigating and implementing. When you ask for code, it writes code. Patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
 
 ## Before You Start
 
-**The `/clear` command** resets Copilot's context between phases. Each RPI phase should start fresh—the artifacts (research doc, plan) carry the context forward, not the chat history.
+> [!TIP]
+> Steps 1 and 2 ([Your First Interaction](first-interaction.md) and
+> [Your First Research](first-research.md)) cover the basics. If you've
+> already completed them or have experience with HVE Core agents, continue
+> below.
+
+The `/clear` command resets Copilot's context between phases. Each RPI phase
+should start fresh. The artifacts (research doc, plan) carry the context
+forward, not the chat history.
+
+> [!NOTE]
+> Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.
 
 ## Phase 1: Research
 
@@ -189,36 +210,52 @@ npm run check:docs-readme
 Rename-Item docs/rpi/README.md.bak README.md
 ```
 
+## Alternative: Single-Session with rpi-agent
+
+The three-agent workflow above separates research, planning, and implementation
+into distinct phases with `/clear` between each. This is the best way to learn
+RPI because you see each phase produce its own artifact.
+
+For day-to-day work, the [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent)
+runs all three phases in a single session. It follows the same methodology but
+handles the phase transitions automatically.
+
+To compare the experience, select **rpi-agent** from the agent picker and try
+this prompt:
+
+> Create a PowerShell script that validates every subfolder under docs/ contains
+> a README.md file. Place it at scripts/linting/Test-DocsReadme.ps1 and add an
+> npm script entry.
+
+The rpi-agent researches, plans, and implements without `/clear` commands
+between phases.
+
 ## What You Learned
 
-* **Phase separation** - `/clear` between phases prevents context pollution
-* **Research reduces unknowns** - You discovered patterns before coding
-* **Plans are specifications** - The plan gave Implementor clear requirements
-* **Artifacts bridge phases** - Findings and plans carry context, not chat history
+* Use `/clear` between phases to prevent context pollution through phase separation.
+* Research reduces unknowns by discovering patterns before coding.
+* The plan gives Implementor clear requirements, acting as a specification.
+* Findings and plans bridge phases by carrying context, not chat history.
 
 ## Troubleshooting
 
-| Issue                 | Solution                               |
-|-----------------------|----------------------------------------|
-| PowerShell not found  | Ensure `pwsh` is installed and in PATH |
-| npm script not found  | Check `package.json` was saved         |
-| Wrong folders checked | Verify script targets `docs/*` pattern |
+| Issue                 | Solution                                                                                          |
+|-----------------------|---------------------------------------------------------------------------------------------------|
+| PowerShell not found  | Ensure `pwsh` is installed and in PATH                                                            |
+| npm script not found  | Check `package.json` was saved                                                                    |
+| Wrong folders checked | Verify script targets `docs/*` pattern                                                            |
+| Agent skips phases    | Use `/clear` before each `/rpi` request; see [Context Engineering](../rpi/context-engineering.md) |
 
-## Next Steps
+## Next Step
 
-* **Complex multi-file tasks** - See [RPI Workflow Overview](../rpi/README.md) and/or [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent)
-* **Simple tasks** - Use [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) or prompts directly
-* **Contribute** - Read [Contributing Guide](../contributing/README.md)
+You've completed your first full RPI cycle. The methodology works the same
+way for any task: research the unknowns, plan the approach, implement from
+the plan.
 
-## Resources
-
-| Resource                                              | Description                          |
-|-------------------------------------------------------|--------------------------------------|
-| [RPI Overview](../rpi/README.md)                      | Full RPI workflow documentation      |
-| [Task Researcher](../rpi/task-researcher.md)          | Deep dive on research phase          |
-| [Task Planner](../rpi/task-planner.md)                | Deep dive on planning phase          |
-| [Task Implementor](../rpi/task-implementor.md)        | Deep dive on implementation phase    |
-| [RPI Agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) | Autonomous single-workflow execution |
+Continue your journey through the
+[New Contributor Milestones](../hve-guide/roles/new-contributor.md#milestone-3-independent-workflow),
+where Milestone 3 guides you through your first independent workflow on a
+task you choose yourself.
 
 ---
 

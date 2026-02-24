@@ -330,9 +330,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### github-backlog-manager
 
-> [!NOTE]
-> Replaces the deprecated `github-issue-manager` agent. Consolidates issue management with backlog discovery, triage, and community interaction workflows.
-
 **Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
 
 **Workflow:** Issue Creation | Backlog Discovery | Triage | Community Interaction

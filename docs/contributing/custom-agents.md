@@ -219,7 +219,7 @@ Agent files **MUST**:
   ```yaml
   handoffs:
     - label: "📋 Create Plan"
-      agent: task-planner
+      agent: Task Planner
       prompt: /task-plan
       send: true
   ```
@@ -239,8 +239,8 @@ description: 'Validates and reviews contributed agents, prompts, and instruction
 tools: ['codebase', 'search', 'problems', 'editFiles', 'changes', 'usages']
 disable-model-invocation: true
 agents:
-  - prompt-tester
-  - prompt-evaluator
+  - Prompt Tester
+  - Prompt Evaluator
 ---
 ```
 

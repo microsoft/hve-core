@@ -117,10 +117,11 @@ function Get-FilesRecursive {
     )
 
     # Determine whether $Path resides inside the current git repository
-    $repoRoot = git rev-parse --show-toplevel 2>$null
-    $resolved = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
-    $resolvedPath = if ($resolved) { $resolved.Path } else { $null }
     $sep = [System.IO.Path]::DirectorySeparatorChar
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($repoRoot) { $repoRoot = $repoRoot.Replace('/', $sep) }
+    $resolved = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
+    $resolvedPath = if ($resolved) { $resolved.Path.Replace('/', $sep) } else { $null }
     $useGit = $repoRoot -and $resolvedPath -and (
         $resolvedPath -eq $repoRoot -or
         $resolvedPath.StartsWith("$repoRoot$sep")

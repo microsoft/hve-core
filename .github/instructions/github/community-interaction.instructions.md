@@ -195,7 +195,7 @@ Triggered when a PR does not meet the project's contribution guidelines and cann
 
 > Thank you for taking the time to submit this PR, @{{contributor}}. We appreciate the effort.
 >
-> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](../../CONTRIBUTING.md) for the full requirements.
+> This PR doesn't currently meet our contribution guidelines: {{criteria}}. Please review our [CONTRIBUTING.md](../../../CONTRIBUTING.md) for the full requirements.
 >
 > You're welcome to revise and resubmit. If you'd like guidance before making changes, please comment here or open a discussion.
 
@@ -322,7 +322,7 @@ Agents should involve human maintainers when:
 * Contributor disputes involve technical direction decisions that need maintainer consensus.
 * The agent cannot determine the appropriate response or scenario template.
 
-Escalation follows the role hierarchy defined in [GOVERNANCE.md](../../GOVERNANCE.md): Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) for behavioral standards.
+Escalation follows the role hierarchy defined in [GOVERNANCE.md](../../../GOVERNANCE.md): Triage Contributor escalates to Maintainer, Maintainer escalates to Admin. Reference [CODE_OF_CONDUCT.md](../../../CODE_OF_CONDUCT.md) for behavioral standards.
 
 ## Integration Instructions
 

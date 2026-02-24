@@ -1,14 +1,14 @@
 ---
 description: 'Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection'
-agent: 'github-backlog-manager'
+agent: GitHub Backlog Manager
 ---
 
 # Triage GitHub Issues
 
 Fetch all open GitHub issues carrying the `needs-triage` label, analyze each for label and milestone recommendations, detect duplicates, and produce a triage plan for review before execution.
 
-Follow all instructions from #file:../instructions/github-backlog-triage.instructions.md while executing this workflow.
-Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md for shared conventions.
+Follow all instructions from #file:../../instructions/github/github-backlog-triage.instructions.md while executing this workflow.
+Follow all instructions from #file:../../instructions/github/github-backlog-planning.instructions.md for shared conventions.
 
 ## Inputs
 

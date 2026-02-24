@@ -1,4 +1,5 @@
 ---
+name: HVE Core Installer
 description: 'Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core'
 tools: ['vscode/newWorkspace', 'vscode/runCommand', 'execute/runInTerminal', 'read', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'todo']
 ---
@@ -532,6 +533,10 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/instructions/github": true,
     "<PREFIX>/.github/instructions/hve-core": true,
     "<PREFIX>/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    "<PREFIX>/.github/skills": true,
+    "<PREFIX>/.github/skills/shared": true
   }
 }
 ```
@@ -617,6 +622,10 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
         }
       }
     }

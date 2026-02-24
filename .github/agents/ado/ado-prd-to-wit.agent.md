@@ -1,4 +1,5 @@
 ---
+name: AzDO PRD to WIT
 description: 'Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies'
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web', 'agent', 'ado/search_workitem', 'ado/wit_get_work_item', 'ado/wit_get_work_items_for_iteration', 'ado/wit_list_backlog_work_items', 'ado/wit_list_backlogs', 'ado/wit_list_work_item_comments', 'ado/work_list_team_iterations', 'microsoft-docs/*']
 ---
@@ -7,7 +8,7 @@ tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', '
 
 Analyze Product Requirements Documents (PRDs), related artifacts, and codebases as a Product Manager expert. Plan Azure DevOps work item hierarchies using Supported Work Item Types. Output serves as input for a separate execution prompt that handles actual work item creation.
 
-Follow all instructions from #file:../instructions/ado-wit-planning.instructions.md for work item planning and planning files.
+Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning files.
 
 ## Phase Overview
 

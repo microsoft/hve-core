@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -132,26 +132,6 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
 
             $headers = @{ 'Authorization' = 'Bearer test' }
             { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/graphql' -Method 'POST' -Headers $headers -Body '{}' } | Should -Throw
-        }
-    }
-}
-
-Describe 'Write-SecurityLog' -Tag 'Unit' {
-    Context 'Log output' {
-        It 'Does not throw for Info level' {
-            { Write-SecurityLog -Message 'Test message' -Level Info } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Warning level' {
-            { Write-SecurityLog -Message 'Warning message' -Level Warning } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Error level' {
-            { Write-SecurityLog -Message 'Error message' -Level Error } | Should -Not -Throw
-        }
-
-        It 'Does not throw for Success level' {
-            { Write-SecurityLog -Message 'Success message' -Level Success } | Should -Not -Throw
         }
     }
 }
@@ -737,7 +717,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
                 }
             } -ParameterFilter { $Body -match 'defaultBranchRef' }
 
-            # Commit query — use [PSCustomObject] so PSObject.Properties iteration works
+            # Commit query - use [PSCustomObject] so PSObject.Properties iteration works
             Mock Invoke-GitHubAPIWithRetry {
                 return [PSCustomObject]@{
                     data = [PSCustomObject]@{
@@ -876,7 +856,7 @@ jobs:
     }
 }
 
-Describe 'Write-OutputResult' -Tag 'Unit' {
+Describe 'Write-SecurityOutput' -Tag 'Unit' {
     Context 'JSON output format' {
         It 'Creates output file with correct structure' {
             $jsonPath = Join-Path $TestDrive 'output.json'
@@ -884,7 +864,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'json' -OutputPath $jsonPath
 
             Test-Path $jsonPath | Should -BeTrue
             $content = Get-Content $jsonPath | ConvertFrom-Json
@@ -900,7 +880,7 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'GitHubAction'; ActionRepo = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'console'
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'console'
 
             Should -Invoke Write-SecurityLog -Times 1
         }
@@ -915,9 +895,91 @@ Describe 'Write-OutputResult' -Tag 'Unit' {
                 @{ Type = 'Tool'; Name = 'node'; DaysOld = 90; Severity = 'High' }
             )
 
-            Write-OutputResult -Dependencies $deps -OutputFormat 'Summary'
+            Write-SecurityOutput -Dependencies $deps -OutputFormat 'Summary'
 
             Should -Invoke Write-Output -Times 1
+        }
+    }
+
+    Context 'GitHub output format with stale dependencies' {
+        BeforeAll {
+            # Write-SecurityOutput receives pre-filtered stale items; all entries are stale by definition
+            $script:githubDeps = @(
+                @{ Type = 'GitHubAction'; Name = 'actions/checkout'; DaysOld = 45; Severity = 'Low'; File = 'ci.yml'; Message = 'GitHub Action is 45 days old' }
+                @{ Type = 'GitHubAction'; Name = 'actions/setup-node'; DaysOld = 90; Severity = 'High'; File = 'build.yml'; Message = 'GitHub Action is 90 days old' }
+            )
+        }
+
+        BeforeEach {
+            Mock Write-CIAnnotation { }
+            Mock Write-CIStepSummary { }
+            Write-SecurityOutput -Dependencies $script:githubDeps -OutputFormat 'github'
+        }
+
+        It 'Calls Write-CIAnnotation for each dependency with Warning level' {
+            Should -Invoke Write-CIAnnotation -Times 2 -ParameterFilter { $Level -eq 'Warning' }
+        }
+
+        It 'Calls Write-CIAnnotation aggregate with Error level' {
+            Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter { $Level -eq 'Error' }
+        }
+
+        It 'Calls Write-CIAnnotation total of 3 times (2 per-item + 1 aggregate)' {
+            Should -Invoke Write-CIAnnotation -Times 3 -Exactly
+        }
+
+        It 'Calls Write-CIStepSummary exactly once' {
+            Should -Invoke Write-CIStepSummary -Times 1 -Exactly
+        }
+
+        It 'Passes markdown containing the summary table header' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match '\| Dependency \| SHA Age \(days\) \| Threshold \(days\) \| Status \|'
+            }
+        }
+
+        It 'Includes dependency names in summary content' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'actions/checkout' -and $Content -match 'actions/setup-node'
+            }
+        }
+
+        It 'Shows stale status for all dependencies' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'Stale'
+            }
+        }
+
+        It 'Includes totals in summary content' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'Found:.+2' -and $Content -match 'Stale:.+2'
+            }
+        }
+    }
+
+    Context 'GitHub output format with no stale dependencies' {
+        BeforeEach {
+            Mock Write-CIAnnotation { }
+            Mock Write-CIStepSummary { }
+            Write-SecurityOutput -Dependencies @() -OutputFormat 'github'
+        }
+
+        It 'Calls Write-CIAnnotation with Notice level for no stale deps' {
+            Should -Invoke Write-CIAnnotation -Times 1 -ParameterFilter { $Level -eq 'Notice' }
+        }
+
+        It 'Calls Write-CIAnnotation exactly once' {
+            Should -Invoke Write-CIAnnotation -Times 1 -Exactly
+        }
+
+        It 'Calls Write-CIStepSummary exactly once' {
+            Should -Invoke Write-CIStepSummary -Times 1 -Exactly
+        }
+
+        It 'Passes all-clear summary when no dependencies' {
+            Should -Invoke Write-CIStepSummary -Times 1 -ParameterFilter {
+                $Content -match 'All Clear' -and $Content -match 'No stale dependencies detected'
+            }
         }
     }
 }
@@ -937,7 +999,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
 
             Mock Test-GitHubActionsForStaleness { return @() }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
             Mock Write-SecurityLog { }
 
@@ -958,7 +1020,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 )
             }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Throw '*Stale dependencies detected*'
@@ -972,7 +1034,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 $script:StaleDependencies = @()
             }
             Mock Get-ToolStaleness { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
                 Should -Not -Throw

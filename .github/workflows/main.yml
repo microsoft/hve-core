@@ -51,6 +51,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: ./.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
   pester-tests:
     name: PowerShell Tests
     uses: ./.github/workflows/pester-tests.yml
@@ -69,6 +80,7 @@ jobs:
       - markdown-lint
       - table-format
       - dependency-pinning-scan
+      - gitleaks-scan
       - pester-tests
     runs-on: ubuntu-latest
     outputs:
@@ -127,6 +139,66 @@ jobs:
             echo "Git tag $TAG already exists"
           fi
 
+  reset-prerelease:
+    name: Reset Pre-Release Branch
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.0.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Reset pre-release branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BRANCH="prerelease/next"
+          REPO="${{ github.repository }}"
+          if gh api "/repos/$REPO/git/refs/heads/$BRANCH" --silent 2>/dev/null; then
+            gh api "/repos/$REPO/git/refs/heads/$BRANCH" \
+              -X PATCH \
+              -f sha="${{ github.sha }}" \
+              -F force=true
+            echo "Reset $BRANCH to ${{ github.sha }}"
+          fi
+
+      - name: Update pre-release PR version
+        # Placeholder version computation — prerelease.yml is the authoritative source.
+        # This provides an interim PR title until the next push to main triggers prerelease.yml.
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BRANCH="prerelease/next"
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "${{ github.repository }}")
+          if [ -n "$PR_NUMBER" ]; then
+            RELEASED="${{ needs.release-please.outputs.version }}"
+            MAJOR=$(echo "$RELEASED" | cut -d. -f1)
+            MINOR=$(echo "$RELEASED" | cut -d. -f2)
+            ODD_MINOR=$((MINOR + 1))
+            if [ $((ODD_MINOR % 2)) -eq 0 ]; then
+              ODD_MINOR=$((ODD_MINOR + 1))
+            fi
+            PRE_VERSION="${MAJOR}.${ODD_MINOR}.0"
+            gh pr edit "$PR_NUMBER" \
+              --title "chore(main): pre-release $PRE_VERSION" \
+              --body "## Pre-Release $PRE_VERSION
+
+          Reset after release $RELEASED. Next push to main will update this PR.
+
+          ---
+          *Managed automatically by pre-release workflow.*"
+            echo "Updated PR #$PR_NUMBER to $PRE_VERSION"
+          fi
+
   extension-package-release:
     name: Package VS Code Extensions (Release)
     needs: [release-please]
@@ -147,9 +219,47 @@ jobs:
     permissions:
       contents: read
 
+  generate-dependency-sbom:
+    name: Generate Dependency SBOM
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout dependency manifests
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            .syft.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Generate dependency SBOM
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+        with:
+          path: .
+          format: spdx-json
+          output-file: dependencies.spdx.json
+          artifact-name: sbom-dependencies
+          upload-release-assets: false
+          upload-artifact: true
+          config: .syft.yaml
+          dependency-snapshot: true
+
+      - name: Upload dependency SBOM to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
+            "dependencies.spdx.json" \
+            --clobber -R "${{ github.repository }}"
+
   attest-and-upload:
     name: Attest and Upload (${{ matrix.id }})
-    needs: [release-please, extension-package-release]
+    needs: [release-please, extension-package-release, generate-dependency-sbom]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     strategy:
@@ -160,27 +270,79 @@ jobs:
       id-token: write
       attestations: write
     steps:
+      - name: Checkout Syft config
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: .syft.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Download dependency SBOM
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: sbom-dependencies
+          path: ./dist
+
       - name: Download VSIX artifact
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: extension-vsix-${{ matrix.id }}
           path: ./dist
 
+      - name: Resolve VSIX filename
+        id: vsix
+        run: |
+          shopt -s nullglob
+          files=(dist/*.vsix)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "::error::No VSIX file found in dist/"
+            exit 1
+          fi
+          if [[ ${#files[@]} -gt 1 ]]; then
+            echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
+            exit 1
+          fi
+          VSIX_FILE="${files[0]}"
+          VSIX_NAME=$(basename "$VSIX_FILE")
+          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+        with:
+          file: ${{ steps.vsix.outputs.file }}
+          format: spdx-json
+          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
+          artifact-name: sbom-${{ matrix.id }}
+          upload-release-assets: false
+          upload-artifact: true
+          config: .syft.yaml
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
-          subject-path: "dist/*.vsix"
+          subject-path: ${{ steps.vsix.outputs.file }}
 
-      - name: Upload VSIX to GitHub Release
+      - name: Attest SBOM
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
+        with:
+          subject-path: ${{ steps.vsix.outputs.file }}
+          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
+
+      - name: Attest dependency SBOM
+        uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
+        with:
+          subject-path: ${{ steps.vsix.outputs.file }}
+          sbom-path: dist/dependencies.spdx.json
+
+      - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection ${{ matrix.id }}"
-            exit 1
-          fi
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$VSIX_FILE" --clobber -R "${{ github.repository }}"
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
+            "${{ steps.vsix.outputs.file }}" \
+            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:
     name: Upload Plugin Package (${{ matrix.id }})
@@ -210,9 +372,117 @@ jobs:
           fi
           gh release upload "${{ needs.release-please.outputs.tag_name }}" "$PLUGIN_ARCHIVE" --clobber -R "${{ github.repository }}"
 
+  sbom-diff:
+    name: SBOM Dependency Diff
+    needs: [release-please, generate-dependency-sbom]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      - name: Download current dependency SBOM
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: sbom-dependencies
+          path: ./current
+
+      - name: Download previous release dependency SBOM
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO="${{ github.repository }}"
+          PREV_TAG=$(gh api "/repos/$REPO/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous release found"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Previous release: $PREV_TAG"
+          echo "tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+          mkdir -p previous
+          if gh release download "$PREV_TAG" -R "$REPO" -p "dependencies.spdx.json" -D previous 2>/dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Previous release has no dependency SBOM"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate dependency diff
+        if: ${{ steps.previous.outputs.found == 'true' }}
+        run: |
+          python3 <<'PYTHON'
+          import json
+          import pathlib
+
+          def load_packages(path):
+              with open(path) as f:
+                  data = json.load(f)
+              root_ids = set(data.get('documentDescribes', []))
+              pkgs = {}
+              for p in data.get('packages', []):
+                  if p.get('SPDXID', '') in root_ids:
+                      continue
+                  name = p.get('name', 'unknown')
+                  version = p.get('versionInfo', 'unknown')
+                  pkgs[name] = version
+              return pkgs
+
+          current = load_packages('current/dependencies.spdx.json')
+          previous = load_packages('previous/dependencies.spdx.json')
+
+          added = {k: v for k, v in current.items() if k not in previous}
+          removed = {k: v for k, v in previous.items() if k not in current}
+          changed = {
+              k: (previous[k], current[k])
+              for k in current
+              if k in previous and current[k] != previous[k]
+          }
+
+          lines = ['# Dependency SBOM Diff', '']
+          if not added and not removed and not changed:
+              lines.append('No dependency changes detected.')
+          else:
+              if added:
+                  lines.extend(['## Added', '', '| Package | Version |', '|---------|---------|'])
+                  for name in sorted(added):
+                      lines.append(f'| {name} | {added[name]} |')
+                  lines.append('')
+              if removed:
+                  lines.extend(['## Removed', '', '| Package | Version |', '|---------|---------|'])
+                  for name in sorted(removed):
+                      lines.append(f'| {name} | {removed[name]} |')
+                  lines.append('')
+              if changed:
+                  lines.extend([
+                      '## Version Changes', '',
+                      '| Package | Previous | Current |',
+                      '|---------|----------|---------|',
+                  ])
+                  for name in sorted(changed):
+                      old, new = changed[name]
+                      lines.append(f'| {name} | {old} | {new} |')
+                  lines.append('')
+
+          lines.extend(['', '_Generated from SPDX JSON dependency SBOMs._', ''])
+          pathlib.Path('dependency-diff.md').write_text('\n'.join(lines))
+          count = len(added) + len(removed) + len(changed)
+          print(f'Diff: {len(added)} added, {len(removed)} removed, {len(changed)} changed')
+          PYTHON
+
+      - name: Upload diff to GitHub Release
+        if: ${{ steps.previous.outputs.found == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
+            "dependency-diff.md" \
+            --clobber -R "${{ github.repository }}"
+
   publish-release:
     name: Publish GitHub Release
-    needs: [release-please, attest-and-upload, upload-plugin-packages]
+    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:

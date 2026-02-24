@@ -43,6 +43,8 @@ Why this matters:
 * Research findings are in files, not chat history
 * Clean context lets each agent work optimally
 
+For the deeper explanation of how LLM context affects agent behavior, see [Context Engineering](context-engineering.md).
+
 ## Walkthrough: Adding Azure Blob Storage
 
 Let's walk through adding Azure Blob Storage to a Python data pipeline.
@@ -348,6 +350,9 @@ Use `/clear` and manual `/task-*` commands instead of handoffs when:
 * You want to provide custom parameters to the next agent
 * The handoff button doesn't match your intended workflow
 
+> [!TIP]
+> Use `/compact` when you want to reduce conversation length without losing all context. Unlike `/clear`, `/compact` summarizes the conversation history rather than removing it. This is useful mid-phase when context grows long but you want to continue the current task.
+
 ## RPI Agent: When Simplicity Fits
 
 For tasks that don't require strict phase separation, **rpi-agent** provides autonomous execution with subagent delegation. Use it when the scope is clear and you don't need the deep iterative research that comes from constraint-based separation.
@@ -373,6 +378,7 @@ See [Agents Reference](../../.github/CUSTOM-AGENTS.md) for rpi-agent implementat
 ## Related Guides
 
 * [RPI Overview](README.md) - Understand the workflow
+* [Context Engineering](context-engineering.md) - Why context management matters
 * [Task Researcher](task-researcher.md) - Deep research phase
 * [Task Planner](task-planner.md) - Create actionable plans
 * [Task Implementor](task-implementor.md) - Execute with precision

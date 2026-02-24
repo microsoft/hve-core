@@ -1,9 +1,9 @@
 {
   "name": "HVE Core - Markdown Editing",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "image": "mcr.microsoft.com/devcontainers/base:2-jammy",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
+      "version": "20"
     },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -27,6 +27,7 @@
     }
   },
   "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
+  "updateContentCommand": "npm ci",
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "remoteUser": "vscode"
 }

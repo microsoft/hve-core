@@ -49,9 +49,14 @@ Plus all the actual code files created or modified during implementation.
 
 ## How to Use Task Implementor
 
-### Step 1: Clear Context
+### Step 1: Clear Context and Open the Plan
 
 🔴 **Start with `/clear` or a new chat** after Task Planner completes.
+
+After clearing, open your plan file (`.copilot-tracking/plans/<topic>-plan.instructions.md`) in the editor before invoking Task Implementor. This ensures the agent can locate and follow the plan without relying on chat history.
+
+> [!TIP]
+> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering.md) for the full explanation.
 
 ### Step 2: Select the Custom Agent
 
@@ -154,11 +159,12 @@ When all phases are complete, Task Implementor provides:
 
 ## Common Pitfalls
 
-| Pitfall                 | Solution                                 |
-|-------------------------|------------------------------------------|
-| Plan not found          | Complete Task Planner first              |
-| Skipping reviews        | Use phaseStop=true for important changes |
-| Not running validations | Check lint/test after each phase         |
+| Pitfall                 | Solution                                                                        |
+|-------------------------|---------------------------------------------------------------------------------|
+| Plan not found          | Complete Task Planner first                                                     |
+| Skipping reviews        | Use phaseStop=true for important changes                                        |
+| Not running validations | Check lint/test after each phase                                                |
+| Context issues          | Use `/clear` before starting; see [Context Engineering](context-engineering.md) |
 
 ## Next Steps
 

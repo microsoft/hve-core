@@ -2,24 +2,54 @@
 title: HVE Core Documentation
 description: Documentation index for HVE Core Copilot customizations
 author: Microsoft
-ms.date: 2026-01-22
+ms.date: 2026-02-18
 ms.topic: overview
+keywords:
+  - hve core
+  - documentation
+  - copilot customizations
+estimated_reading_time: 3
 ---
 
-HVE Core is an enterprise-ready prompt engineering framework for GitHub Copilot. It provides specialized agents, reusable prompts, instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
+HVE Core is a prompt engineering framework for GitHub Copilot designed for team-scale adoption. It provides specialized agents, reusable prompts, instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
 
 ## Audience
 
-| Role                   | Goal                        | Start Here                                          | Key Resources                   |
-|------------------------|-----------------------------|-----------------------------------------------------|---------------------------------|
-| **Developers**         | Use agents to ship features | [First Workflow](getting-started/first-workflow.md) | RPI agents, prompt patterns     |
-| **TPMs & Leads**       | Coordinate AI-assisted work | [Why RPI?](rpi/why-rpi.md)                          | Methodology, team adoption      |
-| **Platform Engineers** | Maintain prompt libraries   | [Build Workflows](architecture/workflows.md)        | Validation pipeline, schemas    |
-| **Contributors**       | Create new artifacts        | [AI Artifacts](contributing/ai-artifacts-common.md) | Authoring patterns, conventions |
+| Role                     | Description                                      | Start Here                                                        |
+|--------------------------|--------------------------------------------------|-------------------------------------------------------------------|
+| Engineer                 | Write code, implement features, fix bugs         | [Engineer Guide](hve-guide/roles/engineer.md)                     |
+| TPM                      | Plan projects, manage requirements, track work   | [TPM Guide](hve-guide/roles/tpm.md)                               |
+| Tech Lead / Architect    | Design architecture, review code, set standards  | [Tech Lead Guide](hve-guide/roles/tech-lead.md)                   |
+| Security Architect       | Assess security, create threat models            | [Security Architect Guide](hve-guide/roles/security-architect.md) |
+| Data Scientist           | Analyze data, build notebooks, create dashboards | [Data Scientist Guide](hve-guide/roles/data-scientist.md)         |
+| SRE / Operations         | Manage infrastructure, handle incidents, deploy  | [SRE Guide](hve-guide/roles/sre-operations.md)                    |
+| Business Program Manager | Define business outcomes, manage stakeholders    | [BPM Guide](hve-guide/roles/business-program-manager.md)          |
+| New Contributor          | Get started contributing to the project          | [New Contributor Guide](hve-guide/roles/new-contributor.md)       |
+| All Roles                | Cross-cutting utility tools                      | [Utility Guide](hve-guide/roles/utility.md)                       |
+
+**[Browse All Role Guides →](hve-guide/roles/README.md)**
+
+## AI-Assisted Project Lifecycle
+
+HVE Core supports a 9-stage project lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. The project lifecycle guides walk through each stage, covering available tools, role-specific guidance, and starter prompts.
+
+* [Stage Overview](hve-guide/lifecycle/README.md) - Full lifecycle map with Mermaid flowchart
+* [Stage 6: Implementation](hve-guide/lifecycle/implementation.md) - Highest-density stage with 30 assets
+* [Stage 2: Discovery](hve-guide/lifecycle/discovery.md) - Research, requirements, and BRD creation
+
+**[AI-Assisted Project Lifecycle Overview →](hve-guide/lifecycle/README.md)**
+
+## Role Guides
+
+Find your role-specific guide for AI-assisted engineering. Each guide maps the agents, prompts, and collections relevant to your responsibilities.
+
+* [Engineer](hve-guide/roles/engineer.md) - RPI workflow, coding standards, implementation
+* [TPM](hve-guide/roles/tpm.md) - Requirements, backlog management, sprint planning
+* [New Contributor](hve-guide/roles/new-contributor.md) - Guided onboarding with progression milestones
+
+**[Browse All Role Guides →](hve-guide/roles/README.md)**
 
 ## Getting Started
-
-**Time to complete**: 15-30 minutes
 
 The Getting Started guide walks through installation, configuration, and running your first Copilot workflow.
 
@@ -31,8 +61,6 @@ The Getting Started guide walks through installation, configuration, and running
 
 ## Agent Systems
 
-**Time to complete**: 10-15 minutes
-
 hve-core provides specialized agents organized into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
 * [RPI Orchestration](rpi/README.md) separates complex tasks into research, planning, implementation, and review phases
@@ -42,8 +70,6 @@ hve-core provides specialized agents organized into functional groups. Each grou
 **[Browse the Agent Catalog →](agents/README.md)**
 
 ## RPI Methodology
-
-**Time to complete**: 20-40 minutes
 
 Research, Plan, Implement (RPI) is a structured methodology for complex AI-assisted engineering tasks. It separates concerns into three specialized agents that work together.
 
@@ -57,15 +83,13 @@ Research, Plan, Implement (RPI) is a structured methodology for complex AI-assis
 
 ## Prompt Engineering
 
-**Time to complete**: 15-25 minutes
-
 HVE Core provides a structured approach to building AI artifacts with protocol patterns, input variables, and maturity lifecycle management.
 
 * [Prompt Builder Agent](../.github/agents/hve-core/prompt-builder.agent.md) - Interactive artifact creation with sandbox testing
 * [AI Artifacts Overview](contributing/ai-artifacts-common.md) - Common patterns across artifact types
 * [Activation Context](architecture/ai-artifacts.md#activation-context) - When artifacts activate within workflows
 
-Key differentiators:
+### Key Differentiators
 
 | Capability              | Description                                               |
 |-------------------------|-----------------------------------------------------------|
@@ -75,8 +99,6 @@ Key differentiators:
 | Schema validation       | JSON schema enforcement for all artifact types            |
 
 ## Contributing
-
-**Time to complete**: 10-20 minutes
 
 Learn how to create and maintain AI artifacts including agents, prompts, instructions, and skills.
 
@@ -117,4 +139,7 @@ Pre-built templates for common engineering documents:
 | [Scripts README](../scripts/README.md)     | Automation script reference        |
 | [Extension README](../extension/README.md) | VS Code extension documentation    |
 
-🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

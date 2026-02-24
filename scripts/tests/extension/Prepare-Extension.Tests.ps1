@@ -1996,6 +1996,70 @@ handoffs:
     }
 }
 
+Describe 'Resolve-HandoffDependencies - display name resolution' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        $script:agentsDir = Join-Path $script:tempDir 'agents'
+        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
+
+        # Agent whose handoffs use display names instead of file stems
+        @'
+---
+name: Parent Agent
+description: "Agent with display-name handoffs"
+handoffs:
+  - label: "Go to child"
+    agent: Child Agent
+    prompt: Continue
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'parent-agent.agent.md')
+
+        @'
+---
+name: Child Agent
+description: "Child with display name"
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'child-agent.agent.md')
+
+        # Chain using display names: Planner -> Implementor (mimics real hve-core agents)
+        @'
+---
+name: Task Planner
+description: "Planner agent"
+handoffs:
+  - label: "Implement"
+    agent: Task Implementor
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-planner.agent.md')
+
+        @'
+---
+name: Task Implementor
+description: "Implementor agent"
+handoffs:
+  - label: "Review"
+    agent: Task Planner
+---
+'@ | Set-Content -Path (Join-Path $script:agentsDir 'task-implementor.agent.md')
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Resolves handoff targets specified by display name' {
+        $result = Resolve-HandoffDependencies -SeedAgents @('parent-agent') -AgentsDir $script:agentsDir
+        $result | Should -Contain 'parent-agent'
+        $result | Should -Contain 'child-agent'
+    }
+
+    It 'Resolves circular display-name handoff chains' {
+        $result = Resolve-HandoffDependencies -SeedAgents @('task-planner') -AgentsDir $script:agentsDir
+        $result | Should -Contain 'task-planner'
+        $result | Should -Contain 'task-implementor'
+    }
+}
+
 Describe 'Get-DiscoveredPrompts - maturity filtering' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
@@ -2532,5 +2596,91 @@ description: "Deprecated skill"
 }
 
 #endregion Deprecated Path Exclusion Tests
+
+#region Maturity Notice Tests
+
+Describe 'New-CollectionReadme - maturity notice' {
+    BeforeAll {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:tempDir -Force | Out-Null
+
+        # Create minimal README template with all tokens including MATURITY_NOTICE
+        $templateContent = @"
+# {{DISPLAY_NAME}}
+
+> {{DESCRIPTION}}
+
+{{MATURITY_NOTICE}}
+
+{{BODY}}
+
+## Included Artifacts
+
+{{ARTIFACTS}}
+
+{{FULL_EDITION}}
+"@
+        $script:templatePath = Join-Path $script:tempDir 'README.template.md'
+        Set-Content -Path $script:templatePath -Value $templateContent
+
+        # Create collection body markdown
+        $script:bodyPath = Join-Path $script:tempDir 'test.collection.md'
+        Set-Content -Path $script:bodyPath -Value 'Collection body content.'
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Includes experimental notice for experimental collection' {
+        $collection = @{
+            id          = 'test-exp'
+            name        = 'Test Experimental'
+            description = 'An experimental collection'
+            maturity    = 'experimental'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-exp.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Match '\u26A0' # warning sign emoji
+        $content | Should -Match 'Pre-Release channel'
+    }
+
+    It 'Has no notice for collection without maturity field' {
+        $collection = @{
+            id          = 'test-default'
+            name        = 'Test Default'
+            description = 'A default collection'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-default.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Not -Match '\u26A0'
+    }
+
+    It 'Has no notice for explicit stable maturity' {
+        $collection = @{
+            id          = 'test-stable'
+            name        = 'Test Stable'
+            description = 'A stable collection'
+            maturity    = 'stable'
+            items       = @()
+        }
+        $outputPath = Join-Path $script:tempDir 'README-stable.md'
+        New-CollectionReadme -Collection $collection -CollectionMdPath $script:bodyPath `
+            -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outputPath
+
+        $content = Get-Content -Path $outputPath -Raw
+        $content | Should -Not -Match '\u26A0'
+    }
+}
+
+#endregion Maturity Notice Tests
 
 #endregion Additional Coverage Tests

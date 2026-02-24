@@ -8,6 +8,20 @@
     "description"
   ],
   "properties": {
+    "agents": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        {
+          "type": "string",
+          "enum": ["*"]
+        }
+      ],
+      "default": "*",
+      "description": "List of subagent names allowed to be invoked by this agent. Use '*' to allow all subagents."
+    },
     "description": {
       "type": "string",
       "minLength": 1,
@@ -28,38 +42,15 @@
       },
       "description": "A list of tool or tool set names available for this custom agent. Can include built-in tools, tool sets, MCP tools, or tools contributed by extensions"
     },
-    "agents": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "A list of agent names available as subagents. Use * to allow all agents, or an empty array [] to prevent subagent use"
-    },
     "model": {
       "oneOf": [
-        {
-          "type": "string"
-        },
+        { "type": "string" },
         {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         }
       ],
-      "description": "The AI model to use. Specify a single model name or a prioritized list of models. If not specified, the currently selected model is used"
-    },
-    "user-invocable": {
-      "type": "boolean",
-      "description": "Controls whether the agent appears in the agents dropdown (default is true). Set to false for subagent-only agents"
-    },
-    "disable-model-invocation": {
-      "type": "boolean",
-      "description": "Prevents the agent from being invoked as a subagent by other agents (default is false)"
-    },
-    "infer": {
-      "type": "boolean",
-      "description": "Deprecated. Use user-invocable and disable-model-invocation instead"
+      "description": "The AI model(s) to use when running the agent. If not specified, the currently selected model in model picker is used."
     },
     "target": {
       "type": "string",
@@ -76,14 +67,21 @@
       },
       "description": "Optional list of Model Context Protocol (MCP) server config json to use with custom agents in GitHub Copilot"
     },
+    "user-invokable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Controls whether the agent appears in the UI for manual invocation."
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, prevents this agent from invoking subagents (including other custom agents). It does not affect which model this agent uses or how the model picker works."
+    },
     "handoffs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "label",
-          "agent"
-        ],
+        "required": ["label", "agent"],
         "properties": {
           "label": {
             "type": "string",
@@ -97,18 +95,18 @@
             "type": "string",
             "description": "The prompt text to send to the target agent"
           },
+          "model": {
+            "type": "string",
+            "description": "Optional model override for the handoff."
+          },
           "send": {
             "type": "boolean",
             "description": "Optional boolean flag to auto-submit the prompt (default is false)"
-          },
-          "model": {
-            "type": "string",
-            "description": "Optional language model override for handoff execution"
           }
         }
       },
       "description": "Optional list of suggested next actions or prompts to transition between custom agents"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

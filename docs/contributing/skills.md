@@ -409,8 +409,8 @@ Skill packages are self-contained and relocatable. The skill root directory vari
 
 The `.github/` directory does not exist in any distributed context. All file references and script paths within a skill must be relative to the skill root, never repo-root-relative.
 
-* Use `./scripts/generate.sh` instead of `./.github/skills/<collection>/<skill>/scripts/generate.sh`
-* Use `references/REFERENCE.md` instead of `.github/skills/<collection>/<skill>/references/REFERENCE.md`
+* Use `./scripts/<script-name>.sh` instead of `./.github/skills/<collection>/<skill>/scripts/<script-name>.sh`
+* Use `references/<reference-name>.md` instead of `.github/skills/<collection>/<skill>/references/<reference-name>.md`
 * From files in subdirectories (such as `references/`), use `../scripts/` to reach sibling directories
 
 This rule applies to all files in the skill: SKILL.md, reference documents, assets, and code examples in documentation. Repo-root-relative paths break portability and will fail validation.

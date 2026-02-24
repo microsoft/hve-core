@@ -11,39 +11,28 @@ items:
   # Agents
   - path: .github/agents/github/github-backlog-manager.agent.md
     kind: agent
-    maturity: experimental
   # Prompts
   - path: .github/prompts/github/github-add-issue.prompt.md
     kind: prompt
-    maturity: experimental
   - path: .github/prompts/github/github-discover-issues.prompt.md
     kind: prompt
-    maturity: experimental
   - path: .github/prompts/github/github-triage-issues.prompt.md
     kind: prompt
-    maturity: experimental
   - path: .github/prompts/github/github-execute-backlog.prompt.md
     kind: prompt
-    maturity: experimental
   - path: .github/prompts/github/github-sprint-plan.prompt.md
     kind: prompt
-    maturity: experimental
   # Instructions
   - path: .github/instructions/github/github-backlog-discovery.instructions.md
     kind: instruction
-    maturity: experimental
   - path: .github/instructions/github/github-backlog-planning.instructions.md
     kind: instruction
-    maturity: experimental
   - path: .github/instructions/github/github-backlog-triage.instructions.md
     kind: instruction
-    maturity: experimental
   - path: .github/instructions/github/github-backlog-update.instructions.md
     kind: instruction
-    maturity: experimental
   - path: .github/instructions/github/community-interaction.instructions.md
     kind: instruction
-    maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:

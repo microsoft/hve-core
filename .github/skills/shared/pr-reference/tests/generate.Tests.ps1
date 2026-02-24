@@ -18,24 +18,6 @@ Describe 'Test-GitAvailability' {
     }
 }
 
-Describe 'Get-RepositoryRoot' {
-    It 'Returns a valid directory path' {
-        $result = Get-RepositoryRoot
-        $result | Should -Not -BeNullOrEmpty
-        Test-Path -Path $result -PathType Container | Should -BeTrue
-    }
-
-    It 'Returns path containing .git directory' {
-        $result = Get-RepositoryRoot
-        Test-Path -Path (Join-Path $result '.git') | Should -BeTrue
-    }
-
-    It 'Should throw when repository root cannot be determined' {
-        Mock git { $global:LASTEXITCODE = 0; return '' }
-        { Get-RepositoryRoot } | Should -Throw '*Unable to determine repository root*'
-    }
-}
-
 Describe 'New-PrDirectory' {
     BeforeAll {
         $script:tempRepo = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())

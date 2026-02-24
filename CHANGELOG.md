@@ -12,6 +12,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.0.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.1...hve-core-v3.0.2) (2026-02-21)
+
+
+### 🐛 Bug Fixes
+
+* **agents:** add commit message presentation to RPI agent review completion ([#721](https://github.com/microsoft/hve-core/issues/721)) ([a063996](https://github.com/microsoft/hve-core/commit/a06399696275e92b6d76b04421f70f8df43e8f8c))
+* **agents:** standardize name frontmatter to human-readable format ([#716](https://github.com/microsoft/hve-core/issues/716)) ([f3e05d8](https://github.com/microsoft/hve-core/commit/f3e05d8bfd2fdffd564a003bf162f24d3a3ca44c))
+* **extension:** preserve artifact directory structure in collection packaging ([#725](https://github.com/microsoft/hve-core/issues/725)) ([4fa94e0](https://github.com/microsoft/hve-core/commit/4fa94e041749a231e5148b6c3054197c389d30bf))
+* **instructions:** pull request template body case-insensitive ([#719](https://github.com/microsoft/hve-core/issues/719)) ([4cc2a5c](https://github.com/microsoft/hve-core/commit/4cc2a5c98f987cd29dc4c9d52463246cf5796101))
+* **instructions:** reorder branch freshness gate before diff generation ([#723](https://github.com/microsoft/hve-core/issues/723)) ([23b457c](https://github.com/microsoft/hve-core/commit/23b457c0e7643629b8438497895e7cf9c2609566))
+
+## [3.0.1](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.0...hve-core-v3.0.1) (2026-02-20)
+
+
+### 🐛 Bug Fixes
+
+* **scripts:** add marketplace manifest validation and standardize source format ([#711](https://github.com/microsoft/hve-core/issues/711)) ([c5ac616](https://github.com/microsoft/hve-core/commit/c5ac616f3b255e17caa187f7a0b585540b9f8999))
+
+## [3.0.0](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.10...hve-core-v3.0.0) (2026-02-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **skills:** migrate PR reference generation to self-contained skill ([#669](https://github.com/microsoft/hve-core/issues/669))
+* restructure RPI collection to HVE Core naming convention ([#668](https://github.com/microsoft/hve-core/issues/668))
+
+### ✨ Features
+
+* **agents:** add agile-coach agent ([#562](https://github.com/microsoft/hve-core/issues/562)) ([de8d86c](https://github.com/microsoft/hve-core/commit/de8d86c8609df811499c206f7fc644555ee4e903))
+* **agents:** add DT coach agent with tiered instruction loading ([#656](https://github.com/microsoft/hve-core/issues/656)) ([206d3a7](https://github.com/microsoft/hve-core/commit/206d3a70abbfd0e54d8486426e0108d4887ce283))
+* **agents:** add product manager advisor and UX/UI designer agents ([#627](https://github.com/microsoft/hve-core/issues/627)) ([539eb8a](https://github.com/microsoft/hve-core/commit/539eb8ab8aacf79dcb833d9df72c64d12000af8a))
+* **agents:** add system architecture reviewer for design trade-offs and ADR creation ([#626](https://github.com/microsoft/hve-core/issues/626)) ([de5cfd6](https://github.com/microsoft/hve-core/commit/de5cfd6214cdb0a0196f476bdcf8b665dabd6a1b))
+* **build:** pin devcontainer image and align tool parity ([#704](https://github.com/microsoft/hve-core/issues/704)) ([6258b1c](https://github.com/microsoft/hve-core/commit/6258b1c45b570aab098f142e7997b5d819c17905))
+* **design-thinking:** add manufacturing industry context template ([#682](https://github.com/microsoft/hve-core/issues/682)) ([ce864bf](https://github.com/microsoft/hve-core/commit/ce864bf7794b1e59d728b9529cfe2a8ece371f7c))
+* **instructions:** add DT coaching state protocol for session persistence ([#654](https://github.com/microsoft/hve-core/issues/654)) ([5a5be4e](https://github.com/microsoft/hve-core/commit/5a5be4e1a1bc4d09d343de6e5ddcd1509c342d7a))
+* **instructions:** add dt-coaching-identity ambient instruction ([#642](https://github.com/microsoft/hve-core/issues/642)) ([6209a0d](https://github.com/microsoft/hve-core/commit/6209a0dae2c177a559118f6dce4591492a51615e))
+* **instructions:** add dt-method-01-deep for advanced scope conversation techniques ([#673](https://github.com/microsoft/hve-core/issues/673)) ([cc92ef9](https://github.com/microsoft/hve-core/commit/cc92ef9e1bf4934edd37c6d2896fd4f5fe624b7e))
+* **instructions:** add dt-method-03-deep for advanced input synthesis techniques ([#676](https://github.com/microsoft/hve-core/issues/676)) ([0079a4f](https://github.com/microsoft/hve-core/commit/0079a4f6ff0d2de74fb883a003e20a20d741e38f))
+* **instructions:** add dt-method-09-deep instructions for Method 9 advanced coaching ([#703](https://github.com/microsoft/hve-core/issues/703)) ([150b2a6](https://github.com/microsoft/hve-core/commit/150b2a6787a70867cbeee5e95ed759008dad6e31))
+* **instructions:** add dt-method-sequencing ambient instruction ([#650](https://github.com/microsoft/hve-core/issues/650)) ([e465b2f](https://github.com/microsoft/hve-core/commit/e465b2f7880466942b0e730cd022ec9c58c1c9b5))
+* **instructions:** add dt-quality-constraints and design-thinking collection ([#645](https://github.com/microsoft/hve-core/issues/645)) ([17002bd](https://github.com/microsoft/hve-core/commit/17002bd2e5fcefd8adc52161c411fab48106b724))
+* **instructions:** add DT-to-RPI handoff contract specification ([#679](https://github.com/microsoft/hve-core/issues/679)) ([87f9962](https://github.com/microsoft/hve-core/commit/87f996239965144b9293139e0fe92419fab6b25a))
+* **instructions:** add energy industry context template ([#687](https://github.com/microsoft/hve-core/issues/687)) ([41088d8](https://github.com/microsoft/hve-core/commit/41088d8cace7217ad292b138eb82161f753d50c6))
+* **instructions:** add healthcare industry context template ([#686](https://github.com/microsoft/hve-core/issues/686)) ([b2d5281](https://github.com/microsoft/hve-core/commit/b2d52811097c964d248c0f50f33968b192a367b5))
+* **instructions:** add Method 1 Scope Conversations coaching knowledge ([#651](https://github.com/microsoft/hve-core/issues/651)) ([93e2d48](https://github.com/microsoft/hve-core/commit/93e2d485a77c1adc7cea7f1e377b710f24f497ce))
+* **instructions:** add Method 2 Design Research coaching knowledge ([#652](https://github.com/microsoft/hve-core/issues/652)) ([30f7f3b](https://github.com/microsoft/hve-core/commit/30f7f3bd65ea1d96f5fe7697583653756668056e))
+* **instructions:** add Method 3 Input Synthesis coaching knowledge ([#653](https://github.com/microsoft/hve-core/issues/653)) ([1efdb7d](https://github.com/microsoft/hve-core/commit/1efdb7dacff762c88558d9b8e160a365d84e75c8))
+* **instructions:** add Method 7 High-Fidelity Prototypes coaching instruction ([#666](https://github.com/microsoft/hve-core/issues/666)) ([9233eab](https://github.com/microsoft/hve-core/commit/9233eab9f1b4630dd38f02184750477c98d1ebc8))
+* **instructions:** add pull request instructions for PR generation workflow ([#706](https://github.com/microsoft/hve-core/issues/706)) ([73d23eb](https://github.com/microsoft/hve-core/commit/73d23eb371c20eaf64e16d35e6dec3fb1cc5d38b))
+* **instructions:** create DT curriculum content (9 modules) ([#690](https://github.com/microsoft/hve-core/issues/690)) ([9f7378f](https://github.com/microsoft/hve-core/commit/9f7378f34d8a7c3f5279de31a2c0327ecba984ad)), closes [#617](https://github.com/microsoft/hve-core/issues/617)
+* **instructions:** create dt-method-02-deep.instructions.md ([#700](https://github.com/microsoft/hve-core/issues/700)) ([4d4d0ca](https://github.com/microsoft/hve-core/commit/4d4d0caacad6147d4f0669826fa69c2f97e79ebf))
+* **instructions:** create dt-method-06-lofi-prototypes.instructions.md ([#684](https://github.com/microsoft/hve-core/issues/684)) ([4d5f757](https://github.com/microsoft/hve-core/commit/4d5f7571cb72864e5142c6549a5047c37f6a29b6))
+* **instructions:** create dt-method-07-deep.instructions.md ([#678](https://github.com/microsoft/hve-core/issues/678)) ([d3ec70d](https://github.com/microsoft/hve-core/commit/d3ec70d6eae62fb09d103e6ab3255f75e01d41c6))
+* **instructions:** Create dt-method-08-deep.instructions.md ([#683](https://github.com/microsoft/hve-core/issues/683)) ([d9e1115](https://github.com/microsoft/hve-core/commit/d9e11152b194a7a59aaa4ca5192dc38046f3070a))
+* **instructions:** create dt-method-08-testing.instructions.md ([#681](https://github.com/microsoft/hve-core/issues/681)) ([3008ad8](https://github.com/microsoft/hve-core/commit/3008ad8054056c2760c7f334d93f77485aff3717))
+* **instructions:** create dt-method-09-iteration.instructions.md ([#685](https://github.com/microsoft/hve-core/issues/685)) ([9d7f4f5](https://github.com/microsoft/hve-core/commit/9d7f4f5e50f513fdeaa77319fb2343359d104028))
+* **instructions:** create dt-rpi-research-context.instructions.md ([#689](https://github.com/microsoft/hve-core/issues/689)) ([34c7b89](https://github.com/microsoft/hve-core/commit/34c7b89db2788a8ccc0cba00ff4083a2b0eb9b35))
+* **instructions:** create manufacturing reference learning scenario ([#692](https://github.com/microsoft/hve-core/issues/692)) ([1bd3994](https://github.com/microsoft/hve-core/commit/1bd39946f284e60b5015c938085ff42ab26d4cec))
+* **instructions:** Design Thinking Method 4 brainstorming instruction file ([#664](https://github.com/microsoft/hve-core/issues/664)) ([06f90b0](https://github.com/microsoft/hve-core/commit/06f90b0681203468a9c1a2e235768bbd73244df5))
+* **prompts:** add DT start-project prompt for coaching initialization ([#657](https://github.com/microsoft/hve-core/issues/657)) ([ce583d5](https://github.com/microsoft/hve-core/commit/ce583d509c25e0425062095544dcf26ec09752ce))
+* **prompts:** add dt-resume-coaching prompt for session recovery ([#665](https://github.com/microsoft/hve-core/issues/665)) ([11b93cb](https://github.com/microsoft/hve-core/commit/11b93cb662dd89c4cd7b65fefcc8bc6071d1faf1))
+* **prompts:** create dt-handoff-problem-space.prompt.md ([#688](https://github.com/microsoft/hve-core/issues/688)) ([277963d](https://github.com/microsoft/hve-core/commit/277963de44aa0b6db146efba1fb5cd6ab49a8a0c))
+* **scripts:** add collection-level maturity field with validation, gating, and notices ([#697](https://github.com/microsoft/hve-core/issues/697)) ([7b1c8e8](https://github.com/microsoft/hve-core/commit/7b1c8e826620db36c582447fc1431e912f1ed22a))
+* **scripts:** add per-violation CI annotations and colorized console output ([#637](https://github.com/microsoft/hve-core/issues/637)) ([bd7d512](https://github.com/microsoft/hve-core/commit/bd7d512209499b201a0c672899ee2a81c1cfc94d))
+* **skills:** edit SKILL frontmatter schema, add CI validation, and documentation ([#625](https://github.com/microsoft/hve-core/issues/625)) ([0138a78](https://github.com/microsoft/hve-core/commit/0138a78abb05059fb36cec9c029fdd58f54d2d5b))
+* **skills:** mandate unit testing and document language support ([#636](https://github.com/microsoft/hve-core/issues/636)) ([9263617](https://github.com/microsoft/hve-core/commit/9263617806792ba6bfaa06c778c7195b05f40d5f))
+* **skills:** migrate PR reference generation to self-contained skill ([#669](https://github.com/microsoft/hve-core/issues/669)) ([cf8805f](https://github.com/microsoft/hve-core/commit/cf8805f96742670ef6436a081be582864c7e4e86))
+
+
+### 🐛 Bug Fixes
+
+* **collections:** migrate artifacts into collection-based subdirectories ([#658](https://github.com/microsoft/hve-core/issues/658)) ([dfa5261](https://github.com/microsoft/hve-core/commit/dfa52619f128ff744bfff4cb17bbc6de3624b9df))
+* **instructions:** optimize Phase 1 DT token budgets and close [#564](https://github.com/microsoft/hve-core/issues/564)/[#565](https://github.com/microsoft/hve-core/issues/565) gaps ([#675](https://github.com/microsoft/hve-core/issues/675)) ([4f42f00](https://github.com/microsoft/hve-core/commit/4f42f00de1c2ba47b7c913acbd76e1b4e9b3b354))
+* **scripts:** add CI annotations and step summary to copyright header check ([#638](https://github.com/microsoft/hve-core/issues/638)) ([5fa6328](https://github.com/microsoft/hve-core/commit/5fa63281cac96faae6f7442d726651d45934d466))
+* **scripts:** add grouped link-lang console diagnostics and failure summary ([#661](https://github.com/microsoft/hve-core/issues/661)) ([4d6871f](https://github.com/microsoft/hve-core/commit/4d6871fa082600e781e0c7d9b8df6e2a1539f700))
+* **scripts:** add per-violation Write-Host and Write-CIAnnotation output to Test-DependencyPinning ([#640](https://github.com/microsoft/hve-core/issues/640)) ([9d3b71d](https://github.com/microsoft/hve-core/commit/9d3b71dc43e9762943c5092d855086f55dcb8473))
+* **scripts:** align agent frontmatter schema with VS Code spec ([#469](https://github.com/microsoft/hve-core/issues/469)) ([254d445](https://github.com/microsoft/hve-core/commit/254d4454d17e8794ba5ee533457c078dd7f2334f))
+* **scripts:** optimize PSScriptAnalyzer linting performance in WSL2 ([#667](https://github.com/microsoft/hve-core/issues/667)) ([f120b93](https://github.com/microsoft/hve-core/commit/f120b93b198a69de5c9d889a2fce554cc9cbe13d))
+* **scripts:** stabilize YAML display key ordering in collection manifest ([#701](https://github.com/microsoft/hve-core/issues/701)) ([73c0d2c](https://github.com/microsoft/hve-core/commit/73c0d2ca189f5b73387de6a78e432956230cfd76))
+* **scripts:** use text stubs for plugin links when symlinks unavailable ([#695](https://github.com/microsoft/hve-core/issues/695)) ([d7650a3](https://github.com/microsoft/hve-core/commit/d7650a3a4b4acc2949d42f9a755285fe261271f8))
+* **skills:** fix powershell test coverage in pr-reference skill ([#699](https://github.com/microsoft/hve-core/issues/699)) ([408e6b7](https://github.com/microsoft/hve-core/commit/408e6b76925e5787f9f19e79cc21d637de8071b3))
+
+
+### 📚 Documentation
+
+* **dt:** add Method 5 Concepts and Method 6 Lo-Fi Prototypes instructions ([#693](https://github.com/microsoft/hve-core/issues/693)) ([cfdcf11](https://github.com/microsoft/hve-core/commit/cfdcf11cbc4fbe03af374436a53f51e9e627b872))
+* **hve-guide:** add role-based guides and project lifecycle documentation ([#663](https://github.com/microsoft/hve-core/issues/663)) ([17a85da](https://github.com/microsoft/hve-core/commit/17a85daf2f170d57880c18936fe38b190d2f5b2e))
+
+
+### ♻️ Refactoring
+
+* restructure RPI collection to HVE Core naming convention ([#668](https://github.com/microsoft/hve-core/issues/668)) ([120dde0](https://github.com/microsoft/hve-core/commit/120dde0dc7a824b995a18fd3f07d8e15947ddf79))
+* **scripts:** consolidate duplicate logging into shared SecurityHelpers module ([#655](https://github.com/microsoft/hve-core/issues/655)) ([627a877](https://github.com/microsoft/hve-core/commit/627a87791c9fc94fbfbd596589ce6a1faaaa013d))
+* **scripts:** use shared SecurityHelpers and CIHelpers modules in security scripts ([#705](https://github.com/microsoft/hve-core/issues/705)) ([3a0baa7](https://github.com/microsoft/hve-core/commit/3a0baa73679086c8f833cbd4c807586a63342a08))
+
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump markdownlint-cli2 from 0.20.0 to 0.21.0 in the npm-dependencies group ([#609](https://github.com/microsoft/hve-core/issues/609)) ([1486dd7](https://github.com/microsoft/hve-core/commit/1486dd72b1f4175a42ae376bc4ec8f1026058b9e))
+
 ## [2.3.10](https://github.com/microsoft/hve-core/compare/hve-core-v2.3.9...hve-core-v2.3.10) (2026-02-17)
 
 
