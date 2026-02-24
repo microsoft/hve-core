@@ -2,13 +2,6 @@ HVE Core provides the complete collection of AI chat agents, prompts, instructio
 
 Use this edition when you want access to everything without choosing a focused collection.
 
-Design Thinking coaching included:
-
-- **DT Coach** — Conversational coaching agent that guides teams through all 9 Design Thinking methods with Think/Speak/Empower philosophy
-- **DT Learning Tutor** — Curriculum-based learning agent covering all 9 methods with manufacturing reference scenarios and progressive exercises
-- **DT Prompts** — Project initialization, session resumption, method advancement, space handoffs, and method-specific workflows for brainstorming, concepts, and prototyping
-- **DT Instructions** — Coaching identity, quality constraints, method sequencing, 9 method-specific guides with deep expertise companions, 3 industry contexts (manufacturing, healthcare, energy), 9 curriculum modules, and RPI integration context
-
 Supporting subagents included:
 
 - **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
