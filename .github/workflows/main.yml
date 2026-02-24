@@ -228,7 +228,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout dependency manifests
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           sparse-checkout: |
             package.json
@@ -271,7 +271,7 @@ jobs:
       attestations: write
     steps:
       - name: Checkout Syft config
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           sparse-checkout: .syft.yaml
           sparse-checkout-cone-mode: false
