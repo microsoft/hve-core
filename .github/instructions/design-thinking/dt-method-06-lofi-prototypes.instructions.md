@@ -322,3 +322,4 @@ Within this folder, produce and update these files:
   Capture structured observation data per test session using the response capture template.
 * `.copilot-tracking/dt/{project-slug}/method-06-lofi-prototypes/constraint-discoveries.md`
   Document cross-session constraint patterns with severity assessment, categorized by physical, environmental, and workflow, with Method 7 handoff notes.
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

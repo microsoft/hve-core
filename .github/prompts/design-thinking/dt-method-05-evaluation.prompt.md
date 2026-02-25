@@ -1,15 +1,19 @@
 ---
 description: 'Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core'
 agent: dt-coach
-argument-hint: "projectName=... [stakeholderGroups=...]"
+argument-hint: "project-slug=... [stakeholderGroups=...]"
 ---
 
 # Method 5: User Concepts - Evaluation
 
 ## Inputs
 
-* ${input:projectName}: (Required) Name of the DT project for state lookup.
+* ${input:project-slug}: (Required) Kebab-case project identifier for the artifact directory (e.g., `factory-floor-maintenance`).
 * ${input:stakeholderGroups}: (Optional) Stakeholder perspectives for concept alignment (e.g., "workers, managers, IT support").
+
+## Requirements
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ---
 

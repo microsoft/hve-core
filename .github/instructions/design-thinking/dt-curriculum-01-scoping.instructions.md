@@ -41,3 +41,5 @@ Scope conversations are the entry point to the Problem Space. They exist to ensu
 ## Learner Level Adaptations
 
 Beginners should focus on the frozen-vs-fluid distinction and basic progressive questioning. Intermediate learners benefit from comparing different questioning strategies and understanding how stakeholder mapping connects forward to Method 2 research planning. Advanced learners should explore edge cases where scope conversations reveal the original request should be abandoned entirely, and critique how power dynamics between stakeholders shape which problems get prioritized.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

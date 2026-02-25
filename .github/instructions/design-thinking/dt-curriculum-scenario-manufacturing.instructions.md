@@ -93,3 +93,5 @@ Use these fictional results for Module 7-9 exercises.
 | T6   | System response time during peak production load             | Pass   | Average 2.1 seconds, within 3-second threshold               |
 | T7   | Repair category terminology match with operator language     | Fail   | 35% wrong-category selection rate; terminology mismatch      |
 | T8   | Emergency procedure lookup under simulated urgency           | Pass   | 95% completion rate, 12-second average; highest satisfaction |
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

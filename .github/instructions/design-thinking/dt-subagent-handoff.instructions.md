@@ -69,3 +69,4 @@ During all subagent dispatch:
 * Coach identity and hint calibration persist across dispatch boundaries.
 * If subagent dispatch fails, the coach presents assessment or compilation manually with reduced detail.
 * Inform the user that background work is in progress ("Let me check our readiness for handoff...").
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
