@@ -205,7 +205,7 @@ function Get-VscePackageCommand {
         # --yes auto-confirms npx package installation for non-interactive CI environments
         return @{
             Executable = 'npx'
-            Arguments  = @('--yes', '@vscode/vsce') + $vsceArgs
+            Arguments  = @('--yes', '@vscode/vsce@3.7.1') + $vsceArgs
         }
     }
 

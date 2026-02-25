@@ -37,11 +37,13 @@ This is a declarative extension: it contributes configuration and file paths, an
 
 ## Prerequisites
 
-Install the VS Code Extension Manager CLI:
+Install project dependencies (includes the VS Code Extension Manager CLI):
 
 ```bash
-npm install -g @vscode/vsce
+npm ci
 ```
+
+After installation, use `npx vsce` to invoke the CLI.
 
 Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
 
