@@ -72,48 +72,7 @@ jobs:
         id: discover
         shell: pwsh
         run: |
-          Import-Module PowerShell-Yaml -ErrorAction Stop
-
-          $collectionsDir = 'collections'
-          $channel = '${{ inputs.channel }}'.Trim()
-          if (-not $channel) { $channel = 'Stable' }
-
-          if (-not (Test-Path $collectionsDir)) {
-            Write-Error "Collections directory not found: $collectionsDir"
-            exit 1
-          }
-
-          $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File | Sort-Object Name
-          $matrixItems = @()
-
-          foreach ($file in $collectionFiles) {
-            $manifest = ConvertFrom-Yaml -Yaml (Get-Content -Path $file.FullName -Raw)
-            $id = [string]$manifest.id
-            $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
-            $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
-
-            if ($maturity -eq 'deprecated') {
-              Write-Host "::notice::Skipping deprecated collection: $id"
-              continue
-            }
-
-            if ($channel -eq 'Stable' -and $maturity -eq 'experimental') {
-              Write-Host "::notice::Skipping experimental collection '$id' for Stable channel"
-              continue
-            }
-
-            $matrixItems += @{
-              id       = $id
-              name     = $name
-              manifest = $file.FullName -replace '\\', '/'
-              maturity = $maturity
-            }
-          }
-
-          $matrixJson = @{ include = $matrixItems } | ConvertTo-Json -Depth 5 -Compress
-          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "Discovered collections:"
-          $matrixJson | ConvertFrom-Json | ConvertTo-Json -Depth 5
+          & ./scripts/extension/Find-CollectionManifests.ps1 -Channel '${{ inputs.channel }}'
 
   package:
     name: Package ${{ matrix.id }}

@@ -8,11 +8,11 @@ argument-hint: "milestone=... [documents=...] [sprintGoal=...] [capacity=...] [a
 
 Analyze a GitHub milestone, assess issue coverage against the full label taxonomy and optional planning documents, and produce a prioritized sprint plan with gap analysis and dependency awareness.
 
-Follow all instructions from #file:../instructions/github-backlog-planning.instructions.md (the planning specification) for shared conventions, templates, and the label taxonomy.
+Follow all instructions from #file:../../instructions/github/github-backlog-planning.instructions.md (the planning specification) for shared conventions, templates, and the label taxonomy.
 
-When documents are provided, follow the Document Parsing Guidelines from [github-backlog-discovery.instructions.md](../instructions/github-backlog-discovery.instructions.md) (the discovery instructions) for requirement extraction and similarity assessment.
+When documents are provided, follow the Document Parsing Guidelines from [github-backlog-discovery.instructions.md](../../instructions/github/github-backlog-discovery.instructions.md) (the discovery instructions) for requirement extraction and similarity assessment.
 
-Follow the Conventional Commit Title Pattern to Label Mapping, Scope Keyword to Scope Label Mapping, Priority Assessment, and Milestone Recommendation sections from [github-backlog-triage.instructions.md](../instructions/github-backlog-triage.instructions.md) (the triage instructions) for label mapping, priority assessment, and milestone recommendations.
+Follow the Conventional Commit Title Pattern to Label Mapping, Scope Keyword to Scope Label Mapping, Priority Assessment, and Milestone Recommendation sections from [github-backlog-triage.instructions.md](../../instructions/github/github-backlog-triage.instructions.md) (the triage instructions) for label mapping, priority assessment, and milestone recommendations.
 
 ## Inputs
 

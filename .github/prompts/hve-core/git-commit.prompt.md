@@ -5,7 +5,7 @@ description: 'Stages all changes, generates a conventional commit message, shows
 
 # Stage, Generate, and Commit
 
-Must follow all instructions provided by #file:../instructions/commit-message.instructions.md
+Must follow all instructions provided by #file:../../instructions/hve-core/commit-message.instructions.md
 
 Protocol:
 
