@@ -322,10 +322,10 @@ Affected workflow jobs:
 
 Defense-in-depth controls:
 
-- All workflows declare job-level permissions, not workflow-level
-- `persist-credentials: false` set on all checkout steps
-- Inline YAML comments document each `security-events: write` declaration
-- SARIF upload is the only write operation performed under this permission
+* All workflows declare job-level permissions, not workflow-level
+* `persist-credentials: false` set on all checkout steps
+* Inline YAML comments document each `security-events: write` declaration
+* SARIF upload is the only write operation performed under this permission
 
 #### E-2: Branch Protection Bypass
 
