@@ -289,16 +289,43 @@ This section documents threats using [STRIDE](https://learn.microsoft.com/azure/
 
 #### E-1: Workflow Token Abuse
 
-| Field             | Value                                                             |
-|-------------------|-------------------------------------------------------------------|
-| **Category**      | Elevation of Privilege                                            |
-| **Asset**         | GitHub Actions tokens                                             |
-| **Threat**        | Compromised workflow step uses GITHUB_TOKEN beyond intended scope |
-| **Likelihood**    | Low (minimal permissions declared)                                |
-| **Impact**        | Medium (depends on token permissions)                             |
-| **Mitigations**   | Minimal permissions pattern, persist-credentials: false           |
-| **Residual Risk** | Low                                                               |
-| **Status**        | Mitigated                                                         |
+| Field             | Value                                                                                            |
+|-------------------|--------------------------------------------------------------------------------------------------|
+| **Category**      | Elevation of Privilege                                                                           |
+| **Asset**         | GitHub Actions tokens                                                                            |
+| **Threat**        | Compromised workflow step uses GITHUB_TOKEN beyond intended scope                                |
+| **Likelihood**    | Low (minimal permissions declared)                                                               |
+| **Impact**        | Medium (depends on token permissions)                                                            |
+| **Mitigations**   | Minimal permissions pattern, persist-credentials: false, inline comments on elevated permissions |
+| **Residual Risk** | Low                                                                                              |
+| **Status**        | Mitigated with Accepted Risk                                                                     |
+
+##### Accepted Risk: Token-Permissions Alerts
+
+OpenSSF Scorecard Token-Permissions flags `security-events: write` as overly broad across workflow files. This permission is required for `github/codeql-action/upload-sarif` and `github/codeql-action/analyze` to upload SARIF results to the repository Security tab. The `security-events` scope grants access only to code scanning alert data and cannot modify repository content, settings, or secrets.
+
+Scorecard's own `scorecard.yml` requires the same permission to publish results, creating a circular dependency in the token-permissions check.
+
+Affected workflow jobs:
+
+| Workflow                          | Job                          |
+|-----------------------------------|------------------------------|
+| `main.yml`                        | `dependency-pinning-scan`    |
+| `main.yml`                        | `gitleaks-scan`              |
+| `pr-validation.yml`               | `dependency-pinning-check`   |
+| `pr-validation.yml`               | `workflow-permissions-check` |
+| `pr-validation.yml`               | `gitleaks-scan`              |
+| `pr-validation.yml`               | `codeql`                     |
+| `security-scan.yml`               | `codeql`                     |
+| `weekly-security-maintenance.yml` | `validate-pinning`           |
+| `weekly-security-maintenance.yml` | `codeql-analysis`            |
+
+Defense-in-depth controls:
+
+- All workflows declare job-level permissions, not workflow-level
+- `persist-credentials: false` set on all checkout steps
+- Inline YAML comments document each `security-events: write` declaration
+- SARIF upload is the only write operation performed under this permission
 
 #### E-2: Branch Protection Bypass
 
