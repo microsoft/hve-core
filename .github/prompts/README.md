@@ -22,58 +22,58 @@ This directory contains **coaching and guidance prompts** designed to provide st
 
 Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/task-research`, `/git-commit`). They provide:
 
-- **Educational Guidance**: Step-by-step coaching approach
-- **Context-Aware Assistance**: Project-specific guidance and examples
-- **Best Practices**: Established patterns and conventions
-- **Interactive Support**: Conversational assistance for complex tasks
+* **Educational Guidance**: Step-by-step coaching approach
+* **Context-Aware Assistance**: Project-specific guidance and examples
+* **Best Practices**: Established patterns and conventions
+* **Interactive Support**: Conversational assistance for complex tasks
 
 ## Available Prompts
 
 ### Onboarding & Planning
 
-- **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
-- **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
-- **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
+* **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
+* **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
+* **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
 
 ### Source Control & Commit Quality
 
-- **[Git Commit (Stage + Commit)](./hve-core/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
-- **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
-- **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
-- **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
+* **[Git Commit (Stage + Commit)](./hve-core/git-commit.prompt.md)** - Stages all changes and creates a Conventional Commit automatically
+* **[Git Commit Message Generator](./hve-core/git-commit-message.prompt.md)** - Generates a compliant commit message for currently staged changes
+* **[Git Merge](./hve-core/git-merge.prompt.md)** - Git merge, rebase, and rebase --onto workflows with conflict handling
+* **[Git Setup](./hve-core/git-setup.prompt.md)** - Verification-first Git configuration assistant
 
 ### Azure DevOps Integration
 
 #### Work Item Management
 
-- **[ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md)** - Retrieves user's work items and organizes into planning files
-- **[ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)** - Processes planning files for task planning with repository context enrichment
+* **[ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md)** - Retrieves user's work items and organizes into planning files
+* **[ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)** - Processes planning files for task planning with repository context enrichment
 
 > **Note:** For comprehensive work item task planning, use the two-step workflow: First run `ado-get-my-work-items` to retrieve and organize work items into planning files, then `ado-process-my-work-items-for-task-planning` to enrich with repository context and generate task planning handoffs.
 
 #### Pull Requests & Builds
 
-- **[ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)** - Creates Azure DevOps PRs with work item discovery and reviewer identification
-- **[ADO Get Build Info](./ado/ado-get-build-info.prompt.md)** - Retrieves Azure DevOps build information for PRs or specific builds
+* **[ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)** - Creates Azure DevOps PRs with work item discovery and reviewer identification
+* **[ADO Get Build Info](./ado/ado-get-build-info.prompt.md)** - Retrieves Azure DevOps build information for PRs or specific builds
 
 ### GitHub Integration
 
-- **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create GitHub issues with proper formatting and labels
+* **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create GitHub issues with proper formatting and labels
 
 ### Azure Operations
 
-- **[Incident Response](./security-planning/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
+* **[Incident Response](./security-planning/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 
 ### Documentation & Process
 
-- **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
-- **[Risk Register](./security-planning/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
+* **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
+* **[Risk Register](./security-planning/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Custom Agents
 
-- **Prompts** (this directory): Coaching and educational guidance for learning
-- **[Instructions](../instructions/README.md)**: Systematic implementation and automation
-- **[Agents](../../docs/contributing/custom-agents.md)**: Specialized AI assistance with enhanced capabilities
+* **Prompts** (this directory): Coaching and educational guidance for learning
+* **[Instructions](../instructions/README.md)**: Systematic implementation and automation
+* **[Agents](../../docs/contributing/custom-agents.md)**: Specialized AI assistance with enhanced capabilities
 
 ## Quick Start
 
@@ -92,9 +92,9 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ## Related Resources
 
-- **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
-- **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
-- **[Agents](../../docs/contributing/custom-agents.md)** - Specialized AI assistance with enhanced capabilities
+* **[Contributing Guide](../../CONTRIBUTING.md)** - Complete guide to contributing to the project
+* **[Instructions](../instructions/README.md)** - Comprehensive guidance files for development standards
+* **[Agents](../../docs/contributing/custom-agents.md)** - Specialized AI assistance with enhanced capabilities
 
 ---
 

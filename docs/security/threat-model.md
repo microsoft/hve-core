@@ -17,10 +17,10 @@ estimated_reading_time: 25
 
 HVE Core is an enterprise prompt engineering framework for GitHub Copilot consisting of:
 
-- Markdown-based prompt artifacts (instructions, prompts, agents, skills)
-- PowerShell automation scripts for linting and validation
-- GitHub Actions CI/CD workflows
-- VS Code extension packaging utilities
+* Markdown-based prompt artifacts (instructions, prompts, agents, skills)
+* PowerShell automation scripts for linting and validation
+* GitHub Actions CI/CD workflows
+* VS Code extension packaging utilities
 
 The repository contains no runtime services, databases, or user data storage. Primary threats target supply chain integrity and developer workflow compromise. Security relies on defense-in-depth with 18+ automated controls validated through CI/CD pipelines.
 
@@ -36,18 +36,18 @@ The repository contains no runtime services, databases, or user data storage. Pr
 
 ## Contents
 
-- [System Description](#system-description)
-- [Trust Boundaries](#trust-boundaries)
-- [Threat Model](#threat-model)
-  - [STRIDE Threats](#stride-threats)
-  - [Dev Container Threats](#dev-container-threats)
-  - [AI-Specific Threats](#ai-specific-threats)
-  - [Responsible AI Threats](#responsible-ai-threats)
-- [Security Controls](#security-controls)
-- [Assurance Argument](#assurance-argument)
-- [MCP Server Trust Analysis](#mcp-server-trust-analysis)
-- [Quantitative Security Metrics](#quantitative-security-metrics)
-- [References](#references)
+* [System Description](#system-description)
+* [Trust Boundaries](#trust-boundaries)
+* [Threat Model](#threat-model)
+  * [STRIDE Threats](#stride-threats)
+  * [Dev Container Threats](#dev-container-threats)
+  * [AI-Specific Threats](#ai-specific-threats)
+  * [Responsible AI Threats](#responsible-ai-threats)
+* [Security Controls](#security-controls)
+* [Assurance Argument](#assurance-argument)
+* [MCP Server Trust Analysis](#mcp-server-trust-analysis)
+* [Quantitative Security Metrics](#quantitative-security-metrics)
+* [References](#references)
 
 ## System Description
 
@@ -56,24 +56,24 @@ The repository contains no runtime services, databases, or user data storage. Pr
 HVE Core contains four primary component categories:
 
 1. **Prompt Engineering Artifacts** (`.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.github/skills/`)
-   - Markdown files with YAML frontmatter
-   - Consumed by GitHub Copilot during development sessions
-   - No executable code execution within prompts
+   * Markdown files with YAML frontmatter
+   * Consumed by GitHub Copilot during development sessions
+   * No executable code execution within prompts
 
 2. **PowerShell Scripts** (`scripts/`)
-   - Linting and validation utilities
-   - CI/CD automation support
-   - No external network connections except documented tool downloads
+   * Linting and validation utilities
+   * CI/CD automation support
+   * No external network connections except documented tool downloads
 
 3. **GitHub Actions Workflows** (`.github/workflows/`)
-   - PR validation pipeline
-   - Security scanning (CodeQL, dependency review)
-   - Release automation
+   * PR validation pipeline
+   * Security scanning (CodeQL, dependency review)
+   * Release automation
 
 4. **VS Code Extension** (`extension/`)
-   - Packaging configuration
-   - Extension manifest
-   - No telemetry or data collection
+   * Packaging configuration
+   * Extension manifest
+   * No telemetry or data collection
 
 ### Data Flow
 
@@ -771,7 +771,7 @@ HVE Core achieves acceptable security through:
 1. **Automated Controls**: 18+ security controls execute automatically via CI/CD
 2. **Defense-in-Depth**: Multiple overlapping controls for critical threats
 3. **Transparent Risk Acceptance**: AI-inherent risks documented with clear boundaries
-4. **Inherited Security**: Leverages GitHub and Copilot platform security
+4. **Inherited Security**: Uses GitHub and Copilot platform security
 
 ## MCP Server Trust Analysis
 
@@ -875,19 +875,19 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Internal Documentation
 
-- [SECURITY.md](../../SECURITY.md): Vulnerability disclosure process
-- [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and roles
-- [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
-- [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
+* [SECURITY.md](../../SECURITY.md): Vulnerability disclosure process
+* [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and roles
+* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 
 ### External Standards
 
-- [OpenSSF Best Practices Silver Criteria](https://www.bestpractices.dev/en/criteria/1)
-- [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-- [MITRE ATLAS](https://atlas.mitre.org/)
-- [Microsoft Responsible AI Standard](https://www.microsoft.com/ai/responsible-ai)
-- [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
-- [GitHub Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+* [OpenSSF Best Practices Silver Criteria](https://www.bestpractices.dev/en/criteria/1)
+* [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+* [MITRE ATLAS](https://atlas.mitre.org/)
+* [Microsoft Responsible AI Standard](https://www.microsoft.com/ai/responsible-ai)
+* [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
+* [GitHub Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 
 ---
 

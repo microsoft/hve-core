@@ -12,38 +12,38 @@ Select all that apply:
 
 **Code & Documentation:**
 
-- [ ] Bug fix (non-breaking change fixing an issue)
-- [ ] New feature (non-breaking change adding functionality)
-- [ ] Breaking change (fix or feature causing existing functionality to change)
-- [ ] Documentation update
+* [ ] Bug fix (non-breaking change fixing an issue)
+* [ ] New feature (non-breaking change adding functionality)
+* [ ] Breaking change (fix or feature causing existing functionality to change)
+* [ ] Documentation update
 
 **Infrastructure & Configuration:**
 
-- [ ] GitHub Actions workflow
-- [ ] Linting configuration (markdown, PowerShell, etc.)
-- [ ] Security configuration
-- [ ] DevContainer configuration
-- [ ] Dependency update
+* [ ] GitHub Actions workflow
+* [ ] Linting configuration (markdown, PowerShell, etc.)
+* [ ] Security configuration
+* [ ] DevContainer configuration
+* [ ] Dependency update
 
 **AI Artifacts:**
 
-- [ ] Reviewed contribution with `prompt-builder` agent and addressed all feedback
-- [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
-- [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
-- [ ] Copilot agent (`.github/agents/*.agent.md`)
-- [ ] Copilot skill (`.github/skills/*/SKILL.md`)
+* [ ] Reviewed contribution with `prompt-builder` agent and addressed all feedback
+* [ ] Copilot instructions (`.github/instructions/*.instructions.md`)
+* [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
+* [ ] Copilot agent (`.github/agents/*.agent.md`)
+* [ ] Copilot skill (`.github/skills/*/SKILL.md`)
 
 > **Note for AI Artifact Contributors**:
 >
-> - **Agents**: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
-> - **Skills**: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
-> - **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
-> - See [Agents Not Accepted](../docs/contributing/custom-agents.md#agents-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
+> * **Agents**: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
+> * **Skills**: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
+> * **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
+> * See [Agents Not Accepted](../docs/contributing/custom-agents.md#agents-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
 
 **Other:**
 
-- [ ] Script/automation (`.ps1`, `.sh`, `.py`)
-- [ ] Other (please describe):
+* [ ] Script/automation (`.ps1`, `.sh`, `.py`)
+* [ ] Other (please describe):
 
 ## Sample Prompts (for AI Artifact Contributions)
 
@@ -64,11 +64,11 @@ Select all that apply:
 
 For detailed contribution requirements, see:
 
-- **Common Standards**: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
-- **Agents**: [docs/contributing/custom-agents.md](../docs/contributing/custom-agents.md) - Agent configurations with tools and behavior patterns
-- **Prompts**: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
-- **Instructions**: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
-- **Skills**: [docs/contributing/skills.md](../docs/contributing/skills.md) - Task execution utilities with cross-platform scripts
+* **Common Standards**: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
+* **Agents**: [docs/contributing/custom-agents.md](../docs/contributing/custom-agents.md) - Agent configurations with tools and behavior patterns
+* **Prompts**: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
+* **Instructions**: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
+* **Skills**: [docs/contributing/skills.md](../docs/contributing/skills.md) - Task execution utilities with cross-platform scripts
 
 ## Testing
 <!-- Describe how you tested these changes -->
@@ -77,34 +77,34 @@ For detailed contribution requirements, see:
 
 ### Required Checks
 
-- [ ] Documentation is updated (if applicable)
-- [ ] Files follow existing naming conventions
-- [ ] Changes are backwards compatible (if applicable)
-- [ ] Tests added for new functionality (if applicable)
+* [ ] Documentation is updated (if applicable)
+* [ ] Files follow existing naming conventions
+* [ ] Changes are backwards compatible (if applicable)
+* [ ] Tests added for new functionality (if applicable)
 
 ### AI Artifact Contributions
 <!-- If contributing an agent, prompt, instruction, or skill, complete these checks -->
-- [ ] Used `/prompt-analyze` to review contribution
-- [ ] Addressed all feedback from `prompt-builder` review
-- [ ] Verified contribution follows common standards and type-specific requirements
+* [ ] Used `/prompt-analyze` to review contribution
+* [ ] Addressed all feedback from `prompt-builder` review
+* [ ] Verified contribution follows common standards and type-specific requirements
 
 ### Required Automated Checks
 
 The following validation commands must pass before merging:
 
-- [ ] Markdown linting: `npm run lint:md`
-- [ ] Spell checking: `npm run spell-check`
-- [ ] Frontmatter validation: `npm run lint:frontmatter`
-- [ ] Skill structure validation: `npm run validate:skills`
-- [ ] Link validation: `npm run lint:md-links`
-- [ ] PowerShell analysis: `npm run lint:ps`
-- [ ] Plugin freshness: `npm run plugin:generate`
+* [ ] Markdown linting: `npm run lint:md`
+* [ ] Spell checking: `npm run spell-check`
+* [ ] Frontmatter validation: `npm run lint:frontmatter`
+* [ ] Skill structure validation: `npm run validate:skills`
+* [ ] Link validation: `npm run lint:md-links`
+* [ ] PowerShell analysis: `npm run lint:ps`
+* [ ] Plugin freshness: `npm run plugin:generate`
 
 ## Security Considerations
 <!-- ⚠️ WARNING: Do not commit sensitive information such as API keys, passwords, or personal data -->
-- [ ] This PR does not contain any sensitive or NDA information
-- [ ] Any new dependencies have been reviewed for security issues
-- [ ] Security-related scripts follow the principle of least privilege
+* [ ] This PR does not contain any sensitive or NDA information
+* [ ] Any new dependencies have been reviewed for security issues
+* [ ] Security-related scripts follow the principle of least privilege
 
 ## Additional Notes
 <!-- Any additional information that reviewers should know -->

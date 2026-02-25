@@ -14,53 +14,65 @@ The following agent types will likely be **rejected or closed automatically** be
 
 ### Duplicate Agent Categories
 
-* **Research or Discovery Agents**: Agents that search for, gather, or discover information
-  * ❌ Reason: Existing agents already handle research and discovery workflows
-  * ✅ Alternative: Use existing research-focused agents in `.github/agents/`
+#### Research or Discovery Agents
 
-* **Indexing or Referencing Agents**: Agents that catalog, index, or create references to existing projects
-  * ❌ Reason: Existing agents already provide indexing and referencing capabilities
-  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
-  * ✅ Alternative: Use existing reference management agents that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+Agents that search for, gather, or discover information.
 
-* **Planning Agents**: Agents that plan work, break down tasks, or organize backlog items
-  * ❌ Reason: Existing agents already handle work planning and task organization
-  * ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+* ❌ Reason: Existing agents already handle research and discovery workflows
+* ✅ Alternative: Use existing research-focused agents in `.github/agents/`
 
-* **Implementation Agents**: General-purpose coding agents that implement features
-  * ❌ Reason: Existing agents already provide implementation guidance
-  * ✅ Alternative: Use existing implementation-focused agents
+#### Indexing or Referencing Agents
+
+Agents that catalog, index, or create references to existing projects.
+
+* ❌ Reason: Existing agents already provide indexing and referencing capabilities
+* ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
+* ✅ Alternative: Use existing reference management agents that use standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+
+#### Planning Agents
+
+Agents that plan work, break down tasks, or organize backlog items.
+
+* ❌ Reason: Existing agents already handle work planning and task organization
+* ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+
+#### Implementation Agents
+
+General-purpose coding agents that implement features.
+
+* ❌ Reason: Existing agents already provide implementation guidance
+* ✅ Alternative: Use existing implementation-focused agents
 
 ### Rationale for Rejection
 
 These agent types are rejected because:
 
-1. **Existing agents are hardened and heavily utilized**: The hve-core library already contains production-tested agents in these categories
-2. **Consistency and maintenance**: Coalescing around existing agents reduces fragmentation and maintenance burden
-3. **Avoid duplication**: Multiple agents serving the same purpose create confusion and divergent behavior
-4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing agents
+1. Existing agents are hardened and heavily used — the hve-core library already contains production-tested agents in these categories
+2. Consistency and maintenance — coalescing around existing agents reduces fragmentation and maintenance burden
+3. Avoid duplication — multiple agents serving the same purpose create confusion and divergent behavior
+4. Standard tooling already integrated — VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
 
 ### Before Submitting
 
 When planning to submit an agent that falls into these categories:
 
-1. **Question necessity**: Does your use case truly require a new agent, or can existing agents meet your needs?
-2. **Review existing agents**: Examine `.github/agents/` to identify agents that already serve your purpose
-3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
-4. **Consider enhancement over creation**: If existing agents don't fully meet your requirements, evaluate whether your changes are:
-   * **Generic enough** to benefit all users
-   * **Valuable enough** to justify modifying the existing agent
-5. **Propose enhancements**: Submit a PR to enhance an existing agent rather than creating a duplicate
+1. Question necessity — does your use case truly require a new agent, or can existing agents meet your needs?
+2. Review existing agents — examine `.github/agents/` to identify agents that already serve your purpose
+3. Check tool integration — verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. Consider enhancement over creation — if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
+5. Propose enhancements — submit a PR to enhance an existing agent rather than creating a duplicate
 
 ### What Makes a Good New Agent
 
 Focus on agents that:
 
-* **Fill gaps**: Address use cases not covered by existing agents
-* **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
-* **Are non-overlapping**: Have clearly distinct purposes from existing agents
-* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing agents
-* **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
+| Criterion            | Description                                                                                     |
+|----------------------|-------------------------------------------------------------------------------------------------|
+| Fill gaps            | Address use cases not covered by existing agents                                                |
+| Provide unique value | Offer specialized domain expertise or workflow patterns not present in the library              |
+| Are non-overlapping  | Have clearly distinct purposes from existing agents                                             |
+| Cannot be merged     | Represent functionality too specialized or divergent to integrate into existing agents          |
+| Use standard tooling | Use widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations |
 
 ## Model Version Requirements
 
@@ -68,8 +80,10 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ### Accepted Models
 
-* **Anthropic**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4)
-* **OpenAI**: Latest GPT models (e.g., GPT-5, 5.1-COdEX)
+| Provider  | Models                                                      |
+|-----------|-------------------------------------------------------------|
+| Anthropic | Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) |
+| OpenAI    | Latest GPT models (e.g., GPT-5, 5.1-COdEX)                  |
 
 ### Not Accepted
 
@@ -80,10 +94,10 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ### Rationale
 
-1. **Feature parity**: Latest models support the most advanced features and capabilities
-2. **Maintenance burden**: Supporting multiple model versions creates testing and compatibility overhead
-3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
-4. **Future-proofing**: Older models will be deprecated and removed from service
+1. Feature parity — latest models support the most advanced features and capabilities
+2. Maintenance burden — supporting multiple model versions creates testing and compatibility overhead
+3. Performance — latest models provide superior reasoning, accuracy, and efficiency
+4. Future-proofing — older models will be deprecated and removed from service
 
 ## Collections
 
@@ -93,9 +107,9 @@ Collection manifests in `collections/*.collection.yml` are the source of truth f
 
 Collection manifests serve three primary functions:
 
-1. **Selection**: Determine which artifacts are included in each collection via `items[]`
-2. **Maturity filtering**: Control channel inclusion with `items[].maturity` (defaults to `stable`)
-3. **Packaging inputs**: Provide canonical manifest data used by build and distribution flows
+1. Selection \u2014 determine which artifacts are included in each collection via `items[]`
+2. Maturity filtering \u2014 control channel inclusion with `items[].maturity` (defaults to `stable`)
+3. Packaging inputs \u2014 provide canonical manifest data used by build and distribution flows
 
 ### Collection Structure
 
@@ -305,10 +319,12 @@ Dependencies are resolved through agent frontmatter `handoffs` declarations duri
 
 When creating artifacts that reference other artifacts:
 
-* **Agent handoffs**: Use the `handoffs` frontmatter field in agents to declare UI navigation buttons
-* **Document relationships**: Clearly describe dependencies in artifact documentation
-* **Test in isolation**: Verify your artifact works when only its collection is installed
-* **Keep coupling minimal**: Avoid unnecessary dependencies between artifacts
+| Guideline              | Description                                                                     |
+|------------------------|---------------------------------------------------------------------------------|
+| Agent handoffs         | Use the `handoffs` frontmatter field in agents to declare UI navigation buttons |
+| Document relationships | Clearly describe dependencies in artifact documentation                         |
+| Test in isolation      | Verify your artifact works when only its collection is installed                |
+| Keep coupling minimal  | Avoid unnecessary dependencies between artifacts                                |
 
 For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
 
@@ -320,8 +336,10 @@ Maturity is defined in `collections/*.collection.yml` under `items[].maturity` a
 
 The maturity field controls which extension channel includes the artifact:
 
-* **Stable channel**: Only artifacts with `maturity: stable`
-* **Pre-release channel**: Artifacts with `stable`, `preview`, or `experimental` maturity
+| Channel             | Description                                                    |
+|---------------------|----------------------------------------------------------------|
+| Stable channel      | Only artifacts with `maturity: stable`                         |
+| Pre-release channel | Artifacts with `stable`, `preview`, or `experimental` maturity |
 
 #### Valid Values
 
@@ -376,21 +394,25 @@ When you add an artifact to a collection manifest:
 
 Each generated plugin directory contains:
 
-* **Symlinked artifacts**: Direct symlinks to source files in `.github/` (preserves single source of truth)
-* **Generated README**: Auto-generated documentation listing all included artifacts
-* **Plugin manifest**: `plugin.json` file for GitHub Copilot CLI plugin system
-* **Marketplace metadata**: Aggregated data for extension distribution
+| Content              | Description                                                                      |
+|----------------------|----------------------------------------------------------------------------------|
+| Symlinked artifacts  | Direct symlinks to source files in `.github/` (preserves single source of truth) |
+| Generated README     | Auto-generated documentation listing all included artifacts                      |
+| Plugin manifest      | `plugin.json` file for GitHub Copilot CLI plugin system                          |
+| Marketplace metadata | Aggregated data for extension distribution                                       |
 
 ### Critical Rules for Plugin Files
 
 > [!WARNING]
 > Files under `plugins/` are generated outputs and MUST NOT be edited directly.
 
-* **Regenerate after changes**: Always run `npm run plugin:generate` after modifying collection manifests or artifacts
-* **Symlinked files**: Markdown artifacts are symlinked, so edits to plugin files modify source artifacts
-* **Generated files**: README and JSON files are generated fresh on each run
-* **Durable edits**: Direct edits to plugin files will be overwritten or cause conflicts
-* **Source of truth**: Always edit the source artifact in `.github/`, not the plugin copy
+| Rule                     | Description                                                                            |
+|--------------------------|----------------------------------------------------------------------------------------|
+| Regenerate after changes | Always run `npm run plugin:generate` after modifying collection manifests or artifacts |
+| Symlinked files          | Markdown artifacts are symlinked, so edits to plugin files modify source artifacts     |
+| Generated files          | README and JSON files are generated fresh on each run                                  |
+| Durable edits            | Direct edits to plugin files will be overwritten or cause conflicts                    |
+| Source of truth          | Always edit the source artifact in `.github/`, not the plugin copy                     |
 
 ### When to Regenerate Plugins
 
@@ -413,13 +435,15 @@ npm run plugin:validate
 
 This command checks:
 
-* **YAML syntax**: Valid YAML structure and formatting
-* **Required fields**: Presence of `id`, `name`, `description`, `items`
-* **Path references**: All artifact paths exist and are accessible
-* **Kind values**: Valid artifact kinds (agent, prompt, instruction, skill, hook)
-* **Maturity values**: Valid maturity levels (stable, preview, experimental, deprecated)
-* **Duplicate paths**: No duplicate artifact entries within a collection
-* **Root-level exclusions**: No repo-specific artifacts from `.github/{type}/` root
+| Check                 | Description                                                       |
+|-----------------------|-------------------------------------------------------------------|
+| YAML syntax           | Valid YAML structure and formatting                               |
+| Required fields       | Presence of `id`, `name`, `description`, `items`                  |
+| Path references       | All artifact paths exist and are accessible                       |
+| Kind values           | Valid artifact kinds (agent, prompt, instruction, skill, hook)    |
+| Maturity values       | Valid maturity levels (stable, preview, experimental, deprecated) |
+| Duplicate paths       | No duplicate artifact entries within a collection                 |
+| Root-level exclusions | No repo-specific artifacts from `.github/{type}/` root            |
 
 Always validate before generating plugins:
 
@@ -448,12 +472,14 @@ All AI artifacts use XML-style HTML comment blocks to wrap examples, schemas, te
 
 ### Requirements
 
-* **Tag naming**: Use kebab-case (e.g., `<!-- <example-valid-frontmatter> -->`)
-* **Matching pairs**: Opening and closing tags MUST match exactly
-* **Unique names**: Each tag name MUST be unique within the file (no duplicates)
-* **Code fence placement**: Place code fences **inside** blocks, never outside
-* **Nested blocks**: Use 4-backtick outer fence when demonstrating blocks with code fences
-* **Single lines**: Opening and closing tags on their own lines
+| Rule                 | Description                                                           |
+|----------------------|-----------------------------------------------------------------------|
+| Tag naming           | Use kebab-case (e.g., `<!-- <example-valid-frontmatter> -->`)         |
+| Matching pairs       | Opening and closing tags MUST match exactly                           |
+| Unique names         | Each tag name MUST be unique within the file (no duplicates)          |
+| Code fence placement | Place code fences inside blocks, never outside                        |
+| Nested blocks        | Use 4-backtick outer fence when demonstrating blocks with code fences |
+| Single lines         | Opening and closing tags on their own lines                           |
 
 ### Valid XML-Style Block Structure
 
@@ -498,13 +524,11 @@ echo "Hello World"
 
 #### Missing Closing Tag
 
-* **Problem**: XML-style comment blocks opened but never closed
-* **Solution**: Always include matching closing tags `<!-- </block-name> -->` for all opened blocks
+XML-style comment blocks opened but never closed. Always include matching closing tags `<!-- </block-name> -->` for all opened blocks.
 
 #### Duplicate Tag Names
 
-* **Problem**: Using the same XML block tag name multiple times in a file
-* **Solution**: Make each tag name unique (e.g., `<example-python-function>` and `<example-bash-script>` instead of multiple `<example-code>` blocks)
+Using the same XML block tag name multiple times in a file. Make each tag name unique (e.g., `<example-python-function>` and `<example-bash-script>` instead of multiple `<example-code>` blocks).
 
 ## Markdown Quality Standards
 
@@ -681,11 +705,13 @@ npm run validate:skills
 
 All submissions MUST pass:
 
-* **Frontmatter Schema**: Valid YAML with required fields
-* **Markdown Linting**: No markdown rule violations
-* **Spell Check**: No spelling errors (or added to dictionary)
-* **Link Validation**: All links accessible and valid
-* **File Format**: Correct fences and structure
+| Gate               | Description                                 |
+|--------------------|---------------------------------------------|
+| Frontmatter Schema | Valid YAML with required fields             |
+| Markdown Linting   | No markdown rule violations                 |
+| Spell Check        | No spelling errors (or added to dictionary) |
+| Link Validation    | All links accessible and valid              |
+| File Format        | Correct fences and structure                |
 
 ### Validation Checklist Template
 
@@ -749,38 +775,31 @@ Before submitting any AI artifact:
 
 ### Ambiguous Directives
 
-* **Problem**: Using vague, non-committal language that doesn't clearly indicate requirements
-* **Solution**: Use RFC 2119 keywords (MUST, SHOULD, MAY) to specify clear requirements
+Using vague, non-committal language that doesn't clearly indicate requirements. Use RFC 2119 keywords (MUST, SHOULD, MAY) to specify clear requirements.
 
 ### Missing XML Block Closures
 
-* **Problem**: XML-style comment blocks opened but never closed
-* **Solution**: Always include matching closing tags for all XML-style comment blocks
+XML-style comment blocks opened but never closed. Always include matching closing tags for all XML-style comment blocks.
 
 ### Code Blocks Without Language Tags
 
-* **Problem**: Code blocks missing language identifiers for syntax highlighting
-* **Solution**: Always specify the language for code blocks (python, bash, json, yaml, markdown, text, plaintext)
+Code blocks missing language identifiers for syntax highlighting. Always specify the language for code blocks (python, bash, json, yaml, markdown, text, plaintext).
 
 ### Bare URLs
 
-* **Problem**: URLs placed directly in text without proper markdown formatting
-* **Solution**: Wrap URLs in angle brackets `<https://example.com>` or use proper markdown link syntax `[text](url)`
+URLs placed directly in text without proper markdown formatting. Wrap URLs in angle brackets `<https://example.com>` or use proper markdown link syntax `[text](url)`.
 
 ### Inconsistent List Markers
 
-* **Problem**: Mixing different bullet point markers (* and -) in the same list
-* **Solution**: Use consistent markers throughout (prefer * for bullets, - for nested or alternatives)
+Mixing different bullet point markers (\* and -) in the same list. Use consistent markers throughout (prefer \* for bullets, - for nested or alternatives).
 
 ### Trailing Whitespace
 
-* **Problem**: Extra spaces at the end of lines (except intentional 2-space line breaks)
-* **Solution**: Remove all trailing whitespace from lines
+Extra spaces at the end of lines (except intentional 2-space line breaks). Remove all trailing whitespace from lines.
 
 ### Skipped Heading Levels
 
-* **Problem**: Jumping from H1 to H3 without an H2, breaking document hierarchy
-* **Solution**: Follow proper heading sequence (H1 → H2 → H3) without skipping levels
+Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper heading sequence (H1 → H2 → H3) without skipping levels.
 
 ## Attribution Requirements
 
@@ -834,9 +853,11 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-* **Agents**: Examine files in `.github/agents/{collection-id}/` (the conventional location)
-* **Prompts**: Examine files in `.github/prompts/{collection-id}/` (the conventional location)
-* **Instructions**: Examine files in `.github/instructions/{collection-id}/` (the conventional location)
+| Artifact Type | Location                                                                     |
+|---------------|------------------------------------------------------------------------------|
+| Agents        | Files in `.github/agents/{collection-id}/` (the conventional location)       |
+| Prompts       | Files in `.github/prompts/{collection-id}/` (the conventional location)      |
+| Instructions  | Files in `.github/instructions/{collection-id}/` (the conventional location) |
 
 ### Check Repository Standards
 
