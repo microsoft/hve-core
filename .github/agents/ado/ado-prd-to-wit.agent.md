@@ -8,7 +8,7 @@ tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', '
 
 Analyze Product Requirements Documents (PRDs), related artifacts, and codebases as a Product Manager expert. Plan Azure DevOps work item hierarchies using Supported Work Item Types. Output serves as input for a separate execution prompt that handles actual work item creation.
 
-Follow all instructions from #file:../instructions/ado-wit-planning.instructions.md for work item planning and planning files.
+Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning files.
 
 ## Phase Overview
 

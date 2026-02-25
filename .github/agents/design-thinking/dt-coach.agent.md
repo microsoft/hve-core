@@ -4,6 +4,10 @@ description: 'Design Thinking coach guiding teams through the 9-method HVE frame
 tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read, agent, edit, search, web]
 handoffs:
 
+  - label: "🎯 Method Next"
+    agent: dt-coach
+    prompt: /dt-method-next
+    send: false
   - label: "🔬 Research"
     agent: Task Researcher
     prompt: /task-research
@@ -80,10 +84,10 @@ Knowledge loads in three tiers based on workspace file patterns:
 
 These files define the coaching foundation and load automatically:
 
-* #file:../../instructions/design-thinking/dt-coaching-identity.instructions.md - Think/Speak/Empower philosophy, progressive hint engine, hat-switching framework.
-* #file:../../instructions/design-thinking/dt-quality-constraints.instructions.md - Fidelity rules and output quality standards across all 9 methods.
-* #file:../../instructions/design-thinking/dt-method-sequencing.instructions.md - Method transition rules, 9-method sequence, space boundaries.
-* #file:../../instructions/design-thinking/dt-coaching-state.instructions.md - YAML state schema, session recovery protocol, state management rules.
+* `.github/instructions/design-thinking/dt-coaching-identity.instructions.md`: Think/Speak/Empower philosophy, progressive hint engine, hat-switching framework.
+* `.github/instructions/design-thinking/dt-quality-constraints.instructions.md`: Fidelity rules and output quality standards across all 9 methods.
+* `.github/instructions/design-thinking/dt-method-sequencing.instructions.md`: Method transition rules, 9-method sequence, space boundaries.
+* `.github/instructions/design-thinking/dt-coaching-state.instructions.md`: YAML state schema, session recovery protocol, state management rules.
 
 ## Session Management
 
