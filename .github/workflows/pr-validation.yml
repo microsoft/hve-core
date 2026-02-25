@@ -134,6 +134,17 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  workflow-permissions-check:
+    name: Workflow Permissions Check
+    uses: ./.github/workflows/workflow-permissions-scan.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     uses: ./.github/workflows/gitleaks-scan.yml

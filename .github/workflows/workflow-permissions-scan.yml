@@ -1,0 +1,105 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+name: Workflow Permissions Scan
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Continue on violations instead of failing'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Upload SARIF results to GitHub Security tab'
+        required: false
+        type: boolean
+        default: true
+      upload-artifact:
+        description: 'Upload results as workflow artifact'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      compliance-score:
+        description: 'Compliance score percentage'
+        value: ${{ jobs.permissions-check.outputs.compliance-score }}
+      violation-count:
+        description: 'Number of workflows missing permissions blocks'
+        value: ${{ jobs.permissions-check.outputs.violation-count }}
+      is-compliant:
+        description: 'Whether all workflows have permissions blocks'
+        value: ${{ jobs.permissions-check.outputs.is-compliant }}
+
+permissions:
+  contents: read
+
+jobs:
+  permissions-check:
+    name: Workflow Permissions Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    outputs:
+      compliance-score: ${{ steps.permissions.outputs.compliance-score }}
+      violation-count: ${{ steps.permissions.outputs.violation-count }}
+      is-compliant: ${{ steps.permissions.outputs.is-compliant }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run Workflow Permissions Validation
+        id: permissions
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $params = @{
+            Path            = '.github/workflows'
+            Format          = 'sarif'
+            OutputPath      = 'logs/workflow-permissions-results.sarif'
+          }
+          if ('${{ inputs.soft-fail }}' -ne 'true') {
+            $params['FailOnViolation'] = $true
+          }
+          ./scripts/security/Test-WorkflowPermissions.ps1 @params
+
+          # Write outputs for downstream consumers
+          if (Test-Path 'logs/workflow-permissions-results.sarif') {
+            $sarif = Get-Content 'logs/workflow-permissions-results.sarif' | ConvertFrom-Json
+            $violationCount = @($sarif.runs[0].results).Count
+            $isCompliant = $violationCount -eq 0
+
+            # Re-run with json format to extract compliance score
+            $jsonParams = @{
+              Path            = '.github/workflows'
+              Format          = 'json'
+              OutputPath      = 'logs/workflow-permissions-results.json'
+            }
+            ./scripts/security/Test-WorkflowPermissions.ps1 @jsonParams
+            $report = Get-Content 'logs/workflow-permissions-results.json' | ConvertFrom-Json
+            $complianceScore = $report.ComplianceScore
+
+            "compliance-score=$complianceScore" >> $env:GITHUB_OUTPUT
+            "violation-count=$violationCount" >> $env:GITHUB_OUTPUT
+            "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Upload SARIF results
+        if: always() && inputs.upload-sarif
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/workflow-permissions-results.sarif
+          category: workflow-permissions
+        continue-on-error: true
+
+      - name: Upload results artifact
+        if: always() && inputs.upload-artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: workflow-permissions-results
+          path: logs/workflow-permissions-results.*
+          retention-days: 90
+        continue-on-error: true
