@@ -107,7 +107,7 @@ constraints?" then "Remember the target is technical proof, not visual design."
 
 ## Output Artifacts
 
-Method 7 produces standardized technical validation artifacts organized under `.copilot-tracking/dt/method-07/`:
+Method 7 produces standardized technical validation artifacts organized under `.copilot-tracking/dt/{project-slug}/method-07-hifi-prototypes/`:
 
 * `technical-approaches/` contains one file per implementation approach, named `approach-{name}.md`. Each file documents the technical approach, performance data, environmental test results, constraint compliance, and comparison with alternative approaches.
 * `integration-testing/` contains validation results for system connections, named `integration-{system}.md`. Each file documents connection setup, coordination testing, compatibility findings, and identified gaps.
@@ -131,3 +131,5 @@ Method 7 produces standardized technical validation artifacts organized under `.
 ### Cross-Method Consistency
 
 Maintains DT coaching principles: end-user validation focus, environmental constraint application, multi-stakeholder perspectives, and iterative "fail fast, learn fast" refinement within technical feasibility constraints.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

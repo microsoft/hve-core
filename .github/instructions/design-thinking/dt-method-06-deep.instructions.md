@@ -214,3 +214,5 @@ Build prototypes that account for the operator's actual physical and cognitive c
 * Limited visibility due to equipment, lighting angles, or protective eyewear constrains display placement and size. Test readability from the operator's actual viewing position, not from a comfortable demo angle.
 
 Coaching prompt: "Put on the gloves and safety glasses. Now try to use this prototype. What changed?"
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

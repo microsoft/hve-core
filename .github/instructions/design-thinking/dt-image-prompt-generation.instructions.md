@@ -121,6 +121,7 @@ Minimal lines, plain white background, black-and-white line art, no shading.
 * Silent Review sequence with stakeholder representatives
 * Visual concepts support 30-second comprehension test
 * Three-lens D/F/V evaluation uses text + optional visuals
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 **YAML Concept Card Schema:**
 

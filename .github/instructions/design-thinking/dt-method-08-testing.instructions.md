@@ -153,6 +153,7 @@ Method 8 produces standardized testing artifacts organized under `.copilot-track
 * Production optimization priorities ranked by user impact
 * Adoption risk findings informing telemetry and monitoring strategy
 * Loop decisions documenting which findings require iteration versus revisit
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ### Non-Linear Loop Outputs
 

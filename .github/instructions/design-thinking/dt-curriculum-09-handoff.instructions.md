@@ -47,3 +47,5 @@ Beginners should focus on the distinction between pre-deployment testing (Method
 Intermediate learners benefit from designing telemetry plans and analyzing unexpected usage patterns, and understanding how Method 9 findings may trigger returns to Method 2 (new user needs discovered) or Method 4 (new solution themes emerging from usage data).
 
 Advanced learners should explore the tension between data-driven decisions and user privacy, analyze when continuous improvement becomes analysis paralysis, and critique how organizational incentive structures (ship features vs maintain quality) affect Method 9 discipline.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

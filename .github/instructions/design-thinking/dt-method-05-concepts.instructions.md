@@ -321,7 +321,7 @@ Method 5 enforces deliberate roughness to focus validation on core assumptions, 
 
 ## Artifacts
 
-**Location**: `.copilot-tracking/dt/{session-id}/method-05-user-concepts/`
+**Location**: `.copilot-tracking/dt/{project-slug}/method-05-user-concepts/`
 
 **Files**:
 
@@ -329,3 +329,9 @@ Method 5 enforces deliberate roughness to focus validation on core assumptions, 
 - `{concept-name}.png` — (Optional) Generated concept visualization images, typically created between Method 5 and Method 6 using `generate-dalle-images.ps1` or M365 Copilot. Not required for Method 6 handoff.
 - `stakeholder-alignment.md` — (Recommended) Silent Review results, D/F/V evaluation, resonance assessment documentation
 - `method-06-handoff.md` — (Required) Prioritized concepts (1-2 selected) with evaluation rationale and constraint context for prototyping
+
+### Cross-Method Consistency
+
+Maintains DT coaching principles: end-user validation focus, environmental constraint application, multi-stakeholder perspectives, and iterative "fail fast, learn fast" refinement within concept evaluation and selection.
+
+- All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

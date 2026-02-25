@@ -2,7 +2,7 @@
 description: 'Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher'
 mode: 'agent'
 tools: ['read_file', 'create_file']
-argument-hint: "projectName=..."
+argument-hint: "project-slug=..."
 ---
 
 # Problem Space Exit Handoff
@@ -12,13 +12,17 @@ Invoke when a team graduates from the Problem Space and chooses lateral handoff 
 
 ## Inputs
 
-* ${input:projectName}: (Required) Name of the DT project. Derives the project slug (kebab-case) for directory lookup under `.copilot-tracking/dt/`.
+* ${input:project-slug}: (Required) Kebab-case project identifier for the artifact directory (e.g., `factory-floor-maintenance`).
+
+## Requirements
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
 
 ### Step 1: Read Coaching State
 
-1. Derive the project slug from `${input:projectName}` using kebab-case conversion.
+1. Use `${input:project-slug}` as the project directory identifier.
 2. Read the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 3. Verify that Methods 1, 2, and 3 appear in the `methods_completed` list.
 4. If any of Methods 1-3 are incomplete, report which methods remain and suggest resuming coaching before handoff.
@@ -110,4 +114,4 @@ The document stands alone as complete context for the receiving RPI agent.
 
 ---
 
-Execute the Problem Space exit handoff for project "${input:projectName}" by following the Required Steps.
+Execute the Problem Space exit handoff for project "${input:project-slug}" by following the Required Steps.

@@ -45,7 +45,7 @@ jobs:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
@@ -56,7 +56,7 @@ jobs:
     uses: ./.github/workflows/gitleaks-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true

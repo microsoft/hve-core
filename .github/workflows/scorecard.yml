@@ -15,7 +15,7 @@ jobs:
     name: Scorecard Analysis
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
       id-token: write
       contents: read
     steps:
