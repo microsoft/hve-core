@@ -43,40 +43,54 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                           | Trigger        | Purpose                                         |
-|------------------------------------|----------------|-------------------------------------------------|
-| `pr-validation.yml`                | Pull request   | Pre-merge quality gate with parallel validation |
-| `main.yml`                         | Push to main   | Post-merge validation and release automation    |
-| `weekly-security-maintenance.yml`  | Sunday 2AM UTC | Scheduled security posture review               |
-| `extension-publish.yml`            | Manual         | VS Code extension marketplace publishing        |
-| `extension-publish-prerelease.yml` | Manual         | VS Code extension pre-release publishing        |
+| Workflow                           | Trigger                 | Purpose                                         |
+|------------------------------------|-------------------------|-------------------------------------------------|
+| `pr-validation.yml`                | Pull request, manual    | Pre-merge quality gate with parallel validation |
+| `main.yml`                         | Push to main, manual    | Post-merge validation and release automation    |
+| `weekly-security-maintenance.yml`  | Sunday 2 AM UTC, manual | Scheduled security posture review               |
+| `security-scan.yml`                | Push to main/develop    | CodeQL security validation                      |
+| `extension-publish.yml`            | Manual                  | VS Code extension marketplace publishing        |
+| `extension-publish-prerelease.yml` | Manual                  | VS Code extension pre-release publishing        |
+| `copilot-setup-steps.yml`          | Manual                  | Coding agent environment setup                  |
+| `prerelease-release.yml`           | PR closed               | Pre-release tag and publish on merge to main    |
+| `prerelease.yml`                   | Push to main            | Pre-release companion PR management             |
+| `scorecard.yml`                    | Schedule, push          | OpenSSF Scorecard security analysis             |
+| `codeql-analysis.yml`              | Schedule                | Weekly CodeQL security scan (also reusable)     |
+| `dependency-review.yml`            | Pull request            | Dependency vulnerability review (also reusable) |
+| `sha-staleness-check.yml`          | Manual                  | SHA reference freshness check (also reusable)   |
 
 ### Reusable Workflows
 
 Individual validation workflows called by orchestration workflows:
 
-| Workflow                      | Purpose                         | npm Script                 |
-|-------------------------------|---------------------------------|----------------------------|
-| `markdown-lint.yml`           | Markdownlint validation         | `npm run lint:md`          |
-| `spell-check.yml`             | cspell dictionary check         | `npm run spell-check`      |
-| `frontmatter-validation.yml`  | AI artifact frontmatter schemas | `npm run lint:frontmatter` |
-| `markdown-link-check.yml`     | Broken link detection           | `npm run lint:md-links`    |
-| `link-lang-check.yml`         | Link language validation        | `npm run lint:links`       |
-| `yaml-lint.yml`               | YAML syntax validation          | `npm run lint:yaml`        |
-| `ps-script-analyzer.yml`      | PowerShell static analysis      | `npm run lint:ps`          |
-| `table-format.yml`            | Markdown table formatting       | `npm run format:tables`    |
-| `pester-tests.yml`            | PowerShell unit tests           | `npm run test:ps`          |
-| `skill-validation.yml`        | Skill structure validation      | `npm run validate:skills`  |
-| `dependency-pinning-scan.yml` | GitHub Actions pinning          | N/A (PowerShell direct)    |
-| `sha-staleness-check.yml`     | SHA reference freshness         | N/A (PowerShell direct)    |
-| `codeql-analysis.yml`         | CodeQL security scanning        | N/A (GitHub native)        |
-| `dependency-review.yml`       | Dependency vulnerability review | N/A (GitHub native)        |
-| `security-scan.yml`           | Composite security validation   | N/A                        |
-| `extension-package.yml`       | VS Code extension packaging     | N/A                        |
+| Workflow                            | Purpose                          | npm Script                          |
+|-------------------------------------|----------------------------------|-------------------------------------|
+| `markdown-lint.yml`                 | Markdownlint validation          | `npm run lint:md`                   |
+| `spell-check.yml`                   | cspell dictionary check          | `npm run spell-check`               |
+| `frontmatter-validation.yml`        | AI artifact frontmatter schemas  | `npm run lint:frontmatter`          |
+| `markdown-link-check.yml`           | Broken link detection            | `npm run lint:md-links`             |
+| `link-lang-check.yml`               | Link language validation         | `npm run lint:links`                |
+| `yaml-lint.yml`                     | YAML syntax validation           | `npm run lint:yaml`                 |
+| `ps-script-analyzer.yml`            | PowerShell static analysis       | `npm run lint:ps`                   |
+| `table-format.yml`                  | Markdown table formatting        | `npm run format:tables`             |
+| `pester-tests.yml`                  | PowerShell unit tests            | `npm run test:ps`                   |
+| `skill-validation.yml`              | Skill structure validation       | `npm run validate:skills`           |
+| `dependency-pinning-scan.yml`       | GitHub Actions pinning           | N/A (PowerShell direct)             |
+| `sha-staleness-check.yml`           | SHA reference freshness*         | N/A (PowerShell direct)             |
+| `codeql-analysis.yml`               | CodeQL security scanning*        | N/A (GitHub native)                 |
+| `dependency-review.yml`             | Dependency vulnerability review* | N/A (GitHub native)                 |
+| `extension-package.yml`             | VS Code extension packaging      | `npm run extension:package`         |
+| `copyright-headers.yml`             | Copyright header validation      | `npm run validate:copyright`        |
+| `gitleaks-scan.yml`                 | Secret detection scanning        | N/A (gitleaks direct)               |
+| `plugin-package.yml`                | Plugin collection packaging      | N/A                                 |
+| `plugin-validation.yml`             | Plugin and collection metadata   | `npm run lint:collections-metadata` |
+| `extension-publish-marketplace.yml` | Extension marketplace publishing | N/A                                 |
+
+Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
 ## PR Validation Pipeline
 
-The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs 12 parallel jobs covering linting, security, and testing.
+The `pr-validation.yml` workflow serves as the primary quality gate for all pull requests. It runs 16 parallel jobs covering linting, security, and testing.
 
 ```mermaid
 flowchart LR
@@ -88,17 +102,21 @@ flowchart LR
         FV[frontmatter-validation]
         LLC[link-lang-check]
         MLC[markdown-link-check]
+        CH[copyright-headers]
     end
 
     subgraph "Analysis"
         PSA[psscriptanalyzer]
         PT[pester-tests]
+        SV[skill-validation]
+        PV[plugin-validation]
     end
 
     subgraph "Security"
         DPC[dependency-pinning-check]
         NA[npm-audit]
         CQL[codeql]
+        GLS[gitleaks-scan]
     end
 ```
 
@@ -119,6 +137,9 @@ flowchart LR
 | dependency-pinning-check | `dependency-pinning-scan.yml` | Action SHA pinning             |
 | npm-audit                | Inline                        | npm dependency vulnerabilities |
 | codeql                   | `codeql-analysis.yml`         | Code security patterns         |
+| copyright-headers        | `copyright-headers.yml`       | Copyright header compliance    |
+| plugin-validation        | `plugin-validation.yml`       | Plugin and collection metadata |
+| gitleaks-scan            | `gitleaks-scan.yml`           | Secret detection               |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
 
@@ -132,9 +153,19 @@ flowchart LR
     V2[markdown-lint] --> RP
     V3[table-format] --> RP
     V4[dependency-pinning-scan] --> RP
-    V5[pester-tests] --> RP
-    RP -->|release_created| PKG[extension-package-release]
-    PKG --> ATT[attest-and-upload]
+    V5[gitleaks-scan] --> RP
+    V6[pester-tests] --> RP
+    RP --> RST[reset-prerelease]
+    RP -->|release_created| EPR[extension-package-release]
+    RP -->|release_created| PPR[plugin-package-release]
+    RP -->|release_created| SBOM[generate-dependency-sbom]
+    EPR --> ATT[attest-and-upload]
+    SBOM --> ATT
+    PPR --> UPP[upload-plugin-packages]
+    SBOM --> SD[sbom-diff]
+    ATT --> PUB[publish-release]
+    UPP --> PUB
+    SD --> PUB
     style RP fill:#f9f,stroke:#333
 ```
 
@@ -142,18 +173,25 @@ Release-please v4 handles `chore`-type commits natively. They are not releasable
 
 ### Main Branch Jobs
 
-| Job                       | Purpose                        | Dependencies                 |
-|---------------------------|--------------------------------|------------------------------|
-| spell-check               | Post-merge spelling validation | None                         |
-| markdown-lint             | Post-merge markdown validation | None                         |
-| table-format              | Post-merge table validation    | None                         |
-| dependency-pinning-scan   | Security pinning check         | None                         |
-| pester-tests              | PowerShell unit tests          | None                         |
-| release-please            | Automated release management   | All validation jobs          |
-| extension-package-release | Build release VSIX             | release-please (conditional) |
-| attest-and-upload         | Sign and upload VSIX           | extension-package-release    |
+| Job                       | Purpose                        | Dependencies                                                         |
+|---------------------------|--------------------------------|----------------------------------------------------------------------|
+| spell-check               | Post-merge spelling validation | None                                                                 |
+| markdown-lint             | Post-merge markdown validation | None                                                                 |
+| table-format              | Post-merge table validation    | None                                                                 |
+| dependency-pinning-scan   | Security pinning check         | None                                                                 |
+| gitleaks-scan             | Secret detection scanning      | None                                                                 |
+| pester-tests              | PowerShell unit tests          | None                                                                 |
+| release-please            | Automated release management   | All validation jobs                                                  |
+| reset-prerelease          | Reset pre-release tracking     | release-please                                                       |
+| extension-package-release | Build release VSIX             | release-please (conditional)                                         |
+| plugin-package-release    | Build release plugin packages  | release-please (conditional)                                         |
+| generate-dependency-sbom  | Generate dependency SBOM       | release-please (conditional)                                         |
+| attest-and-upload         | Sign and upload VSIX           | release-please, extension-package-release, generate-dependency-sbom  |
+| upload-plugin-packages    | Upload plugin packages         | release-please, plugin-package-release                               |
+| sbom-diff                 | Compare SBOM changes           | release-please, generate-dependency-sbom                             |
+| publish-release           | Finalize GitHub Release        | release-please, attest-and-upload, upload-plugin-packages, sbom-diff |
 
-When release-please creates a release, the `extension-package-release` job builds the VSIX with the correct version, and `attest-and-upload` signs it with Sigstore attestation before uploading to the GitHub Release.
+When release-please creates a release, parallel jobs build the extension VSIX (`extension-package-release`), package plugin collections (`plugin-package-release`), and generate an SBOM (`generate-dependency-sbom`). The `attest-and-upload` job signs the VSIX with Sigstore attestation, `upload-plugin-packages` uploads collection artifacts, and `sbom-diff` compares dependency changes. The `publish-release` job finalizes the GitHub Release after all artifacts are ready.
 
 ## Security Workflows
 
@@ -176,29 +214,33 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 | SHA Staleness      | `Test-SHAStaleness.ps1`      | SHAs reference recent commits            |
 | npm Audit          | `npm audit`                  | Known vulnerabilities in dependencies    |
 | CodeQL             | GitHub native                | Code patterns indicating security issues |
+| Gitleaks           | `gitleaks`                   | Secret detection in repository history   |
+| Dependency Review  | GitHub native                | Dependency vulnerability analysis        |
 
 ## Extension Publishing
 
 The `extension-publish.yml` and `extension-publish-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per collection.
 
 ```mermaid
-flowchart LR
-    PC[prepare-changelog] --> DC[discover-collections]
-    NV[normalize-version] --> DC
-    DC --> PKG["package (matrix)"]
-    PKG --> PUB["publish (matrix)"]
+flowchart TD
+    subgraph Stable["extension-publish.yml"]
+        NV[normalize-version] --> PKG1["package (matrix)"]
+        PKG1 --> PUB1["publish (matrix)"]
+    end
+    subgraph PreRelease["extension-publish-prerelease.yml"]
+        VV[validate-version] --> PKG2["package (matrix)"]
+        PKG2 --> PUB2["publish (matrix)"]
+    end
 ```
 
 ### Publishing Jobs
 
-| Job                  | Purpose                                                     |
-|----------------------|-------------------------------------------------------------|
-| prepare-changelog    | Extract release notes from CHANGELOG.md                     |
-| normalize-version    | Ensure version consistency                                  |
-| validate-version     | Enforce ODD minor version for pre-release channel           |
-| discover-collections | Scan collection manifests, filter by maturity and channel   |
-| package (matrix)     | Build one VSIX per collection using `extension-package.yml` |
-| publish (matrix)     | Upload each VSIX to VS Code Marketplace via OIDC + vsce     |
+| Job               | Purpose                                                     | Workflow                           |
+|-------------------|-------------------------------------------------------------|------------------------------------|
+| normalize-version | Ensure version consistency                                  | `extension-publish.yml`            |
+| validate-version  | Enforce odd minor version for pre-release channel           | `extension-publish-prerelease.yml` |
+| package (matrix)  | Build one VSIX per collection using `extension-package.yml` | Both                               |
+| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce     | Both                               |
 
 ### Collection-Based Packaging
 
@@ -226,18 +268,32 @@ Maturity filtering rules:
 
 Workflows invoke validation through npm scripts defined in `package.json`:
 
-| npm Script         | Command                            | Used By                    |
-|--------------------|------------------------------------|----------------------------|
-| `lint:md`          | `markdownlint-cli2`                | markdown-lint.yml          |
-| `spell-check`      | `cspell`                           | spell-check.yml            |
-| `lint:frontmatter` | `Validate-MarkdownFrontmatter.ps1` | frontmatter-validation.yml |
-| `lint:md-links`    | `Markdown-Link-Check.ps1`          | markdown-link-check.yml    |
-| `lint:links`       | `Invoke-LinkLanguageCheck.ps1`     | link-lang-check.yml        |
-| `lint:yaml`        | `Invoke-YamlLint.ps1`              | yaml-lint.yml              |
-| `lint:ps`          | `Invoke-PSScriptAnalyzer.ps1`      | ps-script-analyzer.yml     |
-| `format:tables`    | `markdown-table-formatter`         | table-format.yml           |
-| `test:ps`          | `Invoke-Pester`                    | pester-tests.yml           |
-| `validate:skills`  | `Validate-SkillStructure.ps1`      | skill-validation.yml       |
+| npm Script                     | Command                                     | Used By                    |
+|--------------------------------|---------------------------------------------|----------------------------|
+| `lint:md`                      | `markdownlint-cli2`                         | markdown-lint.yml          |
+| `lint:md:fix`                  | `markdownlint-cli2 --fix`                   | Local                      |
+| `spell-check`                  | `cspell`                                    | spell-check.yml            |
+| `spell-check:fix`              | `cspell --show-suggestions`                 | Local                      |
+| `lint:frontmatter`             | `Validate-MarkdownFrontmatter.ps1`          | frontmatter-validation.yml |
+| `lint:md-links`                | `Markdown-Link-Check.ps1`                   | markdown-link-check.yml    |
+| `lint:links`                   | `Invoke-LinkLanguageCheck.ps1`              | link-lang-check.yml        |
+| `lint:yaml`                    | `Invoke-YamlLint.ps1`                       | yaml-lint.yml              |
+| `lint:ps`                      | `Invoke-PSScriptAnalyzer.ps1`               | ps-script-analyzer.yml     |
+| `lint:collections-metadata`    | `Validate-Collections.ps1`                  | plugin-validation.yml      |
+| `lint:marketplace`             | `Validate-Marketplace.ps1`                  | plugin-validation.yml      |
+| `lint:version-consistency`     | `Test-ActionVersionConsistency.ps1`         | Local                      |
+| `lint:all`                     | Chains all linters                          | Local                      |
+| `format:tables`                | `markdown-table-formatter`                  | table-format.yml           |
+| `test:ps`                      | `Invoke-PesterTests.ps1`                    | pester-tests.yml           |
+| `validate:skills`              | `Validate-SkillStructure.ps1`               | skill-validation.yml       |
+| `validate:copyright`           | `Test-CopyrightHeaders.ps1`                 | copyright-headers.yml      |
+| `extension:prepare`            | `Prepare-Extension.ps1`                     | extension-package.yml      |
+| `extension:prepare:prerelease` | `Prepare-Extension.ps1 -Channel PreRelease` | extension-package.yml      |
+| `extension:package`            | `Package-Extension.ps1`                     | extension-package.yml      |
+| `package:extension`            | Alias for `extension:package`               | extension-package.yml      |
+| `extension:package:prerelease` | `Package-Extension.ps1 -PreRelease`         | extension-package.yml      |
+| `plugin:generate`              | `Generate-Plugins.ps1` + post-process       | plugin-package.yml         |
+| `plugin:validate`              | Alias for `lint:collections-metadata`       | plugin-validation.yml      |
 
 ## Related Documentation
 
