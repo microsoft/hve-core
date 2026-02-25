@@ -58,10 +58,10 @@ graph LR
 
 The [Prompt Builder](../../.github/agents/hve-core/prompt-builder.agent.md) agent streamlines creation, evaluation, and refinement of all artifact types. Three commands cover the full authoring workflow:
 
-| Command            | Purpose                                                        |
-|--------------------|----------------------------------------------------------------|
-| `/prompt-build`    | Create new artifacts or improve existing ones                  |
-| `/prompt-analyze`  | Evaluate quality and produce a structured assessment report    |
+| Command            | Purpose                                                         |
+|--------------------|-----------------------------------------------------------------|
+| `/prompt-build`    | Create new artifacts or improve existing ones                   |
+| `/prompt-analyze`  | Evaluate quality and produce a structured assessment report     |
 | `/prompt-refactor` | Consolidate, deduplicate, or restructure related artifact files |
 
 Each artifact guide below includes an "Accelerating with Prompt Builder" section with type-specific examples and sample invocations.

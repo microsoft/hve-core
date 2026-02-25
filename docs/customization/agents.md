@@ -228,15 +228,15 @@ For full frontmatter schema, naming conventions, and contribution requirements, 
 
 Agent frontmatter supports these fields:
 
-| Field                      | Type    | Required | Purpose                                                     |
-|----------------------------|---------|----------|-------------------------------------------------------------|
-| `name`                     | string  | Yes      | Human-readable name shown in the agent picker               |
-| `description`              | string  | Yes      | One-line purpose with attribution suffix                    |
-| `tools`                    | array   | No       | Restrict available tools; omit for full access              |
-| `agents`                   | array   | No       | Human-readable names of subagent dependencies               |
-| `handoffs`                 | array   | No       | Structured transitions to other agents                      |
+| Field                      | Type    | Required | Purpose                                                      |
+|----------------------------|---------|----------|--------------------------------------------------------------|
+| `name`                     | string  | Yes      | Human-readable name shown in the agent picker                |
+| `description`              | string  | Yes      | One-line purpose with attribution suffix                     |
+| `tools`                    | array   | No       | Restrict available tools; omit for full access               |
+| `agents`                   | array   | No       | Human-readable names of subagent dependencies                |
+| `handoffs`                 | array   | No       | Structured transitions to other agents                       |
 | `disable-model-invocation` | boolean | No       | Set `true` for orchestrators that only delegate to subagents |
-| `user-invocable`           | boolean | No       | Set `false` for subagents not meant for direct invocation   |
+| `user-invocable`           | boolean | No       | Set `false` for subagents not meant for direct invocation    |
 
 ### description
 
@@ -250,12 +250,12 @@ description: "Reviews code for API standards - Brought to you by contoso/enginee
 
 Tool values support four naming patterns:
 
-| Pattern           | Example                                        |
-|-------------------|------------------------------------------------|
-| Individual tools  | `read_file`, `grep_search`, `semantic_search`  |
-| Category          | `read`, `search`, `edit`, `web`, `agent`       |
-| Category-specific | `edit/createFile`, `execute/runInTerminal`      |
-| Wildcard          | `github/*`, `ado/*`                            |
+| Pattern           | Example                                       |
+|-------------------|-----------------------------------------------|
+| Individual tools  | `read_file`, `grep_search`, `semantic_search` |
+| Category          | `read`, `search`, `edit`, `web`, `agent`      |
+| Category-specific | `edit/createFile`, `execute/runInTerminal`    |
+| Wildcard          | `github/*`, `ado/*`                           |
 
 ### agents
 
