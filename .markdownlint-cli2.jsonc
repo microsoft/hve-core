@@ -3,6 +3,7 @@
     "**/node_modules/**",
     "**/packages/**",
     ".copilot-tracking/**",
+    "logs/**",
     "venv/**",
     "scripts/tests/Fixtures/**",
     "extension/README.md",
