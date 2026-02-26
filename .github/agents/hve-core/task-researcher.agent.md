@@ -152,6 +152,21 @@ For each scenario:
 * Include runnable examples and exact references (paths with line ranges).
 * Conclude with one recommended approach and rationale.
 
+## File Path Conventions
+
+All markdown links and file references in research documents must resolve correctly from the generated file's location. Compute the relative path from the research file to the workspace root based on directory depth.
+
+Hypothetical example for a research file located at workspace root `.copilot-tracking/research/subagents/2026-02-23/example-research.md`:
+
+| Research file location | Prefix to workspace root |
+|------------------------|-----------------------------|
+| `.copilot-tracking/research/YYYY-MM-DD/` | `../../../` |
+| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | `../../../../` |
+
+Correct: `[README.md](../../../README.md)`, `[scripts/linting/Markdown-Link-Check.ps1](../../../scripts/linting/Markdown-Link-Check.ps1)`
+
+Incorrect: `[README.md](README.md)`, `[scripts/linting/Markdown-Link-Check.ps1](scripts/linting/Markdown-Link-Check.ps1)`
+
 ## Research Document Template
 
 Use the following template for research documents. Replace all `{{}}` placeholders. Sections wrapped in `<!-- <per_...> -->` comments can repeat; omit the comments in the actual document.
@@ -189,7 +204,7 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ### File Analysis
 
-* {{file_path}}
+* [{{file_name}}]({{path_to_workspace_root}}{{workspace_relative_path}})
   * {{findings_with_line_numbers}}
 
 ### Code Search Results

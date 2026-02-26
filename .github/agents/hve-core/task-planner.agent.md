@@ -283,9 +283,35 @@ Contents:
 * Success criteria for step-level verification.
 * Dependencies listing prerequisites for each step.
 
-## Templates
+## File Path Conventions
 
-Templates use `{{relative_path}}` as `../..` for file references.
+All markdown links and file references in `.copilot-tracking/` files must resolve correctly from the generated file's location.
+
+### References to workspace files
+
+Compute the relative path from the generated file to the workspace root based on directory depth. Use `../` traversal matching the file's nesting level.
+
+| Generated file location | Depth | Prefix to workspace root |
+|-------------------------|-------|--------------------------|
+| `.copilot-tracking/plans/YYYY-MM-DD/` | 3 | `../../../` |
+| `.copilot-tracking/details/YYYY-MM-DD/` | 3 | `../../../` |
+| `.copilot-tracking/research/YYYY-MM-DD/` | 3 | `../../../` |
+| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | 4 | `../../../../` |
+| `.copilot-tracking/plans/logs/YYYY-MM-DD/` | 4 | `../../../../` |
+| `.copilot-tracking/changes/YYYY-MM-DD/` | 3 | `../../../` |
+| `.copilot-tracking/reviews/YYYY-MM-DD/` | 3 | `../../../` |
+
+Example: from `.copilot-tracking/research/subagents/2026-02-19/topic.md`, reference `README.md` as `[README.md](../../../../README.md)` and `.github/copilot-instructions.md` as `[.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)`.
+
+### Cross-references between `.copilot-tracking/` files
+
+Compute relative paths between the two file locations rather than using workspace-root-relative paths.
+
+Example: from a plan at `.copilot-tracking/plans/YYYY-MM-DD/plan.md` to its log at `.copilot-tracking/plans/logs/YYYY-MM-DD/log.md`, use `../logs/YYYY-MM-DD/log.md`.
+
+Example: from a plan at `.copilot-tracking/plans/YYYY-MM-DD/plan.md` to details at `.copilot-tracking/details/YYYY-MM-DD/details.md`, use `../../details/YYYY-MM-DD/details.md`.
+
+## Templates
 
 ### Implementation Plan Template
 
@@ -314,16 +340,16 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ### Project Files
 
-* {{file_path}} - {{file_relevance_description}}
+* {{full_file_path}} - {{file_relevance_description}}
 
 ### References
 
-* {{reference_path_or_url}} - {{reference_description}}
+* {{reference_full_path_or_url}} - {{reference_description}}
 
 ### Standards References
 
-* #file:{{relative_path}}/.github/instructions/{{language}}.instructions.md - {{language_conventions_description}}
-* #file:{{relative_path}}/.github/instructions/{{instruction_file}}.instructions.md - {{instruction_description}}
+* {{full_file_folder_path}}/{{language}}.instructions.md — {{language_conventions_description}}
+* {{full_file_folder_path}}/{{instruction_file}}.instructions.md — {{instruction_description}}
 
 ## Implementation Checklist
 
@@ -396,8 +422,8 @@ Sources: {{context_sources}}
 {{specific_action_description}}
 
 Files:
-* {{file_1_path}} - {{file_1_description}}
-* {{file_2_path}} - {{file_2_description}}
+* {{file_1_full_path}} - {{file_1_description}}
+* {{file_2_full_path}} - {{file_2_description}}
 
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
@@ -407,7 +433,7 @@ Success criteria:
 * {{completion_criteria_2}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * {{previous_step_requirement}}
@@ -418,13 +444,13 @@ Dependencies:
 {{specific_action_description}}
 
 Files:
-* {{file_path}} - {{file_description}}
+* {{file_full_path}} - {{file_description}}
 
 Success criteria:
 * {{completion_criteria}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * Step 1.1 completion
@@ -446,7 +472,7 @@ Validation commands:
 {{specific_action_description}}
 
 Files:
-* {{file_path}} - {{file_description}}
+* {{file_full_path}} - {{file_description}}
 
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
@@ -455,7 +481,7 @@ Success criteria:
 * {{completion_criteria}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * Implementation Phase 1 completion (if not parallelizable)
@@ -505,7 +531,7 @@ Gaps and differences identified between research findings and the implementation
 ### Unaddressed Research Items
 
 * DR-01: {{research_item_not_in_plan}}
-  * Source: {{research_file}} (Lines {{line_start}}-{{line_end}})
+  * Source: {{research_file_full_path}} (Lines {{line_start}}-{{line_end}})
   * Reason: {{why_excluded}}
   * Impact: {{low / medium / high}}
 
@@ -522,7 +548,7 @@ Gaps and differences identified between research findings and the implementation
 
 * Approach: {{description}}
 * Rationale: {{why_selected}}
-* Evidence: {{reference}} (Lines {{line_start}}-{{line_end}})
+* Evidence: {{reference_full_path}} (Lines {{line_start}}-{{line_end}})
 
 ### IP-01: {{alternate_path_title}}
 

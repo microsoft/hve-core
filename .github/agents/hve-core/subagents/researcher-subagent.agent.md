@@ -47,6 +47,21 @@ Read the subagent research document, cleanup and finalize the subagent research 
 * Repeat research as needed during cleanup and/or finalization.
 * Interpret the subagent research document for your response Subagent Research Executive Details.
 
+## File Reference Formatting
+
+When citing workspace files as sources in the subagent research document, use markdown links with relative paths that resolve correctly from the research file's location to the workspace root. Compute the traversal depth based on the output file's directory nesting.
+
+Hypothetical example for a research file located at workspace root `.copilot-tracking/research/subagents/2026-02-23/example-research.md`:
+
+| Research file location | Prefix to workspace root |
+|------------------------|--------------------------|
+| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | `../../../../` |
+| `.copilot-tracking/research/YYYY-MM-DD/` | `../../../` |
+
+Correct, depending on traversed depth: `[README.md](../../../../README.md)`, `[.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)`
+
+Incorrect: `[README.md](README.md)`, `[.github/copilot-instructions.md](.github/copilot-instructions.md)`
+
 ## Response Format
 
 Return Subagent Research Executive Details and include the following requirements:
