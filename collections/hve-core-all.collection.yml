@@ -175,6 +175,8 @@ items:
   kind: instruction
 - path: .github/instructions/ado/ado-get-build-info.instructions.md
   kind: instruction
+- path: .github/instructions/ado/ado-interaction-templates.instructions.md
+  kind: instruction
 - path: .github/instructions/ado/ado-update-wit-items.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-wit-discovery.instructions.md

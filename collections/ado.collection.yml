@@ -33,6 +33,8 @@ items:
     kind: instruction
   - path: .github/instructions/ado/ado-wit-planning.instructions.md
     kind: instruction
+  - path: .github/instructions/ado/ado-interaction-templates.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
