@@ -137,9 +137,9 @@ All times in UTC.
 
 ## References
 
-- [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
-- [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
-- [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
+* [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
+* [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
+* [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
 
 ---
 

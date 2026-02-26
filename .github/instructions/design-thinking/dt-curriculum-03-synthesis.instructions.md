@@ -45,3 +45,5 @@ Beginners should focus on the difference between premature theme forcing and evi
 Intermediate learners benefit from comparing affinity clustering with top-down categorization and understanding how synthesis quality directly affects brainstorming scope in Method 4.
 
 Advanced learners should explore how organizational power dynamics distort synthesis (whose data gets weighted more), analyze cases where contradictory themes are both valid, and critique the boundary between sufficient synthesis and analysis paralysis.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

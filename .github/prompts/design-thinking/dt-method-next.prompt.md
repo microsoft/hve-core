@@ -12,6 +12,8 @@ argument-hint: "[project-slug=...]"
 
 ## Requirements
 
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
+
 ### 1. Locate Project Directory
 
 **Goal:** Find the coaching state file for the specified or inferred project.
@@ -19,7 +21,7 @@ argument-hint: "[project-slug=...]"
 * Derive project-slug from input, open files, or conversation context
 * Look for coaching state at `.copilot-tracking/dt/{project-slug}/coaching-state.md`
 * If not found and multiple projects exist, list available projects with last session dates and ask user to select
-* **Edge case — No project found:** If no DT project exists, respond: "No Design Thinking project found. Start a new project by running `/dt-start-project projectName='...'` with your project name."
+* **Edge case — No project found:** If no DT project exists, respond: "No Design Thinking project found. Start a new project by running `/dt-start-project project-slug='...'` with your project slug."
 
 ### 2. Read and Assess Current State
 

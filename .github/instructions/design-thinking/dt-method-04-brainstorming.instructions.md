@@ -272,3 +272,5 @@ Within this folder, produce and update these files:
   Capture session observations including energy shifts, phase transitions, coaching interventions, and reverse-transition decisions.
 
 These artifacts are the primary structured outputs handed off to Method 5 for concept development.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

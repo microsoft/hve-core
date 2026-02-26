@@ -68,3 +68,4 @@ Cross-method constants: end-user validation, environmental constraints as shaper
 * Ask one thoughtful question at a time
 * Avoid bullet-list responses unless the user requests structured output
 * Refresh context by reading relevant method files before providing specific guidance
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

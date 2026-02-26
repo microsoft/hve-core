@@ -156,3 +156,4 @@ Identify the minimum sensor coverage for meaningful twin behavior. Document data
 * Interface state must be comprehensible to an incoming operator during shift handoff without training on prototype specifics.
 * Audio feedback is unreliable above 80 dB; use visual and haptic feedback patterns instead.
 * Interfaces exposed to oil, dust, or moisture need appropriate enclosures. Prototype enclosures can be improvised (sealed bags, ruggedized tablets) but must be tested under actual conditions.
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

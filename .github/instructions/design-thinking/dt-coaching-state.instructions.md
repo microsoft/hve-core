@@ -11,7 +11,7 @@ This instruction defines the coaching state schema, file conventions, and sessio
 
 Store the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 
-* `{project-slug}` is a kebab-case identifier derived from the project name (e.g., `factory-floor-maintenance`, `patient-handoff-optimization`).
+* `{project-slug}` is a kebab-case project identifier provided by the user (e.g., `factory-floor-maintenance`). All DT artifacts are scoped under `.copilot-tracking/dt/{project-slug}/`.
 * Create the directory when initializing a new coaching project.
 * One state file per project. Multiple concurrent projects each get their own directory.
 
@@ -153,6 +153,7 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 * `coaching-state.md`: coaching state (this schema).
 * Method outputs: stakeholder maps, interview notes, synthesis documents, concept descriptions, prototype feedback, testing results.
 * Naming convention: use descriptive kebab-case filenames prefixed with the method number (e.g., `method-01-stakeholder-map.md`, `method-03-synthesis-themes.md`).
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Integration with Method Sequencing
 

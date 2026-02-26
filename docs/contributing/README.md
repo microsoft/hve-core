@@ -52,10 +52,10 @@ Use this table to navigate to the appropriate guide based on what you want to co
 
 ## Quick Links
 
-- [Agents Directory](../../.github/agents/)
-- [Instructions Directory](../../.github/instructions/)
-- [Prompts Directory](../../.github/prompts/)
-- [Skills Directory](../../.github/skills/)
+* [Agents Directory](../../.github/agents/)
+* [Instructions Directory](../../.github/instructions/)
+* [Prompts Directory](../../.github/prompts/)
+* [Skills Directory](../../.github/skills/)
 
 ---
 

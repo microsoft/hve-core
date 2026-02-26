@@ -62,3 +62,5 @@ When reviewing DT artifacts, add these checks to the standard review checklist:
 | Minor    | Stylistic or structural issues             | Leaked internal reasoning in Speak layer, ideal-only testing conditions, token budget slightly exceeded                   |
 
 These criteria complement co-loaded instruction files (`dt-quality-constraints`, `dt-coaching-identity`, `dt-method-sequencing`, `dt-rpi-handoff-contract`): reference their content during review rather than duplicating it.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

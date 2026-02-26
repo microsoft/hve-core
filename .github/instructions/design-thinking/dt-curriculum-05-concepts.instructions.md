@@ -47,3 +47,5 @@ Beginners should focus on the minimum viable visual principle and practice creat
 Intermediate learners benefit from comparing silent review results across concepts and understanding how concept feedback connects backward to Method 4 themes (invalidating or strengthening them) and forward to Method 6 prototype selection.
 
 Advanced learners should explore how organizational culture affects concept reception (hierarchical organizations may suppress honest feedback), analyze when concepts reveal that synthesis themes from Method 3 were poorly framed, and critique the balance between simplicity and sufficient detail.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

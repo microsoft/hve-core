@@ -187,10 +187,10 @@ After completing the YAML drafting guide above, use this structure for your fina
 
 [Mark the most applicable status for tracking purposes]
 
-- [ ] Draft
-- [ ] Proposed
-- [ ] Accepted
-- [ ] Deprecated
+* [ ] Draft
+* [ ] Proposed
+* [ ] Accepted
+* [ ] Deprecated
 
 ### Context
 
@@ -214,9 +214,9 @@ After completing the YAML drafting guide above, use this structure for your fina
 
 List the key factors that influenced this decision:
 
-- [Driver 1]
-- [Driver 2]
-- [Driver 3]
+* [Driver 1]
+* [Driver 2]
+* [Driver 3]
 
 ### Considered Options (optional)
 

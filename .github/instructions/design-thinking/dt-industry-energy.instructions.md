@@ -91,3 +91,5 @@ Lo-fi prototypes — paper mockups of enhanced dispatch screens and revised hand
 
 **Implementation (Methods 7-9)**: Hi-fi prototypes validate operator decision support tools integrated with the energy management system, tested through grid simulation before live deployment. User testing across shifts reveals that night-shift operators face different renewable challenges (wind peaks) than day-shift operators (solar ramps).
 Operator confidence in managing high-renewable periods improves measurably during pilot. Iteration focuses on alarm management — operators report alarm fatigue from renewable variability triggers that existing thresholds were not designed to handle.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

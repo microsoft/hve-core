@@ -330,3 +330,4 @@ Include production, maintenance, quality, safety, and operations teams in deploy
 * Coaching hats, scaling patterns, and anti-patterns apply within the Design Thinking Method 9 context and assume prior method completion.
 * Verify that ADKAR phases are addressed sequentially; skipping phases undermines adoption sustainability.
 * Cross-reference adoption metrics with the method-tier leading/lagging indicator framework to maintain measurement consistency.
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
