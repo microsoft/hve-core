@@ -285,23 +285,14 @@ Contents:
 
 ## File Path Conventions
 
-Files under `.copilot-tracking/` are local and gitignored. Markdown links in these files must use `../` traversal to reach the target. Count the directory segments in the output file's path from the workspace root and prepend that many `../` to reach workspace-root files. For cross-references between `.copilot-tracking/` files, compute the relative path between the two locations.
+Files under `.copilot-tracking/` are consumed by AI agents, not humans clicking links. Use plain-text workspace-relative paths for all file references. Do not use markdown links or `#file:` directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
-From a file at depth 3 (e.g., `.copilot-tracking/plans/2026-02-23/plan.md`):
+* `README.md`
+* `.github/copilot-instructions.md`
+* `.copilot-tracking/plans/2026-02-23/plan.md`
+* `.copilot-tracking/plans/logs/2026-02-23/log.md`
 
-* `[README.md](../../../README.md)`
-* `[.github/copilot-instructions.md](../../../.github/copilot-instructions.md)`
-* `[planning log](../logs/2026-02-23/log.md)` (cross-reference)
-* `[details](../../details/2026-02-23/details.md)` (cross-reference)
-
-From a file at depth 4 (e.g., `.copilot-tracking/plans/logs/2026-02-23/log.md`):
-
-* `[README.md](../../../../README.md)`
-* `[plan](../../2026-02-23/plan.md)` (cross-reference)
-
-Do not use bare filenames without traversal — `[README.md](README.md)` is always wrong from `.copilot-tracking/` files.
-
-Do not use `#file:` directives in generated `.copilot-tracking/` files. VS Code resolves `#file:` paths and reports errors when targets are missing. Use standard markdown links with the correct traversal prefix instead.
+External URLs may still use markdown link syntax.
 
 ## Templates
 
@@ -336,11 +327,11 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ### References
 
-* {{reference_full_path_or_url}} - {{reference_description}}
+* {{reference_full_file_path_or_url}} - {{reference_description}}
 
 ### Standards References
 
-* [{{instruction_filename}}]({{traversal_prefix}}{{instruction_workspace_relative_path}}) — {{instruction_description}}
+* {{instruction_full_file_path}} — {{instruction_description}}
 
 ## Implementation Checklist
 
@@ -381,7 +372,7 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ## Planning Log
 
-See [{{task_description}}-log.md](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_description}}-log.md) for discrepancy tracking, implementation paths considered, and suggested follow-on work.
+See `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_description}}-log.md` for discrepancy tracking, implementation paths considered, and suggested follow-on work.
 
 ## Dependencies
 
