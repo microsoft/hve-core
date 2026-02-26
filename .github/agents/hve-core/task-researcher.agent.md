@@ -16,10 +16,6 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
-  - label: "🎨 Resume DT Coaching"
-    agent: DT Coach
-    prompt: /dt-resume-coaching
-    send: false
 ---
 
 # Task Researcher
