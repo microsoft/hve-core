@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     outputs:
       compliance-score: ${{ steps.permissions.outputs.compliance-score }}
       violation-count: ${{ steps.permissions.outputs.violation-count }}

@@ -8,7 +8,7 @@ ms.topic: concept
 
 ## Overview
 
-HVE Core uses Pester 5.x for PowerShell testing with a mirror directory structure that maps production scripts to their corresponding test files. The test infrastructure supports isolated unit testing through mock utilities and enforces a 70% code coverage threshold.
+HVE Core uses Pester 5.x for PowerShell testing with a mirror directory structure that maps production scripts to their corresponding test files. The test infrastructure supports isolated unit testing through mock utilities and enforces an 80% code coverage threshold.
 
 ## Directory Structure
 
@@ -16,6 +16,8 @@ Test files follow a mirror pattern where each script directory has a correspondi
 
 ```text
 scripts/
+├── collections/
+│   └── *.ps1
 ├── extension/
 │   ├── Package-Extension.ps1
 │   └── Prepare-Extension.ps1
@@ -23,12 +25,16 @@ scripts/
 │   └── Get-VerifiedDownload.ps1
 ├── linting/
 │   └── *.ps1
+├── plugins/
+│   └── *.ps1
 ├── security/
 │   └── *.ps1
 └── tests/
+    ├── collections/
     ├── extension/
     ├── lib/
     ├── linting/
+    ├── plugins/
     ├── security/
     ├── Fixtures/
     ├── Mocks/
@@ -60,7 +66,7 @@ Code coverage analyzes scripts in production directories while excluding test fi
 | Output path       | `logs/coverage.xml` |
 | Excluded patterns | `*.Tests.ps1`       |
 
-Coverage directories include `linting/`, `security/`, `lib/`, and `extension/`.
+Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plugins/`, `collections/`, and `tests/`.
 
 ### Test Output
 
@@ -166,6 +172,15 @@ Run a specific test file:
 ```powershell
 Invoke-Pester -Path ./scripts/tests/linting/Invoke-PSScriptAnalyzer.Tests.ps1
 ```
+
+### Test Utility Scripts
+
+Two wrapper scripts in `scripts/tests/` streamline test execution:
+
+* `Invoke-PesterTests.ps1` orchestrates full test runs with configuration loading, code coverage, CI output formatting, and result file generation. The `npm run test:ps` command calls this script.
+* `Get-ChangedTestFiles.ps1` identifies test files affected by recent changes, enabling targeted test runs during development or in pull request workflows.
+
+See [scripts/tests/README.md](../../scripts/tests/README.md) for parameters and usage details.
 
 ## Skills Testing
 

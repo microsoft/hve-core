@@ -30,53 +30,65 @@ The following agent types will likely be **rejected or closed automatically** be
 
 ### Duplicate Agent Categories
 
-* **Research or Discovery Agents**: Agents that search for, gather, or discover information
-  * ❌ Reason: Existing agents already handle research and discovery workflows
-  * ✅ Alternative: Use existing research-focused agents in `.github/agents/`
+#### Research or Discovery Agents
 
-* **Indexing or Referencing Agents**: Agents that catalog, index, or create references to existing projects
-  * ❌ Reason: Existing agents already provide indexing and referencing capabilities
-  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
-  * ✅ Alternative: Use existing reference management agents that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+Agents that search for, gather, or discover information.
 
-* **Planning Agents**: Agents that plan work, break down tasks, or organize backlog items
-  * ❌ Reason: Existing agents already handle work planning and task organization
-  * ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+* ❌ Reason: Existing agents already handle research and discovery workflows
+* ✅ Alternative: Use existing research-focused agents in `.github/agents/`
 
-* **Implementation Agents**: General-purpose coding agents that implement features
-  * ❌ Reason: Existing agents already provide implementation guidance
-  * ✅ Alternative: Use existing implementation-focused agents
+#### Indexing or Referencing Agents
+
+Agents that catalog, index, or create references to existing projects.
+
+* ❌ Reason: Existing agents already provide indexing and referencing capabilities
+* ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
+* ✅ Alternative: Use existing reference management agents that use standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+
+#### Planning Agents
+
+Agents that plan work, break down tasks, or organize backlog items.
+
+* ❌ Reason: Existing agents already handle work planning and task organization
+* ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+
+#### Implementation Agents
+
+General-purpose coding agents that implement features.
+
+* ❌ Reason: Existing agents already provide implementation guidance
+* ✅ Alternative: Use existing implementation-focused agents
 
 ### Rationale for Rejection
 
 These agent types are rejected because:
 
-1. **Existing agents are hardened and heavily utilized**: The hve-core library already contains production-tested agents in these categories
-2. **Consistency and maintenance**: Coalescing around existing agents reduces fragmentation and maintenance burden
-3. **Avoid duplication**: Multiple agents serving the same purpose create confusion and divergent behavior
-4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing agents
+1. Existing agents are hardened and heavily used — the hve-core library already contains production-tested agents in these categories
+2. Consistency and maintenance — coalescing around existing agents reduces fragmentation and maintenance burden
+3. Avoid duplication — multiple agents serving the same purpose create confusion and divergent behavior
+4. Standard tooling already integrated — VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
 
 ### Before Submitting
 
 When planning to submit an agent that falls into these categories:
 
-1. **Question necessity**: Does your use case truly require a new agent, or can existing agents meet your needs?
-2. **Review existing agents**: Examine `.github/agents/` to identify agents that already serve your purpose
-3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
-4. **Consider enhancement over creation**: If existing agents don't fully meet your requirements, evaluate whether your changes are:
-   * **Generic enough** to benefit all users
-   * **Valuable enough** to justify modifying the existing agent
-5. **Propose enhancements**: Submit a PR to enhance an existing agent rather than creating a duplicate
+1. Question necessity — does your use case truly require a new agent, or can existing agents meet your needs?
+2. Review existing agents — examine `.github/agents/` to identify agents that already serve your purpose
+3. Check tool integration — verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. Consider enhancement over creation — if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
+5. Propose enhancements — submit a PR to enhance an existing agent rather than creating a duplicate
 
 ### What Makes a Good New Agent
 
 Focus on agents that:
 
-* **Fill gaps**: Address use cases not covered by existing agents
-* **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
-* **Are non-overlapping**: Have clearly distinct purposes from existing agents
-* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing agents
-* **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
+| Criterion            | Description                                                                                     |
+|----------------------|-------------------------------------------------------------------------------------------------|
+| Fill gaps            | Address use cases not covered by existing agents                                                |
+| Provide unique value | Offer specialized domain expertise or workflow patterns not present in the library              |
+| Are non-overlapping  | Have clearly distinct purposes from existing agents                                             |
+| Cannot be merged     | Represent functionality too specialized or divergent to integrate into existing agents          |
+| Use standard tooling | Use widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations |
 
 ### Model Version Requirements
 
@@ -126,97 +138,124 @@ Agent files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of agent functionality
-* **Format**: Single sentence, 10-200 characters
-* **Style**: Sentence case with proper punctuation
-* **Example**: `'Validates contributed content for quality and compliance with hve-core standards'`
+| Attribute | Details                                                                              |
+|-----------|--------------------------------------------------------------------------------------|
+| Purpose   | Concise explanation of agent functionality                                           |
+| Format    | Single sentence, 10-200 characters                                                   |
+| Style     | Sentence case with proper punctuation                                                |
+| Example   | `'Validates contributed content for quality and compliance with hve-core standards'` |
 
 ### Optional Fields
 
 **`name`** (string)
 
-* **Purpose**: Custom display name for the agent
-* **Format**: Lowercase kebab-case matching filename without extension
-* **Default**: File name used if not specified
+| Attribute | Details                                                  |
+|-----------|----------------------------------------------------------|
+| Purpose   | Custom display name for the agent                        |
+| Format    | Lowercase kebab-case matching filename without extension |
+| Default   | File name used if not specified                          |
 
 **`tools`** (array of strings)
 
-* **Purpose**: Lists GitHub Copilot tools available to this agent
-* **Format**: Array of valid tool names in logical order (read before write)
-* **Valid tools**:
-  * `codebase` - Semantic code search
-  * `search` - Grep/regex search
-  * `problems` - Error/warning diagnostics
-  * `editFiles` - File modification
-  * `changes` - Git change tracking
-  * `usages` - Symbol reference search
-  * `githubRepo` - External GitHub repository search
-  * `fetch` - Web page content retrieval
-  * `runCommands` - Terminal command execution
-  * `think` - Extended reasoning
-  * `findTestFiles` - Test file discovery
-  * `terminalLastCommand` - Terminal history
-  * `searchResults` - Search view results
-  * `edit/createFile` - File creation
-  * `edit/createDirectory` - Directory creation
-  * `Bicep (EXPERIMENTAL)/*` - Bicep tooling
-  * `terraform/*` - Terraform tooling
-  * `context7/*` - Library documentation
-  * `microsoft-docs/*` - Microsoft documentation
+| Attribute | Details                                                        |
+|-----------|----------------------------------------------------------------|
+| Purpose   | Lists GitHub Copilot tools available to this agent             |
+| Format    | Array of valid tool names in logical order (read before write) |
+
+Valid tools:
+
+* `codebase` - Semantic code search
+* `search` - Grep/regex search
+* `problems` - Error/warning diagnostics
+* `editFiles` - File modification
+* `changes` - Git change tracking
+* `usages` - Symbol reference search
+* `githubRepo` - External GitHub repository search
+* `fetch` - Web page content retrieval
+* `runCommands` - Terminal command execution
+* `think` - Extended reasoning
+* `findTestFiles` - Test file discovery
+* `terminalLastCommand` - Terminal history
+* `searchResults` - Search view results
+* `edit/createFile` - File creation
+* `edit/createDirectory` - Directory creation
+* `Bicep (EXPERIMENTAL)/*` - Bicep tooling
+* `terraform/*` - Terraform tooling
+* `context7/*` - Library documentation
+* `microsoft-docs/*` - Microsoft documentation
 
 **`agents`** (array of strings)
 
-* **Purpose**: Declares subagent dependencies available to this agent
-* **Format**: Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use
-* **Requirement**: When specified, include the `agent` tool in the `tools` property
+| Attribute   | Details                                                                            |
+|-------------|------------------------------------------------------------------------------------|
+| Purpose     | Declares subagent dependencies available to this agent                             |
+| Format      | Array of agent names. Use `*` to allow all agents, or `[]` to prevent subagent use |
+| Requirement | When specified, include the `agent` tool in the `tools` property                   |
 
 **`model`** (string or array of strings)
 
-* **Purpose**: Specifies the AI model for this agent
-* **Format**: Single model name or prioritized list of models (system tries each in order until available)
-* **Default**: Currently selected model in model picker when omitted
+| Attribute | Details                                                                                      |
+|-----------|----------------------------------------------------------------------------------------------|
+| Purpose   | Specifies the AI model for this agent                                                        |
+| Format    | Single model name or prioritized list of models (system tries each in order until available) |
+| Default   | Currently selected model in model picker when omitted                                        |
 
 **`user-invocable`** (boolean)
 
-* **Purpose**: Controls whether the agent appears in the agents dropdown
-* **Default**: `true`
-* **Usage**: Set to `false` for agents that are only accessible as subagents
+| Attribute | Details                                                         |
+|-----------|-----------------------------------------------------------------|
+| Purpose   | Controls whether the agent appears in the agents dropdown       |
+| Default   | `true`                                                          |
+| Usage     | Set to `false` for agents that are only accessible as subagents |
 
 **`disable-model-invocation`** (boolean)
 
-* **Purpose**: Prevents the agent from being invoked as a subagent by other agents
-* **Default**: `false`
-* **Usage**: Set to `true` for agents that run subagents, cause side effects, or should only run when explicitly requested
+| Attribute | Details                                                                                                       |
+|-----------|---------------------------------------------------------------------------------------------------------------|
+| Purpose   | Prevents the agent from being invoked as a subagent by other agents                                           |
+| Default   | `false`                                                                                                       |
+| Usage     | Set to `true` for agents that run subagents, cause side effects, or should only run when explicitly requested |
 
 **`argument-hint`** (string)
 
-* **Purpose**: Hint text shown in the chat input field to guide users
-* **Format**: Brief text with required arguments first, then optional
+| Attribute | Details                                                 |
+|-----------|---------------------------------------------------------|
+| Purpose   | Hint text shown in the chat input field to guide users  |
+| Format    | Brief text with required arguments first, then optional |
 
 **`target`** (string enum)
 
-* **Purpose**: Target environment for the custom agent
-* **Valid values**: `vscode`, `github-copilot`
+| Attribute    | Details                                 |
+|--------------|-----------------------------------------|
+| Purpose      | Target environment for the custom agent |
+| Valid values | `vscode`, `github-copilot`              |
 
 **`mcp-servers`** (array of objects)
 
-* **Purpose**: MCP server configuration for GitHub Copilot agents
-* **Usage**: Only applicable when `target: github-copilot`
+| Attribute | Details                                            |
+|-----------|----------------------------------------------------|
+| Purpose   | MCP server configuration for GitHub Copilot agents |
+| Usage     | Only applicable when `target: github-copilot`      |
 
 **`handoffs`** (array of objects)
 
-* **Purpose**: Declares agent-to-agent handoff buttons that appear in the chat UI
-* **Format**: Array of handoff declarations
-* **Fields per handoff**:
-  * `label` (string, required): Button text displayed in UI, supports emoji
-  * `agent` (string, required): Target agent filename without `.agent.md` extension
-  * `prompt` (string, optional): Pre-filled prompt text, can include slash commands
-  * `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
-  * `model` (string, optional): Language model override for the handoff execution
-* **Requirements**: VS Code 1.106+ required for handoff support
-* **Example**:
+| Attribute    | Details                                                            |
+|--------------|--------------------------------------------------------------------|
+| Purpose      | Declares agent-to-agent handoff buttons that appear in the chat UI |
+| Format       | Array of handoff declarations                                      |
+| Requirements | VS Code 1.106+ required for handoff support                        |
 
-  ```yaml
+Fields per handoff:
+
+* `label` (string, required): Button text displayed in UI, supports emoji
+* `agent` (string, required): Target agent filename without `.agent.md` extension
+* `prompt` (string, optional): Pre-filled prompt text, can include slash commands
+* `send` (boolean, optional): When true, auto-submits prompt; when false (default), user can edit
+* `model` (string, optional): Language model override for the handoff execution
+
+Example:
+
+```yaml
   handoffs:
     - label: "📋 Create Plan"
       agent: Task Planner
@@ -228,8 +267,10 @@ Agent files **MUST**:
 
 **`infer`** (boolean)
 
-* **Status**: Deprecated. Use `user-invocable` and `disable-model-invocation` instead.
-* **Previous behavior**: `infer: true` (default) made the agent both visible in the picker and available as a subagent. `infer: false` hid it from both.
+| Attribute         | Details                                                                                                                         |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Status            | Deprecated. Use `user-invocable` and `disable-model-invocation` instead.                                                        |
+| Previous behavior | `infer: true` (default) made the agent both visible in the picker and available as a subagent. `infer: false` hid it from both. |
 
 ### Frontmatter Example
 
@@ -355,7 +396,7 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-* **MANDATORY**: Include at end of file
+Include at end of file (MANDATORY):
 
 ```markdown
 ---
@@ -505,8 +546,7 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ### Invalid Tool Names
 
-* **Problem**: Referencing tools that don't exist or using incorrect camelCase variants
-* **Solution**: Use exact tool names from VS Code Copilot's available tools list
+Referencing tools that don't exist or using incorrect camelCase variants. Use exact tool names from VS Code Copilot's available tools list.
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
