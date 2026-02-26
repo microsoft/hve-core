@@ -44,3 +44,5 @@ Recommend returning to DT coaching rather than continuing implementation when an
 * The prototype or concept validated during DT coaching fails under implementation constraints, requiring a return to Solution Space methods for redesign.
 
 These adjustments complement co-loaded instruction files (`dt-rpi-handoff-contract`, `dt-quality-constraints`, `dt-method-sequencing`, `dt-rpi-planning-context`, `dt-rpi-review-context`): reference their content during implementation rather than duplicating it.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

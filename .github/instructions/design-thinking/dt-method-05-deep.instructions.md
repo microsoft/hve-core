@@ -215,3 +215,5 @@ Recognize when concepts share enough foundation to combine into a stronger unifi
 Merge candidates should be tested through a new round of Silent Review to verify that the combined concept retains the strengths of both originals without introducing confusion. Forced merges that compromise each concept's clarity produce weaker results than selecting one concept over another.
 
 Coaching prompt: "These two concepts are solving the same problem differently. What if we took the interaction model from one and the value proposition from the other?"
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

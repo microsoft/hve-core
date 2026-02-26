@@ -2,7 +2,7 @@
 description: 'Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact with tiered routing'
 agent: 'agent'
 tools: ['read_file', 'create_file', 'replace_string_in_file']
-argument-hint: "projectName=..."
+argument-hint: "project-slug=..."
 ---
 
 # Implementation Space Exit Handoff
@@ -13,13 +13,17 @@ This is the final DT exit point: the richest handoff carrying cumulative artifac
 
 ## Inputs
 
-* ${input:projectName}: (Required) Name of the DT project. Derives the project slug (kebab-case) for directory lookup under `.copilot-tracking/dt/`.
+* ${input:project-slug}: (Required) Kebab-case project identifier for the artifact directory (e.g., `factory-floor-maintenance`).
+
+## Requirements
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
 
 ### Step 1: Read Coaching State
 
-1. Derive the project slug from `${input:projectName}` using kebab-case conversion: convert to lowercase, replace spaces and non-alphanumeric characters with hyphens, and collapse consecutive hyphens.
+1. Use `${input:project-slug}` as the project directory identifier.
 2. Read the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`. If the file does not exist, report the missing file path and ask the user to verify the project name before proceeding.
 3. Check `methods_completed` to determine the exit tier:
    * Method 7 only → tier 1 (guided).
@@ -202,4 +206,4 @@ Present the completion ceremony as a conversational summary to the user covering
 
 ---
 
-Execute the Implementation Space exit handoff for project "${input:projectName}" by following the Required Steps.
+Execute the Implementation Space exit handoff for project "${input:project-slug}" by following the Required Steps.

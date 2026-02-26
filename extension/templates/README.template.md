@@ -37,8 +37,8 @@ To install the pre-release version, select **Install Pre-Release Version** from 
 
 ## Requirements
 
-- VS Code version 1.106.1 or higher
-- GitHub Copilot extension
+* VS Code version 1.106.1 or higher
+* GitHub Copilot extension
 
 ## License
 

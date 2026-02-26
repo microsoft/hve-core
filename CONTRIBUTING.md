@@ -20,8 +20,8 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 
 > And if you like the project, but just don't have time to contribute, that's fine. There are other easy ways to support the project and show your appreciation, which we would also be very happy about:
 >
-> - Star the project or add it to your favorites
-> - Mention the project to your peer studio crews and tell your work friends/colleagues
+> * Star the project or add it to your favorites
+> * Mention the project to your peer studio crews and tell your work friends/colleagues
 
 ## Build and Validation Requirements
 
@@ -29,25 +29,37 @@ This project uses several tools to maintain code quality and consistency:
 
 ### Required Tools
 
-- **markdownlint** - Validates markdown formatting and style
-- **cspell** - Spell checking across all file types
-- **markdown-table-formatter** - Ensures consistent table formatting
+| Tool                      | Purpose                                    |
+|---------------------------|--------------------------------------------|
+| markdownlint-cli2         | Validates markdown formatting and style    |
+| cspell                    | Spell checking across all file types       |
+| markdown-table-formatter  | Ensures consistent table formatting        |
+| markdown-link-check       | Validates markdown links are not broken    |
+| PowerShell 7              | Runs linting, validation, and test scripts |
+| PSScriptAnalyzer (module) | PowerShell static analysis                 |
+| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
+| Pester (module)           | PowerShell test framework                  |
 
 ### Validation Commands
 
 Run these npm scripts to validate your changes before submitting:
 
 ```bash
-npm run lint:all         # Run all linters
-npm run lint:md          # Run markdownlint
-npm run lint:ps          # Run PowerShell analyzer
-npm run lint:yaml        # Run YAML linter
-npm run lint:frontmatter # Validate markdown frontmatter
-npm run validate:skills  # Validate skill directory structure
-npm run lint:md-links    # Check markdown links
-npm run spell-check      # Run cspell
-npm run format:tables    # Format markdown tables
-npm run test:ps          # Run PowerShell tests
+npm run lint:all                  # Run all linters
+npm run lint:md                   # Run markdownlint
+npm run lint:ps                   # Run PowerShell analyzer
+npm run lint:yaml                 # Run YAML linter
+npm run lint:frontmatter          # Validate markdown frontmatter
+npm run lint:links                # Check link language paths
+npm run lint:md-links             # Check markdown links
+npm run lint:collections-metadata # Validate collection metadata
+npm run lint:marketplace          # Validate marketplace metadata
+npm run lint:version-consistency  # Check action version consistency
+npm run validate:copyright        # Validate copyright headers
+npm run validate:skills           # Validate skill directory structure
+npm run spell-check               # Run cspell
+npm run format:tables             # Format markdown tables
+npm run test:ps                   # Run PowerShell tests
 ```
 
 For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
@@ -58,45 +70,45 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
 
 ## Table of Contents
 
-- [Build and Validation Requirements](#build-and-validation-requirements)
-  - [Required Tools](#required-tools)
-  - [Validation Commands](#validation-commands)
-  - [Development Environment](#development-environment)
-- [Table of Contents](#table-of-contents)
-- [Code of Conduct](#code-of-conduct)
-- [I Have a Question](#i-have-a-question)
-- [I Want To Contribute](#i-want-to-contribute)
-  - [Reporting Bugs](#reporting-bugs)
-    - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
-    - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
-  - [Suggesting Enhancements](#suggesting-enhancements)
-    - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
-    - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
-  - [Your First Code Contribution](#your-first-code-contribution)
-  - [Improving The Documentation](#improving-the-documentation)
-- [AI Artifact Contributions](#ai-artifact-contributions)
-  - [Getting Started with AI Artifacts](#getting-started-with-ai-artifacts)
-  - [Artifact Types](#artifact-types)
-  - [Essential Resources](#essential-resources)
-  - [Quick Reference](#quick-reference)
-- [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
-  - [Active Pull Requests](#active-pull-requests)
-  - [Draft Pull Requests](#draft-pull-requests)
-  - [Exemptions](#exemptions)
-- [Style Guides](#style-guides)
-  - [Local Development Setup](#local-development-setup)
-  - [Coding Conventions](#coding-conventions)
-  - [Copyright and License Headers](#copyright-and-license-headers)
-- [Testing Requirements](#testing-requirements)
-  - [When Tests Are Required](#when-tests-are-required)
-  - [Test Conventions](#test-conventions)
-  - [Running Tests Locally](#running-tests-locally)
-- [Release Process](#release-process)
-  - [How Releases Work](#how-releases-work)
-  - [Version Determination](#version-determination)
-  - [Commit Message Examples](#commit-message-examples)
-  - [Release Validation](#release-validation)
-- [Attribution](#attribution)
+* [Build and Validation Requirements](#build-and-validation-requirements)
+  * [Required Tools](#required-tools)
+  * [Validation Commands](#validation-commands)
+  * [Development Environment](#development-environment)
+* [Table of Contents](#table-of-contents)
+* [Code of Conduct](#code-of-conduct)
+* [I Have a Question](#i-have-a-question)
+* [I Want To Contribute](#i-want-to-contribute)
+  * [Reporting Bugs](#reporting-bugs)
+    * [Before Submitting a Bug Report](#before-submitting-a-bug-report)
+    * [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
+  * [Suggesting Enhancements](#suggesting-enhancements)
+    * [Before Submitting an Enhancement](#before-submitting-an-enhancement)
+    * [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
+  * [Your First Code Contribution](#your-first-code-contribution)
+  * [Improving The Documentation](#improving-the-documentation)
+* [AI Artifact Contributions](#ai-artifact-contributions)
+  * [Getting Started with AI Artifacts](#getting-started-with-ai-artifacts)
+  * [Artifact Types](#artifact-types)
+  * [Essential Resources](#essential-resources)
+  * [Quick Reference](#quick-reference)
+* [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
+  * [Active Pull Requests](#active-pull-requests)
+  * [Draft Pull Requests](#draft-pull-requests)
+  * [Exemptions](#exemptions)
+* [Style Guides](#style-guides)
+  * [Local Development Setup](#local-development-setup)
+  * [Coding Conventions](#coding-conventions)
+  * [Copyright and License Headers](#copyright-and-license-headers)
+* [Testing Requirements](#testing-requirements)
+  * [When Tests Are Required](#when-tests-are-required)
+  * [Test Conventions](#test-conventions)
+  * [Running Tests Locally](#running-tests-locally)
+* [Release Process](#release-process)
+  * [How Releases Work](#how-releases-work)
+  * [Version Determination](#version-determination)
+  * [Commit Message Examples](#commit-message-examples)
+  * [Release Validation](#release-validation)
+* [Attribution](#attribution)
 
 ## Code of Conduct
 
@@ -114,9 +126,9 @@ Before you ask a question, it is best to search for existing [Issues](https://gi
 
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
-- Open an [Issue](https://github.com/microsoft/hve-core/issues/new).
-- Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+* Open an [Issue](https://github.com/microsoft/hve-core/issues/new).
+* Provide as much context as you can about what you're running into.
+* Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
 
 We will then take care of the issue as soon as possible.
 
@@ -132,31 +144,31 @@ We will then take care of the issue as soon as possible.
 
 A good bug report shouldn't leave others needing to chase you up for more information. Therefore, we ask you to investigate carefully, collect information and describe the issue in detail in your report. Please complete the following steps in advance to help us fix any potential bug as fast as possible.
 
-- Make sure that you are using the latest version of the project.
-- Determine if your bug is really a bug and not an error on your side e.g. using incompatible environment components/versions (Make sure that you have read the [README](./README.md) and [documentation](./.github/). If you are looking for support, you might want to check [this section](#i-have-a-question)).
-- To see if other users have experienced (and potentially already solved) the same issue you are having, check if there is not already a bug report existing for your bug or error in [GitHub Issues](https://github.com/microsoft/hve-core/issues).
-- Also make sure to search the internet (including internal and external Stack Overflow) to see if users outside of the GitHub community have discussed the issue.
-- Collect information about the bug:
-  - Stack trace (Traceback)
-  - OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
-  - Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
-  - Possibly your input and the output
-- Can you reliably reproduce the issue? And can you also reproduce it with older versions?
+* Make sure that you are using the latest version of the project.
+* Determine if your bug is really a bug and not an error on your side e.g. using incompatible environment components/versions (Make sure that you have read the [README](./README.md) and [documentation](./.github/). If you are looking for support, you might want to check [this section](#i-have-a-question)).
+* To see if other users have experienced (and potentially already solved) the same issue you are having, check if there is not already a bug report existing for your bug or error in [GitHub Issues](https://github.com/microsoft/hve-core/issues).
+* Also make sure to search the internet (including internal and external Stack Overflow) to see if users outside of the GitHub community have discussed the issue.
+* Collect information about the bug:
+  * Stack trace (Traceback)
+  * OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
+  * Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
+  * Possibly your input and the output
+* Can you reliably reproduce the issue? And can you also reproduce it with older versions?
 
 #### How Do I Submit a Good Bug Report?
 
 We use GitHub Issues to track bugs and errors. If you run into an issue with the project:
 
-- Open an [Issue](https://github.com/microsoft/hve-core/issues/new). (Since we can't be sure at this point whether it is a bug or not, we ask you not to talk about a "bug" yet and not to label the issue as a "bug.")
-- Explain the behavior you would expect and the actual behavior.
-- Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
-- Provide the information you collected in the previous section.
+* Open an [Issue](https://github.com/microsoft/hve-core/issues/new). (Since we can't be sure at this point whether it is a bug or not, we ask you not to talk about a "bug" yet and not to label the issue as a "bug.")
+* Explain the behavior you would expect and the actual behavior.
+* Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
+* Provide the information you collected in the previous section.
 
 Once it's filed:
 
-- The project team will label the issue accordingly.
-- A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
-- If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
+* The project team will label the issue accordingly.
+* A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
+* If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
 
 ### Suggesting Enhancements
 
@@ -164,30 +176,30 @@ This section guides you through submitting an enhancement suggestion for HVE Cor
 
 #### Before Submitting an Enhancement
 
-- Make sure that you are using the latest version.
-- Read the [README](./README.md) and [documentation](./.github/) carefully and find out if the functionality is already covered, maybe by an individual configuration.
-- Perform a [search](https://github.com/microsoft/hve-core/issues) to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
-- Find out whether your idea fits with the scope and aims of the project. It's up to you to make a strong case to convince the project's developers of the merits of this feature. Keep in mind that we want features that will be useful to the majority of our users and not just a small subset. If you're just targeting a minority of users, consider writing an add-on/plugin library or a sub-project.
+* Make sure that you are using the latest version.
+* Read the [README](./README.md) and [documentation](./.github/) carefully and find out if the functionality is already covered, maybe by an individual configuration.
+* Perform a [search](https://github.com/microsoft/hve-core/issues) to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
+* Find out whether your idea fits with the scope and aims of the project. It's up to you to make a strong case to convince the project's developers of the merits of this feature. Keep in mind that we want features that will be useful to the majority of our users and not just a small subset. If you're just targeting a minority of users, consider writing an add-on/plugin library or a sub-project.
 
 #### How Do I Submit a Good Enhancement Suggestion?
 
 Enhancement suggestions are tracked as [GitHub Issues](https://github.com/microsoft/hve-core/issues).
 
-- Use a **clear and descriptive title** for the issue to identify the suggestion.
-- Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
-- **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](http://git.gnome.org/browse/byzanz/) on Linux.
-- **Explain why this enhancement would be useful** to most HVE Core users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
+* Use a **clear and descriptive title** for the issue to identify the suggestion.
+* Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
+* **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
+* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](http://git.gnome.org/browse/byzanz/) on Linux.
+* **Explain why this enhancement would be useful** to most HVE Core users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
 ### Your First Code Contribution
 
 When contributing code to the project, please consider the following guidance:
 
-- Assign an issue to yourself before beginning any effort, and update the issue status accordingly.
-- If an issue for your contribution does not exist, [please file an issue](https://github.com/microsoft/hve-core/issues/new) first to engage with the project maintainers for guidance.
-- Commits should reference related issues for traceability (e.g., "Fixes #123" or "Relates to #456").
-- When creating a PR, use [GitHub's closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue) in the description to automatically link and close related issues.
-- All code PRs destined for the `main` branch will be reviewed by pre-determined reviewer groups that are automatically added to each PR.
+* Assign an issue to yourself before beginning any effort, and update the issue status accordingly.
+* If an issue for your contribution does not exist, [please file an issue](https://github.com/microsoft/hve-core/issues/new) first to engage with the project maintainers for guidance.
+* Commits should reference related issues for traceability (e.g., "Fixes #123" or "Relates to #456").
+* When creating a PR, use [GitHub's closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue) in the description to automatically link and close related issues.
+* All code PRs destined for the `main` branch will be reviewed by pre-determined reviewer groups that are automatically added to each PR.
 
 This project also includes a Dev Container for development work, and using that dev container is preferred, to ensure you are using the same toolchains and tool versions as other contributors. You can read more about the Dev Container in its [ReadMe](./.devcontainer/README.md).
 
@@ -218,17 +230,17 @@ Start with the [AI Artifacts Contributing Hub](./docs/contributing/README.md) fo
 
 Before contributing AI artifacts, review these resources:
 
-- [Common Standards](./docs/contributing/ai-artifacts-common.md) - Shared quality gates, conventions, and rejection criteria that apply to all artifact types
-- [Release Process](./docs/contributing/release-process.md) - Extension channels, maturity levels, version calculation, and publishing workflow
-- [Branch Protection](./docs/contributing/branch-protection.md) - CI requirements, automated checks, and code review expectations
-- [Project Roadmap](./docs/contributing/ROADMAP.md) - Current focus areas and future direction
+* [Common Standards](./docs/contributing/ai-artifacts-common.md) - Shared quality gates, conventions, and rejection criteria that apply to all artifact types
+* [Release Process](./docs/contributing/release-process.md) - Extension channels, maturity levels, version calculation, and publishing workflow
+* [Branch Protection](./docs/contributing/branch-protection.md) - CI requirements, automated checks, and code review expectations
+* [Project Roadmap](./docs/contributing/ROADMAP.md) - Current focus areas and future direction
 
 ### Quick Reference
 
-- Agents directory: [`.github/agents/`](./.github/agents/)
-- Instructions directory: [`.github/instructions/`](./.github/instructions/)
-- Prompts directory: [`.github/prompts/`](./.github/prompts/)
-- Skills directory: [`.github/skills/`](./.github/skills/)
+* Agents directory: [`.github/agents/`](./.github/agents/)
+* Instructions directory: [`.github/instructions/`](./.github/instructions/)
+* Prompts directory: [`.github/prompts/`](./.github/prompts/)
+* Skills directory: [`.github/skills/`](./.github/skills/)
 
 ## Pull Request Inactivity Policy
 
@@ -249,8 +261,8 @@ The inactivity clock runs only when the PR is waiting on the author. Reviewer-si
 
 Label usage:
 
-- `waiting-on-author` is applied when the reviewer requests changes or the author needs to resolve conflicts. The inactivity clock starts.
-- `waiting-on-reviewer` is applied when the author has addressed feedback and awaits re-review. The inactivity clock pauses.
+* `waiting-on-author` is applied when the reviewer requests changes or the author needs to resolve conflicts. The inactivity clock starts.
+* `waiting-on-reviewer` is applied when the author has addressed feedback and awaits re-review. The inactivity clock pauses.
 
 ### Draft Pull Requests
 
@@ -260,14 +272,14 @@ Draft PRs are fully exempt from inactivity closure. Converting a draft to "ready
 
 The following conditions prevent automatic closure of a pull request:
 
-- PR is in draft state
-- PR is labeled `do-not-close`
-- PR is labeled `waiting-on-reviewer`
+* PR is in draft state
+* PR is labeled `do-not-close`
+* PR is labeled `waiting-on-reviewer`
 
 Reopening rules:
 
-- Authors can reopen a stale-closed PR at any time with updated changes
-- Reopening removes the `stale` label and resets the inactivity clock
+* Authors can reopen a stale-closed PR at any time with updated changes
+* Reopening removes the `stale` label and resets the inactivity clock
 
 ## Style Guides
 
@@ -277,23 +289,23 @@ This project uses automated linters to ensure code quality and consistency. Thes
 
 We strongly recommend using the provided [DevContainer](./.devcontainer/README.md) for development work. The DevContainer:
 
-- Ensures consistent tooling across all developers
-- Comes pre-configured with all required linters and development tools
-- Provides npm scripts for common development tasks
+* Ensures consistent tooling across all developers
+* Comes pre-configured with all required linters and development tools
+* Provides npm scripts for common development tasks
 
 Refer to the [DevContainer README](./.devcontainer/README.md) for detailed information on:
 
-- Setting up your development environment
-- Available linting commands and tools
-- Spell checking configuration
-- Git configuration in the container
+* Setting up your development environment
+* Available linting commands and tools
+* Spell checking configuration
+* Git configuration in the container
 
 ### Coding Conventions
 
-- Follow the markdown style guide defined in `.github/instructions/hve-core/markdown.instructions.md`
-- Use consistent formatting as enforced by markdownlint
-- Run spell checking before committing changes
-- Format tables using the markdown-table-formatter tool
+* Follow the markdown style guide defined in `.github/instructions/hve-core/markdown.instructions.md`
+* Use consistent formatting as enforced by markdownlint
+* Run spell checking before committing changes
+* Format tables using the markdown-table-formatter tool
 
 ### Copyright and License Headers
 
@@ -305,9 +317,9 @@ New functionality MUST include tests. This policy ensures code quality and preve
 
 ### When Tests Are Required
 
-- New PowerShell scripts require corresponding `*.Tests.ps1` files
-- Bug fixes should include a regression test when feasible
-- Documentation-only or configuration-only changes do not require tests
+* New PowerShell scripts require corresponding `*.Tests.ps1` files
+* Bug fixes should include a regression test when feasible
+* Documentation-only or configuration-only changes do not require tests
 
 CI reports coverage at an 18% informational baseline; focus on meaningful coverage for new code rather than a strict percentage.
 
@@ -387,10 +399,10 @@ For complete release process documentation including extension publishing, matur
 
 All releases must pass:
 
-- Spell checking
-- Markdown linting
-- Table format checking
-- Dependency pinning checks
+* Spell checking
+* Markdown linting
+* Table format checking
+* Dependency pinning checks
 
 ## Attribution
 

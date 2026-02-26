@@ -49,6 +49,8 @@ Common patterns:
 
 Frame iteration as progress: each loop produces deeper understanding. Carry forward what was learned.
 
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
+
 ## Method Routing
 
 | Signal                                     | Route To |

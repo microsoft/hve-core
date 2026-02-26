@@ -53,8 +53,9 @@ Scripts are organized by function:
 * Collections (`scripts/collections/`) - Collection validation and shared helper modules.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, and PowerShell analysis.
-* Security (`scripts/security/`) - Dependency pinning validation and SHA staleness checks.
+* Security (`scripts/security/`) - Dependency pinning validation, SHA staleness checks, and action version consistency.
 * Library (`scripts/lib/`) - Shared utilities such as verified downloads.
+* Plugins (`scripts/plugins/`) - Plugin generation and marketplace validation.
 
 ### Skills Organization
 
@@ -143,9 +144,11 @@ Agents should use npm scripts for all validation:
 * `npm run lint:md-links` - Markdown link checking
 * `npm run lint:collections-metadata` - Collection metadata validation
 * `npm run lint:version-consistency` - Action version consistency
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:version-consistency`, and `validate:skills`)
+* `npm run lint:marketplace` - Marketplace validation
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, and `validate:skills`)
 * `npm run validate:copyright` - Copyright header validation
 * `npm run validate:skills` - Skill structure validation
+* `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting
 * `npm run test:ps` - PowerShell tests
 
@@ -157,7 +160,7 @@ Run specific tests by passing a `-TestPath` argument:
 
 ```bash
 npm run test:ps -- -TestPath "scripts/tests/linting/"
-npm run test:ps -- -TestPath "scripts/tests/security/Validate-DependencyPinning.Tests.ps1"
+npm run test:ps -- -TestPath "scripts/tests/security/Test-DependencyPinning.Tests.ps1"
 ```
 
 Test results are always written to the `logs/` directory:

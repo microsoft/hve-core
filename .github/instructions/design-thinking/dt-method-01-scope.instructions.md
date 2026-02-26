@@ -207,3 +207,5 @@ Do not rely on a single conversation. Validate key insights across different sta
 * Decision makers ensure alignment on success criteria and scope.
 
 Document original request versus discovered problem space, key constraints, the stakeholder ecosystem with roles, and business impact expectations as the foundation for all subsequent methods.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

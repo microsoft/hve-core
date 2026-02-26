@@ -27,6 +27,7 @@ The coach uses Think/Speak/Empower to enforce quality without rule citations:
 * Internally assess which quality rules apply and what fidelity level the current method requires
 * Surface quality observations as coaching insights. Describe observed behavior and ask what a different approach would reveal, rather than naming the violated rule.
 * Offer the team choices about addressing quality gaps rather than prescribing corrections
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Quality by Space
 

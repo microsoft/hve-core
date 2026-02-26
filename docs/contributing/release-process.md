@@ -160,11 +160,13 @@ stateDiagram-v2
 
 ### Contributor Guidelines
 
-* **New contributions**: Set `stable` on collection items unless explicitly targeting early adopters
-* **Experimental work**: Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts
-* **Preview promotions**: Set `preview` on collection items when core functionality is complete
-* **Stable promotions**: Set `stable` on collection items after production validation
-* **Deprecation**: Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy.
+| Guideline          | Action                                                                                                                                                                                                                                                                                                                                    |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New contributions  | Set `stable` on collection items unless explicitly targeting early adopters                                                                                                                                                                                                                                                               |
+| Experimental work  | Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts                                                                                                                                                                                                                                                 |
+| Preview promotions | Set `preview` on collection items when core functionality is complete                                                                                                                                                                                                                                                                     |
+| Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                              |
+| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy. |
 
 ---
 

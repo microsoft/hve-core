@@ -1,20 +1,24 @@
 ---
 description: 'Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core'
 agent: DT Coach
-argument-hint: "projectName=..."
+argument-hint: "project-slug=..."
 ---
 
 # Resume Design Thinking Coaching
 
 ## Inputs
 
-* ${input:projectName}: (Required) Name of the DT project to resume. Derives the project slug (kebab-case) for directory lookup under `.copilot-tracking/dt/`.
+* ${input:project-slug}: (Required) Kebab-case project identifier for the artifact directory (e.g., `factory-floor-maintenance`).
+
+## Requirements
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
 ## Required Steps
 
 ### Step 1: Locate Project State
 
-1. Derive the project slug from `${input:projectName}` using kebab-case conversion.
+1. Use `${input:project-slug}` as the project directory identifier.
 2. Look for the coaching state file at `.copilot-tracking/dt/{project-slug}/coaching-state.md`.
 3. If the state file is not found, list directories under `.copilot-tracking/dt/` to check for alternative matches.
 4. If multiple projects exist and the slug is ambiguous, list available projects with their last session dates and ask the user to select one.
@@ -48,4 +52,4 @@ argument-hint: "projectName=..."
 
 ---
 
-Resume the Design Thinking coaching session for project "${input:projectName}" by following the Required Steps.
+Resume the Design Thinking coaching session for project "${input:project-slug}" by following the Required Steps.

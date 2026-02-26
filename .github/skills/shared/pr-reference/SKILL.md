@@ -35,11 +35,11 @@ The repository must have at least one commit diverging from the base branch.
 Run the following command to generate a PR reference with default settings (compares against `origin/main`):
 
 ```bash
-./scripts/generate.sh
+scripts/generate.sh
 ```
 
 ```powershell
-./scripts/generate.ps1
+scripts/generate.ps1
 ```
 
 Output saves to `.copilot-tracking/pr/pr-reference.xml` by default.
@@ -63,15 +63,15 @@ After generating the PR reference, use these utility scripts to query the XML.
 Run the list script to extract file paths from the diff:
 
 ```bash
-./scripts/list-changed-files.sh                  # all changed files
-./scripts/list-changed-files.sh --type added      # filter by change type
-./scripts/list-changed-files.sh --format markdown  # output as markdown table
+scripts/list-changed-files.sh                  # all changed files
+scripts/list-changed-files.sh --type added      # filter by change type
+scripts/list-changed-files.sh --format markdown  # output as markdown table
 ```
 
 ```powershell
-./scripts/list-changed-files.ps1                   # all changed files
-./scripts/list-changed-files.ps1 -Type Added       # filter by change type
-./scripts/list-changed-files.ps1 -Format Json      # output as JSON
+scripts/list-changed-files.ps1                   # all changed files
+scripts/list-changed-files.ps1 -Type Added       # filter by change type
+scripts/list-changed-files.ps1 -Format Json      # output as JSON
 ```
 
 ### Read Diff Content
@@ -79,16 +79,16 @@ Run the list script to extract file paths from the diff:
 Run the read script to inspect diff content with chunking for large diffs:
 
 ```bash
-./scripts/read-diff.sh --info             # chunk info (count, line ranges)
-./scripts/read-diff.sh --chunk 1          # read a specific chunk
-./scripts/read-diff.sh --file src/main.ts  # extract diff for one file
-./scripts/read-diff.sh --summary          # file stats summary
+scripts/read-diff.sh --info             # chunk info (count, line ranges)
+scripts/read-diff.sh --chunk 1          # read a specific chunk
+scripts/read-diff.sh --file src/main.ts  # extract diff for one file
+scripts/read-diff.sh --summary          # file stats summary
 ```
 
 ```powershell
-./scripts/read-diff.ps1 -Info              # chunk info
-./scripts/read-diff.ps1 -Chunk 1           # read a specific chunk
-./scripts/read-diff.ps1 -File "src/main.ts" # extract diff for one file
+scripts/read-diff.ps1 -Info              # chunk info
+scripts/read-diff.ps1 -Chunk 1           # read a specific chunk
+scripts/read-diff.ps1 -File "src/main.ts" # extract diff for one file
 ```
 
 ## Output Format
