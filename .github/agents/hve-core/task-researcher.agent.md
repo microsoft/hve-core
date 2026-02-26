@@ -154,18 +154,22 @@ For each scenario:
 
 ## File Path Conventions
 
-All markdown links and file references in research documents must resolve correctly from the generated file's location. Compute the relative path from the research file to the workspace root based on directory depth.
+Files under `.copilot-tracking/` are local and gitignored. Markdown links in these files must use `../` traversal to reach the target. Count the directory segments in the output file's path from the workspace root and prepend that many `../` to reach workspace-root files. For cross-references between `.copilot-tracking/` files, compute the relative path between the two locations.
 
-Hypothetical example for a research file located at workspace root `.copilot-tracking/research/subagents/2026-02-23/example-research.md`:
+From a file at depth 3 (e.g., `.copilot-tracking/research/2026-02-23/file.md`):
 
-| Research file location | Prefix to workspace root |
-|------------------------|-----------------------------|
-| `.copilot-tracking/research/YYYY-MM-DD/` | `../../../` |
-| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | `../../../../` |
+* `[README.md](../../../README.md)`
+* `[.github/copilot-instructions.md](../../../.github/copilot-instructions.md)`
+* `[subagent doc](../subagents/2026-02-23/topic.md)` (cross-reference)
 
-Correct: `[README.md](../../../README.md)`, `[scripts/linting/Markdown-Link-Check.ps1](../../../scripts/linting/Markdown-Link-Check.ps1)`
+From a file at depth 4 (e.g., `.copilot-tracking/research/subagents/2026-02-23/file.md`):
 
-Incorrect: `[README.md](README.md)`, `[scripts/linting/Markdown-Link-Check.ps1](scripts/linting/Markdown-Link-Check.ps1)`
+* `[README.md](../../../../README.md)`
+* `[research doc](../../2026-02-23/research.md)` (cross-reference)
+
+Do not use bare filenames without traversal — `[README.md](README.md)` is always wrong from `.copilot-tracking/` files.
+
+Do not use `#file:` directives in generated `.copilot-tracking/` files. VS Code resolves `#file:` paths and reports errors when targets are missing. Use standard markdown links with the correct traversal prefix instead.
 
 ## Research Document Template
 
@@ -204,7 +208,7 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ### File Analysis
 
-* [{{file_name}}]({{path_to_workspace_root}}{{workspace_relative_path}})
+* [{{file_name}}]({{traversal_prefix}}{{workspace_relative_path}})
   * {{findings_with_line_numbers}}
 
 ### Code Search Results

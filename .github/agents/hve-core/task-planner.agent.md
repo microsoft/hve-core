@@ -285,31 +285,23 @@ Contents:
 
 ## File Path Conventions
 
-All markdown links and file references in `.copilot-tracking/` files must resolve correctly from the generated file's location.
+Files under `.copilot-tracking/` are local and gitignored. Markdown links in these files must use `../` traversal to reach the target. Count the directory segments in the output file's path from the workspace root and prepend that many `../` to reach workspace-root files. For cross-references between `.copilot-tracking/` files, compute the relative path between the two locations.
 
-### References to workspace files
+From a file at depth 3 (e.g., `.copilot-tracking/plans/2026-02-23/plan.md`):
 
-Compute the relative path from the generated file to the workspace root based on directory depth. Use `../` traversal matching the file's nesting level.
+* `[README.md](../../../README.md)`
+* `[.github/copilot-instructions.md](../../../.github/copilot-instructions.md)`
+* `[planning log](../logs/2026-02-23/log.md)` (cross-reference)
+* `[details](../../details/2026-02-23/details.md)` (cross-reference)
 
-| Generated file location | Depth | Prefix to workspace root |
-|-------------------------|-------|--------------------------|
-| `.copilot-tracking/plans/YYYY-MM-DD/` | 3 | `../../../` |
-| `.copilot-tracking/details/YYYY-MM-DD/` | 3 | `../../../` |
-| `.copilot-tracking/research/YYYY-MM-DD/` | 3 | `../../../` |
-| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | 4 | `../../../../` |
-| `.copilot-tracking/plans/logs/YYYY-MM-DD/` | 4 | `../../../../` |
-| `.copilot-tracking/changes/YYYY-MM-DD/` | 3 | `../../../` |
-| `.copilot-tracking/reviews/YYYY-MM-DD/` | 3 | `../../../` |
+From a file at depth 4 (e.g., `.copilot-tracking/plans/logs/2026-02-23/log.md`):
 
-Example: from `.copilot-tracking/research/subagents/2026-02-19/topic.md`, reference `README.md` as `[README.md](../../../../README.md)` and `.github/copilot-instructions.md` as `[.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)`.
+* `[README.md](../../../../README.md)`
+* `[plan](../../2026-02-23/plan.md)` (cross-reference)
 
-### Cross-references between `.copilot-tracking/` files
+Do not use bare filenames without traversal — `[README.md](README.md)` is always wrong from `.copilot-tracking/` files.
 
-Compute relative paths between the two file locations rather than using workspace-root-relative paths.
-
-Example: from a plan at `.copilot-tracking/plans/YYYY-MM-DD/plan.md` to its log at `.copilot-tracking/plans/logs/YYYY-MM-DD/log.md`, use `../logs/YYYY-MM-DD/log.md`.
-
-Example: from a plan at `.copilot-tracking/plans/YYYY-MM-DD/plan.md` to details at `.copilot-tracking/details/YYYY-MM-DD/details.md`, use `../../details/YYYY-MM-DD/details.md`.
+Do not use `#file:` directives in generated `.copilot-tracking/` files. VS Code resolves `#file:` paths and reports errors when targets are missing. Use standard markdown links with the correct traversal prefix instead.
 
 ## Templates
 
@@ -348,8 +340,7 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ### Standards References
 
-* {{full_file_folder_path}}/{{language}}.instructions.md — {{language_conventions_description}}
-* {{full_file_folder_path}}/{{instruction_file}}.instructions.md — {{instruction_description}}
+* [{{instruction_filename}}]({{traversal_prefix}}{{instruction_workspace_relative_path}}) — {{instruction_description}}
 
 ## Implementation Checklist
 

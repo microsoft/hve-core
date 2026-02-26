@@ -49,18 +49,17 @@ Read the subagent research document, cleanup and finalize the subagent research 
 
 ## File Reference Formatting
 
-When citing workspace files as sources in the subagent research document, use markdown links with relative paths that resolve correctly from the research file's location to the workspace root. Compute the traversal depth based on the output file's directory nesting.
+Files under `.copilot-tracking/` are local and gitignored. When citing workspace files in the subagent research document, use `../` traversal to reach each target. Count the directory segments in the output file's path from the workspace root and prepend that many `../` to reach workspace-root files.
 
-Hypothetical example for a research file located at workspace root `.copilot-tracking/research/subagents/2026-02-23/example-research.md`:
+From a file at depth 4 (e.g., `.copilot-tracking/research/subagents/2026-02-23/topic.md`):
 
-| Research file location | Prefix to workspace root |
-|------------------------|--------------------------|
-| `.copilot-tracking/research/subagents/YYYY-MM-DD/` | `../../../../` |
-| `.copilot-tracking/research/YYYY-MM-DD/` | `../../../` |
+* `[README.md](../../../../README.md)`
+* `[.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)`
+* `[research doc](../../2026-02-23/research.md)` (cross-reference)
 
-Correct, depending on traversed depth: `[README.md](../../../../README.md)`, `[.github/copilot-instructions.md](../../../../.github/copilot-instructions.md)`
+Do not use bare filenames without traversal — `[README.md](README.md)` is always wrong from `.copilot-tracking/` files.
 
-Incorrect: `[README.md](README.md)`, `[.github/copilot-instructions.md](.github/copilot-instructions.md)`
+Do not use `#file:` directives in generated `.copilot-tracking/` files. VS Code resolves `#file:` paths and reports errors when targets are missing. Use standard markdown links with the correct traversal prefix instead.
 
 ## Response Format
 
