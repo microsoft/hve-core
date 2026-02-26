@@ -98,6 +98,23 @@ HVE Core provides a structured approach to building AI artifacts with protocol p
 | Maturity lifecycle      | Four-stage model from experimental to deprecated          |
 | Schema validation       | JSON schema enforcement for all artifact types            |
 
+## Customization
+
+Adapt HVE Core to your team's workflow with these guides, from lightweight instruction files to full fork-and-extend workflows.
+
+* [Customization Overview](customization/README.md) - Spectrum of customization options and role-based entry points
+* [Instructions](customization/instructions.md) - Repository-level and file-pattern-scoped coding guidance
+* [Agents](customization/agents.md) - Custom agent architecture, subagent patterns, and tool restrictions
+* [Prompts](customization/prompts.md) - Task-specific prompt files with variables and agent delegation
+* [Skills](customization/skills.md) - Self-contained skill packages with scripts and references
+* [Collections](customization/collections.md) - Bundle and distribute sets of agents, prompts, instructions, and skills
+* [Build System](customization/build-system.md) - Plugin generation, schema validation, and CI pipeline integration
+* [Forking](customization/forking.md) - Fork setup, customization areas, and upstream synchronization
+* [Environment](customization/environment.md) - DevContainer, VS Code settings, and MCP server configuration
+* [Team Adoption](customization/team-adoption.md) - Governance, naming conventions, onboarding, and change management
+
+**[Customization Guide →](customization/README.md)**
+
 ## Contributing
 
 Learn how to create and maintain AI artifacts including agents, prompts, instructions, and skills.
@@ -134,6 +151,7 @@ Pre-built templates for common engineering documents:
 
 | Resource                                   | Description                        |
 |--------------------------------------------|------------------------------------|
+| [Customization Guide](customization/)      | Adapt HVE Core to your workflow    |
 | [CHANGELOG](../CHANGELOG.md)               | Release history and version notes  |
 | [CONTRIBUTING](../CONTRIBUTING.md)         | Repository contribution guidelines |
 | [Scripts README](../scripts/README.md)     | Automation script reference        |
