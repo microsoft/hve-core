@@ -166,6 +166,7 @@ Cybercrime
 cybersecurity
 datacenter
 datacenters
+davidanson
 dataset
 datasets
 dcgm
@@ -961,6 +962,7 @@ strategizing
 striim
 strpos
 stylecop
+styleguide
 subcomponent
 subcomponents
 subfolders
