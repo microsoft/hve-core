@@ -358,7 +358,7 @@ Collection manifests are defined in root `collections/` as YAML files:
 | Collection | Manifest                      | Description                            |
 |------------|-------------------------------|----------------------------------------|
 | Full       | `hve-core-all.collection.yml` | All artifacts regardless of collection |
-| Developer  | `developer.collection.yml`    | Software engineering focused artifacts |
+| Core       | `hve-core.collection.yml`     | Core prompt engineering artifacts      |
 
 ### Collection Package Files
 
@@ -392,8 +392,8 @@ pwsh ./scripts/extension/Prepare-Extension.ps1
 pwsh ./scripts/extension/Package-Extension.ps1
 
 # Build a collection-specific package (copies collection template)
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml
-pwsh ./scripts/extension/Package-Extension.ps1 -Collection collections/developer.collection.yml
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml
+pwsh ./scripts/extension/Package-Extension.ps1 -Collection collections/hve-core.collection.yml
 ```
 
 When `-Collection` targets a collection other than `hve-core-all`, the prepare script copies the collection template to `package.json` before generating `contributes`. The packaging script restores the canonical `package.json` after building.
@@ -404,7 +404,7 @@ For rapid iteration without running the full build pipeline:
 
 ```bash
 # 1. Prepare the extension (generates package files and discovers artifacts)
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml
 
 # 2. Inspect the result
 cat extension/package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['name'], len(d.get('contributes',{}).get('chatAgents',[])),'agents')"
@@ -452,7 +452,7 @@ To verify artifact inclusion before publishing:
 
 ```bash
 # 1. Prepare with collection filtering
-pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/developer.collection.yml -Verbose
+pwsh ./scripts/extension/Prepare-Extension.ps1 -Collection collections/hve-core.collection.yml -Verbose
 
 # 2. Check package.json for included artifacts
 cat extension/package.json | jq '.contributes.chatAgents'

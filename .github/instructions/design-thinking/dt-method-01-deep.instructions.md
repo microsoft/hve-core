@@ -185,3 +185,5 @@ Manufacturing scope intersects with supplier and customer processes:
 * Which scope boundaries are negotiable with external partners, and which are fixed?
 
 Supply chain boundaries define hard limits on what can change internally. Identify them early to avoid scoping solutions that require external cooperation not yet secured.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

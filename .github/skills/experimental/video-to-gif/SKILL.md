@@ -62,11 +62,11 @@ ffmpeg -version
 Convert a video using default settings (10 FPS, 1280px width, sierra2_4a dithering):
 
 ```bash
-./.github/skills/experimental/video-to-gif/scripts/convert.sh input.mp4
+scripts/convert.sh input.mp4
 ```
 
 ```powershell
-./.github/skills/experimental/video-to-gif/scripts/convert.ps1 -InputPath input.mp4
+scripts/convert.ps1 -InputPath input.mp4
 ```
 
 Output saves to `input.gif` by default.
@@ -150,7 +150,7 @@ Use `--start` and `--duration` to convert a specific portion of the video:
 
 ```bash
 # Start at 5 seconds, convert 10 seconds
-./convert.sh --input video.mp4 --start 5 --duration 10
+scripts/convert.sh --input video.mp4 --start 5 --duration 10
 ```
 
 ### Loop Control
@@ -203,50 +203,50 @@ Use single-pass via `--skip-palette` (bash) or `-SkipPalette` (PowerShell).
 
 ```bash
 # Basic usage
-./convert.sh video.mp4
+scripts/convert.sh video.mp4
 
 # Custom output path
-./convert.sh --input video.mp4 --output demo.gif
+scripts/convert.sh --input video.mp4 --output demo.gif
 
 # Adjust quality parameters
-./convert.sh --input video.mp4 --fps 15 --width 640 --dither floyd_steinberg
+scripts/convert.sh --input video.mp4 --fps 15 --width 640 --dither floyd_steinberg
 
 # HDR video with custom tonemapping
-./convert.sh --input hdr-video.mov --tonemap reinhard
+scripts/convert.sh --input hdr-video.mov --tonemap reinhard
 
 # Extract a 10-second clip starting at 5 seconds
-./convert.sh --input video.mp4 --start 5 --duration 10
+scripts/convert.sh --input video.mp4 --start 5 --duration 10
 
 # Create a GIF that plays only once
-./convert.sh --input video.mp4 --loop 1
+scripts/convert.sh --input video.mp4 --loop 1
 
 # Fast single-pass mode
-./convert.sh --input video.mp4 --skip-palette
+scripts/convert.sh --input video.mp4 --skip-palette
 ```
 
 ### convert.ps1 (PowerShell)
 
 ```powershell
 # Basic usage
-./convert.ps1 -InputPath video.mp4
+scripts/convert.ps1 -InputPath video.mp4
 
 # Custom output path
-./convert.ps1 -InputPath video.mp4 -OutputPath demo.gif
+scripts/convert.ps1 -InputPath video.mp4 -OutputPath demo.gif
 
 # Adjust quality parameters
-./convert.ps1 -InputPath video.mp4 -Fps 15 -Width 640 -Dither floyd_steinberg
+scripts/convert.ps1 -InputPath video.mp4 -Fps 15 -Width 640 -Dither floyd_steinberg
 
 # HDR video with custom tonemapping
-./convert.ps1 -InputPath hdr-video.mov -Tonemap reinhard
+scripts/convert.ps1 -InputPath hdr-video.mov -Tonemap reinhard
 
 # Extract a 10-second clip starting at 5 seconds
-./convert.ps1 -InputPath video.mp4 -Start 5 -Duration 10
+scripts/convert.ps1 -InputPath video.mp4 -Start 5 -Duration 10
 
 # Create a GIF that plays only once
-./convert.ps1 -InputPath video.mp4 -Loop 1
+scripts/convert.ps1 -InputPath video.mp4 -Loop 1
 
 # Fast single-pass mode
-./convert.ps1 -InputPath video.mp4 -SkipPalette
+scripts/convert.ps1 -InputPath video.mp4 -SkipPalette
 ```
 
 ## Examples
@@ -256,14 +256,14 @@ Use single-pass via `--skip-palette` (bash) or `-SkipPalette` (PowerShell).
 HDR content is detected automatically. No special flags are needed:
 
 ```bash
-./convert.sh hdr-footage.mov
+scripts/convert.sh hdr-footage.mov
 ```
 
 The script applies hable tonemapping by default. Use `--tonemap` to try different algorithms:
 
 ```bash
 # Use reinhard for more saturated colors
-./convert.sh --input hdr-footage.mov --tonemap reinhard
+scripts/convert.sh --input hdr-footage.mov --tonemap reinhard
 ```
 
 ### Time Range Extraction
@@ -272,7 +272,7 @@ Extract a specific segment from a longer video:
 
 ```bash
 # Convert seconds 30-45 of a screencast
-./convert.sh --input screencast.mp4 --start 30 --duration 15 --fps 15
+scripts/convert.sh --input screencast.mp4 --start 30 --duration 15 --fps 15
 ```
 
 ### Documentation Thumbnails
@@ -280,7 +280,7 @@ Extract a specific segment from a longer video:
 Create compact thumbnails for documentation:
 
 ```bash
-./convert.sh --input demo.mp4 --width 320 --fps 8
+scripts/convert.sh --input demo.mp4 --width 320 --fps 8
 ```
 
 ## Troubleshooting

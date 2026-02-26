@@ -68,7 +68,7 @@ Each role intersects with 9 lifecycle stages, producing 72 role-stage pairs. Cov
 
 **Thinnest roles**: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
 
-**Least-covered stage**: Stage 4 Decomposition — 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
+**Least-covered stage**: Stage 4 Decomposition: 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 
 > [!NOTE]
 > Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/README.md) for guidance on creating new agents, prompts, and instructions.

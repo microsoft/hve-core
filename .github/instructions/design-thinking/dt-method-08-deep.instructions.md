@@ -221,3 +221,5 @@ The same prototype serves different roles with distinct validation criteria:
 * Safety officers validate compliance, alarm integration, and emergency procedure compatibility.
 
 Each role exercises different features and judges success by different standards. A prototype that delights operators but alarms safety officers requires role-specific iteration.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

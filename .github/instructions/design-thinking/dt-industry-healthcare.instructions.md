@@ -90,3 +90,5 @@ Wait times are driven by information asymmetry, not insufficient capacity.
 HIPAA constraints surface during prototype testing when screen placement in shared areas risks incidental PHI disclosure.
 
 **Implementation (Methods 7-9)**: Hi-fi prototypes validate role-based views integrated with the EMR, tested through clinical simulation before live deployment. User testing across shifts reveals that night-shift workflows differ significantly from day-shift assumptions. ED throughput improves measurably during pilot, and nurse-reported handoff confidence increases. Iteration focuses on discharge communication gaps identified through patient follow-up calls.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

@@ -45,3 +45,5 @@ Beginners should focus on the distinction between desirability validation (lo-fi
 Intermediate learners benefit from designing comparison testing plans and understanding how hi-fi findings may trigger returns to Method 4 (when no technically feasible approach exists for a solution theme) or Method 6 (when a simpler interaction model succeeds).
 
 Advanced learners should explore how organizational procurement and IT governance policies constrain hi-fi prototyping options, analyze when a failed technical validation reveals a gap in the original problem framing from Method 3, and critique the trade-off between thorough comparison and time-to-market pressure.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

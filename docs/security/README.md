@@ -26,23 +26,23 @@ This directory contains security documentation for HVE Core, demonstrating defen
 
 HVE Core is an enterprise prompt engineering framework that:
 
-- Contains no runtime services or user data storage
-- Operates as development-time tooling consumed by GitHub Copilot
-- Relies on defense-in-depth with 18+ automated security controls
+* Contains no runtime services or user data storage
+* Operates as development-time tooling consumed by GitHub Copilot
+* Relies on defense-in-depth with 18+ automated security controls
 
 The [threat model](threat-model.md) documents:
 
-- 36 threats across STRIDE, AI-specific, and Responsible AI categories
-- Security controls mapped to each threat
-- MCP server trust analysis
-- Quantitative security metrics
-- GSN-style assurance argument
+* 36 threats across STRIDE, AI-specific, and Responsible AI categories
+* Security controls mapped to each threat
+* MCP server trust analysis
+* Quantitative security metrics
+* GSN-style assurance argument
 
 ## Related Resources
 
-- [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
-- [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup and trust guidance
-- [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and maintainer roles
+* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup and trust guidance
+* [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and maintainer roles
 
 ---
 

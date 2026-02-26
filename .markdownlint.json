@@ -6,7 +6,7 @@
     "style": "consistent"
   },
   "MD004": {
-    "style": "consistent"
+    "style": "asterisk"
   },
   "MD005": true,
   "MD007": {

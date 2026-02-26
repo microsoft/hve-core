@@ -210,3 +210,5 @@ Watch operators interact with equipment interfaces under real operating conditio
 * Capture workarounds operators use to compensate for interface limitations: tape marks on screens, memorized sequences replacing menu navigation, verbal relay of readings.
 
 Coaching prompt: "Watch how the operator actually uses this interface. Where does the physical environment make the designed interaction difficult?"
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

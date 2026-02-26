@@ -88,3 +88,5 @@ Every artifact, constraint, and assumption in the handoff summary carries a conf
 | `conflicting` | Multiple sources disagree                                | Resolve before planning; escalate if unresolvable |
 
 The RPI researcher treats `assumed`, `unknown`, and `conflicting` markers as investigation targets. The RPI planner distinguishes `validated` constraints from `assumed` ones when assessing implementation risk.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

@@ -46,3 +46,5 @@ Beginners should focus on the divergent-convergent distinction and practice gene
 Intermediate learners benefit from comparing philosophy-based and technology-based clustering approaches and understanding how synthesis themes from Method 3 scope the brainstorming space.
 
 Advanced learners should explore how group dynamics (seniority, personality, domain expertise) affect which ideas get generated and suppressed, and analyze when a brainstorming session signals the need to return to Method 2 for more research.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

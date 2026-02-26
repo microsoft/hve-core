@@ -87,3 +87,5 @@ Use anonymized incident reports and near-miss data as empathy artifacts. These r
 **Solution (Methods 4-6)**: Brainstorming generates four solution themes: hands-free interaction, visual guidance, collaborative knowledge sharing, and proactive assistance. Lo-fi prototypes reveal touchscreen contamination, QR code lighting issues, and production-timing conflicts — constraints invisible from a desk.
 
 **Implementation (Methods 7-9)**: Hi-fi prototypes validate industrial-grade microphones for 85-90 dB environments and glove-friendly interfaces. User testing across four operator types shows 40% higher adoption with glove-friendly design. Shift-change usage spikes lead to dedicated transition features. Emergency stop procedures are used 300% above forecast, revealing safety as the highest-value use case.
+
+* All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
