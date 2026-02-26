@@ -76,7 +76,10 @@ Use the [DT Coach](dt-coach.md) agent to start a guided Design Thinking session.
 
 ## Integration with RPI
 
-Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher, Task Planner, or Task Implementor can consume. See [DT to RPI Integration](dt-rpi-integration.md) for details.
+Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher, Task Planner, or Task Implementor can consume.
+
+* [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md): Step-by-step guide with practical examples at each exit point
+* [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-agent mappings, and confidence markers
 
 ## Learn at Your Own Pace
 

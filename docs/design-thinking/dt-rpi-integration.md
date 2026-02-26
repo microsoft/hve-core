@@ -143,6 +143,7 @@ Each prompt collects the relevant method outputs, confidence markers, and open q
 
 ## Related Resources
 
+* [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md): Step-by-step guide with practical examples at each exit point
 * [Design Thinking Guide](README.md): Overview of all nine methods and three spaces
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework

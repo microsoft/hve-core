@@ -186,7 +186,7 @@ Earlier exit points produce more RPI work. A problem statement handoff requires 
 
 To initiate a handoff, the coach creates a handoff summary at `.copilot-tracking/dt/{project-slug}/handoff-summary.md` with artifacts tagged by confidence level (`validated`, `assumed`, `unknown`, `conflicting`). The receiving RPI agent treats non-validated markers as investigation or verification targets.
 
-For details on the handoff contract, see [DT-RPI Integration](dt-rpi-integration.md).
+For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-agent mappings, see [DT-RPI Integration](dt-rpi-integration.md).
 
 ## Non-Linear Iteration
 
