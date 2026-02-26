@@ -24,6 +24,7 @@ copilot plugin install ado@hve-core
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                         |
+| ado-triage-work-items                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
 
 ## Instructions
 
@@ -34,6 +35,7 @@ copilot plugin install ado@hve-core
 | ado-update-wit-items    | Work item creation and update protocol using MCP ADO tools with handoff tracking                                                                                                                                                                            |
 | ado-wit-discovery       | Protocol for discovering Azure DevOps work items via user assignment or artifact analysis with planning file output                                                                                                                                         |
 | ado-wit-planning        | Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols                                                                                                                                       |
+| ado-backlog-triage      | Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection - Brought to you by microsoft/hve-core                                                                                                 |
 | hve-core-location       | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills
