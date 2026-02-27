@@ -51,34 +51,39 @@ Use this navigator to jump directly to the stage matching your current need.
 
 ```mermaid
 flowchart LR
-    Stage1[Stage 1: Setup] -->|environment ready| Stage2[Stage 2: Discovery]
-    Stage2 -->|BRD approved| Stage3[Stage 3: Product Definition]
-    Stage2 -->|TPMs skip PRD| Stage4[Stage 4: Decomposition]
-    Stage3 -->|PRD finalized| Stage4
-    Stage4 -->|work items created| Stage5[Stage 5: Sprint Planning]
-    Stage5 -->|sprint planned| Stage6[Stage 6: Implementation]
-    Stage6 -->|PR submitted| Stage7[Stage 7: Review]
-    Stage7 -->|approved| Stage8[Stage 8: Delivery]
-    Stage7 -->|rework needed| Stage6
-    Stage8 -->|next sprint| Stage6
-    Stage8 -->|final sprint complete| Stage9[Stage 9: Operations]
-    Stage9 -->|hotfix needed| Stage6
+    S1["Setup"] --> S2["Discovery"]
+    S2 --> S3["Product Definition"]
+    S3 --> S4["Decomposition"]
+    S4 --> S5["Sprint Planning"]
+    S5 --> S6["Implementation"]
+    S6 --> S7["Review"]
+    S7 --> S8["Delivery"]
+    S8 --> S9["Operations"]
+    S7 -.->|"rework"| S6
+    S8 -.->|"next sprint"| S6
+    S9 -.->|"hotfix"| S6
 ```
+
+> [!TIP]
+> [Design Thinking](../../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../../design-thinking/dt-rpi-integration.md) for details.
 
 ## Stage Transition Rules
 
-1. Stage 1 to Stage 2: Installation complete
-2. Stage 2 to Stage 3: BRD complete, handoff at `docs/brds/`
-3. Stage 2 to Stage 4: TPMs skip PRD when BRD is sufficient
-4. Stage 3 to Stage 4: PRD and ADRs finalized
-5. Stage 4 to Stage 5: Work items created
-6. Stage 5 to Stage 6: Sprint planned
-7. Stage 6 to Stage 7: Implementation complete, `/clear` context
-8. Stage 7 to Stage 8: PR approved
-9. Stage 7 to Stage 6: Rework needed
-10. Stage 8 to Stage 6: Next sprint
-11. Stage 8 to Stage 9: Final sprint complete
-12. Stage 9 to Stage 6: Hotfix needed
+1. Design Thinking Exit 1 to Stage 2: Problem statement complete (Methods 1-3) feeds Task Researcher in Discovery
+2. Design Thinking Exit 2 to Stage 2: Validated concept (Methods 4-6) feeds Task Researcher in Discovery
+3. Design Thinking Exit 3 to Stage 2: Implementation spec (Methods 7-9) feeds Task Researcher in Discovery
+4. Stage 1 to Stage 2: Installation complete
+5. Stage 2 to Stage 3: BRD complete, handoff at `docs/brds/`
+6. Stage 2 to Stage 4: TPMs skip PRD when BRD is sufficient
+7. Stage 3 to Stage 4: PRD and ADRs finalized
+8. Stage 4 to Stage 5: Work items created
+9. Stage 5 to Stage 6: Sprint planned
+10. Stage 6 to Stage 7: Implementation complete, `/clear` context
+11. Stage 7 to Stage 8: PR approved
+12. Stage 7 to Stage 6: Rework needed
+13. Stage 8 to Stage 6: Next sprint
+14. Stage 8 to Stage 9: Final sprint complete
+15. Stage 9 to Stage 6: Hotfix needed
 
 ## Coverage Notes
 

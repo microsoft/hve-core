@@ -81,6 +81,14 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 * Learn the [RPI Workflow](../rpi/README.md) for complex tasks
 * Browse [available agents](../../.github/CUSTOM-AGENTS.md) for the full catalog
 
+## Design Thinking Path
+
+For projects requiring user-centered requirements discovery before implementation:
+
+* [Design Thinking Guide](../design-thinking/README.md) — Start here for DT overview
+* [Using the DT Coach](../design-thinking/dt-coach.md) — Learn to use the dt-coach agent
+* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md) — Transition from DT to implementation
+
 ## See Also
 
 * [Installation Guide](install.md) - Full decision matrix for all installation methods
