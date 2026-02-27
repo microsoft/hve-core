@@ -6,7 +6,7 @@ import remarkGithubAlert from 'remark-github-blockquote-alert';
 const config = {
   title: 'HVE Core',
   tagline: 'AI-Driven Software Development Across the Full Lifecycle',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/microsoft-logo.svg',
 
   future: {
     v4: true,
@@ -67,7 +67,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/microsoft-logo.svg',
       announcementBar: {
         id: 'draft_notice',
         content: '⚠️ <strong>Draft Content</strong> — This documentation site is under active development. Content is preliminary and subject to change.',
