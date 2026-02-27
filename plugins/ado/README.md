@@ -24,6 +24,8 @@ copilot plugin install ado@hve-core
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                         |
+| ado-add-work-item                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
+| ado-discover-work-items                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
 
 ## Instructions
 

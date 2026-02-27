@@ -78,7 +78,11 @@ items:
   kind: agent
 - path: .github/agents/security-planning/security-plan-creator.agent.md
   kind: agent
+- path: .github/prompts/ado/ado-add-work-item.prompt.md
+  kind: prompt
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
+  kind: prompt
+- path: .github/prompts/ado/ado-discover-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-get-build-info.prompt.md
   kind: prompt
