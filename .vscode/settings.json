@@ -46,7 +46,8 @@
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
-    ".github/skills/shared": true
+    ".github/skills/shared": true,
+    ".github/skills/experimental": true,
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
