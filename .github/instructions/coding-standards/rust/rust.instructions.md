@@ -270,7 +270,7 @@ error!(
 
 ### OpenTelemetry Integration
 
-When distributed tracing is required, integrate OpenTelemetry via `tracing-opentelemetry`. Add `tracing-opentelemetry`, `opentelemetry`, and `opentelemetry-otlp` to `[dependencies]`.
+When distributed tracing is required, integrate OpenTelemetry via `tracing-opentelemetry`. Add `tracing-opentelemetry`, `opentelemetry`, `opentelemetry-sdk` (with the `rt-tokio` feature), and `opentelemetry-otlp` to `[dependencies]`.
 
 * Check for `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable before enabling the exporter.
 * Fall back to console-only logging when the variable is absent.
@@ -279,19 +279,19 @@ When distributed tracing is required, integrate OpenTelemetry via `tracing-opent
 ```rust
 use std::env;
 
+use tracing_subscriber::layer::SubscriberExt;
+
 fn init_tracing() {
     let subscriber = tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env());
 
     if env::var("OTEL_EXPORTER_OTLP_ENDPOINT").is_ok() {
-        // Configure OpenTelemetry pipeline with OTLP exporter
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
             .install_batch(opentelemetry_sdk::runtime::Tokio)
             .expect("OpenTelemetry pipeline must initialize at startup");
 
         let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-        use tracing_subscriber::layer::SubscriberExt;
         tracing::subscriber::set_global_default(
             subscriber.finish().with(telemetry),
         ).expect("Global subscriber must be set once at startup");
