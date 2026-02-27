@@ -25,9 +25,9 @@ copilot plugin install design-thinking@hve-core
 | dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core |
 | dt-resume-coaching              | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core           |
 | dt-method-next                  | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                          |
-| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact with tiered routing                                                          |
+| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact targeting task-researcher                                                    |
 | dt-handoff-problem-space        | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                               |
-| dt-handoff-solution-space       | Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-planner                                 |
+| dt-handoff-solution-space       | Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-researcher                              |
 | dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core         |
 | dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                     |
 | dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                          |

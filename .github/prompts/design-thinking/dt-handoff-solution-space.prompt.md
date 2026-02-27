@@ -1,5 +1,5 @@
 ---
-description: 'Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-planner'
+description: 'Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-researcher'
 mode: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."
@@ -7,10 +7,10 @@ argument-hint: "project-slug=..."
 
 # Solution Space Exit Handoff
 
-Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting task-planner.
+Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting task-researcher.
 Invoke when a team graduates from the Solution Space and chooses lateral handoff to the RPI pipeline.
 
-Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to RPI Planner for implementation planning. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
+Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to RPI Researcher for investigation with rich Solution Space context. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.
 
 ## Inputs
 
@@ -89,7 +89,7 @@ Include the YAML header:
 exit_point: "concept-validated"
 dt_method: 6
 dt_space: "solution"
-handoff_target: "planner"
+handoff_target: "researcher"
 date: "{today's date}"
 ```
 
@@ -108,35 +108,34 @@ Record a lateral transition in the coaching state `transition_log`:
 ```yaml
 - type: lateral
   from_method: 6
-  to: rpi-planner
-  rationale: "Solution Space complete: handoff to RPI pipeline with validated concepts"
+  to: rpi-researcher
+  rationale: "Solution Space complete: handoff to RPI Researcher with validated concepts"
   date: "{today's date}"
 ```
 
 ### Step 5: Generate RPI Entry
 
-Create a self-contained RPI handoff document at `.copilot-tracking/plans/{project-slug}-plan.md` for task-planner to consume directly.
+Create a self-contained RPI handoff document at `.copilot-tracking/research/{project-slug}-research-topic.md` for task-researcher to consume directly.
 
-Transform DT artifacts into planning-ready context using these mappings:
+Include YAML frontmatter with `description` set to a summary of the handoff context (for example, `description: 'RPI research topic from DT Solution Space for {project name}'`).
 
-| DT Artifact                       | RPI Planning Context        | Notes                                    |
-|-----------------------------------|-----------------------------|------------------------------------------|
-| Validated concepts (Method 5)     | Implementation requirements | Preserve concept descriptions            |
-| Constraint discoveries (Method 6) | Technical boundaries        | Group by category, flag blockers         |
-| User behavior patterns (Method 6) | Usage scenarios             | Include observation evidence             |
-| Invalidated assumptions           | Risks and mitigations       | Document what testing disproved          |
-| Technical unknowns                | Research scope priorities   | Items marked assumed/unknown/conflicting |
+Transform DT artifacts into research-topic context using these mappings:
+
+| DT Artifact                       | Research Topic Context    | Notes                                        |
+|-----------------------------------|---------------------------|----------------------------------------------|
+| Validated concepts (Method 5)     | Research scope definition | Concepts frame what the Researcher validates |
+| Constraint discoveries (Method 6) | Known constraints         | Group by category, flag blockers             |
+| User behavior patterns (Method 6) | Observed context          | Include observation evidence                 |
+| Invalidated assumptions           | Investigation priorities  | Document what testing disproved              |
+| Technical unknowns                | Primary research targets  | Items marked assumed/unknown/conflicting     |
 
 Structure the document with these sections:
 
-* Validated Concepts: prioritized concept definitions from Method 5 handoff, transformed into implementation requirements.
-* Constraint Discoveries: constraints organized by category (Physical/Environmental/Workflow) with severity markers and mitigation considerations.
-* User Behavior Patterns: observed behaviors during prototype testing that inform implementation approach.
-* Investigation Targets: items tagged `assumed`, `unknown`, or `conflicting` requiring RPI research or validation. Prioritize blockers and high-impact unknowns.
-* Handoff Context: Reference to the handoff-solution-space.md artifact for lineage and any caveats from readiness assessment.
-
-Inline all content directly rather than referencing `.copilot-tracking/` paths. Preserve confidence markers to guide RPI research prioritization.
-The document stands alone as complete context for the receiving RPI agent.
+* Research Topic: frame the validated concepts as a research question for the Researcher to investigate. State the problem domain, validated directions, and what remains uncertain.
+* Known Constraints: constraints organized by category (Physical/Environmental/Workflow) with severity markers. The Researcher treats these as established boundaries.
+* Observed Context: user behavior patterns and environmental observations from prototype testing that provide context for research.
+* Investigation Priorities: items tagged `assumed`, `unknown`, or `conflicting` requiring Researcher investigation. Prioritize blockers and high-impact unknowns.
+* DT Artifact Paths: list all `.copilot-tracking/dt/{project-slug}/` artifact paths so the Researcher can read original DT evidence directly.
 
 ---
 

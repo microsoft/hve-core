@@ -29,13 +29,34 @@ Before starting a handoff, ensure you have:
 
 DT-to-RPI handoff can happen at three exit points. Your choice depends on how much DT work is complete and how much you want RPI to handle.
 
-| Exit Point                 | After Methods | RPI Target       | You Have                                                | RPI Does                            |
-|----------------------------|---------------|------------------|---------------------------------------------------------|-------------------------------------|
-| Problem Statement Complete | 1-3           | Task Researcher  | Validated problem, stakeholder map, themes              | Research solutions, plan, implement |
-| Concept Validated          | 4-6           | Task Planner     | Tested concepts, constraint discoveries, narrowed scope | Plan implementation, implement      |
-| Implementation Spec Ready  | 7-8           | Task Implementor | Functional specs, test results, architecture decisions  | Implement the validated design      |
+| Exit Point                 | After Methods | RPI Target      | You Have                                                | RPI Does                                       |
+|----------------------------|---------------|-----------------|---------------------------------------------------------|------------------------------------------------|
+| Problem Statement Complete | 1-3           | Task Researcher | Validated problem, stakeholder map, themes              | Research solutions, plan, implement            |
+| Concept Validated          | 4-6           | Task Researcher | Tested concepts, constraint discoveries, narrowed scope | Research with richer context, plan, implement  |
+| Implementation Spec Ready  | 7-8           | Task Researcher | Functional specs, test results, architecture decisions  | Research with richest context, plan, implement |
 
-Earlier exits transfer more work to RPI. Later exits transfer a more refined, validated artifact.
+Earlier exit points provide leaner artifacts requiring broader Researcher investigation. Later exit points provide richer context from additional DT methods, narrowing the Researcher's scope. Every exit enters the full RPI pipeline at Task Researcher.
+
+## What Task Researcher Needs From Your Handoff
+
+Every handoff artifact contains three categories of information that shape how Task Researcher scopes its investigation:
+
+| Category    | What It Contains                                       | How the Researcher Uses It                           |
+|-------------|--------------------------------------------------------|------------------------------------------------------|
+| Artifacts   | DT method outputs with file paths and evidence summary | Establishes the evidence base and validated context   |
+| Constraints | Technical, environmental, or workflow limitations      | Bounds the solution space the researcher explores     |
+| Assumptions | Beliefs not yet independently verified                 | Drives verification targets and research priorities   |
+
+Each item carries a **confidence marker** that tells the Researcher how much trust to place in it:
+
+| Marker        | Meaning                                             | Researcher Action                              |
+|---------------|-----------------------------------------------------|------------------------------------------------|
+| `validated`   | Confirmed through multiple sources or observation   | Treats as established fact, no re-investigation |
+| `assumed`     | Stated by a source but not independently confirmed  | Marks as a verification target                  |
+| `unknown`     | Identified gap not yet investigated                 | Marks as a primary research target              |
+| `conflicting` | Multiple sources disagree                           | Investigates to resolve the conflict            |
+
+When you review your handoff artifact before giving it to Task Researcher, pay attention to items marked `assumed`, `unknown`, or `conflicting`. These drive the Researcher's investigation scope. If too many critical items carry weak markers, consider returning to DT coaching to strengthen the evidence before handing off.
 
 ## Exit Point 1: Problem Space Handoff (Methods 1-3 → Task Researcher)
 
@@ -111,7 +132,7 @@ After research completes, proceed through the standard RPI phases:
 
 Each phase consumes the previous phase's output. The DT context flows through: the planner references the researcher's DT-informed findings, and the implementor inherits fidelity constraints and stakeholder validation steps.
 
-## Exit Point 2: Solution Space Handoff (Methods 4-6 → Task Planner)
+## Exit Point 2: Solution Space Handoff (Methods 4-6 → Task Researcher)
 
 This scenario hands off after Lo-Fi Prototypes. The team has tested concepts and narrowed directions but has not built functional prototypes.
 
@@ -128,7 +149,7 @@ After completing Method 6, use `/dt-method-next` to assess readiness. The coach 
 This produces:
 
 * `.copilot-tracking/dt/factory-floor-maintenance/handoff-solution-space.md`: The handoff metadata
-* `.copilot-tracking/dt/factory-floor-maintenance/rpi-handoff-solution-space.md`: A self-contained document for Task Planner
+* `.copilot-tracking/dt/factory-floor-maintenance/rpi-handoff-solution-space.md`: A self-contained document for Task Researcher
 
 The Solution Space handoff includes everything from the Problem Space plus:
 
@@ -137,38 +158,49 @@ The Solution Space handoff includes everything from the Problem Space plus:
 * Validated and invalidated assumptions from lo-fi prototype testing
 * User behavior patterns observed during testing
 
-### Step 3: Hand Off to Task Planner
+### Step 3: Verify the Solution Space Artifact
 
-Clear context and switch to Task Planner:
+Open `rpi-handoff-solution-space.md` and verify the contents. A well-formed Solution Space artifact includes everything from Exit Point 1 plus:
+
+* Tested concepts with D/F/V evaluation results and stakeholder alignment evidence
+* Constraint discoveries categorized by type and severity, each with a confidence marker
+* A clear distinction between validated assumptions (evidence from testing) and invalidated assumptions (disproven by prototype feedback)
+* User behavior patterns with specific observations, not generalizations
+
+Check the confidence markers carefully. At Exit Point 2, you should see more `validated` markers than at Exit Point 1 because lo-fi prototype testing produces direct evidence. Items still marked `assumed` or `unknown` become the Researcher's primary investigation targets.
+
+### Step 4: Invoke Task Researcher
+
+Clear context and switch to Task Researcher:
 
 ```text
 /clear
 ```
 
-Open `rpi-handoff-solution-space.md` and invoke the planner:
+Open `rpi-handoff-solution-space.md` and invoke the researcher:
 
 ```text
-@task-planner Plan implementation for the voice-guided repair system.
-The DT handoff artifact is open at
+@task-researcher Research implementation options for the voice-guided
+repair system. The DT handoff artifact is open at
 .copilot-tracking/dt/factory-floor-maintenance/rpi-handoff-solution-space.md
 ```
 
-Task Planner creates an implementation plan that:
+Task Researcher uses the richer Solution Space artifacts to:
 
-* Enforces space-appropriate fidelity (no premature polishing)
-* Includes stakeholder validation steps at each phase
-* Weights task priority using confidence markers from the handoff
-* Builds iteration loops that can route work back to DT methods when needed
+* Narrow technical research scope using validated concepts and constraint discoveries
+* Treat invalidated assumptions as resolved (no re-investigation needed)
+* Focus on feasibility gaps and implementation options for the tested directions
+* Produce a research file that feeds the standard RPI pipeline
 
-### Step 4: Continue Through RPI
+### Step 5: Continue Through RPI
 
 ```text
-/clear → Task Implementor → /clear → Task Reviewer
+/clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
 ```
 
-The planner's output already accounts for DT constraints, so the implementor builds against validated specifications rather than assumptions.
+The researcher's output already incorporates DT constraints and validated concepts, so the planner builds against evidence rather than assumptions.
 
-## Exit Point 3: Validation Space Handoff (Methods 7-8 → Task Implementor)
+## Exit Point 3: Implementation Space Handoff (Methods 7-8 → Task Researcher)
 
 This is the richest handoff, carrying cumulative artifact lineage from all completed methods. The team has functional prototypes, test results, and architecture decisions.
 
@@ -186,58 +218,76 @@ This prompt determines an exit tier based on which Implementation Space methods 
 | 2    | Methods 7-8      | Structured       |
 | 3    | Methods 7-9      | Comprehensive    |
 
-The prompt routes to Task Implementor when the prototype is near production-ready, or to Task Planner when significant architecture gaps remain.
+The Implementation Space provides the richest artifacts of any exit point, giving the Researcher the most complete context to work with.
 
-### Step 2: Hand Off to Task Implementor
+### Step 2: Review the Handoff Artifact
+
+Open the generated handoff artifact and verify the contents match your exit tier:
+
+**All tiers (Method 7+):**
+
+* Architecture decisions and technical trade-offs with comparison results
+* Fidelity mapping matrix and performance benchmarks
+* Integration validation results with confidence markers
+* Specification drafts connected to prototype evidence
+
+**Tier 2+ (Methods 7-8):**
+
+* Test protocols and participant profiles
+* Behavioral observation data (not just opinions)
+* Severity-frequency matrix findings
+* Assumption validation results showing which assumptions were confirmed, challenged, or invalidated
+
+**Tier 3 (Methods 7-9):**
+
+* Refinement log with baseline measurements
+* Scaling assessment across technical, user, process, and constraint dimensions
+* Deployment plan with change management and rollback capability
+* Adoption metrics (leading and lagging indicators)
+
+At this exit point, most items should carry `validated` markers because hi-fi prototypes and user testing produce strong evidence. Items still marked `assumed` or `unknown` stand out as clear research targets for the Researcher.
+
+### Step 3: Hand Off to Task Researcher
 
 ```text
 /clear
 ```
 
-Open the handoff artifact and invoke the implementor:
+Open the handoff artifact and invoke the researcher:
 
 ```text
-@task-implementor Implement the voice-guided repair system based on
-the DT handoff. The handoff artifact is open at
+@task-researcher Research implementation approach for the voice-guided
+repair system. The DT handoff artifact is open at
 .copilot-tracking/dt/factory-floor-maintenance/rpi-handoff-implementation-space.md
 ```
 
-The implementor works with:
+Task Researcher uses the richest available context to:
 
-* Hi-fi prototype specifications and architecture decisions
-* Test results showing which approaches users preferred (e.g., glove-friendly controls driving 40% higher adoption)
-* Fidelity constraints from the originating DT space
-* DT artifact references for traceability
+* Validate architecture decisions against current technical landscape
+* Confirm that test results and user preferences still hold
+* Research integration options and production-readiness requirements
+* Produce a research file that feeds the standard RPI pipeline
+
+### Step 4: Continue Through RPI
+
+```text
+/clear → Task Planner → /clear → Task Implementor → /clear → Task Reviewer
+```
+
+The researcher's output carries validated DT specifications, hi-fi prototype findings, and architecture decisions through the full pipeline. The planner and implementor inherit this rich context rather than re-deriving it.
 
 ## When RPI Returns to DT
 
-The handoff is not one-way. Any RPI agent can recommend returning to DT coaching when their work reveals issues that trace back to DT assumptions. This section shows what that looks like in practice.
+The handoff is not one-way. Task Researcher can recommend returning to DT coaching when research reveals issues that trace back to DT assumptions. Other RPI agents (Planner, Implementor, Reviewer) surface issues through the standard RPI chain; the Researcher aggregates these signals and determines whether a DT return is warranted.
 
 ### Recognizing Return Signals
 
-Each RPI agent encounters different situations that warrant a return:
-
-**Task Researcher** recommends returning when:
+Task Researcher recommends returning to DT when:
 
 * The problem statement needs revision based on new technical evidence
 * Research reveals unrepresented stakeholders whose needs change the problem framing
 * Fundamental DT assumptions are invalidated by technical investigation
-
-**Task Planner** recommends returning when:
-
-* Core assumptions remain unresolved even after research, making planning unreliable
-* Fidelity requirements conflict with the originating DT space
-* The plan reveals that the solution direction needs stakeholder re-validation
-
-**Task Implementor** recommends returning when:
-
-* Real-world constraints (performance, integration, infrastructure) invalidate the concepts validated during DT prototyping
-* Implementation reveals that the user experience differs significantly from what was tested
-
-**Task Reviewer** flags items for DT re-entry when:
-
-* Artifact quality criteria are not met (missing stakeholder coverage, incorrect confidence markers)
-* Implementation diverges from the validated DT direction without documented rationale
+* Downstream RPI agents (Planner, Implementor, or Reviewer) surface issues that trace back to unresolved DT assumptions
 
 ### Practical Example: Researcher Returns to DT
 
@@ -295,14 +345,14 @@ This log gives the full history: the original handoff, the return to DT with the
 
 ## Quick Reference
 
-| Action                 | Command or Step                                                                                    |
-|------------------------|----------------------------------------------------------------------------------------------------|
-| Check readiness        | `/dt-method-next` in DT Coach session                                                              |
-| Problem Space handoff  | `/dt-handoff-problem-space project-slug=...`                                                       |
-| Solution Space handoff | `/dt-handoff-solution-space project-slug=...`                                                      |
-| Implementation handoff | `/dt-handoff-implementation-space project-slug=...`                                                |
-| Switch to RPI agent    | `/clear`, open handoff artifact, invoke `@task-researcher` / `@task-planner` / `@task-implementor` |
-| Return to DT from RPI  | Start new `@dt-coach` session, describe the finding that triggered the return                      |
+| Action                 | Command or Step                                                               |
+|------------------------|-------------------------------------------------------------------------------|
+| Check readiness        | `/dt-method-next` in DT Coach session                                         |
+| Problem Space handoff  | `/dt-handoff-problem-space project-slug=...`                                  |
+| Solution Space handoff | `/dt-handoff-solution-space project-slug=...`                                 |
+| Implementation handoff | `/dt-handoff-implementation-space project-slug=...`                           |
+| Switch to RPI agent    | `/clear`, open handoff artifact, invoke `@task-researcher`                    |
+| Return to DT from RPI  | Start new `@dt-coach` session, describe the finding that triggered the return |
 
 ## Related Resources
 

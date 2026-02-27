@@ -19,26 +19,26 @@ This guide walks through a complete Design Thinking journey, showing how the nin
 
 ## The Complete Journey
 
-```text
-┌───────────────────────────────────────────────────────────────────────────────────────┐
-│                              PROBLEM SPACE                                            │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                             │
-│  │  Method 1    │───→│  Method 2    │───→│  Method 3    │──┐                          │
-│  │  Scope       │    │  Research    │    │  Synthesis   │  │                          │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │                          │
-├────────────────────────────────────────────────────────────┼──────────────────────────┤
-│                              SOLUTION SPACE                │                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │                          │
-│  │  Method 4    │───→│  Method 5    │───→│  Method 6    │──┤                          │
-│  │  Brainstorm  │    │  Concepts    │    │  Lo-Fi Proto │  │                          │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │                          │
-├────────────────────────────────────────────────────────────┼──────────────────────────┤
-│                           VALIDATION SPACE                 │                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │                          │
-│  │  Method 7    │───→│  Method 8    │───→│  Method 9    │ │  ───→  RPI Handoff       │
-│  │  Hi-Fi Proto │    │  Testing     │    │  Scale       │ │                          │
-│  └──────────────┘    └──────────────┘    └──────────────┘ │                          │
-└───────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph problem["Problem Space"]
+        M1["Method 1<br/>Scope"] --> M2["Method 2<br/>Research"] --> M3["Method 3<br/>Synthesis"]
+    end
+
+    subgraph solution["Solution Space"]
+        M4["Method 4<br/>Brainstorm"] --> M5["Method 5<br/>Concepts"] --> M6["Method 6<br/>Lo-Fi Proto"]
+    end
+
+    subgraph validation["Validation Space"]
+        M7["Method 7<br/>Hi-Fi Proto"] --> M8["Method 8<br/>Testing"] --> M9["Method 9<br/>Scale"]
+    end
+
+    M3 -->|"space transition"| M4
+    M6 -->|"space transition"| M7
+
+    M3 -.->|"Exit 1"| TR["Task<br/>Researcher"]
+    M6 -.->|"Exit 2"| TR
+    M8 -.->|"Exit 3"| TR
 ```
 
 ## Problem Space: Methods 1-3
@@ -174,17 +174,47 @@ The coach guides scaling patterns, change management planning, and telemetry-dri
 
 ## DT → RPI Handoff
 
-Design Thinking produces validated understanding; RPI delivers implementation. The handoff can occur at three exit points:
+Design Thinking produces validated understanding; RPI delivers implementation. The handoff can occur at three exit points, each seeding Task Researcher with progressively richer context. Every exit enters the full RPI pipeline at Task Researcher.
 
-| Exit Point                 | After Methods | RPI Target       | What Transfers                                           |
-|----------------------------|---------------|------------------|----------------------------------------------------------|
-| Problem Statement Complete | 1-3           | Task Researcher  | Problem statement, themes, stakeholder map, constraints  |
-| Concept Validated          | 4-6           | Task Planner     | Tested concepts, prototype feedback, narrowed directions |
-| Implementation Spec Ready  | 7-8           | Task Implementor | Hi-fi specs, test results, architecture decisions        |
+| Exit Point                 | Methods | Artifacts Seeded to Researcher                                                                      | Researcher Scope                                                  |
+|----------------------------|---------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| Problem Statement Complete | 1-3     | Problem statement, stakeholder map, research themes, affinity clusters, constraints, assumptions log | Broad: solution approaches, technology options, feasibility       |
+| Concept Validated          | 4-6     | Exit 1 plus tested concepts with D/F/V scores, lo-fi prototype feedback, constraint discoveries      | Moderate: concept feasibility, integration paths, risk areas      |
+| Implementation Spec Ready  | 7-9     | Exits 1-2 plus hi-fi specs, architecture decisions, benchmarks, test protocols, scaling plan          | Narrow: implementation refinement, deployment strategy, edge cases |
 
-Earlier exit points produce more RPI work. A problem statement handoff requires full RPI research and planning. An implementation spec handoff may proceed directly to code.
+**Exit 1 assets — Problem Space (Methods 1-3):**
 
-To initiate a handoff, the coach creates a handoff summary at `.copilot-tracking/dt/{project-slug}/handoff-summary.md` with artifacts tagged by confidence level (`validated`, `assumed`, `unknown`, `conflicting`). The receiving RPI agent treats non-validated markers as investigation or verification targets.
+* Stakeholder map with roles, perspectives, and influence levels
+* Scope boundaries with frozen/fluid classification
+* Interview notes and environmental observation data
+* Affinity clusters and insight statements from synthesis
+* Validated problem statement reframed from the original request
+* How-might-we questions derived from synthesis themes
+* Constraint inventory (technical, environmental, workflow)
+* Assumptions log with each item tagged `validated`, `assumed`, `unknown`, or `conflicting`
+
+**Exit 2 assets — Solution Space (Methods 4-6),** cumulative with Exit 1:
+
+* Brainstorming theme clusters with selected directions
+* `concepts.yml` with desirability/feasibility/viability evaluations per concept
+* Lo-fi prototype test observations with behavioral evidence
+* Constraint discoveries categorized by type (physical, environmental, workflow) and severity (blocker, friction, minor)
+* Validated and invalidated assumptions from user testing
+* User behavior patterns observed during prototype interactions
+* 1-2 narrowed concept directions advanced from initial ideation
+
+**Exit 3 assets — Implementation Space (Methods 7-9),** cumulative with Exits 1-2:
+
+* Architecture decisions and technical trade-offs
+* Implementation comparison results across 2-3 approaches
+* Fidelity mapping matrix and performance benchmarks
+* Integration validation results and specification drafts
+* Test protocols with participant profiles and behavioral data (tier 2+)
+* Severity-frequency matrix and assumption validation results (tier 2+)
+* Refinement log, scaling assessment, and deployment plan (tier 3)
+* Adoption metrics with leading and lagging indicators (tier 3)
+
+Each exit point generates two files in `.copilot-tracking/dt/{project-slug}/`: a handoff summary with structured metadata and confidence markers for every artifact, and a self-contained RPI document that Task Researcher consumes directly with all evidence inlined. Earlier exit points transfer leaner artifacts, requiring the Researcher to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Researcher's scope to specific verification and refinement targets.
 
 For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-agent mappings, see [DT-RPI Integration](dt-rpi-integration.md).
 

@@ -28,6 +28,34 @@ Most projects fail not because the code is wrong, but because the team solved th
 
 **Want the full explanation?** See [Why Design Thinking?](why-design-thinking.md) for in-depth rationale and comparisons with traditional requirements gathering.
 
+## Design Thinking Flow
+
+```mermaid
+flowchart LR
+    subgraph problem["Problem Space — rough / exploratory"]
+        M1["1 · Scope<br/>Conversations"] --> M2["2 · Design<br/>Research"] --> M3["3 · Input<br/>Synthesis"]
+    end
+
+    subgraph solution["Solution Space — scrappy / concept-grade"]
+        M4["4 · Brain-<br/>storming"] --> M5["5 · User<br/>Concepts"] --> M6["6 · Lo-Fi<br/>Prototypes"]
+    end
+
+    subgraph validation["Validation Space — functionally rigorous"]
+        M7["7 · Hi-Fi<br/>Prototypes"] --> M8["8 · User<br/>Testing"] --> M9["9 · Iteration<br/>at Scale"]
+    end
+
+    M3 --> M4
+    M6 --> M7
+
+    M3 -.->|"Exit 1 · problem statement"| TR["Task Researcher"]
+    M6 -.->|"Exit 2 · validated concept"| TR
+    M8 -.->|"Exit 3 · implementation spec"| TR
+
+    TR -.->|"return signal"| M1
+```
+
+Each exit point produces a handoff artifact with confidence markers and a stakeholder map. RPI agents can also return work to DT when assumptions need revision. See [DT to RPI Integration](dt-rpi-integration.md) for details.
+
 ## The Three Spaces
 
 Design Thinking organizes work into three spaces, each with a distinct purpose and quality standard.
@@ -76,7 +104,7 @@ Use the [DT Coach](dt-coach.md) agent to start a guided Design Thinking session.
 
 ## Integration with RPI
 
-Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher, Task Planner, or Task Implementor can consume.
+Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher receives and processes before passing findings through the standard RPI pipeline to Planner and Implementor.
 
 * [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md): Step-by-step guide with practical examples at each exit point
 * [DT to RPI Integration](dt-rpi-integration.md): Reference for the handoff contract, per-agent mappings, and confidence markers

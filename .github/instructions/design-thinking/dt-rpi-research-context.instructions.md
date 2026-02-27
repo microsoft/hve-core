@@ -25,6 +25,22 @@ When task-researcher receives a handoff from the DT coach, these adjustments aug
 * Process qualitative data (interview themes, observation patterns) alongside quantitative data from the DT artifact paths.
 * When an industry context template was active during coaching, reference its vocabulary mapping and constraint inventory for domain-specific framing.
 
+## Tiered Artifact Handling
+
+All DT exits route to Task Researcher. The depth of completed DT methods determines what the researcher already knows and where investigation effort concentrates.
+
+### Problem Space Exit (Methods 1-3)
+
+Artifacts include scope conversations, design research, and input synthesis. Investigation is broad: validate the problem statement, verify stakeholder assumptions, and explore technical feasibility across the full solution landscape.
+
+### Solution Space Exit (Methods 4-6)
+
+Artifacts include brainstorming outputs, user concepts, and low-fidelity prototypes. Investigation narrows: the problem is well-defined and candidate solutions exist. Focus on concept feasibility, constraint validation, and gap analysis for the selected concepts.
+
+### Implementation Space Exit (Methods 7-9)
+
+Artifacts include high-fidelity prototypes, test results, and iteration-at-scale findings. Investigation is narrowest: validated implementations exist. Focus on production readiness, scaling constraints, and remaining unknowns that testing did not cover.
+
 ## Output Format Additions
 
 When producing research output in DT context, include these sections alongside the standard research document:

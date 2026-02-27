@@ -23,45 +23,23 @@ The HVE Guide combines two complementary perspectives on AI-assisted engineering
 A 9-stage lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. Every stage maps to specific agents, prompts, instructions, and skills that accelerate your work.
 
 ```mermaid
-flowchart TD
-    subgraph onboard["Onboarding — New Contributor · SRE"]
-        S1["1 · Setup<br/>install extension"]
-    end
-
-    subgraph requirements["Requirements — TPM · BPM · Tech Lead · Security Architect"]
-        S2["2 · Discovery<br/>task-researcher · brd-builder<br/>security-plan-creator"]
-        S3["3 · Product Definition<br/>prd-builder · adr-creation<br/>product-manager-advisor · arch-diagram-builder"]
-    end
-
-    subgraph planning["Planning — TPM"]
-        S4["4 · Decomposition<br/>ado-prd-to-wit · github-backlog-manager"]
-        S5["5 · Sprint Planning<br/>github-backlog-manager · agile-coach"]
-    end
-
-    subgraph engineering["Engineering — Engineer · Tech Lead · Data Scientist"]
-        S6["6 · Implementation<br/>task-researcher · task-planner<br/>task-implementor · task-reviewer<br/>rpi-agent · prompt-builder · coding-standards"]
-        S7["7 · Review<br/>task-reviewer · pr-review"]
-        S8["8 · Delivery<br/>pull-request · git-commit<br/>git-merge · ado-get-build-info"]
-    end
-
-    subgraph operations["Operations — SRE · Tech Lead"]
-        S9["9 · Operations<br/>doc-ops · incident-response"]
-    end
-
-    DT["Design Thinking<br/>dt-coach<br/>(optional)"] -.->|"design insights ready"| S2
-    S1 -->|"environment ready"| S2
-    S2 -->|"TPM approves BRD"| S3
-    S3 -->|"TPM finalizes PRD"| S4
-    S4 -->|"TPM creates work items"| S5
-    S5 ==>|"TPM hands off to Engineers"| S6
-    S6 -->|"Engineer submits PR"| S7
-    S7 -->|"Tech Lead approves"| S8
-    S7 -.->|"rework needed"| S6
-    S8 -->|"SRE deploys"| S9
+flowchart LR
+    S1["1 · Setup"] --> S2["2 · Discovery"]
+    S2 --> S3["3 · Product Definition"]
+    S3 --> S4["4 · Decomposition"]
+    S4 --> S5["5 · Sprint Planning"]
+    S5 --> S6["6 · Implementation"]
+    S6 --> S7["7 · Review"]
+    S7 --> S8["8 · Delivery"]
+    S8 --> S9["9 · Operations"]
+    S7 -.->|"rework"| S6
     S8 -.->|"next sprint"| S6
     S9 -.->|"hotfix"| S6
     S9 -.->|"next iteration"| S2
 ```
+
+> [!TIP]
+> [Design Thinking](../../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../../design-thinking/dt-rpi-integration.md) for details.
 
 | Stage   | Name               | Key Tools                                                                                                   |
 |---------|--------------------|-------------------------------------------------------------------------------------------------------------|
