@@ -13,8 +13,8 @@ copilot plugin install experimental@hve-core
 
 ## Skills
 
-| Skill | Description |
-| ----- | ----------- |
+| Skill        | Description  |
+|--------------|--------------|
 | video-to-gif | video-to-gif |
 
 ---
