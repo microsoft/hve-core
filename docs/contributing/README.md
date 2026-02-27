@@ -20,19 +20,19 @@ Guidelines and standards for contributing AI artifacts to hve-core.
 
 Use this table to navigate to the appropriate guide based on what you want to contribute:
 
-| I want to...                            | Start here                                                            |
-|-----------------------------------------|-----------------------------------------------------------------------|
+| I want to...                            | Start here                                                                                                      |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | Report a bug or suggest an enhancement  | [CONTRIBUTING.md](https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md#reporting-bugs)               |
 | Submit a code change                    | [CONTRIBUTING.md](https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md#your-first-code-contribution) |
 | Improve general documentation           | [CONTRIBUTING.md](https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md#improving-the-documentation)  |
-| Create or modify an agent               | [Custom Agents](custom-agents.md)                                     |
-| Create or modify an instruction file    | [Instructions](instructions.md)                                       |
-| Create or modify a prompt               | [Prompts](prompts.md)                                                 |
-| Create or modify a skill                | [Skills](skills.md)                                                   |
-| Understand shared AI artifact standards | [Common Standards](ai-artifacts-common.md)                            |
-| Learn about the release process         | [Release Process](release-process.md)                                 |
-| Check CI and review requirements        | [Branch Protection](branch-protection.md)                             |
-| See the project roadmap                 | [Roadmap](ROADMAP.md)                                                 |
+| Create or modify an agent               | [Custom Agents](custom-agents.md)                                                                               |
+| Create or modify an instruction file    | [Instructions](instructions.md)                                                                                 |
+| Create or modify a prompt               | [Prompts](prompts.md)                                                                                           |
+| Create or modify a skill                | [Skills](skills.md)                                                                                             |
+| Understand shared AI artifact standards | [Common Standards](ai-artifacts-common.md)                                                                      |
+| Learn about the release process         | [Release Process](release-process.md)                                                                           |
+| Check CI and review requirements        | [Branch Protection](branch-protection.md)                                                                       |
+| See the project roadmap                 | [Roadmap](ROADMAP.md)                                                                                           |
 
 ## Contribution Guides
 

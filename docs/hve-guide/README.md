@@ -87,11 +87,11 @@ flowchart TD
     START -->|Install collections| CQ[Collection Quick Reference]
 ```
 
-| I want to...                            | Go Here                                                                  |
-|-----------------------------------------|--------------------------------------------------------------------------|
-| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                                |
-| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)                     |
-| Get my role-specific guide              | [Role Finder](roles/#find-your-role)                            |
+| I want to...                            | Go Here                                            |
+|-----------------------------------------|----------------------------------------------------|
+| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                   |
+| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)        |
+| Get my role-specific guide              | [Role Finder](roles/#find-your-role)               |
 | Install collections for my role         | [Collection Quick Reference](roles/#role-overview) |
 
 <!-- markdownlint-disable MD036 -->

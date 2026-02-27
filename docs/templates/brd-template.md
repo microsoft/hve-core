@@ -13,8 +13,8 @@ Version \{\{version\}\} | Status \{\{status\}\} | Owner \{\{docOwner\}\} | Spons
 
 ## Progress Tracker
 
-| Phase                | Done                          | Gaps                      | Updated                      |
-|----------------------|-------------------------------|---------------------------|------------------------------|
+| Phase                | Done                              | Gaps                          | Updated                          |
+|----------------------|-----------------------------------|-------------------------------|----------------------------------|
 | Business Context     | \{\{phaseContextComplete\}\}      | \{\{phaseContextGaps\}\}      | \{\{phaseContextUpdated\}\}      |
 | Problem & Drivers    | \{\{phaseProblemComplete\}\}      | \{\{phaseProblemGaps\}\}      | \{\{phaseProblemUpdated\}\}      |
 | Objectives & Metrics | \{\{phaseObjectivesComplete\}\}   | \{\{phaseObjectivesGaps\}\}   | \{\{phaseObjectivesUpdated\}\}   |

@@ -18,16 +18,16 @@ HVE Core is a prompt engineering framework for GitHub Copilot designed for team-
 
 | Role                     | Description                                                    | Start Here                                                        |
 |--------------------------|----------------------------------------------------------------|-------------------------------------------------------------------|
-| Engineer                 | Write code, implement features, fix bugs                       | [Engineer Guide](hve-guide/roles/engineer.md)                        |
-| TPM                      | Plan projects, manage requirements, track work                 | [TPM Guide](hve-guide/roles/tpm.md)                                  |
-| Tech Lead / Architect    | Design architecture, review code, set standards                | [Tech Lead Guide](hve-guide/roles/tech-lead.md)                      |
-| Security Architect       | Assess security, create threat models                          | [Security Architect Guide](hve-guide/roles/security-architect.md)    |
-| Data Scientist           | Analyze data, build notebooks, create dashboards               | [Data Scientist Guide](hve-guide/roles/data-scientist.md)            |
-| SRE / Operations         | Manage infrastructure, handle incidents, deploy                | [SRE Guide](hve-guide/roles/sre-operations.md)                       |
-| Business Program Manager | Define business outcomes, manage stakeholders                  | [BPM Guide](hve-guide/roles/business-program-manager.md)             |
-| New Contributor          | Get started contributing to the project                        | [New Contributor Guide](hve-guide/roles/new-contributor.md)          |
-| UX Designer              | Design Thinking coaching, user research, prototyping workflows | [UX Designer Guide](hve-guide/roles/ux-designer.md)                  |
-| All Roles                | Cross-cutting utility tools                                    | [Utility Guide](hve-guide/roles/utility.md)                          |
+| Engineer                 | Write code, implement features, fix bugs                       | [Engineer Guide](hve-guide/roles/engineer.md)                     |
+| TPM                      | Plan projects, manage requirements, track work                 | [TPM Guide](hve-guide/roles/tpm.md)                               |
+| Tech Lead / Architect    | Design architecture, review code, set standards                | [Tech Lead Guide](hve-guide/roles/tech-lead.md)                   |
+| Security Architect       | Assess security, create threat models                          | [Security Architect Guide](hve-guide/roles/security-architect.md) |
+| Data Scientist           | Analyze data, build notebooks, create dashboards               | [Data Scientist Guide](hve-guide/roles/data-scientist.md)         |
+| SRE / Operations         | Manage infrastructure, handle incidents, deploy                | [SRE Guide](hve-guide/roles/sre-operations.md)                    |
+| Business Program Manager | Define business outcomes, manage stakeholders                  | [BPM Guide](hve-guide/roles/business-program-manager.md)          |
+| New Contributor          | Get started contributing to the project                        | [New Contributor Guide](hve-guide/roles/new-contributor.md)       |
+| UX Designer              | Design Thinking coaching, user research, prototyping workflows | [UX Designer Guide](hve-guide/roles/ux-designer.md)               |
+| All Roles                | Cross-cutting utility tools                                    | [Utility Guide](hve-guide/roles/utility.md)                       |
 
 **[Browse All Role Guides →](hve-guide/roles/)**
 
@@ -160,12 +160,12 @@ Pre-built templates for common engineering documents:
 
 ## Quick Links
 
-| Resource                                   | Description                        |
-|--------------------------------------------|------------------------------------|
-| [Customization Guide](customization/)      | Adapt HVE Core to your workflow    |
-| [CHANGELOG](https://github.com/microsoft/hve-core/blob/main/CHANGELOG.md) | Release history and version notes  |
-| [CONTRIBUTING](https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md) | Repository contribution guidelines |
-| [Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/README.md) | Automation script reference        |
+| Resource                                                                                | Description                        |
+|-----------------------------------------------------------------------------------------|------------------------------------|
+| [Customization Guide](customization/)                                                   | Adapt HVE Core to your workflow    |
+| [CHANGELOG](https://github.com/microsoft/hve-core/blob/main/CHANGELOG.md)               | Release history and version notes  |
+| [CONTRIBUTING](https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md)         | Repository contribution guidelines |
+| [Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/README.md)     | Automation script reference        |
 | [Extension README](https://github.com/microsoft/hve-core/blob/main/extension/README.md) | VS Code extension documentation    |
 
 <!-- markdownlint-disable MD036 -->

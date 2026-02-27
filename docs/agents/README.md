@@ -14,18 +14,18 @@ estimated_reading_time: 5
 
 hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
-| Group                               | Agents   | Complexity  | Documentation                       |
-|-------------------------------------|----------|-------------|-------------------------------------|
-| RPI Orchestration                   | 5        | High        | [RPI Documentation](../rpi/)        |
-| GitHub Backlog Management           | 1 active | Very High   | [Backlog Manager](github-backlog/)  |
-| ADO Integration                     | 1        | Medium-High | Planned                             |
-| Document Builders                   | 4        | Medium-High | Planned                             |
-| Data Pipeline                       | 4        | Medium      | Planned                             |
-| DevOps Quality                      | 2        | High        | Planned                             |
-| Meta/Engineering                    | 1        | High        | Planned                             |
-| Infrastructure                      | 1        | Very High   | Planned                             |
-| Utility                             | 1        | Low-Medium  | Planned                             |
-| [Design Thinking](#design-thinking) | 2        | High        | Active                              |
+| Group                               | Agents   | Complexity  | Documentation                      |
+|-------------------------------------|----------|-------------|------------------------------------|
+| RPI Orchestration                   | 5        | High        | [RPI Documentation](../rpi/)       |
+| GitHub Backlog Management           | 1 active | Very High   | [Backlog Manager](github-backlog/) |
+| ADO Integration                     | 1        | Medium-High | Planned                            |
+| Document Builders                   | 4        | Medium-High | Planned                            |
+| Data Pipeline                       | 4        | Medium      | Planned                            |
+| DevOps Quality                      | 2        | High        | Planned                            |
+| Meta/Engineering                    | 1        | High        | Planned                            |
+| Infrastructure                      | 1        | Very High   | Planned                            |
+| Utility                             | 1        | Low-Medium  | Planned                            |
+| [Design Thinking](#design-thinking) | 2        | High        | Active                             |
 
 ## RPI Orchestration
 
