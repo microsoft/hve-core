@@ -197,6 +197,16 @@ jobs:
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
           git push origin "$BRANCH"
 
+      - name: Ensure pre-release label exists
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh label create "autorelease: prerelease" \
+            --description "Pre-release pull request" \
+            --color "FBCA04" \
+            -R "$REPO" 2>/dev/null || true
+
       - name: Create or update pre-release PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -216,6 +226,7 @@ jobs:
             gh pr edit "$PR_NUMBER" \
               --title "$TITLE" \
               --body "$PR_BODY" \
+              --add-label "autorelease: prerelease" \
               -R "$REPO"
             echo "Updated PR #$PR_NUMBER"
           else
