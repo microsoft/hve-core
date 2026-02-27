@@ -29,14 +29,14 @@ flowchart TD
     end
 
     subgraph validate["Validation Space"]
-        M78["Methods 7-8<br/>Hi-Fi Prototypes · User Testing"]
+        M79["Methods 7-9<br/>Hi-Fi Prototypes · Testing · Iteration"]
     end
 
-    DT --> M13 --> M46 --> M78
+    DT --> M13 --> M46 --> M79
 
     M13 -.->|"Exit 1 · problem statement complete"| TR["Task Researcher"]
     M46 -.->|"Exit 2 · concept validated"| TR
-    M78 -.->|"Exit 3 · implementation spec ready"| TR
+    M79 -.->|"Exit 3 · implementation spec ready"| TR
 
     TR --> TP["Task Planner"] --> TI["Task Implementor"]
     TR -.->|"return when DT assumptions need revision"| DT
@@ -64,7 +64,7 @@ After Brainstorming, User Concepts, and Low-Fidelity Prototypes, the team has a 
 * Assess feasibility of tested concepts across stakeholder perspectives
 * Investigate integration and scaling concerns before planning begins
 
-### Implementation Spec Ready (Methods 7-8 → Task Researcher)
+### Implementation Spec Ready (Methods 7-9 → Task Researcher)
 
 After High-Fidelity Prototypes and User Testing, the team has functionally validated specifications. Task Researcher receives the richest artifact set to:
 

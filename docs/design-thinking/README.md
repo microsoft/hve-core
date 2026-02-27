@@ -49,7 +49,7 @@ flowchart LR
 
     M3 -.->|"Exit 1 · problem statement"| TR["Task Researcher"]
     M6 -.->|"Exit 2 · validated concept"| TR
-    M8 -.->|"Exit 3 · implementation spec"| TR
+    M9 -.->|"Exit 3 · implementation spec"| TR
 
     TR -.->|"return signal"| M1
 ```

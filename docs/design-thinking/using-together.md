@@ -38,7 +38,7 @@ flowchart LR
 
     M3 -.->|"Exit 1"| TR["Task<br/>Researcher"]
     M6 -.->|"Exit 2"| TR
-    M8 -.->|"Exit 3"| TR
+    M9 -.->|"Exit 3"| TR
 ```
 
 ## Problem Space: Methods 1-3
@@ -203,7 +203,7 @@ Design Thinking produces validated understanding; RPI delivers implementation. T
 * User behavior patterns observed during prototype interactions
 * 1-2 narrowed concept directions advanced from initial ideation
 
-**Exit 3 assets — Implementation Space (Methods 7-9),** cumulative with Exits 1-2:
+**Exit 3 assets — Validation Space (Methods 7-9),** cumulative with Exits 1-2:
 
 * Architecture decisions and technical trade-offs
 * Implementation comparison results across 2-3 approaches

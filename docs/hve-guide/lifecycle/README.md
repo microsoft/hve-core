@@ -71,7 +71,7 @@ flowchart LR
 
 1. Design Thinking Exit 1 to Stage 2: Problem statement complete (Methods 1-3) feeds Task Researcher in Discovery
 2. Design Thinking Exit 2 to Stage 2: Validated concept (Methods 4-6) feeds Task Researcher in Discovery
-3. Design Thinking Exit 3 to Stage 2: Implementation spec (Methods 7-8) feeds Task Researcher in Discovery
+3. Design Thinking Exit 3 to Stage 2: Implementation spec (Methods 7-9) feeds Task Researcher in Discovery
 4. Stage 1 to Stage 2: Installation complete
 5. Stage 2 to Stage 3: BRD complete, handoff at `docs/brds/`
 6. Stage 2 to Stage 4: TPMs skip PRD when BRD is sufficient

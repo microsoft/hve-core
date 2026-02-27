@@ -200,7 +200,7 @@ Task Researcher uses the richer Solution Space artifacts to:
 
 The researcher's output already incorporates DT constraints and validated concepts, so the planner builds against evidence rather than assumptions.
 
-## Exit Point 3: Implementation Space Handoff (Methods 7-8 → Task Researcher)
+## Exit Point 3: Implementation Space Handoff (Methods 7-9 → Task Researcher)
 
 This is the richest handoff, carrying cumulative artifact lineage from all completed methods. The team has functional prototypes, test results, and architecture decisions.
 

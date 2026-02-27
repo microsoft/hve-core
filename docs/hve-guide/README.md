@@ -39,7 +39,7 @@ flowchart LR
 ```
 
 > [!TIP]
-> [Design Thinking](../../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../../design-thinking/dt-rpi-integration.md) for details.
+> [Design Thinking](../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../design-thinking/dt-rpi-integration.md) for details.
 
 | Stage   | Name               | Key Tools                                                                                                   |
 |---------|--------------------|-------------------------------------------------------------------------------------------------------------|

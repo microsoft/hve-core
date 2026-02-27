@@ -61,7 +61,7 @@ When a Design Thinking session reaches a natural exit point, the DT Coach prepar
 
 * Problem Statement Complete (after Methods 1-3): Task Researcher uses validated problem framing to scope technical research.
 * Concept Validated (after Methods 4-6): Task Planner uses stakeholder-validated concepts to create implementation plans.
-* Implementation Spec Ready (after Methods 7-8): Task Implementor uses functionally rigorous specifications for direct implementation.
+* Implementation Spec Ready (after Methods 7-9): Task Researcher uses functionally rigorous specifications for focused technical investigation.
 
 See [DT to RPI Integration](dt-rpi-integration.md) for the full handoff protocol.
 

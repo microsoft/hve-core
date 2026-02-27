@@ -15,7 +15,7 @@ Three exit points align with DT space boundaries. Each exit targets the RPI agen
 |----------------------------|--------------|---------------------------|------------|----------------------------------------------------------------------------------------|
 | Problem Statement Complete | 1-3 complete | Problem → Solution        | Researcher | Validated problem statement, synthesis themes, stakeholder map, constraint inventory   |
 | Concept Validated          | 4-6 complete | Solution → Implementation | Researcher | Tested concepts, lo-fi prototype feedback, constraint discoveries, narrowed directions |
-| Implementation Spec Ready  | 7-8 complete | Implementation exit       | Researcher | Hi-fi prototype specs, user testing results, architecture decisions, rollout criteria  |
+| Implementation Spec Ready  | 7-9 complete | Implementation exit       | Researcher | Hi-fi prototype specs, user testing results, architecture decisions, rollout criteria  |
 
 The exit tier describes the richness and completeness of artifacts provided to the Researcher, not which RPI phase to skip to. Later exits provide richer context that may reduce the Researcher's investigation scope, but the full RPI pipeline (Research → Plan → Implement) always executes.
 
