@@ -71,7 +71,7 @@ jobs:
           CHANNEL_LABEL="Stable"
           PRE_RELEASE_FLAG=""
           if [ "$PRE_RELEASE" == "true" ]; then
-            CHANNEL_LABEL="Pre-Release (ODD minor)"
+            CHANNEL_LABEL="Pre-Release"
             PRE_RELEASE_FLAG="--pre-release"
           fi
 
@@ -89,7 +89,7 @@ jobs:
           EMOJI="🎉"
           EXTRA=""
           if [ "$PRE_RELEASE" == "true" ]; then
-            CHANNEL_LABEL="Pre-Release (ODD minor)"
+            CHANNEL_LABEL="Pre-Release"
             EMOJI="🚀"
             EXTRA=$'\nUsers can install via **Switch to Pre-Release Version** in VS Code.\n'
           fi

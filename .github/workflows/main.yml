@@ -192,11 +192,7 @@ jobs:
             RELEASED="${{ needs.release-please.outputs.version }}"
             MAJOR=$(echo "$RELEASED" | cut -d. -f1)
             MINOR=$(echo "$RELEASED" | cut -d. -f2)
-            ODD_MINOR=$((MINOR + 1))
-            if [ $((ODD_MINOR % 2)) -eq 0 ]; then
-              ODD_MINOR=$((ODD_MINOR + 1))
-            fi
-            PRE_VERSION="${MAJOR}.${ODD_MINOR}.0"
+            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0-rc.0"
             gh pr edit "$PR_NUMBER" \
               --title "chore(main): pre-release $PRE_VERSION" \
               --body "## Pre-Release $PRE_VERSION

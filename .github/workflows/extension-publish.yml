@@ -58,11 +58,10 @@ jobs:
             exit 1
           fi
 
-          # Validate even minor version (stable channel convention)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if (( MINOR % 2 != 0 )); then
-            echo "::error::Stable channel requires EVEN minor version. Got: $VERSION (minor=$MINOR is ODD)"
-            echo "::error::Use extension-publish-prerelease workflow for ODD minor (pre-release) versions"
+          # Validate stable version (must not contain pre-release suffix)
+          if echo "$VERSION" | grep -qE '\-rc\.[0-9]+'; then
+            echo "::error::Stable channel does not accept pre-release versions. Got: $VERSION"
+            echo "::error::Use extension-publish-prerelease workflow for -rc.N versions"
             exit 1
           fi
 

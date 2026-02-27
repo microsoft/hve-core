@@ -45,29 +45,38 @@ jobs:
           CURRENT=$(jq -r '.["."]//"0.0.0"' .release-please-manifest.json)
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
 
-          # Next ODD minor version
-          NEXT_MINOR=$((MINOR + 1))
-          if [ $((NEXT_MINOR % 2)) -eq 0 ]; then
-            NEXT_MINOR=$((NEXT_MINOR + 1))
-          fi
-
-          # Check for breaking changes since last release tag
+          # Find the last release tag for commit range analysis
           LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
+
+          # Check for breaking changes and new features since last release.
+          # Match conventional commit subject with ! (e.g. feat!:) or
+          # a BREAKING CHANGE / BREAKING-CHANGE footer token at line start.
           HAS_BREAKING=0
+          HAS_FEAT=0
           if [ -n "$LAST_TAG" ]; then
             HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s%n%b' | \
-              grep -cE '^[a-z]+(\(.+\))?!:|BREAKING[ -]CHANGE' || true)
+              grep -cE '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE:' || true)
+            HAS_FEAT=$(git log "$LAST_TAG"..HEAD --format='%s' | \
+              grep -cE '^feat(\(.+\))?[!]?:' || true)
           fi
 
+          # Compute base version using conventional commit bump rules
           if [ "$HAS_BREAKING" -gt 0 ]; then
-            PRE_VERSION="$((MAJOR + 1)).1.0"
+            BASE_VERSION="$((MAJOR + 1)).0.0"
+          elif [ "$HAS_FEAT" -gt 0 ]; then
+            BASE_VERSION="${MAJOR}.$((MINOR + 1)).0"
           else
-            PRE_VERSION="${MAJOR}.${NEXT_MINOR}.0"
+            BASE_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
+
+          # Append SemVer pre-release suffix with commit count as rc number
+          RC_NUMBER=$(git rev-list --count "${LAST_TAG}..HEAD" 2>/dev/null || echo "1")
+          PRE_VERSION="${BASE_VERSION}-rc.${RC_NUMBER}"
 
           echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Computed pre-release version: $PRE_VERSION (current: $CURRENT)"
+          echo "Computed pre-release version: $PRE_VERSION (base: $BASE_VERSION, rc: $RC_NUMBER, current: $CURRENT)"
 
       - name: Generate changelog
         id: changelog

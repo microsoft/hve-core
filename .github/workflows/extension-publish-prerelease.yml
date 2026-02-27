@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "ODD minor version (e.g., 1.1.0). Leave empty to auto-detect from latest release."
+        description: "Pre-release version with -rc.N suffix (e.g., 3.1.0-rc.5). Leave empty to auto-detect."
         required: false
         type: string
         default: ""
@@ -29,7 +29,7 @@ jobs:
     outputs:
       version: ${{ steps.validate.outputs.version }}
     steps:
-      - name: Validate ODD minor version
+      - name: Validate pre-release version
         id: validate
         env:
           GH_TOKEN: ${{ github.token }}
@@ -40,41 +40,34 @@ jobs:
           VERSION="${VERSION#v}"
           VERSION="${VERSION#hve-core-v}"
 
-          # Auto-detect from latest release tag when no version specified
+          # Auto-detect from latest pre-release tag when no version specified
           if [ -z "$VERSION" ]; then
-            TAG=$(gh release view --json tagName -q '.tagName' -R "${{ github.repository }}")
-            VERSION="${TAG#hve-core-v}"
-
-            MAJOR=$(echo "$VERSION" | cut -d. -f1)
-            MINOR=$(echo "$VERSION" | cut -d. -f2)
-            PATCH=$(echo "$VERSION" | cut -d. -f3)
-
-            # Derive ODD minor: if even, bump minor by 1 and reset patch
-            if (( MINOR % 2 == 0 )); then
-              MINOR=$((MINOR + 1))
-              PATCH=0
+            TAG=$(gh release list --exclude-drafts --limit 10 --json tagName,isPrerelease \
+              -q '[.[] | select(.isPrerelease)] | .[0].tagName // empty' \
+              -R "${{ github.repository }}")
+            if [ -n "$TAG" ]; then
+              VERSION="${TAG#hve-core-v}"
+              echo "📦 Auto-detected pre-release version: $VERSION"
+            else
+              echo "::error::No pre-release found. Provide a version manually (e.g., 3.1.0-rc.1)"
+              exit 1
             fi
-            VERSION="${MAJOR}.${MINOR}.${PATCH}"
-            echo "📦 Auto-derived pre-release version from latest release: $VERSION"
           fi
 
-          # Validate format
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 1.1.0)"
+          # Validate semver format (with optional -rc.N suffix)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 3.1.0-rc.5)"
             exit 1
           fi
 
-          # Extract minor version
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-
-          # Check if ODD (pre-release channel uses ODD minor versions)
-          if (( MINOR % 2 == 0 )); then
-            echo "::error::Pre-release requires ODD minor version. Got: $VERSION (minor=$MINOR is EVEN)"
-            echo "::error::Use version like 1.1.0, 1.3.0, 2.1.0 for pre-release channel"
+          # Pre-release channel requires -rc.N suffix
+          if ! echo "$VERSION" | grep -qE '\-rc\.[0-9]+$'; then
+            echo "::error::Pre-release version $VERSION must contain an -rc.N suffix (e.g., 3.1.0-rc.5)"
+            echo "::error::Use extension-publish workflow for stable versions"
             exit 1
           fi
 
-          echo "✅ Valid pre-release version: $VERSION (minor=$MINOR is ODD)"
+          echo "✅ Valid pre-release version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   package:
