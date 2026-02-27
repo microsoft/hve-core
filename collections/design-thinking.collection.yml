@@ -184,5 +184,7 @@ items:
   - path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
 display:
   ordering: alpha
