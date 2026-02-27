@@ -32,5 +32,7 @@ items:
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  - path: .github/instructions/shared/story-quality.instructions.md
+    kind: instruction
 display:
   ordering: manual
