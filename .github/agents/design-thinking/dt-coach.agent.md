@@ -8,17 +8,9 @@ handoffs:
     agent: dt-coach
     prompt: /dt-method-next
     send: false
-  - label: "🔬 Research"
+  - label: "🔬 Hand off to RPI"
     agent: Task Researcher
     prompt: /task-research
-    send: true
-  - label: "📋 Plan"
-    agent: Task Planner
-    prompt: /task-plan
-    send: true
-  - label: "🛠️ Implement"
-    agent: Task Implementor
-    prompt: /task-implement
     send: true
 ---
 

@@ -16,10 +16,6 @@ handoffs:
   - label: "🔬 Deeper Research"
     agent: Task Researcher
     prompt: /task-research continue deeper research based on potential next research items
-  - label: "🎨 Resume DT Coaching"
-    agent: DT Coach
-    prompt: /dt-resume-coaching
-    send: false
 ---
 
 # Task Researcher
@@ -152,6 +148,16 @@ For each scenario:
 * Include runnable examples and exact references (paths with line ranges).
 * Conclude with one recommended approach and rationale.
 
+## File Path Conventions
+
+Files under `.copilot-tracking/` are consumed by AI agents, not humans clicking links. Use plain-text workspace-relative paths for all file references. Do not use markdown links or `#file:` directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* `README.md`
+* `.github/copilot-instructions.md`
+* `.copilot-tracking/research/subagents/2026-02-23/topic.md`
+
+External URLs may still use markdown link syntax.
+
 ## Research Document Template
 
 Use the following template for research documents. Replace all `{{}}` placeholders. Sections wrapped in `<!-- <per_...> -->` comments can repeat; omit the comments in the actual document.
@@ -189,7 +195,7 @@ Use the following template for research documents. Replace all `{{}}` placeholde
 
 ### File Analysis
 
-* {{file_path}}
+* {{workspace_relative_file_path}}
   * {{findings_with_line_numbers}}
 
 ### Code Search Results

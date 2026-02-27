@@ -283,9 +283,18 @@ Contents:
 * Success criteria for step-level verification.
 * Dependencies listing prerequisites for each step.
 
-## Templates
+## File Path Conventions
 
-Templates use `{{relative_path}}` as `../..` for file references.
+Files under `.copilot-tracking/` are consumed by AI agents, not humans clicking links. Use plain-text workspace-relative paths for all file references. Do not use markdown links or `#file:` directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* `README.md`
+* `.github/copilot-instructions.md`
+* `.copilot-tracking/plans/2026-02-23/plan.md`
+* `.copilot-tracking/plans/logs/2026-02-23/log.md`
+
+External URLs may still use markdown link syntax.
+
+## Templates
 
 ### Implementation Plan Template
 
@@ -314,16 +323,15 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ### Project Files
 
-* {{file_path}} - {{file_relevance_description}}
+* {{full_file_path}} - {{file_relevance_description}}
 
 ### References
 
-* {{reference_path_or_url}} - {{reference_description}}
+* {{reference_full_file_path_or_url}} - {{reference_description}}
 
 ### Standards References
 
-* #file:{{relative_path}}/.github/instructions/{{language}}.instructions.md - {{language_conventions_description}}
-* #file:{{relative_path}}/.github/instructions/{{instruction_file}}.instructions.md - {{instruction_description}}
+* {{instruction_full_file_path}} — {{instruction_description}}
 
 ## Implementation Checklist
 
@@ -364,7 +372,7 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ## Planning Log
 
-See [{{task_description}}-log.md](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_description}}-log.md) for discrepancy tracking, implementation paths considered, and suggested follow-on work.
+See `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_description}}-log.md` for discrepancy tracking, implementation paths considered, and suggested follow-on work.
 
 ## Dependencies
 
@@ -396,8 +404,8 @@ Sources: {{context_sources}}
 {{specific_action_description}}
 
 Files:
-* {{file_1_path}} - {{file_1_description}}
-* {{file_2_path}} - {{file_2_description}}
+* {{file_1_full_path}} - {{file_1_description}}
+* {{file_2_full_path}} - {{file_2_description}}
 
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
@@ -407,7 +415,7 @@ Success criteria:
 * {{completion_criteria_2}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * {{previous_step_requirement}}
@@ -418,13 +426,13 @@ Dependencies:
 {{specific_action_description}}
 
 Files:
-* {{file_path}} - {{file_description}}
+* {{file_full_path}} - {{file_description}}
 
 Success criteria:
 * {{completion_criteria}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * Step 1.1 completion
@@ -446,7 +454,7 @@ Validation commands:
 {{specific_action_description}}
 
 Files:
-* {{file_path}} - {{file_description}}
+* {{file_full_path}} - {{file_description}}
 
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
@@ -455,7 +463,7 @@ Success criteria:
 * {{completion_criteria}}
 
 Context references:
-* {{reference_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
+* {{reference_full_path}} (Lines {{line_start}}-{{line_end}}) - {{section_description}}
 
 Dependencies:
 * Implementation Phase 1 completion (if not parallelizable)
@@ -505,7 +513,7 @@ Gaps and differences identified between research findings and the implementation
 ### Unaddressed Research Items
 
 * DR-01: {{research_item_not_in_plan}}
-  * Source: {{research_file}} (Lines {{line_start}}-{{line_end}})
+  * Source: {{research_file_full_path}} (Lines {{line_start}}-{{line_end}})
   * Reason: {{why_excluded}}
   * Impact: {{low / medium / high}}
 
@@ -522,7 +530,7 @@ Gaps and differences identified between research findings and the implementation
 
 * Approach: {{description}}
 * Rationale: {{why_selected}}
-* Evidence: {{reference}} (Lines {{line_start}}-{{line_end}})
+* Evidence: {{reference_full_path}} (Lines {{line_start}}-{{line_end}})
 
 ### IP-01: {{alternate_path_title}}
 

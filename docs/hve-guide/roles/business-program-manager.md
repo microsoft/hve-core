@@ -149,14 +149,17 @@ navigation support.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                         | Docs       |
-|-----------------------------|-------------------------------------------------|------------|
-| **brd-builder**             | Business requirements document creation         | Agent file |
-| **product-manager-advisor** | Product strategy and prioritization guidance    | Agent file |
-| **agile-coach**             | User story creation and refinement coaching     | Agent file |
-| **task-researcher**         | Business context and market research            | Agent file |
-| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables | Agent file |
-| **memory**                  | Session context and preference persistence      | Agent file |
+| Agent                       | Purpose                                                   | Docs                                               |
+|-----------------------------|-----------------------------------------------------------|----------------------------------------------------|
+| **brd-builder**             | Business requirements document creation                   | Agent file                                         |
+| **product-manager-advisor** | Product strategy and prioritization guidance              | Agent file                                         |
+| **agile-coach**             | User story creation and refinement coaching               | Agent file                                         |
+| **task-researcher**         | Business context and market research                      | Agent file                                         |
+| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
+| **memory**                  | Session context and preference persistence                | Agent file                                         |
+| **dt-coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
+
+BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
 
 Prompts complement the agents for cross-cutting workflows:
 
