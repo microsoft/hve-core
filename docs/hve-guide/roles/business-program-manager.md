@@ -1,6 +1,7 @@
 ---
 title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -42,17 +43,17 @@ The BPM and TPM roles share tooling but apply it differently:
 | Measurement       | Business outcomes, ROI, customer impact                                 | Sprint velocity, delivery milestones, technical quality   |
 | Lifecycle stages  | Stage 2: Discovery, Stage 3: Product Definition, Stage 4: Decomposition | Stage 2 through Stage 8 with deeper technical involvement |
 
-For technical backlog management, Azure DevOps integration, or GitHub issue workflows, see the [TPM Guide](tpm.md).
+For technical backlog management, Azure DevOps integration, or GitHub issue workflows, see the [TPM Guide](tpm).
 
 ## Your Lifecycle Stages
 
 > [!NOTE]
 > BPMs primarily operate in these lifecycle stages:
 >
-> [Stage 2: Discovery](../lifecycle/discovery.md): Research business requirements, competitive landscape, market context
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define business requirements and outcome specifications
-> [Stage 4: Decomposition](../lifecycle/decomposition.md): Break down business objectives into program milestones
-> [Stage 5: Sprint Planning](../lifecycle/sprint-planning.md): Coordinate cross-team planning and milestone alignment
+> [Stage 2: Discovery](../lifecycle/discovery): Research business requirements, competitive landscape, market context
+> [Stage 3: Product Definition](../lifecycle/product-definition): Define business requirements and outcome specifications
+> [Stage 4: Decomposition](../lifecycle/decomposition): Break down business objectives into program milestones
+> [Stage 5: Sprint Planning](../lifecycle/sprint-planning): Coordinate cross-team planning and milestone alignment
 
 ## Stage Walkthrough
 
@@ -177,14 +178,14 @@ Prompts complement the agents for cross-cutting workflows:
 
 ## Related Roles
 
-* BPM + TPM: BPMs define business requirements and outcomes; TPMs decompose them into technical specifications and work items. Strong collaboration between these roles ensures business intent carries through to implementation. See the [TPM Guide](tpm.md).
-* BPM + Security Architect: Business requirements include compliance and security constraints. Security plans validate that business commitments are technically achievable. See the [Security Architect Guide](security-architect.md).
+* BPM + TPM: BPMs define business requirements and outcomes; TPMs decompose them into technical specifications and work items. Strong collaboration between these roles ensures business intent carries through to implementation. See the [TPM Guide](tpm).
+* BPM + Security Architect: Business requirements include compliance and security constraints. Security plans validate that business commitments are technically achievable. See the [Security Architect Guide](security-architect).
 
 ## Next Steps
 
 > [!TIP]
-> Explore project planning tools: [Project Planning Collection](../../collections/project-planning.collection.md)
-> Understand the TPM workflow for technical handoff: [TPM Guide](tpm.md)
+> Explore project planning tools: [Project Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/project-planning.collection.md)
+> Understand the TPM workflow for technical handoff: [TPM Guide](tpm)
 > See how program management fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

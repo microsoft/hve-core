@@ -1,6 +1,7 @@
 ---
 title: Using Workflows Together
 description: Connect discovery, triage, sprint planning, and execution into a complete backlog management pipeline
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial

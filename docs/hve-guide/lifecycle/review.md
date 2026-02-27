@@ -1,6 +1,7 @@
 ---
 title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -19,7 +20,7 @@ Review validates that implementations meet acceptance criteria and quality stand
 
 ## When You Enter This Stage
 
-You enter Review after completing implementation work in [Stage 6: Implementation](implementation.md).
+You enter Review after completing implementation work in [Stage 6: Implementation](implementation).
 
 > [!NOTE]
 > Prerequisites: Implementation complete with all changes committed. Use `/clear` to reset context before starting review.
@@ -58,10 +59,10 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 Engineers submit work for review and participate as peer reviewers. Tech Leads serve as primary reviewers, evaluating architecture alignment and code quality. Data Scientists review notebooks and dashboard outputs. Security Architects validate implementation against security requirements and compliance standards.
 
-* [Engineer Guide](../roles/engineer.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
-* [Data Scientist Guide](../roles/data-scientist.md)
-* [Security Architect Guide](../roles/security-architect.md)
+* [Engineer Guide](../roles/engineer)
+* [Tech Lead Guide](../roles/tech-lead)
+* [Data Scientist Guide](../roles/data-scientist)
+* [Security Architect Guide](../roles/security-architect)
 
 ## Starter Prompts
 
@@ -139,7 +140,7 @@ Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review
 
 ## Stage Outputs and Next Stage
 
-Review produces reviewed pull requests with feedback, validation reports, and approval decisions. Transition to [Stage 8: Delivery](delivery.md) when the PR is approved. Return to [Stage 6: Implementation](implementation.md) when rework is needed.
+Review produces reviewed pull requests with feedback, validation reports, and approval decisions. Transition to [Stage 8: Delivery](delivery) when the PR is approved. Return to [Stage 6: Implementation](implementation) when rework is needed.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

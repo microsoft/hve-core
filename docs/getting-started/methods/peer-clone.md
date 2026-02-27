@@ -1,6 +1,7 @@
 ---
 title: Peer Directory Clone Installation
 description: Install HVE-Core as a sibling directory for local VS Code development
+sidebar_position: 4
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -25,10 +26,10 @@ Peer Directory Clone places HVE-Core as a sibling folder next to your project. T
 
 ❌ **Consider alternatives when:**
 
-* You use devcontainers → [Git-Ignored Folder](git-ignored.md) or [Mounted Directory](mounted.md)
-* You use Codespaces → [GitHub Codespaces](codespaces.md)
-* Your team needs version control → [Submodule](submodule.md)
-* You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
+* You use devcontainers → [Git-Ignored Folder](git-ignored) or [Mounted Directory](mounted)
+* You use Codespaces → [GitHub Codespaces](codespaces)
+* Your team needs version control → [Submodule](submodule)
+* You need paths that work everywhere → [Multi-Root Workspace](multi-root)
 
 ## How It Works
 
@@ -172,7 +173,7 @@ Relative paths break if your project moves. Options:
 
 1. Re-clone HVE-Core next to the new location
 2. Update settings.json with the new relative path
-3. Switch to [Multi-Root Workspace](multi-root.md) for portable paths
+3. Switch to [Multi-Root Workspace](multi-root) for portable paths
 
 ### Doesn't Work in Devcontainer
 
@@ -180,9 +181,9 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 **Solutions:**
 
-* Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
-* Use [Mounted Directory](mounted.md) to share HVE-Core across projects
-* Use [Multi-Root Workspace](multi-root.md) for the most portable solution
+* Use [Git-Ignored Folder](git-ignored) for self-contained installation
+* Use [Mounted Directory](mounted) to share HVE-Core across projects
+* Use [Multi-Root Workspace](multi-root) for the most portable solution
 
 ## Limitations
 
@@ -198,9 +199,9 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [Multi-Root Workspace](multi-root.md) - Upgrade to portable paths
-* [Submodule](submodule.md) - Add version control for teams
+* [Your First Workflow](../first-workflow) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root) - Upgrade to portable paths
+* [Submodule](submodule) - Add version control for teams
 
 ---
 

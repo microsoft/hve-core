@@ -1,6 +1,7 @@
 ---
 title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-10
 ms.topic: concept
@@ -410,11 +411,11 @@ Move an artifact to `.github/deprecated/{type}/` when:
 
 ## Related Documentation
 
-* [Agent Systems Catalog](../agents/README.md) - Overview of all agent systems with workflow documentation
-* [AI Artifacts Common Standards](../contributing/ai-artifacts-common.md) - Quality requirements for all artifacts
-* [Contributing Prompts](../contributing/prompts.md) - Prompt file specifications
-* [Contributing Agents](../contributing/custom-agents.md) - Agent file specifications
-* [Contributing Instructions](../contributing/instructions.md) - Instruction file specifications
-* [Contributing Skills](../contributing/skills.md) - Skill package specifications
+* [Agent Systems Catalog](../agents/) - Overview of all agent systems with workflow documentation
+* [AI Artifacts Common Standards](../contributing/ai-artifacts-common) - Quality requirements for all artifacts
+* [Contributing Prompts](../contributing/prompts) - Prompt file specifications
+* [Contributing Agents](../contributing/custom-agents) - Agent file specifications
+* [Contributing Instructions](../contributing/instructions) - Instruction file specifications
+* [Contributing Skills](../contributing/skills) - Skill package specifications
 
 🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

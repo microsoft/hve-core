@@ -1,6 +1,7 @@
 ---
 title: Sprint Planning Workflow
 description: Organize triaged issues into milestones with priority sequencing and capacity awareness
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial
@@ -108,7 +109,7 @@ high-priority bugs and the v2.2 milestone for enhancements. Create a new
 ## Next Steps
 
 1. Review the sprint plan and handoff file for accuracy
-2. Proceed to the [Execution workflow](execution.md) to apply milestone assignments
+2. Proceed to the [Execution workflow](execution) to apply milestone assignments
 
 > [!TIP]
 > For teams with fixed sprint cadences, create milestones in advance through repository settings. Sprint planning works best when it maps to existing milestones rather than recommending new ones.

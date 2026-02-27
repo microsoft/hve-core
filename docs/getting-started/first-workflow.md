@@ -1,6 +1,7 @@
 ---
 title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -14,7 +15,7 @@ estimated_reading_time: 10
 ---
 
 > [!NOTE]
-> Step 3 of 4 in the [Getting Started Journey](README.md).
+> Step 3 of 4 in the [Getting Started Journey](./).
 
 Build a real validation script using the Research → Plan → Implement workflow. You'll create a PowerShell script that checks that every docs subfolder has a `README.md` file.
 
@@ -42,13 +43,13 @@ You'll create:
 Multiple unknowns make RPI a good fit for this task: existing script patterns, PowerShell conventions, npm integration, output format. Research first reduces guesswork.
 
 > [!IMPORTANT]
-> AI can't tell the difference between investigating and implementing. When you ask for code, it writes code. Patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi.md).
+> AI can't tell the difference between investigating and implementing. When you ask for code, it writes code. Patterns that look plausible but break your conventions. RPI's constraint system changes the goal: when AI knows it cannot implement, it stops optimizing for "plausible code" and starts optimizing for "verified truth." [Learn more about why RPI works](../rpi/why-rpi).
 
 ## Before You Start
 
 > [!TIP]
-> Steps 1 and 2 ([Your First Interaction](first-interaction.md) and
-> [Your First Research](first-research.md)) cover the basics. If you've
+> Steps 1 and 2 ([Your First Interaction](first-interaction) and
+> [Your First Research](first-research)) cover the basics. If you've
 > already completed them or have experience with HVE Core agents, continue
 > below.
 
@@ -57,7 +58,7 @@ should start fresh. The artifacts (research doc, plan) carry the context
 forward, not the chat history.
 
 > [!NOTE]
-> Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.
+> Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering) for the full explanation.
 
 ## Phase 1: Research
 
@@ -216,7 +217,7 @@ The three-agent workflow above separates research, planning, and implementation
 into distinct phases with `/clear` between each. This is the best way to learn
 RPI because you see each phase produce its own artifact.
 
-For day-to-day work, the [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent)
+For day-to-day work, the [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
 runs all three phases in a single session. It follows the same methodology but
 handles the phase transitions automatically.
 
@@ -244,7 +245,7 @@ between phases.
 | PowerShell not found  | Ensure `pwsh` is installed and in PATH                                                            |
 | npm script not found  | Check `package.json` was saved                                                                    |
 | Wrong folders checked | Verify script targets `docs/*` pattern                                                            |
-| Agent skips phases    | Use `/clear` before each `/rpi` request; see [Context Engineering](../rpi/context-engineering.md) |
+| Agent skips phases    | Use `/clear` before each `/rpi` request; see [Context Engineering](../rpi/context-engineering) |
 
 ## Next Step
 
@@ -253,7 +254,7 @@ way for any task: research the unknowns, plan the approach, implement from
 the plan.
 
 Continue your journey through the
-[New Contributor Milestones](../hve-guide/roles/new-contributor.md#milestone-3-independent-workflow),
+[New Contributor Milestones](../hve-guide/roles/new-contributor#milestone-3-independent-workflow),
 where Milestone 3 guides you through your first independent workflow on a
 task you choose yourself.
 

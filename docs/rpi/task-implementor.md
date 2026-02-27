@@ -1,6 +1,7 @@
 ---
 title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -56,7 +57,7 @@ Plus all the actual code files created or modified during implementation.
 After clearing, open your plan file (`.copilot-tracking/plans/<topic>-plan.instructions.md`) in the editor before invoking Task Implementor. This ensures the agent can locate and follow the plan without relying on chat history.
 
 > [!TIP]
-> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering.md) for the full explanation.
+> Context management is an engineering practice, not a ritual. Clearing context removes accumulated tokens that cause the model to ignore its instructions. See [Context Engineering](context-engineering) for the full explanation.
 
 ### Step 2: Select the Custom Agent
 
@@ -164,14 +165,14 @@ When all phases are complete, Task Implementor provides:
 | Plan not found          | Complete Task Planner first                                                     |
 | Skipping reviews        | Use phaseStop=true for important changes                                        |
 | Not running validations | Check lint/test after each phase                                                |
-| Context issues          | Use `/clear` before starting; see [Context Engineering](context-engineering.md) |
+| Context issues          | Use `/clear` before starting; see [Context Engineering](context-engineering) |
 
 ## Next Steps
 
 After Task Implementor completes:
 
 1. **Clear context** using `/clear` or starting a new chat
-2. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer.md)
+2. **Review** using `/task-review` to switch to [Task Reviewer](task-reviewer)
 3. **Address findings** from the review before committing
 4. **Commit** your changes with a descriptive message
 5. **Clean up** planning files if no longer needed

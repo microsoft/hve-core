@@ -1,6 +1,7 @@
 ---
 title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: overview
@@ -15,8 +16,8 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 | Group                     | Agents   | Complexity  | Documentation                               |
 |---------------------------|----------|-------------|---------------------------------------------|
-| RPI Orchestration         | 5        | High        | [RPI Documentation](../rpi/README.md)       |
-| GitHub Backlog Management | 1 active | Very High   | [Backlog Manager](github-backlog/README.md) |
+| RPI Orchestration         | 5        | High        | [RPI Documentation](../rpi/)       |
+| GitHub Backlog Management | 1 active | Very High   | [Backlog Manager](github-backlog/) |
 | ADO Integration           | 1        | Medium-High | Planned                                     |
 | Document Builders         | 4        | Medium-High | Planned                                     |
 | Data Pipeline             | 4        | Medium      | Planned                                     |
@@ -27,11 +28,11 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 ## RPI Orchestration
 
-The Research, Plan, Implement methodology separates complex tasks into specialized phases. Five agents (task-researcher, task-planner, task-implementor, task-reviewer, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/README.md) for the full guide.
+The Research, Plan, Implement methodology separates complex tasks into specialized phases. Five agents (task-researcher, task-planner, task-implementor, task-reviewer, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## GitHub Backlog Management
 
-Automates issue discovery, triage, sprint planning, and execution across GitHub repositories. The backlog manager agent orchestrates five distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](github-backlog/README.md) for workflow guides.
+Automates issue discovery, triage, sprint planning, and execution across GitHub repositories. The backlog manager agent orchestrates five distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](github-backlog/) for workflow guides.
 
 ## ADO Integration
 

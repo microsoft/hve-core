@@ -1,6 +1,7 @@
 ---
 title: "Stage 8: Delivery"
 description: Merge approved changes, verify builds, and update tracking systems for release
+sidebar_position: 9
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -22,7 +23,7 @@ Delivery takes approved pull requests through merge, build verification, and wor
 
 ## When You Enter This Stage
 
-You enter Delivery after [Stage 7: Review](review.md) with an approved pull request.
+You enter Delivery after [Stage 7: Review](review) with an approved pull request.
 
 > [!NOTE]
 > Prerequisites: PR approved, CI checks passing, no merge conflicts.
@@ -52,10 +53,10 @@ You enter Delivery after [Stage 7: Review](review.md) with an approved pull requ
 
 Engineers merge their approved PRs and verify builds. TPMs update work item status and close sprint tasks. SREs validate deployment pipelines and monitor post-merge build health. Data Scientists package notebooks, dashboards, and documentation for stakeholders.
 
-* [Engineer Guide](../roles/engineer.md)
-* [TPM Guide](../roles/tpm.md)
-* [SRE/Operations Guide](../roles/sre-operations.md)
-* [Data Scientist Guide](../roles/data-scientist.md)
+* [Engineer Guide](../roles/engineer)
+* [TPM Guide](../roles/tpm)
+* [SRE/Operations Guide](../roles/sre-operations)
+* [Data Scientist Guide](../roles/data-scientist)
 
 ## Starter Prompts
 
@@ -73,7 +74,7 @@ Engineers merge their approved PRs and verify builds. TPMs update work item stat
 
 ## Stage Outputs and Next Stage
 
-Delivery produces merged code on the target branch, updated work items, and verified build results. Transition to [Stage 6: Implementation](implementation.md) for the next sprint, or to [Stage 9: Operations](operations.md) when the final sprint is complete.
+Delivery produces merged code on the target branch, updated work items, and verified build results. Transition to [Stage 6: Implementation](implementation) for the next sprint, or to [Stage 9: Operations](operations) when the final sprint is complete.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

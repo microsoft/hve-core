@@ -1,6 +1,7 @@
 ---
 title: Discovery Workflow
 description: Discover and categorize GitHub issues through user-centric, artifact-driven, and search-based paths
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial
@@ -112,8 +113,8 @@ a milestone. Include any issues labeled "needs-triage" regardless of assignee.
 
 ## Next Steps
 
-1. Send your discovery output through the [Triage workflow](triage.md) to assign labels and priorities
-2. See [Using Workflows Together](using-together.md) for the full pipeline walkthrough
+1. Send your discovery output through the [Triage workflow](triage) to assign labels and priorities
+2. See [Using Workflows Together](using-together) for the full pipeline walkthrough
 
 > [!TIP]
 > Run `/clear` between discovery and triage. Each workflow reads its own planning files and mixing session context produces unreliable label suggestions.

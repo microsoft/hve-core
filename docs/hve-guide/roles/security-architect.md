@@ -1,6 +1,7 @@
 ---
 title: Security Architect Guide
 description: HVE Core support for security architects building threat models, security plans, and compliance verification
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -41,10 +42,10 @@ This guide is for you if you perform threat modeling, build security plans, asse
 > [!NOTE]
 > Security architects primarily operate in these lifecycle stages:
 >
-> [Stage 2: Discovery](../lifecycle/discovery.md): Research security requirements, investigate threat landscape, gather evidence
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define threat models, security specifications, and compliance requirements
-> [Stage 7: Review](../lifecycle/review.md): Validate implementation against security requirements
-> [Stage 9: Operations](../lifecycle/operations.md): Monitor security posture, update threat models, manage incident response
+> [Stage 2: Discovery](../lifecycle/discovery): Research security requirements, investigate threat landscape, gather evidence
+> [Stage 3: Product Definition](../lifecycle/product-definition): Define threat models, security specifications, and compliance requirements
+> [Stage 7: Review](../lifecycle/review): Validate implementation against security requirements
+> [Stage 9: Operations](../lifecycle/operations): Monitor security posture, update threat models, manage incident response
 
 ## Stage Walkthrough
 
@@ -92,8 +93,8 @@ arguments.
 | Agent                     | Purpose                                       | Docs                                            |
 |---------------------------|-----------------------------------------------|-------------------------------------------------|
 | **security-plan-creator** | Security plan and threat model generation     | Agent file                                      |
-| **task-researcher**       | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-reviewer**         | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **task-researcher**       | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher) |
+| **task-reviewer**         | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer)     |
 | **memory**                | Session context and preference persistence    | Agent file                                      |
 
 Prompts complement the agents for targeted security workflows:
@@ -115,15 +116,15 @@ Prompts complement the agents for targeted security workflows:
 
 ## Related Roles
 
-* Security Architect + TPM: Security requirements integrate into BRDs and PRDs. Threat models inform product specifications and compliance gates. See the [TPM Guide](tpm.md).
-* Security Architect + Tech Lead: Security architecture decisions align with overall system design. Threat models shape architectural choices. See the [Tech Lead Guide](tech-lead.md).
-* Security Architect + SRE: Operational security, incident response, and monitoring bridge security planning with production operations. See the [SRE / Operations Guide](sre-operations.md).
+* Security Architect + TPM: Security requirements integrate into BRDs and PRDs. Threat models inform product specifications and compliance gates. See the [TPM Guide](tpm).
+* Security Architect + Tech Lead: Security architecture decisions align with overall system design. Threat models shape architectural choices. See the [Tech Lead Guide](tech-lead).
+* Security Architect + SRE: Operational security, incident response, and monitoring bridge security planning with production operations. See the [SRE / Operations Guide](sre-operations).
 
 ## Next Steps
 
 > [!TIP]
-> Explore security planning tools: [Security Planning Collection](../../collections/security-planning.collection.md)
-> Review the threat model documentation: [Threat Model](../../security/threat-model.md)
+> Explore security planning tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
+> Review the threat model documentation: [Threat Model](../../security/threat-model)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

@@ -1,6 +1,7 @@
 ---
 title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: how-to
@@ -19,7 +20,7 @@ Decomposition converts finalized product specifications into trackable work item
 
 ## When You Enter This Stage
 
-You enter Decomposition after completing [Stage 3: Product Definition](product-definition.md) with finalized PRDs and ADRs. TPMs who skipped Product Definition enter directly from [Stage 2: Discovery](discovery.md) with a sufficient BRD.
+You enter Decomposition after completing [Stage 3: Product Definition](product-definition) with finalized PRDs and ADRs. TPMs who skipped Product Definition enter directly from [Stage 2: Discovery](discovery) with a sufficient BRD.
 
 > [!NOTE]
 > Prerequisites: PRD or BRD finalized with clear acceptance criteria. Azure DevOps project configured (for ADO work items).
@@ -38,7 +39,7 @@ You enter Decomposition after completing [Stage 3: Product Definition](product-d
 
 TPMs own Decomposition, creating work item hierarchies that engineers pick up during Sprint Planning. The quality of decomposition directly affects implementation velocity.
 
-* [TPM Guide](../roles/tpm.md)
+* [TPM Guide](../roles/tpm)
 
 ## Starter Prompts
 
@@ -82,7 +83,7 @@ the project board.
 
 ## Stage Outputs and Next Stage
 
-Decomposition produces work item hierarchies in ADO or GitHub Issues, with acceptance criteria traced to PRD requirements. Transition to [Stage 5: Sprint Planning](sprint-planning.md) when work items are created and prioritized.
+Decomposition produces work item hierarchies in ADO or GitHub Issues, with acceptance criteria traced to PRD requirements. Transition to [Stage 5: Sprint Planning](sprint-planning) when work items are created and prioritized.
 
 ## Coverage Notes
 

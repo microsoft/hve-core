@@ -1,6 +1,7 @@
 ---
 title: VS Code Extension Installation
 description: Install HVE-Core as a VS Code extension from the marketplace
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-01-07
 ms.topic: how-to
@@ -27,10 +28,10 @@ VS Code Extension installation provides HVE-Core directly through the VS Code Ma
 
 ❌ **Consider alternatives when:**
 
-* You need to customize custom agents, prompts, or instructions → [Peer Clone](peer-clone.md) or [Git-Ignored](git-ignored.md)
-* Your team needs to version control HVE-Core → [Submodule](submodule.md)
-* You're contributing to HVE-Core development → [Peer Clone](peer-clone.md)
-* You need to test pre-release versions → [Multi-Root Workspace](multi-root.md)
+* You need to customize custom agents, prompts, or instructions → [Peer Clone](peer-clone) or [Git-Ignored](git-ignored)
+* Your team needs to version control HVE-Core → [Submodule](submodule)
+* You're contributing to HVE-Core development → [Peer Clone](peer-clone)
+* You need to test pre-release versions → [Multi-Root Workspace](multi-root)
 
 ## How It Works
 
@@ -94,7 +95,7 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 .copilot-tracking/
 ```
 
-This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install.md#post-installation-update-your-gitignore) for details on what gets stored there.
+This applies even when using the extension. The folder is created in your project directory when you use agents like `task-researcher` or `pr-review`. See the [installation guide](../install#post-installation-update-your-gitignore) for details on what gets stored there.
 
 ## What's Included
 
@@ -187,7 +188,7 @@ The extension updates automatically through VS Code's extension system:
 
 1. Start with extension for quick setup
 2. When customization needed, uninstall extension
-3. Follow [Peer Clone](peer-clone.md) method for local modifications
+3. Follow [Peer Clone](peer-clone) method for local modifications
 
 ## Troubleshooting
 
@@ -256,7 +257,7 @@ If you're currently using manual methods like Peer Clone:
 If you need customization:
 
 1. Uninstall the extension from Extensions view
-2. Follow a manual method such as [Peer Clone](peer-clone.md) for local customization
+2. Follow a manual method such as [Peer Clone](peer-clone) for local customization
 3. Customize agents, prompts, or instructions as needed
 
 ## Limitations
@@ -273,9 +274,9 @@ If you need customization:
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [Multi-Root Workspace](multi-root.md) - Combine extension with custom components
-* [Peer Clone](peer-clone.md) - Switch to customizable installation
+* [Your First Workflow](../first-workflow) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root) - Combine extension with custom components
+* [Peer Clone](peer-clone) - Switch to customizable installation
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: Why the RPI Workflow Works
 description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: concept
@@ -41,10 +42,10 @@ The solution isn't teaching AI to be smarter. It's preventing AI from doing cert
 
 RPI (Research → Plan → Implement → Review) works by separating AI work into four distinct phases, each handled by a specialized agent:
 
-* [Task Researcher](task-researcher.md): investigates your codebase and external sources, producing verified findings with citations
-* [Task Planner](task-planner.md): transforms research into actionable implementation plans with clear success criteria
-* [Task Implementor](task-implementor.md): executes plans methodically, following established patterns discovered during research
-* [Task Reviewer](task-reviewer.md): validates implementation against specifications, checks compliance, and identifies follow-up work
+* [Task Researcher](task-researcher): investigates your codebase and external sources, producing verified findings with citations
+* [Task Planner](task-planner): transforms research into actionable implementation plans with clear success criteria
+* [Task Implementor](task-implementor): executes plans methodically, following established patterns discovered during research
+* [Task Reviewer](task-reviewer): validates implementation against specifications, checks compliance, and identifies follow-up work
 
 The magic happens because each phase starts fresh. When you clear context between phases, the implementation session doesn't carry forward the assumptions from research. It only has the documented artifacts: verified findings, explicit decisions, and cited evidence.
 
@@ -136,7 +137,7 @@ HVE Core provides two workflow options. The right choice depends on the task, no
 
 ### Strict RPI: When Quality Matters Most
 
-Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md) → [Task Reviewer](task-reviewer.md)) when:
+Use the four-phase workflow ([Task Researcher](task-researcher) → [Task Planner](task-planner) → [Task Implementor](task-implementor) → [Task Reviewer](task-reviewer)) when:
 
 * 🔍 **Deep research needed**: new frameworks, external APIs, compliance requirements
 * 📁 **Multi-file changes**: pattern discovery across the codebase
@@ -152,7 +153,7 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 ### rpi-agent: When Simplicity Fits
 
-Use the [autonomous agent](../../.github/agents/hve-core/rpi-agent.agent.md) when:
+Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
 
 * ✅ **Clear scope**: straightforward feature or bug fix
 * ✅ **Minimal research**: codebase-only investigation
@@ -181,10 +182,10 @@ rpi-agent can hand off to Task Researcher when it encounters complexity beyond i
 
 Ready to try it yourself?
 
-* [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
-* [Using the Agents Together](using-together.md): context management and handoffs
-* [RPI Overview](README.md): the four phases explained
-* [Task Reviewer Guide](task-reviewer.md): validation and iteration
+* [Your First RPI Workflow](../getting-started/first-workflow): 15-minute hands-on tutorial
+* [Using the Agents Together](using-together): context management and handoffs
+* [RPI Overview](./): the four phases explained
+* [Task Reviewer Guide](task-reviewer): validation and iteration
 
 ---
 

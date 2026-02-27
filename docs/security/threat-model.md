@@ -1,6 +1,7 @@
 ---
 title: Security Assurance Case and Threat Model
 description: Comprehensive threat model and security assurance documentation demonstrating enterprise security practices
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-01-23
 ms.topic: reference
@@ -805,7 +806,7 @@ HVE Core achieves acceptable security through:
 HVE Core documents integrations with Model Context Protocol servers. This section analyzes the trust posture of each server.
 
 > [!NOTE]
-> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE Core development experience. See [MCP Configuration](../getting-started/mcp-configuration.md) for setup instructions.
+> GitHub MCP is enabled by default in VS Code when using GitHub Copilot. The other servers are optional and recommended for an optimal HVE Core development experience. See [MCP Configuration](../getting-started/mcp-configuration) for setup instructions.
 
 ### Server Summary
 
@@ -902,10 +903,10 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Internal Documentation
 
-* [SECURITY.md](../../SECURITY.md): Vulnerability disclosure process
-* [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and roles
-* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
-* [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
+* [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
+* [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
+* [Branch Protection](../contributing/branch-protection): Repository protection configuration
+* [MCP Configuration](../getting-started/mcp-configuration): MCP server setup guidance
 
 ### External Standards
 

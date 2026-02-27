@@ -1,6 +1,7 @@
 ---
 title: Why the Backlog Manager Works
 description: Design principles and cognitive foundations behind the GitHub Backlog Manager workflow separation
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: concept

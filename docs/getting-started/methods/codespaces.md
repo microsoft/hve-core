@@ -1,6 +1,7 @@
 ---
 title: GitHub Codespaces Installation
 description: Install HVE-Core in GitHub Codespaces using postCreateCommand
+sidebar_position: 8
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -25,9 +26,9 @@ GitHub Codespaces requires a specific installation approach because traditional 
 
 ❌ **Consider alternatives when:**
 
-* You also need local devcontainer support → [Multi-Root Workspace](multi-root.md)
-* Your team needs version control → [Submodule](submodule.md)
-* You're using local VS Code only → [Peer Clone](peer-clone.md)
+* You also need local devcontainer support → [Multi-Root Workspace](multi-root)
+* Your team needs version control → [Submodule](submodule)
+* You're using local VS Code only → [Peer Clone](peer-clone)
 
 ## Why Other Methods Don't Work in Codespaces
 
@@ -432,9 +433,9 @@ Replace `v1.0.0` with your desired version tag.
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [Multi-Root Workspace](multi-root.md) - For dual local + Codespaces support
-* [Submodule](submodule.md) - For team version control
+* [Your First Workflow](../first-workflow) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root) - For dual local + Codespaces support
+* [Submodule](submodule) - For team version control
 
 ---
 

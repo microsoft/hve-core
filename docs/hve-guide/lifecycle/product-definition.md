@@ -1,6 +1,7 @@
 ---
 title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -19,7 +20,7 @@ Product Definition transforms Discovery outputs into actionable specifications. 
 
 ## When You Enter This Stage
 
-You enter Product Definition after completing [Stage 2: Discovery](discovery.md) with a finalized BRD.
+You enter Product Definition after completing [Stage 2: Discovery](discovery) with a finalized BRD.
 
 > [!NOTE]
 > Prerequisites: BRD complete and available at `docs/brds/`. Architecture options explored during Discovery.
@@ -38,8 +39,8 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 
 TPMs own Product Definition, translating BRDs into PRDs with clear acceptance criteria. Tech Leads contribute architecture decisions and validate technical feasibility of proposed requirements.
 
-* [TPM Guide](../roles/tpm.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
+* [TPM Guide](../roles/tpm)
+* [Tech Lead Guide](../roles/tech-lead)
 
 ## Starter Prompts
 
@@ -72,7 +73,7 @@ integration. Use mermaid flowchart syntax.
 
 ## Stage Outputs and Next Stage
 
-Product Definition produces PRDs, ADRs, and architecture diagrams. Transition to [Stage 4: Decomposition](decomposition.md) when PRDs and ADRs are finalized.
+Product Definition produces PRDs, ADRs, and architecture diagrams. Transition to [Stage 4: Decomposition](decomposition) when PRDs and ADRs are finalized.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

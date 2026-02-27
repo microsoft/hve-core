@@ -1,6 +1,7 @@
 ---
 title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: how-to
@@ -36,11 +37,11 @@ This guide is for you if you drive project planning, manage requirements, coordi
 > [!NOTE]
 > TPMs primarily operate in these lifecycle stages:
 >
-> [Stage 2: Discovery](../lifecycle/discovery.md): Research requirements, gather context, discover existing issues
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Create BRDs and PRDs, define product specifications
-> [Stage 4: Decomposition](../lifecycle/decomposition.md): Break down requirements into work items and tasks
-> [Stage 5: Sprint Planning](../lifecycle/sprint-planning.md): Triage issues, plan sprints, manage backlog
-> [Stage 8: Delivery](../lifecycle/delivery.md): Track delivery, update work items, close milestones
+> [Stage 2: Discovery](../lifecycle/discovery): Research requirements, gather context, discover existing issues
+> [Stage 3: Product Definition](../lifecycle/product-definition): Create BRDs and PRDs, define product specifications
+> [Stage 4: Decomposition](../lifecycle/decomposition): Break down requirements into work items and tasks
+> [Stage 5: Sprint Planning](../lifecycle/sprint-planning): Triage issues, plan sprints, manage backlog
+> [Stage 8: Delivery](../lifecycle/delivery): Track delivery, update work items, close milestones
 
 ## Stage Walkthrough
 
@@ -104,8 +105,8 @@ Set iteration path to Sprint 24.
 | **github-backlog-manager**  | GitHub issue discovery and backlog automation | [GitHub Backlog](../../agents/github-backlog/)  |
 | **product-manager-advisor** | Product strategy and prioritization guidance  | Agent file                                      |
 | **ux-ui-designer**          | UX/UI design guidance and review              | Agent file                                      |
-| **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../../rpi/task-researcher.md) |
-| **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../../rpi/README.md)                 |
+| **task-researcher**         | Deep technical and requirement research       | [Task Researcher](../../rpi/task-researcher) |
+| **rpi-agent**               | RPI workflow orchestration                    | [RPI docs](../../rpi/)                 |
 | **memory**                  | Session context and preference persistence    | Agent file                                      |
 
 ## Tips
@@ -120,15 +121,15 @@ Set iteration path to Sprint 24.
 
 ## Related Roles
 
-* TPM + Security Architect: Secure product launches require requirements gathering paired with threat modeling and compliance verification. Security plans integrate into the BRD/PRD workflow. See the [Security Architect Guide](security-architect.md).
-* TPM + Engineer: TPMs define requirements and manage backlogs while engineers implement. Work item decomposition flows directly into RPI planning. See the [Engineer Guide](engineer.md).
+* TPM + Security Architect: Secure product launches require requirements gathering paired with threat modeling and compliance verification. Security plans integrate into the BRD/PRD workflow. See the [Security Architect Guide](security-architect).
+* TPM + Engineer: TPMs define requirements and manage backlogs while engineers implement. Work item decomposition flows directly into RPI planning. See the [Engineer Guide](engineer).
 
 ## Next Steps
 
 > [!TIP]
 > Explore GitHub Backlog automation: [GitHub Backlog Manager](../../agents/github-backlog/)
 > Understand the full project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
-> Review collaboration with Security: [Security Architect Guide](security-architect.md)
+> Review collaboration with Security: [Security Architect Guide](security-architect)
 
 ---
 

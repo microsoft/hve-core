@@ -1,6 +1,7 @@
 ---
 title: Execution Workflow
 description: Apply triage and planning recommendations to GitHub issues through structured handoff consumption
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial
@@ -118,7 +119,7 @@ Skip any operations on issues that have been updated in the last 24 hours.
 ## Next Steps
 
 1. Review the execution log for any skipped operations or conflicts
-2. See [Using Workflows Together](using-together.md) for iterating through the full pipeline after execution
+2. See [Using Workflows Together](using-together) for iterating through the full pipeline after execution
 
 > [!TIP]
 > For large handoffs with many operations, consider executing in batches by checking only a subset of items at a time. This makes review easier and reduces the blast radius of any unexpected changes.

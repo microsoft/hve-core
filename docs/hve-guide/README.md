@@ -1,6 +1,7 @@
 ---
 title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: overview
@@ -76,7 +77,7 @@ flowchart TD
 
 > **Cross-cutting**: memory is available at every stage and is not tied to any single phase.
 
-**[AI-Assisted Project Lifecycle Overview →](lifecycle/README.md)**
+**[AI-Assisted Project Lifecycle Overview →](lifecycle/)**
 
 ### Role Guides
 
@@ -84,17 +85,17 @@ Nine role-specific guides covering recommended collections, stage walkthroughs, 
 
 | Role                     | Primary Stages                              | Guide                                                         |
 |--------------------------|---------------------------------------------|---------------------------------------------------------------|
-| Engineer                 | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](roles/engineer.md)                                 |
-| TPM                      | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](roles/tpm.md)                                           |
-| Tech Lead / Architect    | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](roles/tech-lead.md)                               |
-| Security Architect       | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](roles/security-architect.md)             |
-| Data Scientist           | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](roles/data-scientist.md)                     |
-| SRE / Operations         | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](roles/sre-operations.md)                   |
-| Business Program Manager | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](roles/business-program-manager.md) |
-| New Contributor          | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](roles/new-contributor.md)                   |
-| Utility                  | All                                         | [Utility](roles/utility.md)                                   |
+| Engineer                 | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](roles/engineer)                                 |
+| TPM                      | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](roles/tpm)                                           |
+| Tech Lead / Architect    | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](roles/tech-lead)                               |
+| Security Architect       | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](roles/security-architect)             |
+| Data Scientist           | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](roles/data-scientist)                     |
+| SRE / Operations         | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](roles/sre-operations)                   |
+| Business Program Manager | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](roles/business-program-manager) |
+| New Contributor          | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](roles/new-contributor)                   |
+| Utility                  | All                                         | [Utility](roles/utility)                                   |
 
-**[Browse All Role Guides →](roles/README.md)**
+**[Browse All Role Guides →](roles/)**
 
 ## Where to Start
 
@@ -108,10 +109,10 @@ flowchart TD
 
 | I want to...                            | Go Here                                                                  |
 |-----------------------------------------|--------------------------------------------------------------------------|
-| Understand the full project workflow    | [Lifecycle Overview](lifecycle/README.md)                                |
-| Find tools for my current project phase | [Stage Navigator](lifecycle/README.md#where-are-you)                     |
-| Get my role-specific guide              | [Role Finder](roles/README.md#find-your-role)                            |
-| Install collections for my role         | [Collection Quick Reference](roles/README.md#collection-quick-reference) |
+| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                                |
+| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)                     |
+| Get my role-specific guide              | [Role Finder](roles/#find-your-role)                            |
+| Install collections for my role         | [Collection Quick Reference](roles/#role-overview) |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

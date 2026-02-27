@@ -1,6 +1,7 @@
 ---
 title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -35,11 +36,11 @@ This guide is for you if you make architecture decisions, set coding standards, 
 > [!NOTE]
 > Tech leads primarily operate in these lifecycle stages:
 >
-> [Stage 2: Discovery](../lifecycle/discovery.md): Research architecture, evaluate design options, gather evidence
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define architecture decisions and design specifications
-> [Stage 6: Implementation](../lifecycle/implementation.md): Guide implementation, enforce standards
-> [Stage 7: Review](../lifecycle/review.md): Review designs, code, and architectural compliance
-> [Stage 9: Operations](../lifecycle/operations.md): Maintain standards, evolve architecture
+> [Stage 2: Discovery](../lifecycle/discovery): Research architecture, evaluate design options, gather evidence
+> [Stage 3: Product Definition](../lifecycle/product-definition): Define architecture decisions and design specifications
+> [Stage 6: Implementation](../lifecycle/implementation): Guide implementation, enforce standards
+> [Stage 7: Review](../lifecycle/review): Review designs, code, and architectural compliance
+> [Stage 9: Operations](../lifecycle/operations): Maintain standards, evolve architecture
 
 ## Stage Walkthrough
 
@@ -97,10 +98,10 @@ specificity, and alignment with repository conventions.
 | **adr-creation**         | Architecture decision record creation      | Agent file                                      |
 | **arch-diagram-builder** | Mermaid architecture diagram generation    | Agent file                                      |
 | **pr-review**            | Pull request review automation             | Agent file                                      |
-| **task-reviewer**        | Implementation review against plan         | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **task-reviewer**        | Implementation review against plan         | [Task Reviewer](../../rpi/task-reviewer)     |
 | **prompt-builder**       | Prompt engineering artifact creation       | Agent file                                      |
-| **task-researcher**      | Deep codebase and architecture research    | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**         | Structured implementation planning         | [Task Planner](../../rpi/task-planner.md)       |
+| **task-researcher**      | Deep codebase and architecture research    | [Task Researcher](../../rpi/task-researcher) |
+| **task-planner**         | Structured implementation planning         | [Task Planner](../../rpi/task-planner)       |
 | **doc-ops**              | Documentation operations and maintenance   | Agent file                                      |
 | **memory**               | Session context and preference persistence | Agent file                                      |
 
@@ -125,16 +126,16 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 ## Related Roles
 
-* Tech Lead + Engineer: Architecture decisions feed implementation. Tech leads set standards and review while engineers build. See the [Engineer Guide](engineer.md).
-* Tech Lead + Security Architect: Security architecture integrates with overall system design. Threat models inform architecture decisions. See the [Security Architect Guide](security-architect.md).
-* Tech Lead + TPM: Architecture shapes product requirements and vice versa. Design decisions affect decomposition and sprint planning. See the [TPM Guide](tpm.md).
+* Tech Lead + Engineer: Architecture decisions feed implementation. Tech leads set standards and review while engineers build. See the [Engineer Guide](engineer).
+* Tech Lead + Security Architect: Security architecture integrates with overall system design. Threat models inform architecture decisions. See the [Security Architect Guide](security-architect).
+* Tech Lead + TPM: Architecture shapes product requirements and vice versa. Design decisions affect decomposition and sprint planning. See the [TPM Guide](tpm).
 
 ## Next Steps
 
 > [!TIP]
 > See the full project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
-> Explore prompt engineering practices: [Prompt Engineering Contribution Guide](../../contributing/prompts.md)
-> Review coding standards: [Coding Standards Collection](../../collections/coding-standards.collection.md)
+> Explore prompt engineering practices: [Prompt Engineering Contribution Guide](../../contributing/prompts)
+> Review coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
 
 ---
 

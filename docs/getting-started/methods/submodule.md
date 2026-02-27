@@ -1,6 +1,7 @@
 ---
 title: Git Submodule Installation
 description: Set up HVE-Core as a git submodule for version-controlled team consumption
+sidebar_position: 7
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -26,8 +27,8 @@ Git submodules provide version-controlled, reproducible HVE-Core consumption. Ev
 
 ❌ **Consider alternatives when:**
 
-* You want automatic updates → [Multi-Root Workspace](multi-root.md)
-* You're a solo developer without version pinning needs → [Multi-Root Workspace](multi-root.md)
+* You want automatic updates → [Multi-Root Workspace](multi-root)
+* You're a solo developer without version pinning needs → [Multi-Root Workspace](multi-root)
 
 ## How It Works
 
@@ -269,9 +270,9 @@ git commit
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
-* [Back to Installation Guide](../install.md) - Compare other methods
+* [Your First Workflow](../first-workflow) - Try HVE-Core with a real task
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
+* [Back to Installation Guide](../install) - Compare other methods
 
 ---
 

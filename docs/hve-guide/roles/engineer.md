@@ -1,6 +1,7 @@
 ---
 title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -36,11 +37,11 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 > [!NOTE]
 > Engineers primarily operate in these lifecycle stages:
 >
-> [Stage 2: Discovery](../lifecycle/discovery.md): Research requirements, investigate codebase, gather context
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Transform research into structured implementation plans
-> [Stage 6: Implementation](../lifecycle/implementation.md): Build features, write code, execute plans
-> [Stage 7: Review](../lifecycle/review.md): Review code, validate changes, ensure quality
-> [Stage 8: Delivery](../lifecycle/delivery.md): Commit, create PRs, merge changes
+> [Stage 2: Discovery](../lifecycle/discovery): Research requirements, investigate codebase, gather context
+> [Stage 3: Product Definition](../lifecycle/product-definition): Transform research into structured implementation plans
+> [Stage 6: Implementation](../lifecycle/implementation): Build features, write code, execute plans
+> [Stage 7: Review](../lifecycle/review): Review code, validate changes, ensure quality
+> [Stage 8: Delivery](../lifecycle/delivery): Commit, create PRs, merge changes
 
 ## Stage Walkthrough
 
@@ -103,11 +104,11 @@ with coding standards.
 
 | Agent                | Purpose                                        | Docs                                              |
 |----------------------|------------------------------------------------|---------------------------------------------------|
-| **task-researcher**  | Deep codebase and API research                 | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-planner**     | Structured implementation planning             | [Task Planner](../../rpi/task-planner.md)         |
-| **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/README.md)               |
+| **task-researcher**  | Deep codebase and API research                 | [Task Researcher](../../rpi/task-researcher)   |
+| **task-planner**     | Structured implementation planning             | [Task Planner](../../rpi/task-planner)         |
+| **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor) |
+| **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer)       |
+| **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/)               |
 | **pr-review**        | Pull request review automation                 | Agent file                                        |
 | **memory**           | Session context and preference persistence     | Agent file                                        |
 | **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                        |
@@ -126,15 +127,15 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 ## Related Roles
 
-* Engineer + Tech Lead: Feature development benefits from architecture review and standards enforcement. The Tech Lead validates design decisions while the Engineer implements. See the [Tech Lead Guide](tech-lead.md).
-* Engineer + Data Scientist: Analytics pipeline development pairs data specification and notebook prototyping with production-grade integration. See the [Data Scientist Guide](data-scientist.md).
-* New Contributor to Engineer: Contributors progress from guided mode through autonomous engineering. See the [New Contributor Guide](new-contributor.md).
+* Engineer + Tech Lead: Feature development benefits from architecture review and standards enforcement. The Tech Lead validates design decisions while the Engineer implements. See the [Tech Lead Guide](tech-lead).
+* Engineer + Data Scientist: Analytics pipeline development pairs data specification and notebook prototyping with production-grade integration. See the [Data Scientist Guide](data-scientist).
+* New Contributor to Engineer: Contributors progress from guided mode through autonomous engineering. See the [New Contributor Guide](new-contributor).
 
 ## Next Steps
 
 > [!TIP]
-> Run your first RPI workflow: [First Workflow Guide](../../getting-started/first-workflow.md)
-> Explore the full RPI methodology: [RPI Documentation](../../rpi/README.md)
+> Run your first RPI workflow: [First Workflow Guide](../../getting-started/first-workflow)
+> Explore the full RPI methodology: [RPI Documentation](../../rpi/)
 > See how your stages connect: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

@@ -29,7 +29,9 @@
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
-    "plugin:validate": "npm run lint:collections-metadata"
+    "plugin:validate": "npm run lint:collections-metadata",
+    "docs:build": "npm --prefix docs/docusaurus run build",
+    "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
     "cspell": "9.6.4",

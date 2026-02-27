@@ -1,6 +1,7 @@
 ---
 title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -19,10 +20,10 @@ Implementation is the highest-density stage in the project lifecycle, with 30 as
 
 ## When You Enter This Stage
 
-You enter Implementation after completing [Stage 5: Sprint Planning](sprint-planning.md) with assigned work items. You also re-enter this stage from [Stage 7: Review](review.md) when rework is needed, from [Stage 8: Delivery](delivery.md) at the start of each new sprint, or from [Stage 9: Operations](operations.md) for hotfixes.
+You enter Implementation after completing [Stage 5: Sprint Planning](sprint-planning) with assigned work items. You also re-enter this stage from [Stage 7: Review](review) when rework is needed, from [Stage 8: Delivery](delivery) at the start of each new sprint, or from [Stage 9: Operations](operations) for hotfixes.
 
 > [!NOTE]
-> Prerequisites: Sprint planned with assigned work items. Development environment configured from [Stage 1: Setup](setup.md).
+> Prerequisites: Sprint planned with assigned work items. Development environment configured from [Stage 1: Setup](setup).
 
 ## Available Tools
 
@@ -89,11 +90,11 @@ All coding standard instructions activate automatically based on file type:
 
 Engineers are the primary users of Implementation, spending the majority of their engagement time here. Tech Leads contribute architecture-sensitive implementations. Data Scientists use notebook and dashboard generators. SREs handle infrastructure code. New Contributors start with guided tasks.
 
-* [Engineer Guide](../roles/engineer.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
-* [Data Scientist Guide](../roles/data-scientist.md)
-* [SRE/Operations Guide](../roles/sre-operations.md)
-* [New Contributor Guide](../roles/new-contributor.md)
+* [Engineer Guide](../roles/engineer)
+* [Tech Lead Guide](../roles/tech-lead)
+* [Data Scientist Guide](../roles/data-scientist)
+* [SRE/Operations Guide](../roles/sre-operations)
+* [New Contributor Guide](../roles/new-contributor)
 
 ## Starter Prompts
 
@@ -154,7 +155,7 @@ and error handling for invalid cursor values.
 
 ## Stage Outputs and Next Stage
 
-Implementation produces source code, documentation, notebooks, dashboards, prompt artifacts, and infrastructure definitions. Transition to [Stage 7: Review](review.md) when implementation is complete. Use `/clear` to reset context before starting the review cycle.
+Implementation produces source code, documentation, notebooks, dashboards, prompt artifacts, and infrastructure definitions. Transition to [Stage 7: Review](review) when implementation is complete. Use `/clear` to reset context before starting the review cycle.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

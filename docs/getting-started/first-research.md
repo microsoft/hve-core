@@ -1,6 +1,7 @@
 ---
 title: Your First Research
 description: Use the task-researcher agent to investigate your own codebase
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -14,7 +15,7 @@ estimated_reading_time: 5
 ---
 
 > [!NOTE]
-> Step 2 of 4 in the [Getting Started Journey](README.md).
+> Step 2 of 4 in the [Getting Started Journey](./).
 
 The RPI framework separates research from implementation. Before writing code,
 you find verified facts about the codebase. This exercise introduces the
@@ -68,7 +69,7 @@ generate plausible answers. It searched, read, and cited.
 
 You've installed HVE Core, talked to an agent, and run your first research.
 The next step is a full Research, Plan, Implement cycle:
-[Your First Full Workflow](first-workflow.md).
+[Your First Full Workflow](first-workflow).
 
 ---
 

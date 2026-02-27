@@ -1,6 +1,7 @@
 ---
 title: Release Process
 description: Trunk-based release workflow using release-please automation and manual VS Code extension publishing
+sidebar_position: 9
 ms.date: 2026-01-08
 ms.topic: how-to
 author: WilliamBerryiii
@@ -68,7 +69,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](../../.github/instructions/hve-core/commit-message.instructions.md).
+For more details, see the [commit message instructions](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md).
 
 ## For Maintainers
 
@@ -97,7 +98,7 @@ VS Code extension publishing is manual via GitHub Actions workflow dispatch.
 
 ### Publishing Steps
 
-1. Navigate to **Actions → Publish Extension** in the repository (see [extension-publish.yml](../../.github/workflows/extension-publish.yml) for workflow details)
+1. Navigate to **Actions → Publish Extension** in the repository (see [extension-publish.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/extension-publish.yml) for workflow details)
 2. Select **Run workflow**
 3. Choose the `main` branch
 4. Optionally specify a version (defaults to `package.json` version)
@@ -166,7 +167,7 @@ stateDiagram-v2
 | Experimental work  | Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts                                                                                                                                                                                                                                                 |
 | Preview promotions | Set `preview` on collection items when core functionality is complete                                                                                                                                                                                                                                                                     |
 | Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                              |
-| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy. |
+| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts#deprecated-artifacts) for the full deprecation policy. |
 
 ---
 

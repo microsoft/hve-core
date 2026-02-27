@@ -1,6 +1,7 @@
 ---
 title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -43,7 +44,7 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 
 Install HVE Core and run your first agent interaction.
 
-1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
+1. Follow the [installation guide](../../getting-started/install) to set up your development environment.
 2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments. For custom installations, use the **hve-core-installer** agent instead.
 3. Open a chat and select the **memory** agent to verify agent responsiveness.
 4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
@@ -70,8 +71,8 @@ Checkpoint: You have completed one full RPI cycle and understand how phases conn
 Use agents selectively and combine workflows for larger tasks.
 
 1. Use `/rpi mode=auto` for end-to-end automation on a multi-file change.
-2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
-3. Install a second collection relevant to your work (see the [Collection Quick Reference](README.md#collection-quick-reference)).
+2. Explore additional agents from the [Engineer Guide](engineer) or your role guide.
+3. Install a second collection relevant to your work (see the [Role Overview](./#role-overview)).
 4. Use the **memory** agent to save preferences and context that persist across sessions.
 
 Checkpoint: You choose which agents to use based on task needs and work with multiple collections.
@@ -161,16 +162,16 @@ for each validator.
 
 ## Related Roles
 
-* New Contributor to Engineer: After completing all four milestones, you have the skills and tooling fluency described in the [Engineer Guide](engineer.md). Transition to that guide for advanced engineering workflows.
+* New Contributor to Engineer: After completing all four milestones, you have the skills and tooling fluency described in the [Engineer Guide](engineer). Transition to that guide for advanced engineering workflows.
 * New Contributor to Any Role: The onboarding milestones build foundational skills applicable to every role. After Milestone 2, explore the role guide that matches your work (TPM, Data Scientist, SRE, and more).
 
 ## Next Steps
 
 > [!TIP]
-> Start with installation: [Install Guide](../../getting-started/install.md)
-> Run your first workflow: [First Workflow Guide](../../getting-started/first-workflow.md)
-> Explore the RPI methodology: [RPI Documentation](../../rpi/README.md)
-> Find your role: [Role Guides Overview](README.md)
+> Start with installation: [Install Guide](../../getting-started/install)
+> Run your first workflow: [First Workflow Guide](../../getting-started/first-workflow)
+> Explore the RPI methodology: [RPI Documentation](../../rpi/)
+> Find your role: [Role Guides Overview](./)
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE-Core from host filesystem
+sidebar_position: 5
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -26,10 +27,10 @@ Mounted Directory installation shares a single HVE-Core clone across multiple de
 
 ❌ **Consider alternatives when:**
 
-* You use Codespaces → [GitHub Codespaces](codespaces.md) (mounts don't work)
-* You want simpler setup → [Git-Ignored Folder](git-ignored.md)
-* Your team needs version control → [Submodule](submodule.md)
-* You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
+* You use Codespaces → [GitHub Codespaces](codespaces) (mounts don't work)
+* You want simpler setup → [Git-Ignored Folder](git-ignored)
+* Your team needs version control → [Submodule](submodule)
+* You need paths that work everywhere → [Multi-Root Workspace](multi-root)
 
 ## ⚠️ Important Limitations
 
@@ -357,7 +358,7 @@ Settings must use absolute container paths (`/workspaces/hve-core/...`), not rel
 
 This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host bind mounts.
 
-**Solution:** Use [postCreateCommand](codespaces.md) for Codespaces, or [Multi-Root Workspace](multi-root.md) for dual-environment support.
+**Solution:** Use [postCreateCommand](codespaces) for Codespaces, or [Multi-Root Workspace](multi-root) for dual-environment support.
 
 ## Limitations
 
@@ -374,9 +375,9 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [Multi-Root Workspace](multi-root.md) - Simpler portable solution
-* [postCreateCommand](codespaces.md) - If you also need Codespaces support
+* [Your First Workflow](../first-workflow) - Try HVE-Core with a real task
+* [Multi-Root Workspace](multi-root) - Simpler portable solution
+* [postCreateCommand](codespaces) - If you also need Codespaces support
 
 ---
 

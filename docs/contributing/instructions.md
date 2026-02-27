@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
+sidebar_position: 3
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -8,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Instructions File?
 
@@ -133,7 +134,7 @@ lastUpdated: '2025-11-19'
 All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
 
 > [!NOTE]
-> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common#repo-specific-artifact-exclusion) for details.
 
 ### Adding Your Instructions to a Collection
 
@@ -169,7 +170,7 @@ Choose collections based on who uses the technology or pattern:
 | Test standards          | `hve-core-all`, `coding-standards`                |
 | ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common#collection-manifests-and-dependencies).
 
 ## Content Structure Standards
 
@@ -324,7 +325,7 @@ Brought to you by microsoft/hve-core
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules. Common tags for instructions:
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common#xml-style-block-standards) for complete rules. Common tags for instructions:
 
 * `<!-- <example-{pattern-name}> -->` - Code examples
 * `<!-- <convention-{category}> -->` - Convention blocks
@@ -334,7 +335,7 @@ See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-com
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common#rfc-2119-directive-language) for complete guidance.
 
 ## Pattern Definition Standards
 
@@ -587,9 +588,9 @@ Before submitting your instructions file, verify:
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common#rfc-2119-directive-language))
 
 ### Technical Validation
 
@@ -609,7 +610,7 @@ Before submitting your instructions file, verify:
 
 ## Testing Your Instructions
 
-See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For instructions specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common#common-testing-practices) for testing guidelines. For instructions specifically:
 
 1. Verify `applyTo` glob pattern matches intended files
 2. Test all code examples execute correctly
@@ -630,11 +631,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 * **Problem**: Multiple instruction files with overlapping glob patterns causing ambiguity
 * **Solution**: Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
@@ -645,14 +646,14 @@ All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
-* [Contributing Prompts](prompts.md) - Workflow-specific guidance
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [AI Artifacts Common Standards](ai-artifacts-common) - Shared standards for all contributions
+* [Contributing Custom Agents](custom-agents) - AI agent configuration files
+* [Contributing Prompts](prompts) - Workflow-specific guidance
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common#getting-help) for support resources. For instructions-specific assistance:
 
 * Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands

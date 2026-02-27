@@ -1,6 +1,7 @@
 ---
 title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
+sidebar_position: 2
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: reference
@@ -326,7 +327,7 @@ When creating artifacts that reference other artifacts:
 | Test in isolation      | Verify your artifact works when only its collection is installed                |
 | Keep coupling minimal  | Avoid unnecessary dependencies between artifacts                                |
 
-For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
+For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents#frontmatter-requirements).
 
 ### Maturity Field Requirements
 
@@ -372,7 +373,7 @@ items:
     maturity: stable
 ```
 
-For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
+For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process#extension-channels-and-maturity).
 
 **Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
 
@@ -464,7 +465,7 @@ For detailed documentation on the plugin generation system, including:
 * Plugin directory structure specifications
 * Troubleshooting generation errors
 
-See the [Plugin Scripts README](../../scripts/plugins/README.md).
+See the [Plugin Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md).
 
 ## XML-Style Block Standards
 
@@ -845,7 +846,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See [commit-message.instructions.md](../../.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
+See [commit-message.instructions.md](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
 
 ## Getting Help
 
@@ -873,10 +874,10 @@ When contributing AI artifacts:
 
 ### Common Resources
 
-* [Contributing Custom Agents](custom-agents.md) - Agent configurations
-* [Contributing Prompts](prompts.md) - Workflow guidance
-* [Contributing Instructions](instructions.md) - Technology standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
+* [Contributing Custom Agents](custom-agents) - Agent configurations
+* [Contributing Prompts](prompts) - Workflow guidance
+* [Contributing Instructions](instructions) - Technology standards
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 
 ---
 

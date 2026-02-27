@@ -1,6 +1,7 @@
 ---
 title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -19,7 +20,7 @@ Discovery is where engagements take shape. This stage supports requirement gathe
 
 ## When You Enter This Stage
 
-You enter Discovery after completing [Stage 1: Setup](setup.md) with a configured environment.
+You enter Discovery after completing [Stage 1: Setup](setup) with a configured environment.
 
 > [!NOTE]
 > Prerequisites: HVE Core installation complete, project repository initialized.
@@ -44,11 +45,11 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 TPMs lead Discovery, producing BRDs and coordinating research across disciplines. Engineers contribute technical feasibility research. Tech Leads evaluate architecture options. Security Architects drive threat modeling. Data Scientists define data requirements.
 
-* [TPM Guide](../roles/tpm.md)
-* [Engineer Guide](../roles/engineer.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
-* [Security Architect Guide](../roles/security-architect.md)
-* [Data Scientist Guide](../roles/data-scientist.md)
+* [TPM Guide](../roles/tpm)
+* [Engineer Guide](../roles/engineer)
+* [Tech Lead Guide](../roles/tech-lead)
+* [Security Architect Guide](../roles/security-architect)
+* [Data Scientist Guide](../roles/data-scientist)
 
 ## Starter Prompts
 
@@ -82,7 +83,7 @@ access control. Exclude infrastructure and network-level controls.
 
 ## Stage Outputs and Next Stage
 
-Discovery produces BRDs, research summaries, security plans, data specifications, and architecture decision records. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
+Discovery produces BRDs, research summaries, security plans, data specifications, and architecture decision records. Transition to [Stage 3: Product Definition](product-definition) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition).
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

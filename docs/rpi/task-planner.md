@@ -1,6 +1,7 @@
 ---
 title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -159,14 +160,14 @@ After Task Planner completes:
 
 1. **Review** all three planning files
 2. **Clear context** using `/clear` or starting a new chat
-3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor.md)
+3. **Proceed to implementation** using `/task-implement` to switch to [Task Implementor](task-implementor)
 
 The `/task-implement` prompt automatically locates the plan and switches to Task Implementor.
 
 > [!TIP]
 > Use the **⚡ Implement** handoff button when available to transition directly to Task Implementor with context.
 
-After implementation, continue to [Task Reviewer](task-reviewer.md) to validate against specifications.
+After implementation, continue to [Task Reviewer](task-reviewer) to validate against specifications.
 
 ---
 

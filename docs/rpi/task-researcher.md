@@ -1,6 +1,7 @@
 ---
 title: Task Researcher Guide
 description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -138,7 +139,7 @@ After Task Researcher completes:
 
 1. **Review** the research document in `.copilot-tracking/research/`
 2. **Clear context** using `/clear` or starting a new chat
-3. **Proceed to planning** with [Task Planner](task-planner.md)
+3. **Proceed to planning** with [Task Planner](task-planner)
 
 Pass the research document path to Task Planner so it can create an actionable implementation plan.
 

@@ -1,6 +1,7 @@
 ---
 title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
+sidebar_position: 10
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -19,7 +20,7 @@ Operations covers the ongoing lifecycle after delivery, including incident respo
 
 ## When You Enter This Stage
 
-You enter Operations after completing the final sprint delivery in [Stage 8: Delivery](delivery.md).
+You enter Operations after completing the final sprint delivery in [Stage 8: Delivery](delivery).
 
 > [!NOTE]
 > Prerequisites: Production deployment complete. Monitoring and alerting configured.
@@ -61,9 +62,9 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 SREs lead Operations, handling incident response and system monitoring. Tech Leads contribute to architecture-level maintenance decisions. Engineers address hotfixes and ongoing code maintenance.
 
-* [SRE/Operations Guide](../roles/sre-operations.md)
-* [Tech Lead Guide](../roles/tech-lead.md)
-* [Engineer Guide](../roles/engineer.md)
+* [SRE/Operations Guide](../roles/sre-operations)
+* [Tech Lead Guide](../roles/tech-lead)
+* [Engineer Guide](../roles/engineer)
 
 ## Starter Prompts
 
@@ -132,7 +133,7 @@ Resume a previous session:
 
 ## Stage Outputs and Next Stage
 
-Operations produces updated documentation, incident reports, refined prompts, and maintenance artifacts. When a hotfix is needed, transition back to [Stage 6: Implementation](implementation.md) to address the issue through the standard implementation workflow.
+Operations produces updated documentation, incident reports, refined prompts, and maintenance artifacts. When a hotfix is needed, transition back to [Stage 6: Implementation](implementation) to address the issue through the standard implementation workflow.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

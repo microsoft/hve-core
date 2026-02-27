@@ -1,5 +1,6 @@
 // @ts-check
 import {themes as prismThemes} from 'prism-react-renderer';
+import remarkGithubAlert from 'remark-github-blockquote-alert';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -21,6 +22,9 @@ const config = {
 
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
   },
 
   i18n: {
@@ -34,11 +38,21 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          path: '../',
+          exclude: [
+            'docusaurus/**',
+            'announcements/**',
+            '**/_*.{js,jsx,ts,tsx,md,mdx}',
+            '**/_*/**',
+            '**/*.test.{js,jsx,ts,tsx}',
+            '**/__tests__/**',
+          ],
           sidebarPath: './sidebars.js',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
-          editUrl:
-            'https://github.com/microsoft/hve-core/tree/main/docs/docusaurus/',
+          editUrl: ({ docPath }) =>
+            `https://github.com/microsoft/hve-core/tree/main/docs/${docPath}`,
+          remarkPlugins: [remarkGithubAlert],
         },
         blog: false,
         theme: {
@@ -84,9 +98,14 @@ const config = {
             label: 'Topics',
             position: 'left',
             items: [
-              { label: 'Agents & Prompts', to: '/docs/category/agents-and-prompts' },
-              { label: 'Workflows', to: '/docs/category/workflows' },
-              { label: 'Design Thinking', to: '/docs/category/design-thinking' },
+              { label: 'Getting Started', to: '/docs/category/getting-started' },
+              { label: 'HVE Guide', to: '/docs/category/hve-guide' },
+              { label: 'RPI Workflow', to: '/docs/category/rpi' },
+              { label: 'Agents', to: '/docs/category/agents' },
+              { label: 'Architecture', to: '/docs/category/architecture' },
+              { label: 'Contributing', to: '/docs/category/contributing' },
+              { label: 'Security', to: '/docs/category/security' },
+              { label: 'Templates', to: '/docs/category/templates' },
             ],
           },
           {
@@ -102,10 +121,19 @@ const config = {
           {
             title: 'Documentation',
             items: [
-              {
-                label: 'Introduction',
-                to: '/docs/intro',
-              },
+              { label: 'Getting Started', to: '/docs/category/getting-started' },
+              { label: 'HVE Guide', to: '/docs/category/hve-guide' },
+              { label: 'RPI Workflow', to: '/docs/category/rpi' },
+              { label: 'Agents', to: '/docs/category/agents' },
+              { label: 'Architecture', to: '/docs/category/architecture' },
+            ],
+          },
+          {
+            title: 'Resources',
+            items: [
+              { label: 'Contributing', to: '/docs/category/contributing' },
+              { label: 'Security', to: '/docs/category/security' },
+              { label: 'Templates', to: '/docs/category/templates' },
             ],
           },
           {
@@ -114,10 +142,6 @@ const config = {
               {
                 label: 'GitHub',
                 href: 'https://github.com/microsoft/hve-core',
-              },
-              {
-                label: 'Contributing',
-                href: 'https://github.com/microsoft/hve-core/blob/main/CONTRIBUTING.md',
               },
             ],
           },

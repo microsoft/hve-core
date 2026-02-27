@@ -4,6 +4,8 @@
  * Dual-layer: Infima overrides + custom --ms-learn-* properties
  */
 
+@import 'remark-github-blockquote-alert/alert.css';
+
 /* Segoe UI Variable web font (matches MS Learn) */
 @font-face {
   font-family: 'Segoe UI Variable Text';

@@ -1,6 +1,7 @@
 ---
 title: Root Cause Analysis (RCA) Template
 description: Structured post-incident documentation template for root cause analysis
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-04
 ---

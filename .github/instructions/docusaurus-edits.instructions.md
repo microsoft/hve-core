@@ -1,11 +1,11 @@
 ---
 description: "Conventions for creating and editing Docusaurus documentation pages in the HVE-Core site"
-applyTo: 'docs/docusaurus/**'
+applyTo: 'docs/**'
 ---
 
 # Docusaurus Content Instructions
 
-These instructions apply automatically when editing any file under `docs/docusaurus/`. Follow them to maintain consistency across the documentation site.
+These instructions apply automatically when editing any file under `docs/`. Follow them to maintain consistency across the documentation site.
 
 ## Frontmatter
 
@@ -34,7 +34,7 @@ tags: [build-the-work, rpi, workflow]
 
 ## Admonitions
 
-Use Docusaurus triple-colon syntax for callout boxes. Do not use GitHub-flavored `> [!NOTE]` alerts.
+Both Docusaurus admonitions (`:::note`, `:::tip`, `:::warning`) and GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) are supported. GitHub-style alerts render correctly in Docusaurus via `remark-github-blockquote-alert` and on GitHub natively. Prefer GitHub-style alerts for content that must render on both platforms.
 
 ```markdown
 :::note
@@ -104,13 +104,16 @@ Each sidebar category is a directory containing a `_category_.json` file:
 }
 ```
 
-Adding a new top-level category changes the site information architecture. Discuss with maintainers before creating one. The current segment hierarchy is:
+Adding a new top-level category changes the site information architecture. Discuss with maintainers before creating one. The current category hierarchy is:
 
 1. Getting Started
-2. Shape the Work
-3. Build the Work
-4. Ship It
-5. Reference
+2. HVE Guide
+3. RPI
+4. Agents
+5. Architecture
+6. Contributing
+7. Security
+8. Templates
 
 ## Images
 

@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
+sidebar_position: 5
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -8,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Agent?
 
@@ -319,7 +320,7 @@ Choose collections based on who benefits most from your agent:
 
 If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common#collection-manifests-and-dependencies).
 
 ### MCP Tool Dependencies
 
@@ -344,7 +345,7 @@ tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
 
 * Document MCP dependencies in agent body text when using `mcp_*` tool patterns
 * Agents should gracefully handle missing MCP servers (tools unavailable)
-* Reference the [MCP Server Configuration](../getting-started/mcp-configuration.md) guide when agents require MCP tools
+* Reference the [MCP Server Configuration](../getting-started/mcp-configuration) guide when agents require MCP tools
 * Prefer built-in VS Code Copilot tools when equivalent functionality exists
 
 ## Agent Content Structure Standards
@@ -406,11 +407,11 @@ Brought to you by microsoft/hve-core
 
 ### XML-Style Block Requirements
 
-See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common.md#xml-style-block-standards) for complete rules and examples.
+See [AI Artifacts Common Standards - XML-Style Block Standards](ai-artifacts-common#xml-style-block-standards) for complete rules and examples.
 
 ### Directive Language Standards
 
-Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common.md#rfc-2119-directive-language) for complete guidance.
+Use RFC 2119 compliant keywords (MUST/SHOULD/MAY). See [AI Artifacts Common Standards - RFC 2119 Directive Language](ai-artifacts-common#rfc-2119-directive-language) for complete guidance.
 
 ## Tool Usage Discipline
 
@@ -486,7 +487,7 @@ Report validation status:
 
 ## Research and External Sources
 
-When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
+When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common#attribution-requirements) for guidelines.
 
 ## Validation Checklist
 
@@ -513,9 +514,9 @@ Before submitting your agent, verify:
 
 ### Common Standards
 
-* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common.md#markdown-quality-standards))
-* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common.md#xml-style-block-standards))
-* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common.md#rfc-2119-directive-language))
+* [ ] Markdown quality (see [Common Standards - Markdown Quality](ai-artifacts-common#markdown-quality-standards))
+* [ ] XML-style blocks properly formatted (see [Common Standards - XML-Style Blocks](ai-artifacts-common#xml-style-block-standards))
+* [ ] RFC 2119 keywords used consistently (see [Common Standards - RFC 2119](ai-artifacts-common#rfc-2119-directive-language))
 
 ### Technical Validation
 
@@ -533,7 +534,7 @@ Before submitting your agent, verify:
 
 ## Testing Your Agent
 
-See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common.md#common-testing-practices) for testing guidelines. For agents specifically:
+See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-common#common-testing-practices) for testing guidelines. For agents specifically:
 
 1. Test with realistic scenarios matching the agent's purpose
 2. Verify tool usage patterns execute correctly
@@ -548,11 +549,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 Referencing tools that don't exist or using incorrect camelCase variants. Use exact tool names from VS Code Copilot's available tools list.
 
-For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
+For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common#common-issues-and-fixes).
 
 ## Automated Validation
 
-Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common.md#common-validation-standards)):
+Run these commands before submission (see [Common Standards - Common Validation](ai-artifacts-common#common-validation-standards)):
 
 * `npm run lint:frontmatter`
 * `npm run lint:md`
@@ -563,14 +564,14 @@ All checks **MUST** pass before merge.
 
 ## Related Documentation
 
-* [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
-* [Contributing Prompts](prompts.md) - Workflow-specific guidance files
-* [Contributing Instructions](instructions.md) - Technology-specific standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [AI Artifacts Common Standards](ai-artifacts-common) - Shared standards for all contributions
+* [Contributing Prompts](prompts) - Workflow-specific guidance files
+* [Contributing Instructions](instructions) - Technology-specific standards
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common#getting-help) for support resources. For agent-specific assistance, review existing examples in `.github/agents/{collection-id}/` (the conventional location for agent files).
 
 ---
 

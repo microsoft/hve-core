@@ -1,6 +1,7 @@
 ---
 title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -22,7 +23,7 @@ Setup is the entry point for every HVE Core engagement. This stage covers instal
 You enter Setup when starting a new project or joining an existing engagement that uses HVE Core tooling.
 
 > [!NOTE]
-> Prerequisites: VS Code with GitHub Copilot Chat enabled. See [Getting Started](../../getting-started/install.md) for detailed installation instructions.
+> Prerequisites: VS Code with GitHub Copilot Chat enabled. See [Getting Started](../../getting-started/install) for detailed installation instructions.
 
 ## Available Tools
 
@@ -39,7 +40,7 @@ You enter Setup when starting a new project or joining an existing engagement th
 
 ## Role-Specific Guidance
 
-All roles pass through Setup as their first step. Engineers and new contributors spend the most time here configuring language-specific tooling. TPMs and Tech Leads typically complete Setup quickly and advance to [Stage 2: Discovery](discovery.md).
+All roles pass through Setup as their first step. Engineers and new contributors spend the most time here configuring language-specific tooling. TPMs and Tech Leads typically complete Setup quickly and advance to [Stage 2: Discovery](discovery).
 
 For role-specific onboarding paths, see the [Role Guides](../roles/).
 
@@ -71,7 +72,7 @@ test files under tests/.
 
 ## Stage Outputs and Next Stage
 
-Setup produces a configured development environment with HVE Core collections installed and user preferences stored. Transition to [Stage 2: Discovery](discovery.md) when installation is complete.
+Setup produces a configured development environment with HVE Core collections installed and user preferences stored. Transition to [Stage 2: Discovery](discovery) when installation is complete.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

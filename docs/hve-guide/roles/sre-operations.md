@@ -1,6 +1,7 @@
 ---
 title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -42,15 +43,15 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > [!NOTE]
 > SRE / Operations engineers primarily operate in these lifecycle stages:
 >
-> [Stage 1: Setup](../lifecycle/setup.md): Configure environments, install tooling, set up infrastructure
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define infrastructure requirements and operational specifications
-> [Stage 6: Implementation](../lifecycle/implementation.md): Build infrastructure, write IaC, configure pipelines
-> [Stage 8: Delivery](../lifecycle/delivery.md): Deploy infrastructure, validate environments, release changes
-> [Stage 9: Operations](../lifecycle/operations.md): Monitor systems, handle incidents, maintain production
+> [Stage 1: Setup](../lifecycle/setup): Configure environments, install tooling, set up infrastructure
+> [Stage 3: Product Definition](../lifecycle/product-definition): Define infrastructure requirements and operational specifications
+> [Stage 6: Implementation](../lifecycle/implementation): Build infrastructure, write IaC, configure pipelines
+> [Stage 8: Delivery](../lifecycle/delivery): Deploy infrastructure, validate environments, release changes
+> [Stage 9: Operations](../lifecycle/operations): Monitor systems, handle incidents, maintain production
 
 ## Stage Walkthrough
 
-1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
+1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install). Set up IaC project structure for your infrastructure repository.
 2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-plan-creator** agent for infrastructure security planning.
 3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
 4. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
@@ -100,9 +101,9 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 | Agent                     | Purpose                                        | Docs                                              |
 |---------------------------|------------------------------------------------|---------------------------------------------------|
-| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer.md)       |
+| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher)   |
+| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor) |
+| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer)       |
 | **security-plan-creator** | Infrastructure security planning               | Agent file                                        |
 | **pr-review**             | Pull request review for infrastructure changes | Agent file                                        |
 | **memory**                | Session context and preference persistence     | Agent file                                        |
@@ -130,15 +131,15 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 ## Related Roles
 
-* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Threat models inform operational controls. See the [Security Architect Guide](security-architect.md).
-* SRE + Engineer: Production reliability requires collaboration between infrastructure operations and feature development. Deployment pipelines serve both roles. See the [Engineer Guide](engineer.md).
-* SRE + Tech Lead: Infrastructure architecture decisions shape operational practices. IaC standards maintain consistency across environments. See the [Tech Lead Guide](tech-lead.md).
+* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Threat models inform operational controls. See the [Security Architect Guide](security-architect).
+* SRE + Engineer: Production reliability requires collaboration between infrastructure operations and feature development. Deployment pipelines serve both roles. See the [Engineer Guide](engineer).
+* SRE + Tech Lead: Infrastructure architecture decisions shape operational practices. IaC standards maintain consistency across environments. See the [Tech Lead Guide](tech-lead).
 
 ## Next Steps
 
 > [!TIP]
-> Explore IaC coding standards: [Coding Standards Collection](../../collections/coding-standards.collection.md)
-> Set up incident response tools: [Security Planning Collection](../../collections/security-planning.collection.md)
+> Explore IaC coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
+> Set up incident response tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

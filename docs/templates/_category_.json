@@ -1,0 +1,9 @@
+{
+  "label": "Templates",
+  "position": 9,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index"
+  }
+}

@@ -1,6 +1,7 @@
 ---
 title: GitHub Backlog Manager
 description: Automated issue discovery, triage, sprint planning, and execution for GitHub repositories
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: concept
@@ -24,7 +25,7 @@ The GitHub Backlog Manager automates issue lifecycle management across GitHub re
 * ⚡ Throughput: Automated triage and sprint planning handle repetitive decisions, freeing your team for engineering work
 
 > [!TIP]
-> For the full rationale and quality comparison, see [Why the Backlog Manager Works](why-backlog-manager.md).
+> For the full rationale and quality comparison, see [Why the Backlog Manager Works](why-backlog-manager).
 
 ## The Five Workflows
 
@@ -32,25 +33,25 @@ The GitHub Backlog Manager automates issue lifecycle management across GitHub re
 
 Discovery finds and categorizes issues from multiple sources. Three discovery paths cover different starting points: user-centric (assigned issues), artifact-driven (local code changes mapped to backlog items), and search-based (criteria-driven queries across repositories). Discovery produces issue analysis files that feed into triage.
 
-See the [Discovery workflow guide](discovery.md) for paths, artifacts, and examples.
+See the [Discovery workflow guide](discovery) for paths, artifacts, and examples.
 
 ### 🏷️ Triage
 
 Triage assigns labels, assesses priority, and detects duplicates for discovered issues. It applies a 17-label taxonomy organized by type, area, priority, and lifecycle categories. Conventional commit patterns in issue titles inform label suggestions. A four-aspect similarity framework flags potential duplicates before they create noise.
 
-See the [Triage workflow guide](triage.md) for the label taxonomy and duplicate detection.
+See the [Triage workflow guide](triage) for the label taxonomy and duplicate detection.
 
 ### 📋 Sprint Planning
 
 Sprint planning organizes triaged issues into milestones with capacity awareness. A six-step milestone discovery process matches issues to existing or new milestones. The workflow assesses issue volume against team capacity and recommends distribution across sprints.
 
-See the [Sprint Planning workflow guide](sprint-planning.md) for milestone discovery and capacity planning.
+See the [Sprint Planning workflow guide](sprint-planning) for milestone discovery and capacity planning.
 
 ### ⚡ Execution
 
 Execution consumes handoff files produced by earlier workflows and performs the planned operations. It creates, updates, and closes issues according to the plan, tracking each operation with checkbox-based progress and per-operation logging. Failed operations log errors without blocking the rest of the batch.
 
-See the [Execution workflow guide](execution.md) for handoff consumption and operation logging.
+See the [Execution workflow guide](execution) for handoff consumption and operation logging.
 
 ### ➕ Quick Add
 
@@ -80,7 +81,7 @@ Partial autonomy is the default, applying labels and milestones automatically wh
 
 ## Quick Start
 
-1. Configure your MCP servers following the [MCP Configuration guide](../../getting-started/mcp-configuration.md)
+1. Configure your MCP servers following the [MCP Configuration guide](../../getting-started/mcp-configuration)
 2. Open a Copilot Chat session and type: `Discover open issues assigned to me`
 3. Review the discovery output, then type `/clear` and start a triage session
 4. Continue through sprint planning and execution as needed
@@ -90,16 +91,16 @@ Partial autonomy is the default, applying labels and milestones automatically wh
 
 ## Prerequisites
 
-The GitHub Backlog Manager requires MCP server configuration for GitHub API access. See [MCP Configuration](../../getting-started/mcp-configuration.md) for setup instructions. The GitHub MCP tools (listed in the agent specification) must be available in your VS Code context.
+The GitHub Backlog Manager requires MCP server configuration for GitHub API access. See [MCP Configuration](../../getting-started/mcp-configuration) for setup instructions. The GitHub MCP tools (listed in the agent specification) must be available in your VS Code context.
 
 ## Next Steps
 
-* [Discovery](discovery.md) - Find and categorize issues from multiple sources
-* [Triage](triage.md) - Assign labels, priorities, and detect duplicates
-* [Sprint Planning](sprint-planning.md) - Organize issues into milestones
-* [Execution](execution.md) - Execute planned operations from handoff files
-* [Using Workflows Together](using-together.md) - End-to-end pipeline walkthrough
-* [Why the Backlog Manager Works](why-backlog-manager.md) - Design rationale and quality comparison
+* [Discovery](discovery) - Find and categorize issues from multiple sources
+* [Triage](triage) - Assign labels, priorities, and detect duplicates
+* [Sprint Planning](sprint-planning) - Organize issues into milestones
+* [Execution](execution) - Execute planned operations from handoff files
+* [Using Workflows Together](using-together) - End-to-end pipeline walkthrough
+* [Why the Backlog Manager Works](why-backlog-manager) - Design rationale and quality comparison
 
 ---
 

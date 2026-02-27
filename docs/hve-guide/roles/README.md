@@ -1,6 +1,7 @@
 ---
 title: Role Guides
 description: Find your role-specific guide for AI-assisted engineering with HVE Core tooling
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: concept
@@ -18,15 +19,15 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 
 | Role                     | Dedicated Assets | Total Addressable | Primary Stages                              | Guide                                                   |
 |--------------------------|------------------|-------------------|---------------------------------------------|---------------------------------------------------------|
-| Engineer                 | 26               | 28+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](engineer.md)                                 |
-| TPM                      | 24               | 32+               | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](tpm.md)                                           |
-| Tech Lead / Architect    | 19               | 23+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](tech-lead.md)                               |
-| Security Architect       | 3                | 9                 | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](security-architect.md)             |
-| Data Scientist           | 6                | 13                | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](data-scientist.md)                     |
-| SRE / Operations         | 8                | 13+               | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](sre-operations.md)                   |
-| Business Program Manager | N/A              | N/A               | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](business-program-manager.md) |
-| New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
-| Utility                  | N/A              | 13                | All                                         | [Utility](utility.md)                                   |
+| Engineer                 | 26               | 28+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Engineer](engineer)                                 |
+| TPM                      | 24               | 32+               | Stage 2, Stage 3, Stage 4, Stage 5, Stage 8 | [TPM](tpm)                                           |
+| Tech Lead / Architect    | 19               | 23+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](tech-lead)                               |
+| Security Architect       | 3                | 9                 | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](security-architect)             |
+| Data Scientist           | 6                | 13                | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](data-scientist)                     |
+| SRE / Operations         | 8                | 13+               | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](sre-operations)                   |
+| Business Program Manager | N/A              | N/A               | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](business-program-manager) |
+| New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor)                   |
+| Utility                  | N/A              | 13                | All                                         | [Utility](utility)                                   |
 
 > **Dedicated Assets** count agents, prompts, instructions, and skills built specifically for a role's primary workflow. **Total Addressable** adds cross-cutting tools (memory, Git prompts, auto-activated instructions) and shared collection assets. The **+** suffix indicates additional auto-activated assets not individually enumerated.
 
@@ -34,24 +35,24 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 
 | I want to...                                                | Recommended Role Guide                                  |
 |-------------------------------------------------------------|---------------------------------------------------------|
-| Write code, implement features, or fix bugs                 | [Engineer](engineer.md)                                 |
-| Plan projects, manage requirements, or track work           | [TPM](tpm.md)                                           |
-| Design architecture, review code, or set standards          | [Tech Lead](tech-lead.md)                               |
-| Assess security, create threat models, or review compliance | [Security Architect](security-architect.md)             |
-| Analyze data, build notebooks, or create dashboards         | [Data Scientist](data-scientist.md)                     |
-| Manage infrastructure, handle incidents, or deploy          | [SRE / Operations](sre-operations.md)                   |
-| Define business outcomes or manage stakeholder alignment    | [Business Program Manager](business-program-manager.md) |
-| Get started contributing to the project                     | [New Contributor](new-contributor.md)                   |
-| Use cross-cutting utilities (memory, docs, media)           | [Utility](utility.md)                                   |
+| Write code, implement features, or fix bugs                 | [Engineer](engineer)                                 |
+| Plan projects, manage requirements, or track work           | [TPM](tpm)                                           |
+| Design architecture, review code, or set standards          | [Tech Lead](tech-lead)                               |
+| Assess security, create threat models, or review compliance | [Security Architect](security-architect)             |
+| Analyze data, build notebooks, or create dashboards         | [Data Scientist](data-scientist)                     |
+| Manage infrastructure, handle incidents, or deploy          | [SRE / Operations](sre-operations)                   |
+| Define business outcomes or manage stakeholder alignment    | [Business Program Manager](business-program-manager) |
+| Get started contributing to the project                     | [New Contributor](new-contributor)                   |
+| Use cross-cutting utilities (memory, docs, media)           | [Utility](utility)                                   |
 
 ## Collaboration Patterns
 
 Roles frequently collaborate across workflows. These scenarios illustrate common multi-role interactions:
 
-* Engineers and tech leads collaborate on feature development with architecture review, coding standards enforcement, and implementation guidance. See the [Engineer](engineer.md) and [Tech Lead](tech-lead.md) guides.
-* TPMs and security architects coordinate secure product launches combining requirements gathering, threat modeling, and compliance verification. See the [TPM](tpm.md) and [Security Architect](security-architect.md) guides.
-* Data scientists and engineers bridge analytics pipeline development with data specification, notebook prototyping, and production integration. See the [Data Scientist](data-scientist.md) and [Engineer](engineer.md) guides.
-* New contributors progress to engineers through onboarding from guided workflows to full autonomous engineering. See the [New Contributor](new-contributor.md) and [Engineer](engineer.md) guides.
+* Engineers and tech leads collaborate on feature development with architecture review, coding standards enforcement, and implementation guidance. See the [Engineer](engineer) and [Tech Lead](tech-lead) guides.
+* TPMs and security architects coordinate secure product launches combining requirements gathering, threat modeling, and compliance verification. See the [TPM](tpm) and [Security Architect](security-architect) guides.
+* Data scientists and engineers bridge analytics pipeline development with data specification, notebook prototyping, and production integration. See the [Data Scientist](data-scientist) and [Engineer](engineer) guides.
+* New contributors progress to engineers through onboarding from guided workflows to full autonomous engineering. See the [New Contributor](new-contributor) and [Engineer](engineer) guides.
 
 ## Coverage Notes
 
@@ -71,7 +72,7 @@ Each role intersects with 9 lifecycle stages, producing 72 role-stage pairs. Cov
 **Least-covered stage**: Stage 4 Decomposition: 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 
 > [!NOTE]
-> Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/README.md) for guidance on creating new agents, prompts, and instructions.
+> Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/) for guidance on creating new agents, prompts, and instructions.
 
 ## Next Steps
 

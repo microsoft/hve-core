@@ -32,39 +32,39 @@ export const iconCards: IconCardData[] = [
     description: 'Install, configure, and run your first AI-assisted workflow',
   },
   {
+    icon: <DesignThinkingIcon />,
+    supertitle: 'HVE Guide',
+    title: 'Project lifecycle',
+    href: '/docs/category/hve-guide',
+    description: 'Explore the HVE project lifecycle stages and role-specific guides',
+  },
+  {
+    icon: <WorkflowsIcon />,
+    supertitle: 'RPI Workflow',
+    title: 'Research-Plan-Implement',
+    href: '/docs/category/rpi',
+    description: 'The Research-Plan-Implement loop for structured AI-assisted development',
+  },
+  {
     icon: <AgentsPromptsIcon />,
-    supertitle: 'Agents & Prompts',
+    supertitle: 'Agents',
     title: 'Custom AI agents',
-    href: '/docs/category/agents-and-prompts',
+    href: '/docs/category/agents',
     description: 'Build and configure specialized agents for your development tasks',
   },
   {
     icon: <InstructionsSkillsIcon />,
-    supertitle: 'Instructions & Skills',
-    title: 'Coding guidelines',
-    href: '/docs/category/instructions-and-skills',
-    description: 'Auto-applied coding standards and reusable skill packages',
-  },
-  {
-    icon: <WorkflowsIcon />,
-    supertitle: 'Workflows',
-    title: 'Development flows',
-    href: '/docs/category/workflows',
-    description: 'The RPI workflow and structured AI-assisted development patterns',
-  },
-  {
-    icon: <DesignThinkingIcon />,
-    supertitle: 'Design Thinking',
-    title: 'Shape the work',
-    href: '/docs/category/design-thinking',
-    description: 'Plan, specify, and architect features before implementation',
+    supertitle: 'Architecture',
+    title: 'System design',
+    href: '/docs/category/architecture',
+    description: 'Architecture decisions, design patterns, and system design references',
   },
   {
     icon: <TemplatesExamplesIcon />,
-    supertitle: 'Templates & Examples',
+    supertitle: 'Templates',
     title: 'Reusable patterns',
-    href: '/docs/category/templates-and-examples',
-    description: 'Ready-to-use templates for agents, prompts, and instructions',
+    href: '/docs/category/templates',
+    description: 'Ready-to-use templates for ADRs, BRDs, agents, and instructions',
   },
 ];
 
@@ -75,8 +75,8 @@ export const boxCards: BoxCardData[] = [
     description: 'Get up and running in minutes',
     links: [
       { label: 'Installation guide', href: '/docs/category/getting-started' },
-      { label: 'Your first workflow', href: '/docs/category/workflows' },
-      { label: 'Browse templates', href: '/docs/category/templates-and-examples' },
+      { label: 'Your first workflow', href: '/docs/category/rpi' },
+      { label: 'Browse templates', href: '/docs/category/templates' },
     ],
   },
   {
@@ -84,9 +84,9 @@ export const boxCards: BoxCardData[] = [
     title: 'Build with AI',
     description: 'Leverage AI across the development lifecycle',
     links: [
-      { label: 'Configure agents', href: '/docs/category/agents-and-prompts' },
-      { label: 'Write instructions', href: '/docs/category/instructions-and-skills' },
-      { label: 'Design thinking', href: '/docs/category/design-thinking' },
+      { label: 'Configure agents', href: '/docs/category/agents' },
+      { label: 'Write instructions', href: '/docs/category/contributing' },
+      { label: 'Architecture', href: '/docs/category/architecture' },
     ],
   },
   {
@@ -94,9 +94,9 @@ export const boxCards: BoxCardData[] = [
     title: 'Plan & Architect',
     description: 'Structure work before coding',
     links: [
-      { label: 'Explore and specify', href: '/docs/category/design-thinking' },
-      { label: 'RPI workflow', href: '/docs/category/workflows' },
-      { label: 'Architecture patterns', href: '/docs/category/templates-and-examples' },
+      { label: 'Explore and specify', href: '/docs/category/hve-guide' },
+      { label: 'RPI workflow', href: '/docs/category/rpi' },
+      { label: 'Architecture patterns', href: '/docs/category/architecture' },
     ],
   },
   {
@@ -104,9 +104,9 @@ export const boxCards: BoxCardData[] = [
     title: 'Customize & Extend',
     description: 'Tailor HVE Core to your team',
     links: [
-      { label: 'Custom agents', href: '/docs/category/agents-and-prompts' },
-      { label: 'Skill packages', href: '/docs/category/instructions-and-skills' },
-      { label: 'Template library', href: '/docs/category/templates-and-examples' },
+      { label: 'Custom agents', href: '/docs/category/agents' },
+      { label: 'Skill packages', href: '/docs/category/contributing' },
+      { label: 'Template library', href: '/docs/category/templates' },
     ],
   },
 ];

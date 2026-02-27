@@ -1,6 +1,7 @@
 ---
 title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -25,18 +26,18 @@ This guide walks you through four steps, each building on the last:
 
 | Step                                                      | What You Do                                             | Time    |
 |-----------------------------------------------------------|---------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
-| [First Research](first-research.md)                       | Use task-researcher on your own codebase                | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
+| [First Interaction](first-interaction)                 | Talk to an agent, see it respond                        | 1 min   |
+| [First Research](first-research)                       | Use task-researcher on your own codebase                | 5 min   |
+| [First Full Workflow](first-workflow)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
+| [Growing with HVE](../hve-guide/roles/new-contributor) | Progress through four milestones toward independent use | Ongoing |
 
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
-> [First Full Workflow](first-workflow.md) or try the
-> [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
+> [First Full Workflow](first-workflow) or try the
+> [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
 > single-session workflows.
 
-Need installation help? See the [Installation Guide](install.md) for all
+Need installation help? See the [Installation Guide](install) for all
 methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
@@ -61,7 +62,7 @@ for the quickest path.
 
 * Verify Git is installed: run `git --version` in terminal
 * Check network connectivity to github.com
-* See the [installation guide](install.md) for method-specific troubleshooting
+* See the [installation guide](install) for method-specific troubleshooting
 
 ## Optional Scripts
 
@@ -77,15 +78,15 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 ## Next Steps
 
-* Start the journey: [Your First Interaction](first-interaction.md)
-* Learn the [RPI Workflow](../rpi/README.md) for complex tasks
-* Browse [available agents](../../.github/CUSTOM-AGENTS.md) for the full catalog
+* Start the journey: [Your First Interaction](first-interaction)
+* Learn the [RPI Workflow](../rpi/) for complex tasks
+* Browse [available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for the full catalog
 
 ## See Also
 
-* [Installation Guide](install.md) - Full decision matrix for all installation methods
-* [MCP Configuration](mcp-configuration.md) - Configure Model Context Protocol servers
-* [Role Guides](../hve-guide/roles/README.md) - Find your role-specific guide
+* [Installation Guide](install) - Full decision matrix for all installation methods
+* [MCP Configuration](mcp-configuration) - Configure Model Context Protocol servers
+* [Role Guides](../hve-guide/roles/) - Find your role-specific guide
 
 ---
 
