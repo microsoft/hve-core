@@ -7,6 +7,8 @@ tags:
   - preview
 items:
   # Skills
+  - path: .github/skills/experimental/powerpoint
+    kind: skill
   - path: .github/skills/experimental/video-to-gif
     kind: skill
   # Instructions
