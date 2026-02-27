@@ -12,6 +12,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.1.0](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.2...hve-core-v3.1.0) (2026-02-27)
+
+
+### ✨ Features
+
+* **agents:** add DT coach return path handoff to task-researcher ([#591](https://github.com/microsoft/hve-core/issues/591)) ([#758](https://github.com/microsoft/hve-core/issues/758)) ([3888705](https://github.com/microsoft/hve-core/commit/3888705fbf841b71b1b20e63fbe43a207cbe9348))
+* **agents:** add dt-learning-tutor agent for DT education ([#662](https://github.com/microsoft/hve-core/issues/662)) ([acd6539](https://github.com/microsoft/hve-core/commit/acd6539ed799bb25ed628f13b382e9183e7792b5))
+* **design-thinking:** create dt-method-04-deep.instructions.md ([#709](https://github.com/microsoft/hve-core/issues/709)) ([1fa1af1](https://github.com/microsoft/hve-core/commit/1fa1af1780b16864cd7185058f9e5b47dc06ec13))
+* **docs:** add Docusaurus 3 documentation site with GitHub Pages deployment ([#680](https://github.com/microsoft/hve-core/issues/680)) ([569721b](https://github.com/microsoft/hve-core/commit/569721b9ae9851dcd5c383245e88b3bd00d363c4))
+* **instructions:** add DT image prompt generation guidance for Method 5 ([#726](https://github.com/microsoft/hve-core/issues/726)) ([bbce9c2](https://github.com/microsoft/hve-core/commit/bbce9c24ae573184968fb5c8f8c2353fd5019e05))
+* **instructions:** add DT subagent handoff workflow instructions ([#592](https://github.com/microsoft/hve-core/issues/592)) ([#757](https://github.com/microsoft/hve-core/issues/757)) ([9940c12](https://github.com/microsoft/hve-core/commit/9940c12a7759ee7129342696bc2d7b3e1737dc4c))
+* **instructions:** add DT-aware task-implementor context instructions ([#755](https://github.com/microsoft/hve-core/issues/755)) ([b3f5384](https://github.com/microsoft/hve-core/commit/b3f538481ce9789879714d69a93e22044f83e2ce))
+* **instructions:** add DT-aware task-reviewer review context ([#714](https://github.com/microsoft/hve-core/issues/714)) ([089a252](https://github.com/microsoft/hve-core/commit/089a252baf89e7d09b5cb00e8d975009971336c3))
+* **instructions:** create dt-method-05-deep.instructions.md ([#747](https://github.com/microsoft/hve-core/issues/747)) ([4426907](https://github.com/microsoft/hve-core/commit/442690711b22a89d5c35a1189e6d362a8214f56e))
+* **instructions:** create dt-method-06-deep.instructions.md ([#602](https://github.com/microsoft/hve-core/issues/602)) ([#748](https://github.com/microsoft/hve-core/issues/748)) ([e6c4e10](https://github.com/microsoft/hve-core/commit/e6c4e103851e0866d41a4c7297a9bdf2cc4cafe3))
+* **prompts:** add dt-handoff-solution-space prompt for Solution Spac… ([#707](https://github.com/microsoft/hve-core/issues/707)) ([ac939aa](https://github.com/microsoft/hve-core/commit/ac939aa08a6a81225d4bc7bc08ba5ec8060a5418))
+* **prompts:** add dt-method-next routing prompt ([#713](https://github.com/microsoft/hve-core/issues/713)) ([0c080d6](https://github.com/microsoft/hve-core/commit/0c080d69c3c3f6eea51367e3e237d1df905143e9))
+* **prompts:** add Implementation Space exit handoff prompt for DT workflows ([#708](https://github.com/microsoft/hve-core/issues/708)) ([e445fdf](https://github.com/microsoft/hve-core/commit/e445fdf8b915096b6ec2c9b0f978145d14c14ff8))
+* **scripts:** add Write-CIStepSummary markdown table to Test-SHAStaleness github output ([#660](https://github.com/microsoft/hve-core/issues/660)) ([cd3334a](https://github.com/microsoft/hve-core/commit/cd3334ac75b46f507e5a3ce96d5954cd28f7d297))
+* **scripts:** extract embedded PowerShell from workflows into testable scripts ([#738](https://github.com/microsoft/hve-core/issues/738)) ([585b241](https://github.com/microsoft/hve-core/commit/585b241c35d383a634207a3de893a91fa078a9ad))
+* **workflows:** add gitleaks binary-based secret scanning as PR gate ([#734](https://github.com/microsoft/hve-core/issues/734)) ([8b19725](https://github.com/microsoft/hve-core/commit/8b197250063fc1629244f661f78baf9022cebbb0))
+* **workflows:** add SBOM generation, attestation, and diff tooling to release pipeline ([#730](https://github.com/microsoft/hve-core/issues/730)) ([88f9ddb](https://github.com/microsoft/hve-core/commit/88f9ddbe8bdbf29de09558835793162539638d75))
+* **workflows:** add workflow permissions validation for OpenSSF Scorecard compliance ([#759](https://github.com/microsoft/hve-core/issues/759)) ([8fd1243](https://github.com/microsoft/hve-core/commit/8fd1243be79a083aad4484159504f2f996e8edec))
+
+
+### 🐛 Bug Fixes
+
+* **agents:** standardize file path conventions for copilot-tracking output ([#784](https://github.com/microsoft/hve-core/issues/784)) ([f5c69a7](https://github.com/microsoft/hve-core/commit/f5c69a78b8f70c1f4b207c955b0729579190aef2))
+* **build:** add missing subagents and shared instructions to collection manifests ([#804](https://github.com/microsoft/hve-core/issues/804)) ([ff5f2ff](https://github.com/microsoft/hve-core/commit/ff5f2ff04aa42b4a2979c7e75c0a36852f7f7fc8))
+* **docs:** replace Docusaurus favicons with Microsoft logo ([#808](https://github.com/microsoft/hve-core/issues/808)) ([3e2dac3](https://github.com/microsoft/hve-core/commit/3e2dac35fe558d8815fb3594a2e87238732f8ecd))
+* **docs:** replace parent-directory VS Code settings paths with per-subdirectory enumeration ([#732](https://github.com/microsoft/hve-core/issues/732)) ([1cf04b1](https://github.com/microsoft/hve-core/commit/1cf04b176a498ce1988cc0746ac325dde744eb30))
+* **extension:** resolve handoff dependencies using display names ([#727](https://github.com/microsoft/hve-core/issues/727)) ([0a600ba](https://github.com/microsoft/hve-core/commit/0a600ba154d072a29d7aa8f1ceeeba8040276699))
+* **instructions:** enforce project-scoped artifact isolation across DT files ([#766](https://github.com/microsoft/hve-core/issues/766)) ([f8c00a3](https://github.com/microsoft/hve-core/commit/f8c00a32070a12a1de44167c889e24cfcdf6d353))
+* **instructions:** update broken file directives and markdown links after collection directory reorg ([#743](https://github.com/microsoft/hve-core/issues/743)) ([fc3c967](https://github.com/microsoft/hve-core/commit/fc3c967a410ac46aaf7a2fba3ed8cc8a60d545c8))
+* **settings:** exclude auto-generated CHANGELOG.md from spell check ([#756](https://github.com/microsoft/hve-core/issues/756)) ([780cf22](https://github.com/microsoft/hve-core/commit/780cf22b44fce94835bfd0f2c545c3a6ee43df54))
+* **workflows:** add job-level permissions to extension-publish.yml ([#729](https://github.com/microsoft/hve-core/issues/729)) ([8cb62a7](https://github.com/microsoft/hve-core/commit/8cb62a7135b610738c520d02b3f056b9a93bfdca))
+* **workflows:** add job-level permissions to validate-version in extension-publish-prerelease ([#731](https://github.com/microsoft/hve-core/issues/731)) ([b7db43b](https://github.com/microsoft/hve-core/commit/b7db43ba2bda2c428e3a01fcb752aafc74eb8ee5))
+* **workflows:** add pre-release companion pipeline with even/odd versioning ([#735](https://github.com/microsoft/hve-core/issues/735)) ([933a7b1](https://github.com/microsoft/hve-core/commit/933a7b133c08d2aa0d9464d1c46164046a873864))
+* **workflows:** add top-level permissions to copilot-setup-steps.yml ([#760](https://github.com/microsoft/hve-core/issues/760)) ([13703a1](https://github.com/microsoft/hve-core/commit/13703a1f773fb57f9db8b2f7001e37f1b34e322c))
+* **workflows:** ensure prerelease label exists before PR creation ([#806](https://github.com/microsoft/hve-core/issues/806)) ([3abdf4c](https://github.com/microsoft/hve-core/commit/3abdf4c1502d497c81868a45cb1245abefbd6cf5))
+* **workflows:** replace even/odd versioning with SemVer -rc.N suffixes ([#811](https://github.com/microsoft/hve-core/issues/811)) ([18f7545](https://github.com/microsoft/hve-core/commit/18f754522e3440fd4bb990b373f3b7378b21f09e))
+
+
+### 📚 Documentation
+
+* **build:** add Design Thinking section to hve-core-all collection description ([#762](https://github.com/microsoft/hve-core/issues/762)) ([6b6feb5](https://github.com/microsoft/hve-core/commit/6b6feb542a8037716eb1b37c4f82abb7b0ab1c02)), closes [#615](https://github.com/microsoft/hve-core/issues/615)
+* **design-thinking:** add Design Thinking documentation and DT-to-RPI handoff ([#789](https://github.com/microsoft/hve-core/issues/789)) ([dabed00](https://github.com/microsoft/hve-core/commit/dabed001c8ac7da3f2e4368ae1f279080c627cbd))
+* **docs:** add customization guides for HVE Core artifacts ([#772](https://github.com/microsoft/hve-core/issues/772)) ([abfd03e](https://github.com/microsoft/hve-core/commit/abfd03ef8b9f81e150e6d564a43b755cc910c8e6))
+* reconcile documentation against implementation ([#771](https://github.com/microsoft/hve-core/issues/771)) ([24ebe6d](https://github.com/microsoft/hve-core/commit/24ebe6de0b8658da5af9d4318a25fa7d0cb7e20a))
+* **security:** document accepted Token-Permissions risks and add lint:dependency-pinning ([#763](https://github.com/microsoft/hve-core/issues/763)) ([1601d7d](https://github.com/microsoft/hve-core/commit/1601d7de80a4aa17a11c6473314b7bfcd46b1bfd))
+
+
+### ♻️ Refactoring
+
+* remove duplicate git diff logic in frontmatter validator ([#473](https://github.com/microsoft/hve-core/issues/473)) ([69caa84](https://github.com/microsoft/hve-core/commit/69caa8478ab7dc405473006d6b3a9f222517013b))
+* **scripts:** move collection scripts from plugins to collections ([#728](https://github.com/microsoft/hve-core/issues/728)) ([1a6d7d9](https://github.com/microsoft/hve-core/commit/1a6d7d9026d3f09452b8c04824b4e10c54fe851a))
+
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump basic-ftp from 5.0.5 to 5.2.0 ([#780](https://github.com/microsoft/hve-core/issues/780)) ([d00092c](https://github.com/microsoft/hve-core/commit/d00092cef8aa4ce556345370ec5b94c9554a9987))
+* **deps:** bump the github-actions group across 1 directory with 2 updates ([#752](https://github.com/microsoft/hve-core/issues/752)) ([4596c62](https://github.com/microsoft/hve-core/commit/4596c62b6a4859c30ab3d06403d6257df000dab9))
+* **skills:** standardize script path references in SKILL.md files ([#768](https://github.com/microsoft/hve-core/issues/768)) ([4de0a01](https://github.com/microsoft/hve-core/commit/4de0a01004d73b3983cd790c1a6bcf568f2e4242))
+
 ## [3.0.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.1...hve-core-v3.0.2) (2026-02-21)
 
 
