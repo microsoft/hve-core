@@ -191,7 +191,7 @@ a:visited {
   font-weight: 400;
   line-height: 25.6px;
   padding: 2px 0 2px 16px;
-  color: #e6e6e6;
+  color: var(--ifm-font-color-base);
 }
 
 .menu__link:hover {
@@ -206,6 +206,10 @@ a:visited {
   font-weight: 600;
   color: var(--ifm-font-color-base);
   background-color: var(--ms-learn-section-bg);
+}
+
+[data-theme='dark'] .menu__link {
+  color: #e6e6e6;
 }
 
 .menu__list-item-collapsible > .menu__link {
