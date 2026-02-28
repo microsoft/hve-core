@@ -122,6 +122,15 @@ jobs:
           # created in the next step, ensuring subsequent runs find it.
           skip-github-pull-request: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main)') }}
 
+      - name: Validate even-minor convention
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: |
+          MINOR="${{ steps.release.outputs.minor }}"
+          if (( MINOR % 2 != 0 )); then
+            echo "::error::Release version ${{ steps.release.outputs.version }} has odd minor ($MINOR). Even/odd convention requires even minor for stable releases."
+            exit 1
+          fi
+
       # Workaround: release-please with "draft": true uses lazy tag
       # creation. The git tag is not materialized until the release is
       # published. Without the tag, release-please cannot find the draft
@@ -192,7 +201,7 @@ jobs:
             RELEASED="${{ needs.release-please.outputs.version }}"
             MAJOR=$(echo "$RELEASED" | cut -d. -f1)
             MINOR=$(echo "$RELEASED" | cut -d. -f2)
-            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0-rc.0"
+            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
             gh pr edit "$PR_NUMBER" \
               --title "chore(main): pre-release $PRE_VERSION" \
               --body "## Pre-Release $PRE_VERSION
