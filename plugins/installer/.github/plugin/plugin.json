@@ -1,5 +1,5 @@
 {
   "name": "installer",
   "description": "Interactive installer agent for deploying HVE Core artifacts across workspace configurations",
-  "version": "3.0.2"
+  "version": "3.1.44"
 }
