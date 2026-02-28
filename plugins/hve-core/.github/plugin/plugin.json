@@ -1,5 +1,5 @@
 {
   "name": "hve-core",
   "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
-  "version": "3.1.44"
+  "version": "3.1.46"
 }
