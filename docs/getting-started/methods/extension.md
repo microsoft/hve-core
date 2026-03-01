@@ -1,6 +1,7 @@
 ---
 title: VS Code Extension Installation
 description: Install HVE-Core as a VS Code extension from the marketplace
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-01-07
 ms.topic: how-to

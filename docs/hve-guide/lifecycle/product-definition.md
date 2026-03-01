@@ -1,6 +1,7 @@
 ---
 title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

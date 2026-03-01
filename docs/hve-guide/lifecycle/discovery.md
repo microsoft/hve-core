@@ -1,6 +1,7 @@
 ---
 title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -57,7 +58,7 @@ TPMs lead Discovery, producing BRDs and coordinating research across disciplines
 * [Data Scientist Guide](../roles/data-scientist.md)
 * [UX Designer Guide](../roles/ux-designer.md)
 
-UX and UI designers use Discovery-stage tools alongside **dt-coach** for structured user research. The dt-coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement task-researcher workflows with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/README.md) for method details.
+UX and UI designers use Discovery-stage tools alongside **dt-coach** for structured user research. The dt-coach agent provides nine Design Thinking methods, including interview planning, environmental observation, and input synthesis, that complement task-researcher workflows with empathy-driven requirements gathering. See the [Design Thinking documentation](../../design-thinking/) for method details.
 
 ## Starter Prompts
 

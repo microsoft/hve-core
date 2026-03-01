@@ -1,6 +1,7 @@
 ---
 title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE-Core using VS Code multi-root workspaces
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -258,7 +259,7 @@ After setup, verify HVE-Core is working:
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 
 ---

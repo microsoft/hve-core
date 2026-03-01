@@ -141,12 +141,12 @@ Refactor related skills with `/prompt-refactor`:
 Skills follow a three-level disclosure model that minimizes context consumption:
 
 1. **Metadata** (~100 tokens): The `name` and `description` from frontmatter. Copilot reads this first to decide relevance.
-2. **Instructions** (<5000 tokens): The SKILL.md body. Loaded when Copilot determines the skill applies to the current request.
+2. **Instructions** (\<5000 tokens): The SKILL.md body. Loaded when Copilot determines the skill applies to the current request.
 3. **Resources** (on demand): Supporting files in `references/`, `scripts/`, or other subdirectories. Loaded only when the instructions reference them explicitly.
 
 This model matters for large skills. A compliance-review skill might include hundreds of pages of regulatory text in its `references/` folder, but Copilot reads only the SKILL.md body until a specific regulation is needed.
 
-The [pr-reference skill](../../.github/skills/shared/pr-reference/SKILL.md) in this repository demonstrates this pattern: the SKILL.md defines the protocol, and supporting files provide templates and helper scripts that load only during active use.
+The [pr-reference skill](pathname://../../.github/skills/shared/pr-reference/SKILL.md) in this repository demonstrates this pattern: the SKILL.md defines the protocol, and supporting files provide templates and helper scripts that load only during active use.
 
 ## Including Reference Materials
 

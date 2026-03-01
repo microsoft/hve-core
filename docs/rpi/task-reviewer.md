@@ -1,6 +1,7 @@
 ---
 title: Task Reviewer Guide
 description: Use the Task Reviewer custom agent to validate implementation against research and plan specifications
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial

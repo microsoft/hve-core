@@ -1,6 +1,7 @@
 ---
 title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: overview
@@ -55,7 +56,7 @@ flowchart LR
 
 > **Cross-cutting**: memory is available at every stage and is not tied to any single phase.
 
-**[AI-Assisted Project Lifecycle Overview →](lifecycle/README.md)**
+**[AI-Assisted Project Lifecycle Overview →](lifecycle/)**
 
 ### Role Guides
 
@@ -74,7 +75,7 @@ Nine role-specific guides covering recommended collections, stage walkthroughs, 
 | UX Designer              | Stage 2, Stage 3, Stage 6, Stage 7          | [UX Designer](roles/ux-designer.md)                           |
 | Utility                  | All                                         | [Utility](roles/utility.md)                                   |
 
-**[Browse All Role Guides →](roles/README.md)**
+**[Browse All Role Guides →](roles/)**
 
 ## Where to Start
 
@@ -86,12 +87,12 @@ flowchart TD
     START -->|Install collections| CQ[Collection Quick Reference]
 ```
 
-| I want to...                            | Go Here                                                                  |
-|-----------------------------------------|--------------------------------------------------------------------------|
-| Understand the full project workflow    | [Lifecycle Overview](lifecycle/README.md)                                |
-| Find tools for my current project phase | [Stage Navigator](lifecycle/README.md#where-are-you)                     |
-| Get my role-specific guide              | [Role Finder](roles/README.md#find-your-role)                            |
-| Install collections for my role         | [Collection Quick Reference](roles/README.md#collection-quick-reference) |
+| I want to...                            | Go Here                                            |
+|-----------------------------------------|----------------------------------------------------|
+| Understand the full project workflow    | [Lifecycle Overview](lifecycle/)                   |
+| Find tools for my current project phase | [Stage Navigator](lifecycle/#where-are-you)        |
+| Get my role-specific guide              | [Role Finder](roles/#find-your-role)               |
+| Install collections for my role         | [Collection Quick Reference](roles/#role-overview) |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

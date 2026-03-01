@@ -1,6 +1,7 @@
 ---
 title: Triage Workflow
 description: Classify, label, and detect duplicate GitHub issues using structured triage analysis
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial

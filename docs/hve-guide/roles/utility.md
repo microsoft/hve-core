@@ -1,6 +1,7 @@
 ---
 title: Utility Reference
 description: Cross-cutting HVE Core utilities for memory, documentation, media, Git workflows, and diagnostic operations
+sidebar_position: 10
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: reference
@@ -78,7 +79,7 @@ middleware chain but haven't started implementation yet.
 
 The video-to-gif skill converts video files to optimized GIF format using FFmpeg two-pass encoding. This skill activates through the **memory** agent or general chat context.
 
-Refer to the [video-to-gif skill](../../.github/skills/experimental/video-to-gif/SKILL.md) for detailed usage, parameters, and optimization options.
+Refer to the [video-to-gif skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/video-to-gif/SKILL.md) for detailed usage, parameters, and optimization options.
 
 ### Git Workflows
 
@@ -140,8 +141,8 @@ This fallback activates automatically. No manual configuration is needed.
 ## Next Steps
 
 > [!TIP]
-> Find your role-specific guide: [Role Guides Overview](README.md)
-> Explore collection options: [Collection Quick Reference](README.md#collection-quick-reference)
+> Find your role-specific guide: [Role Guides Overview](./)
+> Explore collection options: [Role Overview](./#role-overview)
 > Get started with installation: [Install Guide](../../getting-started/install.md)
 
 ---

@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
+sidebar_position: 4
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -145,7 +146,7 @@ Choose collections based on who invokes or benefits from the workflow:
 | Documentation workflows | `hve-core-all`, `hve-core`                |
 | Architecture prompts    | `hve-core-all`, `project-planning`        |
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## Prompt Content Structure Standards
 
@@ -529,7 +530,7 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 

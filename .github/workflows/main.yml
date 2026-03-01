@@ -73,6 +73,14 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
+  docusaurus-tests:
+    name: Docusaurus Tests
+    uses: ./.github/workflows/docusaurus-tests.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   release-please:
     name: Release Please
     needs:
@@ -82,6 +90,7 @@ jobs:
       - dependency-pinning-scan
       - gitleaks-scan
       - pester-tests
+      - docusaurus-tests
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -112,6 +121,15 @@ jobs:
           # unreleased changes so skipping loses nothing. The tag is
           # created in the next step, ensuring subsequent runs find it.
           skip-github-pull-request: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(main)') }}
+
+      - name: Validate even-minor convention
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        run: |
+          MINOR="${{ steps.release.outputs.minor }}"
+          if (( MINOR % 2 != 0 )); then
+            echo "::error::Release version ${{ steps.release.outputs.version }} has odd minor ($MINOR). Even/odd convention requires even minor for stable releases."
+            exit 1
+          fi
 
       # Workaround: release-please with "draft": true uses lazy tag
       # creation. The git tag is not materialized until the release is
@@ -183,11 +201,7 @@ jobs:
             RELEASED="${{ needs.release-please.outputs.version }}"
             MAJOR=$(echo "$RELEASED" | cut -d. -f1)
             MINOR=$(echo "$RELEASED" | cut -d. -f2)
-            ODD_MINOR=$((MINOR + 1))
-            if [ $((ODD_MINOR % 2)) -eq 0 ]; then
-              ODD_MINOR=$((ODD_MINOR + 1))
-            fi
-            PRE_VERSION="${MAJOR}.${ODD_MINOR}.0"
+            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
             gh pr edit "$PR_NUMBER" \
               --title "chore(main): pre-release $PRE_VERSION" \
               --body "## Pre-Release $PRE_VERSION

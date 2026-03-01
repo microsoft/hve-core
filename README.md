@@ -21,6 +21,7 @@ estimated_reading_time: 3
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/microsoft/hve-core/badge)](https://scorecard.dev/viewer/?uri=github.com/microsoft/hve-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11795/badge)](https://www.bestpractices.dev/projects/11795)
 [![License](https://img.shields.io/github/license/microsoft/hve-core)](./LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-microsoft.github.io%2Fhve--core-blue)](https://microsoft.github.io/hve-core/)
 <!-- markdownlint-enable MD013 -->
 
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
@@ -57,6 +58,18 @@ Select the **memory** agent and type:
 The agent creates a memory file in your workspace. You now have a working HVE Core installation that responds to natural language.
 
 Ready to go deeper? Follow the [Getting Started Guide](docs/getting-started/README.md).
+
+## Documentation
+
+Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
+
+| Guide                                                    | Description                                     |
+|----------------------------------------------------------|-------------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial               |
+| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement        |
+| [Contributing](docs/contributing/README.md)              | Create custom agents, instructions, and prompts |
+| [Agents Reference](.github/CUSTOM-AGENTS.md)             | All available agents                            |
+| [Instructions Reference](.github/instructions/README.md) | All coding instructions                         |
 
 ## What's Included
 
@@ -140,16 +153,6 @@ We appreciate contributions! Whether you're fixing typos or adding new component
 1. Read our [Contributing Guide](CONTRIBUTING.md)
 2. Check out [open issues](https://github.com/microsoft/hve-core/issues)
 3. Join the [discussion](https://github.com/microsoft/hve-core/discussions)
-
-## Documentation
-
-| Guide                                                    | Description                                     |
-|----------------------------------------------------------|-------------------------------------------------|
-| [Getting Started](docs/getting-started/README.md)        | Setup and first workflow tutorial               |
-| [RPI Workflow](docs/rpi/README.md)                       | Deep dive into Research, Plan, Implement        |
-| [Contributing](docs/contributing/README.md)              | Create custom agents, instructions, and prompts |
-| [Agents Reference](.github/CUSTOM-AGENTS.md)             | All available agents                            |
-| [Instructions Reference](.github/instructions/README.md) | All coding instructions                         |
 
 ## Responsible AI
 

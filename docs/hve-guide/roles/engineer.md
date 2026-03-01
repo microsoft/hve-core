@@ -1,6 +1,7 @@
 ---
 title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -107,7 +108,7 @@ with coding standards.
 | **task-planner**     | Structured implementation planning             | [Task Planner](../../rpi/task-planner.md)         |
 | **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor.md) |
 | **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/README.md)               |
+| **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/)                        |
 | **pr-review**        | Pull request review automation                 | Agent file                                        |
 | **memory**           | Session context and preference persistence     | Agent file                                        |
 | **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                        |
@@ -134,7 +135,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 
 > [!TIP]
 > Run your first RPI workflow: [First Workflow Guide](../../getting-started/first-workflow.md)
-> Explore the full RPI methodology: [RPI Documentation](../../rpi/README.md)
+> Explore the full RPI methodology: [RPI Documentation](../../rpi/)
 > See how your stages connect: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

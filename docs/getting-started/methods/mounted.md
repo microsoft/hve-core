@@ -1,6 +1,7 @@
 ---
 title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE-Core from host filesystem
+sidebar_position: 5
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to

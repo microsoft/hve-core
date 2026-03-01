@@ -56,7 +56,7 @@ graph LR
 
 ## Authoring with Prompt Builder
 
-The [Prompt Builder](../../.github/agents/hve-core/prompt-builder.agent.md) agent streamlines creation, evaluation, and refinement of all artifact types. Three commands cover the full authoring workflow:
+The [Prompt Builder](pathname://../../.github/agents/hve-core/prompt-builder.agent.md) agent streamlines creation, evaluation, and refinement of all artifact types. Three commands cover the full authoring workflow:
 
 | Command            | Purpose                                                         |
 |--------------------|-----------------------------------------------------------------|

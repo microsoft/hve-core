@@ -1,6 +1,7 @@
 ---
 title: Why the RPI Workflow Works
 description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: concept
@@ -152,7 +153,7 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 ### rpi-agent: When Simplicity Fits
 
-Use the [autonomous agent](../../.github/agents/hve-core/rpi-agent.agent.md) when:
+Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
 
 * ✅ **Clear scope**: straightforward feature or bug fix
 * ✅ **Minimal research**: codebase-only investigation
@@ -183,7 +184,7 @@ Ready to try it yourself?
 
 * [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
 * [Using the Agents Together](using-together.md): context management and handoffs
-* [RPI Overview](README.md): the four phases explained
+* [RPI Overview](./): the four phases explained
 * [Task Reviewer Guide](task-reviewer.md): validation and iteration
 
 ---

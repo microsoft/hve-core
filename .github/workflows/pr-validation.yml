@@ -78,6 +78,14 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
+  docusaurus-tests:
+    name: Docusaurus Tests
+    uses: ./.github/workflows/docusaurus-tests.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   frontmatter-validation:
     name: Frontmatter Validation
     uses: ./.github/workflows/frontmatter-validation.yml

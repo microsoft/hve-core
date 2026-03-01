@@ -1,6 +1,7 @@
 ---
 title: Understanding the RPI Workflow
 description: Learn the Research, Plan, Implement, Review workflow for transforming complex tasks into validated code
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: concept
@@ -121,8 +122,8 @@ For the technical explanation of why this matters, see [Context Engineering](con
 * [Task Reviewer Guide](task-reviewer.md) - Validate implementations
 * [Using Them Together](using-together.md) - Complete workflow example
 * [Context Engineering](context-engineering.md) - Why context management matters
-* [Agents Reference](../../.github/CUSTOM-AGENTS.md) - All available agents
-* [Agent Systems Catalog](../agents/README.md) - Browse all agent families beyond RPI
+* [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) - All available agents
+* [Agent Systems Catalog](../agents/) - Browse all agent families beyond RPI
 
 ## See Also
 
