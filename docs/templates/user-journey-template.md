@@ -1,6 +1,7 @@
 ---
 title: User Journey Map
 description: Structured template for Jobs-to-be-Done analysis and user journey mapping
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-16
 ms.topic: reference

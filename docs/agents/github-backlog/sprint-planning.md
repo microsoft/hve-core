@@ -1,6 +1,7 @@
 ---
 title: Sprint Planning Workflow
 description: Organize triaged issues into milestones with priority sequencing and capacity awareness
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: tutorial

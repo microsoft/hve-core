@@ -1,6 +1,7 @@
 ---
 title: "Stage 8: Delivery"
 description: Merge approved changes, verify builds, and update tracking systems for release
+sidebar_position: 9
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

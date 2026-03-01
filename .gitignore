@@ -461,3 +461,8 @@ dependency-pinning-artifacts/
 .mcp/*-local.json
 .mcp/*.local.json
 .mcp/.env
+
+# Docusaurus build artifacts
+docs/docusaurus/build/
+docs/docusaurus/.docusaurus/
+docs/docusaurus/node_modules/

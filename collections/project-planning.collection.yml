@@ -29,6 +29,17 @@ items:
     kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
+  # Subagents
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

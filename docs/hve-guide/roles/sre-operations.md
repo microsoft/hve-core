@@ -1,6 +1,7 @@
 ---
 title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -137,8 +138,8 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 ## Next Steps
 
 > [!TIP]
-> Explore IaC coding standards: [Coding Standards Collection](../../collections/coding-standards.collection.md)
-> Set up incident response tools: [Security Planning Collection](../../collections/security-planning.collection.md)
+> Explore IaC coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
+> Set up incident response tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

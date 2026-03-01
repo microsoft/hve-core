@@ -1,6 +1,7 @@
 ---
 title: Architecture Overview
 description: HVE Core system design and component relationships
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: concept
@@ -58,7 +59,7 @@ Automation scripts handle quality assurance and development workflows. The scrip
 
 ### Plugins
 
-Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills. Running `npm run plugin:generate` produces the `plugins/` directory, which contains generated output organized by collection ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](../../scripts/plugins/README.md) for the generation pipeline.
+Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills. Running `npm run plugin:generate` produces the `plugins/` directory, which contains generated output organized by collection ID. Files under `plugins/` are not edited directly. See [scripts/plugins/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md) for the generation pipeline.
 
 ### Documentation
 

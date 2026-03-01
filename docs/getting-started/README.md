@@ -1,6 +1,7 @@
 ---
 title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -33,7 +34,7 @@ This guide walks you through four steps, each building on the last:
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
 > [First Full Workflow](first-workflow.md) or try the
-> [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
+> [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
 > single-session workflows.
 
 Need installation help? See the [Installation Guide](install.md) for all
@@ -78,8 +79,8 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 ## Next Steps
 
 * Start the journey: [Your First Interaction](first-interaction.md)
-* Learn the [RPI Workflow](../rpi/README.md) for complex tasks
-* Browse [available agents](../../.github/CUSTOM-AGENTS.md) for the full catalog
+* Learn the [RPI Workflow](../rpi/) for complex tasks
+* Browse [available agents](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for the full catalog
 
 ## Design Thinking Path
 
@@ -93,7 +94,7 @@ For projects requiring user-centered requirements discovery before implementatio
 
 * [Installation Guide](install.md) - Full decision matrix for all installation methods
 * [MCP Configuration](mcp-configuration.md) - Configure Model Context Protocol servers
-* [Role Guides](../hve-guide/roles/README.md) - Find your role-specific guide
+* [Role Guides](../hve-guide/roles/) - Find your role-specific guide
 
 ---
 

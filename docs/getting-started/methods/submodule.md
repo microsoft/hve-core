@@ -1,6 +1,7 @@
 ---
 title: Git Submodule Installation
 description: Set up HVE-Core as a git submodule for version-controlled team consumption
+sidebar_position: 7
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -270,7 +271,7 @@ git commit
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 
 ---

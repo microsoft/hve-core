@@ -22,6 +22,11 @@ copilot plugin install project-planning@hve-core
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
 | rpi-agent                    | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                            |
 | prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
+| researcher-subagent          | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                               |
+| plan-validator               | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                          |
+| phase-implementor            | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                                    |
+| rpi-validator                | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core                                             |
+| implementation-validator     | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                            |
 
 ## Instructions
 

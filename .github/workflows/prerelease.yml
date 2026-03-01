@@ -46,35 +46,48 @@ jobs:
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
 
-          # Next ODD minor version
-          NEXT_MINOR=$((MINOR + 1))
-          if [ $((NEXT_MINOR % 2)) -eq 0 ]; then
-            NEXT_MINOR=$((NEXT_MINOR + 1))
-          fi
+          # Find the last stable release tag (even minor) for commit range analysis.
+          # Pre-release tags (odd minor) are excluded to prevent version regression
+          # when a pre-release tag exists between the last stable tag and HEAD.
+          LAST_TAG=$(git tag -l 'hve-core-v*' | awk -F'[v.]' '{if ($(NF-1) % 2 == 0) print}' | sort -V | tail -1)
 
-          # Check for breaking changes since last release tag
-          LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
+          # Check for breaking changes since last release.
+          # Match conventional commit subject with ! (e.g. feat!:) or
+          # a BREAKING CHANGE / BREAKING-CHANGE footer token at line start.
           HAS_BREAKING=0
           if [ -n "$LAST_TAG" ]; then
             HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s%n%b' | \
-              grep -cE '^[a-z]+(\(.+\))?!:|BREAKING[ -]CHANGE' || true)
+              grep -cE '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE:' || true)
           fi
 
+          # Even/odd convention: odd minor = pre-release, even minor = stable.
+          # Compute the next odd minor from the current manifest version.
           if [ "$HAS_BREAKING" -gt 0 ]; then
-            PRE_VERSION="$((MAJOR + 1)).1.0"
+            PRE_MAJOR=$((MAJOR + 1))
+            PRE_MINOR=1
           else
-            PRE_VERSION="${MAJOR}.${NEXT_MINOR}.0"
+            PRE_MAJOR=$MAJOR
+            if (( MINOR % 2 == 0 )); then
+              PRE_MINOR=$((MINOR + 1))
+            else
+              PRE_MINOR=$MINOR
+            fi
           fi
+
+          # Use commit count since last tag as patch for unique, monotonic versions
+          COMMIT_COUNT=$(git rev-list --count "${LAST_TAG}..HEAD" 2>/dev/null || echo "0")
+          PRE_VERSION="${PRE_MAJOR}.${PRE_MINOR}.${COMMIT_COUNT}"
 
           echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Computed pre-release version: $PRE_VERSION (current: $CURRENT)"
+          echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
+          echo "Computed pre-release version: $PRE_VERSION (current: $CURRENT, last stable: $LAST_TAG)"
 
       - name: Generate changelog
         id: changelog
         env:
           PRE_VERSION: ${{ steps.version.outputs.version }}
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
         run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 --match 'hve-core-v*' 2>/dev/null || echo "")
           MAX_COUNT_ARG=""
           if [ -z "$LAST_TAG" ]; then
             RANGE="HEAD"
@@ -140,6 +153,22 @@ jobs:
             echo 'CHANGELOG_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+            Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          }
+
       - name: Update prerelease/next branch with version files
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -193,9 +222,27 @@ jobs:
             fi
           done
 
+          # Update .release-please-manifest.json so release-please sees the
+          # odd-minor version when this PR merges to main
+          jq --arg v "$PRE_VERSION" '.["."] = $v' .release-please-manifest.json > tmp.json \
+            && mv tmp.json .release-please-manifest.json
+
+          # Regenerate plugin outputs so plugin-validation passes
+          npm run plugin:generate
+
           git add -A
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
           git push origin "$BRANCH"
+
+      - name: Ensure pre-release label exists
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh label create "autorelease: prerelease" \
+            --description "Pre-release pull request" \
+            --color "FBCA04" \
+            -R "$REPO" 2>/dev/null || true
 
       - name: Create or update pre-release PR
         env:
@@ -216,6 +263,7 @@ jobs:
             gh pr edit "$PR_NUMBER" \
               --title "$TITLE" \
               --body "$PR_BODY" \
+              --add-label "autorelease: prerelease" \
               -R "$REPO"
             echo "Updated PR #$PR_NUMBER"
           else

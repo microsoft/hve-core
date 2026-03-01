@@ -1,6 +1,7 @@
 ---
 title: Roadmap
 description: Project direction and priorities for HVE Core over the next 12-18 months
+sidebar_position: 10
 author: HVE Core Team
 ms.date: 2026-01-21
 ms.topic: reference

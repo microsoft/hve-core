@@ -1,0 +1,50 @@
+name: Docusaurus Tests
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on test failures'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  docusaurus:
+    name: Docusaurus Unit Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: docs/docusaurus/package-lock.json
+
+      - name: Install dependencies
+        working-directory: docs/docusaurus
+        run: npm ci
+
+      - name: Run tests
+        working-directory: docs/docusaurus
+        run: npm test
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        with:
+          name: docusaurus-test-results
+          path: docs/docusaurus/test-results/
+          retention-days: 30
+          if-no-files-found: ignore

@@ -1,6 +1,7 @@
 ---
 title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -71,7 +72,7 @@ Use agents selectively and combine workflows for larger tasks.
 
 1. Use `/rpi mode=auto` for end-to-end automation on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
-3. Install a second collection relevant to your work (see the [Collection Quick Reference](README.md#collection-quick-reference)).
+3. Install a second collection relevant to your work (see the [Role Overview](./#role-overview)).
 4. Use the **memory** agent to save preferences and context that persist across sessions.
 
 Checkpoint: You choose which agents to use based on task needs and work with multiple collections.
@@ -169,8 +170,8 @@ for each validator.
 > [!TIP]
 > Start with installation: [Install Guide](../../getting-started/install.md)
 > Run your first workflow: [First Workflow Guide](../../getting-started/first-workflow.md)
-> Explore the RPI methodology: [RPI Documentation](../../rpi/README.md)
-> Find your role: [Role Guides Overview](README.md)
+> Explore the RPI methodology: [RPI Documentation](../../rpi/)
+> Find your role: [Role Guides Overview](./)
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: Using RPI Agents Together
 description: Complete walkthrough of the RPI workflow from research through review
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -373,11 +374,11 @@ You don't have to decide upfront. Start with rpi-agent for speed, and if the tas
 > [!TIP]
 > For the full explanation of why constraints change AI behavior, see [Why the RPI Workflow Works](why-rpi.md#the-counterintuitive-insight).
 
-See [Agents Reference](../../.github/CUSTOM-AGENTS.md) for rpi-agent implementation details.
+See [Agents Reference](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md) for rpi-agent implementation details.
 
 ## Related Guides
 
-* [RPI Overview](README.md) - Understand the workflow
+* [RPI Overview](./) - Understand the workflow
 * [Context Engineering](context-engineering.md) - Why context management matters
 * [Task Researcher](task-researcher.md) - Deep research phase
 * [Task Planner](task-planner.md) - Create actionable plans

@@ -1,6 +1,7 @@
 ---
 title: "Stage 5: Sprint Planning"
 description: Organize work items into sprints and manage backlog priorities with AI-assisted planning
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

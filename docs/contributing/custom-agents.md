@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
+sidebar_position: 5
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -319,7 +320,7 @@ Choose collections based on who benefits most from your agent:
 
 If your agent dispatches other agents at runtime via `runSubagent`, invokes prompts, or depends on skills, document those relationships in the agent content and validate packaging behavior in affected collections.
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ### MCP Tool Dependencies
 
@@ -566,7 +567,7 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Prompts](prompts.md) - Workflow-specific guidance files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 

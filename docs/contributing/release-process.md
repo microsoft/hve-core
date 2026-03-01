@@ -1,6 +1,7 @@
 ---
 title: Release Process
 description: Trunk-based release workflow using release-please automation and manual VS Code extension publishing
+sidebar_position: 9
 ms.date: 2026-01-08
 ms.topic: how-to
 author: WilliamBerryiii
@@ -68,7 +69,7 @@ git commit -m "docs: update installation guide"
 git commit -m "feat!: redesign configuration schema"
 ```
 
-For more details, see the [commit message instructions](../../.github/instructions/hve-core/commit-message.instructions.md).
+For more details, see the [commit message instructions](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md).
 
 ## For Maintainers
 
@@ -97,7 +98,7 @@ VS Code extension publishing is manual via GitHub Actions workflow dispatch.
 
 ### Publishing Steps
 
-1. Navigate to **Actions → Publish Extension** in the repository (see [extension-publish.yml](../../.github/workflows/extension-publish.yml) for workflow details)
+1. Navigate to **Actions → Publish Extension** in the repository (see [extension-publish.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/extension-publish.yml) for workflow details)
 2. Select **Run workflow**
 3. Choose the `main` branch
 4. Optionally specify a version (defaults to `package.json` version)
