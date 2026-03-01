@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.1.47](https://github.com/microsoft/hve-core/compare/hve-core-v3.1.46...hve-core-v3.1.47) (2026-03-01)
+
+
+### 🐛 Bug Fixes
+
+* **build:** resolve Pinned-Dependencies alerts for vsce npm commands in extension workflows ([#782](https://github.com/microsoft/hve-core/issues/782)) ([89dad9d](https://github.com/microsoft/hve-core/commit/89dad9dfc714f7ed5bdfb747e777d88771fcd71e))
+
 ## [3.0.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.1...hve-core-v3.0.2) (2026-02-21)
 
 
