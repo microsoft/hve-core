@@ -1568,3 +1568,5 @@ streamlit
 Streamlit
 Overreliance
 Contestability
+LASTEXITCODE
+scriptblock
