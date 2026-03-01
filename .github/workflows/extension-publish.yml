@@ -58,11 +58,11 @@ jobs:
             exit 1
           fi
 
-          # Validate even minor version (stable channel convention)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if (( MINOR % 2 != 0 )); then
-            echo "::error::Stable channel requires EVEN minor version. Got: $VERSION (minor=$MINOR is ODD)"
-            echo "::error::Use extension-publish-prerelease workflow for ODD minor (pre-release) versions"
+          # Even/odd convention: even minor = stable, odd minor = pre-release
+          PUBLISH_MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( PUBLISH_MINOR % 2 == 1 )); then
+            echo "::error::Stable channel requires even minor version. Got: $VERSION (odd minor = pre-release)"
+            echo "::error::Use the pre-release publish workflow for odd-minor versions"
             exit 1
           fi
 

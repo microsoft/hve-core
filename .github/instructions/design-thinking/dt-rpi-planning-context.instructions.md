@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/dt/**'
 
 # DT Planning Context
 
-When task-planner operates on DT artifacts or receives a DT handoff, these adjustments augment standard planning behavior. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
+When task-planner operates on artifacts that originated from a Design Thinking process, these adjustments augment standard planning behavior. The Planner does not receive direct DT handoffs; DT context arrives through the Researcher's output. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
 
 ## Planning Adjustments
 

@@ -1,6 +1,7 @@
 ---
 title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-01-16
 ms.topic: reference

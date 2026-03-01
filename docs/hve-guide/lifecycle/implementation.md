@@ -1,6 +1,7 @@
 ---
 title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

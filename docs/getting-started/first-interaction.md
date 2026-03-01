@@ -1,6 +1,7 @@
 ---
 title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: tutorial
@@ -13,7 +14,7 @@ estimated_reading_time: 2
 ---
 
 > [!NOTE]
-> Step 1 of 4 in the [Getting Started Journey](README.md).
+> Step 1 of 4 in the [Getting Started Journey](./).
 
 Before diving into workflows and methodologies, confirm that everything works.
 You need one agent interaction that produces a visible result.

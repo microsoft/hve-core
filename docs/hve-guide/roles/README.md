@@ -1,6 +1,7 @@
 ---
 title: Role Guides
 description: Find your role-specific guide for AI-assisted engineering with HVE Core tooling
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: concept
@@ -71,7 +72,7 @@ Each role intersects with 9 lifecycle stages, producing 72 role-stage pairs. Cov
 **Least-covered stage**: Stage 4 Decomposition: 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 
 > [!NOTE]
-> Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/README.md) for guidance on creating new agents, prompts, and instructions.
+> Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/) for guidance on creating new agents, prompts, and instructions.
 
 ## Next Steps
 

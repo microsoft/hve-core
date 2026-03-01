@@ -1,6 +1,7 @@
 ---
 title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-16
 ms.topic: how-to
@@ -182,7 +183,7 @@ Choose collections based on who uses the skill's utilities:
 | Infrastructure tools | `hve-core-all`, `coding-standards` |
 | Code generation      | `hve-core-all`, `coding-standards` |
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## SKILL.md Content Structure
 
@@ -312,7 +313,7 @@ Bash scripts **MUST**:
 * Check for required dependencies
 * Handle platform differences (macOS vs Linux)
 
-See [bash.instructions.md](../../.github/instructions/coding-standards/bash/bash.instructions.md) for complete standards.
+See [bash.instructions.md](https://github.com/microsoft/hve-core/blob/main/.github/instructions/coding-standards/bash/bash.instructions.md) for complete standards.
 
 ### PowerShell Scripts
 
@@ -428,7 +429,7 @@ Copilot reads the `name` and `description` fields from all SKILL.md files at sta
 When a user request or caller description semantically matches a skill's `description`:
 
 1. **Level 1 (Discovery)**: Copilot matches the task against `name` and `description` frontmatter (always loaded, ~100 tokens per skill).
-2. **Level 2 (Instructions)**: The full SKILL.md body loads into context with script usage, parameters, and troubleshooting (<5000 tokens recommended).
+2. **Level 2 (Instructions)**: The full SKILL.md body loads into context with script usage, parameters, and troubleshooting (under 5000 tokens recommended).
 3. **Level 3 (Resources)**: Scripts, examples, and references in the skill directory load on-demand during execution.
 
 ### Writing Effective Descriptions

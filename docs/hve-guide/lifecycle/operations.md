@@ -1,6 +1,7 @@
 ---
 title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
+sidebar_position: 10
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

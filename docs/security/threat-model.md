@@ -1,6 +1,7 @@
 ---
 title: Security Assurance Case and Threat Model
 description: Comprehensive threat model and security assurance documentation demonstrating enterprise security practices
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-01-23
 ms.topic: reference
@@ -902,8 +903,8 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Internal Documentation
 
-* [SECURITY.md](../../SECURITY.md): Vulnerability disclosure process
-* [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and roles
+* [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
+* [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
 * [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
 * [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 

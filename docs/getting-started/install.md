@@ -1,6 +1,7 @@
 ---
 title: Installing HVE-Core
 description: Choose the right installation method for your environment
+sidebar_position: 2
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -229,8 +230,8 @@ If you use agents like `ado-prd-to-wit` or `github-backlog-manager`, see [MCP Se
 ## Next Steps
 
 * [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../rpi/README.md) - Research, Plan, Implement methodology
-* [Contributing](../contributing/README.md) - Contribute to HVE-Core
+* [RPI Workflow](../rpi/) - Research, Plan, Implement methodology
+* [Contributing](../contributing/) - Contribute to HVE-Core
 
 ---
 

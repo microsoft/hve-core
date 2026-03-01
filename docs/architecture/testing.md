@@ -1,6 +1,7 @@
 ---
 title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-01-22
 ms.topic: concept
@@ -46,7 +47,7 @@ Test files use the `.Tests.ps1` suffix convention, enabling automatic discovery 
 
 ## Pester Configuration
 
-The configuration file at [scripts/tests/pester.config.ps1](../../scripts/tests/pester.config.ps1) defines test execution behavior:
+The configuration file at [scripts/tests/pester.config.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/pester.config.ps1) defines test execution behavior:
 
 ```powershell
 # Key configuration settings
@@ -79,7 +80,7 @@ Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `plu
 
 ### LintingHelpers Module
 
-The [LintingHelpers.psm1](../../scripts/linting/Modules/LintingHelpers.psm1) module provides shared functions for linting scripts and tests:
+The [LintingHelpers.psm1](https://github.com/microsoft/hve-core/blob/main/scripts/linting/Modules/LintingHelpers.psm1) module provides shared functions for linting scripts and tests:
 
 | Function                  | Purpose                                                         |
 |---------------------------|-----------------------------------------------------------------|
@@ -92,7 +93,7 @@ The [LintingHelpers.psm1](../../scripts/linting/Modules/LintingHelpers.psm1) mod
 
 ### GitMocks Module
 
-The [GitMocks.psm1](../../scripts/tests/Mocks/GitMocks.psm1) module provides reusable mock helpers for Git CLI and GitHub Actions testing.
+The [GitMocks.psm1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/Mocks/GitMocks.psm1) module provides reusable mock helpers for Git CLI and GitHub Actions testing.
 
 #### Environment Management
 
@@ -180,7 +181,7 @@ Two wrapper scripts in `scripts/tests/` streamline test execution:
 * `Invoke-PesterTests.ps1` orchestrates full test runs with configuration loading, code coverage, CI output formatting, and result file generation. The `npm run test:ps` command calls this script.
 * `Get-ChangedTestFiles.ps1` identifies test files affected by recent changes, enabling targeted test runs during development or in pull request workflows.
 
-See [scripts/tests/README.md](../../scripts/tests/README.md) for parameters and usage details.
+See [scripts/tests/README.md](https://github.com/microsoft/hve-core/blob/main/scripts/tests/README.md) for parameters and usage details.
 
 ## Skills Testing
 

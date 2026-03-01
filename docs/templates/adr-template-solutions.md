@@ -1,6 +1,7 @@
 ---
 title: ADR Title
 description: '[The title should be unique within the library, provide a longer title if needed to differentiate with other ADRs]'
+sidebar_position: 1
 author: Name of author(s)
 ms.date: 2025-06-06
 ms.topic: architecture

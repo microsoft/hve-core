@@ -1,6 +1,7 @@
 ---
 title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -34,12 +35,17 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 | arch-diagram-builder    | Agent | Select **arch-diagram-builder** agent    | Generate architecture diagrams for PRDs         |
 | security-plan-creator   | Agent | Select **security-plan-creator** agent   | Validate security requirements in product specs |
 
+## Design Thinking for Product Concepts
+
+Teams that used **dt-coach** during Discovery can carry Design Thinking outputs into Product Definition. Methods 4-5 (Brainstorming and User Concepts) produce validated solution concepts with Desirability/Feasibility/Viability analysis that strengthen PRD requirements. The **dt-coach** agent helps refine concepts before formal PRD creation, ensuring product definitions reflect user-validated insights. See the [Design Thinking documentation](../../design-thinking/README.md) for method details.
+
 ## Role-Specific Guidance
 
 TPMs own Product Definition, translating BRDs into PRDs with clear acceptance criteria. Tech Leads contribute architecture decisions and validate technical feasibility of proposed requirements.
 
 * [TPM Guide](../roles/tpm.md)
 * [Tech Lead Guide](../roles/tech-lead.md)
+* [UX Designer Guide](../roles/ux-designer.md)
 
 ## Starter Prompts
 

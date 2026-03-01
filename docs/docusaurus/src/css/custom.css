@@ -1,0 +1,350 @@
+/**
+ * MS Learn Architecture Center Color System
+ * Three-blue palette: #005ba1 (hero), #0078d4 (cards), #0f6cbd (primary)
+ * Dual-layer: Infima overrides + custom --ms-learn-* properties
+ */
+
+@import 'remark-github-blockquote-alert/alert.css';
+
+/* Segoe UI Variable web font (matches MS Learn) */
+@font-face {
+  font-family: 'Segoe UI Variable Text';
+  src: url('https://learn.microsoft.com/static/third-party/SegoeUIVariable/SegoeUI-VF.ttf') format('truetype-variations');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SegoeUI';
+  src: url('https://learn.microsoft.com/static/third-party/SegoeUIWeb/1.01.206/SegoeUI-Roman-VF_web.woff2') format('woff2');
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Layer 1: Infima variable overrides */
+:root {
+  --ifm-color-primary: #0f6cbd;
+  --ifm-color-primary-dark: #115ea3;
+  --ifm-color-primary-darker: #0c3b5e;
+  --ifm-color-primary-darkest: #0a2e4a;
+  --ifm-color-primary-light: #2886c7;
+  --ifm-color-primary-lighter: #479ef5;
+  --ifm-color-primary-lightest: #96c6fa;
+  --ifm-background-color: #ffffff;
+  --ifm-font-color-base: #161616;
+  --ifm-link-color: #0065b3;
+  --ifm-footer-background-color: #e8e6df;
+  --ifm-card-background-color: #ffffff;
+  --ifm-code-font-size: 95%;
+  --ifm-font-family-base: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ifm-heading-font-family: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, 'system-ui', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Heading sizes to match MS Learn */
+  --ifm-h1-font-size: 2.5rem;
+  --ifm-h2-font-size: 1.125rem;
+  --ifm-h3-font-size: 1rem;
+  --ifm-h4-font-size: 0.875rem;
+  --ifm-heading-font-weight: 600;
+  --ifm-line-height-base: 1.3;
+
+  /* Layer 2: Custom MS Learn properties */
+  --ms-learn-hero-bg: #005ba1;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #005ba1 0%, #004d88 66.72%, #003e6e);
+  --ms-learn-hero-text: #ffffff;
+  --ms-learn-hero-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' fill='none'%3E%3Cpath d='M8 6l10 10m0-10L8 16M38 36l10 10m0-10L38 46' stroke='%23000' stroke-opacity='0.08' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --ms-learn-card-accent: #0078d4;
+  --ms-learn-card-border: #e6e6e6;
+  --ms-learn-text-subtle: #505050;
+  --ms-learn-section-bg: #f2f2f2;
+  --ms-learn-footer-bg: #e8e6df;
+  --ms-learn-visited-link: #624991;
+  --ms-learn-success: #107c10;
+  --ms-learn-danger: #bc2f32;
+}
+
+/* Announcement bar dark mode */
+[data-theme='dark'] div[class*="announcementBar"] {
+  background-color: #332b00;
+  color: #ffd54f;
+}
+
+/* Link hover: MS Learn style (darker color + underline) */
+a:hover {
+  color: var(--ifm-color-primary-dark);
+  text-decoration: underline;
+}
+
+/* No underline on card links */
+a[class*="cardContainer"]:hover,
+a[class*="card"]:hover {
+  text-decoration: none;
+}
+
+a:visited {
+  color: inherit;
+}
+
+/* Navbar link hover: no underline in nav */
+.navbar__link:hover {
+  text-decoration: none;
+}
+
+.navbar__link:visited {
+  color: inherit;
+}
+
+/* Navbar: MS Learn-style sizing */
+.navbar {
+  height: 54px;
+  padding: 0 24px;
+}
+
+.navbar__brand {
+  gap: 0;
+}
+
+.navbar__logo {
+  margin-right: 8px;
+  padding-right: 8px;
+  border-right: 2px solid #161616;
+  height: 24px;
+}
+
+.navbar__title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.navbar__brand:hover {
+  text-decoration: none;
+}
+
+.navbar__brand:visited,
+.navbar__brand {
+  color: inherit;
+}
+
+.navbar__title:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.navbar__link {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.dropdown > .navbar__link {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18.2px;
+  padding: 4px 12px;
+  display: block;
+}
+
+.dropdown.navbar__item {
+  padding: 0;
+}
+
+/* Replace filled triangle dropdown arrow with chevron - only on dropdown items */
+.navbar__link[aria-expanded]::after {
+  border: none;
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-4px);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Navbar dark mode */
+[data-theme='dark'] .navbar {
+  background-color: #1f1f1f;
+  border-bottom: 1px solid var(--ms-learn-card-border);
+}
+
+[data-theme='dark'] .navbar__logo {
+  border-right-color: #fff;
+}
+
+[data-theme='dark'] .navbar__title {
+  color: #fff;
+}
+
+[data-theme='dark'] .navbar__link {
+  color: #fff;
+}
+
+[data-theme='dark'] .navbar__link:hover {
+  color: #75b6e7;
+}
+
+/* Sidebar: MS Learn-style */
+.menu__link {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 25.6px;
+  padding: 2px 0 2px 16px;
+  color: var(--ifm-font-color-base);
+}
+
+.menu__link:hover {
+  color: inherit;
+}
+
+.menu__link:visited {
+  color: inherit;
+}
+
+.menu__link--active {
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  background-color: var(--ms-learn-section-bg);
+}
+
+[data-theme='dark'] .menu__link {
+  color: #e6e6e6;
+}
+
+.menu__list-item-collapsible > .menu__link {
+  font-weight: 400;
+}
+
+/* Move caret/chevron to left side of label */
+.menu__list-item-collapsible {
+  flex-direction: row;
+}
+
+.menu__caret {
+  order: -1;
+  padding: 0;
+  margin-right: -4px;
+  transform: scale(0.5);
+}
+
+.menu__link--sublist {
+  padding-left: 4px;
+}
+
+/* Child items indented */
+.menu__list .menu__list {
+  margin-left: 16px;
+  padding-left: 0;
+}
+
+/* Sidebar container */
+.menu {
+  padding: 0 24px 24px;
+}
+
+.theme-doc-sidebar-menu {
+  position: sticky;
+  top: 24px;
+}
+
+/* Footer: MS Learn-style warm gray background */
+.footer--dark {
+  background-color: var(--ms-learn-footer-bg);
+  color: var(--ifm-font-color-base);
+}
+
+.footer--dark .footer__title {
+  color: var(--ifm-font-color-base);
+}
+
+.footer--dark .footer__link-item {
+  color: var(--ifm-link-color);
+}
+
+.footer--dark .footer__copyright {
+  color: var(--ms-learn-text-subtle);
+}
+
+/* Breadcrumbs: MS Learn-style spacing */
+.breadcrumbs__item:not(:last-child)::after {
+  margin: 0 0.5rem;
+}
+
+.breadcrumbs__link {
+  font-size: 14px;
+  color: var(--ifm-link-color);
+}
+
+/* Content area padding */
+.theme-doc-markdown {
+  padding: 24px 0;
+}
+
+/* TOC: "In this article" heading on right-side TOC */
+.table-of-contents {
+  border-left: 2px solid var(--ms-learn-card-border);
+  padding-left: 1rem;
+}
+
+.table-of-contents::before {
+  content: 'In this article';
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Article metadata styling */
+.theme-doc-markdown header + div {
+  color: var(--ms-learn-text-subtle);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Generated-index cards: MS Learn-style treatment */
+.docCard {
+  border: 1px solid var(--ms-learn-card-border);
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+}
+
+.docCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.docCard a:hover {
+  text-decoration: none;
+}
+
+/* Dark mode: derived from MS Learn dark theme (extracted via Chrome DevTools) */
+[data-theme='dark'] {
+  --ifm-color-primary: #75b6e7;
+  --ifm-color-primary-dark: #479ef5;
+  --ifm-color-primary-darker: #2886c7;
+  --ifm-color-primary-darkest: #0f6cbd;
+  --ifm-color-primary-light: #96c6fa;
+  --ifm-color-primary-lighter: #b8d7f5;
+  --ifm-color-primary-lightest: #cfe4fa;
+  --ifm-background-color: #1f1f1f;
+  --ifm-font-color-base: #ffffff;
+  --ifm-link-color: #75b6e7;
+  --ifm-footer-background-color: #091f2c;
+  --ifm-card-background-color: #091f2c;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --ms-learn-hero-bg: #1a6fb5;
+  --ms-learn-hero-gradient: linear-gradient(174.2deg, #1a6fb5 0%, #115ea3 66.72%, #0c3b5e);
+  --ms-learn-hero-text: #ffffff;
+  --ms-learn-card-accent: #75b6e7;
+  --ms-learn-card-border: #404040;
+  --ms-learn-text-subtle: #d2d2d2;
+  --ms-learn-section-bg: #292929;
+  --ms-learn-footer-bg: #091f2c;
+  --ms-learn-visited-link: #ac7ee1;
+  --ms-learn-success: #2ea043;
+  --ms-learn-danger: #f85149;
+}

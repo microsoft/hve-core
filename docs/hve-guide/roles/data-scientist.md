@@ -1,6 +1,7 @@
 ---
 title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
+sidebar_position: 9
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -134,8 +135,8 @@ Python environment management follows the `uv` virtual environment instructions 
 ## Next Steps
 
 > [!TIP]
-> Explore the data science collection: [Data Science Collection](../../collections/data-science.collection.md)
-> Set up your Python environment: [uv Projects](../../.github/instructions/coding-standards/uv-projects.instructions.md)
+> Explore the data science collection: [Data Science Collection](https://github.com/microsoft/hve-core/blob/main/collections/data-science.collection.md)
+> Set up your Python environment: [uv Projects](https://github.com/microsoft/hve-core/blob/main/.github/instructions/coding-standards/uv-projects.instructions.md)
 > See how analytics fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

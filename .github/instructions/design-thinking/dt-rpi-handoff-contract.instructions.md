@@ -11,13 +11,15 @@ Defines the formal contract for lateral handoffs from Design Thinking coaching i
 
 Three exit points align with DT space boundaries. Each exit targets the RPI agent best suited to consume DT outputs at that stage.
 
-| Exit Point                 | DT Methods   | DT Space Boundary         | RPI Target  | What Transfers                                                                         |
-|----------------------------|--------------|---------------------------|-------------|----------------------------------------------------------------------------------------|
-| Problem Statement Complete | 1-3 complete | Problem → Solution        | Researcher  | Validated problem statement, synthesis themes, stakeholder map, constraint inventory   |
-| Concept Validated          | 4-6 complete | Solution → Implementation | Planner     | Tested concepts, lo-fi prototype feedback, constraint discoveries, narrowed directions |
-| Implementation Spec Ready  | 7-8 complete | Implementation exit       | Implementor | Hi-fi prototype specs, user testing results, architecture decisions, rollout criteria  |
+| Exit Point                 | DT Methods   | DT Space Boundary         | RPI Target | What Transfers                                                                         |
+|----------------------------|--------------|---------------------------|------------|----------------------------------------------------------------------------------------|
+| Problem Statement Complete | 1-3 complete | Problem → Solution        | Researcher | Validated problem statement, synthesis themes, stakeholder map, constraint inventory   |
+| Concept Validated          | 4-6 complete | Solution → Implementation | Researcher | Tested concepts, lo-fi prototype feedback, constraint discoveries, narrowed directions |
+| Implementation Spec Ready  | 7-9 complete | Implementation exit       | Researcher | Hi-fi prototype specs, user testing results, architecture decisions, rollout criteria  |
 
-Earlier exit points produce more RPI work. A Problem Statement Complete handoff requires full RPI research and planning. An Implementation Spec Ready handoff may skip directly to implementation.
+The exit tier describes the richness and completeness of artifacts provided to the Researcher, not which RPI phase to skip to. Later exits provide richer context that may reduce the Researcher's investigation scope, but the full RPI pipeline (Research → Plan → Implement) always executes.
+
+Every exit enters the RPI pipeline at Task Researcher. Earlier exit points provide leaner artifacts requiring broader research investigation. Later exit points provide richer, more validated artifacts that narrow the Researcher's scope but do not bypass any RPI phase.
 
 ## Exit-Point Artifact Schema
 
@@ -28,7 +30,7 @@ Record handoff artifacts in the coaching state `transition_log` using a lateral 
 exit_point: "problem-statement-complete | concept-validated | implementation-spec-ready"
 dt_method: 3          # last completed DT method
 dt_space: "problem"   # space being exited
-handoff_target: "researcher | planner | implementor"
+handoff_target: "researcher"  # constant — all DT exits enter RPI at Researcher
 date: "YYYY-MM-DD"
 
 artifacts:
@@ -57,22 +59,22 @@ assumptions:
 
 Each RPI agent consumes different DT outputs. Provide artifacts matching the target agent's needs.
 
-| RPI Agent   | Required Inputs                                                           | Optional Inputs                                                             | Format                                                          |
-|-------------|---------------------------------------------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------------|
-| Researcher  | Problem statement, synthesis themes, constraint inventory                 | Stakeholder map, interview evidence, environmental context                  | Free-form topic referencing DT artifacts by path                |
-| Planner     | Validated concepts, constraint discoveries, user feedback from prototypes | Synthesis themes, stakeholder alignment status, frozen/fluid classification | Research file path (from RPI researcher) plus DT artifact paths |
-| Implementor | Hi-fi prototype specs, user testing results, architecture decisions       | Performance benchmarks, rollout criteria, trade-off documentation           | Plan file path (from RPI planner)                               |
+| RPI Agent   | DT Artifact Consumption                                                                                                                 | Format                                           |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
+| Researcher  | All DT exit artifacts: problem statements, tested concepts, hi-fi specs, stakeholder maps, constraint inventories, user testing results | Free-form topic referencing DT artifacts by path |
+| Planner     | Receives DT context indirectly through Researcher output                                                                                | Research file path (upstream from Researcher)    |
+| Implementor | Receives DT context indirectly through Researcher→Planner chain                                                                         | Plan file path (upstream from Planner)           |
 
-When handing off to the Researcher, frame the DT problem statement as the research topic and reference artifact paths so the researcher can read DT evidence directly rather than relying on summarized context.
+Frame the DT outputs as the research topic and reference artifact paths so the Researcher can read DT evidence directly rather than relying on summarized context. Planner and Implementor consume DT findings as they flow through the standard RPI pipeline.
 
 ## Graduation Awareness Behavior
 
 The DT coach monitors for handoff readiness at every space boundary using this four-step flow:
 
 1. **Detect**: At each method boundary, assess whether the team's work satisfies the space boundary readiness signals defined in the method sequencing protocol.
-2. **Surface**: When readiness signals are met, explicitly name the lateral handoff option alongside forward and backward options. State which exit point applies and which RPI agent would receive the work.
+2. **Surface**: When readiness signals are met, explicitly name the lateral handoff option alongside forward and backward options. State which exit point applies. All exits hand off to Task Researcher.
 3. **Prepare**: If the team chooses lateral handoff, create the handoff summary file. Tag each artifact and constraint with a confidence marker. Identify gaps where confidence is `unknown` or `conflicting`.
-4. **Transfer**: Record a lateral transition in the coaching state `transition_log` with rationale. Announce the handoff target and provide the handoff summary path for the RPI agent.
+4. **Transfer**: Record a lateral transition in the coaching state `transition_log` with rationale. Announce the handoff to Task Researcher and provide the handoff summary path.
 
 The coach remains available in an advisory capacity after handoff. If the RPI workflow surfaces questions that require DT methods, the team can resume coaching from the recorded state.
 
@@ -87,6 +89,6 @@ Every artifact, constraint, and assumption in the handoff summary carries a conf
 | `unknown`     | Gap identified but not yet investigated                  | Prioritize in RPI research scope                  |
 | `conflicting` | Multiple sources disagree                                | Resolve before planning; escalate if unresolvable |
 
-The RPI researcher treats `assumed`, `unknown`, and `conflicting` markers as investigation targets. The RPI planner distinguishes `validated` constraints from `assumed` ones when assessing implementation risk.
+The RPI researcher treats `assumed`, `unknown`, and `conflicting` markers as investigation targets. Downstream RPI agents (Planner, Implementor) encounter these markers through the pipeline chain rather than from direct DT handoff.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.

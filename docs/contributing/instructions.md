@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
+sidebar_position: 3
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -133,7 +134,7 @@ lastUpdated: '2025-11-19'
 All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
 
 > [!NOTE]
-> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Instructions Exclusion](ai-artifacts-common.md#repo-specific-instructions-exclusion) for details.
+> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common.md#repo-specific-artifact-exclusion) for details.
 
 ### Adding Your Instructions to a Collection
 
@@ -169,7 +170,7 @@ Choose collections based on who uses the technology or pattern:
 | Test standards          | `hve-core-all`, `coding-standards`                |
 | ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
 
-For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests).
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## Content Structure Standards
 
@@ -648,7 +649,7 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Prompts](prompts.md) - Workflow-specific guidance
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 

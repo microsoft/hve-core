@@ -155,7 +155,7 @@ Describe 'Get-VscePackageCommand' {
     It 'Returns npx command structure for npx type' {
         $result = Get-VscePackageCommand -CommandType 'npx'
         $result.Executable | Should -Be 'npx'
-        $result.Arguments | Should -Contain '@vscode/vsce'
+        $result.Arguments | Should -Contain '@vscode/vsce@3.7.1'
         $result.Arguments | Should -Contain 'package'
     }
 

@@ -1,6 +1,7 @@
 ---
 title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial
@@ -14,7 +15,7 @@ estimated_reading_time: 10
 ---
 
 > [!NOTE]
-> Step 3 of 4 in the [Getting Started Journey](README.md).
+> Step 3 of 4 in the [Getting Started Journey](./).
 
 Build a real validation script using the Research → Plan → Implement workflow. You'll create a PowerShell script that checks that every docs subfolder has a `README.md` file.
 
@@ -216,7 +217,7 @@ The three-agent workflow above separates research, planning, and implementation
 into distinct phases with `/clear` between each. This is the best way to learn
 RPI because you see each phase produce its own artifact.
 
-For day-to-day work, the [rpi-agent](../../.github/CUSTOM-AGENTS.md#rpi-agent)
+For day-to-day work, the [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent)
 runs all three phases in a single session. It follows the same methodology but
 handles the phase transitions automatically.
 

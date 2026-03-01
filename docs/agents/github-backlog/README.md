@@ -1,6 +1,7 @@
 ---
 title: GitHub Backlog Manager
 description: Automated issue discovery, triage, sprint planning, and execution for GitHub repositories
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-02-12
 ms.topic: concept

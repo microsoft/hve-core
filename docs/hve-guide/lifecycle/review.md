@@ -1,6 +1,7 @@
 ---
 title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to

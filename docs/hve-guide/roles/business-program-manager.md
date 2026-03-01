@@ -1,6 +1,7 @@
 ---
 title: Business Program Manager Guide
 description: HVE Core support for business program managers driving stakeholder alignment, business outcomes, and program coordination
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: how-to
@@ -149,14 +150,17 @@ navigation support.
 
 ## Key Agents and Workflows
 
-| Agent                       | Purpose                                         | Docs       |
-|-----------------------------|-------------------------------------------------|------------|
-| **brd-builder**             | Business requirements document creation         | Agent file |
-| **product-manager-advisor** | Product strategy and prioritization guidance    | Agent file |
-| **agile-coach**             | User story creation and refinement coaching     | Agent file |
-| **task-researcher**         | Business context and market research            | Agent file |
-| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables | Agent file |
-| **memory**                  | Session context and preference persistence      | Agent file |
+| Agent                       | Purpose                                                   | Docs                                               |
+|-----------------------------|-----------------------------------------------------------|----------------------------------------------------|
+| **brd-builder**             | Business requirements document creation                   | Agent file                                         |
+| **product-manager-advisor** | Product strategy and prioritization guidance              | Agent file                                         |
+| **agile-coach**             | User story creation and refinement coaching               | Agent file                                         |
+| **task-researcher**         | Business context and market research                      | Agent file                                         |
+| **ux-ui-designer**          | UX/UI guidance for business-facing deliverables           | Agent file                                         |
+| **memory**                  | Session context and preference persistence                | Agent file                                         |
+| **dt-coach**                | Design Thinking coaching for user-centered program design | [Design Thinking](../../design-thinking/README.md) |
+
+BPMs benefit from **dt-coach** when program design requires user-centered validation. Design Thinking scope conversations (Method 1) and user concepts (Method 5) help BPMs ground business requirements in validated user needs before formal BRD creation.
 
 Prompts complement the agents for cross-cutting workflows:
 
@@ -183,7 +187,7 @@ Prompts complement the agents for cross-cutting workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore project planning tools: [Project Planning Collection](../../collections/project-planning.collection.md)
+> Explore project planning tools: [Project Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/project-planning.collection.md)
 > Understand the TPM workflow for technical handoff: [TPM Guide](tpm.md)
 > See how program management fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 

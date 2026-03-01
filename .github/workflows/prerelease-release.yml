@@ -48,17 +48,17 @@ jobs:
           VERSION=$(echo "$PR_TITLE" | grep -oE 'pre-release [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
           if [ -z "$VERSION" ]; then
             echo "⚠️ Could not extract version from PR title, falling back to manifest"
-            VERSION=$(jq -r '.["."]//"0.0.0"' .release-please-manifest.json 2>/dev/null || echo "")
+            VERSION=$(jq -r '.["."] // "0.0.0"' .release-please-manifest.json 2>/dev/null || echo "")
           fi
           if [ -z "$VERSION" ]; then
             echo "::error::Could not extract version from PR title or manifest: $PR_TITLE"
             exit 1
           fi
 
-          # Validate odd minor version (pre-release convention)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if [ $((MINOR % 2)) -eq 0 ]; then
-            echo "::error::Pre-release version $VERSION has even minor ($MINOR). Pre-release versions must have odd minor."
+          # Even/odd convention: pre-release versions must have odd minor
+          PRE_MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( PRE_MINOR % 2 == 0 )); then
+            echo "::error::Pre-release version $VERSION must have an odd minor (even/odd convention)"
             exit 1
           fi
 

@@ -1,0 +1,9 @@
+{
+  "label": "Security",
+  "position": 8,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index"
+  }
+}

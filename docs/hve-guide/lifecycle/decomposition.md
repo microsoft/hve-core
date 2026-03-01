@@ -1,6 +1,7 @@
 ---
 title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: how-to

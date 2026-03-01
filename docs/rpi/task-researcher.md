@@ -1,6 +1,7 @@
 ---
 title: Task Researcher Guide
 description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
