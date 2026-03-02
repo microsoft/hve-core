@@ -1,11 +1,12 @@
 id: coding-standards
 name: Coding Standards
-description: Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform projects
+description: Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform projects
 tags:
   - coding-standards
   - bash
   - bicep
   - csharp
+  - powershell
   - python
   - terraform
   - uv
@@ -18,6 +19,10 @@ items:
   - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
     kind: instruction
   - path: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
+    kind: instruction
+  - path: .github/instructions/coding-standards/powershell/pester.instructions.md
+    kind: instruction
+  - path: .github/instructions/coding-standards/powershell/powershell.instructions.md
     kind: instruction
   - path: .github/instructions/coding-standards/python-script.instructions.md
     kind: instruction

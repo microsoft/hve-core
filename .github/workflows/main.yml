@@ -157,6 +157,32 @@ jobs:
             echo "Git tag $TAG already exists"
           fi
 
+  close-milestone:
+    name: Close Release Milestone
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close milestone for released version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAJOR: ${{ needs.release-please.outputs.major }}
+          MINOR: ${{ needs.release-please.outputs.minor }}
+        run: |
+          REPO="${{ github.repository }}"
+          TITLE="v${MAJOR}.${MINOR}.0"
+          NUMBER=$(gh api "/repos/$REPO/milestones?state=open&per_page=100" \
+            --jq ".[] | select(.title == \"$TITLE\") | .number")
+          if [ -n "$NUMBER" ]; then
+            gh api "/repos/$REPO/milestones/$NUMBER" \
+              -X PATCH -f state=closed
+            echo "✅ Closed milestone $TITLE (#$NUMBER)"
+          else
+            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+          fi
+
   reset-prerelease:
     name: Reset Pre-Release Branch
     needs: [release-please]
@@ -283,6 +309,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     steps:
       - name: Checkout Syft config
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
@@ -338,13 +365,13 @@ jobs:
           subject-path: ${{ steps.vsix.outputs.file }}
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@07e74fc4e78d1aad915e867f9a094073a9f71527 # v4.0.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
           sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
 
       - name: Attest dependency SBOM
-        uses: actions/attest-sbom@07e74fc4e78d1aad915e867f9a094073a9f71527 # v4.0.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
           sbom-path: dist/dependencies.spdx.json

@@ -1,0 +1,1 @@
+../../../.github/prompts/code-review/functional-code-review.prompt.md

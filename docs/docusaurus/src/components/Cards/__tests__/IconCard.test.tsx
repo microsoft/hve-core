@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import IconCard from '../IconCard';
+
+expect.extend(toHaveNoViolations);
 
 describe('IconCard', () => {
   const defaultProps = {
@@ -36,5 +39,13 @@ describe('IconCard', () => {
   it('omits description when not provided', () => {
     const { container } = render(<IconCard {...defaultProps} />);
     expect(container.querySelector('.cardDescription')).toBeNull();
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<IconCard {...defaultProps} />);
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });

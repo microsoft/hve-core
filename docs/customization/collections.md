@@ -91,7 +91,7 @@ Collections support four maturity tiers that control inclusion in generated plug
 | Tier           | Meaning                                    | Plugin Inclusion            |
 |----------------|--------------------------------------------|-----------------------------|
 | `stable`       | Production-ready, fully tested             | Included in all channels    |
-| `preview`      | Feature-complete but undergoing validation | Included in preview channel |
+| `preview`      | Feature-complete but undergoing validation | Included in all channels    |
 | `experimental` | Early-stage, may change significantly      | Excluded from stable builds |
 | `deprecated`   | Scheduled for removal                      | Excluded from new builds    |
 
