@@ -14,6 +14,7 @@ copilot plugin install hve-core-all@hve-core
 | Agent                        | Description                                                                                                                                                                                                |
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ado-prd-to-wit               | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                                                                  |
+| functional-code-review       | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core                                                                |
 | gen-data-spec                | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                             |
 | gen-jupyter-notebook         | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                  |
 | gen-streamlit-dashboard      | Develop a multi-page Streamlit dashboard                                                                                                                                                                   |
@@ -58,6 +59,7 @@ copilot plugin install hve-core-all@hve-core
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                                 |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
+| functional-code-review                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core        |
 | dt-handoff-implementation-space             | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact targeting task-researcher                                                        |
 | dt-handoff-problem-space                    | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                                   |
 | dt-handoff-solution-space                   | Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-researcher                                  |

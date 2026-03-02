@@ -495,10 +495,10 @@ npm run lint:yaml
 Collection manifests are YAML files in `collections/` following this structure:
 
 ```yaml
-id: developer
-name: hve-developer
-displayName: "HVE Core - Developer Edition"
-description: "AI-powered coding agents curated for software engineers"
+id: data-science
+name: hve-data-science
+displayName: "HVE Core - Data Science"
+description: "AI-powered agents for data analysis, notebooks, and dashboards"
 maturity: stable
 items:
   - kind: agent

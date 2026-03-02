@@ -20,7 +20,7 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `rpi` (research and planning workflows for larger analytics projects). For clone-based setups, use the **hve-core-installer** agent with `install data-science rpi`.
+> Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `hve-core` (research and planning workflows for larger analytics projects). For clone-based setups, use the **hve-core-installer** agent with `install data-science hve-core`.
 
 ## What HVE Core Does for You
 

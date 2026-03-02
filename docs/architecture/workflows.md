@@ -247,15 +247,25 @@ flowchart TD
 
 Collection manifests in `collections/*.collection.yml` define collection-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
 
-| Collection     | Maturity     | Included In        |
-|----------------|--------------|--------------------|
-| `hve-core-all` | Stable       | Stable, PreRelease |
-| `developer`    | Experimental | PreRelease only    |
+| Collection          | Maturity     | Included In        |
+|---------------------|--------------|--------------------|
+| `hve-core-all`      | Stable       | Stable, PreRelease |
+| `hve-core`          | Stable       | Stable, PreRelease |
+| `ado`               | Stable       | Stable, PreRelease |
+| `github`            | Stable       | Stable, PreRelease |
+| `project-planning`  | Stable       | Stable, PreRelease |
+| `coding-standards`  | Stable       | Stable, PreRelease |
+| `data-science`      | Stable       | Stable, PreRelease |
+| `security-planning` | Stable       | Stable, PreRelease |
+| `design-thinking`   | Preview      | Stable, PreRelease |
+| `installer`         | Stable       | Stable, PreRelease |
+| `experimental`      | Experimental | PreRelease only    |
 
 Maturity filtering rules:
 
 * **Deprecated** collections are always excluded.
 * **Experimental** collections are excluded from Stable channel builds.
+* **Preview** collections are included in both Stable and PreRelease channel builds.
 * **Stable** collections are included in all channel builds.
 
 ### Version Channels
