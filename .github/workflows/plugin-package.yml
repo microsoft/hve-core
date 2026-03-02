@@ -90,7 +90,7 @@ jobs:
                   zip -r "dist/plugins/${{ matrix.id }}.zip" "$plugin_dir"
 
             - name: Upload plugin artifact
-              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+              uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
               with:
                   name: plugin-package-${{ matrix.id }}
                   path: dist/plugins/${{ matrix.id }}.zip

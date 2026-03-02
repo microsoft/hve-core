@@ -1,6 +1,7 @@
 ---
 title: "Method 4: Brainstorming"
 description: "Generate diverse solution ideas through structured divergent thinking and converge on promising directions through evidence-informed clustering."
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

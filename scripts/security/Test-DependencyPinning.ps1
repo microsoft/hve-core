@@ -173,6 +173,12 @@ $DependencyPatterns = @{
         ValidationFunc = 'Get-WorkflowNpmCommandViolations'
         Description    = 'Workflow npm install/update commands should use npm ci'
     }
+
+    'workflow-npm-commands' = @{
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        ValidationFunc = 'Get-WorkflowNpmCommandViolations'
+        Description    = 'Workflow npm install/update commands should use npm ci'
+    }
 }
 
 # DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1

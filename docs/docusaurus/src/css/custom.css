@@ -65,12 +65,6 @@
   --ms-learn-danger: #bc2f32;
 }
 
-/* Announcement bar dark mode */
-[data-theme='dark'] div[class*="announcementBar"] {
-  background-color: #332b00;
-  color: #ffd54f;
-}
-
 /* Link hover: MS Learn style (darker color + underline) */
 a:hover {
   color: var(--ifm-color-primary-dark);

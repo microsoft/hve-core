@@ -1,6 +1,7 @@
 ---
 title: "Method 7: Hi-Fi Prototypes"
 description: "Translate lo-fi constraint discoveries into technically feasible implementations that validate whether user-validated solutions can be built and deployed."
+sidebar_position: 11
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

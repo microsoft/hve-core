@@ -1,6 +1,7 @@
 ---
 title: "Method 2: Design Research"
 description: "Investigate user needs, behaviors, and environmental conditions through curiosity-driven research that builds an evidence base for synthesis."
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial
