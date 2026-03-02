@@ -388,7 +388,8 @@ function Test-ShellDownloadSecurity {
                 $violation.Line = $i + 1
                 $violation.Type = $FileInfo.Type
                 $violation.Name = $line.Trim()
-                $violation.Severity = 'warning'
+                $violation.Severity = 'Medium'
+                $violation.ViolationType = 'Unpinned'
                 $violation.Description = 'Download without checksum verification'
                 $violation.Metadata = @{ Pattern = $line.Trim() }
                 $violations += $violation
@@ -477,7 +478,8 @@ function Get-NpmDependencyViolations {
                 $violation.Type = $type
                 $violation.Name = $packageName
                 $violation.Version = $version
-                $violation.Severity = 'warning'
+                $violation.Severity = 'Medium'
+                $violation.ViolationType = 'Unpinned'
                 $violation.Description = "Unpinned npm dependency in $section"
                 $violation.Metadata = @{ Section = $section }
                 $violations += $violation
@@ -698,6 +700,7 @@ function Get-DependencyViolation {
                     $violation.CurrentRef = $match.Value
                     $violation.Description = "Unpinned dependency: $description"
                     $violation.Severity = if ($fileType -eq 'github-actions') { 'High' } else { 'Medium' }
+                    $violation.ViolationType = 'Unpinned'
                     $violation.Metadata['PatternDescription'] = $description
                     $violation.Metadata['LineContent'] = $lines[$lineNumber - 1]
 

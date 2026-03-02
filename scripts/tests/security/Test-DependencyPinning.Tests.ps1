@@ -149,6 +149,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
             $result[0].Line | Should -BeGreaterThan 0
             $result[0].Description | Should -Be 'Download without checksum verification'
             $result[0].Name | Should -Match 'curl.*https://'
+            $result[0].Severity | Should -Be 'Medium'
+            $result[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Detects insecure download when checksum is beyond lookahead window' {
@@ -332,6 +334,8 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
             $result[0].Type | Should -Be 'github-actions'
+            $result[0].Severity | Should -Be 'High'
+            $result[0].ViolationType | Should -Be 'Unpinned'
         }
     }
 
@@ -940,6 +944,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             $lodashViolation | Should -Not -BeNullOrEmpty
             $lodashViolation.Name | Should -Be 'lodash'
             $lodashViolation.Version | Should -Be '^4.17.21'
+            $lodashViolation.Severity | Should -Be 'Medium'
+            $lodashViolation.ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Assigns valid line numbers to violations' {
@@ -1107,6 +1113,7 @@ Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
             $violations = Get-DependencyViolation -FileInfo $fileInfo
             $violations | Should -Not -BeNullOrEmpty
             $violations[0].GetType().Name | Should -Be 'DependencyViolation'
+            $violations[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Sets File from FileInfo when missing' {
