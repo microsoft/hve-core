@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import BoxCard from '../BoxCard';
+
+expect.extend(toHaveNoViolations);
 
 describe('BoxCard', () => {
   const defaultProps = {
@@ -43,5 +46,13 @@ describe('BoxCard', () => {
   it('omits icon when not provided', () => {
     const { container } = render(<BoxCard {...defaultProps} />);
     expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<BoxCard {...defaultProps} />);
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });

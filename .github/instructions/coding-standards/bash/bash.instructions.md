@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.sh'
-description: 'Instructions for bash script implementation - Brought to you by microsoft/edge-ai'
+description: 'Instructions for bash script implementation - Brought to you by microsoft/hve-core'
 ---
 
 # Bash Script Instructions
@@ -54,6 +54,32 @@ Encapsulate script logic in a `main()` function called at the end. This pattern:
 * Ensures all functions are defined before use
 * Supports sourcing scripts for testing
 * Provides clear entry point
+
+## Copyright Headers
+
+Every `.sh` file requires a copyright header immediately after the shebang line.
+
+Two required lines:
+
+* `# Copyright (c) Microsoft Corporation.`
+* `# SPDX-License-Identifier: MIT`
+
+Placement: after `#!/usr/bin/env bash`, before any other content.
+
+CI validates copyright headers via `npm run validate:copyright` using `scripts/linting/Test-CopyrightHeaders.ps1`.
+
+<!-- <example-copyright-header> -->
+```bash
+#!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#
+# script-name.sh
+# Brief description of script purpose
+
+set -euo pipefail
+```
+<!-- </example-copyright-header> -->
 
 ## Formatting and Style
 

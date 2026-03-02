@@ -3,7 +3,7 @@ title: Security Assurance Case and Threat Model
 description: Comprehensive threat model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-01-23
+ms.date: 2026-03-01
 ms.topic: reference
 keywords:
   - security
@@ -23,17 +23,17 @@ HVE Core is an enterprise prompt engineering framework for GitHub Copilot consis
 * GitHub Actions CI/CD workflows
 * VS Code extension packaging utilities
 
-The repository contains no runtime services, databases, or user data storage. Primary threats target supply chain integrity and developer workflow compromise. Security relies on defense-in-depth with 18+ automated controls validated through CI/CD pipelines.
+The repository contains no runtime services, databases, or user data storage. Primary threats target supply chain integrity and developer workflow compromise. Security relies on defense-in-depth with 20+ automated controls validated through CI/CD pipelines.
 
 ### Security Posture Overview
 
 | Category                 | Status  | Control Count | Automated |
 |--------------------------|---------|---------------|-----------|
-| Supply Chain Security    | Strong  | 6 controls    | 100%      |
+| Supply Chain Security    | Strong  | 8 controls    | 100%      |
 | Code Quality             | Strong  | 5 controls    | 100%      |
 | Access Control           | Strong  | 4 controls    | 100%      |
 | Vulnerability Management | Strong  | 3 controls    | 100%      |
-| Total                    | **18+** | **18**        | **100%**  |
+| Total                    | **20+** | **20**        | **100%**  |
 
 ## Contents
 
@@ -721,14 +721,36 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 ### Supply Chain Security Controls
 
-| ID   | Control                    | Implementation                       | Validates Against |
-|------|----------------------------|--------------------------------------|-------------------|
-| SC-1 | SHA Pinning Validation     | Test-DependencyPinning.ps1           | S-1, S-2          |
-| SC-2 | SHA Staleness Monitoring   | Test-SHAStaleness.ps1                | S-1               |
-| SC-3 | Dependency Review          | dependency-review.yml                | S-2, AI-5         |
-| SC-4 | npm Security Audit         | npm audit in pr-validation.yml       | S-2               |
-| SC-5 | Dependabot Updates         | dependabot.yml                       | S-1, S-2          |
-| SC-6 | Tool Checksum Verification | scripts/security/tool-checksums.json | S-1               |
+| ID   | Control                         | Implementation                                  | Validates Against |
+|------|---------------------------------|-------------------------------------------------|-------------------|
+| SC-1 | SHA Pinning Validation          | Test-DependencyPinning.ps1                      | S-1, S-2          |
+| SC-2 | SHA Staleness Monitoring        | Test-SHAStaleness.ps1                           | S-1               |
+| SC-3 | Dependency Review               | dependency-review.yml                           | S-2, AI-5         |
+| SC-4 | npm Security Audit              | npm audit in pr-validation.yml                  | S-2               |
+| SC-5 | Dependabot Updates              | dependabot.yml                                  | S-1, S-2          |
+| SC-6 | Tool Checksum Verification      | scripts/security/tool-checksums.json            | S-1               |
+| SC-7 | SBOM Generation and Attestation | anchore/sbom-action, actions/attest in main.yml | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff            | sbom-diff job in main.yml                       | S-1, S-2          |
+
+#### SC-8: SBOM Dependency Diff Implementation
+
+The `sbom-diff` job in `main.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
+
+| Field            | Value                                                                      |
+|------------------|----------------------------------------------------------------------------|
+| **Trigger**      | Runs when `release_created == 'true'`, after SBOM generation completes     |
+| **Input**        | SPDX JSON dependency SBOMs from current build and previous GitHub Release  |
+| **Output**       | `dependency-diff.md` uploaded to the GitHub Release as an asset            |
+| **Failure Mode** | `continue-on-error: true` prevents diff failures from blocking the release |
+| **Permissions**  | `contents: write` (release asset upload only)                              |
+
+The diff script parses SPDX JSON packages, excludes root document entries, and categorizes changes into three groups:
+
+* **Added** packages not present in the previous release
+* **Removed** packages no longer included in the current build
+* **Version changes** where the same package appears in both releases at different versions
+
+When no previous release exists or the prior release lacks a dependency SBOM, the job exits cleanly without producing a diff. This graceful degradation ensures the first release in a repository proceeds without error.
 
 ### Code Quality Controls
 
@@ -776,12 +798,12 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Evidence Mapping
 
-| Goal | Evidence                                                            |
-|------|---------------------------------------------------------------------|
-| G1   | SHA pinning logs, staleness reports, dependency review results      |
-| G2   | Branch protection configuration, CODEOWNERS file, PR review history |
-| G3   | This threat model document, MCP trust analysis                      |
-| G4   | Writing style guidelines, inclusive language checks, PR reviews     |
+| Goal | Evidence                                                                                                                    |
+|------|-----------------------------------------------------------------------------------------------------------------------------|
+| G1   | SHA pinning logs, staleness reports, dependency review results, SBOM attestation verification, dependency SBOM diff reports |
+| G2   | Branch protection configuration, CODEOWNERS file, PR review history                                                         |
+| G3   | This threat model document, MCP trust analysis                                                                              |
+| G4   | Writing style guidelines, inclusive language checks, PR reviews                                                             |
 
 ### Assumptions and Justifications
 
@@ -796,7 +818,7 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 HVE Core achieves acceptable security through:
 
-1. **Automated Controls**: 18+ security controls execute automatically via CI/CD
+1. **Automated Controls**: 20+ security controls execute automatically via CI/CD
 2. **Defense-in-Depth**: Multiple overlapping controls for critical threats
 3. **Transparent Risk Acceptance**: AI-inherent risks documented with clear boundaries
 4. **Inherited Security**: Uses GitHub and Copilot platform security
@@ -891,13 +913,13 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Validation Workflow Coverage
 
-| Workflow                        | Trigger            | Security Checks                      |
-|---------------------------------|--------------------|--------------------------------------|
-| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks |
-| main.yml                        | Push to main       | Pinning, gitleaks                    |
-| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                      |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning               |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL           |
+| Workflow                        | Trigger            | Security Checks                                                |
+|---------------------------------|--------------------|----------------------------------------------------------------|
+| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
+| main.yml                        | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
+| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
+| dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL                                     |
 
 ## References
 

@@ -23,10 +23,10 @@ This guide helps you get started with HVE Core from your first install through i
 > For custom installations, select the **hve-core-installer** agent and install the starter collection:
 >
 > ```text
-> install rpi
+> install hve-core
 > ```
 >
-> The `rpi` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
+> The `hve-core` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
 
 ## What HVE Core Does for You
 

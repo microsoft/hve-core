@@ -1,0 +1,17 @@
+name: test-npm-install
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm install
+      - name: Update packages
+        run: |
+          npm update
+          npm run build
+      - name: Install and test
+        run: npm install-test
+      - name: Short alias install
+        run: npm i --save-dev some-package
