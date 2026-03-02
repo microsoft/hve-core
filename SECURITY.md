@@ -96,49 +96,7 @@ A successful verification confirms:
 
 ### Verifying the SBOM
 
-Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format. The SBOM lists every component bundled in the extension, including names, versions, and licenses. Like build provenance, the SBOM is cryptographically attested using Sigstore.
-
-To verify the SBOM attestation for a downloaded VSIX:
-
-```bash
-gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
-  --predicate-type https://spdx.dev/Document/v2.3
-```
-
-A successful verification confirms:
-
-* The component inventory was generated from the official CI/CD pipeline
-* The SBOM has not been modified since signing
-* The SBOM corresponds to the verified VSIX artifact
-
-> [!TIP]
-> Build provenance and SBOM are independent attestations. The default `gh attestation verify` command (without `--predicate-type`) verifies build provenance. Adding `--predicate-type https://spdx.dev/Document/v2.3` verifies the SBOM instead.
-
-### Downloading and Inspecting the SBOM
-
-Each release publishes two SBOM files:
-
-* `hve-core-<version>.vsix.spdx.json` lists the components packaged inside the VSIX
-* `dependencies.spdx.json` lists the npm dependency tree used during the build
-
-Download the SBOM files from a release:
-
-```bash
-gh release download <version> -R microsoft/hve-core -p '*.spdx.json'
-```
-
-Inspect the SBOM contents with `jq`:
-
-```bash
-# View a summary
-jq '{version: .spdxVersion, name: .name, created: .creationInfo.created, packages: (.packages | length)}' hve-core-<version>.vsix.spdx.json
-
-# List all packages and versions
-jq '.packages[] | {name, versionInfo}' hve-core-<version>.vsix.spdx.json
-
-# List package licenses
-jq '.packages[] | {name, licenseConcluded, licenseDeclared}' hve-core-<version>.vsix.spdx.json
-```
+Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format, cryptographically attested using Sigstore. For verification steps, download instructions, inspection commands, and SPDX field reference, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
 
 ### What Gets Signed
 
