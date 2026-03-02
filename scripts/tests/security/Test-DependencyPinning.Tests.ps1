@@ -124,6 +124,163 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
             $result | Should -Not -BeNullOrEmpty
             $result[0].Severity | Should -Be 'warning'
         }
+
+        It 'Detects both curl and wget violations in the same file' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 2
+        }
+
+        It 'Populates violation object fields correctly' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result[0].File | Should -Be 'insecure-download.sh'
+            $result[0].Type | Should -Be 'shell-downloads'
+            $result[0].Line | Should -BeGreaterThan 0
+            $result[0].Description | Should -Be 'Download without checksum verification'
+            $result[0].Name | Should -Match 'curl.*https://'
+        }
+
+        It 'Detects insecure download when checksum is beyond lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'beyond-lookahead.sh'
+            # Download at line 1, checksum at line 8 (beyond 6-line window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'echo "line 6"'
+                'echo "line 7"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'beyond-lookahead.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 1
+        }
+    }
+
+    Context 'Secure downloads' {
+        It 'Returns no violations for downloads with checksum verification' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'secure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'secure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts sha256sum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'sha256sum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'sha256sum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts shasum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'shasum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.tar.gz -O /tmp/tool.tar.gz'
+                'shasum -a 256 /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'shasum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts Get-FileHash within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'get-filehash-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'Get-FileHash /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'get-filehash-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts openssl dgst -sha256 within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'openssl-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.zip -O /tmp/tool.zip'
+                'openssl dgst -sha256 /tmp/tool.zip'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'openssl-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts checksum at lookahead boundary (line 5 after download)' {
+            $scriptPath = Join-Path $TestDrive 'boundary-check.sh'
+            # Download at line 1, checksum at line 6 (index 0+5 = within window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'boundary-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+    }
+
+    Context 'Edge cases' {
+        It 'Returns empty array for empty file' {
+            $scriptPath = Join-Path $TestDrive 'empty.sh'
+            Set-Content -Path $scriptPath -Value ''
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'empty.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
     }
 
     Context 'File not found' {
@@ -475,6 +632,33 @@ Describe 'pip ExcludePatterns integration' -Tag 'Unit' {
     It 'Returns correct type metadata for pip files' {
         $files = @(Get-FilesToScan -ScanPath $pipTestRoot -Types 'pip')
         $files[0].Type | Should -Be 'pip'
+    }
+}
+
+Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
+    BeforeAll {
+        $shellTestRoot = Join-Path $TestDrive 'shell-exclude-test'
+        $scriptsDir = Join-Path $shellTestRoot 'scripts'
+        New-Item -Path $scriptsDir -ItemType Directory -Force | Out-Null
+
+        # Script file that should be scanned
+        Set-Content -Path (Join-Path $scriptsDir 'install.sh') -Value 'echo hello'
+
+        # File inside Fixtures directory (should be excluded)
+        $fixturesDir = Join-Path $scriptsDir 'Fixtures'
+        New-Item -Path $fixturesDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $fixturesDir 'test-download.sh') -Value 'echo fixture'
+    }
+
+    It 'Excludes Fixtures directory from shell-downloads scans' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files | Should -HaveCount 1
+        $files[0].RelativePath | Should -Be (Join-Path 'scripts' 'install.sh')
+    }
+
+    It 'Returns correct type metadata for shell-downloads files' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files[0].Type | Should -Be 'shell-downloads'
     }
 }
 
