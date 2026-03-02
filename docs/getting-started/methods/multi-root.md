@@ -55,17 +55,9 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using multi-root workspace from our fork"
-4. Follow the guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. Use the manual steps below for multi-root workspace customization.
 
 ## Manual Setup
-
-> [!TIP]
-> The `hve-core-installer` agent can automate the steps below, including forking, cloning, workspace file creation, and devcontainer configuration. See [Quick Start](#quick-start) to use the guided flow instead.
 
 ### Step 1: Fork and Clone
 
@@ -107,7 +99,6 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/agents/data-science": true,
       "HVE-Core Fork/.github/agents/design-thinking": true,
       "HVE-Core Fork/.github/agents/github": true,
-      "HVE-Core Fork/.github/agents/installer": true,
       "HVE-Core Fork/.github/agents/project-planning": true,
       "HVE-Core Fork/.github/agents/hve-core": true,
       "HVE-Core Fork/.github/agents/hve-core/subagents": true,

@@ -58,8 +58,6 @@ items:
   kind: agent
 - path: .github/agents/hve-core/task-reviewer.agent.md
   kind: agent
-- path: .github/agents/installer/hve-core-installer.agent.md
-  kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -346,6 +344,8 @@ items:
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
+  kind: skill
+- path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill

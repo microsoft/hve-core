@@ -27,7 +27,7 @@ estimated_reading_time: 3
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
 > [!TIP]
-> Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
+> Install via VS Code extension or Copilot CLI plugin (~30 seconds). See the [Installation Guide](docs/getting-started/install.md).
 
 ## Overview
 

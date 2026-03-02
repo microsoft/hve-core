@@ -27,7 +27,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security-planning` (incident response tooling), and `rpi` (structured investigation and remediation workflows). For clone-based setups, use the **hve-core-installer** agent with `install coding-standards security-planning rpi`.
+> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security-planning` (incident response tooling), and `rpi` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

@@ -29,7 +29,7 @@ You enter Setup when starting a new project or joining an existing engagement th
 
 | Tool               | Type        | How to Invoke                       | Purpose                                         |
 |--------------------|-------------|-------------------------------------|-------------------------------------------------|
-| hve-core-installer | Agent       | Select **hve-core-installer** agent | Install and configure HVE Core for your project |
+| hve-core-installer | Skill       | Invoke via VS Code extension or CLI | Install and configure HVE Core for your project |
 | memory             | Agent       | Select **memory** agent             | Store persistent preferences and conventions    |
 | checkpoint         | Prompt      | `/checkpoint`                       | Save current environment state                  |
 | git-setup          | Prompt      | `/git-setup`                        | Configure Git settings for the project          |
@@ -46,7 +46,7 @@ For role-specific onboarding paths, see the [Role Guides](../roles/).
 
 ## Starter Prompts
 
-Select **hve-core-installer** agent:
+Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) or use a [clone-based method](../../getting-started/install.md):
 
 ```text
 Set up HVE Core for my Python microservices project. Install the rpi and

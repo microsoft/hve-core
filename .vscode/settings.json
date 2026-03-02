@@ -32,7 +32,6 @@
     ".github/agents/data-science": true,
     ".github/agents/design-thinking": true,
     ".github/agents/github": true,
-    ".github/agents/installer": true,
     ".github/agents/project-planning": true,
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true,
