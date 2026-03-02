@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Validates an HVE-Core clone-based installation.
 .DESCRIPTION
@@ -15,9 +15,9 @@ if (-not $basePath) { throw "Variable `$basePath must be set per method table ab
 if (-not $method) { throw "Variable `$method must be set (1-6)" }
 
 $valid = $true
-@("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions") | ForEach-Object {
-    if (-not (Test-Path $_)) { $valid = $false; Write-Host "❌ Missing: $_" }
-    else { Write-Host "✅ Found: $_" }
+foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions")) {
+    if (-not (Test-Path $dir)) { $valid = $false; Write-Host "❌ Missing: $dir" }
+    else { Write-Host "✅ Found: $dir" }
 }
 
 # Method 5 additional check: workspace file

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Copies selected HVE-Core agents to the target repository.
 .DESCRIPTION

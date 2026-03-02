@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Validates that the HVE Core VS Code extension is installed.
 .DESCRIPTION

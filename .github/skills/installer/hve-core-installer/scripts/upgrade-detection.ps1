@@ -21,7 +21,8 @@ if (Test-Path $manifestPath) {
     Write-Host "INSTALLED_VERSION=$($manifest.version)"
     Write-Host "SOURCE_VERSION=$sourceVersion"
     Write-Host "VERSION_CHANGED=$($sourceVersion -ne $manifest.version)"
-    Write-Host "INSTALLED_COLLECTION=$($manifest.collection ?? 'hve-core')"
+    $collection = if ($manifest.collection) { $manifest.collection } else { 'hve-core' }
+    Write-Host "INSTALLED_COLLECTION=$collection"
 } else {
     Write-Host "UPGRADE_MODE=false"
 }

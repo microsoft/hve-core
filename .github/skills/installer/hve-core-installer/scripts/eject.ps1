@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Ejects a tracked file from HVE-Core upgrade management.
 .DESCRIPTION

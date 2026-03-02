@@ -12,7 +12,6 @@
 #>
 $ErrorActionPreference = 'Stop'
 
-$sourceBase = "$hveCoreBasePath/.github/agents"
 $targetDir = ".github/agents"
 
 # Get files to copy based on selection (paths relative to agents/)
