@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2025-11-04
+ms.date: 2026-03-01
 ms.topic: reference
 keywords:
   - security
@@ -10,7 +10,10 @@ keywords:
   - MSRC
   - responsible disclosure
   - coordinated disclosure
-estimated_reading_time: 3
+  - SBOM
+  - software bill of materials
+  - SPDX
+estimated_reading_time: 5
 ---
 
 <!-- BEGIN MICROSOFT SECURITY.MD V0.0.9 BLOCK -->
@@ -91,11 +94,60 @@ A successful verification confirms:
 * The build occurred in GitHub Actions
 * The artifact has not been modified since signing
 
+### Verifying the SBOM
+
+Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format. The SBOM lists every component bundled in the extension, including names, versions, and licenses. Like build provenance, the SBOM is cryptographically attested using Sigstore.
+
+To verify the SBOM attestation for a downloaded VSIX:
+
+```bash
+gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core \
+  --predicate-type https://spdx.dev/Document/v2.3
+```
+
+A successful verification confirms:
+
+* The component inventory was generated from the official CI/CD pipeline
+* The SBOM has not been modified since signing
+* The SBOM corresponds to the verified VSIX artifact
+
+> [!TIP]
+> Build provenance and SBOM are independent attestations. The default `gh attestation verify` command (without `--predicate-type`) verifies build provenance. Adding `--predicate-type https://spdx.dev/Document/v2.3` verifies the SBOM instead.
+
+### Downloading and Inspecting the SBOM
+
+Each release publishes two SBOM files:
+
+* `hve-core-<version>.vsix.spdx.json` lists the components packaged inside the VSIX
+* `dependencies.spdx.json` lists the npm dependency tree used during the build
+
+Download the SBOM files from a release:
+
+```bash
+gh release download <version> -R microsoft/hve-core -p '*.spdx.json'
+```
+
+Inspect the SBOM contents with `jq`:
+
+```bash
+# View a summary
+jq '{version: .spdxVersion, name: .name, created: .creationInfo.created, packages: (.packages | length)}' hve-core-<version>.vsix.spdx.json
+
+# List all packages and versions
+jq '.packages[] | {name, versionInfo}' hve-core-<version>.vsix.spdx.json
+
+# List package licenses
+jq '.packages[] | {name, licenseConcluded, licenseDeclared}' hve-core-<version>.vsix.spdx.json
+```
+
 ### What Gets Signed
 
 | Artifact               | Channel         | Signed                |
 |------------------------|-----------------|-----------------------|
 | VSIX extension package | GitHub Releases | Yes                   |
+| Per-extension SBOM     | GitHub Releases | Yes                   |
+| Dependency SBOM        | GitHub Releases | Yes                   |
+| Dependency diff        | GitHub Releases | No                    |
 | VS Code Marketplace    | Stable          | Marketplace signature |
 | VS Code Marketplace    | Pre-Release     | Marketplace signature |
 
