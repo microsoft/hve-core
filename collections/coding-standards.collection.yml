@@ -20,6 +20,8 @@ items:
     kind: instruction
   - path: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
     kind: instruction
+  - path: .github/instructions/coding-standards/powershell/pester.instructions.md
+    kind: instruction
   - path: .github/instructions/coding-standards/powershell/powershell.instructions.md
     kind: instruction
   - path: .github/instructions/coding-standards/python-script.instructions.md
