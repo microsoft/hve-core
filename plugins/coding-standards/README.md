@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Coding Standards
 
-Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform projects
+Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
 
 ## Install
 
@@ -19,6 +19,8 @@ copilot plugin install coding-standards@hve-core
 | csharp-tests      | Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                             |
 | pester            | Instructions for Pester testing conventions - Brought to you by microsoft/hve-core                                                                                                                                                                          |
 | powershell        | Instructions for PowerShell scripting implementation - Brought to you by microsoft/hve-core                                                                                                                                                                 |
+| rust              | Required instructions for Rust research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                                              |
+| rust-tests        | Required instructions for Rust test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                                    |
 | python-script     | Instructions for Python scripting implementation - Brought to you by microsoft/hve-core                                                                                                                                                                     |
 | terraform         | Instructions for Terraform infrastructure as code implementation - Brought to you by microsoft/hve-core                                                                                                                                                     |
 | uv-projects       | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |

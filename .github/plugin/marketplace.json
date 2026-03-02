@@ -24,7 +24,7 @@
     {
       "name": "coding-standards",
       "source": "coding-standards",
-      "description": "Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform projects",
+      "description": "Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
       "version": "3.1.46"
     },
     {

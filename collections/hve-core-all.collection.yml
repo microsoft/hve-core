@@ -199,6 +199,10 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/python-script.instructions.md
   kind: instruction
+- path: .github/instructions/coding-standards/rust/rust-tests.instructions.md
+  kind: instruction
+- path: .github/instructions/coding-standards/rust/rust.instructions.md
+  kind: instruction
 - path: .github/instructions/coding-standards/terraform/terraform.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/uv-projects.instructions.md
