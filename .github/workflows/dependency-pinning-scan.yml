@@ -12,7 +12,7 @@ on:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'github-actions'
+        default: 'github-actions,npm,workflow-npm-commands'
       soft-fail:
         description: 'Whether to continue on compliance violations'
         required: false
