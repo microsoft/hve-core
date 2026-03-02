@@ -2,6 +2,10 @@ HVE Core provides the complete collection of AI chat agents, prompts, instructio
 
 Use this edition when you want access to everything without choosing a focused collection.
 
+Code review agents included:
+
+- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+
 Supporting subagents included:
 
 - **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations

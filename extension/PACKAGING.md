@@ -37,11 +37,13 @@ This is a declarative extension: it contributes configuration and file paths, an
 
 ## Prerequisites
 
-Install the VS Code Extension Manager CLI:
+Install project dependencies (includes the VS Code Extension Manager CLI):
 
 ```bash
-npm install -g @vscode/vsce
+npm ci
 ```
+
+After installation, use `npx vsce` to invoke the CLI.
 
 Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
 
@@ -493,10 +495,10 @@ npm run lint:yaml
 Collection manifests are YAML files in `collections/` following this structure:
 
 ```yaml
-id: developer
-name: hve-developer
-displayName: "HVE Core - Developer Edition"
-description: "AI-powered coding agents curated for software engineers"
+id: data-science
+name: hve-data-science
+displayName: "HVE Core - Data Science"
+description: "AI-powered agents for data analysis, notebooks, and dashboards"
 maturity: stable
 items:
   - kind: agent
