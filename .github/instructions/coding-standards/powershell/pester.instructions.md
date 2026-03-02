@@ -11,22 +11,22 @@ Pester 5.x is the testing framework for all PowerShell code. Tests run exclusive
 
 Test files use a `.Tests.ps1` suffix matching the production file name:
 
-| Production file | Test file |
-|---|---|
+| Production file              | Test file                          |
+|------------------------------|------------------------------------|
 | `Test-DependencyPinning.ps1` | `Test-DependencyPinning.Tests.ps1` |
-| `SecurityHelpers.psm1` | `SecurityHelpers.Tests.ps1` |
-| `SecurityClasses.psm1` | `SecurityClasses.Tests.ps1` |
+| `SecurityHelpers.psm1`       | `SecurityHelpers.Tests.ps1`        |
+| `SecurityClasses.psm1`       | `SecurityClasses.Tests.ps1`        |
 
 ## Test File Location
 
 **Mirror directory pattern**: Test files in `scripts/tests/` mirror the production `scripts/` layout. Each production subdirectory has a corresponding test subdirectory:
 
-| Production directory | Test directory |
-|---|---|
+| Production directory   | Test directory               |
+|------------------------|------------------------------|
 | `scripts/collections/` | `scripts/tests/collections/` |
-| `scripts/linting/` | `scripts/tests/linting/` |
-| `scripts/security/` | `scripts/tests/security/` |
-| `scripts/lib/` | `scripts/tests/lib/` |
+| `scripts/linting/`     | `scripts/tests/linting/`     |
+| `scripts/security/`    | `scripts/tests/security/`    |
+| `scripts/lib/`         | `scripts/tests/lib/`         |
 
 **Co-located skill tests**: Skills place tests inside the skill directory rather than the mirror tree:
 
@@ -224,23 +224,23 @@ AfterAll {
 
 ## Assertion Reference
 
-| Assertion | Usage |
-|---|---|
-| `Should -Be` | Exact value equality |
-| `Should -BeExactly` | Case-sensitive equality |
-| `Should -BeTrue` / `-BeFalse` | Boolean checks |
-| `Should -BeNullOrEmpty` | Null or empty string |
-| `Should -Not -BeNullOrEmpty` | Non-null and non-empty |
-| `Should -Match` | Regex matching |
-| `Should -BeLike` | Wildcard matching |
-| `Should -Contain` | Collection membership |
-| `Should -BeOfType` | Type assertion |
-| `Should -HaveCount` | Collection length |
-| `Should -Throw` | Exception expected |
-| `Should -Not -Throw` | No exception expected |
-| `Should -BeGreaterThan` | Numeric comparison |
-| `Should -BeLessThan` | Numeric comparison |
-| `Should -Invoke` | Mock call verification |
+| Assertion                     | Usage                   |
+|-------------------------------|-------------------------|
+| `Should -Be`                  | Exact value equality    |
+| `Should -BeExactly`           | Case-sensitive equality |
+| `Should -BeTrue` / `-BeFalse` | Boolean checks          |
+| `Should -BeNullOrEmpty`       | Null or empty string    |
+| `Should -Not -BeNullOrEmpty`  | Non-null and non-empty  |
+| `Should -Match`               | Regex matching          |
+| `Should -BeLike`              | Wildcard matching       |
+| `Should -Contain`             | Collection membership   |
+| `Should -BeOfType`            | Type assertion          |
+| `Should -HaveCount`           | Collection length       |
+| `Should -Throw`               | Exception expected      |
+| `Should -Not -Throw`          | No exception expected   |
+| `Should -BeGreaterThan`       | Numeric comparison      |
+| `Should -BeLessThan`          | Numeric comparison      |
+| `Should -Invoke`              | Mock call verification  |
 
 ## Running Tests
 
