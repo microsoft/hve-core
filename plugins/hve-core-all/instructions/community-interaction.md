@@ -1,1 +1,1 @@
-../../../.github/instructions/community-interaction.instructions.md
+../../../.github/instructions/github/community-interaction.instructions.md

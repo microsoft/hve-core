@@ -1,1 +1,0 @@
-../../../.github/instructions/prompt-builder.instructions.md

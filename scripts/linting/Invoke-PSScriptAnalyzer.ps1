@@ -68,8 +68,7 @@ function Invoke-PSScriptAnalyzerCore {
     }
     else {
         Write-Host "Analyzing all PowerShell files..." -ForegroundColor Cyan
-        $gitignorePath = Join-Path (git rev-parse --show-toplevel 2>$null) ".gitignore"
-        $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1') -GitIgnorePath $gitignorePath)
+        $filesToAnalyze = @(Get-FilesRecursive -Path "." -Include @('*.ps1', '*.psm1', '*.psd1'))
     }
 
     if (@($filesToAnalyze).Count -eq 0) {
@@ -187,6 +186,12 @@ function Invoke-PSScriptAnalyzerCore {
 #region Main Execution
 
 if ($MyInvocation.InvocationName -ne '.') {
+    # Strip /mnt/* paths from PATH to avoid slow 9P cross-filesystem
+    # lookups in WSL. PSScriptAnalyzer resolves commands by scanning every
+    # PATH directory per file; Windows mount points add ~40s per file.
+    $env:PATH = ($env:PATH -split [System.IO.Path]::PathSeparator |
+        Where-Object { $_ -notlike '/mnt/*' }) -join [System.IO.Path]::PathSeparator
+
     try {
         Invoke-PSScriptAnalyzerCore -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -ConfigPath $ConfigPath -OutputPath $OutputPath
         exit 0

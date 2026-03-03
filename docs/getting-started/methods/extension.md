@@ -1,6 +1,7 @@
 ---
 title: VS Code Extension Installation
 description: Install HVE-Core as a VS Code extension from the marketplace
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-01-07
 ms.topic: how-to
@@ -42,7 +43,7 @@ VS Code Extension System
 │   ├── .github/agents/         # All chat agents
 │   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
-│   └── scripts/dev-tools/      # PR reference generation
+│   └── .github/skills/         # All skill packages
 └── Only optional workspace configuration needed!
 ```
 
@@ -105,7 +106,7 @@ The extension provides all HVE-Core components:
 | Chat Agents  | task-planner, pr-review, adr-creation   |
 | Prompts      | git-commit, pull-request, ado-create-pr |
 | Instructions | markdown, python-script, commit-message |
-| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh |
+| Skills       | pr-reference, video-to-gif              |
 
 ## Updating
 
@@ -119,21 +120,25 @@ The extension updates automatically through VS Code's extension system:
 
 ### Pros ✅
 
-* **Zero configuration** - No workspace settings or file cloning required
-* **Works everywhere** - Local, devcontainers, Codespaces, any environment
-* **Automatic updates** - VS Code manages updates seamlessly
-* **No repository pollution** - Nothing added to your project
-* **Instant availability** - Works immediately after installation
-* **No manual setup** - No scripts to run or paths to configure
-* **Marketplace managed** - Centralized distribution and versioning
+| Advantage               | Detail                                            |
+|-------------------------|---------------------------------------------------|
+| Zero configuration      | No workspace settings or file cloning required    |
+| Works everywhere        | Local, devcontainers, Codespaces, any environment |
+| Automatic updates       | VS Code manages updates automatically             |
+| No repository pollution | Nothing added to your project                     |
+| Instant availability    | Works immediately after installation              |
+| No manual setup         | No scripts to run or paths to configure           |
+| Marketplace managed     | Centralized distribution and versioning           |
 
 ### Cons ❌
 
-* **No customization** - Can't modify custom agents, prompts, or instructions
-* **Extension updates only** - Can't easily test development versions
-* **No version pinning** - Uses latest version (or opt into pre-release)
-* **No team control** - Can't enforce specific versions across team
-* **Limited flexibility** - Can't combine with custom local modifications
+| Limitation             | Detail                                               |
+|------------------------|------------------------------------------------------|
+| No customization       | Can't modify custom agents, prompts, or instructions |
+| Extension updates only | Testing development versions requires extra setup    |
+| No version pinning     | Uses latest version (or opt into pre-release)        |
+| No team control        | Can't enforce specific versions across team          |
+| Limited flexibility    | Can't combine with custom local modifications        |
 
 ## Common Scenarios
 
@@ -242,18 +247,18 @@ If you have both extension and manual installation (like Peer Clone):
 
 If you're currently using manual methods like Peer Clone:
 
-1. **Remove workspace settings** - Delete HVE-Core paths from `.vscode/settings.json`
-2. **Optionally remove cloned folder** - Delete hve-core clone if no longer needed
-3. **Install extension** - Follow Quick Start above
-4. **Verify** - Test agents appear in Copilot Chat
+1. Delete HVE-Core paths from `.vscode/settings.json`
+2. Optionally remove the hve-core clone if no longer needed
+3. Install the extension following the Quick Start above
+4. Verify agents appear in Copilot Chat
 
 ### From Extension to Manual Installation
 
 If you need customization:
 
-1. **Uninstall extension** - Extensions view → Uninstall "HVE Core"
-2. **Follow manual method** - See [Peer Clone](peer-clone.md) for local customization
-3. **Customize** - Edit custom agents, prompts, or instructions as needed
+1. Uninstall the extension from Extensions view
+2. Follow a manual method such as [Peer Clone](peer-clone.md) for local customization
+3. Customize agents, prompts, or instructions as needed
 
 ## Limitations
 

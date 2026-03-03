@@ -16,10 +16,10 @@ A pre-configured development environment that includes all tools, extensions, an
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-- Git
+* [Docker Desktop](https://www.docker.com/products/docker-desktop)
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+* Git
 
 ## Quick Start
 
@@ -37,41 +37,46 @@ A pre-configured development environment that includes all tools, extensions, an
    ```
 
 3. Reopen in container:
-   - Press `F1` or `Ctrl+Shift+P`
-   - Select **Dev Containers: Reopen in Container**
-   - Wait for the container to build (first time takes 5-10 minutes)
+   * Press `F1` or `Ctrl+Shift+P`
+   * Select **Dev Containers: Reopen in Container**
+   * Wait for the container to build (first time takes 5-10 minutes)
 
 ## Included Tools
 
 ### Languages & Runtimes
 
-- Node.js (LTS)
-- Python 3.11
-- PowerShell 7.x
+* Node.js 20
+* Python 3.11
+* PowerShell 7.x
 
 ### CLI Tools
 
-- Git
-- GitHub CLI (`gh`)
-- Azure CLI (`az`)
+* Git
+* GitHub CLI (`gh`)
+* Azure CLI (`az`)
+* actionlint (GitHub Actions workflow linter)
 
 ### Code Quality
 
-- **Markdown**: markdownlint, markdown-table-formatter
-- **Spelling**: Code Spell Checker (VS Code extension)
-- **Shell**: shellcheck
-- **Diagrams**: Mermaid CLI
+* **Markdown**: markdownlint, markdown-table-formatter
+* **Spelling**: Code Spell Checker (VS Code extension)
+* **Shell**: shellcheck
 
 ### Security
 
-- Gitleaks (secret scanning)
-- Checkov (infrastructure as code scanning)
+* Gitleaks (secret scanning)
+
+### PowerShell Modules
+
+* PSScriptAnalyzer
+* PowerShell-Yaml
+* Pester 5.7.1
 
 ## Pre-installed VS Code Extensions
 
-- **Spell Checking**: Street Side Software Spell Checker
-- **Markdown**: markdownlint, Markdown All in One, Mermaid support
-- **GitHub**: GitHub Pull Requests
+* **Spell Checking**: Street Side Software Spell Checker
+* **Markdown**: markdownlint, Markdown All in One, Mermaid support
+* **GitHub**: GitHub Pull Requests
 
 ## Common Commands
 

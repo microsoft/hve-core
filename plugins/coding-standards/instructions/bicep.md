@@ -1,1 +1,1 @@
-../../../.github/instructions/bicep/bicep.instructions.md
+../../../.github/instructions/coding-standards/bicep/bicep.instructions.md

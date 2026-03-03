@@ -1,1 +1,1 @@
-../../../.github/prompts/ado-get-build-info.prompt.md
+../../../.github/prompts/ado/ado-get-build-info.prompt.md

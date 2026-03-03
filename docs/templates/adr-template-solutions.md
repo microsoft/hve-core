@@ -1,6 +1,7 @@
 ---
 title: ADR Title
 description: '[The title should be unique within the library, provide a longer title if needed to differentiate with other ADRs]'
+sidebar_position: 1
 author: Name of author(s)
 ms.date: 2025-06-06
 ms.topic: architecture
@@ -187,10 +188,10 @@ After completing the YAML drafting guide above, use this structure for your fina
 
 [Mark the most applicable status for tracking purposes]
 
-- [ ] Draft
-- [ ] Proposed
-- [ ] Accepted
-- [ ] Deprecated
+* [ ] Draft
+* [ ] Proposed
+* [ ] Accepted
+* [ ] Deprecated
 
 ### Context
 
@@ -214,9 +215,9 @@ After completing the YAML drafting guide above, use this structure for your fina
 
 List the key factors that influenced this decision:
 
-- [Driver 1]
-- [Driver 2]
-- [Driver 3]
+* [Driver 1]
+* [Driver 2]
+* [Driver 3]
 
 ### Considered Options (optional)
 

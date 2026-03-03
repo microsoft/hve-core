@@ -1,6 +1,7 @@
 ---
 title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-01-16
 ms.topic: reference
@@ -86,8 +87,10 @@ Navigate to: **Settings → Branches → Branch protection rules → Edit `main`
 
 ## Future Considerations
 
-* **GitHub Rulesets**: Consider migrating to Rulesets for enhanced push restrictions
-* **2 reviewers**: Can be enabled as team grows for Tier 4 (9/10) score
+| Item            | Details                                                       |
+|-----------------|---------------------------------------------------------------|
+| GitHub Rulesets | Consider migrating to Rulesets for enhanced push restrictions |
+| 2 reviewers     | Can be enabled as team grows for Tier 4 (9/10) score          |
 
 ---
 

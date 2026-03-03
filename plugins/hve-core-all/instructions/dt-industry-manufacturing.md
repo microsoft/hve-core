@@ -1,0 +1,1 @@
+../../../.github/instructions/design-thinking/dt-industry-manufacturing.instructions.md

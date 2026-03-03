@@ -1,1 +1,1 @@
-../../../.github/agents/test-streamlit-dashboard.agent.md
+../../../.github/agents/data-science/test-streamlit-dashboard.agent.md

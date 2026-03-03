@@ -337,123 +337,6 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     }
 }
 
-Describe 'Write-OutputResult' -Tag 'Unit' {
-    BeforeAll {
-        $script:TestResults = @(
-            @{
-                FilePath = 'test.yml'
-                ActionsPinned = 2
-                ActionsSkipped = 1
-                Changes = @(
-                    @{ Action = 'actions/checkout@v4'; Status = 'Pinned'; NewRef = 'actions/checkout@abc123' }
-                )
-            }
-        )
-        $script:TestSummary = 'Processed 1 file, pinned 2 actions'
-    }
-
-    Context 'JSON output format' {
-        It 'Creates valid JSON output' {
-            $tempPath = Join-Path $TestDrive 'output.json'
-
-            Write-OutputResult -OutputFormat 'json' -Results $script:TestResults -Summary $script:TestSummary -OutputPath $tempPath
-
-            Test-Path $tempPath | Should -BeTrue
-            $content = Get-Content $tempPath -Raw
-            { $content | ConvertFrom-Json } | Should -Not -Throw
-        }
-
-        It 'Includes results in JSON structure' {
-            $tempPath = Join-Path $TestDrive 'results.json'
-
-            Write-OutputResult -OutputFormat 'json' -Results $script:TestResults -Summary $script:TestSummary -OutputPath $tempPath
-
-            $json = Get-Content $tempPath -Raw | ConvertFrom-Json
-            $json | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'AzDO output format' {
-        It 'Emits VSO logging commands' {
-            $script:TestIssueResults = @(
-                @{
-                    Severity = 'High'
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'azdo' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for VSO commands
-            $hasVsoCommand = $output | Where-Object { $_ -match '##vso\[' }
-            $hasVsoCommand | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'GitHub output format' {
-        It 'Emits GitHub Actions workflow commands' {
-            $script:TestIssueResults = @(
-                @{
-                    Severity = 'High'
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'github' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for GitHub commands
-            $hasGitHubCommand = $output | Where-Object { $_ -match '^::\w+' }
-            $hasGitHubCommand | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'Console output format' {
-        It 'Writes summary to console' {
-            # Console format reads from $script:SecurityIssues, so populate it
-            $script:SecurityIssues = @(
-                @{
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                }
-            )
-            Mock Write-Host { }
-
-            # Should not throw
-            { Write-OutputResult -OutputFormat 'console' -Results $script:TestResults -Summary $script:TestSummary } |
-                Should -Not -Throw
-        }
-    }
-
-    Context 'BuildWarning output format' {
-        It 'Emits build warning format' {
-            $script:TestIssueResults = @(
-                @{
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'BuildWarning' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for build warnings
-            $output | Should -Not -BeNullOrEmpty
-            ($output | Where-Object { $_ -match '##\[warning\]' }) | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'Empty results handling' {
-        It 'Handles empty results array' {
-            { Write-OutputResult -OutputFormat 'console' -Results @() -Summary 'No files processed' } |
-                Should -Not -Throw
-        }
-    }
-}
-
 Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
     BeforeEach {
         Initialize-MockCIEnvironment
@@ -699,93 +582,6 @@ Describe 'Set-ContentPreservePermission' -Tag 'Unit' {
     }
 }
 
-Describe 'Add-SecurityIssue' -Tag 'Unit' {
-    BeforeEach {
-        # Reset script-level variable
-        $script:SecurityIssues = @()
-    }
-
-    Context 'Issue accumulation' {
-        It 'Adds issue to SecurityIssues array' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Test Issue' -Description 'Test description'
-
-            $script:SecurityIssues | Should -HaveCount 1
-        }
-
-        It 'Accumulates multiple issues' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Issue 1' -Description 'Desc 1'
-            Add-SecurityIssue -Type 'StaleAction' -Severity 'Medium' -Title 'Issue 2' -Description 'Desc 2'
-
-            $script:SecurityIssues | Should -HaveCount 2
-        }
-    }
-
-    Context 'Issue structure' {
-        It 'Includes all required fields' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'Critical' -Title 'Critical Issue' -Description 'Critical description'
-
-            $issue = $script:SecurityIssues[0]
-            $issue.Type | Should -Be 'UnpinnedAction'
-            $issue.Severity | Should -Be 'Critical'
-            $issue.Title | Should -Be 'Critical Issue'
-            $issue.Description | Should -Be 'Critical description'
-        }
-
-        It 'Includes optional fields when provided' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Issue' -Description 'Desc' -File 'workflow.yml' -Line '10' -Recommendation 'Pin the action'
-
-            $issue = $script:SecurityIssues[0]
-            $issue.File | Should -Be 'workflow.yml'
-            $issue.Line | Should -Be '10'
-            $issue.Recommendation | Should -Be 'Pin the action'
-        }
-    }
-}
-
-Describe 'Write-SecurityLog' -Tag 'Unit' {
-    Context 'Log levels' {
-        It 'Writes Info level messages' {
-            Mock Write-Host { } -Verifiable
-
-            Write-SecurityLog -Message 'Info message' -Level 'Info'
-
-            Should -InvokeVerifiable
-        }
-
-        It 'Writes Warning level messages with Warning prefix' {
-            # Write-SecurityLog uses Write-Host for all levels with a prefix
-            $captured = $null
-            Mock Write-Host { param($Object) $script:captured = $Object }
-
-            Write-SecurityLog -Message 'Warning message' -Level 'Warning'
-
-            $script:captured | Should -Match '\[Warning\]'
-            $script:captured | Should -Match 'Warning message'
-        }
-
-        It 'Writes Error level messages with Error prefix' {
-            # Write-SecurityLog uses Write-Host for all levels with a prefix
-            $captured = $null
-            Mock Write-Host { param($Object) $script:captured = $Object }
-
-            Write-SecurityLog -Message 'Error message' -Level 'Error'
-
-            $script:captured | Should -Match '\[Error\]'
-            $script:captured | Should -Match 'Error message'
-        }
-    }
-
-    Context 'Default level' {
-        It 'Uses Info as default level' {
-            Mock Write-Host { } -Verifiable
-
-            Write-SecurityLog -Message 'Default level message'
-
-            Should -InvokeVerifiable
-        }
-    }
-}
-
 Describe 'Get-SHAForAction - Already Pinned' -Tag 'Unit' {
     BeforeAll {
         $script:OriginalGitHubToken = $env:GITHUB_TOKEN
@@ -916,12 +712,12 @@ jobs:
             Set-Content (Join-Path $workDir 'ci.yml') -Value $content
 
             Mock Write-SecurityLog { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock Get-SHAForAction { return "actions/checkout@$sha" }
 
             Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console'
 
-            Should -Invoke Write-OutputResult -Times 1
+            Should -Invoke Write-SecurityOutput -Times 1
         }
     }
 
@@ -940,7 +736,7 @@ jobs:
       - run: echo hi
 '@
             Mock Write-SecurityLog { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock Export-SecurityReport { return (Join-Path $TestDrive 'report.json') }
 
             Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputReport -OutputFormat 'console'
@@ -965,13 +761,13 @@ jobs:
         uses: some-unknown/action@v1
 '@
             Mock Write-SecurityLog { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock Get-SHAForAction { return $null }
-            Mock Add-SecurityIssue { }
+            Mock New-SecurityIssue { return [PSCustomObject]@{Type='';Severity='';Title='';Description=''} }
 
             Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console'
 
-            Should -Invoke Add-SecurityIssue -Times 1
+            Should -Invoke New-SecurityIssue -Times 1
         }
     }
 
@@ -994,7 +790,7 @@ jobs:
             Set-Content $filePath -Value $content
 
             Mock Write-SecurityLog { }
-            Mock Write-OutputResult { }
+            Mock Write-SecurityOutput { }
             Mock Get-SHAForAction { return "actions/checkout@$sha" }
 
             Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console' -WhatIf

@@ -1,1 +1,1 @@
-../../../.github/agents/arch-diagram-builder.agent.md
+../../../.github/agents/project-planning/arch-diagram-builder.agent.md

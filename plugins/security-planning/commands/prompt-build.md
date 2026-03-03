@@ -1,1 +1,0 @@
-../../../.github/prompts/prompt-build.prompt.md

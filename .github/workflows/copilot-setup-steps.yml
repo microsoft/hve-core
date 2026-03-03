@@ -12,6 +12,14 @@ name: "Copilot Setup Steps"
 on:
   workflow_dispatch:
 
+# Minimal permissions
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
@@ -61,6 +69,7 @@ jobs:
         run: |
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
       - name: Verify tool availability
         run: |

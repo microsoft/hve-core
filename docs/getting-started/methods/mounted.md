@@ -1,6 +1,7 @@
 ---
 title: Mounted Directory Installation
 description: Advanced devcontainer setup mounting HVE-Core from host filesystem
+sidebar_position: 5
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -160,9 +161,36 @@ After rebuild, update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-  "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-  "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+  "chat.agentFilesLocations": {
+    "/workspaces/hve-core/.github/agents/ado": true,
+    "/workspaces/hve-core/.github/agents/data-science": true,
+    "/workspaces/hve-core/.github/agents/design-thinking": true,
+    "/workspaces/hve-core/.github/agents/github": true,
+    "/workspaces/hve-core/.github/agents/installer": true,
+    "/workspaces/hve-core/.github/agents/project-planning": true,
+    "/workspaces/hve-core/.github/agents/hve-core": true,
+    "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+    "/workspaces/hve-core/.github/agents/security-planning": true
+  },
+  "chat.promptFilesLocations": {
+    "/workspaces/hve-core/.github/prompts/ado": true,
+    "/workspaces/hve-core/.github/prompts/design-thinking": true,
+    "/workspaces/hve-core/.github/prompts/github": true,
+    "/workspaces/hve-core/.github/prompts/hve-core": true,
+    "/workspaces/hve-core/.github/prompts/security-planning": true
+  },
+  "chat.instructionsFilesLocations": {
+    "/workspaces/hve-core/.github/instructions/ado": true,
+    "/workspaces/hve-core/.github/instructions/coding-standards": true,
+    "/workspaces/hve-core/.github/instructions/design-thinking": true,
+    "/workspaces/hve-core/.github/instructions/github": true,
+    "/workspaces/hve-core/.github/instructions/hve-core": true,
+    "/workspaces/hve-core/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    "/workspaces/hve-core/.github/skills": true,
+    "/workspaces/hve-core/.github/skills/shared": true
+  }
 }
 ```
 
@@ -173,9 +201,36 @@ After rebuild, update `.vscode/settings.json`:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/data-science": true,
+          "/workspaces/hve-core/.github/agents/design-thinking": true,
+          "/workspaces/hve-core/.github/agents/github": true,
+          "/workspaces/hve-core/.github/agents/installer": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
+          "/workspaces/hve-core/.github/agents/hve-core": true,
+          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/security-planning": true
+        },
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/design-thinking": true,
+          "/workspaces/hve-core/.github/prompts/github": true,
+          "/workspaces/hve-core/.github/prompts/hve-core": true,
+          "/workspaces/hve-core/.github/prompts/security-planning": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions/ado": true,
+          "/workspaces/hve-core/.github/instructions/coding-standards": true,
+          "/workspaces/hve-core/.github/instructions/design-thinking": true,
+          "/workspaces/hve-core/.github/instructions/github": true,
+          "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
+        }
       }
     }
   }
@@ -208,9 +263,36 @@ ls /workspaces/hve-core/.github/agents
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.agentFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/data-science": true,
+          "/workspaces/hve-core/.github/agents/design-thinking": true,
+          "/workspaces/hve-core/.github/agents/github": true,
+          "/workspaces/hve-core/.github/agents/installer": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
+          "/workspaces/hve-core/.github/agents/hve-core": true,
+          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/security-planning": true
+        },
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/design-thinking": true,
+          "/workspaces/hve-core/.github/prompts/github": true,
+          "/workspaces/hve-core/.github/prompts/hve-core": true,
+          "/workspaces/hve-core/.github/prompts/security-planning": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions/ado": true,
+          "/workspaces/hve-core/.github/instructions/coding-standards": true,
+          "/workspaces/hve-core/.github/instructions/design-thinking": true,
+          "/workspaces/hve-core/.github/instructions/github": true,
+          "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
+        }
       }
     }
   }

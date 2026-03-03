@@ -1,1 +1,1 @@
-../../../.github/instructions/python-script.instructions.md
+../../../.github/instructions/coding-standards/python-script.instructions.md

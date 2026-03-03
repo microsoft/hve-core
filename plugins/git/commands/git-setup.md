@@ -1,1 +1,0 @@
-../../../.github/prompts/git-setup.prompt.md

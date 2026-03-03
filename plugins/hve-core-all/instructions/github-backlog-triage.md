@@ -1,1 +1,1 @@
-../../../.github/instructions/github-backlog-triage.instructions.md
+../../../.github/instructions/github/github-backlog-triage.instructions.md

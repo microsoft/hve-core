@@ -1,6 +1,7 @@
 ---
 title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-01-31
 ms.topic: reference
@@ -62,11 +63,11 @@ param(
 
 ## References
 
-- [Microsoft Open Source](https://opensource.microsoft.com/) - Microsoft's open source program and governance
-- [SPDX License List](https://spdx.org/licenses/) - Standard license identifiers
-- [SPDX License Identifier Specification](https://spdx.github.io/spdx-spec/v2.3/using-SPDX-short-identifiers-in-source-files/) - How to use SPDX identifiers in source files
-- [OpenSSF Best Practices Badge Criteria](https://www.bestpractices.dev/en/criteria/2) - Gold level requirements
-- [PowerShell/PowerShell header example](https://github.com/PowerShell/PowerShell/blob/master/tools/Sign-Package.ps1) - Reference implementation
+* [Microsoft Open Source](https://opensource.microsoft.com/) - Microsoft's open source program and governance
+* [SPDX License List](https://spdx.org/licenses/) - Standard license identifiers
+* [SPDX License Identifier Specification](https://spdx.github.io/spdx-spec/v2.3/using-SPDX-short-identifiers-in-source-files/) - How to use SPDX identifiers in source files
+* [OpenSSF Best Practices Badge Criteria](https://www.bestpractices.dev/en/criteria/2) - Gold level requirements
+* [PowerShell/PowerShell header example](https://github.com/PowerShell/PowerShell/blob/master/tools/Sign-Package.ps1) - Reference implementation
 
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: Root Cause Analysis (RCA) Template
 description: Structured post-incident documentation template for root cause analysis
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-04
 ---
@@ -137,9 +138,9 @@ All times in UTC.
 
 ## References
 
-- [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
-- [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
-- [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
+* [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
+* [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
+* [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
 
 ---
 

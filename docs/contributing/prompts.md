@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
+sidebar_position: 4
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -28,12 +29,16 @@ Create a prompt when you need to:
 
 ### Location
 
-All prompt files **MUST** be placed in:
+Prompt files are typically organized in a collection subdirectory by convention:
 
 ```text
-.github/prompts/
+.github/prompts/{collection-id}/
 └── your-prompt-name.prompt.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -72,17 +77,6 @@ Prompt files **MUST**:
   * `workflow` - Automated workflow/pipeline context
 * **Example**: `workflow`
 
-**`maturity`** (string enum, MANDATORY)
-
-* **Purpose**: Controls which extension channel includes this prompt
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New prompts should use `stable` unless targeting early adopters
-* **Example**: `stable`
-
 ### Optional Fields
 
 **`category`** (string enum)
@@ -116,13 +110,43 @@ Prompt files **MUST**:
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
 mode: 'workflow'
-maturity: 'stable'
 category: 'ado'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Collection Entry Requirements
+
+All prompts must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+
+### Adding Your Prompt to a Collection
+
+After creating your prompt file, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+  # path can reference artifacts from any subfolder
+  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
+    kind: prompt
+    maturity: stable
+```
+
+### Selecting Collections for Prompts
+
+Choose collections based on who invokes or benefits from the workflow:
+
+| Prompt Type             | Recommended Collections                   |
+|-------------------------|-------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `hve-core`                |
+| ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
+| GitHub issue workflows  | `hve-core-all`, `github`                  |
+| RPI workflow prompts    | `hve-core-all`, `hve-core`                |
+| Documentation workflows | `hve-core-all`, `hve-core`                |
+| Architecture prompts    | `hve-core-all`, `project-planning`        |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## Prompt Content Structure Standards
 
@@ -429,7 +453,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity field set appropriately (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] Maturity set in collection item (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined
@@ -506,11 +530,11 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/` (the conventional location for prompt files).
 
 ---
 

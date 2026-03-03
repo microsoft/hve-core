@@ -1,1 +1,0 @@
-../../../.github/agents/task-implementor.agent.md

@@ -1,1 +1,1 @@
-../../../.github/instructions/github-backlog-discovery.instructions.md
+../../../.github/instructions/github/github-backlog-discovery.instructions.md

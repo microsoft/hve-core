@@ -22,6 +22,7 @@
     "**/package-lock.json",
     "Cargo.lock",
     "**/Cargo.lock",
+    "CHANGELOG.md",
     "logs/**"
   ],
   "ignoreRegExpList": [
@@ -51,6 +52,7 @@
     "docker",
     "rust",
     "data-science",
+    "design-thinking",
     "aws",
     "terraform",
     "azure-services",
@@ -59,26 +61,10 @@
     "general-technical"
   ],
   "words": [
-    "autobuild",
     "behaviour",
-    "Browsable",
-    "Chronograf",
-    "edgeai",
-    "GHCP",
-    "GHSA",
-    "Kapacitor",
-    "kata",
-    "katas",
+    "brainwriting",
     "learning",
-    "MMDD",
-    "pullrequest",
-    "rhysd",
-    "SARIF",
-    "Segoe",
-    "streamlit",
-    "Streamlit",
-    "vscodeignore",
-    "\u02c8pr\u00e6ks\u026as",
-    "\u03c0\u03c1\u1fb6\u03be\u03b9\u03c2"
+    "ˈpræksɪs",
+    "πρᾶξις"
   ]
 }

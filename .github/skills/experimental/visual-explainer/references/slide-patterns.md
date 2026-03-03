@@ -1,4 +1,9 @@
-# Slide Deck Patterns
+---
+title: Slide Deck Patterns
+description: CSS patterns, JS engine, slide type layouts, transitions, and curated presets for self-contained HTML slide presentations
+---
+
+## Overview
 
 CSS patterns, JS engine, slide type layouts, transitions, navigation chrome, and curated presets for self-contained HTML slide presentations. All slides are viewport-fit (100dvh), single-file, same philosophy as scrollable pages.
 

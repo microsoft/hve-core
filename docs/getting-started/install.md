@@ -1,6 +1,7 @@
 ---
 title: Installing HVE-Core
 description: Choose the right installation method for your environment
+sidebar_position: 2
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -84,6 +85,41 @@ Answer these questions to find your recommended installation method:
 | Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
+
+## Collection Packages
+
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. Clone-based methods let you select any collection during setup.
+
+| Collection        | Collection ID       | Maturity     | Description                                                      |
+|-------------------|---------------------|--------------|------------------------------------------------------------------|
+| **Full** ⭐        | `hve-core-all`      | Stable       | All stable artifacts (recommended for most)                      |
+| HVE Core Workflow | `hve-core`          | Stable       | RPI workflow with Git commit, merge, and pull request prompts    |
+| Azure DevOps      | `ado`               | Stable       | Work item management, build monitoring, and PR creation          |
+| Coding Standards  | `coding-standards`  | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc. |
+| Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
+| Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
+| GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
+| Installer         | `installer`         | Stable       | Interactive installer agent for workspace configuration          |
+| Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
+| Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
+| Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
+
+### Extension Installation (Full Collection)
+
+The VS Code Marketplace extension installs the **Full** collection containing all stable artifacts. This is the recommended approach for most users.
+
+### Clone Methods (Collection Filtering)
+
+Clone-based installation methods support collection-based agent filtering through the installer agent:
+
+1. Clone the repository using your preferred method
+2. Run the `hve-core-installer` agent
+3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
+
+The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
+
+> [!NOTE]
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
 
 ### Quick Decision Tree
 
@@ -200,8 +236,8 @@ If you use agents like `ado-prd-to-wit` or `github-backlog-manager`, see [MCP Se
 ## Next Steps
 
 * [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../rpi/README.md) - Research, Plan, Implement methodology
-* [Contributing](../contributing/README.md) - Contribute to HVE-Core
+* [RPI Workflow](../rpi/) - Research, Plan, Implement methodology
+* [Contributing](../contributing/) - Contribute to HVE-Core
 
 ---
 

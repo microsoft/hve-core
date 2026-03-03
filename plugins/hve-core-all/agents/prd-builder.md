@@ -1,1 +1,1 @@
-../../../.github/agents/prd-builder.agent.md
+../../../.github/agents/project-planning/prd-builder.agent.md

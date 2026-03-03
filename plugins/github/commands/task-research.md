@@ -1,1 +1,0 @@
-../../../.github/prompts/task-research.prompt.md

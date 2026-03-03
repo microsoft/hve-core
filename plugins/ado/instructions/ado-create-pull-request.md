@@ -1,1 +1,1 @@
-../../../.github/instructions/ado-create-pull-request.instructions.md
+../../../.github/instructions/ado/ado-create-pull-request.instructions.md

@@ -25,7 +25,7 @@ jobs:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     with:
       soft-fail: true
       upload-sarif: true
@@ -46,7 +46,7 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
       actions: read
 
   # Job 4: Generate consolidated summary
