@@ -34,6 +34,9 @@
 .PARAMETER SourcePath
     Source PPTX for partial rebuilds. Optional for Build.
 
+.PARAMETER TemplatePath
+    Template PPTX file path for themed builds. Optional for Build.
+
 .PARAMETER Slides
     Comma-separated slide numbers to rebuild. Requires SourcePath. Optional for Build.
 
@@ -54,6 +57,9 @@
 
 .EXAMPLE
     ./Invoke-PptxPipeline.ps1 -Action Validate -InputPath slide-deck/presentation.pptx -ContentDir content/
+
+.EXAMPLE
+    ./Invoke-PptxPipeline.ps1 -Action Build -ContentDir content/ -StylePath content/global/style.yaml -OutputPath slide-deck/presentation.pptx -TemplatePath template.pptx
 
 .EXAMPLE
     ./Invoke-PptxPipeline.ps1 -Action Build -ContentDir content/ -StylePath content/global/style.yaml -OutputPath slide-deck/presentation.pptx -SourcePath slide-deck/presentation.pptx -Slides "3,7,15"
@@ -82,6 +88,9 @@ param(
 
     [Parameter()]
     [string]$OutputDir,
+
+    [Parameter()]
+    [string]$TemplatePath,
 
     [Parameter()]
     [string]$SourcePath,
@@ -293,6 +302,10 @@ function Invoke-BuildDeck {
         '--output', $OutputPath
     )
 
+    if ($TemplatePath) {
+        $arguments += '--template'
+        $arguments += $TemplatePath
+    }
     if ($SourcePath) {
         $arguments += '--source'
         $arguments += $SourcePath

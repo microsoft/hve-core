@@ -12,79 +12,86 @@ from pathlib import Path
 import yaml
 from pptx import Presentation
 
-
-def emu_to_inches(emu_val) -> float:
-    """Convert EMU to inches, rounded to 3 decimal places."""
-    if emu_val is None:
-        return 0.0
-    return round(emu_val / 914400, 3)
-
-
-def rgb_to_hex(rgb_color) -> str | None:
-    """Convert an RGBColor to a hex string."""
-    if rgb_color is None:
-        return None
-    return f"#{rgb_color}"
-
-
-def extract_font_info(font) -> dict:
-    """Extract font information from a python-pptx font object."""
-    info = {}
-    if font.name:
-        info["font"] = font.name
-    if font.size:
-        info["size"] = int(font.size.pt)
-    try:
-        if font.color and font.color.rgb:
-            info["color"] = rgb_to_hex(font.color.rgb)
-    except (AttributeError, TypeError):
-        pass
-    if font.bold:
-        info["bold"] = True
-    if font.italic:
-        info["italic"] = True
-    return info
+from pptx_colors import extract_color, hex_brightness, rgb_to_hex
+from pptx_fills import extract_fill, extract_line
+from pptx_fonts import (
+    extract_alignment,
+    extract_font_info,
+    extract_paragraph_font,
+    normalize_font_family,
+)
+from pptx_shapes import AUTO_SHAPE_NAME_MAP, extract_rotation
+from pptx_text import (
+    extract_paragraph_properties,
+    extract_run_properties,
+    extract_text_frame_properties,
+)
+from pptx_utils import emu_to_inches
 
 
-def extract_rotation(shape) -> float | None:
-    """Extract rotation in degrees, returning None when zero."""
-    rot = shape.rotation
-    if rot and rot != 0.0:
-        return rot
-    return None
+def extract_connector(shape) -> dict:
+    """Extract a connector element definition."""
+    elem = {
+        "type": "connector",
+        "begin_x": emu_to_inches(shape.begin_x),
+        "begin_y": emu_to_inches(shape.begin_y),
+        "end_x": emu_to_inches(shape.end_x),
+        "end_y": emu_to_inches(shape.end_y),
+        "name": shape.name,
+    }
+    line_props = extract_line(shape)
+    if line_props:
+        elem.update(line_props)
+    return elem
 
 
-def extract_paragraph_font(paragraph) -> dict:
-    """Extract font properties from a paragraph's default run properties.
-
-    python-pptx exposes paragraph-level defaults via ``paragraph.font``.
-    Many PPTX files store styling here rather than on individual runs.
-    """
-    info = {}
-    font = paragraph.font
-    if font.name:
-        info["font"] = font.name
-    if font.size:
-        info["size"] = int(font.size.pt)
-    try:
-        if font.color and font.color.rgb:
-            info["color"] = rgb_to_hex(font.color.rgb)
-    except (AttributeError, TypeError):
-        pass
-    if font.bold is True:
-        info["bold"] = True
-    if font.italic is True:
-        info["italic"] = True
-    return info
+def extract_group(shape, slide_num: int, output_dir, img_count: int) -> dict:
+    """Extract a group shape and its nested child elements."""
+    elem = {
+        "type": "group",
+        "left": emu_to_inches(shape.left),
+        "top": emu_to_inches(shape.top),
+        "width": emu_to_inches(shape.width),
+        "height": emu_to_inches(shape.height),
+        "name": shape.name,
+        "elements": [],
+    }
+    for child in shape.shapes:
+        child_elem = extract_child_shape(child, slide_num, output_dir, img_count)
+        if child_elem:
+            elem["elements"].append(child_elem)
+    return elem
 
 
-def extract_alignment(paragraph) -> str | None:
-    """Map a paragraph alignment enum to a string."""
-    al = paragraph.alignment
-    if al is None:
-        return None
-    mapping = {1: "left", 2: "center", 3: "right", 4: "justify"}
-    return mapping.get(int(al))
+def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
+    """Extract a single child shape within a group."""
+    shape_type = shape.shape_type
+    if shape_type == 13:  # PICTURE
+        return extract_image(shape, output_dir, slide_num, img_count)
+    elif shape_type == 17:  # TEXT_BOX
+        return extract_textbox(shape)
+    elif shape_type == 1:  # AUTO_SHAPE
+        return extract_shape(shape)
+    elif shape_type == 9:  # LINE / CONNECTOR
+        return extract_connector(shape)
+    elif shape_type == 6:  # Nested GROUP
+        return extract_group(shape, slide_num, output_dir, img_count)
+    elif hasattr(shape, "has_table") and shape.has_table:
+        from pptx_tables import extract_table
+        return extract_table(shape)
+    elif hasattr(shape, "has_chart") and shape.has_chart:
+        from pptx_charts import extract_chart
+        return extract_chart(shape)
+    return {
+        "type": "shape",
+        "shape": "rectangle",
+        "left": emu_to_inches(shape.left),
+        "top": emu_to_inches(shape.top),
+        "width": emu_to_inches(shape.width),
+        "height": emu_to_inches(shape.height),
+        "name": shape.name,
+        "_unrecognized_shape_type": int(shape_type),
+    }
 
 
 def extract_shape(shape) -> dict:
@@ -103,39 +110,45 @@ def extract_shape(shape) -> dict:
     if rot is not None:
         elem["rotation"] = rot
 
-    # Detect shape type from name
-    name_lower = shape.name.lower()
-    if "rounded" in name_lower:
-        elem["shape"] = "rounded_rectangle"
-    elif "oval" in name_lower or "circle" in name_lower:
-        elem["shape"] = "oval"
-    elif "arrow" in name_lower:
-        elem["shape"] = "right_arrow"
-    elif "chevron" in name_lower:
-        elem["shape"] = "chevron"
-
-    # Extract fill color
+    # Detect shape type from auto_shape_type enum
     try:
-        fill = shape.fill
-        if fill.type is not None:
-            color = rgb_to_hex(fill.fore_color.rgb)
-            if color:
-                elem["fill"] = color
+        elem["shape"] = AUTO_SHAPE_NAME_MAP.get(shape.auto_shape_type, "rectangle")
+    except (AttributeError, TypeError):
+        elem["shape"] = "rectangle"
+
+    # Extract fill
+    try:
+        fill_result = extract_fill(shape.fill)
+        if fill_result is not None:
+            elem["fill"] = fill_result
     except (AttributeError, TypeError):
         pass
+
+    # Extract line properties
+    line_props = extract_line(shape)
+    if line_props:
+        elem.update(line_props)
 
     # Extract text if present
     if shape.has_text_frame:
         text = shape.text_frame.text.strip()
         if text:
             elem["text"] = text
+
+            # Extract text frame-level properties
+            tf_props = extract_text_frame_properties(shape.text_frame)
+            if tf_props:
+                elem.update(tf_props)
+
             # Extract text styling: try run-level first, fall back to paragraph-level
             for para in shape.text_frame.paragraphs:
                 run_info = {}
                 for run in para.runs:
                     run_info = extract_font_info(run.font)
+                    run_info.update(extract_run_properties(run))
                     break
                 para_info = extract_paragraph_font(para)
+                para_spacing = extract_paragraph_properties(para)
                 # Merge: run-level wins, paragraph-level fills gaps
                 merged = {**para_info, **run_info}
                 if "font" in merged:
@@ -146,6 +159,12 @@ def extract_shape(shape) -> dict:
                     elem["text_color"] = merged["color"]
                 if merged.get("bold"):
                     elem["text_bold"] = True
+                if merged.get("underline"):
+                    elem["underline"] = True
+                if merged.get("hyperlink"):
+                    elem["hyperlink"] = merged["hyperlink"]
+                if para_spacing:
+                    elem.update(para_spacing)
                 break
 
     return elem
@@ -169,17 +188,26 @@ def extract_textbox(shape) -> dict:
 
     # Check if this is a rich text element (multiple runs with different formatting)
     if shape.has_text_frame:
+        # Extract text frame-level properties (margins, auto_size, vertical_anchor)
+        tf_props = extract_text_frame_properties(shape.text_frame)
+        if tf_props:
+            elem.update(tf_props)
+
         runs = []
         para_info = {}
         alignment = None
+        para_spacing = {}
         for para in shape.text_frame.paragraphs:
             if not para_info:
                 para_info = extract_paragraph_font(para)
             if alignment is None:
                 alignment = extract_alignment(para)
+            if not para_spacing:
+                para_spacing = extract_paragraph_properties(para)
             for run in para.runs:
                 font_info = extract_font_info(run.font)
-                runs.append({"text": run.text, **font_info})
+                run_extra = extract_run_properties(run)
+                runs.append({"text": run.text, **font_info, **run_extra})
 
         # If multiple runs with different formatting, mark as rich_text
         if len(runs) > 1:
@@ -191,6 +219,8 @@ def extract_textbox(shape) -> dict:
                 del elem["text"]
                 if alignment:
                     elem["alignment"] = alignment
+                if para_spacing:
+                    elem.update(para_spacing)
                 return elem
 
         # Single-style text box: merge run-level and paragraph-level font info
@@ -211,8 +241,14 @@ def extract_textbox(shape) -> dict:
             elem["font_bold"] = True
         if merged.get("italic"):
             elem["italic"] = True
+        if merged.get("underline"):
+            elem["underline"] = True
+        if merged.get("hyperlink"):
+            elem["hyperlink"] = merged["hyperlink"]
         if alignment:
             elem["alignment"] = alignment
+        if para_spacing:
+            elem.update(para_spacing)
 
     return elem
 
@@ -276,26 +312,23 @@ def detect_global_style(prs) -> dict:
     for slide in prs.slides:
         # Detect background colors
         try:
-            bg = slide.background
-            if bg.fill.type is not None:
-                color = rgb_to_hex(bg.fill.fore_color.rgb)
-                if color:
-                    bg_colors[color] += 1
+            fill_result = extract_fill(slide.background.fill)
+            if isinstance(fill_result, str):
+                bg_colors[fill_result] += 1
         except (AttributeError, TypeError):
             pass
 
         for shape in slide.shapes:
             # Collect fill colors
             try:
-                if shape.fill.type is not None:
-                    color = rgb_to_hex(shape.fill.fore_color.rgb)
-                    if color:
-                        # Thin horizontal bars are accent colors
-                        h = emu_to_inches(shape.height)
-                        if h < 0.1:
-                            accent_colors[color] += 1
-                        else:
-                            fill_colors[color] += 1
+                fill_result = extract_fill(shape.fill)
+                if isinstance(fill_result, str):
+                    # Thin horizontal bars are accent colors
+                    h = emu_to_inches(shape.height)
+                    if h < 0.1:
+                        accent_colors[fill_result] += 1
+                    else:
+                        fill_colors[fill_result] += 1
             except (AttributeError, TypeError):
                 pass
 
@@ -305,15 +338,14 @@ def detect_global_style(prs) -> dict:
                     for run in para.runs:
                         if run.font.name:
                             # Separate font family from weight suffix
-                            base_name = _normalize_font_family(run.font.name)
+                            base_name = normalize_font_family(run.font.name)
                             font_names[base_name] += 1
                         if run.font.size:
                             font_sizes[int(run.font.size.pt)] += 1
                         try:
-                            if run.font.color and run.font.color.rgb:
-                                color = rgb_to_hex(run.font.color.rgb)
-                                if color:
-                                    text_colors[color] += 1
+                            color = extract_color(run.font.color)
+                            if isinstance(color, str) and color.startswith("#"):
+                                text_colors[color] += 1
                         except (AttributeError, TypeError):
                             pass
 
@@ -326,7 +358,7 @@ def detect_global_style(prs) -> dict:
 
     # Assign text colors by brightness
     for color_hex, _count in text_colors.most_common(5):
-        brightness = _hex_brightness(color_hex)
+        brightness = hex_brightness(color_hex)
         if brightness > 200 and "text_white" not in colors:
             colors["text_white"] = color_hex
         elif brightness < 80 and "text_dark" not in colors:
@@ -378,26 +410,18 @@ def detect_global_style(prs) -> dict:
             "speaker_notes_required": True,
         },
     }
+
+    # Extract presentation metadata
+    metadata = {}
+    props = prs.core_properties
+    for attr in ("title", "author", "subject", "keywords", "description", "category"):
+        val = getattr(props, attr, None)
+        if val:
+            metadata[attr] = val
+    if metadata:
+        style["metadata"] = metadata
+
     return style
-
-
-def _normalize_font_family(name: str) -> str:
-    """Strip weight suffixes from a font name to get the base family."""
-    suffixes = (
-        " Semibold", " SemiBold", " Bold", " Light", " Thin",
-        " Black", " Medium", " ExtraBold", " ExtraLight",
-    )
-    for suffix in suffixes:
-        if name.endswith(suffix):
-            return name[: -len(suffix)]
-    return name
-
-
-def _hex_brightness(hex_color: str) -> int:
-    """Calculate perceived brightness (0-255) from a hex color string."""
-    h = hex_color.lstrip("#")
-    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-    return int(0.299 * r + 0.587 * g + 0.114 * b)
 
 
 def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
@@ -411,14 +435,20 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
         "elements": [],
     }
 
+    # Extract layout name
+    try:
+        layout_name = slide.slide_layout.name
+        if layout_name:
+            content["layout"] = layout_name
+    except (AttributeError, TypeError):
+        pass
+
     # Extract slide background
     try:
         if not slide.follow_master_background:
-            bg_fill = slide.background.fill
-            if bg_fill.type is not None:
-                bg_color = rgb_to_hex(bg_fill.fore_color.rgb)
-                if bg_color:
-                    content["background"] = {"fill": bg_color}
+            fill_result = extract_fill(slide.background.fill)
+            if fill_result is not None:
+                content["background"] = {"fill": fill_result}
     except (AttributeError, TypeError):
         pass
 
@@ -455,6 +485,20 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
                 elem = extract_textbox(shape)
                 elem["_placeholder"] = True
                 content["elements"].append(elem)
+        elif shape_type == 6:  # GROUP
+            elem = extract_group(shape, slide_num, slide_dir, img_count)
+            content["elements"].append(elem)
+        elif shape_type == 9:  # LINE / CONNECTOR
+            elem = extract_connector(shape)
+            content["elements"].append(elem)
+        elif hasattr(shape, "has_table") and shape.has_table:
+            from pptx_tables import extract_table
+            elem = extract_table(shape)
+            content["elements"].append(elem)
+        elif hasattr(shape, "has_chart") and shape.has_chart:
+            from pptx_charts import extract_chart
+            elem = extract_chart(shape)
+            content["elements"].append(elem)
         else:
             # Log unrecognized shape types for manual review
             content["elements"].append({

@@ -11,84 +11,36 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
+from lxml import etree
 from pptx import Presentation
-from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE
+from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
-SHAPE_MAP = {
-    "rectangle": MSO_SHAPE.RECTANGLE,
-    "rounded_rectangle": MSO_SHAPE.ROUNDED_RECTANGLE,
-    "right_arrow": MSO_SHAPE.RIGHT_ARROW,
-    "chevron": MSO_SHAPE.CHEVRON,
-    "oval": MSO_SHAPE.OVAL,
-    "diamond": MSO_SHAPE.DIAMOND,
-    "pentagon": MSO_SHAPE.PENTAGON,
-    "hexagon": MSO_SHAPE.HEXAGON,
-    "right_triangle": MSO_SHAPE.RIGHT_TRIANGLE,
+from pptx_colors import apply_color_to_font, resolve_color
+from pptx_fills import apply_fill, apply_line
+from pptx_fonts import ALIGNMENT_MAP, resolve_font
+from pptx_shapes import SHAPE_MAP, apply_rotation
+from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties
+from pptx_utils import load_yaml, merge_styles
+
+CONNECTOR_TYPE_MAP = {
+    "straight": MSO_CONNECTOR_TYPE.STRAIGHT,
+    "elbow": MSO_CONNECTOR_TYPE.ELBOW,
+    "curve": MSO_CONNECTOR_TYPE.CURVE,
 }
 
 
-def load_yaml(path: Path) -> dict:
-    """Load a YAML file and return the parsed dictionary."""
-    with open(path, encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+def set_slide_bg(slide, fill_spec, colors: dict):
+    """Set a background fill on a slide."""
+    apply_fill(slide.background, fill_spec, colors)
 
-
-def resolve_color(value: str, colors: dict) -> RGBColor:
-    """Resolve a color reference ($name) or hex (#RRGGBB) to an RGBColor."""
-    if value.startswith("$"):
-        key = value[1:]
-        value = colors.get(key, "#000000")
-    hex_str = value.lstrip("#")
-    return RGBColor(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
-
-
-def resolve_font(value: str, typography: dict) -> str:
-    """Resolve a font reference ($name) or return the literal font name."""
-    if value.startswith("$"):
-        key = value[1:]
-        return typography.get(key, "Segoe UI")
-    return value
-
-
-def merge_styles(global_style: dict, overrides: dict | None) -> dict:
-    """Deep-merge per-slide style overrides into the global style."""
-    if not overrides:
-        return global_style.copy()
-    merged = {}
-    for key in global_style:
-        if key in overrides and isinstance(global_style[key], dict) and isinstance(overrides[key], dict):
-            merged[key] = {**global_style[key], **overrides[key]}
-        elif key in overrides:
-            merged[key] = overrides[key]
-        else:
-            merged[key] = global_style[key]
-    for key in overrides:
-        if key not in merged:
-            merged[key] = overrides[key]
-    return merged
-
-
-def set_slide_bg(slide, color: RGBColor):
-    """Set a solid background color on a slide."""
-    bg = slide.background
-    fill = bg.fill
-    fill.solid()
-    fill.fore_color.rgb = color
-
-
-def apply_rotation(shape, rotation: float | None):
-    """Apply rotation in degrees to a shape when specified."""
-    if rotation is not None and rotation != 0:
-        shape.rotation = rotation
 
 
 def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
                 font_size=16, font_color=None, bold=False, italic=False,
-                alignment=None, name=None, rotation=None):
+                alignment=None, name=None, rotation=None, elem=None,
+                colors=None):
     """Add a text box to a slide. Splits text on newlines into separate paragraphs."""
     txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     if name:
@@ -97,21 +49,28 @@ def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
     tf = txBox.text_frame
     tf.word_wrap = True
 
+    # Apply text frame-level properties (margins, auto_size, vertical_anchor)
+    if elem:
+        apply_text_properties(tf, elem)
+
     lines = text.split("\n") if "\n" in text else [text]
 
     for i, line in enumerate(lines):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         if alignment:
-            align_map = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT}
-            p.alignment = align_map.get(alignment, PP_ALIGN.LEFT)
+            p.alignment = ALIGNMENT_MAP.get(alignment, ALIGNMENT_MAP["left"])
+        if elem:
+            apply_paragraph_properties(p, elem)
         run = p.add_run()
         run.text = line
         run.font.name = font_name
         run.font.size = Pt(font_size)
         if font_color:
-            run.font.color.rgb = font_color
+            apply_color_to_font(run.font.color, font_color)
         run.font.bold = bold
         run.font.italic = italic
+        if elem:
+            apply_run_properties(run, elem, colors or {})
     return txBox
 
 
@@ -130,17 +89,8 @@ def add_shape_element(slide, elem, colors, typography):
 
     apply_rotation(shape, elem.get("rotation"))
 
-    if "fill" in elem:
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = resolve_color(elem["fill"], colors)
-    else:
-        shape.fill.background()
-
-    if "line_color" in elem:
-        shape.line.color.rgb = resolve_color(elem["line_color"], colors)
-        shape.line.width = Pt(elem.get("line_width", 1))
-    else:
-        shape.line.fill.background()
+    apply_fill(shape, elem.get("fill"), colors)
+    apply_line(shape, elem, colors)
 
     if "corner_radius" in elem:
         shape.adjustments[0] = elem["corner_radius"]
@@ -148,14 +98,18 @@ def add_shape_element(slide, elem, colors, typography):
     if "text" in elem:
         tf = shape.text_frame
         tf.word_wrap = True
+        apply_text_properties(tf, elem)
         p = tf.paragraphs[0]
         p.text = elem["text"]
+        apply_paragraph_properties(p, elem)
         run = p.runs[0]
         run.font.name = resolve_font(elem.get("text_font", "$body_font"), typography)
         run.font.size = Pt(elem.get("text_size", 16))
         if "text_color" in elem:
-            run.font.color.rgb = resolve_color(elem["text_color"], colors)
+            color_spec = resolve_color(elem["text_color"], colors)
+            apply_color_to_font(run.font.color, color_spec)
         run.font.bold = elem.get("text_bold", False)
+        apply_run_properties(run, elem, colors)
 
     return shape
 
@@ -192,15 +146,20 @@ def add_rich_text_element(slide, elem, colors, typography):
     tf.word_wrap = True
     p = tf.paragraphs[0]
 
+    # Apply text frame-level properties
+    apply_text_properties(tf, elem)
+
     for i, seg in enumerate(elem.get("segments", [])):
         run = p.add_run() if i > 0 else (p.runs[0] if p.runs else p.add_run())
         run.text = seg["text"]
         run.font.name = resolve_font(seg.get("font", "$body_font"), typography)
         run.font.size = Pt(seg.get("size", 16))
         if "color" in seg:
-            run.font.color.rgb = resolve_color(seg["color"], colors)
+            color_spec = resolve_color(seg["color"], colors)
+            apply_color_to_font(run.font.color, color_spec)
         run.font.bold = seg.get("bold", False)
         run.font.italic = seg.get("italic", False)
+        apply_run_properties(run, seg, colors)
 
     return txBox
 
@@ -213,26 +172,21 @@ def add_card_element(slide, elem, colors, typography):
     height = Inches(elem["height"])
 
     # Card background
-    card_fill = resolve_color(elem.get("fill", "$bg_card"), colors)
     shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = card_fill
+    apply_fill(shape, elem.get("fill", "$bg_card"), colors)
     if "border_color" in elem:
-        shape.line.color.rgb = resolve_color(elem["border_color"], colors)
-        shape.line.width = Pt(elem.get("border_width", 1))
+        apply_line(shape, {"line_color": elem["border_color"], "line_width": elem.get("border_width", 1)}, colors)
     else:
         shape.line.fill.background()
 
     # Accent bar
     if elem.get("accent_bar"):
-        bar_color = resolve_color(elem.get("accent_color", "$accent_blue"), colors)
         bar = slide.shapes.add_shape(
             MSO_SHAPE.RECTANGLE,
             Inches(elem["left"] + 0.15), Inches(elem["top"] + 0.1),
             Inches(elem["width"] - 0.3), Inches(0.04)
         )
-        bar.fill.solid()
-        bar.fill.fore_color.rgb = bar_color
+        apply_fill(bar, elem.get("accent_color", "$accent_blue"), colors)
         bar.line.fill.background()
 
     # Title
@@ -277,25 +231,23 @@ def add_arrow_flow_element(slide, elem, colors, typography):
     x = elem["left"]
 
     for item in items:
-        color = resolve_color(item.get("color", "$accent_blue"), colors)
         shape = slide.shapes.add_shape(
             MSO_SHAPE.CHEVRON,
             Inches(x), Inches(elem["top"]),
             Inches(item_width), Inches(elem["height"])
         )
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = color
+        apply_fill(shape, item.get("color", "$accent_blue"), colors)
         shape.line.fill.background()
 
         tf = shape.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = item["label"]
-        p.alignment = PP_ALIGN.CENTER
+        p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
         run.font.name = resolve_font("$body_font", typography)
         run.font.size = Pt(14)
-        run.font.color.rgb = resolve_color("$text_white", colors)
+        apply_color_to_font(run.font.color, resolve_color("$text_white", colors))
         run.font.bold = True
 
         x += item_width + 0.3
@@ -304,7 +256,6 @@ def add_arrow_flow_element(slide, elem, colors, typography):
 def add_numbered_step_element(slide, elem, colors, typography):
     """Add a numbered step with circle, label, and description."""
     number = elem.get("number", 1)
-    accent = resolve_color(elem.get("accent_color", "$accent_blue"), colors)
 
     # Number circle
     circle = slide.shapes.add_shape(
@@ -312,17 +263,16 @@ def add_numbered_step_element(slide, elem, colors, typography):
         Inches(elem["left"]), Inches(elem["top"]),
         Inches(0.5), Inches(0.5)
     )
-    circle.fill.solid()
-    circle.fill.fore_color.rgb = accent
+    apply_fill(circle, elem.get("accent_color", "$accent_blue"), colors)
     circle.line.fill.background()
     tf = circle.text_frame
     p = tf.paragraphs[0]
     p.text = str(number)
-    p.alignment = PP_ALIGN.CENTER
+    p.alignment = ALIGNMENT_MAP["center"]
     run = p.runs[0]
     run.font.name = resolve_font("$body_font", typography)
     run.font.size = Pt(16)
-    run.font.color.rgb = resolve_color("$text_white", colors)
+    apply_color_to_font(run.font.color, resolve_color("$text_white", colors))
     run.font.bold = True
 
     # Label
@@ -348,6 +298,161 @@ def add_numbered_step_element(slide, elem, colors, typography):
         )
 
 
+def add_connector_element(slide, elem: dict, colors: dict):
+    """Add a connector element from a content.yaml definition.
+
+    YAML schema:
+    - type: connector
+      connector_type: straight
+      begin_x: 3.0
+      begin_y: 2.0
+      end_x: 7.0
+      end_y: 4.0
+      line_color: "$accent_blue"
+      line_width: 2
+      dash_style: solid
+      head_end: none
+      tail_end: arrow
+    """
+    conn_type = CONNECTOR_TYPE_MAP.get(
+        elem.get("connector_type", "straight"), MSO_CONNECTOR_TYPE.STRAIGHT
+    )
+
+    connector = slide.shapes.add_connector(
+        conn_type,
+        Inches(elem["begin_x"]), Inches(elem["begin_y"]),
+        Inches(elem["end_x"]), Inches(elem["end_y"]),
+    )
+
+    apply_line(connector, elem, colors)
+
+    # Arrow heads via lxml XML manipulation
+    sp_pr = connector._element.find(qn("a:ln"))
+    if sp_pr is None:
+        ln_parent = connector._element.spPr
+        sp_pr = ln_parent.find(qn("a:ln"))
+    if sp_pr is None:
+        sp_pr = etree.SubElement(connector._element.spPr, qn("a:ln"))
+
+    if "head_end" in elem and elem["head_end"] != "none":
+        head = etree.SubElement(sp_pr, qn("a:headEnd"))
+        head.set("type", elem["head_end"])
+    if "tail_end" in elem and elem["tail_end"] != "none":
+        tail = etree.SubElement(sp_pr, qn("a:tailEnd"))
+        tail.set("type", elem["tail_end"])
+
+    if "name" in elem:
+        connector.name = elem["name"]
+
+    return connector
+
+
+def add_group_element(slide, elem: dict, colors: dict, typography: dict,
+                      content_dir: Path):
+    """Add a group element containing nested child elements.
+
+    YAML schema:
+    - type: group
+      left: 1.0
+      top: 2.0
+      width: 5.0
+      height: 3.0
+      elements:
+        - type: shape
+          shape: rectangle
+          left: 0
+          top: 0
+          width: 5.0
+          height: 3.0
+          fill: "$bg_card"
+        - type: textbox
+          left: 0.2
+          top: 0.2
+          width: 4.6
+          height: 0.5
+          text: "Group Title"
+    """
+    group = slide.shapes.add_group_shape()
+
+    group.left = Inches(elem["left"])
+    group.top = Inches(elem["top"])
+    group.width = Inches(elem["width"])
+    group.height = Inches(elem["height"])
+
+    for child_elem in elem.get("elements", []):
+        build_element_in_group(group, child_elem, colors, typography, content_dir)
+
+    if "name" in elem:
+        group.name = elem["name"]
+
+    return group
+
+
+def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
+                           content_dir: Path):
+    """Dispatch a child element build within a group shape.
+
+    Uses group.shapes as the target shapes collection so children are added
+    inside the group rather than on the slide.
+    """
+    elem_type = elem.get("type", "textbox")
+    shapes = group.shapes
+
+    if elem_type == "shape":
+        shape_type = SHAPE_MAP.get(elem.get("shape", "rectangle"), MSO_SHAPE.RECTANGLE)
+        shape = shapes.add_shape(
+            shape_type,
+            Inches(elem["left"]), Inches(elem["top"]),
+            Inches(elem["width"]), Inches(elem["height"]),
+        )
+        if "name" in elem:
+            shape.name = elem["name"]
+        apply_rotation(shape, elem.get("rotation"))
+        apply_fill(shape, elem.get("fill"), colors)
+        apply_line(shape, elem, colors)
+        if "text" in elem:
+            tf = shape.text_frame
+            tf.word_wrap = True
+            apply_text_properties(tf, elem)
+            p = tf.paragraphs[0]
+            p.text = elem["text"]
+            run = p.runs[0]
+            run.font.name = resolve_font(elem.get("text_font", "$body_font"), typography)
+            run.font.size = Pt(elem.get("text_size", 16))
+            if "text_color" in elem:
+                apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
+            run.font.bold = elem.get("text_bold", False)
+    elif elem_type == "textbox":
+        txBox = shapes.add_textbox(
+            Inches(elem["left"]), Inches(elem["top"]),
+            Inches(elem["width"]), Inches(elem["height"]),
+        )
+        if "name" in elem:
+            txBox.name = elem["name"]
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        apply_text_properties(tf, elem)
+        text = elem.get("text", "")
+        lines = text.split("\n") if "\n" in text else [text]
+        for i, line in enumerate(lines):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            if "alignment" in elem:
+                p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
+            apply_paragraph_properties(p, elem)
+            run = p.add_run()
+            run.text = line
+            run.font.name = resolve_font(elem.get("font", "$body_font"), typography)
+            run.font.size = Pt(elem.get("font_size", 16))
+            if "font_color" in elem:
+                apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
+            run.font.bold = elem.get("font_bold", False)
+            run.font.italic = elem.get("italic", False)
+    elif elem_type == "connector":
+        add_connector_element(group, elem, colors)
+    elif elem_type == "image":
+        add_image_element(group, elem, content_dir)
+
+
 def clear_slide_shapes(slide):
     """Remove all shapes from a slide, preserving the slide itself."""
     sp_tree = slide.shapes._spTree
@@ -356,6 +461,38 @@ def clear_slide_shapes(slide):
                         or sp.tag.endswith('}cxnSp')]
     for sp in shapes_to_remove:
         sp_tree.remove(sp)
+
+
+def get_slide_layout(prs, slide_content: dict, style: dict):
+    """Select slide layout based on content.yaml or style.yaml configuration."""
+    layout_spec = slide_content.get("layout")
+    layouts_map = style.get("layouts", {})
+
+    if layout_spec is None or layout_spec == "blank":
+        return prs.slide_layouts[6]
+
+    # Resolve through style.yaml layouts map
+    if layout_spec in layouts_map:
+        layout_ref = layouts_map[layout_spec]
+        if isinstance(layout_ref, int):
+            return prs.slide_layouts[layout_ref]
+        elif isinstance(layout_ref, str):
+            for layout in prs.slide_layouts:
+                if layout.name == layout_ref:
+                    return layout
+
+    # Direct name lookup
+    if isinstance(layout_spec, str):
+        for layout in prs.slide_layouts:
+            if layout.name == layout_spec:
+                return layout
+
+    # Direct index lookup
+    if isinstance(layout_spec, int):
+        return prs.slide_layouts[layout_spec]
+
+    # Fallback to blank
+    return prs.slide_layouts[6]
 
 
 def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None):
@@ -372,19 +509,38 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         slide = existing_slide
         clear_slide_shapes(slide)
     else:
-        slide_layout = prs.slide_layouts[6]  # Blank layout
-        slide = prs.slides.add_slide(slide_layout)
+        layout = get_slide_layout(prs, slide_content, merged_style)
+        slide = prs.slides.add_slide(layout)
+
+    # Populate themed layout placeholders
+    placeholders = slide_content.get("placeholders", {})
+    for idx_str, value in placeholders.items():
+        idx = int(idx_str)
+        if idx in slide.placeholders:
+            ph = slide.placeholders[idx]
+            if isinstance(value, str):
+                ph.text = value
+            elif isinstance(value, list):
+                tf = ph.text_frame
+                tf.text = value[0]
+                for line in value[1:]:
+                    tf.add_paragraph().text = line
 
     # Set background from per-slide definition or global style
     bg_block = slide_content.get("background")
     if bg_block and "fill" in bg_block:
-        bg_color = resolve_color(bg_block["fill"], colors)
+        set_slide_bg(slide, bg_block["fill"], colors)
     else:
-        bg_color = resolve_color(colors.get("bg_dark", "#1B1B1F"), colors)
-    set_slide_bg(slide, bg_color)
+        set_slide_bg(slide, colors.get("bg_dark", "#1B1B1F"), colors)
+
+    # Enable turbo mode for dense slides
+    elements = slide_content.get("elements", [])
+    turbo_enabled = len(elements) > 20
+    if turbo_enabled:
+        slide.shapes.turbo_add_enabled = True
 
     # Process elements in order
-    for elem in slide_content.get("elements", []):
+    for elem in elements:
         elem_type = elem.get("type", "textbox")
 
         if elem_type == "shape":
@@ -403,7 +559,9 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
                 italic=elem.get("italic", False),
                 alignment=elem.get("alignment"),
                 name=elem.get("name"),
-                rotation=elem.get("rotation")
+                rotation=elem.get("rotation"),
+                elem=elem,
+                colors=colors
             )
         elif elem_type == "image":
             add_image_element(slide, elem, content_dir)
@@ -415,6 +573,16 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
             add_arrow_flow_element(slide, elem, colors, typography)
         elif elem_type == "numbered_step":
             add_numbered_step_element(slide, elem, colors, typography)
+        elif elem_type == "table":
+            from pptx_tables import add_table_element
+            add_table_element(slide, elem, colors, typography)
+        elif elem_type == "chart":
+            from pptx_charts import add_chart_element
+            add_chart_element(slide, elem, colors)
+        elif elem_type == "connector":
+            add_connector_element(slide, elem, colors)
+        elif elem_type == "group":
+            add_group_element(slide, elem, colors, typography, content_dir)
 
     # Execute content-extra.py if present
     extra_script = content_dir / "content-extra.py"
@@ -424,6 +592,9 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
             mod.render(slide, merged_style, content_dir)
+
+    if turbo_enabled:
+        slide.shapes.turbo_add_enabled = False
 
     # Add speaker notes
     notes = slide_content.get("speaker_notes", "")
@@ -453,6 +624,7 @@ def main():
     parser.add_argument("--content-dir", required=True, help="Path to the content/ directory")
     parser.add_argument("--style", required=True, help="Path to the global style.yaml")
     parser.add_argument("--output", required=True, help="Output PPTX file path")
+    parser.add_argument("--template", help="Template PPTX file path for themed builds")
     parser.add_argument("--source", help="Source PPTX to update (for partial rebuilds)")
     parser.add_argument("--slides", help="Comma-separated slide numbers to rebuild (requires --source)")
     args = parser.parse_args()
@@ -466,7 +638,32 @@ def main():
     width = dims.get("width_inches", 13.333)
     height = dims.get("height_inches", 7.5)
 
-    if args.source and args.slides:
+    if args.template:
+        # Template build: open template and preserve its theme/layouts
+        prs = Presentation(args.template)
+        # Only override dimensions when explicitly set in style.yaml
+        if "dimensions" in style:
+            prs.slide_width = Inches(width)
+            prs.slide_height = Inches(height)
+
+        # Apply presentation metadata from style.yaml
+        metadata = style.get("metadata", {})
+        if metadata:
+            props = prs.core_properties
+            for key, value in metadata.items():
+                if hasattr(props, key):
+                    setattr(props, key, value)
+
+        slides_data = discover_slides(content_dir)
+        if not slides_data:
+            print("No slide content found in", content_dir)
+            sys.exit(1)
+
+        for num, slide_dir in slides_data:
+            slide_content = load_yaml(slide_dir / "content.yaml")
+            build_slide(prs, slide_content, style, slide_dir)
+            print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
+    elif args.source and args.slides:
         # Partial rebuild: open existing deck and replace specific slides
         prs = Presentation(args.source)
         slide_nums = [int(s.strip()) for s in args.slides.split(",")]
@@ -492,6 +689,14 @@ def main():
         prs = Presentation()
         prs.slide_width = Inches(width)
         prs.slide_height = Inches(height)
+
+        # Apply presentation metadata from style.yaml
+        metadata = style.get("metadata", {})
+        if metadata:
+            props = prs.core_properties
+            for key, value in metadata.items():
+                if hasattr(props, key):
+                    setattr(props, key, value)
 
         slides_data = discover_slides(content_dir)
         if not slides_data:
