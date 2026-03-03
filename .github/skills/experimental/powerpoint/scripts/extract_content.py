@@ -395,7 +395,11 @@ def extract_textbox(shape) -> dict:
         if len(runs) > 1:
             fonts = {r.get("font") for r in runs if "font" in r}
             colors = {r.get("color") for r in runs if "color" in r}
-            if len(fonts) > 1 or len(colors) > 1:
+            bolds = {r.get("bold", False) for r in runs}
+            italics = {r.get("italic", False) for r in runs}
+            underlines = {r.get("underline", False) for r in runs}
+            if (len(fonts) > 1 or len(colors) > 1 or len(bolds) > 1
+                    or len(italics) > 1 or len(underlines) > 1):
                 elem["type"] = "rich_text"
                 elem["segments"] = runs
                 del elem["text"]
