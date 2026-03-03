@@ -109,6 +109,27 @@ def apply_fill(shape, fill_spec, colors: dict):
         back_spec = resolve_color(fill_spec.get("back_color", "#FFFFFF"), colors)
         apply_color_spec(shape.fill.fore_color, fore_spec)
         apply_color_spec(shape.fill.back_color, back_spec)
+        # Apply alpha on pattern fore/back color elements
+        patt_el = shape.fill._fill._element.find(qn('a:pattFill'))
+        if patt_el is not None:
+            if "fore_alpha" in fill_spec:
+                fg = patt_el.find(qn('a:fgClr'))
+                if fg is not None and len(fg) > 0:
+                    alpha_val = str(int(fill_spec["fore_alpha"] * 1000))
+                    existing = fg[0].find(qn('a:alpha'))
+                    if existing is not None:
+                        existing.set('val', alpha_val)
+                    else:
+                        etree.SubElement(fg[0], qn('a:alpha')).set('val', alpha_val)
+            if "back_alpha" in fill_spec:
+                bg = patt_el.find(qn('a:bgClr'))
+                if bg is not None and len(bg) > 0:
+                    alpha_val = str(int(fill_spec["back_alpha"] * 1000))
+                    existing = bg[0].find(qn('a:alpha'))
+                    if existing is not None:
+                        existing.set('val', alpha_val)
+                    else:
+                        etree.SubElement(bg[0], qn('a:alpha')).set('val', alpha_val)
 
 
 def extract_fill(fill) -> dict | str | None:
@@ -173,12 +194,29 @@ def extract_fill(fill) -> dict | str | None:
                         break
                 except (AttributeError, TypeError):
                     pass
-            return {
+            result = {
                 "type": "pattern",
                 "pattern": pattern_name,
                 "fore_color": extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb),
                 "back_color": extract_color(fill.back_color) or rgb_to_hex(fill.back_color.rgb),
             }
+            # Extract alpha from pattern fore/back color elements
+            try:
+                patt_el = fill._fill._element.find(qn('a:pattFill'))
+                if patt_el is not None:
+                    fg = patt_el.find(qn('a:fgClr'))
+                    if fg is not None and len(fg) > 0:
+                        alpha_el = fg[0].find(qn('a:alpha'))
+                        if alpha_el is not None:
+                            result["fore_alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+                    bg = patt_el.find(qn('a:bgClr'))
+                    if bg is not None and len(bg) > 0:
+                        alpha_el = bg[0].find(qn('a:alpha'))
+                        if alpha_el is not None:
+                            result["back_alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+            except (AttributeError, TypeError):
+                pass
+            return result
     except (AttributeError, TypeError):
         pass
 
