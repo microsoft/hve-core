@@ -118,8 +118,8 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Generated PPTX path: `slide-deck/{{ppt-name}}.pptx`.
 * Content directory path.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
-* Instructions to use the `powerpoint` skill's `validate_deck.py` script.
-* Instructions to visually inspect all modified or added slides assuming issues exist.
+* Instructions to use `Invoke-PptxPipeline.ps1 -Action Export` to render slides to images, then run `validate_deck.py` for PPTX-only checks (speaker notes, slide count).
+* Instructions to read each exported slide image and perform direct visual evaluation for all quality checks (text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, and additional layout concerns).
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**
 

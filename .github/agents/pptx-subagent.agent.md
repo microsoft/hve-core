@@ -96,34 +96,32 @@ Generate or update the PPTX from content YAML.
 
 #### Task: `validate`
 
-Validate the generated deck against quality criteria using both programmatic checks and visual image inspection.
+Validate the generated deck against quality criteria using PPTX property checks and Copilot SDK vision-based validation.
 
-1. Run `validate_deck.py` from the `powerpoint` skill.
-2. Export all slides to JPG images for visual inspection:
-   * Run the `Export` action via `Invoke-PptxPipeline.ps1` with `-ImageOutputDir` pointing to `{{working-directory}}/slide-deck/validation/` and `-Resolution 150`.
-   * Alternatively, run `export_slides.py` directly and convert the resulting PDF to JPGs using `pdftoppm` or PyMuPDF.
-   * The exported images are saved as `slide-001.jpg`, `slide-002.jpg`, etc.
-3. Read each exported slide image and inspect it visually. Assume there are issues and find them. Check every slide for:
-   * **Overlapping elements** — text through shapes, lines through words, stacked elements.
-   * **Text overflow or cut-off** — text cut off at edges or box boundaries.
+1. Run the full Validate pipeline via `Invoke-PptxPipeline.ps1 -Action Validate`:
+   * Use `-InputPath` pointing to the PPTX file and `-ContentDir` pointing to the content directory.
+   * Use `-ImageOutputDir` pointing to `{{working-directory}}/slide-deck/validation/` and `-Resolution 150`.
+   * Pass `-ValidationPrompt` with the visual check descriptions below (or write them to a temp file and pass `-ValidationPromptFile`).
+   * Optionally pass `-ValidationModel` to specify the vision model (default: `claude-haiku-4.5`).
+   * The pipeline runs three steps: export slides to images, run `validate_deck.py` (speaker notes, slide count), and run `validate_slides.py` (vision-based checks via Copilot SDK).
+2. The validation prompt to pass must include these visual checks:
+   * **Text overlay** — text elements that overlap each other, text crossing through shapes or lines, stacked elements where content is hidden.
+   * **Overflow** — content cut off or extending beyond visible slide boundaries, text or shapes clipped at edges.
+   * **Font consistency** — mixed or unexpected font styles that do not match the overall slide design, visually different typefaces used inconsistently.
+   * **Edge margins** — elements positioned too close to slide edges (less than approximately 5% from any edge). Full-bleed background images or banners that intentionally span the full slide are acceptable.
+   * **Element spacing** — insufficient spacing between adjacent elements, elements nearly touching, uneven gaps between similar items, cards and sections squeezed together.
+   * **Color contrast** — text difficult to read due to poor contrast with its background. Flag light text on light backgrounds, dark text on dark backgrounds. Apply WCAG guidelines: flag estimated contrast ratios below 4.5:1 for body text or 3:1 for large text.
+   * **Narrow text boxes** — text that appears cramped, truncated, or squeezed into a box too narrow for its content, excessive line wrapping in small regions.
+   * **Leftover placeholders** — default template text like "Click to add title", "Click to edit", "Add subtitle", or similar placeholder text that was never replaced with actual content.
    * **Decorative line positioning** — lines positioned for single-line text but title wrapped to two lines.
    * **Citation collisions** — source citations or footers colliding with content above.
-   * **Element spacing** — elements too close (< 0.3" gaps) or cards/sections nearly touching.
-   * **Uneven gaps** — large empty area in one place, cramped in another.
-   * **Insufficient margin** — elements closer than 0.5" from slide edges.
    * **Column alignment** — columns or similar elements not aligned consistently.
-   * **Low-contrast text** — light gray text on cream-colored background or similar.
-   * **Low-contrast icons** — dark icons on dark backgrounds without a contrasting circle.
-   * **Narrow text boxes** — text boxes too narrow causing excessive wrapping.
-   * **Leftover placeholders** — leftover placeholder content from templates.
    * **Readable fill combinations** — accent colors used as fills must be darkened to ~60% saturation for white text readability.
-   * **Speaker notes** — missing on content slides.
-   * **Font consistency** — mismatched or fallback fonts.
    * **Background images** — pasted images instead of fill properties.
-4. Cross-reference visual findings from the exported images against programmatic results from `validate_deck.py`.
-5. For each slide, list issues or areas of concern, even if minor.
-6. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
-7. Update the execution log with all validation findings including the path to exported slide images.
+3. Read the vision validation results from `{{working-directory}}/slide-deck/validation/validation-results.json`.
+4. For each slide, list issues or areas of concern, even if minor.
+5. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
+6. Update the execution log with all validation findings including the path to exported slide images and the vision results JSON.
 
 #### Task: `export`
 
