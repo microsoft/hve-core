@@ -3,7 +3,9 @@
 Handles solid, gradient, and pattern fills plus line/border properties.
 """
 
+from lxml import etree
 from pptx.enum.dml import MSO_FILL, MSO_LINE_DASH_STYLE, MSO_PATTERN_TYPE
+from pptx.oxml.ns import qn
 from pptx.util import Pt
 
 from pptx_colors import apply_color_spec, apply_color_to_fill, extract_color, resolve_color, rgb_to_hex
@@ -51,16 +53,51 @@ def apply_fill(shape, fill_spec, colors: dict):
         shape.fill.solid()
         color_spec = resolve_color(fill_spec.get("color", "#000000"), colors)
         apply_color_to_fill(shape.fill, color_spec)
+        if "alpha" in fill_spec:
+            alpha_val = str(int(fill_spec["alpha"] * 1000))
+            solid_el = shape.fill._fill._element.find(qn('a:solidFill'))
+            if solid_el is not None and len(solid_el) > 0:
+                color_el = solid_el[0]
+                existing = color_el.find(qn('a:alpha'))
+                if existing is not None:
+                    existing.set('val', alpha_val)
+                else:
+                    alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
+                    alpha_sub.set('val', alpha_val)
 
     elif fill_type == "gradient":
         shape.fill.gradient()
         shape.fill.gradient_angle = fill_spec.get("angle", 90)
-        for i, stop in enumerate(fill_spec.get("stops", [])):
+        stops_data = fill_spec.get("stops", [])
+
+        # Add extra gradient stops if needed (python-pptx defaults to 2)
+        existing_count = len(shape.fill.gradient_stops)
+        if len(stops_data) > existing_count:
+            gs_lst = shape.fill._fill._element.find(qn('a:gsLst'))
+            if gs_lst is not None:
+                for _ in range(len(stops_data) - existing_count):
+                    new_gs = etree.SubElement(gs_lst, qn('a:gs'))
+                    new_gs.set('pos', '0')
+                    etree.SubElement(new_gs, qn('a:srgbClr')).set('val', '000000')
+
+        for i, stop in enumerate(stops_data):
             if i < len(shape.fill.gradient_stops):
                 gs = shape.fill.gradient_stops[i]
                 color_spec = resolve_color(stop["color"], colors)
                 apply_color_spec(gs.color, color_spec)
                 gs.position = stop["position"]
+                # Apply alpha on the gradient stop's color element
+                if "alpha" in stop:
+                    alpha_val = str(int(stop["alpha"] * 1000))
+                    gs_el = gs._element
+                    color_el = gs_el[0] if len(gs_el) > 0 else None
+                    if color_el is not None:
+                        existing = color_el.find(qn('a:alpha'))
+                        if existing is not None:
+                            existing.set('val', alpha_val)
+                        else:
+                            alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
+                            alpha_sub.set('val', alpha_val)
 
     elif fill_type == "pattern":
         shape.fill.patterned()
@@ -88,17 +125,35 @@ def extract_fill(fill) -> dict | str | None:
             return None
 
         if fill_type == MSO_FILL.SOLID:
-            return extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb)
+            color = extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb)
+            # Check for alpha on the color element at XML level
+            try:
+                fill_el = fill._fill._element
+                solid = fill_el.find(qn('a:solidFill'))
+                if solid is not None and len(solid) > 0:
+                    alpha_el = solid[0].find(qn('a:alpha'))
+                    if alpha_el is not None:
+                        alpha_val = int(alpha_el.get('val', '100000'))
+                        return {"type": "solid", "color": color, "alpha": round(alpha_val / 1000, 1)}
+            except (AttributeError, TypeError):
+                pass
+            return color
 
         if fill_type == MSO_FILL.GRADIENT:
             stops = []
             for gs in fill.gradient_stops:
                 color = extract_color(gs.color)
                 if color is not None:
-                    stops.append({
+                    stop_data = {
                         "position": gs.position,
                         "color": color,
-                    })
+                    }
+                    # Extract alpha from the gradient stop's color element
+                    alpha_el = gs._element.find('.//' + qn('a:alpha'))
+                    if alpha_el is not None:
+                        alpha_val = int(alpha_el.get('val', '100000'))
+                        stop_data["alpha"] = round(alpha_val / 1000, 1)
+                    stops.append(stop_data)
             result = {"type": "gradient", "stops": stops}
             try:
                 result["angle"] = fill.gradient_angle
@@ -163,3 +218,74 @@ def extract_line(shape) -> dict:
     except (AttributeError, TypeError):
         pass
     return result
+
+
+def extract_effect_list(shape) -> dict | None:
+    """Extract outer shadow effect from a shape's effectLst.
+
+    Returns dict with shadow properties when present, None otherwise.
+    """
+    try:
+        sp = shape._element
+        effect_lst = sp.find('.//' + qn('a:effectLst'))
+        if effect_lst is None or len(effect_lst) == 0:
+            return None
+        shadow = effect_lst.find(qn('a:outerShdw'))
+        if shadow is None:
+            return None
+        result = {"type": "outer_shadow"}
+        for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+            val = shadow.get(attr)
+            if val is not None:
+                result[attr] = val
+        color_el = shadow[0] if len(shadow) > 0 else None
+        if color_el is not None:
+            tag = color_el.tag.split('}')[-1]
+            if tag == 'prstClr':
+                result["color"] = color_el.get('val', 'black')
+                result["color_type"] = "preset"
+            elif tag == 'srgbClr':
+                result["color"] = '#' + color_el.get('val', '000000')
+                result["color_type"] = "rgb"
+            alpha_el = color_el.find(qn('a:alpha'))
+            if alpha_el is not None:
+                result["alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+        return result
+    except (AttributeError, TypeError, IndexError):
+        return None
+
+
+def apply_effect_list(shape, effect: dict):
+    """Apply outer shadow effect to a shape's spPr element."""
+    if not effect or effect.get("type") != "outer_shadow":
+        return
+    sp_pr = shape._element.find(qn('p:spPr'))
+    if sp_pr is None:
+        sp_pr = shape._element.spPr
+
+    # Remove existing effectLst
+    existing = sp_pr.find(qn('a:effectLst'))
+    if existing is not None:
+        sp_pr.remove(existing)
+
+    effect_lst = etree.SubElement(sp_pr, qn('a:effectLst'))
+    shadow = etree.SubElement(effect_lst, qn('a:outerShdw'))
+    for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+        if attr in effect:
+            shadow.set(attr, str(effect[attr]))
+
+    color_type = effect.get("color_type", "preset")
+    color_val = effect.get("color", "black")
+    if color_type == "preset":
+        color_el = etree.SubElement(shadow, qn('a:prstClr'))
+        color_el.set('val', color_val)
+    elif color_type == "rgb":
+        color_el = etree.SubElement(shadow, qn('a:srgbClr'))
+        color_el.set('val', color_val.lstrip('#'))
+    else:
+        color_el = etree.SubElement(shadow, qn('a:prstClr'))
+        color_el.set('val', 'black')
+
+    if "alpha" in effect:
+        alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
+        alpha_sub.set('val', str(int(effect["alpha"] * 1000)))

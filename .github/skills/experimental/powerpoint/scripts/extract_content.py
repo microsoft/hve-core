@@ -13,8 +13,9 @@ from lxml import etree
 import yaml
 from pptx import Presentation
 
+from pptx.oxml.ns import qn
 from pptx_colors import extract_color, hex_brightness
-from pptx_fills import extract_fill, extract_line
+from pptx_fills import extract_fill, extract_line, extract_effect_list
 from pptx_fonts import (
     extract_alignment,
     extract_font_info,
@@ -245,6 +246,11 @@ def extract_shape(shape) -> dict:
     if line_props:
         elem.update(line_props)
 
+    # Extract effect list (outer shadow)
+    effect = extract_effect_list(shape)
+    if effect:
+        elem["effect"] = effect
+
     # Extract text if present
     if shape.has_text_frame:
         text = shape.text_frame.text.strip()
@@ -282,6 +288,8 @@ def extract_shape(shape) -> dict:
                     elem["hyperlink"] = merged["hyperlink"]
                 if "char_spacing" in merged:
                     elem["char_spacing"] = merged["char_spacing"]
+                if "effect" in merged:
+                    elem["text_effect"] = merged["effect"]
                 if para_spacing:
                     elem.update(para_spacing)
                 if bullet_props:
@@ -371,6 +379,8 @@ def extract_textbox(shape) -> dict:
             elem["hyperlink"] = merged["hyperlink"]
         if "char_spacing" in merged:
             elem["char_spacing"] = merged["char_spacing"]
+        if "effect" in merged:
+            elem["text_effect"] = merged["effect"]
         if alignment:
             elem["alignment"] = alignment
         if para_spacing:
@@ -425,6 +435,15 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
     rot = extract_rotation(shape)
     if rot is not None:
         elem["rotation"] = rot
+
+    # Extract image opacity from alphaModFix on the blip element
+    blip = shape._element.find('.//' + qn('a:blip'))
+    if blip is not None:
+        amf = blip.find(qn('a:alphaModFix'))
+        if amf is not None:
+            amt = int(amf.get('amt', '100000'))
+            elem["opacity"] = round(amt / 1000, 1)
+
     return elem
 
 

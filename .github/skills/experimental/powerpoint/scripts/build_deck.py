@@ -18,7 +18,7 @@ from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
 from pptx_colors import apply_color_to_font, resolve_color
-from pptx_fills import apply_fill, apply_line
+from pptx_fills import apply_fill, apply_line, apply_effect_list
 from pptx_fonts import ALIGNMENT_MAP
 from pptx_shapes import SHAPE_MAP, apply_rotation
 from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties, apply_bullet_properties
@@ -144,6 +144,9 @@ def add_shape_element(slide, elem, colors, typography):
     if "corner_radius" in elem:
         shape.adjustments[0] = elem["corner_radius"]
 
+    if "effect" in elem:
+        apply_effect_list(shape, elem["effect"])
+
     if "text" in elem:
         tf = shape.text_frame
         tf.word_wrap = True
@@ -184,6 +187,17 @@ def add_image_element(slide, elem, content_dir: Path):
     if "name" in elem:
         pic.name = elem["name"]
     apply_rotation(pic, elem.get("rotation"))
+
+    # Apply image opacity via alphaModFix on the blip element
+    if "opacity" in elem:
+        blip = pic._element.find('.//' + qn('a:blip'))
+        if blip is not None:
+            amt = str(int(elem["opacity"] * 1000))
+            amf = blip.find(qn('a:alphaModFix'))
+            if amf is None:
+                amf = etree.SubElement(blip, qn('a:alphaModFix'))
+            amf.set('amt', amt)
+
     return pic
 
 
