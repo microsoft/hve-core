@@ -280,21 +280,39 @@ def extract_bullet_properties(paragraph) -> dict:
         if srgb is not None:
             props['bullet_color'] = f"#{srgb.get('val', '000000')}"
 
+    # Extract paragraph margin and indent (controls bullet-to-text spacing)
+    marL = pPr.get('marL')
+    if marL is not None:
+        props['bullet_margin_left'] = int(marL)
+
+    indent = pPr.get('indent')
+    if indent is not None:
+        props['bullet_indent'] = int(indent)
+
     return props
 
 
 def apply_bullet_properties(paragraph, elem: dict):
     """Apply bullet properties to a paragraph via lxml.
 
-    Reads bullet_char, bullet_font, bullet_size_pct, bullet_color from elem.
+    Reads bullet_char, bullet_font, bullet_size_pct, bullet_color,
+    bullet_margin_left, bullet_indent from elem.
     """
-    if 'bullet_char' not in elem and 'bullet_none' not in elem:
+    has_bullet_props = ('bullet_char' in elem or 'bullet_none' in elem
+                        or 'bullet_margin_left' in elem or 'bullet_indent' in elem)
+    if not has_bullet_props:
         return
 
     pPr = paragraph._p.find(qn('a:pPr'))
     if pPr is None:
         pPr = etree.SubElement(paragraph._p, qn('a:pPr'))
         paragraph._p.insert(0, pPr)
+
+    # Apply margin and indent (controls bullet-to-text spacing)
+    if 'bullet_margin_left' in elem:
+        pPr.set('marL', str(elem['bullet_margin_left']))
+    if 'bullet_indent' in elem:
+        pPr.set('indent', str(elem['bullet_indent']))
 
     if elem.get('bullet_none'):
         etree.SubElement(pPr, qn('a:buNone'))

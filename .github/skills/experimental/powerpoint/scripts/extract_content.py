@@ -272,6 +272,7 @@ def extract_shape(shape) -> dict:
                 para_info = extract_paragraph_font(para)
                 para_spacing = extract_paragraph_properties(para)
                 bullet_props = extract_bullet_properties(para)
+                alignment = extract_alignment(para)
                 # Merge: run-level wins, paragraph-level fills gaps
                 merged = {**para_info, **run_info}
                 if "font" in merged:
@@ -290,6 +291,8 @@ def extract_shape(shape) -> dict:
                     elem["char_spacing"] = merged["char_spacing"]
                 if "effect" in merged:
                     elem["text_effect"] = merged["effect"]
+                if alignment:
+                    elem["alignment"] = alignment
                 if para_spacing:
                     elem.update(para_spacing)
                 if bullet_props:
@@ -439,6 +442,15 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
     # Extract image crop from srcRect on blipFill
     blipFill = shape._element.find(qn('p:blipFill'))
     if blipFill is not None:
+        # Preserve blipFill attributes (rotWithShape, dpi, etc.)
+        blip_fill_attrs = {}
+        for attr_name in ('rotWithShape', 'dpi'):
+            val = blipFill.get(attr_name)
+            if val is not None:
+                blip_fill_attrs[attr_name] = val
+        if blip_fill_attrs:
+            elem["blip_fill_attrs"] = blip_fill_attrs
+
         srcRect = blipFill.find(qn('a:srcRect'))
         if srcRect is not None and srcRect.attrib:
             crop = {}
