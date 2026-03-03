@@ -13,14 +13,23 @@ This skill provides Python scripts that consume YAML configuration files to prod
 
 ## Prerequisites
 
-### PowerShell (Recommended)
+### PowerShell
 
-The `Invoke-PptxPipeline.ps1` script handles virtual environment creation and dependency installation automatically. Requires Python 3 and PowerShell 7+.
+The `Invoke-PptxPipeline.ps1` script handles virtual environment creation and dependency installation automatically via `uv sync`. Requires `uv`, Python 3.11+, and PowerShell 7+.
 
-### Python Dependencies (Manual)
+### Installing uv
+
+If `uv` is not installed:
 
 ```bash
-pip install python-pptx pyyaml cairosvg Pillow pymupdf github-copilot-sdk
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Via pip (fallback)
+pip install uv
 ```
 
 ### System Dependencies (Export and Validation)
@@ -111,7 +120,7 @@ See the [content-extra.py template](content-extra-py-template.md) for the full t
 
 ## Script Reference
 
-All operations are available through the PowerShell orchestrator (`Invoke-PptxPipeline.ps1`) or directly via the Python scripts. The PowerShell script manages the Python virtual environment and dependency installation automatically.
+All operations are available through the PowerShell orchestrator (`Invoke-PptxPipeline.ps1`) or directly via the Python scripts. The PowerShell script manages the Python virtual environment and dependency installation automatically via `uv sync`.
 
 ### Build a Slide Deck
 
@@ -387,5 +396,23 @@ These checks require direct PPTX inspection and cannot be detected from images:
 | Background fill replaced with NoFill | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing |
 | Missing speaker notes | Notes not specified in `content.yaml` | Add `speaker_notes` field to every content slide |
 | LibreOffice not found during Validate | Validate exports slides to images first | Install LibreOffice: `brew install --cask libreoffice` (macOS) |
+| `uv` not found | uv package manager not installed | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
+| Python not found by uv | No Python 3.11+ on PATH | Install via `uv python install 3.11` or `pyenv install 3.11` |
+| `uv sync` fails | Missing or corrupt `.venv` | Delete `.venv/` at the skill root and re-run `uv sync` |
+| Import errors in scripts | Dependencies not installed or stale venv | Run `uv sync` from the skill root to recreate the environment |
+
+## Environment Recovery
+
+When scripts fail due to missing modules, import errors, or a corrupt virtual environment, recover with:
+
+```bash
+cd .github/skills/experimental/powerpoint
+rm -rf .venv
+uv sync
+```
+
+This recreates the virtual environment from scratch using `pyproject.toml` as the single source of truth. The `Invoke-PptxPipeline.ps1` orchestrator runs `uv sync` automatically on each invocation unless `-SkipVenvSetup` is passed.
+
+When `uv` itself is not available, install it first (see Installing uv above), then retry. When Python 3.11+ is not available, run `uv python install 3.11` to have uv fetch and manage the interpreter.
 
 > Brought to you by microsoft/hve-core

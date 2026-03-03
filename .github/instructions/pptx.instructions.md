@@ -58,6 +58,8 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 * For update and cleanup workflows, preserve existing masters and layouts from the source deck.
 * When updating an existing deck, always regenerate from content YAML rather than modifying the PPTX directly; update content files first, then regenerate into `slide-deck/`.
 * Follow the repo's Python environment conventions (`uv-projects.instructions.md`) for virtual environment and dependency management.
+* All dependencies are declared in `pyproject.toml` at the skill root. The `Invoke-PptxPipeline.ps1` orchestrator manages the virtual environment automatically. Never install packages with `pip install` directly.
+* When scripts fail due to missing modules or import errors, follow the Environment Recovery steps in the `powerpoint` skill instructions.
 
 ## Validation Criteria
 
