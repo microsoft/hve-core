@@ -55,7 +55,7 @@ def apply_fill(shape, fill_spec, colors: dict):
         apply_color_to_fill(shape.fill, color_spec)
         if "alpha" in fill_spec:
             alpha_val = str(int(fill_spec["alpha"] * 1000))
-            solid_el = shape.fill._fill._element.find(qn('a:solidFill'))
+            solid_el = shape.fill._fill._solidFill
             if solid_el is not None and len(solid_el) > 0:
                 color_el = solid_el[0]
                 existing = color_el.find(qn('a:alpha'))
@@ -110,7 +110,7 @@ def apply_fill(shape, fill_spec, colors: dict):
         apply_color_spec(shape.fill.fore_color, fore_spec)
         apply_color_spec(shape.fill.back_color, back_spec)
         # Apply alpha on pattern fore/back color elements
-        patt_el = shape.fill._fill._element.find(qn('a:pattFill'))
+        patt_el = shape.fill._fill._pattFill
         if patt_el is not None:
             if "fore_alpha" in fill_spec:
                 fg = patt_el.find(qn('a:fgClr'))
@@ -149,10 +149,9 @@ def extract_fill(fill) -> dict | str | None:
             color = extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb)
             # Check for alpha on the color element at XML level
             try:
-                fill_el = fill._fill._element
-                solid = fill_el.find(qn('a:solidFill'))
-                if solid is not None and len(solid) > 0:
-                    alpha_el = solid[0].find(qn('a:alpha'))
+                solid_el = fill._fill._solidFill
+                if solid_el is not None and len(solid_el) > 0:
+                    alpha_el = solid_el[0].find(qn('a:alpha'))
                     if alpha_el is not None:
                         alpha_val = int(alpha_el.get('val', '100000'))
                         return {"type": "solid", "color": color, "alpha": round(alpha_val / 1000, 1)}
@@ -202,7 +201,7 @@ def extract_fill(fill) -> dict | str | None:
             }
             # Extract alpha from pattern fore/back color elements
             try:
-                patt_el = fill._fill._element.find(qn('a:pattFill'))
+                patt_el = fill._fill._pattFill
                 if patt_el is not None:
                     fg = patt_el.find(qn('a:fgClr'))
                     if fg is not None and len(fg) > 0:

@@ -1,0 +1,18 @@
+[project]
+name = "powerpoint-skill-tests"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+markers = [
+    "integration: roundtrip integration tests",
+    "slow: tests that create full presentations",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
