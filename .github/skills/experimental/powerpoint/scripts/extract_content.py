@@ -262,7 +262,8 @@ def extract_shape(shape) -> dict:
             if tf_props:
                 elem.update(tf_props)
 
-            # Extract text styling: try run-level first, fall back to paragraph-level
+            # Extract per-paragraph formatting
+            para_dicts = []
             for para in shape.text_frame.paragraphs:
                 run_info = {}
                 for run in para.runs:
@@ -273,31 +274,48 @@ def extract_shape(shape) -> dict:
                 para_spacing = extract_paragraph_properties(para)
                 bullet_props = extract_bullet_properties(para)
                 alignment = extract_alignment(para)
-                # Merge: run-level wins, paragraph-level fills gaps
                 merged = {**para_info, **run_info}
+                p_dict = {"text": para.text}
                 if "font" in merged:
-                    elem["text_font"] = merged["font"]
+                    p_dict["text_font"] = merged["font"]
                 if "size" in merged:
-                    elem["text_size"] = merged["size"]
+                    p_dict["text_size"] = merged["size"]
                 if "color" in merged:
-                    elem["text_color"] = merged["color"]
+                    p_dict["text_color"] = merged["color"]
                 if merged.get("bold"):
-                    elem["text_bold"] = True
+                    p_dict["text_bold"] = True
                 if merged.get("underline"):
-                    elem["underline"] = True
+                    p_dict["underline"] = True
                 if merged.get("hyperlink"):
-                    elem["hyperlink"] = merged["hyperlink"]
+                    p_dict["hyperlink"] = merged["hyperlink"]
                 if "char_spacing" in merged:
-                    elem["char_spacing"] = merged["char_spacing"]
+                    p_dict["char_spacing"] = merged["char_spacing"]
                 if "effect" in merged:
-                    elem["text_effect"] = merged["effect"]
+                    p_dict["text_effect"] = merged["effect"]
                 if alignment:
-                    elem["alignment"] = alignment
+                    p_dict["alignment"] = alignment
                 if para_spacing:
-                    elem.update(para_spacing)
+                    p_dict.update(para_spacing)
                 if bullet_props:
-                    elem.update(bullet_props)
-                break
+                    p_dict.update(bullet_props)
+                para_dicts.append(p_dict)
+
+            non_empty = [p for p in para_dicts if p["text"].strip()]
+            if len(non_empty) > 1:
+                # Multi-paragraph: store per-paragraph formatting
+                elem["paragraphs"] = para_dicts
+                # Also set element-level defaults from first non-empty paragraph
+                first = non_empty[0]
+                for key in ("text_font", "text_size", "text_color", "text_bold",
+                            "alignment", "char_spacing"):
+                    if key in first:
+                        elem[key] = first[key]
+            elif non_empty:
+                # Single paragraph: flatten to element level
+                first = non_empty[0]
+                for key, val in first.items():
+                    if key != "text":
+                        elem[key] = val
 
     return elem
 
@@ -326,23 +344,49 @@ def extract_textbox(shape) -> dict:
             elem.update(tf_props)
 
         runs = []
-        para_info = {}
-        alignment = None
-        para_spacing = {}
-        bullet_props = {}
+        para_dicts = []
         for para in shape.text_frame.paragraphs:
-            if not para_info:
-                para_info = extract_paragraph_font(para)
-            if alignment is None:
-                alignment = extract_alignment(para)
-            if not para_spacing:
-                para_spacing = extract_paragraph_properties(para)
-            if not bullet_props:
-                bullet_props = extract_bullet_properties(para)
+            run_info = {}
+            para_runs = []
             for run in para.runs:
                 font_info = extract_font_info(run.font)
                 run_extra = extract_run_properties(run)
-                runs.append({"text": run.text, **font_info, **run_extra})
+                para_runs.append({"text": run.text, **font_info, **run_extra})
+                if not run_info:
+                    run_info = {**font_info, **run_extra}
+            runs.extend(para_runs)
+
+            p_info = extract_paragraph_font(para)
+            p_spacing = extract_paragraph_properties(para)
+            p_bullets = extract_bullet_properties(para)
+            p_alignment = extract_alignment(para)
+            merged = {**p_info, **run_info}
+            p_dict = {"text": para.text}
+            if "font" in merged:
+                p_dict["font"] = merged["font"]
+            if "size" in merged:
+                p_dict["font_size"] = merged["size"]
+            if "color" in merged:
+                p_dict["font_color"] = merged["color"]
+            if merged.get("bold"):
+                p_dict["font_bold"] = True
+            if merged.get("italic"):
+                p_dict["italic"] = True
+            if merged.get("underline"):
+                p_dict["underline"] = True
+            if merged.get("hyperlink"):
+                p_dict["hyperlink"] = merged["hyperlink"]
+            if "char_spacing" in merged:
+                p_dict["char_spacing"] = merged["char_spacing"]
+            if "effect" in merged:
+                p_dict["text_effect"] = merged["effect"]
+            if p_alignment:
+                p_dict["alignment"] = p_alignment
+            if p_spacing:
+                p_dict.update(p_spacing)
+            if p_bullets:
+                p_dict.update(p_bullets)
+            para_dicts.append(p_dict)
 
         # If multiple runs with different formatting, mark as rich_text
         if len(runs) > 1:
@@ -352,44 +396,27 @@ def extract_textbox(shape) -> dict:
                 elem["type"] = "rich_text"
                 elem["segments"] = runs
                 del elem["text"]
-                if alignment:
-                    elem["alignment"] = alignment
-                if para_spacing:
-                    elem.update(para_spacing)
+                first_p = next((p for p in para_dicts if p["text"].strip()), {})
+                if first_p.get("alignment"):
+                    elem["alignment"] = first_p["alignment"]
                 return elem
 
-        # Single-style text box: merge run-level and paragraph-level font info
-        merged = {**para_info}
-        if runs:
-            # Run-level properties override paragraph-level
-            for key, val in runs[0].items():
-                if key != "text" and val is not None:
-                    merged[key] = val
-
-        if "font" in merged:
-            elem["font"] = merged["font"]
-        if "size" in merged:
-            elem["font_size"] = merged["size"]
-        if "color" in merged:
-            elem["font_color"] = merged["color"]
-        if merged.get("bold"):
-            elem["font_bold"] = True
-        if merged.get("italic"):
-            elem["italic"] = True
-        if merged.get("underline"):
-            elem["underline"] = True
-        if merged.get("hyperlink"):
-            elem["hyperlink"] = merged["hyperlink"]
-        if "char_spacing" in merged:
-            elem["char_spacing"] = merged["char_spacing"]
-        if "effect" in merged:
-            elem["text_effect"] = merged["effect"]
-        if alignment:
-            elem["alignment"] = alignment
-        if para_spacing:
-            elem.update(para_spacing)
-        if bullet_props:
-            elem.update(bullet_props)
+        non_empty = [p for p in para_dicts if p["text"].strip()]
+        if len(non_empty) > 1:
+            # Multi-paragraph: store per-paragraph formatting
+            elem["paragraphs"] = para_dicts
+            # Set element-level defaults from first non-empty paragraph
+            first = non_empty[0]
+            for key in ("font", "font_size", "font_color", "font_bold",
+                        "italic", "alignment", "char_spacing"):
+                if key in first:
+                    elem[key] = first[key]
+        elif non_empty:
+            # Single-style text box: flatten to element level
+            first = non_empty[0]
+            for key, val in first.items():
+                if key != "text":
+                    elem[key] = val
 
     return elem
 
@@ -936,6 +963,7 @@ def main():
         theme_colors = _resolve_theme_colors(prs)
         if theme_colors:
             global_style["theme_colors"] = theme_colors
+            global_style = _resolve_theme_refs_in_content(global_style, theme_colors)
             print(f"Resolved {len(theme_colors)} theme colors")
 
     global_dir = output_dir / "global"
