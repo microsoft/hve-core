@@ -134,7 +134,7 @@ python scripts/build_deck.py \
   --slides 3,7,15
 ```
 
-Opens the existing deck, regenerates only the specified slides from their `content.yaml`, and saves.
+Opens the existing deck, clears shapes on the specified slides, rebuilds them in-place from their `content.yaml`, and saves. All other slides remain untouched.
 
 ### Extract Content from Existing PPTX
 
@@ -152,6 +152,30 @@ python scripts/extract_content.py \
 
 Extracts text, shapes, images, and styling from an existing PPTX into the `content/` folder structure. Creates `content.yaml` files for each slide and populates the `global/style.yaml` from detected patterns.
 
+#### Extract Specific Slides
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Extract `
+  -InputPath existing-deck.pptx `
+  -OutputDir content/ `
+  -Slides "3,7,15"
+```
+
+```bash
+python scripts/extract_content.py \
+  --input existing-deck.pptx \
+  --output-dir content/ \
+  --slides 3,7,15
+```
+
+Extracts only the specified slides (plus the global style). Useful for targeted updates on large decks.
+
+#### Extraction Limitations
+
+* **Linked images**: Picture shapes that reference external (linked) images instead of embedded blobs are recorded with `path: LINKED_IMAGE_NOT_EMBEDDED`. The script does not crash but the image must be re-embedded manually.
+* **Inherited styling**: When text elements inherit font, size, or color from the slide master or layout, the extraction records no inline styling. Content YAML for these elements needs explicit font properties added before rebuild.
+* **Style detection heuristics**: The `detect_global_style()` function uses frequency analysis across all slides. For decks with mixed styling, review and adjust `style.yaml` values manually after extraction.
+
 ### Validate a Deck
 
 ```powershell
@@ -166,7 +190,25 @@ python scripts/validate_deck.py \
   --content-dir content/
 ```
 
-Validates the generated deck against the content definitions. Checks for text overlay, width overflow, missing speaker notes, color readability, and element bounds.
+Validates the generated deck against the content definitions. Checks for text overlay (with horizontal-aware overlap detection), width overflow, missing speaker notes, font consistency (treating font family variants as compatible), and element bounds.
+
+#### Validate Specific Slides
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
+  -InputPath slide-deck/presentation.pptx `
+  -ContentDir content/ `
+  -Slides "3,7,15"
+```
+
+```bash
+python scripts/validate_deck.py \
+  --input slide-deck/presentation.pptx \
+  --content-dir content/ \
+  --slides 3,7,15
+```
+
+Validates only the specified slides. When content directories cover fewer slides than the PPTX, the slide count check reports an informational note rather than an error.
 
 ### Export Slides to Images
 
@@ -198,6 +240,8 @@ Converts specified slides to JPG images for visual inspection. The PowerShell or
 * python-pptx does NOT support SVG images. Always convert to PNG via `cairosvg` or `Pillow`.
 * python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX.
 * Transitions and animations are preserved when opening and saving existing files, but cannot be created or modified via the API.
+* When extracting content, slide master and layout inheritance means many text elements have no inline styling. Add explicit font properties in content YAML before rebuilding.
+* The Export action requires LibreOffice for PPTX-to-PDF conversion. The PowerShell orchestrator checks for LibreOffice availability before starting and provides platform-specific install instructions if missing.
 * Accessing `background.fill` on slides with inherited backgrounds replaces them with `NoFill`. Check `slide.follow_master_background` before accessing the fill property.
 
 ## Validation Rules

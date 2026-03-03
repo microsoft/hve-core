@@ -16,7 +16,7 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN
-from pptx.util import Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 SHAPE_MAP = {
     "rectangle": MSO_SHAPE.RECTANGLE,
@@ -82,25 +82,29 @@ def set_slide_bg(slide, color: RGBColor):
 
 def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
                 font_size=16, font_color=None, bold=False, italic=False,
-                alignment=None):
-    """Add a text box to a slide."""
+                alignment=None, name=None):
+    """Add a text box to a slide. Splits text on newlines into separate paragraphs."""
     txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
+    if name:
+        txBox.name = name
     tf = txBox.text_frame
     tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = text
-    if alignment:
-        align_map = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT}
-        p.alignment = align_map.get(alignment, PP_ALIGN.LEFT)
-    run = p.runs[0] if p.runs else p.add_run()
-    if not p.runs:
-        run.text = text
-    run.font.name = font_name
-    run.font.size = Pt(font_size)
-    if font_color:
-        run.font.color.rgb = font_color
-    run.font.bold = bold
-    run.font.italic = italic
+
+    lines = text.split("\n") if "\n" in text else [text]
+
+    for i, line in enumerate(lines):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        if alignment:
+            align_map = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT}
+            p.alignment = align_map.get(alignment, PP_ALIGN.LEFT)
+        run = p.add_run()
+        run.text = line
+        run.font.name = font_name
+        run.font.size = Pt(font_size)
+        if font_color:
+            run.font.color.rgb = font_color
+        run.font.bold = bold
+        run.font.italic = italic
     return txBox
 
 
@@ -113,6 +117,9 @@ def add_shape_element(slide, elem, colors, typography):
     height = Inches(elem["height"])
 
     shape = slide.shapes.add_shape(shape_type, left, top, width, height)
+
+    if "name" in elem:
+        shape.name = elem["name"]
 
     if "fill" in elem:
         shape.fill.solid()
@@ -158,6 +165,8 @@ def add_image_element(slide, elem, content_dir: Path):
     width = Inches(elem["width"])
     height = Inches(elem["height"])
     pic = slide.shapes.add_picture(str(img_path), left, top, width, height)
+    if "name" in elem:
+        pic.name = elem["name"]
     return pic
 
 
@@ -167,6 +176,8 @@ def add_rich_text_element(slide, elem, colors, typography):
         Inches(elem["left"]), Inches(elem["top"]),
         Inches(elem["width"]), Inches(elem["height"])
     )
+    if "name" in elem:
+        txBox.name = elem["name"]
     tf = txBox.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
@@ -327,15 +338,32 @@ def add_numbered_step_element(slide, elem, colors, typography):
         )
 
 
-def build_slide(prs, slide_content: dict, style: dict, content_dir: Path):
-    """Build a single slide from content.yaml data and style context."""
+def clear_slide_shapes(slide):
+    """Remove all shapes from a slide, preserving the slide itself."""
+    sp_tree = slide.shapes._spTree
+    shapes_to_remove = [sp for sp in sp_tree.iterchildren() if sp.tag.endswith('}sp')
+                        or sp.tag.endswith('}pic') or sp.tag.endswith('}grpSp')
+                        or sp.tag.endswith('}cxnSp')]
+    for sp in shapes_to_remove:
+        sp_tree.remove(sp)
+
+
+def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None):
+    """Build a single slide from content.yaml data and style context.
+
+    When existing_slide is provided, clears its shapes and rebuilds in place
+    instead of appending a new slide.
+    """
     merged_style = merge_styles(style, slide_content.get("style_overrides"))
     colors = merged_style.get("colors", {})
     typography = merged_style.get("typography", {})
 
-    # Add a blank slide
-    slide_layout = prs.slide_layouts[6]  # Blank layout
-    slide = prs.slides.add_slide(slide_layout)
+    if existing_slide is not None:
+        slide = existing_slide
+        clear_slide_shapes(slide)
+    else:
+        slide_layout = prs.slide_layouts[6]  # Blank layout
+        slide = prs.slides.add_slide(slide_layout)
 
     # Set background
     bg_color = resolve_color(colors.get("bg_dark", "#1B1B1F"), colors)
@@ -358,7 +386,8 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path):
                 font_color=font_color,
                 bold=elem.get("bold", False),
                 italic=elem.get("italic", False),
-                alignment=elem.get("alignment")
+                alignment=elem.get("alignment"),
+                name=elem.get("name")
             )
         elif elem_type == "image":
             add_image_element(slide, elem, content_dir)
@@ -434,15 +463,14 @@ def main():
                 continue
             slide_dir = slides_to_rebuild[num]
             slide_content = load_yaml(slide_dir / "content.yaml")
-            # Remove the existing slide at this position (0-indexed)
+            # Rebuild in-place: clear shapes on the existing slide and repopulate
             idx = num - 1
             if idx < len(prs.slides):
-                rId = prs.slides._sldIdLst[idx].rId
-                prs.part.drop_rel(rId)
-                del prs.slides._sldIdLst[idx]
-            # Build the new slide
-            build_slide(prs, slide_content, style, slide_dir)
-            print(f"Rebuilt slide {num}")
+                existing_slide = prs.slides[idx]
+                build_slide(prs, slide_content, style, slide_dir, existing_slide=existing_slide)
+                print(f"Rebuilt slide {num} in-place")
+            else:
+                print(f"Warning: Slide {num} does not exist in deck (has {len(prs.slides)} slides), skipping")
     else:
         # Full build
         prs = Presentation()

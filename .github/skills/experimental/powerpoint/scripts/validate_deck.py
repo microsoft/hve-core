@@ -32,11 +32,16 @@ def check_text_overlay(slide, slide_num: int) -> list[str]:
 
     for shape in slide.shapes:
         if shape.has_text_frame and shape.text_frame.text.strip():
+            left = emu_to_inches(shape.left)
             top = emu_to_inches(shape.top)
+            width = emu_to_inches(shape.width)
             height = emu_to_inches(shape.height)
             bottom = top + height
+            right = left + width
             text_elements.append({
                 "name": shape.name,
+                "left": left,
+                "right": right,
                 "top": top,
                 "bottom": bottom,
                 "text": shape.text_frame.text[:50],
@@ -48,6 +53,10 @@ def check_text_overlay(slide, slide_num: int) -> list[str]:
     for i in range(len(text_elements) - 1):
         current = text_elements[i]
         next_elem = text_elements[i + 1]
+        # Only flag overlap when elements share horizontal space
+        h_overlap = current["left"] < next_elem["right"] and next_elem["left"] < current["right"]
+        if not h_overlap:
+            continue
         gap = next_elem["top"] - current["bottom"]
         if gap < 0:
             issues.append(
@@ -87,6 +96,32 @@ def check_speaker_notes(slide, slide_num: int) -> list[str]:
     return issues
 
 
+def _font_family_matches(font_name: str, expected_fonts: set[str]) -> bool:
+    """Check if a font name matches any expected font, treating weight variants as compatible."""
+    if font_name in expected_fonts:
+        return True
+    # Strip weight suffixes and check base family
+    suffixes = (
+        " Semibold", " SemiBold", " Bold", " Light", " Thin",
+        " Black", " Medium", " ExtraBold", " ExtraLight",
+    )
+    base = font_name
+    for suffix in suffixes:
+        if font_name.endswith(suffix):
+            base = font_name[: -len(suffix)]
+            break
+    # Check if base family matches any expected font or its base family
+    for expected in expected_fonts:
+        exp_base = expected
+        for suffix in suffixes:
+            if expected.endswith(suffix):
+                exp_base = expected[: -len(suffix)]
+                break
+        if base == exp_base:
+            return True
+    return False
+
+
 def check_font_consistency(slide, slide_num: int, expected_fonts: set[str] | None = None) -> list[str]:
     """Check for unexpected or inconsistent fonts."""
     issues = []
@@ -97,7 +132,7 @@ def check_font_consistency(slide, slide_num: int, expected_fonts: set[str] | Non
         if shape.has_text_frame:
             for para in shape.text_frame.paragraphs:
                 for run in para.runs:
-                    if run.font.name and run.font.name not in expected_fonts:
+                    if run.font.name and not _font_family_matches(run.font.name, expected_fonts):
                         issues.append(
                             f"Slide {slide_num}: Unexpected font '{run.font.name}' "
                             f"in '{shape.name}' (expected: {expected_fonts})"
@@ -105,7 +140,8 @@ def check_font_consistency(slide, slide_num: int, expected_fonts: set[str] | Non
     return issues
 
 
-def validate_deck(pptx_path: Path, content_dir: Path | None = None) -> list[str]:
+def validate_deck(pptx_path: Path, content_dir: Path | None = None,
+                   slide_filter: set[int] | None = None) -> list[str]:
     """Run all validation checks on a PPTX file."""
     prs = Presentation(str(pptx_path))
     all_issues = []
@@ -127,17 +163,27 @@ def validate_deck(pptx_path: Path, content_dir: Path | None = None) -> list[str]
 
     for i, slide in enumerate(prs.slides):
         slide_num = i + 1
+        if slide_filter and slide_num not in slide_filter:
+            continue
         all_issues.extend(check_text_overlay(slide, slide_num))
         all_issues.extend(check_width_overflow(slide, slide_num, max_width))
         all_issues.extend(check_speaker_notes(slide, slide_num))
         all_issues.extend(check_font_consistency(slide, slide_num, expected_fonts))
 
-    # Check slide count against content
-    if content_dir:
+    # Check slide count against content (only when all slides have content dirs)
+    if content_dir and not slide_filter:
         slide_dirs = sorted(
             [d for d in content_dir.iterdir() if d.is_dir() and d.name.startswith("slide-")]
         )
-        if len(slide_dirs) != len(prs.slides):
+        if len(slide_dirs) == len(prs.slides):
+            pass  # Full content coverage, no mismatch
+        elif len(slide_dirs) < len(prs.slides):
+            # Partial content is expected during incremental updates
+            all_issues.append(
+                f"Info: Partial content detected — {len(prs.slides)} slides in PPTX, "
+                f"{len(slide_dirs)} content directories (expected for incremental updates)"
+            )
+        else:
             all_issues.append(
                 f"Slide count mismatch: {len(prs.slides)} slides in PPTX, "
                 f"{len(slide_dirs)} content directories"
@@ -150,13 +196,18 @@ def main():
     parser = argparse.ArgumentParser(description="Validate a PowerPoint deck")
     parser.add_argument("--input", required=True, help="Input PPTX file path")
     parser.add_argument("--content-dir", help="Content directory for comparison")
+    parser.add_argument("--slides", help="Comma-separated slide numbers to validate (default: all)")
     args = parser.parse_args()
 
     pptx_path = Path(args.input)
     content_dir = Path(args.content_dir) if args.content_dir else None
 
+    slide_filter = None
+    if args.slides:
+        slide_filter = {int(s.strip()) for s in args.slides.split(",")}
+
     print(f"Validating: {pptx_path}")
-    issues = validate_deck(pptx_path, content_dir)
+    issues = validate_deck(pptx_path, content_dir, slide_filter=slide_filter)
 
     if issues:
         print(f"\n{len(issues)} issue(s) found:\n")

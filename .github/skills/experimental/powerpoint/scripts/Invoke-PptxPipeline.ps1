@@ -327,6 +327,11 @@ function Invoke-ExtractContent {
         '--output-dir', $OutputDir
     )
 
+    if ($Slides) {
+        $arguments += '--slides'
+        $arguments += $Slides
+    }
+
     Write-Host "Extracting content from $InputPath -> $OutputDir"
     & $python @arguments
     if ($LASTEXITCODE -ne 0) {
@@ -356,6 +361,11 @@ function Invoke-ValidateDeck {
         $arguments += $ContentDir
     }
 
+    if ($Slides) {
+        $arguments += '--slides'
+        $arguments += $Slides
+    }
+
     Write-Host "Validating deck $InputPath"
     & $python @arguments
     if ($LASTEXITCODE -ne 0) {
@@ -377,6 +387,18 @@ function Invoke-ExportSlides {
 
     $python = Get-VenvPythonPath
     $exportScript = Join-Path $ScriptDir 'export_slides.py'
+
+    # Pre-flight: verify LibreOffice is available (required for PPTX-to-PDF)
+    $libreoffice = Get-Command 'libreoffice' -ErrorAction SilentlyContinue
+    if (-not $libreoffice) {
+        $libreoffice = Get-Command 'soffice' -ErrorAction SilentlyContinue
+    }
+    if (-not $libreoffice) {
+        $installHint = if ($IsMacOS) { 'brew install --cask libreoffice' }
+            elseif ($IsWindows) { 'winget install TheDocumentFoundation.LibreOffice' }
+            else { 'sudo apt-get install libreoffice' }
+        throw "LibreOffice is required for PPTX-to-PDF export but was not found on PATH. Install with: $installHint"
+    }
 
     # Ensure output directory exists
     if (-not (Test-Path $ImageOutputDir)) {
