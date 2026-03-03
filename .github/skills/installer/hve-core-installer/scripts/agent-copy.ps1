@@ -1,15 +1,47 @@
-﻿<#
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+<#
 .SYNOPSIS
     Copies selected HVE-Core agents to the target repository.
 .DESCRIPTION
     Creates .github/agents/ directory, copies agent files, computes SHA256 hashes,
     and writes .hve-tracking.json manifest for upgrade tracking.
-.NOTES
-    Set $hveCoreBasePath, $selection, $collectionId, $filesToCopy,
-    and optionally $keepExisting and $collisions before running.
+.PARAMETER HveCoreBasePath
+    Root path of the local HVE-Core clone used as the copy source.
+.PARAMETER CollectionId
+    Collection identifier recorded in the tracking manifest.
+.PARAMETER FilesToCopy
+    Array of agent file paths relative to the source agents directory.
+.PARAMETER KeepExisting
+    When set, existing files listed in Collisions are preserved instead of overwritten.
+.PARAMETER Collisions
+    Array of target file paths that already exist and may conflict.
+.EXAMPLE
+    ./scripts/agent-copy.ps1 -HveCoreBasePath ../hve-core -CollectionId hve-core -FilesToCopy @('hve-core/task-researcher.agent.md')
 .OUTPUTS
     Per-file copy status and manifest creation confirmation.
 #>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$HveCoreBasePath,
+
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CollectionId,
+
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string[]]$FilesToCopy,
+
+    [Parameter()]
+    [switch]$KeepExisting,
+
+    [Parameter()]
+    [string[]]$Collisions = @()
+)
+
 $ErrorActionPreference = 'Stop'
 
 $sourceBase = "$hveCoreBasePath/.github/agents"

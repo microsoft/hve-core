@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Detects the current development environment for HVE-Core installation.
 # Outputs key-value pairs: ENV_TYPE, IS_CODESPACES, IS_DEVCONTAINER,
 # HAS_DEVCONTAINER_JSON, HAS_WORKSPACE_FILE, IS_HVE_CORE_REPO.

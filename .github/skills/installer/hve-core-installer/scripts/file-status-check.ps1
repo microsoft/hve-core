@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Compares current agent files against the .hve-tracking.json manifest.
@@ -5,9 +7,14 @@
     For each tracked file, computes the current SHA256 hash and compares it
     against the stored hash to determine status: managed, modified, ejected,
     or missing.
+.EXAMPLE
+    ./scripts/file-status-check.ps1
 .OUTPUTS
     Per-file status lines: FILE=<path>|STATUS=<status>|ACTION=<action>.
 #>
+[CmdletBinding()]
+param()
+
 $ErrorActionPreference = 'Stop'
 
 $manifest = Get-Content ".hve-tracking.json" | ConvertFrom-Json -AsHashtable

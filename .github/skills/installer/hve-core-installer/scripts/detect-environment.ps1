@@ -1,13 +1,20 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Detects the current development environment for HVE-Core installation.
 .DESCRIPTION
     Identifies whether the user is in a local VS Code, devcontainer, or Codespaces
     environment and reports relevant configuration details.
+.EXAMPLE
+    ./scripts/detect-environment.ps1
 .OUTPUTS
     Key-value pairs: ENV_TYPE, IS_CODESPACES, IS_DEVCONTAINER,
     HAS_DEVCONTAINER_JSON, HAS_WORKSPACE_FILE, IS_HVE_CORE_REPO.
 #>
+[CmdletBinding()]
+param()
+
 $ErrorActionPreference = 'Stop'
 
 # Detect environment type

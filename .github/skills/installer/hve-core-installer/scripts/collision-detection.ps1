@@ -1,15 +1,32 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Detects file collisions before copying HVE-Core agents.
 .DESCRIPTION
     Checks the target directory for existing agent files that would conflict
     with the selected agent bundle or collection.
-.NOTES
-    Set $hveCoreBasePath, $selection ('hve-core' or collection id),
-    and optionally $collectionAgents (array of relative paths) before running.
+.PARAMETER Selection
+    Agent bundle to check. Use 'hve-core' for the default set or a collection identifier.
+.PARAMETER CollectionAgents
+    Array of agent file paths relative to the agents directory for non-default collections.
+.EXAMPLE
+    ./scripts/collision-detection.ps1 -Selection hve-core
+.EXAMPLE
+    ./scripts/collision-detection.ps1 -Selection my-collection -CollectionAgents @('my-collection/custom.agent.md')
 .OUTPUTS
     COLLISIONS_DETECTED=true/false and COLLISION_FILES list.
 #>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Selection,
+
+    [Parameter()]
+    [string[]]$CollectionAgents = @()
+)
+
 $ErrorActionPreference = 'Stop'
 
 $targetDir = ".github/agents"

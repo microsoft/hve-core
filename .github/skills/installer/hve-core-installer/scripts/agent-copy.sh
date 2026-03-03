@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Copies selected HVE-Core agents to the target repository.
 # Creates .github/agents/, copies agent files, computes SHA256 hashes,
 # and writes .hve-tracking.json manifest for upgrade tracking.

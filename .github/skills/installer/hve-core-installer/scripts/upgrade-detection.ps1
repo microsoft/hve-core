@@ -1,15 +1,26 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Detects whether the current installation is eligible for upgrade.
 .DESCRIPTION
     Checks for .hve-tracking.json and compares installed version against
     the source HVE-Core version from package.json.
-.NOTES
-    Set $hveCoreBasePath before running.
+.PARAMETER HveCoreBasePath
+    Root path of the local HVE-Core clone containing package.json.
+.EXAMPLE
+    ./scripts/upgrade-detection.ps1 -HveCoreBasePath ../hve-core
 .OUTPUTS
     UPGRADE_MODE, INSTALLED_VERSION, SOURCE_VERSION, VERSION_CHANGED,
     INSTALLED_COLLECTION key-value pairs.
 #>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$HveCoreBasePath
+)
+
 $ErrorActionPreference = 'Stop'
 $manifestPath = ".hve-tracking.json"
 

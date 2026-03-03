@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Compares current agent files against the .hve-tracking.json manifest.
 # Requires jq. Outputs per-file status lines.
 set -euo pipefail

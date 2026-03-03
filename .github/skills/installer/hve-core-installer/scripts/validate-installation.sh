@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Validates an HVE-Core clone-based installation.
 # Usage: validate-installation.sh <method> <base_path>
 #   method:    Installation method number (1-6)

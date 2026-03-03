@@ -1,18 +1,28 @@
-﻿<#
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+<#
 .SYNOPSIS
     Validates that the HVE Core VS Code extension is installed.
 .DESCRIPTION
     Checks the installed extensions list for ise-hve-essentials.hve-core
     and reports version information.
-.NOTES
-    Set $codeCli to 'code' or 'code-insiders' before running.
+.PARAMETER CodeCli
+    Path or name of the VS Code CLI executable. Defaults to 'code'.
+.EXAMPLE
+    ./scripts/validate-extension.ps1
+.EXAMPLE
+    ./scripts/validate-extension.ps1 -CodeCli 'code-insiders'
 .OUTPUTS
     EXTENSION_INSTALLED=True/False and version details.
 #>
-$ErrorActionPreference = 'Stop'
+[CmdletBinding()]
+param(
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$CodeCli = 'code'
+)
 
-# Set based on user's earlier choice: 'code' or 'code-insiders'
-if (-not $codeCli) { $codeCli = "code" }
+$ErrorActionPreference = 'Stop'
 
 # Check if extension is installed
 $extensions = & $codeCli --list-extensions 2>$null

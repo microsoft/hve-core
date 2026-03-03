@@ -1,18 +1,34 @@
-﻿<#
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+<#
 .SYNOPSIS
     Validates an HVE-Core clone-based installation.
 .DESCRIPTION
     Checks that required directories exist and method-specific configuration
     is correct (workspace file for multi-root, .gitmodules for submodule).
-.NOTES
-    Set $method (1-6) and $basePath before running.
+.PARAMETER BasePath
+    Root path of the installation to validate.
+.PARAMETER Method
+    Installation method number (1-6) that determines which validations to run.
+.EXAMPLE
+    ./scripts/validate-installation.ps1 -BasePath ./my-project -Method 1
+.EXAMPLE
+    ./scripts/validate-installation.ps1 -BasePath ./my-project -Method 5
 .OUTPUTS
     Per-directory pass/fail status and overall validation result.
 #>
-$ErrorActionPreference = 'Stop'
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$BasePath,
 
-if (-not $basePath) { throw "Variable `$basePath must be set per method table above" }
-if (-not $method) { throw "Variable `$method must be set (1-6)" }
+    [Parameter(Mandatory)]
+    [ValidateRange(1, 6)]
+    [int]$Method
+)
+
+$ErrorActionPreference = 'Stop'
 
 $valid = $true
 foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions")) {

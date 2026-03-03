@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Detects whether the current installation is eligible for upgrade.
 # Checks for .hve-tracking.json and compares installed version against source.
 # Usage: upgrade-detection.sh <hve_core_base_path>

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Validates that the HVE Core VS Code extension is installed.
 # Set code_cli to 'code' or 'code-insiders' before running.
 # Outputs EXTENSION_INSTALLED=true/false and version details.

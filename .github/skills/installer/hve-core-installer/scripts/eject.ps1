@@ -1,4 +1,6 @@
-﻿<#
+﻿# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+<#
 .SYNOPSIS
     Ejects a tracked file from HVE-Core upgrade management.
 .DESCRIPTION
@@ -6,9 +8,13 @@
     skip it. The file remains on disk but is owned by the user.
 .PARAMETER FilePath
     The relative path to the file to eject (e.g., .github/agents/task-implementor.agent.md).
+.EXAMPLE
+    ./scripts/eject.ps1 -FilePath '.github/agents/task-implementor.agent.md'
 #>
+[CmdletBinding()]
 param(
     [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
     [string]$FilePath
 )
 
