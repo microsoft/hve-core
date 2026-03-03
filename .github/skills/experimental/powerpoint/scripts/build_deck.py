@@ -84,7 +84,7 @@ def set_slide_bg_image(slide, image_path: str, content_dir: Path):
 
 
 
-def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
+def add_textbox(slide, left, top, width, height, text, font_name=None,
                 font_size=16, font_color=None, bold=False, italic=False,
                 alignment=None, name=None, rotation=None, elem=None,
                 colors=None):
@@ -112,7 +112,8 @@ def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
             apply_bullet_properties(p, elem)
         run = p.add_run()
         run.text = line
-        run.font.name = font_name
+        if font_name:
+            run.font.name = font_name
         run.font.size = Pt(font_size)
         if font_color:
             apply_color_to_font(run.font.color, font_color)
@@ -155,11 +156,15 @@ def add_shape_element(slide, elem, colors, typography):
         lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
         for i, line in enumerate(lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            if "alignment" in elem:
+                p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
             apply_paragraph_properties(p, elem)
             apply_bullet_properties(p, elem)
             run = p.add_run()
             run.text = line
-            run.font.name = elem.get("text_font", "Segoe UI")
+            text_font = elem.get("text_font")
+            if text_font:
+                run.font.name = text_font
             run.font.size = Pt(elem.get("text_size", 16))
             if "text_color" in elem:
                 color_spec = resolve_color(elem["text_color"])
@@ -187,6 +192,13 @@ def add_image_element(slide, elem, content_dir: Path):
     if "name" in elem:
         pic.name = elem["name"]
     apply_rotation(pic, elem.get("rotation"))
+
+    # Restore blipFill attributes (rotWithShape, dpi, etc.)
+    if "blip_fill_attrs" in elem:
+        blipFill = pic._element.find(qn('p:blipFill'))
+        if blipFill is not None:
+            for attr_name, attr_val in elem["blip_fill_attrs"].items():
+                blipFill.set(attr_name, attr_val)
 
     # Apply image crop via srcRect on blipFill
     if "crop" in elem:
@@ -235,7 +247,9 @@ def add_rich_text_element(slide, elem, colors, typography):
     for i, seg in enumerate(elem.get("segments", [])):
         run = p.add_run() if i > 0 else (p.runs[0] if p.runs else p.add_run())
         run.text = seg["text"]
-        run.font.name = seg.get("font", "Segoe UI")
+        seg_font = seg.get("font")
+        if seg_font:
+            run.font.name = seg_font
         run.font.size = Pt(seg.get("size", 16))
         if "color" in seg:
             color_spec = resolve_color(seg["color"])
@@ -504,7 +518,9 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
                 apply_bullet_properties(p, elem)
                 run = p.add_run()
                 run.text = line
-                run.font.name = elem.get("text_font", "Segoe UI")
+                text_font = elem.get("text_font")
+                if text_font:
+                    run.font.name = text_font
                 run.font.size = Pt(elem.get("text_size", 16))
                 if "text_color" in elem:
                     apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
@@ -530,7 +546,9 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             apply_bullet_properties(p, elem)
             run = p.add_run()
             run.text = line
-            run.font.name = elem.get("font", "Segoe UI")
+            grp_font = elem.get("font")
+            if grp_font:
+                run.font.name = grp_font
             run.font.size = Pt(elem.get("font_size", 16))
             if "font_color" in elem:
                 apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
@@ -683,7 +701,7 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         if elem_type == "shape":
             add_shape_element(slide, elem, colors, typography)
         elif elem_type == "textbox":
-            font_name = elem.get("font", "Segoe UI")
+            font_name = elem.get("font")
             font_color = resolve_color(elem["font_color"]) if "font_color" in elem else None
             is_bold = elem.get("font_bold", elem.get("bold", False))
             add_textbox(
