@@ -46,6 +46,47 @@ def extract_font_info(font) -> dict:
     return info
 
 
+def extract_rotation(shape) -> float | None:
+    """Extract rotation in degrees, returning None when zero."""
+    rot = shape.rotation
+    if rot and rot != 0.0:
+        return rot
+    return None
+
+
+def extract_paragraph_font(paragraph) -> dict:
+    """Extract font properties from a paragraph's default run properties.
+
+    python-pptx exposes paragraph-level defaults via ``paragraph.font``.
+    Many PPTX files store styling here rather than on individual runs.
+    """
+    info = {}
+    font = paragraph.font
+    if font.name:
+        info["font"] = font.name
+    if font.size:
+        info["size"] = int(font.size.pt)
+    try:
+        if font.color and font.color.rgb:
+            info["color"] = rgb_to_hex(font.color.rgb)
+    except (AttributeError, TypeError):
+        pass
+    if font.bold is True:
+        info["bold"] = True
+    if font.italic is True:
+        info["italic"] = True
+    return info
+
+
+def extract_alignment(paragraph) -> str | None:
+    """Map a paragraph alignment enum to a string."""
+    al = paragraph.alignment
+    if al is None:
+        return None
+    mapping = {1: "left", 2: "center", 3: "right", 4: "justify"}
+    return mapping.get(int(al))
+
+
 def extract_shape(shape) -> dict:
     """Extract a shape element definition."""
     elem = {
@@ -57,6 +98,10 @@ def extract_shape(shape) -> dict:
         "height": emu_to_inches(shape.height),
         "name": shape.name,
     }
+
+    rot = extract_rotation(shape)
+    if rot is not None:
+        elem["rotation"] = rot
 
     # Detect shape type from name
     name_lower = shape.name.lower()
@@ -84,19 +129,23 @@ def extract_shape(shape) -> dict:
         text = shape.text_frame.text.strip()
         if text:
             elem["text"] = text
-            # Extract text styling from first run
+            # Extract text styling: try run-level first, fall back to paragraph-level
             for para in shape.text_frame.paragraphs:
+                run_info = {}
                 for run in para.runs:
-                    font_info = extract_font_info(run.font)
-                    if "font" in font_info:
-                        elem["text_font"] = font_info["font"]
-                    if "size" in font_info:
-                        elem["text_size"] = font_info["size"]
-                    if "color" in font_info:
-                        elem["text_color"] = font_info["color"]
-                    if font_info.get("bold"):
-                        elem["text_bold"] = True
+                    run_info = extract_font_info(run.font)
                     break
+                para_info = extract_paragraph_font(para)
+                # Merge: run-level wins, paragraph-level fills gaps
+                merged = {**para_info, **run_info}
+                if "font" in merged:
+                    elem["text_font"] = merged["font"]
+                if "size" in merged:
+                    elem["text_size"] = merged["size"]
+                if "color" in merged:
+                    elem["text_color"] = merged["color"]
+                if merged.get("bold"):
+                    elem["text_bold"] = True
                 break
 
     return elem
@@ -114,10 +163,20 @@ def extract_textbox(shape) -> dict:
         "name": shape.name,
     }
 
+    rot = extract_rotation(shape)
+    if rot is not None:
+        elem["rotation"] = rot
+
     # Check if this is a rich text element (multiple runs with different formatting)
     if shape.has_text_frame:
         runs = []
+        para_info = {}
+        alignment = None
         for para in shape.text_frame.paragraphs:
+            if not para_info:
+                para_info = extract_paragraph_font(para)
+            if alignment is None:
+                alignment = extract_alignment(para)
             for run in para.runs:
                 font_info = extract_font_info(run.font)
                 runs.append({"text": run.text, **font_info})
@@ -130,21 +189,30 @@ def extract_textbox(shape) -> dict:
                 elem["type"] = "rich_text"
                 elem["segments"] = runs
                 del elem["text"]
+                if alignment:
+                    elem["alignment"] = alignment
                 return elem
 
-        # Single-style text box
+        # Single-style text box: merge run-level and paragraph-level font info
+        merged = {**para_info}
         if runs:
-            first = runs[0]
-            if "font" in first:
-                elem["font"] = first["font"]
-            if "size" in first:
-                elem["font_size"] = first["size"]
-            if "color" in first:
-                elem["font_color"] = first["color"]
-            if first.get("bold"):
-                elem["bold"] = True
-            if first.get("italic"):
-                elem["italic"] = True
+            # Run-level properties override paragraph-level
+            for key, val in runs[0].items():
+                if key != "text" and val is not None:
+                    merged[key] = val
+
+        if "font" in merged:
+            elem["font"] = merged["font"]
+        if "size" in merged:
+            elem["font_size"] = merged["size"]
+        if "color" in merged:
+            elem["font_color"] = merged["color"]
+        if merged.get("bold"):
+            elem["font_bold"] = True
+        if merged.get("italic"):
+            elem["italic"] = True
+        if alignment:
+            elem["alignment"] = alignment
 
     return elem
 
@@ -155,7 +223,7 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
         img = shape.image
     except ValueError:
         # Linked images have no embedded blob
-        return {
+        elem = {
             "type": "image",
             "path": "LINKED_IMAGE_NOT_EMBEDDED",
             "left": emu_to_inches(shape.left),
@@ -165,6 +233,10 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
             "name": shape.name,
             "_note": "Image was linked, not embedded in the PPTX",
         }
+        rot = extract_rotation(shape)
+        if rot is not None:
+            elem["rotation"] = rot
+        return elem
 
     ext = img.content_type.split("/")[-1]
     if ext == "jpeg":
@@ -186,6 +258,9 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
         "height": emu_to_inches(shape.height),
         "name": shape.name,
     }
+    rot = extract_rotation(shape)
+    if rot is not None:
+        elem["rotation"] = rot
     return elem
 
 
@@ -336,10 +411,21 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
         "elements": [],
     }
 
-    # Extract speaker notes
+    # Extract slide background
     try:
-        notes = slide.notes_slide.notes_text_frame.text.strip()
-        if notes:
+        if not slide.follow_master_background:
+            bg_fill = slide.background.fill
+            if bg_fill.type is not None:
+                bg_color = rgb_to_hex(bg_fill.fore_color.rgb)
+                if bg_color:
+                    content["background"] = {"fill": bg_color}
+    except (AttributeError, TypeError):
+        pass
+
+    # Extract speaker notes (include empty string when notes slide exists)
+    try:
+        if slide.has_notes_slide:
+            notes = slide.notes_slide.notes_text_frame.text.strip()
             content["speaker_notes"] = notes
     except (AttributeError, TypeError):
         pass

@@ -80,13 +80,20 @@ def set_slide_bg(slide, color: RGBColor):
     fill.fore_color.rgb = color
 
 
+def apply_rotation(shape, rotation: float | None):
+    """Apply rotation in degrees to a shape when specified."""
+    if rotation is not None and rotation != 0:
+        shape.rotation = rotation
+
+
 def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
                 font_size=16, font_color=None, bold=False, italic=False,
-                alignment=None, name=None):
+                alignment=None, name=None, rotation=None):
     """Add a text box to a slide. Splits text on newlines into separate paragraphs."""
     txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     if name:
         txBox.name = name
+    apply_rotation(txBox, rotation)
     tf = txBox.text_frame
     tf.word_wrap = True
 
@@ -120,6 +127,8 @@ def add_shape_element(slide, elem, colors, typography):
 
     if "name" in elem:
         shape.name = elem["name"]
+
+    apply_rotation(shape, elem.get("rotation"))
 
     if "fill" in elem:
         shape.fill.solid()
@@ -167,6 +176,7 @@ def add_image_element(slide, elem, content_dir: Path):
     pic = slide.shapes.add_picture(str(img_path), left, top, width, height)
     if "name" in elem:
         pic.name = elem["name"]
+    apply_rotation(pic, elem.get("rotation"))
     return pic
 
 
@@ -365,8 +375,12 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         slide_layout = prs.slide_layouts[6]  # Blank layout
         slide = prs.slides.add_slide(slide_layout)
 
-    # Set background
-    bg_color = resolve_color(colors.get("bg_dark", "#1B1B1F"), colors)
+    # Set background from per-slide definition or global style
+    bg_block = slide_content.get("background")
+    if bg_block and "fill" in bg_block:
+        bg_color = resolve_color(bg_block["fill"], colors)
+    else:
+        bg_color = resolve_color(colors.get("bg_dark", "#1B1B1F"), colors)
     set_slide_bg(slide, bg_color)
 
     # Process elements in order
@@ -378,16 +392,18 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         elif elem_type == "textbox":
             font_name = resolve_font(elem.get("font", "$body_font"), typography)
             font_color = resolve_color(elem.get("font_color", "$text_white"), colors) if "font_color" in elem else None
+            is_bold = elem.get("font_bold", elem.get("bold", False))
             add_textbox(
                 slide, elem["left"], elem["top"], elem["width"], elem["height"],
                 elem.get("text", ""),
                 font_name=font_name,
                 font_size=elem.get("font_size", typography.get("body_size", 16)),
                 font_color=font_color,
-                bold=elem.get("bold", False),
+                bold=is_bold,
                 italic=elem.get("italic", False),
                 alignment=elem.get("alignment"),
-                name=elem.get("name")
+                name=elem.get("name"),
+                rotation=elem.get("rotation")
             )
         elif elem_type == "image":
             add_image_element(slide, elem, content_dir)
