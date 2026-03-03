@@ -262,6 +262,32 @@ Concurrent validation processes multiple slides in parallel (default: 3). Cachin
 
 Validates only the specified slides. When content directories cover fewer slides than the PPTX, the slide count check reports an informational note rather than an error.
 
+#### validate_slides.py CLI Reference
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--image-dir` | Yes | — | Directory containing `slide-NNN.jpg` images |
+| `--prompt` | One of `--prompt` / `--prompt-file` | — | Validation prompt text |
+| `--prompt-file` | One of `--prompt` / `--prompt-file` | — | Path to file containing the validation prompt |
+| `--model` | No | `claude-haiku-4.5` | Vision model ID |
+| `--output` | No | stdout | JSON results file path |
+| `--report` | No | — | Markdown report file path |
+| `--slides` | No | all | Comma-separated slide numbers to validate |
+| `--concurrency` | No | `3` | Max concurrent slide validations |
+| `--cache-dir` | No | `{image-dir}/cache` | Cache directory for validation results by image hash |
+| `--no-cache` | No | — | Disable caching and re-validate all slides |
+| `-v`, `--verbose` | No | — | Enable debug-level logging |
+
+#### Validation Outputs
+
+When run through the pipeline, validation produces these files in the image output directory:
+
+| File | Format | Content |
+|---|---|---|
+| `validation-results.json` | JSON | Per-slide issues with check type, severity, description, and location |
+| `validation-report.md` | Markdown | Human-readable report with severity summary, cache statistics, and per-slide findings |
+| `cache/{hash}.json` | JSON | Cached per-slide results keyed by SHA-256 of image + prompt + model |
+
 ### Export Slides to Images
 
 ```powershell
