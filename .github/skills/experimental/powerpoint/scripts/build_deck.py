@@ -188,6 +188,22 @@ def add_image_element(slide, elem, content_dir: Path):
         pic.name = elem["name"]
     apply_rotation(pic, elem.get("rotation"))
 
+    # Apply image crop via srcRect on blipFill
+    if "crop" in elem:
+        blipFill = pic._element.find(qn('p:blipFill'))
+        if blipFill is not None:
+            srcRect = blipFill.find(qn('a:srcRect'))
+            if srcRect is None:
+                # Insert srcRect after a:blip
+                blip_el = blipFill.find(qn('a:blip'))
+                idx = list(blipFill).index(blip_el) + 1 if blip_el is not None else 0
+                srcRect = etree.Element(qn('a:srcRect'))
+                blipFill.insert(idx, srcRect)
+            crop = elem["crop"]
+            for side in ('l', 't', 'r', 'b'):
+                if side in crop:
+                    srcRect.set(side, str(crop[side]))
+
     # Apply image opacity via alphaModFix on the blip element
     if "opacity" in elem:
         blip = pic._element.find('.//' + qn('a:blip'))
@@ -625,6 +641,22 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
                 tf.text = value[0]
                 for line in value[1:]:
                     tf.add_paragraph().text = line
+
+    # Remove unused placeholder shapes inherited from the layout
+    used_ph_indices = {int(k) for k in placeholders}
+    sp_tree = slide.shapes._spTree
+    for sp in list(sp_tree.iterchildren()):
+        nvSpPr = sp.find(qn('p:nvSpPr'))
+        if nvSpPr is None:
+            continue
+        nvPr = nvSpPr.find(qn('p:nvPr'))
+        if nvPr is None:
+            continue
+        ph = nvPr.find(qn('p:ph'))
+        if ph is not None:
+            idx = int(ph.get('idx', '0'))
+            if idx not in used_ph_indices:
+                sp_tree.remove(sp)
 
     # Set background from per-slide definition only
     bg_block = slide_content.get("background")
