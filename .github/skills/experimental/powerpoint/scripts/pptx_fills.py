@@ -6,7 +6,7 @@ Handles solid, gradient, and pattern fills plus line/border properties.
 from pptx.enum.dml import MSO_FILL, MSO_LINE_DASH_STYLE, MSO_PATTERN_TYPE
 from pptx.util import Pt
 
-from pptx_colors import apply_color_spec, apply_color_to_fill, resolve_color, rgb_to_hex
+from pptx_colors import apply_color_spec, apply_color_to_fill, extract_color, resolve_color, rgb_to_hex
 
 DASH_STYLE_MAP = {
     "solid": MSO_LINE_DASH_STYLE.SOLID,
@@ -88,20 +88,23 @@ def extract_fill(fill) -> dict | str | None:
             return None
 
         if fill_type == MSO_FILL.SOLID:
-            return rgb_to_hex(fill.fore_color.rgb)
+            return extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb)
 
         if fill_type == MSO_FILL.GRADIENT:
             stops = []
             for gs in fill.gradient_stops:
-                stops.append({
-                    "position": gs.position,
-                    "color": rgb_to_hex(gs.color.rgb),
-                })
-            return {
-                "type": "gradient",
-                "angle": fill.gradient_angle,
-                "stops": stops,
-            }
+                color = extract_color(gs.color)
+                if color is not None:
+                    stops.append({
+                        "position": gs.position,
+                        "color": color,
+                    })
+            result = {"type": "gradient", "stops": stops}
+            try:
+                result["angle"] = fill.gradient_angle
+            except ValueError:
+                pass
+            return result
 
         if fill_type == MSO_FILL.PATTERNED:
             pattern_val = fill.pattern
@@ -118,8 +121,8 @@ def extract_fill(fill) -> dict | str | None:
             return {
                 "type": "pattern",
                 "pattern": pattern_name,
-                "fore_color": rgb_to_hex(fill.fore_color.rgb),
-                "back_color": rgb_to_hex(fill.back_color.rgb),
+                "fore_color": extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb),
+                "back_color": extract_color(fill.back_color) or rgb_to_hex(fill.back_color.rgb),
             }
     except (AttributeError, TypeError):
         pass
@@ -150,7 +153,7 @@ def extract_line(shape) -> dict:
     try:
         line = shape.line
         if line.color and line.color.type is not None:
-            result["line_color"] = rgb_to_hex(line.color.rgb)
+            result["line_color"] = extract_color(line.color) or rgb_to_hex(line.color.rgb)
         if line.width:
             result["line_width"] = round(line.width.pt, 1)
         if line.dash_style and line.dash_style != MSO_LINE_DASH_STYLE.SOLID:

@@ -49,6 +49,9 @@
 .PARAMETER Resolution
     DPI resolution for exported slide images. Defaults to 150. Optional for Export.
 
+.PARAMETER Strict
+    Enable strict validation mode. Flags all elements including full-bleed backgrounds in edge-margin checks.
+
 .EXAMPLE
     ./Invoke-PptxPipeline.ps1 -Action Build -ContentDir content/ -StylePath content/global/style.yaml -OutputPath slide-deck/presentation.pptx
 
@@ -103,6 +106,9 @@ param(
 
     [Parameter()]
     [int]$Resolution = 150,
+
+    [Parameter()]
+    [switch]$Strict,
 
     [Parameter()]
     [switch]$SkipVenvSetup
@@ -377,6 +383,10 @@ function Invoke-ValidateDeck {
     if ($Slides) {
         $arguments += '--slides'
         $arguments += $Slides
+    }
+
+    if ($Strict) {
+        $arguments += '--strict'
     }
 
     Write-Host "Validating deck $InputPath"
