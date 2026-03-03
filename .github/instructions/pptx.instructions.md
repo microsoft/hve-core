@@ -68,7 +68,9 @@ Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholde
 
 The validation pipeline writes outputs to `{{working-directory}}/slide-deck/validation/`:
 
-* `validation-results.json` — Per-slide JSON with issues, severity, and overall quality.
+* `deck-validation-results.json` — Per-slide PPTX property findings (speaker notes, slide count).
+* `deck-validation-report.md` — Human-readable Markdown report for PPTX property validation.
+* `validation-results.json` — Per-slide JSON with vision issues, severity, and overall quality.
 * `validation-report.md` — Human-readable Markdown report with severity counts, cache statistics, and per-slide findings.
 * `cache/` — Auto-enabled result cache keyed by SHA-256 of image content + prompt + model. Subsequent runs skip unchanged slides. Pass `--no-cache` to force re-validation.
 

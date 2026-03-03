@@ -278,13 +278,25 @@ Validates only the specified slides. When content directories cover fewer slides
 | `--no-cache` | No | — | Disable caching and re-validate all slides |
 | `-v`, `--verbose` | No | — | Enable debug-level logging |
 
+#### validate_deck.py CLI Reference
+
+| Flag | Required | Default | Description |
+|---|---|---|---|
+| `--input` | Yes | — | Input PPTX file path |
+| `--content-dir` | No | — | Content directory for slide count comparison |
+| `--slides` | No | all | Comma-separated slide numbers to validate |
+| `--output` | No | stdout | JSON results file path |
+| `--report` | No | — | Markdown report file path |
+
 #### Validation Outputs
 
 When run through the pipeline, validation produces these files in the image output directory:
 
 | File | Format | Content |
 |---|---|---|
-| `validation-results.json` | JSON | Per-slide issues with check type, severity, description, and location |
+| `deck-validation-results.json` | JSON | Per-slide PPTX property issues (speaker notes, slide count) |
+| `deck-validation-report.md` | Markdown | Human-readable report for PPTX property validation |
+| `validation-results.json` | JSON | Per-slide vision issues with check type, severity, description, and location |
 | `validation-report.md` | Markdown | Human-readable report with severity summary, cache statistics, and per-slide findings |
 | `cache/{hash}.json` | JSON | Cached per-slide results keyed by SHA-256 of image + prompt + model |
 
