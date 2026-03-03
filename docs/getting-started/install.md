@@ -88,19 +88,25 @@ Answer these questions to find your recommended installation method:
 
 ## Collection Packages
 
-HVE-Core supports role-based artifact collections tailored to specific roles:
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. Clone-based methods let you select any collection during setup.
 
-| Collection    | Extension Name  | Collection ID  | Maturity     | Description                          |
-|---------------|-----------------|----------------|--------------|--------------------------------------|
-| **Full**      | `hve-core`      | `hve-core-all` | Stable       | All artifacts (recommended for most) |
-| **Developer** | `hve-developer` | `developer`    | Experimental | Software engineering focus           |
-
-> [!NOTE]
-> Experimental collections are only available via PreRelease extension builds. The Stable channel includes the Full collection only.
+| Collection        | Collection ID       | Maturity     | Description                                                      |
+|-------------------|---------------------|--------------|------------------------------------------------------------------|
+| **Full** ⭐        | `hve-core-all`      | Stable       | All stable artifacts (recommended for most)                      |
+| HVE Core Workflow | `hve-core`          | Stable       | RPI workflow with Git commit, merge, and pull request prompts    |
+| Azure DevOps      | `ado`               | Stable       | Work item management, build monitoring, and PR creation          |
+| Coding Standards  | `coding-standards`  | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc. |
+| Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
+| Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
+| GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
+| Installer         | `installer`         | Stable       | Interactive installer agent for workspace configuration          |
+| Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
+| Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
+| Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
 
 ### Extension Installation (Full Collection)
 
-The VS Code Marketplace extension installs the **full collection** containing all stable artifacts. This is the recommended approach for most users.
+The VS Code Marketplace extension installs the **Full** collection containing all stable artifacts. This is the recommended approach for most users.
 
 ### Clone Methods (Collection Filtering)
 

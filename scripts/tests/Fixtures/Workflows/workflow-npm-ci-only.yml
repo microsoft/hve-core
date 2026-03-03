@@ -1,0 +1,22 @@
+name: test-npm-ci-only
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install from lockfile
+        run: npm ci
+      - name: Run linting
+        run: npm run lint
+      - name: Run tests
+        run: npm test
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+      - name: Check version
+        run: npm --version
+      - name: Multi-step clean
+        run: |
+          npm ci
+          npm run build
+          npm run test

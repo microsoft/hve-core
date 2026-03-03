@@ -50,13 +50,13 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | Workflow                          | Triggers                                | Jobs                                                            | Mode                       | Purpose                              |
 |-----------------------------------|-----------------------------------------|-----------------------------------------------------------------|----------------------------|--------------------------------------|
 | `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
-| `main.yml`                        | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
+| `release-stable.yml`              | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
 
 **pr-validation.yml jobs**: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
-**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
+**release-stable.yml jobs**: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
 
 ## Reusable Workflows
 
@@ -236,7 +236,7 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 **Current Architecture:** CodeQL now runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
 
 * **CodeQL PR validation**: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
-* **Main branch**: Runs via `main.yml` on every push to main
+* **Main branch**: Runs via `release-stable.yml` on every push to main
 * **Weekly scan**: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
 
 This architecture ensures:
@@ -252,7 +252,7 @@ This architecture ensures:
 |--------------------------------------|----------------------------------------------------------|-----------------------|
 | Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
 | Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Merge to main                        | `main.yml` (5 jobs)                                      | ✅  Yes               |
+| Merge to main                        | `release-stable.yml` (5 jobs)                                      | ✅  Yes               |
 | Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
 | Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
 
@@ -267,7 +267,7 @@ To add a new workflow to the repository:
 3. Use SHA pinning for all actions
 4. Use minimal permissions
 5. Add soft-fail input support
-6. Update `pr-validation.yml` and `main.yml` to include new job
+6. Update `pr-validation.yml` and `release-stable.yml` to include new job
 7. Document in this README
 
 ## Using Reusable Workflows

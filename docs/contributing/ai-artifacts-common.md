@@ -137,20 +137,20 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection           | Tags                                                                                 |
-|----------------------|--------------------------------------------------------------------------------------|
-| `hve-core-all`       | `hve`, `complete`, `bundle`                                                          |
-| `ado`                | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                       |
-| `coding-standards`   | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`           |
-| `data-science`       | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`        |
-| `design-thinking`    | `design-thinking`, `coaching`, `methodology`, `ux`                                   |
-| `experimental`       | `experimental`, `media`, `utilities`                                                 |
-| `github`             | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
-| `installer`          | `installer`, `setup`, `onboarding`                                                   |
-| `hve-core-installer` | `installer`, `setup`, `deployment`                                                   |
-| `project-planning`   | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
-| `hve-core`           | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
-| `security-planning`  | `security`, `incident-response`, `risk`, `planning`                                  |
+| Collection           | Tags                                                                                     |
+|----------------------|------------------------------------------------------------------------------------------|
+| `hve-core-all`       | `hve`, `complete`, `bundle`                                                              |
+| `ado`                | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                           |
+| `coding-standards`   | `coding-standards`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `terraform`, `uv` |
+| `data-science`       | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`            |
+| `design-thinking`    | `design-thinking`, `coaching`, `methodology`, `ux`                                       |
+| `experimental`       | `experimental`, `media`, `utilities`                                                     |
+| `github`             | `github`, `issues`, `backlog`, `triage`, `sprint`                                        |
+| `installer`          | `installer`, `setup`, `onboarding`                                                       |
+| `hve-core-installer` | `installer`, `setup`, `deployment`                                                       |
+| `project-planning`   | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`             |
+| `hve-core`           | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review`     |
+| `security-planning`  | `security`, `incident-response`, `risk`, `planning`                                      |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
@@ -248,7 +248,7 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 | **Design Thinking**    | `design-thinking`    | Design Thinking coaching identity, quality constraints, and methodology instructions |
 | **Experimental**       | `experimental`       | Experimental skills and utilities in early development                               |
 | **GitHub Backlog**     | `github`             | GitHub issue discovery, triage, sprint planning, and backlog execution               |
-| **Installer**          | `installer`          | HVE Core installation skill and environment setup                                    |
+| **Installer**          | `installer`          | HVE Core installation and environment setup                                          |
 | **HVE Core Installer** | `hve-core-installer` | Decision-driven installer skill for deploying HVE Core across workspaces             |
 | **Project Planning**   | `project-planning`   | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
 | **HVE Core Workflow**  | `hve-core`           | Research, Plan, Implement, Review workflow agents and prompts                        |
@@ -608,7 +608,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Ends with attribution footer
+* Includes attribution in frontmatter `description` field
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -806,22 +806,19 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution footer at the end:
+All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
 
-```markdown
----
-
-Brought to you by microsoft/hve-core
+```yaml
+description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
 ```
 
-**Placement**: After all content, before final closing fence.
+**Format**: `- Brought to you by organization/repository-name` appended to the description value.
 
-**Format**:
+Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 
-* Horizontal rule (`---`)
-* Blank line
-* Exact text: "Brought to you by microsoft/hve-core"
-* Or team-specific: "Brought to you by microsoft/edge-ai"
+```markdown
+> Brought to you by microsoft/hve-core
+```
 
 ## GitHub Issue Title Conventions
 

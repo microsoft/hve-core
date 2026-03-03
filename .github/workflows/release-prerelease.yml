@@ -1,4 +1,4 @@
-name: Pre-Release Publish
+name: Pre-Release Pipeline
 
 on:
   pull_request:
@@ -94,6 +94,32 @@ jobs:
             --draft \
             --notes "$BODY" \
             -R "$REPO"
+
+  close-milestone:
+    name: Close Pre-Release Milestone
+    needs: [prerelease-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close milestone for pre-release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prerelease-tag.outputs.version }}
+        run: |
+          REPO="${{ github.repository }}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          TITLE="v${MAJOR}.${MINOR}.0"
+          NUMBER=$(gh api "/repos/$REPO/milestones?state=open&per_page=100" \
+            --jq ".[] | select(.title == \"$TITLE\") | .number")
+          if [ -n "$NUMBER" ]; then
+            gh api "/repos/$REPO/milestones/$NUMBER" \
+              -X PATCH -f state=closed
+            echo "✅ Closed milestone $TITLE (#$NUMBER)"
+          else
+            echo "ℹ️ No open milestone found matching '$TITLE' — skipping"
+          fi
 
   extension-package-prerelease:
     name: Package VS Code Extensions (Pre-Release)

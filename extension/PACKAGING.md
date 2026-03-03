@@ -55,11 +55,11 @@ Install-Module -Name PowerShell-Yaml -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                  | Trigger           | Purpose                                     |
-|-------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml` | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/extension-publish.yml` | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/main.yml`              | Push to main      | Includes extension packaging in CI          |
+| Workflow                                           | Trigger           | Purpose                                     |
+|----------------------------------------------------|-------------------|---------------------------------------------|
+| `.github/workflows/extension-package.yml`          | Reusable workflow | Packages extension with flexible versioning |
+| `.github/workflows/release-marketplace-stable.yml` | Release/manual    | Publishes to VS Code Marketplace            |
+| `.github/workflows/release-stable.yml`             | Push to main      | Includes extension packaging in CI          |
 
 ## Packaging Pipeline Overview
 
@@ -495,10 +495,10 @@ npm run lint:yaml
 Collection manifests are YAML files in `collections/` following this structure:
 
 ```yaml
-id: developer
-name: hve-developer
-displayName: "HVE Core - Developer Edition"
-description: "AI-powered coding agents curated for software engineers"
+id: data-science
+name: hve-data-science
+displayName: "HVE Core - Data Science"
+description: "AI-powered agents for data analysis, notebooks, and dashboards"
 maturity: stable
 items:
   - kind: agent

@@ -109,7 +109,7 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
+    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
@@ -165,11 +165,168 @@ $DependencyPatterns = @{
         ValidationFunc = 'Test-ShellDownloadSecurity'
         Description    = 'Shell script downloads must include checksum verification'
     }
+
+    'workflow-npm-commands' = @{
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        ValidationFunc = 'Get-WorkflowNpmCommandViolations'
+        Description    = 'Workflow npm install/update commands should use npm ci'
+    }
 }
 
 # DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1
 
 #region Functions
+
+function Test-NpmCommandLine {
+    <#
+    .SYNOPSIS
+        Tests whether a line contains an unpinned npm command.
+    .DESCRIPTION
+        Matches npm install, npm i, npm update, and npm install-test commands.
+        Does not match npm ci, npm run, npm test, npm audit, or npx.
+    .PARAMETER Line
+        The text line to test for npm commands.
+    .OUTPUTS
+        System.String or $null
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$Line
+    )
+
+    if ($Line -match '\bnpm\s+(install-test|install|update)\b') {
+        return $Matches[0]
+    }
+    if ($Line -match '\bnpm\s+i\b(?!nstall|nit)') {
+        return $Matches[0]
+    }
+
+    return $null
+}
+
+function New-NpmCommandViolation {
+    <#
+    .SYNOPSIS
+        Creates a DependencyViolation for an unpinned npm command.
+    .DESCRIPTION
+        Constructs a DependencyViolation object with standard fields for
+        npm command violations detected in workflow run: steps.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys.
+    .PARAMETER LineNumber
+        1-based line number of the violation.
+    .PARAMETER Line
+        The source line containing the npm command.
+    .PARAMETER Command
+        The matched npm command string.
+    .OUTPUTS
+        DependencyViolation
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo,
+        [Parameter(Mandatory)]
+        [int]$LineNumber,
+        [Parameter(Mandatory)]
+        [string]$Line,
+        [Parameter(Mandatory)]
+        [string]$Command
+    )
+
+    $violation = [DependencyViolation]::new(
+        $FileInfo.RelativePath,
+        $LineNumber,
+        'workflow-npm-commands',
+        $Command,
+        'Medium',
+        "Unpinned npm command detected: '$Command'. Use 'npm ci' for deterministic installs from lockfile."
+    )
+    $violation.ViolationType = 'Unpinned'
+    $violation.CurrentRef = $Line.Trim()
+    $violation.Remediation = "Replace '$Command' with 'npm ci' for reproducible builds."
+    return $violation
+}
+
+function Get-WorkflowNpmCommandViolations {
+    <#
+    .SYNOPSIS
+        Detects unpinned npm install commands in GitHub Actions workflow run: steps.
+    .DESCRIPTION
+        Scans workflow YAML files for run: blocks and detects npm commands that
+        modify the dependency tree (install, i, update, install-test). Commands
+        that use the lockfile deterministically (ci) or do not install packages
+        (run, test, audit) are not flagged.
+
+        Uses indentation-aware parsing to confine detection to actual run: block
+        content, reducing false positives from YAML comments or unrelated keys.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys identifying the file to scan.
+    .OUTPUTS
+        DependencyViolation[]
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $violations = @()
+    $filePath = $FileInfo.Path
+
+    if (-not (Test-Path -LiteralPath $filePath)) {
+        return $violations
+    }
+
+    $lines = Get-Content -LiteralPath $filePath
+    $inRunBlock = $false
+    $runBlockIndent = 0
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.TrimStart()
+
+        if ($trimmed -eq '' -or $trimmed.StartsWith('#')) {
+            continue
+        }
+
+        $currentIndent = $line.Length - $line.TrimStart().Length
+
+        if ($trimmed -match '^run:\s*(.*)$') {
+            $runContent = $Matches[1].Trim()
+            $runBlockIndent = $currentIndent
+
+            if ($runContent -and $runContent -notmatch '^[|>]') {
+                $npmMatch = Test-NpmCommandLine -Line $runContent
+                if ($npmMatch) {
+                    $violations += New-NpmCommandViolation -FileInfo $FileInfo -LineNumber ($i + 1) -Line $runContent -Command $npmMatch
+                }
+                $inRunBlock = $false
+            } else {
+                $inRunBlock = $true
+            }
+            continue
+        }
+
+        if ($inRunBlock) {
+            if ($currentIndent -le $runBlockIndent) {
+                $inRunBlock = $false
+                if ($trimmed -match '^run:\s*(.*)$') {
+                    $i--
+                    continue
+                }
+            } else {
+                if ($trimmed.StartsWith('#')) {
+                    continue
+                }
+                $npmMatch = Test-NpmCommandLine -Line $trimmed
+                if ($npmMatch) {
+                    $violations += New-NpmCommandViolation -FileInfo $FileInfo -LineNumber ($i + 1) -Line $trimmed -Command $npmMatch
+                }
+            }
+        }
+    }
+
+    return $violations
+}
 
 function Test-ShellDownloadSecurity {
     <#
@@ -795,7 +952,7 @@ function Invoke-DependencyPinningAnalysis {
         [switch]$Recursive,
 
         [Parameter()]
-        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
+        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
 
         [Parameter()]
         [string]$ExcludePaths = "",
