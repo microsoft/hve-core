@@ -98,6 +98,8 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 * python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX.
 * Transitions and animations are preserved when opening and saving existing files, but cannot be created or modified via the API.
 * Accessing `background.fill` on slides with inherited backgrounds replaces them with `NoFill`. Check `slide.follow_master_background` before accessing the fill property.
+* When extracting content from existing decks, text elements that inherit styling from slide masters or layouts show no inline font properties. The extraction records no styling for these elements. Add explicit font, font_size, and font_color properties to content YAML before rebuilding.
+* Partial rebuilds clear shapes on the existing slide in-place and repopulate from content YAML. The slide position in the deck is preserved.
 
 ## Default Color Palette
 

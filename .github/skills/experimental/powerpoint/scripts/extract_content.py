@@ -2,15 +2,15 @@
 
 Usage:
     python extract_content.py --input existing-deck.pptx --output-dir content/
+    python extract_content.py --input existing-deck.pptx --output-dir content/ --slides 3,7,15
 """
 
 import argparse
-import re
+from collections import Counter
 from pathlib import Path
 
 import yaml
 from pptx import Presentation
-from pptx.util import Emu
 
 
 def emu_to_inches(emu_val) -> float:
@@ -151,7 +151,21 @@ def extract_textbox(shape) -> dict:
 
 def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
     """Extract an image element and save the image file."""
-    img = shape.image
+    try:
+        img = shape.image
+    except ValueError:
+        # Linked images have no embedded blob
+        return {
+            "type": "image",
+            "path": "LINKED_IMAGE_NOT_EMBEDDED",
+            "left": emu_to_inches(shape.left),
+            "top": emu_to_inches(shape.top),
+            "width": emu_to_inches(shape.width),
+            "height": emu_to_inches(shape.height),
+            "name": shape.name,
+            "_note": "Image was linked, not embedded in the PPTX",
+        }
+
     ext = img.content_type.split("/")[-1]
     if ext == "jpeg":
         ext = "jpg"
@@ -177,9 +191,12 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
 
 def detect_global_style(prs) -> dict:
     """Analyze the presentation to detect common styling patterns."""
-    colors = {}
-    fonts = set()
-    font_sizes = set()
+    bg_colors = Counter()
+    text_colors = Counter()
+    accent_colors = Counter()
+    fill_colors = Counter()
+    font_names = Counter()
+    font_sizes = Counter()
 
     for slide in prs.slides:
         # Detect background colors
@@ -188,7 +205,7 @@ def detect_global_style(prs) -> dict:
             if bg.fill.type is not None:
                 color = rgb_to_hex(bg.fill.fore_color.rgb)
                 if color:
-                    colors.setdefault("bg_dark", color)
+                    bg_colors[color] += 1
         except (AttributeError, TypeError):
             pass
 
@@ -198,10 +215,12 @@ def detect_global_style(prs) -> dict:
                 if shape.fill.type is not None:
                     color = rgb_to_hex(shape.fill.fore_color.rgb)
                     if color:
-                        # Heuristic: small horizontal bars are accent colors
+                        # Thin horizontal bars are accent colors
                         h = emu_to_inches(shape.height)
                         if h < 0.1:
-                            colors.setdefault("accent_blue", color)
+                            accent_colors[color] += 1
+                        else:
+                            fill_colors[color] += 1
             except (AttributeError, TypeError):
                 pass
 
@@ -210,25 +229,62 @@ def detect_global_style(prs) -> dict:
                 for para in shape.text_frame.paragraphs:
                     for run in para.runs:
                         if run.font.name:
-                            fonts.add(run.font.name)
+                            # Separate font family from weight suffix
+                            base_name = _normalize_font_family(run.font.name)
+                            font_names[base_name] += 1
                         if run.font.size:
-                            font_sizes.add(int(run.font.size.pt))
+                            font_sizes[int(run.font.size.pt)] += 1
                         try:
                             if run.font.color and run.font.color.rgb:
                                 color = rgb_to_hex(run.font.color.rgb)
                                 if color:
-                                    colors.setdefault("text_white", color)
+                                    text_colors[color] += 1
                         except (AttributeError, TypeError):
                             pass
 
-    # Determine primary fonts
+    # Build color map from frequency analysis
+    colors = {}
+    if bg_colors:
+        colors["bg_dark"] = bg_colors.most_common(1)[0][0]
+    if fill_colors:
+        colors["bg_card"] = fill_colors.most_common(1)[0][0]
+
+    # Assign text colors by brightness
+    for color_hex, _count in text_colors.most_common(5):
+        brightness = _hex_brightness(color_hex)
+        if brightness > 200 and "text_white" not in colors:
+            colors["text_white"] = color_hex
+        elif brightness < 80 and "text_dark" not in colors:
+            colors["text_dark"] = color_hex
+        elif 80 <= brightness <= 200 and "text_gray" not in colors:
+            colors["text_gray"] = color_hex
+
+    # Assign accent colors from thin bars
+    accent_names = ["accent_blue", "accent_teal", "accent_green"]
+    for i, (color_hex, _count) in enumerate(accent_colors.most_common(3)):
+        if i < len(accent_names):
+            colors[accent_names[i]] = color_hex
+
+    # Determine primary fonts (base family, not weight-specific)
     body_font = "Segoe UI"
     code_font = "Cascadia Code"
-    for f in fonts:
-        if "cascadia" in f.lower() or "consolas" in f.lower() or "mono" in f.lower():
+    for f, _count in font_names.most_common():
+        if any(kw in f.lower() for kw in ("cascadia", "consolas", "mono", "courier")):
             code_font = f
-        elif "segoe" in f.lower() or "arial" in f.lower() or "calibri" in f.lower():
+        else:
             body_font = f
+            break
+
+    # Determine font sizes using frequency-based median for body, 75th percentile for heading
+    heading_size = 28
+    body_size = 16
+    if font_sizes:
+        # Filter outliers: ignore sizes below 8pt and above 60pt
+        filtered = {s: c for s, c in font_sizes.items() if 8 < s < 60}
+        if filtered:
+            sorted_sizes = sorted(filtered.keys())
+            body_size = sorted_sizes[len(sorted_sizes) // 2]
+            heading_size = sorted_sizes[int(len(sorted_sizes) * 0.85)]
 
     style = {
         "dimensions": {
@@ -240,14 +296,33 @@ def detect_global_style(prs) -> dict:
         "typography": {
             "body_font": body_font,
             "code_font": code_font,
-            "heading_size": max(font_sizes) if font_sizes else 28,
-            "body_size": min(font_sizes) if font_sizes else 16,
+            "heading_size": heading_size,
+            "body_size": body_size,
         },
         "defaults": {
             "speaker_notes_required": True,
         },
     }
     return style
+
+
+def _normalize_font_family(name: str) -> str:
+    """Strip weight suffixes from a font name to get the base family."""
+    suffixes = (
+        " Semibold", " SemiBold", " Bold", " Light", " Thin",
+        " Black", " Medium", " ExtraBold", " ExtraLight",
+    )
+    for suffix in suffixes:
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
+def _hex_brightness(hex_color: str) -> int:
+    """Calculate perceived brightness (0-255) from a hex color string."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return int(0.299 * r + 0.587 * g + 0.114 * b)
 
 
 def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
@@ -288,6 +363,24 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
         elif shape_type == 1:  # AUTO_SHAPE
             elem = extract_shape(shape)
             content["elements"].append(elem)
+        elif shape_type == 14:  # PLACEHOLDER
+            # Placeholders may contain text; extract like textboxes
+            if shape.has_text_frame:
+                elem = extract_textbox(shape)
+                elem["_placeholder"] = True
+                content["elements"].append(elem)
+        else:
+            # Log unrecognized shape types for manual review
+            content["elements"].append({
+                "type": "shape",
+                "shape": "rectangle",
+                "left": emu_to_inches(shape.left),
+                "top": emu_to_inches(shape.top),
+                "width": emu_to_inches(shape.width),
+                "height": emu_to_inches(shape.height),
+                "name": shape.name,
+                "_unrecognized_shape_type": int(shape_type),
+            })
 
     return content, slide_dir
 
@@ -296,11 +389,16 @@ def main():
     parser = argparse.ArgumentParser(description="Extract content from a PPTX into YAML")
     parser.add_argument("--input", required=True, help="Input PPTX file path")
     parser.add_argument("--output-dir", required=True, help="Output content directory")
+    parser.add_argument("--slides", help="Comma-separated slide numbers to extract (default: all)")
     args = parser.parse_args()
 
     pptx_path = Path(args.input)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    slide_filter = None
+    if args.slides:
+        slide_filter = {int(s.strip()) for s in args.slides.split(",")}
 
     prs = Presentation(str(pptx_path))
     print(f"Extracting from: {pptx_path}")
@@ -316,17 +414,21 @@ def main():
         yaml.dump(global_style, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
     print(f"Global style saved to {style_path}")
 
-    # Extract each slide
+    # Extract slides (filtered or all)
+    extracted = 0
     for i, slide in enumerate(prs.slides):
         slide_num = i + 1
+        if slide_filter and slide_num not in slide_filter:
+            continue
         content, slide_dir = extract_slide(slide, slide_num, output_dir)
 
         content_path = slide_dir / "content.yaml"
         with open(content_path, "w", encoding="utf-8") as f:
             yaml.dump(content, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
         print(f"Slide {slide_num}: {content.get('title', 'Untitled')} -> {content_path}")
+        extracted += 1
 
-    print(f"\nExtraction complete. {len(prs.slides)} slides extracted to {output_dir}")
+    print(f"\nExtraction complete. {extracted} slide(s) extracted to {output_dir}")
 
 
 if __name__ == "__main__":
