@@ -26,6 +26,7 @@ from pptx_text import (
     extract_paragraph_properties,
     extract_run_properties,
     extract_text_frame_properties,
+    extract_bullet_properties,
 )
 from pptx_utils import emu_to_inches
 
@@ -224,6 +225,13 @@ def extract_shape(shape) -> dict:
     except (AttributeError, TypeError):
         elem["shape"] = "rectangle"
 
+    # Extract corner radius (adjustment values) for rounded rectangles
+    try:
+        if shape.adjustments and len(shape.adjustments) > 0:
+            elem["corner_radius"] = round(shape.adjustments[0], 5)
+    except (AttributeError, TypeError, IndexError):
+        pass
+
     # Extract fill
     try:
         fill_result = extract_fill(shape.fill)
@@ -257,6 +265,7 @@ def extract_shape(shape) -> dict:
                     break
                 para_info = extract_paragraph_font(para)
                 para_spacing = extract_paragraph_properties(para)
+                bullet_props = extract_bullet_properties(para)
                 # Merge: run-level wins, paragraph-level fills gaps
                 merged = {**para_info, **run_info}
                 if "font" in merged:
@@ -275,6 +284,8 @@ def extract_shape(shape) -> dict:
                     elem["char_spacing"] = merged["char_spacing"]
                 if para_spacing:
                     elem.update(para_spacing)
+                if bullet_props:
+                    elem.update(bullet_props)
                 break
 
     return elem
@@ -307,6 +318,7 @@ def extract_textbox(shape) -> dict:
         para_info = {}
         alignment = None
         para_spacing = {}
+        bullet_props = {}
         for para in shape.text_frame.paragraphs:
             if not para_info:
                 para_info = extract_paragraph_font(para)
@@ -314,6 +326,8 @@ def extract_textbox(shape) -> dict:
                 alignment = extract_alignment(para)
             if not para_spacing:
                 para_spacing = extract_paragraph_properties(para)
+            if not bullet_props:
+                bullet_props = extract_bullet_properties(para)
             for run in para.runs:
                 font_info = extract_font_info(run.font)
                 run_extra = extract_run_properties(run)
@@ -361,6 +375,8 @@ def extract_textbox(shape) -> dict:
             elem["alignment"] = alignment
         if para_spacing:
             elem.update(para_spacing)
+        if bullet_props:
+            elem.update(bullet_props)
 
     return elem
 
@@ -702,32 +718,10 @@ def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[flo
     except (AttributeError, TypeError):
         pass
 
-    # Use provided slide dimensions for background image detection
-    slide_w = slide_dims[0] if slide_dims else 13.333
-    slide_h = slide_dims[1] if slide_dims else 7.5
-
     img_count = 0
-    # Detect background images: full-slide pictures at the bottom of the z-order.
-    # Check z=0 and z=1 independently — some decks layer decorative images under
-    # the main background image.
-    bg_image_indices = set()
-    shapes_list = list(slide.shapes)
-    for z_index in range(min(2, len(shapes_list))):
-        shape = shapes_list[z_index]
-        if (shape.shape_type == 13
-                and _is_background_image(shape, slide_w, slide_h)):
-            bg_image_indices.add(z_index)
 
-    for z_index, shape in enumerate(shapes_list):
+    for z_index, shape in enumerate(list(slide.shapes)):
         shape_type = shape.shape_type
-
-        # Convert detected background images to background entries
-        if z_index in bg_image_indices:
-            img_count += 1
-            img = _save_image_blob(shape, slide_dir, slide_num, img_count)
-            # Use the last (topmost) background image as the slide background
-            content["background"] = {"image": img["path"]}
-            continue
 
         if shape_type == 13:  # PICTURE
             img_count += 1

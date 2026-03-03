@@ -21,7 +21,7 @@ from pptx_colors import apply_color_to_font, resolve_color
 from pptx_fills import apply_fill, apply_line
 from pptx_fonts import ALIGNMENT_MAP
 from pptx_shapes import SHAPE_MAP, apply_rotation
-from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties
+from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties, apply_bullet_properties
 from pptx_utils import load_yaml
 
 CONNECTOR_TYPE_MAP = {
@@ -45,7 +45,11 @@ def set_slide_bg_image(slide, image_path: str, content_dir: Path):
     from pptx.opc.constants import RELATIONSHIP_TYPE as RT
     from pptx.parts.image import Image, ImagePart
 
-    cSld = slide.background._element  # p:cSld element
+    sld = slide._element
+    cSld = sld.find(qn("p:cSld"))
+    if cSld is None:
+        return
+
     spTree = cSld.find(qn("p:spTree"))
 
     # Remove existing p:bg element if present
@@ -105,6 +109,7 @@ def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
             p.alignment = ALIGNMENT_MAP.get(alignment, ALIGNMENT_MAP["left"])
         if elem:
             apply_paragraph_properties(p, elem)
+            apply_bullet_properties(p, elem)
         run = p.add_run()
         run.text = line
         run.font.name = font_name
@@ -148,6 +153,7 @@ def add_shape_element(slide, elem, colors, typography):
         for i, line in enumerate(lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             apply_paragraph_properties(p, elem)
+            apply_bullet_properties(p, elem)
             run = p.add_run()
             run.text = line
             run.font.name = elem.get("text_font", "Segoe UI")
@@ -465,6 +471,7 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
             for i, line in enumerate(lines):
                 p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                apply_bullet_properties(p, elem)
                 run = p.add_run()
                 run.text = line
                 run.font.name = elem.get("text_font", "Segoe UI")
@@ -490,6 +497,7 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             if "alignment" in elem:
                 p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
             apply_paragraph_properties(p, elem)
+            apply_bullet_properties(p, elem)
             run = p.add_run()
             run.text = line
             run.font.name = elem.get("font", "Segoe UI")
