@@ -84,6 +84,21 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/prompt-refactor.prompt.md
     kind: prompt
+  # Visual Explainer Prompts
+  - path: .github/prompts/hve-core/viz-diff-review.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-fact-check.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-slides.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-plan.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-diagram.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-plan-review.prompt.md
+    kind: prompt
+  - path: .github/prompts/hve-core/viz-project-recap.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/hve-core/writing-style.instructions.md
     kind: instruction

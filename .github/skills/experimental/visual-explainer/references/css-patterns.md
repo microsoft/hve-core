@@ -249,6 +249,7 @@ function example() {
 For implementation plans and architecture docs, **don't display entire source files inline**. Instead:
 
 1. **Show structure, not code:**
+
    ```html
    <div class="file-structure">
      <div class="file-structure__path">src/extension.ts</div>
@@ -265,6 +266,7 @@ For implementation plans and architecture docs, **don't display entire source fi
    ```
 
 2. **Use collapsible sections for full code:**
+
    ```html
    <details class="collapsible">
      <summary>Full implementation (87 lines)</summary>
@@ -273,6 +275,7 @@ For implementation plans and architecture docs, **don't display entire source fi
    ```
 
 3. **Show key snippets only:**
+
    ```html
    <p>The core logic intercepts task completion:</p>
    <pre class="code-block"><code>pi.on("agent_end", async () => {
@@ -282,9 +285,10 @@ For implementation plans and architecture docs, **don't display entire source fi
    ```
 
 **Anti-patterns:**
-- Displaying full source files inline (100+ lines overwhelming the page)
-- Code blocks without `white-space: pre-wrap` (code runs together into unreadable wall)
-- No height constraint on long code (page becomes endless scroll)
+
+* Displaying full source files inline (100+ lines overwhelming the page)
+* Code blocks without `white-space: pre-wrap` (code runs together into unreadable wall)
+* No height constraint on long code (page becomes endless scroll)
 
 If someone needs the full file, put it in a collapsible section or link to it.
 
@@ -429,6 +433,7 @@ Mermaid SVGs render at a fixed size based on content. Without explicit centering
 Mermaid sizes diagrams based on content, not container. Complex diagrams with many nodes render small to fit everything, leaving the text nearly unreadable. Three fixes:
 
 **1. Increase fontSize in themeVariables** (most effective):
+
 ```javascript
 mermaid.initialize({
   theme: 'base',
@@ -439,6 +444,7 @@ mermaid.initialize({
 ```
 
 **2. CSS zoom** for diagrams that still render too small:
+
 ```css
 .mermaid-wrap--scaled .mermaid {
   zoom: 1.3;
@@ -446,6 +452,7 @@ mermaid.initialize({
 ```
 
 **3. Constrain container width** so the diagram doesn't float in dead space:
+
 ```css
 .mermaid-wrap--constrained {
   max-width: 800px;
@@ -626,6 +633,7 @@ Scroll-to-zoom requires Ctrl/Cmd+scroll to avoid hijacking normal page scroll. C
 ## Grid Layouts
 
 ### Architecture Diagram (2-column with sidebar)
+
 ```css
 .arch-grid {
   display: grid;
@@ -642,6 +650,7 @@ Scroll-to-zoom requires Ctrl/Cmd+scroll to avoid hijacking normal page scroll. C
 ```
 
 ### Pipeline (horizontal steps)
+
 ```css
 .pipeline {
   display: flex;
@@ -674,6 +683,7 @@ Scroll-to-zoom requires Ctrl/Cmd+scroll to avoid hijacking normal page scroll. C
 ```
 
 ### Card Grid (dashboard / metrics)
+
 ```css
 .card-grid {
   display: grid;
@@ -840,6 +850,7 @@ Styled spans for match/gap/warning states. Never use emoji.
 ```
 
 Usage in table cells:
+
 ```html
 <td><span class="status status--match">Match</span></td>
 <td><span class="status status--gap">Gap</span></td>
@@ -880,6 +891,7 @@ For totals, counts, or aggregate status at the bottom:
 ## Connectors
 
 ### CSS Arrow (vertical, between stacked sections)
+
 ```css
 .flow-arrow {
   display: flex;
@@ -905,12 +917,15 @@ For totals, counts, or aggregate status at the bottom:
 ```
 
 Down arrow SVG (reuse inline):
+
 ```html
 <svg viewBox="0 0 20 20"><path d="M10 4 L10 16 M6 12 L10 16 L14 12"/></svg>
 ```
 
 ### CSS Arrow (horizontal, between inline steps)
+
 Use `::after` or a literal arrow character:
+
 ```css
 .h-arrow::after {
   content: '→';
@@ -921,7 +936,9 @@ Use `::after` or a literal arrow character:
 ```
 
 ### SVG Curved Connector (between arbitrary nodes)
+
 For connections that aren't simple vertical/horizontal, use an absolutely positioned SVG overlay:
+
 ```html
 <svg class="connectors" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
   <path d="M 150,100 C 150,200 350,100 350,200" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
@@ -961,6 +978,7 @@ Set `--i` per element in the HTML to control stagger order:
 ```
 
 ### Hover Lift
+
 ```css
 .ve-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1032,13 +1050,14 @@ Uses `@property` to animate a custom property as an integer, then display it via
 
 Don't use the same animation for everything. Mix types by element role, with easing stagger (fast-then-slow, not linear):
 
-- **Cards**: `fadeUp` — the default entrance, reliable and subtle
-- **KPI / badges**: `fadeScale` — scale draws the eye to important numbers
-- **SVG connectors**: `drawIn` — reveals flow direction, pairs with card stagger
-- **Hero numbers**: `countUp` — counting motion signals "this number matters"
-- **Stagger timing**: `calc(var(--i) * 0.06s)` with lower `--i` values on important elements so they appear first
+* **Cards**: `fadeUp` — the default entrance, reliable and subtle
+* **KPI / badges**: `fadeScale` — scale draws the eye to important numbers
+* **SVG connectors**: `drawIn` — reveals flow direction, pairs with card stagger
+* **Hero numbers**: `countUp` — counting motion signals "this number matters"
+* **Stagger timing**: `calc(var(--i) * 0.06s)` with lower `--i` values on important elements so they appear first
 
 ### Respect Reduced Motion
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1619,12 +1638,13 @@ function toggleTheme() {
 ### Prose Anti-Patterns
 
 Avoid these in reading-first content:
-- Body text smaller than 16px
-- Line-height below 1.5
-- Measure wider than 75ch (text spanning full viewport)
-- Pull quotes every other paragraph
-- Drop caps on every section
-- Busy background patterns behind text
+
+* Body text smaller than 16px
+* Line-height below 1.5
+* Measure wider than 75ch (text spanning full viewport)
+* Pull quotes every other paragraph
+* Drop caps on every section
+* Busy background patterns behind text
 
 ## Generated Images
 

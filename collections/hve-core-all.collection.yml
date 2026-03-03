@@ -171,6 +171,20 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/viz-diagram.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-diff-review.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-fact-check.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-plan-review.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-plan.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-project-recap.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/viz-slides.prompt.md
+  kind: prompt
 - path: .github/prompts/security-planning/incident-response.prompt.md
   kind: prompt
 - path: .github/prompts/security-planning/risk-register.prompt.md
