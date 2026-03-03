@@ -204,6 +204,20 @@ def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> di
     return result
 
 
+def _has_formatting_variation(runs: list) -> bool:
+    """Check if multiple runs have different formatting properties."""
+    if len(runs) <= 1:
+        return False
+    fonts = {r.get("font") for r in runs if "font" in r}
+    sizes = {r.get("size") for r in runs if "size" in r}
+    colors = {r.get("color") for r in runs if "color" in r}
+    bolds = {r.get("bold", False) for r in runs}
+    italics = {r.get("italic", False) for r in runs}
+    underlines = {r.get("underline", False) for r in runs}
+    return (len(fonts) > 1 or len(sizes) > 1 or len(colors) > 1
+            or len(bolds) > 1 or len(italics) > 1 or len(underlines) > 1)
+
+
 def extract_shape(shape) -> dict:
     """Extract a shape element definition."""
     elem = {
@@ -262,14 +276,17 @@ def extract_shape(shape) -> dict:
             if tf_props:
                 elem.update(tf_props)
 
-            # Extract per-paragraph formatting
+            # Extract per-paragraph formatting with per-paragraph rich text detection
             para_dicts = []
             for para in shape.text_frame.paragraphs:
                 run_info = {}
+                para_runs = []
                 for run in para.runs:
-                    run_info = extract_font_info(run.font)
-                    run_info.update(extract_run_properties(run))
-                    break
+                    font_info = extract_font_info(run.font)
+                    run_extra = extract_run_properties(run)
+                    para_runs.append({"text": run.text, **font_info, **run_extra})
+                    if not run_info:
+                        run_info = {**font_info, **run_extra}
                 para_info = extract_paragraph_font(para)
                 para_spacing = extract_paragraph_properties(para)
                 bullet_props = extract_bullet_properties(para)
@@ -300,10 +317,13 @@ def extract_shape(shape) -> dict:
                     p_dict.update(para_spacing)
                 if bullet_props:
                     p_dict.update(bullet_props)
+                if _has_formatting_variation(para_runs):
+                    p_dict["runs"] = para_runs
                 para_dicts.append(p_dict)
 
             non_empty = [p for p in para_dicts if p["text"].strip()]
-            if len(para_dicts) > 1:
+            any_has_runs = any("runs" in p for p in para_dicts)
+            if len(para_dicts) > 1 or any_has_runs:
                 # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
                 elem["paragraphs"] = para_dicts
                 # Also set element-level defaults from first non-empty paragraph
@@ -346,7 +366,6 @@ def extract_textbox(shape) -> dict:
         if tf_props:
             elem.update(tf_props)
 
-        runs = []
         para_dicts = []
         for para in shape.text_frame.paragraphs:
             run_info = {}
@@ -357,7 +376,6 @@ def extract_textbox(shape) -> dict:
                 para_runs.append({"text": run.text, **font_info, **run_extra})
                 if not run_info:
                     run_info = {**font_info, **run_extra}
-            runs.extend(para_runs)
 
             p_info = extract_paragraph_font(para)
             p_spacing = extract_paragraph_properties(para)
@@ -389,27 +407,14 @@ def extract_textbox(shape) -> dict:
                 p_dict.update(p_spacing)
             if p_bullets:
                 p_dict.update(p_bullets)
+            # Per-paragraph rich text: store runs when formatting varies within paragraph
+            if _has_formatting_variation(para_runs):
+                p_dict["runs"] = para_runs
             para_dicts.append(p_dict)
 
-        # If multiple runs with different formatting, mark as rich_text
-        if len(runs) > 1:
-            fonts = {r.get("font") for r in runs if "font" in r}
-            colors = {r.get("color") for r in runs if "color" in r}
-            bolds = {r.get("bold", False) for r in runs}
-            italics = {r.get("italic", False) for r in runs}
-            underlines = {r.get("underline", False) for r in runs}
-            if (len(fonts) > 1 or len(colors) > 1 or len(bolds) > 1
-                    or len(italics) > 1 or len(underlines) > 1):
-                elem["type"] = "rich_text"
-                elem["segments"] = runs
-                del elem["text"]
-                first_p = next((p for p in para_dicts if p["text"].strip()), {})
-                if first_p.get("alignment"):
-                    elem["alignment"] = first_p["alignment"]
-                return elem
-
         non_empty = [p for p in para_dicts if p["text"].strip()]
-        if len(para_dicts) > 1:
+        any_has_runs = any("runs" in p for p in para_dicts)
+        if len(para_dicts) > 1 or any_has_runs:
             # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
             elem["paragraphs"] = para_dicts
             # Set element-level defaults from first non-empty paragraph
