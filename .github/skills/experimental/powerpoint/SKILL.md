@@ -20,12 +20,14 @@ The `Invoke-PptxPipeline.ps1` script handles virtual environment creation and de
 ### Python Dependencies (Manual)
 
 ```bash
-pip install python-pptx pyyaml cairosvg Pillow pymupdf
+pip install python-pptx pyyaml cairosvg Pillow pymupdf github-copilot-sdk
 ```
 
-### System Dependencies (Export)
+### System Dependencies (Export and Validation)
 
-The Export action requires LibreOffice for PPTX-to-PDF conversion and optionally `pdftoppm` from poppler for PDF-to-JPG rendering. When `pdftoppm` is not available, PyMuPDF handles the image rendering.
+The Export and Validate actions require LibreOffice for PPTX-to-PDF conversion and optionally `pdftoppm` from poppler for PDF-to-JPG rendering. When `pdftoppm` is not available, PyMuPDF handles the image rendering.
+
+The Validate action's vision-based checks require the GitHub Copilot CLI for model access.
 
 ```bash
 # macOS
@@ -39,6 +41,21 @@ sudo apt-get install libreoffice poppler-utils
 winget install TheDocumentFoundation.LibreOffice
 # choco install libreoffice-still      # alternative
 # poppler: no winget package; use choco install poppler (optional, provides pdftoppm)
+```
+
+### Copilot CLI (Vision Validation)
+
+The `validate_slides.py` script uses the GitHub Copilot SDK to send slide images to vision-capable models. The Copilot CLI must be installed and authenticated:
+
+```bash
+# Install Copilot CLI
+npm install -g @github/copilot-cli
+
+# Authenticate (uses the same GitHub account as VS Code Copilot)
+copilot auth login
+
+# Verify
+copilot --version
 ```
 
 ### Required Files
@@ -204,13 +221,36 @@ Extracts only the specified slides (plus the global style). Useful for targeted 
   -ContentDir content/
 ```
 
-```bash
-python scripts/validate_deck.py \
-  --input slide-deck/presentation.pptx \
-  --content-dir content/
+The Validate action runs a two- or three-step pipeline:
+
+1. **Export** — Renders slides to JPG images via LibreOffice (PPTX → PDF → JPG).
+2. **PPTX validation** — Checks PPTX-only properties (`validate_deck.py`) for speaker notes and slide count.
+3. **Vision validation** (optional) — Sends slide images to a vision-capable model via the Copilot SDK (`validate_slides.py`) for visual quality checks. Runs when `-ValidationPrompt` or `-ValidationPromptFile` is provided.
+
+#### Validate with Vision Checks
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
+  -InputPath slide-deck/presentation.pptx `
+  -ContentDir content/ `
+  -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast" `
+  -ValidationModel claude-haiku-4.5
 ```
 
-Validates the generated deck against the content definitions. Checks for text overlay (with horizontal-aware overlap detection), width overflow, missing speaker notes, font consistency (treating font family variants as compatible), and element bounds.
+Vision validation results are written to `validation-results.json` in the image output directory.
+
+#### Validate with Concurrency and Caching
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
+  -InputPath slide-deck/presentation.pptx `
+  -ContentDir content/ `
+  -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast" `
+  -ValidationConcurrency 5 `
+  -ValidationCacheDir slide-deck/validation/cache
+```
+
+Concurrent validation processes multiple slides in parallel (default: 3). Caching stores results keyed by image hash + prompt + model; subsequent runs skip unchanged slides.
 
 #### Validate Specific Slides
 
@@ -219,13 +259,6 @@ Validates the generated deck against the content definitions. Checks for text ov
   -InputPath slide-deck/presentation.pptx `
   -ContentDir content/ `
   -Slides "3,7,15"
-```
-
-```bash
-python scripts/validate_deck.py \
-  --input slide-deck/presentation.pptx \
-  --content-dir content/ \
-  --slides 3,7,15
 ```
 
 Validates only the specified slides. When content directories cover fewer slides than the PPTX, the slide count check reports an informational note rather than an error.
@@ -269,6 +302,8 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_text.py` | Text frame properties (margins, auto-size, vertical anchor), paragraph properties (spacing, level), run properties (underline, hyperlink) |
 | `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
 | `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
+| `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
+| `validate_slides.py` | Vision-based slide validation via Copilot SDK |
 
 ## python-pptx Constraints
 
@@ -276,7 +311,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 * python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX with the `--template` argument.
 * Transitions and animations are preserved when opening and saving existing files, but cannot be created or modified via the API.
 * When extracting content, slide master and layout inheritance means many text elements have no inline styling. Add explicit font properties in content YAML before rebuilding.
-* The Export action requires LibreOffice for PPTX-to-PDF conversion. The PowerShell orchestrator checks for LibreOffice availability before starting and provides platform-specific install instructions if missing.
+* The Export and Validate actions require LibreOffice for PPTX-to-PDF conversion. The PowerShell orchestrator checks for LibreOffice availability before starting and provides platform-specific install instructions if missing.
 * Accessing `background.fill` on slides with inherited backgrounds replaces them with `NoFill`. Check `slide.follow_master_background` before accessing the fill property.
 * Gradient fills use the python-pptx `GradientFill` API with `GradientStop` objects. Each stop specifies a position (0–100) and a color.
 * Theme colors resolve via `MSO_THEME_COLOR` enum. Brightness adjustments apply through the color format's `brightness` property.
@@ -284,16 +319,25 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 
 ## Validation Rules
 
-* **Text overlay**: Text overlapping other elements; verify `bottom + 0.2 < next_element_top`.
-* **Width overflow**: Elements exceeding slide width; `left + width <= 13.333`.
-* **Height overflow**: Elements exceeding slide height; `top + height <= 7.5`.
-* **Speaker notes**: Required on all content slides.
-* **Font consistency**: Inconsistent font families across slides (family variants treated as compatible).
-* **Edge margins**: Elements within 0.5" of slide edges.
-* **Element spacing**: Overlapping or colliding elements with less than 0.3" gap.
+### Visual Checks (via `validate_slides.py`)
+
+These checks are performed by `validate_slides.py` using a vision-capable model through the Copilot SDK. The script receives a validation prompt describing what to check and sends each slide image to the model:
+
+* **Text overlay**: Text overlapping other elements; verified visually from rendered images.
+* **Width overflow**: Elements exceeding slide width; visible as clipped content at edges.
+* **Height overflow**: Elements exceeding slide height; visible as clipped content at edges.
+* **Font consistency**: Inconsistent font families across slides; detected visually.
+* **Edge margins**: Elements within 0.5" of slide edges; detected from rendered layout.
+* **Element spacing**: Overlapping or colliding elements with insufficient gaps.
 * **Color contrast**: Low contrast between text color and background fill.
-* **Narrow text boxes**: Text boxes too narrow for their content.
+* **Narrow text boxes**: Text boxes too narrow for their content; visible as excessive wrapping.
 * **Leftover placeholders**: Unused template placeholder text remaining in slides.
+
+### PPTX-Only Checks (via `validate_deck.py`)
+
+These checks require direct PPTX inspection and cannot be detected from images:
+
+* **Speaker notes**: Required on all content slides; notes are invisible in rendered images.
 
 ## Troubleshooting
 
@@ -305,5 +349,6 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | Bright accent color unreadable as fill | White text on bright background | Darken accent to ~60% saturation for box fills |
 | Background fill replaced with NoFill | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing |
 | Missing speaker notes | Notes not specified in `content.yaml` | Add `speaker_notes` field to every content slide |
+| LibreOffice not found during Validate | Validate exports slides to images first | Install LibreOffice: `brew install --cask libreoffice` (macOS) |
 
 > Brought to you by microsoft/hve-core

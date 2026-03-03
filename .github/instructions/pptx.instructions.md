@@ -62,6 +62,8 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 
 ## Validation Criteria
 
+Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholders, narrow text boxes, font consistency) are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. Speaker notes validation remains PPTX-based via `validate_deck.py`.
+
 ### Element Positioning
 
 * **Text overlay**: Trace vertical positions mathematically: `bottom = top + height`, verify `bottom + 0.2 < next_element_top`.

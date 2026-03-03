@@ -49,9 +49,6 @@
 .PARAMETER Resolution
     DPI resolution for exported slide images. Defaults to 150. Optional for Export.
 
-.PARAMETER Strict
-    Enable strict validation mode. Flags all elements including full-bleed backgrounds in edge-margin checks.
-
 .EXAMPLE
     ./Invoke-PptxPipeline.ps1 -Action Build -ContentDir content/ -StylePath content/global/style.yaml -OutputPath slide-deck/presentation.pptx
 
@@ -108,7 +105,19 @@ param(
     [int]$Resolution = 150,
 
     [Parameter()]
-    [switch]$Strict,
+    [string]$ValidationPrompt,
+
+    [Parameter()]
+    [string]$ValidationPromptFile,
+
+    [Parameter()]
+    [string]$ValidationModel = 'claude-haiku-4.5',
+
+    [Parameter()]
+    [int]$ValidationConcurrency = 3,
+
+    [Parameter()]
+    [string]$ValidationCacheDir,
 
     [Parameter()]
     [switch]$SkipVenvSetup
@@ -118,7 +127,7 @@ $ErrorActionPreference = 'Stop'
 
 $ScriptDir = $PSScriptRoot
 $VenvDir = Join-Path $ScriptDir '.venv'
-$RequiredPackages = @('python-pptx', 'pyyaml', 'cairosvg', 'Pillow', 'pymupdf')
+$RequiredPackages = @('python-pptx', 'pyyaml', 'cairosvg', 'Pillow', 'pymupdf', 'github-copilot-sdk')
 
 #region Environment Setup
 
@@ -361,38 +370,87 @@ function Invoke-ExtractContent {
 function Invoke-ValidateDeck {
     <#
     .SYNOPSIS
-        Runs validate_deck.py with the provided parameters.
+        Exports slides to images, runs PPTX property checks, and optionally runs
+        Copilot SDK vision validation.
+    .DESCRIPTION
+        Chains Export (PPTX to JPG images), validate_deck.py (speaker notes,
+        slide count), and validate_slides.py (vision-based quality checks via
+        Copilot SDK). The vision step runs when ValidationPrompt or
+        ValidationPromptFile is provided.
     #>
     [CmdletBinding()]
     [OutputType([void])]
     param()
 
     $python = Get-VenvPythonPath
-    $script = Join-Path $ScriptDir 'validate_deck.py'
+    $hasVisionPrompt = $ValidationPrompt -or $ValidationPromptFile
+    $totalSteps = if ($hasVisionPrompt) { 3 } else { 2 }
 
-    $arguments = @(
-        $script,
+    # Default image output directory when not specified
+    if (-not $ImageOutputDir) {
+        $ImageOutputDir = Join-Path (Split-Path $InputPath) 'validation'
+    }
+
+    # Step 1: Export slides to images
+    Write-Host "Step 1/$totalSteps`: Exporting slides to images..."
+    Invoke-ExportSlides
+
+    # Step 2: Run PPTX-only checks (speaker notes, slide count)
+    Write-Host "Step 2/$totalSteps`: Running PPTX property checks..."
+    $pptxScript = Join-Path $ScriptDir 'validate_deck.py'
+    $pptxArgs = @(
+        $pptxScript,
         '--input', $InputPath
     )
-
     if ($ContentDir) {
-        $arguments += '--content-dir'
-        $arguments += $ContentDir
+        $pptxArgs += '--content-dir'
+        $pptxArgs += $ContentDir
     }
-
     if ($Slides) {
-        $arguments += '--slides'
-        $arguments += $Slides
+        $pptxArgs += '--slides'
+        $pptxArgs += $Slides
     }
 
-    if ($Strict) {
-        $arguments += '--strict'
-    }
-
-    Write-Host "Validating deck $InputPath"
-    & $python @arguments
+    & $python @pptxArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "validate_deck.py failed with exit code $LASTEXITCODE."
+        throw "validate_deck.py found issues (exit code $LASTEXITCODE)."
+    }
+
+    # Step 3: Run Copilot SDK vision validation (when prompt provided)
+    if ($hasVisionPrompt) {
+        Write-Host "Step 3/$totalSteps`: Running Copilot SDK vision validation..."
+        $visionScript = Join-Path $ScriptDir 'validate_slides.py'
+        $visionArgs = @(
+            $visionScript,
+            '--image-dir', $ImageOutputDir,
+            '--model', $ValidationModel,
+            '--concurrency', $ValidationConcurrency
+        )
+        if ($ValidationPrompt) {
+            $visionArgs += '--prompt'
+            $visionArgs += $ValidationPrompt
+        }
+        if ($ValidationPromptFile) {
+            $visionArgs += '--prompt-file'
+            $visionArgs += $ValidationPromptFile
+        }
+        $visionOutputPath = Join-Path $ImageOutputDir 'validation-results.json'
+        $visionArgs += '--output'
+        $visionArgs += $visionOutputPath
+        if ($Slides) {
+            $visionArgs += '--slides'
+            $visionArgs += $Slides
+        }
+        if ($ValidationCacheDir) {
+            $visionArgs += '--cache-dir'
+            $visionArgs += $ValidationCacheDir
+        }
+
+        & $python @visionArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "validate_slides.py failed with exit code $LASTEXITCODE."
+        }
+        Write-Host "Vision validation results: $visionOutputPath"
     }
 }
 
