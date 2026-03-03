@@ -64,6 +64,14 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 
 Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholders, narrow text boxes, font consistency) are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. Speaker notes validation remains PPTX-based via `validate_deck.py`.
 
+### Validation Outputs
+
+The validation pipeline writes outputs to `{{working-directory}}/slide-deck/validation/`:
+
+* `validation-results.json` — Per-slide JSON with issues, severity, and overall quality.
+* `validation-report.md` — Human-readable Markdown report with severity counts, cache statistics, and per-slide findings.
+* `cache/` — Auto-enabled result cache keyed by SHA-256 of image content + prompt + model. Subsequent runs skip unchanged slides. Pass `--no-cache` to force re-validation.
+
 ### Element Positioning
 
 * **Text overlay**: Trace vertical positions mathematically: `bottom = top + height`, verify `bottom + 0.2 < next_element_top`.
