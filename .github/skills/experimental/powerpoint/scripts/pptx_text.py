@@ -81,7 +81,7 @@ def apply_paragraph_properties(paragraph, elem: dict):
 def apply_run_properties(run, elem: dict, colors: dict):
     """Apply run-level font properties beyond basic font/size/color/bold/italic.
 
-    Supports: underline, hyperlink, char_spacing.
+    Supports: underline, hyperlink, char_spacing, effect (outer shadow).
     When a hyperlink is set, the font color is re-applied afterward to prevent
     the automatic theme hyperlink color from overriding the intended color.
     """
@@ -96,6 +96,42 @@ def apply_run_properties(run, elem: dict, colors: dict):
             apply_color_to_font(run.font.color, resolve_color(elem[color_key], colors))
     if "char_spacing" in elem:
         _apply_char_spacing(run.font, elem["char_spacing"])
+    effect = elem.get("effect") or elem.get("text_effect")
+    if effect:
+        _apply_run_effect(run, effect)
+
+
+def _apply_run_effect(run, effect: dict):
+    """Apply outer shadow effect to a run's rPr element."""
+    if not effect or effect.get("type") != "outer_shadow":
+        return
+    rpr = run.font._element
+    # Remove existing effectLst
+    existing = rpr.find(qn('a:effectLst'))
+    if existing is not None:
+        rpr.remove(existing)
+
+    effect_lst = etree.SubElement(rpr, qn('a:effectLst'))
+    shadow = etree.SubElement(effect_lst, qn('a:outerShdw'))
+    for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+        if attr in effect:
+            shadow.set(attr, str(effect[attr]))
+
+    color_type = effect.get("color_type", "preset")
+    color_val = effect.get("color", "black")
+    if color_type == "preset":
+        color_el = etree.SubElement(shadow, qn('a:prstClr'))
+        color_el.set('val', color_val)
+    elif color_type == "rgb":
+        color_el = etree.SubElement(shadow, qn('a:srgbClr'))
+        color_el.set('val', color_val.lstrip('#'))
+    else:
+        color_el = etree.SubElement(shadow, qn('a:prstClr'))
+        color_el.set('val', 'black')
+
+    if "alpha" in effect:
+        alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
+        alpha_sub.set('val', str(int(effect["alpha"] * 1000)))
 
 
 def _apply_char_spacing(font, spacing_pt: float):
@@ -150,7 +186,7 @@ def extract_paragraph_properties(paragraph) -> dict:
 
 
 def extract_run_properties(run) -> dict:
-    """Extract run-level properties beyond basic font info (underline, hyperlink, char_spacing)."""
+    """Extract run-level properties beyond basic font info (underline, hyperlink, char_spacing, effects)."""
     props = {}
     if run.font.underline:
         props["underline"] = True
@@ -164,7 +200,43 @@ def extract_run_properties(run) -> dict:
     spc = _extract_char_spacing(run.font)
     if spc is not None:
         props["char_spacing"] = spc
+    # Outer shadow effect on text run
+    effect = _extract_run_effect(run)
+    if effect:
+        props["effect"] = effect
     return props
+
+
+def _extract_run_effect(run) -> dict | None:
+    """Extract outer shadow effect from a run's rPr effectLst."""
+    try:
+        rpr = run.font._element
+        effect_lst = rpr.find(qn('a:effectLst'))
+        if effect_lst is None or len(effect_lst) == 0:
+            return None
+        shadow = effect_lst.find(qn('a:outerShdw'))
+        if shadow is None:
+            return None
+        result = {"type": "outer_shadow"}
+        for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+            val = shadow.get(attr)
+            if val is not None:
+                result[attr] = val
+        color_el = shadow[0] if len(shadow) > 0 else None
+        if color_el is not None:
+            tag = color_el.tag.split('}')[-1]
+            if tag == 'prstClr':
+                result["color"] = color_el.get('val', 'black')
+                result["color_type"] = "preset"
+            elif tag == 'srgbClr':
+                result["color"] = '#' + color_el.get('val', '000000')
+                result["color_type"] = "rgb"
+            alpha_el = color_el.find(qn('a:alpha'))
+            if alpha_el is not None:
+                result["alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+        return result
+    except (AttributeError, TypeError, IndexError):
+        return None
 
 
 _NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
