@@ -436,6 +436,19 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
     if rot is not None:
         elem["rotation"] = rot
 
+    # Extract image crop from srcRect on blipFill
+    blipFill = shape._element.find(qn('p:blipFill'))
+    if blipFill is not None:
+        srcRect = blipFill.find(qn('a:srcRect'))
+        if srcRect is not None and srcRect.attrib:
+            crop = {}
+            for side in ('l', 't', 'r', 'b'):
+                val = srcRect.get(side)
+                if val is not None:
+                    crop[side] = int(val)
+            if crop:
+                elem["crop"] = crop
+
     # Extract image opacity from alphaModFix on the blip element
     blip = shape._element.find('.//' + qn('a:blip'))
     if blip is not None:
