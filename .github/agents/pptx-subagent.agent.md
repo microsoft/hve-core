@@ -45,11 +45,10 @@ Create and update the execution log progressively documenting:
 
 ### Pre-requisite: Setup
 
-1. Read and follow the `powerpoint` skill instructions in full.
+1. Read and follow the `powerpoint` skill instructions in full, including prerequisites and environment recovery.
 2. Read and follow the `pptx.instructions.md` shared instructions.
 3. Read any additional skill instructions specified in inputs.
 4. Verify the working directory structure exists; create missing directories.
-5. Install Python dependencies from the `powerpoint` skill prerequisites if not already available.
 
 ### Step 1: Execute Task
 

@@ -126,63 +126,47 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $ScriptDir = $PSScriptRoot
-$VenvDir = Join-Path $ScriptDir '.venv'
-$RequiredPackages = @('python-pptx', 'pyyaml', 'cairosvg', 'Pillow', 'pymupdf', 'github-copilot-sdk')
+$SkillRoot = Split-Path $ScriptDir
+$VenvDir = Join-Path $SkillRoot '.venv'
 
 #region Environment Setup
 
-function Test-PythonAvailability {
+function Test-UvAvailability {
     <#
     .SYNOPSIS
-        Verifies a Python 3 executable is available on PATH.
+        Verifies uv is available on PATH.
     .OUTPUTS
-        [string] The resolved Python command name.
+        [string] The resolved uv command path.
     #>
     [CmdletBinding()]
     [OutputType([string])]
     param()
 
-    foreach ($cmd in @('python3', 'python')) {
-        $resolved = Get-Command $cmd -ErrorAction SilentlyContinue
-        if ($resolved) {
-            $version = & $cmd --version 2>&1
-            if ($version -match 'Python 3') {
-                return $cmd
-            }
-        }
+    $resolved = Get-Command 'uv' -ErrorAction SilentlyContinue
+    if ($resolved) {
+        return $resolved.Source
     }
-    throw 'Python 3 is required but was not found on PATH.'
+    throw 'uv is required but was not found on PATH. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh'
 }
 
-function Initialize-PythonVenv {
+function Initialize-PythonEnvironment {
     <#
     .SYNOPSIS
-        Creates a Python virtual environment and installs required packages.
-    .PARAMETER PythonCmd
-        The Python executable to use for venv creation.
+        Syncs the Python virtual environment and dependencies via uv.
+    .DESCRIPTION
+        Runs uv sync from the skill root directory. Creates the virtual
+        environment and installs all dependencies declared in pyproject.toml.
     #>
     [CmdletBinding()]
     [OutputType([void])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$PythonCmd
-    )
+    param()
 
-    if (-not (Test-Path $VenvDir)) {
-        Write-Host "Creating virtual environment at $VenvDir"
-        & $PythonCmd -m venv $VenvDir
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to create virtual environment."
-        }
-    }
-
-    $pipPath = Get-VenvPipPath
-    Write-Host 'Installing dependencies...'
-    & $pipPath install --quiet @RequiredPackages
+    Write-Host 'Syncing Python environment via uv...'
+    & uv sync --directory $SkillRoot
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to install dependencies: $($RequiredPackages -join ', ')"
+        throw 'Failed to sync Python environment via uv.'
     }
-    Write-Host 'Dependencies installed.'
+    Write-Host 'Environment synchronized.'
 }
 
 function Get-VenvPythonPath {
@@ -200,23 +184,6 @@ function Get-VenvPythonPath {
         return Join-Path $VenvDir 'Scripts/python.exe'
     }
     return Join-Path $VenvDir 'bin/python'
-}
-
-function Get-VenvPipPath {
-    <#
-    .SYNOPSIS
-        Returns the path to the venv pip executable.
-    .OUTPUTS
-        [string] Absolute path to the venv pip binary.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param()
-
-    if ($IsWindows) {
-        return Join-Path $VenvDir 'Scripts/pip.exe'
-    }
-    return Join-Path $VenvDir 'bin/pip'
 }
 
 #endregion
@@ -593,10 +560,9 @@ function ConvertTo-SlideImages {
 
 #region Main
 
-$pythonCmd = Test-PythonAvailability
-
 if (-not $SkipVenvSetup) {
-    Initialize-PythonVenv -PythonCmd $pythonCmd
+    Test-UvAvailability | Out-Null
+    Initialize-PythonEnvironment
 }
 
 switch ($Action) {

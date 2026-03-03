@@ -1,6 +1,22 @@
 [project]
 name = "powerpoint-skill-tests"
+version = "0.0.0"
 requires-python = ">=3.11"
+dependencies = [
+    "python-pptx",
+    "pyyaml",
+    "cairosvg",
+    "Pillow",
+    "pymupdf",
+    "github-copilot-sdk",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "ruff>=0.15",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
