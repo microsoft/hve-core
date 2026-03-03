@@ -30,6 +30,22 @@ CONNECTOR_TYPE_MAP = {
     "curve": MSO_CONNECTOR_TYPE.CURVE,
 }
 
+PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
+ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+
+def _reset_effect_ref(shape):
+    """Reset effectRef idx to 0 to prevent theme shadow inheritance.
+
+    python-pptx defaults effectRef idx to 2, which references the theme's
+    effectStyleLst[2] that typically includes an outerShdw element.
+    """
+    style_el = shape._element.find(f"{{{PNS}}}style")
+    if style_el is not None:
+        effect_ref = style_el.find(f"{{{ANS}}}effectRef")
+        if effect_ref is not None:
+            effect_ref.set("idx", "0")
+
 
 def set_slide_bg(slide, fill_spec, colors: dict):
     """Set a background fill on a slide."""
@@ -110,20 +126,39 @@ def add_textbox(slide, left, top, width, height, text, font_name=None,
                 p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
             apply_paragraph_properties(p, p_def)
             apply_bullet_properties(p, p_def)
-            run = p.add_run()
-            run.text = p_def.get("text", "")
-            p_font = p_def.get("font", font_name)
-            if p_font:
-                run.font.name = p_font
-            run.font.size = Pt(p_def.get("font_size", font_size))
-            p_color = p_def.get("font_color")
-            if p_color:
-                apply_color_to_font(run.font.color, resolve_color(p_color))
-            elif font_color:
-                apply_color_to_font(run.font.color, font_color)
-            run.font.bold = p_def.get("font_bold", bold)
-            run.font.italic = p_def.get("italic", italic)
-            apply_run_properties(run, p_def, colors or {})
+            p_runs = p_def.get("runs")
+            if p_runs:
+                # Multi-run paragraph: apply each run with its own formatting
+                for j, seg in enumerate(p_runs):
+                    run = p.add_run() if j > 0 else (p.runs[0] if p.runs else p.add_run())
+                    run.text = seg.get("text", "")
+                    seg_font = seg.get("font", font_name)
+                    if seg_font:
+                        run.font.name = seg_font
+                    run.font.size = Pt(seg.get("size", font_size))
+                    if "color" in seg:
+                        apply_color_to_font(run.font.color, resolve_color(seg["color"]))
+                    elif font_color:
+                        apply_color_to_font(run.font.color, font_color)
+                    run.font.bold = seg.get("bold", False)
+                    run.font.italic = seg.get("italic", False)
+                    apply_run_properties(run, seg, colors or {})
+            else:
+                # Single-run paragraph
+                run = p.add_run()
+                run.text = p_def.get("text", "")
+                p_font = p_def.get("font", font_name)
+                if p_font:
+                    run.font.name = p_font
+                run.font.size = Pt(p_def.get("font_size", font_size))
+                p_color = p_def.get("font_color")
+                if p_color:
+                    apply_color_to_font(run.font.color, resolve_color(p_color))
+                elif font_color:
+                    apply_color_to_font(run.font.color, font_color)
+                run.font.bold = p_def.get("font_bold", bold)
+                run.font.italic = p_def.get("italic", italic)
+                apply_run_properties(run, p_def, colors or {})
         return txBox
 
     # Flat format: split on newlines and apply element-level formatting
@@ -160,6 +195,9 @@ def add_shape_element(slide, elem, colors, typography):
 
     shape = slide.shapes.add_shape(shape_type, left, top, width, height)
 
+    # Reset effectRef to prevent theme shadow inheritance (python-pptx defaults to idx=2)
+    _reset_effect_ref(shape)
+
     if "name" in elem:
         shape.name = elem["name"]
 
@@ -189,18 +227,35 @@ def add_shape_element(slide, elem, colors, typography):
                     p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
                 apply_paragraph_properties(p, p_def)
                 apply_bullet_properties(p, p_def)
-                run = p.add_run()
-                run.text = p_def.get("text", "")
-                text_font = p_def.get("text_font", elem.get("text_font"))
-                if text_font:
-                    run.font.name = text_font
-                run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
-                p_color = p_def.get("text_color", elem.get("text_color"))
-                if p_color:
-                    apply_color_to_font(run.font.color, resolve_color(p_color))
-                run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
-                run.font.italic = p_def.get("italic", elem.get("italic", False))
-                apply_run_properties(run, p_def, colors)
+                p_runs = p_def.get("runs")
+                if p_runs:
+                    for j, seg in enumerate(p_runs):
+                        run = p.add_run() if j > 0 else (p.runs[0] if p.runs else p.add_run())
+                        run.text = seg.get("text", "")
+                        seg_font = seg.get("font", elem.get("text_font"))
+                        if seg_font:
+                            run.font.name = seg_font
+                        run.font.size = Pt(seg.get("size", elem.get("text_size", 16)))
+                        if "color" in seg:
+                            apply_color_to_font(run.font.color, resolve_color(seg["color"]))
+                        elif "text_color" in elem:
+                            apply_color_to_font(run.font.color, resolve_color(elem["text_color"]))
+                        run.font.bold = seg.get("bold", False)
+                        run.font.italic = seg.get("italic", False)
+                        apply_run_properties(run, seg, colors)
+                else:
+                    run = p.add_run()
+                    run.text = p_def.get("text", "")
+                    text_font = p_def.get("text_font", elem.get("text_font"))
+                    if text_font:
+                        run.font.name = text_font
+                    run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
+                    p_color = p_def.get("text_color", elem.get("text_color"))
+                    if p_color:
+                        apply_color_to_font(run.font.color, resolve_color(p_color))
+                    run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
+                    run.font.italic = p_def.get("italic", elem.get("italic", False))
+                    apply_run_properties(run, p_def, colors)
         else:
             text = elem["text"]
             lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
