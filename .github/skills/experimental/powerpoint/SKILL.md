@@ -237,20 +237,19 @@ The Validate action runs a two- or three-step pipeline:
   -ValidationModel claude-haiku-4.5
 ```
 
-Vision validation results are written to `validation-results.json` in the image output directory.
+Vision validation results are written to `validation-results.json` in the image output directory. A Markdown report is written to `validation-report.md` alongside the JSON, providing per-slide findings, severity counts, and cache statistics.
 
-#### Validate with Concurrency and Caching
+#### Validate with Concurrency
 
 ```powershell
 ./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
   -InputPath slide-deck/presentation.pptx `
   -ContentDir content/ `
   -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast" `
-  -ValidationConcurrency 5 `
-  -ValidationCacheDir slide-deck/validation/cache
+  -ValidationConcurrency 5
 ```
 
-Concurrent validation processes multiple slides in parallel (default: 3). Caching stores results keyed by image hash + prompt + model; subsequent runs skip unchanged slides.
+Concurrent validation processes multiple slides in parallel (default: 3). Caching is auto-enabled at `{ImageOutputDir}/cache/` — results are keyed by image hash + prompt + model and subsequent runs skip unchanged slides. Pass `--no-cache` to `validate_slides.py` (or omit `-ValidationCacheDir` and override manually) to force re-validation.
 
 #### Validate Specific Slides
 
@@ -303,7 +302,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
 | `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
 | `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
-| `validate_slides.py` | Vision-based slide validation via Copilot SDK |
+| `validate_slides.py` | Vision-based slide validation via Copilot SDK with auto-caching and Markdown report generation |
 
 ## python-pptx Constraints
 

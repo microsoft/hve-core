@@ -104,6 +104,7 @@ Validate the generated deck against quality criteria using PPTX property checks 
    * Pass `-ValidationPrompt` with the visual check descriptions below (or write them to a temp file and pass `-ValidationPromptFile`).
    * Optionally pass `-ValidationModel` to specify the vision model (default: `claude-haiku-4.5`).
    * The pipeline runs three steps: export slides to images, run `validate_deck.py` (speaker notes, slide count), and run `validate_slides.py` (vision-based checks via Copilot SDK).
+   * Caching is auto-enabled at `{{ImageOutputDir}}/cache/`. Results are keyed by image hash + prompt + model. Pass `-NoCache` to force re-validation of all slides.
 2. The validation prompt to pass must include these visual checks:
    * **Text overlay** — text elements that overlap each other, text crossing through shapes or lines, stacked elements where content is hidden.
    * **Overflow** — content cut off or extending beyond visible slide boundaries, text or shapes clipped at edges.
@@ -119,6 +120,7 @@ Validate the generated deck against quality criteria using PPTX property checks 
    * **Readable fill combinations** — accent colors used as fills must be darkened to ~60% saturation for white text readability.
    * **Background images** — pasted images instead of fill properties.
 3. Read the vision validation results from `{{working-directory}}/slide-deck/validation/validation-results.json`.
+4. Read the Markdown validation report from `{{working-directory}}/slide-deck/validation/validation-report.md` for a human-readable summary with per-slide findings, severity counts, and cache statistics.
 4. For each slide, list issues or areas of concern, even if minor.
 5. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
 6. Update the execution log with all validation findings including the path to exported slide images and the vision results JSON.

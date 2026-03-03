@@ -8,8 +8,9 @@ Usage:
     python validate_slides.py --image-dir /path/to/images/ --prompt "Check for..."
     python validate_slides.py --image-dir images/ --prompt-file prompt.txt --model claude-haiku-4.5
     python validate_slides.py --image-dir images/ --prompt "..." --output results.json
+    python validate_slides.py --image-dir images/ --prompt "..." --report validation-report.md
     python validate_slides.py --image-dir images/ --prompt "..." --concurrency 5
-    python validate_slides.py --image-dir images/ --prompt "..." --cache-dir /tmp/cache
+    python validate_slides.py --image-dir images/ --prompt "..." --no-cache
 """
 
 import argparse
@@ -19,6 +20,7 @@ import json
 import logging
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from copilot import CopilotClient, PermissionHandler
@@ -82,6 +84,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", type=Path, help="Output JSON file path (default: stdout)"
     )
     parser.add_argument(
+        "--report", type=Path, help="Output Markdown report file path",
+    )
+    parser.add_argument(
         "--slides", help="Comma-separated slide numbers to validate (default: all)"
     )
     parser.add_argument(
@@ -93,12 +98,12 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        help="Directory for caching validation results by image hash",
+        help="Directory for caching validation results by image hash (default: {image-dir}/cache)",
     )
     parser.add_argument(
         "--no-cache",
         action="store_true",
-        help="Skip cache and re-validate all slides",
+        help="Disable caching and re-validate all slides",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
@@ -195,6 +200,112 @@ def save_cached_result(cache_dir: Path, cache_key: str, result: dict) -> None:
     cache_file.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
 
+SEVERITY_ICON = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}
+QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️", "poor": "❌"}
+
+
+def generate_report(results: dict, cached_count: int, validated_count: int) -> str:
+    """Generate a Markdown validation report from results.
+
+    Args:
+        results: Validation results dict with model, slide_count, slides.
+        cached_count: Number of slides served from cache.
+        validated_count: Number of slides validated fresh.
+
+    Returns:
+        Markdown report string.
+    """
+    lines = ["# Slide Validation Report", ""]
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines.append(f"**Generated**: {ts}  ")
+    lines.append(f"**Model**: {results['model']}  ")
+    lines.append(f"**Slides**: {results['slide_count']}")
+    lines.append("")
+
+    # Cache statistics
+    if cached_count > 0 or validated_count > 0:
+        total = cached_count + validated_count
+        lines.append("## Cache Statistics")
+        lines.append("")
+        lines.append("| Metric | Count |")
+        lines.append("|-|-|")
+        lines.append(f"| Cache hits | {cached_count} |")
+        lines.append(f"| Validated | {validated_count} |")
+        lines.append(f"| Total | {total} |")
+        lines.append("")
+
+    # Summary counts
+    error_count = 0
+    warning_count = 0
+    info_count = 0
+    parse_errors = 0
+    for slide in results["slides"]:
+        if slide.get("parse_error"):
+            parse_errors += 1
+            continue
+        for issue in slide.get("issues", []):
+            sev = issue.get("severity", "info")
+            if sev == "error":
+                error_count += 1
+            elif sev == "warning":
+                warning_count += 1
+            else:
+                info_count += 1
+
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Severity | Count |")
+    lines.append("|-|-|")
+    lines.append(f"| ❌ Errors | {error_count} |")
+    lines.append(f"| ⚠️ Warnings | {warning_count} |")
+    lines.append(f"| ℹ️ Info | {info_count} |")
+    if parse_errors:
+        lines.append(f"| 🔴 Parse failures | {parse_errors} |")
+    lines.append("")
+
+    # Per-slide details
+    lines.append("## Per-Slide Findings")
+    lines.append("")
+    for slide in results["slides"]:
+        num = slide.get("slide_number", "?")
+        quality = slide.get("overall_quality", "unknown")
+        icon = QUALITY_ICON.get(quality, "❓")
+        lines.append(f"### Slide {num} {icon} {quality}")
+        lines.append("")
+
+        if slide.get("parse_error"):
+            lines.append("**Could not parse model response.**")
+            raw = slide.get("raw_response", "")
+            if raw:
+                lines.append("")
+                lines.append("<details><summary>Raw response</summary>")
+                lines.append("")
+                lines.append(f"```\n{raw}\n```")
+                lines.append("")
+                lines.append("</details>")
+            lines.append("")
+            continue
+
+        issues = slide.get("issues", [])
+        if not issues:
+            lines.append("No issues found.")
+            lines.append("")
+            continue
+
+        lines.append("| Severity | Check | Location | Description |")
+        lines.append("|-|-|-|-|")
+        for issue in issues:
+            sev = issue.get("severity", "info")
+            sev_icon = SEVERITY_ICON.get(sev, "")
+            check = issue.get("check_type", "")
+            loc = issue.get("location", "")
+            desc = issue.get("description", "")
+            lines.append(f"| {sev_icon} {sev} | {check} | {loc} | {desc} |")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 async def validate_slide(
     session, slide_num: int, image_path: Path, prompt: str
 ) -> dict:
@@ -250,15 +361,16 @@ async def run(args: argparse.Namespace) -> int:
         "Found %d slide image(s) to validate with model %s", len(images), args.model
     )
 
-    # Separate cached vs uncached slides
-    use_cache = args.cache_dir and not args.no_cache
+    # Resolve cache directory: default to {image_dir}/cache when not specified
+    cache_dir = args.cache_dir if args.cache_dir else image_dir / "cache"
+    use_cache = not args.no_cache
     cached_results = []
     to_validate = []
 
     for slide_num, image_path in images:
         if use_cache:
             key = compute_cache_key(image_path, prompt, args.model)
-            cached = load_cached_result(args.cache_dir, key)
+            cached = load_cached_result(cache_dir, key)
             if cached is not None:
                 logger.debug("Cache hit for slide %d", slide_num)
                 cached_results.append(cached)
@@ -299,7 +411,7 @@ async def run(args: argparse.Namespace) -> int:
             if use_cache:
                 for (slide_num, image_path), result in zip(to_validate, fresh_results):
                     key = compute_cache_key(image_path, prompt, args.model)
-                    save_cached_result(args.cache_dir, key, result)
+                    save_cached_result(cache_dir, key, result)
 
             for result in fresh_results:
                 if result.get("parse_error"):
@@ -330,6 +442,13 @@ async def run(args: argparse.Namespace) -> int:
         logger.info("Results written to %s", args.output)
     else:
         print(output_json)
+
+    # Generate Markdown report
+    if args.report:
+        report_md = generate_report(results, len(cached_results), len(to_validate))
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(report_md, encoding="utf-8")
+        logger.info("Report written to %s", args.report)
 
     # Report summary
     total_issues = sum(

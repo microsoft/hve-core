@@ -391,6 +391,11 @@ function Invoke-ValidateDeck {
         $ImageOutputDir = Join-Path (Split-Path $InputPath) 'validation'
     }
 
+    # Default cache directory alongside images
+    if (-not $ValidationCacheDir) {
+        $ValidationCacheDir = Join-Path $ImageOutputDir 'cache'
+    }
+
     # Step 1: Export slides to images
     Write-Host "Step 1/$totalSteps`: Exporting slides to images..."
     Invoke-ExportSlides
@@ -437,14 +442,15 @@ function Invoke-ValidateDeck {
         $visionOutputPath = Join-Path $ImageOutputDir 'validation-results.json'
         $visionArgs += '--output'
         $visionArgs += $visionOutputPath
+        $visionReportPath = Join-Path $ImageOutputDir 'validation-report.md'
+        $visionArgs += '--report'
+        $visionArgs += $visionReportPath
         if ($Slides) {
             $visionArgs += '--slides'
             $visionArgs += $Slides
         }
-        if ($ValidationCacheDir) {
-            $visionArgs += '--cache-dir'
-            $visionArgs += $ValidationCacheDir
-        }
+        $visionArgs += '--cache-dir'
+        $visionArgs += $ValidationCacheDir
 
         & $python @visionArgs
         if ($LASTEXITCODE -ne 0) {
