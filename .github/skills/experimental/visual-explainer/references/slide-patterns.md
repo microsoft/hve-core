@@ -13,15 +13,18 @@ When converting a plan, spec, review, or any structured document into slides, fo
 **Step 1 — Inventory the source.** Read the entire source document and enumerate every section, subsection, card, table row, decision, specification, collapsible detail, and footnote. Count them. A plan with 7 sections, 6 decision cards, a 7-row file table, 4 presets, 6 technique guides, and an engine spec with 3 sub-specs and 2 collapsibles is ~25 distinct content items that all need slide real estate.
 
 **Step 2 — Map source to slides.** Assign each inventory item to one or more slides. Every item must appear somewhere. Rules:
-- If a section has 6 decisions, all 6 need slides — not the 2 that fit on one split slide.
-- If a table has 7 rows, all 7 rows show up.
-- Collapsible/expandable details in the source are not optional in the deck — they become their own slides.
-- Subsections with multiple cards (e.g., "6 Visual Technique cards") may need 2–3 slides to cover at readable density.
-- Each plan section typically needs a divider slide + 1–3 content slides depending on density.
+
+* If a section has 6 decisions, all 6 need slides — not the 2 that fit on one split slide.
+* If a table has 7 rows, all 7 rows show up.
+* Collapsible/expandable details in the source are not optional in the deck — they become their own slides.
+* Subsections with multiple cards (e.g., "6 Visual Technique cards") may need 2–3 slides to cover at readable density.
+* Each plan section typically needs a divider slide + 1–3 content slides depending on density.
 
 **Step 3 — Choose layouts.** For each planned slide, pick a slide type and spatial composition. Vary across the sequence (see Compositional Variety below). This is where narrative pacing happens — alternate dense slides with sparse ones.
 
-**Step 4 — Plan images.** Run `which surf`. If surf-cli is available, plan 2–4 generated images for the deck. At minimum, target the **title slide** (16:9 background that sets the visual tone) and **one full-bleed slide** (immersive background for a key moment). Content slides with conceptual topics also benefit from a 1:1 illustration in the aside area. Generate these images early — before writing HTML — so you can embed them as base64 data URIs. See the Proactive Imagery section below for the full workflow. If surf isn't available, degrade to CSS gradients and SVG decorations — note the fallback in a comment but don't error.
+**Step 4 — Plan images.** Run `which surf`. If surf-cli is available, plan 2–4 generated images for the deck.
+At minimum, target the **title slide** (16:9 background that sets the visual tone) and **one full-bleed slide** (immersive background for a key moment). Content slides with conceptual topics also benefit from a 1:1 illustration in the aside area.
+Generate these images early — before writing HTML — so you can embed them as base64 data URIs. See the Proactive Imagery section below for the full workflow. If surf isn't available, degrade to CSS gradients and SVG decorations — note the fallback in a comment but don't error.
 
 **Step 5 — Verify before writing HTML.** Scan the inventory from Step 1. Is anything unmapped? Would a reader of the source document notice something missing from the deck? If yes, add slides. A source document with 7 sections typically produces 18–25 slides, not 10–13.
 
@@ -457,9 +460,10 @@ function autoFit() {
 ```
 
 Three cases, one function:
-- **Mermaid:** SVGs render with fixed dimensions inside flex containers — force them to fill available width.
-- **KPI values:** Long text strings at hero scale overflow card boundaries — `transform: scale()` shrinks visually without reflow.
-- **Blockquotes:** Quotes longer than ~100 characters get proportionally smaller font. The 0.5 floor prevents unreadably small text; if it needs more than 50% shrink, it should have been a content slide.
+
+* **Mermaid:** SVGs render with fixed dimensions inside flex containers — force them to fill available width.
+* **KPI values:** Long text strings at hero scale overflow card boundaries — `transform: scale()` shrinks visually without reflow.
+* **Blockquotes:** Quotes longer than ~100 characters get proportionally smaller font. The 0.5 floor prevents unreadably small text; if it needs more than 50% shrink, it should have been a content slide.
 
 ## Slide Type Layouts
 
@@ -627,9 +631,9 @@ Full-viewport Mermaid diagram. Max 8–10 nodes (presentation scale — fewer, l
 
 **When to use Mermaid vs CSS in slides.** Mermaid renders SVGs at a fixed size the agent can't control — node dimensions are set by the library, not by CSS. This creates a recurring problem: small diagrams (fewer than ~7 nodes, no branching) render as tiny elements floating in a huge viewport with acres of dead space. The rule:
 
-- **Use Mermaid** for complex graphs: 8+ nodes, branching paths, cycles, multiple edge crossings — anything where automatic edge routing saves real effort.
-- **Use CSS Pipeline** (below) for simple linear flows: A → B → C → D sequences, build steps, deployment stages. CSS cards give full control over sizing, typography, and fill the viewport naturally.
-- **Never leave a small Mermaid diagram alone on a slide.** If the diagram is small, either switch to CSS, or pair it with supporting content (description cards, bullet annotations, a summary panel) in a split layout. A slide with a tiny diagram and empty space is a failed slide.
+* **Use Mermaid** for complex graphs: 8+ nodes, branching paths, cycles, multiple edge crossings — anything where automatic edge routing saves real effort.
+* **Use CSS Pipeline** (below) for simple linear flows: A → B → C → D sequences, build steps, deployment stages. CSS cards give full control over sizing, typography, and fill the viewport naturally.
+* **Never leave a small Mermaid diagram alone on a slide.** If the diagram is small, either switch to CSS, or pair it with supporting content (description cards, bullet annotations, a summary panel) in a split layout. A slide with a tiny diagram and empty space is a failed slide.
 
 **Mermaid centering fix.** When you do use Mermaid, add `display: flex; align-items: center; justify-content: center;` to `.mermaid-wrap` so the SVG centers within its container instead of hugging the top-left corner. Change `transform-origin` to `center center` so zoom radiates from the middle.
 
@@ -1144,9 +1148,10 @@ rm /tmp/ve-slide-title.png
 ```
 
 **Prompt craft for slides:** Be specific about style, dominant colors, and mood. Pull colors from the preset's CSS variables. Examples:
-- Terminal Mono: "dark abstract circuit board pattern, green (#50fa7b) traces on near-black (#0a0e14), minimal, technical"
-- Midnight Editorial: "deep navy abstract composition, warm gold accent light, cinematic depth of field, premium editorial feel"
-- Warm Signal: "warm cream textured paper with terracotta geometric accents, confident modern design"
+
+* Terminal Mono: "dark abstract circuit board pattern, green (#50fa7b) traces on near-black (#0a0e14), minimal, technical"
+* Midnight Editorial: "deep navy abstract composition, warm gold accent light, cinematic depth of field, premium editorial feel"
+* Warm Signal: "warm cream textured paper with terracotta geometric accents, confident modern design"
 
 **When surf fails or isn't available:** Degrade gracefully to CSS gradients and SVG decorations. Use the `.slide__bg--gradient` pattern with bold `linear-gradient` or `radial-gradient` backgrounds. The deck should stand on its own visually without generated images — they enhance, they don't carry. Note the fallback in an HTML comment (`<!-- surf unavailable, using CSS gradient fallback -->`) so future edits know to retry.
 
@@ -1159,12 +1164,13 @@ rm /tmp/ve-slide-title.png
 Consecutive slides must vary their spatial approach. Three centered slides in a row means push one off-axis.
 
 **Composition patterns to alternate between:**
-- Centered (title slides, quotes)
-- Left-heavy: content on the left 60%, breathing room on the right
-- Right-heavy: content on the right 60%, visual or whitespace on the left
-- Edge-aligned: content pushed to bottom or top, large empty space opposite
-- Split: two distinct panels filling the viewport
-- Full-bleed: background dominates, minimal overlaid text
+
+* Centered (title slides, quotes)
+* Left-heavy: content on the left 60%, breathing room on the right
+* Right-heavy: content on the right 60%, visual or whitespace on the left
+* Edge-aligned: content pushed to bottom or top, large empty space opposite
+* Split: two distinct panels filling the viewport
+* Full-bleed: background dominates, minimal overlaid text
 
 The agent should plan the slide sequence considering layout rhythm, not just content order. When outlining a deck, assign a composition to each slide before writing HTML.
 
@@ -1172,11 +1178,11 @@ The agent should plan the slide sequence considering layout rhythm, not just con
 
 Slides get projected, screen-shared, viewed at distance. Design accordingly:
 
-- **Minimum body text: 16px.** Nothing smaller except labels and captions.
-- **One focal point per slide.** Not three competing elements.
-- **Higher contrast than pages.** Dimmed text (`--text-dim`) should still be easily readable at distance — test against the background.
-- **Nav chrome opacity.** Dots and progress bar must be visible on any slide background (light or dark) without being distracting. Use the backdrop blur or text-shadow approach from the Nav Chrome section.
-- **Simpler Mermaid diagrams.** Max 8–10 nodes, 18px+ labels, 2px+ edges. The diagram should be readable without zoom at presentation distance. Zoom controls remain available for detail inspection.
+* **Minimum body text: 16px.** Nothing smaller except labels and captions.
+* **One focal point per slide.** Not three competing elements.
+* **Higher contrast than pages.** Dimmed text (`--text-dim`) should still be easily readable at distance — test against the background.
+* **Nav chrome opacity.** Dots and progress bar must be visible on any slide background (light or dark) without being distracting. Use the backdrop blur or text-shadow approach from the Nav Chrome section.
+* **Simpler Mermaid diagrams.** Max 8–10 nodes, 18px+ labels, 2px+ edges. The diagram should be readable without zoom at presentation distance. Zoom controls remain available for detail inspection.
 
 ## Content Density Limits
 

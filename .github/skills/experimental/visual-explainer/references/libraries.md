@@ -9,6 +9,7 @@ Use for flowcharts, sequence diagrams, ER diagrams, state machines, mind maps, c
 Do NOT use for dashboards — CSS Grid card layouts with Chart.js look better for those. Data tables use `<table>` elements.
 
 **CDN:**
+
 ```html
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -18,6 +19,7 @@ Do NOT use for dashboards — CSS Grid card layouts with Chart.js look better fo
 ```
 
 **With ELK layout** (required for `layout: 'elk'` — it's a separate package, not bundled in core):
+
 ```html
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
@@ -148,7 +150,7 @@ Mermaid renders SVG. Override its classes for pixel-perfect control that `themeV
 
 2. **Use semi-transparent fills (8-digit hex) for node backgrounds.** They layer over whatever Mermaid's base theme background is, producing a tint that works in both light and dark modes. Use `20`–`44` alpha for subtle, `55`–`77` for prominent:
 
-```
+```text
 classDef highlight fill:#b5761433,stroke:#b57614,stroke-width:2px
 classDef muted fill:#7c6f6411,stroke:#7c6f6444,stroke-width:1px
 ```
@@ -158,18 +160,19 @@ classDef muted fill:#7c6f6411,stroke:#7c6f6444,stroke-width:1px
 Mermaid uses certain characters for shape syntax. Node labels containing these characters cause syntax errors unless quoted.
 
 **Shape characters to watch:**
-- `[/text/]` — parallelogram
-- `[\text\]` — trapezoid (alt)
-- `[/text\]` — trapezoid
-- `[\text/]` — trapezoid (alt)
-- `[(text)]` — cylindrical
-- `[[text]]` — subroutine
-- `((text))` — circle
-- `{{text}}` — hexagon
+
+* `[/text/]` — parallelogram
+* `[\text\]` — trapezoid (alt)
+* `[/text\]` — trapezoid
+* `[\text/]` — trapezoid (alt)
+* `[(text)]` — cylindrical
+* `[[text]]` — subroutine
+* `((text))` — circle
+* `{{text}}` — hexagon
 
 **If your node label starts with `/`, `\`, `(`, or `{`, wrap it in quotes:**
 
-```
+```text
 %% WRONG — syntax error (/ starts parallelogram shape)
 CMD[/gallery command] --> SRV[server]
 
@@ -179,7 +182,7 @@ CMD["/gallery command"] --> SRV[server]
 
 **Edge labels with special characters also need quotes:**
 
-```
+```text
 %% WRONG — quotes inside edge label
 UI -->|"Use as Reference"| RET
 
@@ -193,9 +196,10 @@ Avoid opaque light fills like `fill:#fefce8` — they render as bright boxes in 
 ### stateDiagram-v2 Label Limitations
 
 State diagram transition labels have a strict parser. Avoid:
-- `<br/>` — only works in flowcharts; causes a parse error in state diagrams
-- Parentheses in labels — `cancel()` can confuse the parser
-- Multiple colons — the first `:` is the label delimiter; extra colons in the label text may break parsing
+
+* `<br/>` — only works in flowcharts; causes a parse error in state diagrams
+* Parentheses in labels — `cancel()` can confuse the parser
+* Multiple colons — the first `:` is the label delimiter; extra colons in the label text may break parsing
 
 If you need multi-line labels or special characters, use a `flowchart` instead of `stateDiagram-v2`. Flowcharts support quoted labels (`|"label with: special chars"|`) and `<br/>` for line breaks.
 
@@ -205,20 +209,20 @@ Most Mermaid failures come from a few recurring issues. Follow these rules to av
 
 **Quote labels with special characters.** Parentheses, colons, commas, brackets, and ampersands break the parser when unquoted. Wrap any label containing special characters in double quotes:
 
-```
+```text
 A["handleRequest(ctx)"] --> B["DB: query users"]
 A[handleRequest] --> B[query users]
 ```
 
 **Keep IDs simple.** Node IDs should be alphanumeric with no spaces or punctuation. Put the readable name in the label, not the ID:
 
-```
+```text
 userSvc["User Service"] --> authSvc["Auth Service"]
 ```
 
 **Max 15-20 nodes per diagram.** Beyond that, readability collapses even with ELK layout. Use `subgraph` blocks to group related nodes, or split into multiple diagrams:
 
-```
+```text
 subgraph Auth
   login --> validate --> token
 end
@@ -242,7 +246,7 @@ Auth --> API
 
 **Sequence diagram messages must be plain text.** Unlike flowchart labels, sequence diagram messages (the text after `:`) cannot be quoted or escaped. Curly braces `{}`, square brackets `[]`, angle brackets `<>`, and `&` will silently break the parser and the entire diagram renders as raw text. Write human-readable descriptions, not code:
 
-```
+```text
 %% WRONG — parser chokes on braces, brackets, ampersand
 A->>B: web_search({ queries: [...] })
 B->>B: User removes query 2, keeps 1 & 3
@@ -269,7 +273,7 @@ B->>S: POST /submit with selected indices
 
 **Rule of thumb:** If the diagram has more than one row of nodes or any branching, use `TD`. The extra vertical space makes labels readable.
 
-```
+```text
 %% WRONG — LR with many nodes produces wide, short, unreadable diagram
 flowchart LR
   A --> B --> C --> D --> E
@@ -284,6 +288,7 @@ flowchart TD
 ### Diagram Type Examples
 
 **Flowchart with decisions:**
+
 ```html
 <pre class="mermaid">
 graph TD
@@ -299,6 +304,7 @@ graph TD
 ```
 
 **Sequence diagram:**
+
 ```html
 <pre class="mermaid">
 sequenceDiagram
@@ -317,6 +323,7 @@ sequenceDiagram
 ```
 
 **ER diagram:**
+
 ```html
 <pre class="mermaid">
 erDiagram
@@ -331,6 +338,7 @@ erDiagram
 ```
 
 **State diagram:**
+
 ```html
 <pre class="mermaid">
 stateDiagram-v2
@@ -345,6 +353,7 @@ stateDiagram-v2
 ```
 
 **Mind map:**
+
 ```html
 <pre class="mermaid">
 mindmap
@@ -419,6 +428,7 @@ Use for bar charts, line charts, pie/doughnut charts, radar charts, and other da
 ```
 
 Wrap the canvas in a styled container:
+
 ```css
 .chart-container {
   background: var(--surface);
@@ -477,6 +487,7 @@ Use when a diagram has 10+ elements and you want a choreographed entrance sequen
 ```
 
 When using anime.js, set initial opacity to 0 in CSS so elements don't flash before the animation:
+
 ```css
 .ve-card { opacity: 0; }
 
@@ -490,10 +501,11 @@ When using anime.js, set initial opacity to 0 in CSS so elements don't flash bef
 Always load with `display=swap` for fast rendering. Pick a distinctive pairing — body + mono at minimum, optionally a display font for the title.
 
 **FORBIDDEN as `--font-body` (AI slop signals):**
-- Inter — the single most overused AI default font
-- Roboto — generic Android/Google default
-- Arial, Helvetica — system defaults with no character
-- system-ui alone without a named font — signals zero design intent
+
+* Inter — the single most overused AI default font
+* Roboto — generic Android/Google default
+* Arial, Helvetica — system defaults with no character
+* system-ui alone without a named font — signals zero design intent
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -502,6 +514,7 @@ Always load with `display=swap` for fast rendering. Pick a distinctive pairing �
 ```
 
 Define as CSS variables for easy reference:
+
 ```css
 :root {
   --font-body: 'Outfit', system-ui, sans-serif;

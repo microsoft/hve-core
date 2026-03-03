@@ -33,11 +33,12 @@ The page uses a two-column CSS Grid: sidebar (TOC) + main content. On mobile it 
 ```
 
 Key structural rules:
-- `<nav class="toc">` is the **first child** of `.wrap`
-- All page content goes inside `<div class="main">`
-- Every section heading gets an `id="s1"`, `id="s2"`, etc.
-- TOC links use `href="#s1"` matching those IDs
-- Keep TOC link text short (truncate long section names)
+
+* `<nav class="toc">` is the **first child** of `.wrap`
+* All page content goes inside `<div class="main">`
+* Every section heading gets an `id="s1"`, `id="s2"`, etc.
+* TOC links use `href="#s1"` matching those IDs
+* Keep TOC link text short (truncate long section names)
 
 ## CSS
 
@@ -205,8 +206,8 @@ Place before `</body>`, after any Mermaid init:
 
 ## Adaptation Notes
 
-- The `.toc-title` text, link labels, accent color, and section IDs change per page. Everything else is copy-paste.
-- For pages with fewer than 4 sections, skip the TOC entirely — it adds clutter without value.
-- The `grid-template-columns: 170px 1fr` width works for most TOCs. If section names are longer, go up to `200px`.
-- The `rootMargin: '-10% 0px -80% 0px'` means a section is "active" when its heading enters the top 10-20% of the viewport. This works well with sticky headers.
-- On mobile, the horizontal bar uses `overflow-x: auto` with hidden scrollbar. The active tab auto-scrolls into the center of the bar as the user scrolls the page.
+* The `.toc-title` text, link labels, accent color, and section IDs change per page. Everything else is copy-paste.
+* For pages with fewer than 4 sections, skip the TOC entirely — it adds clutter without value.
+* The `grid-template-columns: 170px 1fr` width works for most TOCs. If section names are longer, go up to `200px`.
+* The `rootMargin: '-10% 0px -80% 0px'` means a section is "active" when its heading enters the top 10-20% of the viewport. This works well with sticky headers.
+* On mobile, the horizontal bar uses `overflow-x: auto` with hidden scrollbar. The active tab auto-scrolls into the center of the bar as the user scrolls the page.
