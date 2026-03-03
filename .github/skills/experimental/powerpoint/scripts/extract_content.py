@@ -284,6 +284,8 @@ def extract_shape(shape) -> dict:
                     p_dict["text_color"] = merged["color"]
                 if merged.get("bold"):
                     p_dict["text_bold"] = True
+                if merged.get("italic"):
+                    p_dict["italic"] = True
                 if merged.get("underline"):
                     p_dict["underline"] = True
                 if merged.get("hyperlink"):
@@ -301,15 +303,16 @@ def extract_shape(shape) -> dict:
                 para_dicts.append(p_dict)
 
             non_empty = [p for p in para_dicts if p["text"].strip()]
-            if len(non_empty) > 1:
-                # Multi-paragraph: store per-paragraph formatting
+            if len(para_dicts) > 1:
+                # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
                 elem["paragraphs"] = para_dicts
                 # Also set element-level defaults from first non-empty paragraph
-                first = non_empty[0]
-                for key in ("text_font", "text_size", "text_color", "text_bold",
-                            "alignment", "char_spacing"):
-                    if key in first:
-                        elem[key] = first[key]
+                if non_empty:
+                    first = non_empty[0]
+                    for key in ("text_font", "text_size", "text_color", "text_bold",
+                                "italic", "alignment", "char_spacing"):
+                        if key in first:
+                            elem[key] = first[key]
             elif non_empty:
                 # Single paragraph: flatten to element level
                 first = non_empty[0]
@@ -402,15 +405,16 @@ def extract_textbox(shape) -> dict:
                 return elem
 
         non_empty = [p for p in para_dicts if p["text"].strip()]
-        if len(non_empty) > 1:
-            # Multi-paragraph: store per-paragraph formatting
+        if len(para_dicts) > 1:
+            # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
             elem["paragraphs"] = para_dicts
             # Set element-level defaults from first non-empty paragraph
-            first = non_empty[0]
-            for key in ("font", "font_size", "font_color", "font_bold",
-                        "italic", "alignment", "char_spacing"):
-                if key in first:
-                    elem[key] = first[key]
+            if non_empty:
+                first = non_empty[0]
+                for key in ("font", "font_size", "font_color", "font_bold",
+                            "italic", "alignment", "char_spacing"):
+                    if key in first:
+                        elem[key] = first[key]
         elif non_empty:
             # Single-style text box: flatten to element level
             first = non_empty[0]
