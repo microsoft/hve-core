@@ -415,10 +415,19 @@ function Invoke-ValidateDeck {
         $pptxArgs += '--slides'
         $pptxArgs += $Slides
     }
+    $deckOutputPath = Join-Path $ImageOutputDir 'deck-validation-results.json'
+    $pptxArgs += '--output'
+    $pptxArgs += $deckOutputPath
+    $deckReportPath = Join-Path $ImageOutputDir 'deck-validation-report.md'
+    $pptxArgs += '--report'
+    $pptxArgs += $deckReportPath
 
     & $python @pptxArgs
-    if ($LASTEXITCODE -ne 0) {
-        throw "validate_deck.py found issues (exit code $LASTEXITCODE)."
+    if ($LASTEXITCODE -eq 2) {
+        throw "validate_deck.py encountered an error (exit code $LASTEXITCODE)."
+    }
+    if ($LASTEXITCODE -eq 1) {
+        Write-Host "PPTX property checks found warnings — see $deckReportPath"
     }
 
     # Step 3: Run Copilot SDK vision validation (when prompt provided)

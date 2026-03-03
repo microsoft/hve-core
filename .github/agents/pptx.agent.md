@@ -117,13 +117,20 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Task type: `validate`.
 * Generated PPTX path: `slide-deck/{{ppt-name}}.pptx`.
 * Content directory path.
+* Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
-* Instructions to use `Invoke-PptxPipeline.ps1 -Action Export` to render slides to images, then run `validate_deck.py` for PPTX-only checks (speaker notes, slide count).
-* Instructions to read each exported slide image and perform direct visual evaluation for all quality checks (text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, and additional layout concerns).
+* Validation prompt containing these visual checks: text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative line positioning, citation collisions, column alignment, readable fill combinations, and background images.
+* Optional overrides: validation model (default: `claude-haiku-4.5`), concurrency, cache settings.
+
+The subagent runs `Invoke-PptxPipeline.ps1 -Action Validate` which chains export (PPTX → images), PPTX property checks (`validate_deck.py`), and Copilot SDK vision validation (`validate_slides.py`). Results are written to the image output directory as JSON and Markdown reports.
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**
 
-Read the subagent's execution log and review all findings.
+Read the subagent's execution log and review all validation findings from:
+* `slide-deck/validation/deck-validation-results.json` — PPTX property findings (speaker notes, slide count).
+* `slide-deck/validation/deck-validation-report.md` — Human-readable PPTX property report.
+* `slide-deck/validation/validation-results.json` — Vision-based quality findings.
+* `slide-deck/validation/validation-report.md` — Human-readable vision validation report.
 
 #### After Validation
 

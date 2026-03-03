@@ -121,7 +121,9 @@ Validate the generated deck against quality criteria using PPTX property checks 
    * **Background images** — pasted images instead of fill properties.
 3. Read the vision validation results from `{{working-directory}}/slide-deck/validation/validation-results.json`.
 4. Read the Markdown validation report from `{{working-directory}}/slide-deck/validation/validation-report.md` for a human-readable summary with per-slide findings, severity counts, and cache statistics.
-4. For each slide, list issues or areas of concern, even if minor.
+5. Read the PPTX property results from `{{working-directory}}/slide-deck/validation/deck-validation-results.json`.
+6. Read the PPTX property report from `{{working-directory}}/slide-deck/validation/deck-validation-report.md` for speaker notes and slide count findings.
+7. For each slide, list issues or areas of concern, even if minor.
 5. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
 6. Update the execution log with all validation findings including the path to exported slide images and the vision results JSON.
 
