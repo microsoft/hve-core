@@ -463,19 +463,37 @@ def clear_slide_shapes(slide):
         sp_tree.remove(sp)
 
 
+def _find_blank_layout(prs):
+    """Find the best blank layout in the presentation, with fallbacks."""
+    # Try index 6 first (default blank in standard templates)
+    try:
+        return prs.slide_layouts[6]
+    except IndexError:
+        pass
+    # Search by name
+    for layout in prs.slide_layouts:
+        if layout.name.lower() in ("blank", "blank slide"):
+            return layout
+    # Fall back to last layout
+    return prs.slide_layouts[len(prs.slide_layouts) - 1]
+
+
 def get_slide_layout(prs, slide_content: dict, style: dict):
     """Select slide layout based on content.yaml or style.yaml configuration."""
     layout_spec = slide_content.get("layout")
     layouts_map = style.get("layouts", {})
 
     if layout_spec is None or layout_spec == "blank":
-        return prs.slide_layouts[6]
+        return _find_blank_layout(prs)
 
     # Resolve through style.yaml layouts map
     if layout_spec in layouts_map:
         layout_ref = layouts_map[layout_spec]
         if isinstance(layout_ref, int):
-            return prs.slide_layouts[layout_ref]
+            try:
+                return prs.slide_layouts[layout_ref]
+            except IndexError:
+                return _find_blank_layout(prs)
         elif isinstance(layout_ref, str):
             for layout in prs.slide_layouts:
                 if layout.name == layout_ref:
@@ -489,10 +507,13 @@ def get_slide_layout(prs, slide_content: dict, style: dict):
 
     # Direct index lookup
     if isinstance(layout_spec, int):
-        return prs.slide_layouts[layout_spec]
+        try:
+            return prs.slide_layouts[layout_spec]
+        except IndexError:
+            return _find_blank_layout(prs)
 
     # Fallback to blank
-    return prs.slide_layouts[6]
+    return _find_blank_layout(prs)
 
 
 def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None):
@@ -645,6 +666,12 @@ def main():
         if "dimensions" in style:
             prs.slide_width = Inches(width)
             prs.slide_height = Inches(height)
+
+        # Remove existing slides from the template — keep only theme/layouts
+        while len(prs.slides) > 0:
+            rId = prs.slides._sldIdLst[0].rId
+            prs.part.drop_rel(rId)
+            prs.slides._sldIdLst.remove(prs.slides._sldIdLst[0])
 
         # Apply presentation metadata from style.yaml
         metadata = style.get("metadata", {})

@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 from pptx import Presentation
 
-from pptx_colors import extract_color, hex_brightness, rgb_to_hex
+from pptx_colors import extract_color, hex_brightness
 from pptx_fills import extract_fill, extract_line
 from pptx_fonts import (
     extract_alignment,
@@ -42,6 +42,79 @@ def extract_connector(shape) -> dict:
     line_props = extract_line(shape)
     if line_props:
         elem.update(line_props)
+    return elem
+
+
+def _is_freeform(shape) -> bool:
+    """Check whether a shape is a freeform with custom geometry."""
+    nsmap = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+    return shape._element.find(".//a:custGeom", nsmap) is not None
+
+
+def extract_freeform(shape) -> dict:
+    """Extract a freeform shape with its path vertices."""
+    elem = {
+        "type": "freeform",
+        "left": emu_to_inches(shape.left),
+        "top": emu_to_inches(shape.top),
+        "width": emu_to_inches(shape.width),
+        "height": emu_to_inches(shape.height),
+        "name": shape.name,
+    }
+
+    rot = extract_rotation(shape)
+    if rot is not None:
+        elem["rotation"] = rot
+
+    # Extract fill and line properties
+    try:
+        fill_result = extract_fill(shape.fill)
+        if fill_result is not None:
+            elem["fill"] = fill_result
+    except (AttributeError, TypeError):
+        pass
+
+    line_props = extract_line(shape)
+    if line_props:
+        elem.update(line_props)
+
+    # Extract path vertices from custGeom XML
+    nsmap = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+    paths = []
+    for path_el in shape._element.findall(".//a:custGeom/a:pathLst/a:path", nsmap):
+        commands = []
+        for child in path_el:
+            tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if tag == "moveTo":
+                pt = child.find("a:pt", nsmap)
+                if pt is not None:
+                    commands.append({
+                        "cmd": "moveTo",
+                        "x": int(pt.get("x", 0)),
+                        "y": int(pt.get("y", 0)),
+                    })
+            elif tag == "lnTo":
+                pt = child.find("a:pt", nsmap)
+                if pt is not None:
+                    commands.append({
+                        "cmd": "lineTo",
+                        "x": int(pt.get("x", 0)),
+                        "y": int(pt.get("y", 0)),
+                    })
+            elif tag == "cubicBezTo":
+                pts = child.findall("a:pt", nsmap)
+                commands.append({
+                    "cmd": "cubicBezTo",
+                    "pts": [{"x": int(p.get("x", 0)), "y": int(p.get("y", 0))} for p in pts],
+                })
+            elif tag == "close":
+                commands.append({"cmd": "close"})
+        if commands:
+            paths.append(commands)
+
+    if paths:
+        elem["paths"] = paths
+
     return elem
 
 
@@ -82,7 +155,9 @@ def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> di
     elif hasattr(shape, "has_chart") and shape.has_chart:
         from pptx_charts import extract_chart
         return extract_chart(shape)
-    return {
+    elif _is_freeform(shape):
+        return extract_freeform(shape)
+    result = {
         "type": "shape",
         "shape": "rectangle",
         "left": emu_to_inches(shape.left),
@@ -90,8 +165,10 @@ def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> di
         "width": emu_to_inches(shape.width),
         "height": emu_to_inches(shape.height),
         "name": shape.name,
-        "_unrecognized_shape_type": int(shape_type),
     }
+    if shape_type is not None:
+        result["_unrecognized_shape_type"] = int(shape_type)
+    return result
 
 
 def extract_shape(shape) -> dict:
@@ -499,9 +576,12 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
             from pptx_charts import extract_chart
             elem = extract_chart(shape)
             content["elements"].append(elem)
+        elif _is_freeform(shape):
+            elem = extract_freeform(shape)
+            content["elements"].append(elem)
         else:
             # Log unrecognized shape types for manual review
-            content["elements"].append({
+            elem_data = {
                 "type": "shape",
                 "shape": "rectangle",
                 "left": emu_to_inches(shape.left),
@@ -509,8 +589,10 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
                 "width": emu_to_inches(shape.width),
                 "height": emu_to_inches(shape.height),
                 "name": shape.name,
-                "_unrecognized_shape_type": int(shape_type),
-            })
+            }
+            if shape_type is not None:
+                elem_data["_unrecognized_shape_type"] = int(shape_type)
+            content["elements"].append(elem_data)
 
     return content, slide_dir
 

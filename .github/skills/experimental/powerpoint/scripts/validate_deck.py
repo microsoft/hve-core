@@ -8,7 +8,6 @@ import argparse
 from pathlib import Path
 
 from pptx import Presentation
-from pptx.util import Emu
 
 from pptx_fonts import font_family_matches
 from pptx_utils import emu_to_inches, load_yaml
@@ -119,7 +118,8 @@ def check_height_overflow(slide, slide_num: int, max_height: float = 7.5) -> lis
 
 
 def check_edge_margins(slide, slide_num: int, max_width: float = 13.333,
-                       max_height: float = 7.5, min_margin: float = 0.5) -> list[str]:
+                       max_height: float = 7.5, min_margin: float = 0.5,
+                       strict: bool = False) -> list[str]:
     """Check for elements too close to slide edges."""
     issues = []
     for shape in slide.shapes:
@@ -127,6 +127,11 @@ def check_edge_margins(slide, slide_num: int, max_width: float = 13.333,
         top = emu_to_inches(shape.top)
         width = emu_to_inches(shape.width)
         height = emu_to_inches(shape.height)
+
+        # Skip full-bleed elements (backgrounds, banners) in non-strict mode
+        if not strict:
+            if width >= max_width * 0.95 or height >= max_height * 0.95:
+                continue
 
         if left < min_margin:
             issues.append(f"Slide {slide_num}: '{shape.name}' too close to left edge (left={left:.2f}, min={min_margin})")
@@ -141,7 +146,8 @@ def check_edge_margins(slide, slide_num: int, max_width: float = 13.333,
     return issues
 
 
-def check_element_spacing(slide, slide_num: int, min_spacing: float = 0.3) -> list[str]:
+def check_element_spacing(slide, slide_num: int, min_spacing: float = 0.3,
+                          max_width: float = 13.333, max_height: float = 7.5) -> list[str]:
     """Check for insufficient spacing between adjacent elements."""
     issues = []
     elements = []
@@ -153,6 +159,11 @@ def check_element_spacing(slide, slide_num: int, min_spacing: float = 0.3) -> li
             "right": emu_to_inches(shape.left) + emu_to_inches(shape.width),
             "bottom": emu_to_inches(shape.top) + emu_to_inches(shape.height),
         })
+
+    # Filter out full-slide background elements that overlap everything
+    elements = [e for e in elements
+                if not (e["right"] - e["left"] >= max_width * 0.95
+                        and e["bottom"] - e["top"] >= max_height * 0.95)]
 
     for i in range(len(elements)):
         for j in range(i + 1, len(elements)):
@@ -264,7 +275,8 @@ def check_leftover_placeholders(slide, slide_num: int) -> list[str]:
 
 
 def validate_deck(pptx_path: Path, content_dir: Path | None = None,
-                   slide_filter: set[int] | None = None) -> list[str]:
+                   slide_filter: set[int] | None = None,
+                   strict: bool = False) -> list[str]:
     """Run all validation checks on a PPTX file."""
     prs = Presentation(str(pptx_path))
     all_issues = []
@@ -294,8 +306,8 @@ def validate_deck(pptx_path: Path, content_dir: Path | None = None,
         all_issues.extend(check_speaker_notes(slide, slide_num))
         all_issues.extend(check_font_consistency(slide, slide_num, expected_fonts))
         all_issues.extend(check_height_overflow(slide, slide_num, max_height))
-        all_issues.extend(check_edge_margins(slide, slide_num, max_width, max_height))
-        all_issues.extend(check_element_spacing(slide, slide_num))
+        all_issues.extend(check_edge_margins(slide, slide_num, max_width, max_height, strict=strict))
+        all_issues.extend(check_element_spacing(slide, slide_num, max_width=max_width, max_height=max_height))
         all_issues.extend(check_color_contrast(slide, slide_num))
         all_issues.extend(check_narrow_text_boxes(slide, slide_num))
         all_issues.extend(check_leftover_placeholders(slide, slide_num))
@@ -327,6 +339,8 @@ def main():
     parser.add_argument("--input", required=True, help="Input PPTX file path")
     parser.add_argument("--content-dir", help="Content directory for comparison")
     parser.add_argument("--slides", help="Comma-separated slide numbers to validate (default: all)")
+    parser.add_argument("--strict", action="store_true",
+                        help="Enable strict validation (flag full-bleed elements in edge checks)")
     args = parser.parse_args()
 
     pptx_path = Path(args.input)
@@ -337,7 +351,7 @@ def main():
         slide_filter = {int(s.strip()) for s in args.slides.split(",")}
 
     print(f"Validating: {pptx_path}")
-    issues = validate_deck(pptx_path, content_dir, slide_filter=slide_filter)
+    issues = validate_deck(pptx_path, content_dir, slide_filter=slide_filter, strict=args.strict)
 
     if issues:
         print(f"\n{len(issues)} issue(s) found:\n")
