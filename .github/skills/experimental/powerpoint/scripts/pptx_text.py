@@ -1,10 +1,12 @@
 """Text frame, paragraph, and run property utilities for PowerPoint skill scripts.
 
 Centralizes enhanced text properties (margins, auto-size, spacing, underline,
-hyperlinks) used by build_deck.py and extract_content.py.
+hyperlinks, bullets) used by build_deck.py and extract_content.py.
 """
 
+from lxml import etree
 from pptx.enum.text import MSO_AUTO_SIZE, MSO_VERTICAL_ANCHOR
+from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
 AUTO_SIZE_MAP = {
@@ -163,3 +165,82 @@ def extract_run_properties(run) -> dict:
     if spc is not None:
         props["char_spacing"] = spc
     return props
+
+
+_NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+
+
+def extract_bullet_properties(paragraph) -> dict:
+    """Extract bullet properties from a paragraph's pPr element.
+
+    Returns dict with bullet_char, bullet_font, bullet_size_pct, bullet_color
+    when present. Returns {"bullet_none": True} when buNone is set.
+    """
+    props = {}
+    pPr = paragraph._p.find(qn('a:pPr'))
+    if pPr is None:
+        return props
+
+    buNone = pPr.find(qn('a:buNone'))
+    if buNone is not None:
+        props['bullet_none'] = True
+        return props
+
+    buChar = pPr.find(qn('a:buChar'))
+    if buChar is not None:
+        props['bullet_char'] = buChar.get('char', '•')
+
+    buFont = pPr.find(qn('a:buFont'))
+    if buFont is not None:
+        typeface = buFont.get('typeface')
+        if typeface:
+            props['bullet_font'] = typeface
+
+    buSzPct = pPr.find(qn('a:buSzPct'))
+    if buSzPct is not None:
+        val = buSzPct.get('val')
+        if val:
+            props['bullet_size_pct'] = int(val)
+
+    buClr = pPr.find(qn('a:buClr'))
+    if buClr is not None:
+        srgb = buClr.find(qn('a:srgbClr'))
+        if srgb is not None:
+            props['bullet_color'] = f"#{srgb.get('val', '000000')}"
+
+    return props
+
+
+def apply_bullet_properties(paragraph, elem: dict):
+    """Apply bullet properties to a paragraph via lxml.
+
+    Reads bullet_char, bullet_font, bullet_size_pct, bullet_color from elem.
+    """
+    if 'bullet_char' not in elem and 'bullet_none' not in elem:
+        return
+
+    pPr = paragraph._p.find(qn('a:pPr'))
+    if pPr is None:
+        pPr = etree.SubElement(paragraph._p, qn('a:pPr'))
+        paragraph._p.insert(0, pPr)
+
+    if elem.get('bullet_none'):
+        etree.SubElement(pPr, qn('a:buNone'))
+        return
+
+    if 'bullet_font' in elem:
+        buFont = etree.SubElement(pPr, qn('a:buFont'))
+        buFont.set('typeface', elem['bullet_font'])
+
+    if 'bullet_size_pct' in elem:
+        buSzPct = etree.SubElement(pPr, qn('a:buSzPct'))
+        buSzPct.set('val', str(elem['bullet_size_pct']))
+
+    if 'bullet_color' in elem:
+        buClr = etree.SubElement(pPr, qn('a:buClr'))
+        srgb = etree.SubElement(buClr, qn('a:srgbClr'))
+        srgb.set('val', elem['bullet_color'].lstrip('#'))
+
+    if 'bullet_char' in elem:
+        buChar = etree.SubElement(pPr, qn('a:buChar'))
+        buChar.set('char', elem['bullet_char'])
