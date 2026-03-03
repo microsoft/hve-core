@@ -1,8 +1,11 @@
 id: coding-standards
 name: Coding Standards
-description: Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
+description: Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
 tags:
   - coding-standards
+  - code-review
+  - pull-request
+  - quality
   - bash
   - bicep
   - csharp
@@ -12,6 +15,12 @@ tags:
   - terraform
   - uv
 items:
+  # Agents
+  - path: .github/agents/code-review/functional-code-review.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/code-review/functional-code-review.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/coding-standards/bash/bash.instructions.md
     kind: instruction
