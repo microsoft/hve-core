@@ -91,15 +91,38 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 * **Speaker notes**: Required on all content slides.
 * **Consistent styling**: Fonts, colors, and element styling must be consistent across all slides.
 * **Proper fonts**: No mismatched or fallback fonts.
+* **Leftover placeholders**: No leftover placeholder content from templates.
+
+## Color Conventions
+
+* Use `$color_name` references for colors defined in `style.yaml`. This keeps colors centralized and easy to update.
+* Use `#RRGGBB` hex values only for one-off colors not part of the design system.
+* Use `@theme_name` references (e.g., `@accent_1`) when building from a template PPTX and the slide should adapt to the template's theme colors. Theme colors change when the user switches the PowerPoint theme.
+* Use the dict syntax (`{theme: "accent_1", brightness: 0.4}`) when a theme color needs brightness adjustment. Brightness ranges from -1.0 (darkest) to 1.0 (lightest).
+
+## Gradient Fill Conventions
+
+* Use gradient fills sparingly for visual emphasis on hero elements, section dividers, or background accents.
+* Keep gradient stops to 2–3 colors for readability. More stops increase visual complexity.
+* Specify gradient angle to control direction (0 = left-to-right, 90 = top-to-bottom, 270 = bottom-to-top).
+
+## Template Usage Conventions
+
+* Use the `--template` argument when building decks that must follow corporate branding or predefined slide masters.
+* Define layout name mappings in `style.yaml` under `layouts:` to bridge content YAML layout names to template layout names.
+* Populate themed layout placeholders via the `placeholders:` section in content YAML rather than manually positioning text over placeholder areas.
+* When no template is specified, the build script creates a blank presentation with layout index 6 (blank layout).
 
 ## python-pptx Constraints
 
 * python-pptx does NOT support SVG images. Always convert to PNG via `cairosvg` or `Pillow`.
-* python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX.
+* python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX with the `--template` argument.
 * Transitions and animations are preserved when opening and saving existing files, but cannot be created or modified via the API.
 * Accessing `background.fill` on slides with inherited backgrounds replaces them with `NoFill`. Check `slide.follow_master_background` before accessing the fill property.
 * When extracting content from existing decks, text elements that inherit styling from slide masters or layouts show no inline font properties. The extraction records no styling for these elements. Add explicit font, font_size, and font_color properties to content YAML before rebuilding.
 * Partial rebuilds clear shapes on the existing slide in-place and repopulate from content YAML. The slide position in the deck is preserved.
+* Gradient fills use `GradientStop` objects with position (0–100) and color. Theme colors adjust brightness through the color format's `brightness` property.
+* Template-based builds resolve layouts by name or index. Unmatched layout names fall back to blank layout (index 6).
 
 ## Default Color Palette
 

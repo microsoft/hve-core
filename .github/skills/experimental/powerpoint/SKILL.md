@@ -114,6 +114,26 @@ python scripts/build_deck.py \
 
 Reads all `content/slide-*/content.yaml` files in numeric order and generates the complete deck. Executes `content-extra.py` files when present.
 
+### Build from a Template
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Build `
+  -ContentDir content/ `
+  -StylePath content/global/style.yaml `
+  -OutputPath slide-deck/presentation.pptx `
+  -TemplatePath corporate-template.pptx
+```
+
+```bash
+python scripts/build_deck.py \
+  --content-dir content/ \
+  --style content/global/style.yaml \
+  --output slide-deck/presentation.pptx \
+  --template corporate-template.pptx
+```
+
+Loads slide masters and layouts from the template PPTX. Layout names in each slide's `content.yaml` resolve against the template's layouts, with optional name mapping via the `layouts` section in `style.yaml`. Populate themed layout placeholders using the `placeholders` section in content YAML.
+
 ### Update Specific Slides
 
 ```powershell
@@ -235,23 +255,45 @@ Converts specified slides to JPG images for visual inspection. The PowerShell or
 
 **Dependencies**: Requires LibreOffice for PPTX-to-PDF conversion and either `pdftoppm` (from `poppler`) or `pymupdf` (pip) for PDF-to-JPG rendering.
 
+## Script Architecture
+
+The build and extraction scripts use shared modules in the `scripts/` directory:
+
+| Module | Purpose |
+|---|---|
+| `pptx_utils.py` | Unit conversion (`emu_to_inches()`), YAML loading, style merging |
+| `pptx_colors.py` | Color resolution (`$name`, `#hex`, `@theme`, dict with brightness), theme color map (16 entries) |
+| `pptx_fonts.py` | Font resolution, family normalization, weight suffix handling, alignment mapping |
+| `pptx_shapes.py` | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities |
+| `pptx_fills.py` | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles |
+| `pptx_text.py` | Text frame properties (margins, auto-size, vertical anchor), paragraph properties (spacing, level), run properties (underline, hyperlink) |
+| `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
+| `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
+
 ## python-pptx Constraints
 
 * python-pptx does NOT support SVG images. Always convert to PNG via `cairosvg` or `Pillow`.
-* python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX.
+* python-pptx cannot create new slide masters or layouts programmatically. Use blank layouts or start from a template PPTX with the `--template` argument.
 * Transitions and animations are preserved when opening and saving existing files, but cannot be created or modified via the API.
 * When extracting content, slide master and layout inheritance means many text elements have no inline styling. Add explicit font properties in content YAML before rebuilding.
 * The Export action requires LibreOffice for PPTX-to-PDF conversion. The PowerShell orchestrator checks for LibreOffice availability before starting and provides platform-specific install instructions if missing.
 * Accessing `background.fill` on slides with inherited backgrounds replaces them with `NoFill`. Check `slide.follow_master_background` before accessing the fill property.
+* Gradient fills use the python-pptx `GradientFill` API with `GradientStop` objects. Each stop specifies a position (0–100) and a color.
+* Theme colors resolve via `MSO_THEME_COLOR` enum. Brightness adjustments apply through the color format's `brightness` property.
+* Template-based builds load layouts by name or index. Layout name resolution falls back to index 6 (blank) when no match is found.
 
 ## Validation Rules
 
-* Text overlay: `bottom = top + height`; verify `bottom + 0.2 < next_element_top`.
-* Width overflow: `left + width <= 13.333` for every element.
-* Color readability: when using accent colors as fills, darken to ~60% saturation for white text.
-* Speaker notes: required on all content slides.
-* Image format: SVG files cause runtime errors; always use PNG.
-* Font consistency: verify no mismatched or fallback fonts.
+* **Text overlay**: Text overlapping other elements; verify `bottom + 0.2 < next_element_top`.
+* **Width overflow**: Elements exceeding slide width; `left + width <= 13.333`.
+* **Height overflow**: Elements exceeding slide height; `top + height <= 7.5`.
+* **Speaker notes**: Required on all content slides.
+* **Font consistency**: Inconsistent font families across slides (family variants treated as compatible).
+* **Edge margins**: Elements within 0.5" of slide edges.
+* **Element spacing**: Overlapping or colliding elements with less than 0.3" gap.
+* **Color contrast**: Low contrast between text color and background fill.
+* **Narrow text boxes**: Text boxes too narrow for their content.
+* **Leftover placeholders**: Unused template placeholder text remaining in slides.
 
 ## Troubleshooting
 

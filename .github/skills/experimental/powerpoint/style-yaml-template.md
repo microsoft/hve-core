@@ -20,6 +20,26 @@ dimensions:
   height_inches: 7.5
   format: "16:9"
 
+# Template configuration (optional)
+template:
+  path: "template.pptx"            # path to template PPTX file
+  preserve_dimensions: true         # keep template slide dimensions
+
+# Layout mapping (optional, used with templates)
+layouts:
+  title: "Title Slide"             # content.yaml layout name -> PowerPoint layout name
+  content: "Title and Content"
+  section: "Section Header"
+  blank: 6                          # integer index fallback
+
+# Presentation metadata (optional)
+metadata:
+  title: "HVE Workshop Deck"
+  author: "Allen Greaves"
+  subject: "AI-Assisted Engineering"
+  keywords: "HVE, Copilot, AI"
+  category: "Presentation"
+
 # Color palette
 colors:
   bg_dark: "#1B1B1F"
@@ -65,6 +85,14 @@ defaults:
 |---|---|---|
 | `dimensions` | `width_inches`, `height_inches` | Slide canvas size in inches |
 | `dimensions` | `format` | Aspect ratio label (informational) |
+| `template` | `path` | Path to a template PPTX file for themed builds |
+| `template` | `preserve_dimensions` | Keep the template's slide dimensions when `true` |
+| `layouts` | `<name>: <layout>` | Maps content.yaml layout names to PowerPoint layout names or indices |
+| `metadata` | `title` | Presentation title set in file properties |
+| `metadata` | `author` | Presentation author |
+| `metadata` | `subject` | Presentation subject |
+| `metadata` | `keywords` | Presentation keywords |
+| `metadata` | `category` | Presentation category |
 | `colors` | `<name>: <hex>` | Named color entries; referenced as `$name` in content files |
 | `typography` | `body_font`, `code_font` | Font family names |
 | `typography` | `*_size` | Default point sizes for each text tier |
