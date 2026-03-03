@@ -199,6 +199,7 @@ def add_shape_element(slide, elem, colors, typography):
                 if p_color:
                     apply_color_to_font(run.font.color, resolve_color(p_color))
                 run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
+                run.font.italic = p_def.get("italic", elem.get("italic", False))
                 apply_run_properties(run, p_def, colors)
         else:
             text = elem["text"]
@@ -219,6 +220,7 @@ def add_shape_element(slide, elem, colors, typography):
                     color_spec = resolve_color(elem["text_color"])
                     apply_color_to_font(run.font.color, color_spec)
                 run.font.bold = elem.get("text_bold", False)
+                run.font.italic = elem.get("italic", False)
                 apply_run_properties(run, elem, colors)
 
     return shape
