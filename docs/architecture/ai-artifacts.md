@@ -17,13 +17,13 @@ The artifact system organizes customizations by scope and responsibility. Prompt
 
 Prompts (`.prompt.md`) serve as workflow entry points. They capture user intent and translate requests into structured guidance for Copilot execution.
 
-**Core characteristics:**
+#### Core Characteristics
 
 * Define single-session workflows with clear inputs and outputs
 * Accept user inputs through `${input:varName}` template syntax
 * Delegate to agents via `agent:` frontmatter references
 
-**Frontmatter structure:**
+#### Frontmatter Structure
 
 ```yaml
 ---
@@ -38,14 +38,14 @@ Prompts answer the question "what does the user want to accomplish?" and route e
 
 Agents (`.agent.md`) define task-specific behaviors with access to Copilot tools. They orchestrate multi-step workflows and make decisions based on context.
 
-**Core characteristics:**
+#### Core Characteristics
 
 * Specify available tools through `tools:` frontmatter arrays
 * Enable workflow handoffs via `handoffs:` references to other agents
 * Maintain conversation context across multiple interactions
 * Apply domain expertise through detailed behavioral instructions
 
-**Frontmatter structure:**
+#### Frontmatter Structure
 
 ```yaml
 ---
@@ -69,14 +69,14 @@ Agents answer the question "how should this task be executed?" and coordinate th
 
 Instructions (`.instructions.md`) encode technology-specific standards and conventions. They apply automatically based on file patterns and provide consistent guidance across the codebase.
 
-**Core characteristics:**
+#### Core Characteristics
 
 * Match files through `applyTo:` glob patterns for automatic application
 * Define coding standards, naming conventions, and quality requirements
 * Apply to specific languages, frameworks, or file types
 * Stack with other instructions when multiple patterns match
 
-**Frontmatter structure:**
+#### Frontmatter Structure
 
 ```yaml
 ---
@@ -98,13 +98,13 @@ Instructions placed at the root of `.github/instructions/` (without a subdirecto
 
 Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agents invoke for specialized tasks. Unlike instructions (passive reference), skills contain actual scripts that perform operations.
 
-**Core characteristics:**
+#### Core Characteristics
 
 * Provide self-contained utility packages with documentation and scripts
 * Include parallel implementations for cross-platform support (`.sh` and `.ps1`)
 * Execute actual operations rather than providing guidance
 
-**Directory structure (by convention):**
+#### Directory Structure (by Convention)
 
 ```text
 .github/skills/{collection-id}/<skill-name>/
@@ -116,7 +116,7 @@ Skills (`.github/skills/<name>/SKILL.md`) provide executable utilities that agen
     └── README.md      # Usage examples
 ```
 
-**Frontmatter structure:**
+#### Frontmatter Structure
 
 ```yaml
 ---
@@ -125,7 +125,7 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 ---
 ```
 
-**Required frontmatter fields:**
+#### Required Frontmatter Fields
 
 | Field         | Description                                             |
 |---------------|---------------------------------------------------------|
@@ -136,7 +136,7 @@ Maturity is tracked in `collections/*.collection.yml`, not in skill frontmatter.
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
-**Key distinction from instructions:**
+#### Key Distinction from Instructions
 
 | Aspect     | Instructions                | Skills                |
 |------------|-----------------------------|-----------------------|
@@ -157,7 +157,7 @@ graph LR
     AGENT --> SKILLS[Skills]
 ```
 
-**Flow mechanics:**
+### Flow Mechanics
 
 1. User invokes a prompt through `/prompt` commands or workflow triggers.
 2. Prompt references an agent via `agent:` frontmatter, delegating execution.

@@ -746,9 +746,9 @@ The `sbom-diff` job in `main.yml` runs during each release to surface supply cha
 
 The diff script parses SPDX JSON packages, excludes root document entries, and categorizes changes into three groups:
 
-* **Added** packages not present in the previous release
-* **Removed** packages no longer included in the current build
-* **Version changes** where the same package appears in both releases at different versions
+* Added packages not present in the previous release
+* Removed packages no longer included in the current build
+* Version changes where the same package appears in both releases at different versions
 
 When no previous release exists or the prior release lacks a dependency SBOM, the job exits cleanly without producing a diff. This graceful degradation ensures the first release in a repository proceeds without error.
 
@@ -785,7 +785,7 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Top-Level Goal
 
-**G0**: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
+G0: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
 
 ### Supporting Goals
 
@@ -818,10 +818,10 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 HVE Core achieves acceptable security through:
 
-1. **Automated Controls**: 20+ security controls execute automatically via CI/CD
-2. **Defense-in-Depth**: Multiple overlapping controls for critical threats
-3. **Transparent Risk Acceptance**: AI-inherent risks documented with clear boundaries
-4. **Inherited Security**: Uses GitHub and Copilot platform security
+1. Automated Controls: 20+ security controls execute automatically via CI/CD
+2. Defense-in-Depth: Multiple overlapping controls for critical threats
+3. Transparent Risk Acceptance: AI-inherent risks documented with clear boundaries
+4. Inherited Security: Uses GitHub and Copilot platform security
 
 ## MCP Server Trust Analysis
 
@@ -889,8 +889,8 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Trust Recommendations
 
-1. **First-party servers (GitHub, Azure DevOps, Microsoft Docs)**: Enable with organization policy controls; GitHub MCP is enabled by default
-2. **Third-party servers (Context7)**: Evaluate data flow, use API key rotation, review Upstash trust center
+1. First-party servers (GitHub, Azure DevOps, Microsoft Docs): Enable with organization policy controls; GitHub MCP is enabled by default
+2. Third-party servers (Context7): Evaluate data flow, use API key rotation, review Upstash trust center
 
 ## Quantitative Security Metrics
 

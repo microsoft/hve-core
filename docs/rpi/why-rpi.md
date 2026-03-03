@@ -139,12 +139,12 @@ HVE Core provides two workflow options. The right choice depends on the task, no
 
 Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md) → [Task Reviewer](task-reviewer.md)) when:
 
-* 🔍 **Deep research needed**: new frameworks, external APIs, compliance requirements
-* 📁 **Multi-file changes**: pattern discovery across the codebase
-* 👥 **Team handoff**: artifacts document decisions for others
-* 🛠️ **Long-term maintenance**: work you'll maintain and evolve over time
+* 🔍 New frameworks, external APIs, or compliance requirements demand deep research
+* 📁 Pattern discovery across the codebase requires multi-file changes
+* 👥 Artifacts that document decisions support team handoff
+* 🛠️ Work you'll maintain and evolve over time benefits from long-term maintenance records
 
-**The workflow:**
+#### The workflow
 
 1. Invoke Task Researcher → produces research document with citations
 2. Clear context, invoke Task Planner → produces implementation plan
@@ -155,9 +155,9 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
 
-* ✅ **Clear scope**: straightforward feature or bug fix
-* ✅ **Minimal research**: codebase-only investigation
-* ✅ **Quick iteration**: active development with fast feedback loops
+* ✅ Straightforward feature or bug fix with clear scope
+* ✅ Codebase-only investigation requiring minimal research
+* ✅ Active development with fast feedback loops for quick iteration
 
 **The workflow:** Single rpi-agent session that orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
 

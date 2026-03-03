@@ -75,9 +75,9 @@ hve-core provides specialized agents organized into functional groups. Each grou
 
 AI-assisted Design Thinking uses the dt-coach agent to guide teams through nine methods across three spaces.
 
-* [Design Thinking Guide](design-thinking/README.md) — Overview and method catalog
-* [Why Design Thinking?](design-thinking/why-design-thinking.md) — When to use DT
-* [Using the DT Coach](design-thinking/dt-coach.md) — Agent usage guide
+* [Design Thinking Guide](design-thinking/README.md): Overview and method catalog
+* [Why Design Thinking?](design-thinking/why-design-thinking.md): When to use DT
+* [Using the DT Coach](design-thinking/dt-coach.md): Agent usage guide
 * [Browse all Design Thinking docs →](design-thinking/)
 
 ## RPI Methodology

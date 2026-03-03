@@ -68,11 +68,11 @@ Each role intersects with 9 lifecycle stages, producing 81 role-stage pairs. Cov
 | Thin     |               18 |     22% |
 | None     |               32 |     40% |
 
-**Strongest coverage**: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations), UX Designer at Stages 2-3 (discovery and design via Design Thinking).
+Strongest coverage: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations), UX Designer at Stages 2-3 (discovery and design via Design Thinking).
 
-**Thinnest roles**: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
+Thinnest roles: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
 
-**Least-covered stage**: Stage 4 Decomposition: 8 of 9 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
+Least-covered stage: Stage 4 Decomposition: 8 of 9 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 
 > [!NOTE]
 > Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/) for guidance on creating new agents, prompts, and instructions.

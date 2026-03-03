@@ -34,13 +34,15 @@ graph LR
     style G fill:#388e3c
 ```
 
-* **VS Code Settings** suit individual preferences like font size, theme, and editor behavior. No files to create or share.
-* **Instructions** configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with the highest return for shaping AI output.
-* **Agents and Prompts** define specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.
-* **Skills** package domain knowledge into self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.
-* **Collections** bundle agents, prompts, instructions, and skills into distributable packages for team or organization adoption.
-* **Build System** customization lets you add validation scripts, schema checks, and plugin generation pipelines.
-* **Fork and Extend** gives full control over every artifact. Fork the repository when your changes diverge significantly from upstream.
+| Approach           | Description                                                                                                                                                 |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VS Code Settings   | Individual preferences like font size, theme, and editor behavior. No files to create or share.                                                             |
+| Instructions       | Configure Copilot behavior through `.github/copilot-instructions.md` and `.instructions.md` files. Lowest effort with highest return for shaping AI output. |
+| Agents and Prompts | Specialized workflows: agents for multi-turn interactions, prompts for single-shot tasks. Both accept tool restrictions and delegation rules.               |
+| Skills             | Domain knowledge in self-contained bundles with optional scripts. Use when instruction files alone cannot capture the depth of a domain.                    |
+| Collections        | Bundle agents, prompts, instructions, and skills into distributable packages for team or organization adoption.                                             |
+| Build System       | Validation scripts, schema checks, and plugin generation pipelines.                                                                                         |
+| Fork and Extend    | Full control over every artifact. Fork the repository when your changes diverge significantly from upstream.                                                |
 
 ## Choose Your Approach
 

@@ -263,10 +263,12 @@ Collection manifests in `collections/*.collection.yml` define collection-scoped 
 
 Maturity filtering rules:
 
-* **Deprecated** collections are always excluded.
-* **Experimental** collections are excluded from Stable channel builds.
-* **Preview** collections are included in both Stable and PreRelease channel builds.
-* **Stable** collections are included in all channel builds.
+| Maturity Level | Build Inclusion                                 |
+|----------------|-------------------------------------------------|
+| Deprecated     | Always excluded                                 |
+| Experimental   | Excluded from Stable channel builds             |
+| Preview        | Included in both Stable and PreRelease channels |
+| Stable         | Included in all channel builds                  |
 
 ### Version Channels
 
