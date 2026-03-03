@@ -1,6 +1,11 @@
-# External Libraries (CDN)
+---
+title: External Libraries (CDN)
+description: Optional CDN libraries for visual-explainer HTML diagrams including Mermaid.js, Chart.js, and font pairings
+---
 
-Optional CDN libraries for cases where pure CSS/HTML isn't enough. Only include what the diagram actually needs — most diagrams need zero external JS.
+## Overview
+
+Optional CDN libraries for cases where pure CSS/HTML isn't enough. Only include what the diagram actually needs. Most diagrams need zero external JS.
 
 ## Mermaid.js — Diagramming Engine
 

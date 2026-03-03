@@ -47,29 +47,29 @@ Verify each claim against the code. If something cannot be verified, mark it as 
 6. **File map** — full tree with color-coded new/modified/deleted indicators. *Visual treatment: compact — consider `<details>` collapsed by default for pages with many sections.*
 7. **Test coverage** — before/after test file counts and what's covered
 8. **Code review** — structured Good/Bad/Ugly analysis of the changes:
-   * **Good**: Solid choices, improvements, clean patterns worth calling out
-   * **Bad**: Concrete issues — bugs, regressions, missing error handling, logic errors
-   * **Ugly**: Subtle problems — tech debt introduced, maintainability concerns, things that work now but will bite later
-   * **Questions**: Anything unclear or that needs the author's clarification
+   * Solid choices, improvements, and clean patterns worth calling out (Good)
+   * Concrete issues: bugs, regressions, missing error handling, logic errors (Bad)
+   * Subtle problems: tech debt introduced, maintainability concerns, things that work now but will bite later (Ugly)
+   * Anything unclear or that needs the author's clarification (Questions)
    * Use styled cards with green/red/amber/blue left-border accents matching the diff color language. Each item should reference specific files and line ranges. If nothing to flag in a category, say "None found" rather than omitting the section.
 9. **Decision log** — for each significant design choice in the diff, a styled card with:
-   * **Decision**: one-line summary of what was decided (e.g., "Promise-based deferred resolution instead of event emitters for cleanup signaling")
-   * **Rationale**: why this approach — constraints, trade-offs, what it enables. Pull from conversation context if available, infer from code structure if not.
-   * **Alternatives considered**: what was rejected and why, if recoverable
-   * **Confidence**: whether this rationale was explicitly discussed (high — sourced from conversation/docs) or inferred from the code (medium — flagged as inference). Low confidence means the rationale couldn't be recovered at all.
+   * One-line summary of what was decided, e.g., "Promise-based deferred resolution instead of event emitters for cleanup signaling" (Decision)
+   * Why this approach: constraints, trade-offs, what it enables. Pull from conversation context if available, infer from code structure if not. (Rationale)
+   * What was rejected and why, if recoverable (Alternatives considered)
+   * Whether this rationale was explicitly discussed (high, sourced from conversation/docs) or inferred from the code (medium, flagged as inference). Low confidence means the rationale couldn't be recovered at all. (Confidence)
    * Visual treatment by confidence level — use left-border accent colors consistent with the diff color language: **High** (sourced from conversation/docs): green left border. **Medium** (inferred from code): blue left border, labeled "inferred." **Low** (not recoverable): amber left border, "rationale not recoverable — document before committing" warning. Low-confidence cards are cognitive debt hotspots — tell the user to document the reasoning before committing.
 10. **Re-entry context** — a concise "note from present-you to future-you" covering the following. *Visual treatment: compact — consider `<details>` collapsed by default for pages with many sections.*
 
-* **Key invariants**: assumptions the changed code relies on that aren't enforced by types or tests (e.g., "cleanup must be called before session switch or artifacts leak")
-* **Non-obvious coupling**: files or behaviors that are connected in ways that aren't visible from imports alone (e.g., "the feed renderer reads events written by the overlay — changing the event schema requires updating both")
-* **Gotchas**: things that would surprise someone modifying this code in two weeks. Edge cases, ordering dependencies, implicit contracts.
-* **Don't forget**: if the changes require follow-up work (migration, config update, docs), list it here.
+* Assumptions the changed code relies on that aren't enforced by types or tests, e.g., "cleanup must be called before session switch or artifacts leak" (Key invariants)
+* Files or behaviors that are connected in ways that aren't visible from imports alone, e.g., "the feed renderer reads events written by the overlay, so changing the event schema requires updating both" (Non-obvious coupling)
+* Things that would surprise someone modifying this code in two weeks: edge cases, ordering dependencies, implicit contracts (Gotchas)
+* Follow-up work required by the changes (migration, config update, docs) (Don't forget)
 
 **Visual hierarchy**: Sections 1-3 should dominate the viewport on load (hero depth, larger type, more padding). Sections 6+ are reference material and should feel lighter (flat or recessed depth, compact layout, collapsible where appropriate).
 
 **Optional illustrations** — if `surf` CLI is available (`which surf`), consider generating a hero banner or conceptual illustration via `surf gemini --generate-image` when it would enhance the page. Embed as base64 data URI. See css-patterns.md "Generated Images" for container styles. Skip if surf isn't available or the diff is purely structural.
 
-Include responsive section navigation. Use diff-style visual language throughout: red for removed/before, green for added/after, yellow for modified, blue for neutral context. Write to `~/.agent/diagrams/` and open in browser.
+Include responsive section navigation. Use diff-style visual language throughout: red for removed/before, green for added/after, yellow for modified, blue for neutral context. Write to `.copilot-tracking/diagrams/` and open in browser.
 
 Ultrathink.
 

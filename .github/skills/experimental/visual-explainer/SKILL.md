@@ -4,7 +4,6 @@ description: Generate beautiful, self-contained HTML pages that visually explain
 license: MIT
 metadata:
   author: nicobailon
-  contributors: andrewDoing
   version: "0.4.3"
 ---
 
@@ -179,12 +178,13 @@ Keep animations purposeful: entrance reveals, hover feedback, and user-initiated
 
 ### 4. Deliver
 
-**Output location:** Write to `~/.agent/diagrams/`. Use a descriptive filename based on content: `modem-architecture.html`, `pipeline-flow.html`, `schema-overview.html`. The directory persists across sessions.
+**Output location:** Write to `.copilot-tracking/diagrams/`. Use a descriptive filename based on content: `modem-architecture.html`, `pipeline-flow.html`, `schema-overview.html`.
 
 **Open in browser:**
 
-* macOS: `open ~/.agent/diagrams/filename.html`
-* Linux: `xdg-open ~/.agent/diagrams/filename.html`
+* macOS: `open .copilot-tracking/diagrams/filename.html`
+* Linux: `xdg-open .copilot-tracking/diagrams/filename.html`
+* Windows: `start .copilot-tracking/diagrams/filename.html`
 
 **Tell the user** the file path so they can re-open or share it.
 
@@ -442,3 +442,5 @@ Before delivering, apply this test: **Would a developer looking at this page imm
 7. Three-dot code block chrome
 
 If two or more of these are present, the page is slop. Regenerate with a different aesthetic direction — Editorial, Blueprint, Paper/ink, or a specific IDE theme. These constrained aesthetics are harder to mess up because they have specific visual requirements that prevent defaulting to generic patterns.
+
+*🤖 Crafted with precision by nicobailon, modified with ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

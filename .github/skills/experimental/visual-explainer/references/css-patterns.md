@@ -1,4 +1,9 @@
-# CSS Patterns for Diagrams
+---
+title: CSS Patterns for Diagrams
+description: Reusable CSS patterns for layout, connectors, theming, and visual effects in self-contained HTML diagrams
+---
+
+## Overview
 
 Reusable patterns for layout, connectors, theming, and visual effects in self-contained HTML diagrams.
 

@@ -6,12 +6,12 @@ description: "Verify factual accuracy of documents against the codebase using th
 
 Load the visual-explainer skill, then verify the factual accuracy of a document that makes claims about a codebase. Read the file, extract every verifiable claim, check each against the actual code and git history, correct inaccuracies in place, and add a verification summary.
 
-For HTML files: read `./references/css-patterns.md` to match the existing page's styling when inserting the verification summary.
+For HTML files: read the visual-explainer skill's `references/css-patterns.md` to match the existing page's styling when inserting the verification summary.
 
 **Target file** — determine what to verify from `$1`:
 
 * Explicit path: verify that specific file (`.html`, `.md`, or any text document)
-* No argument: verify the most recently modified `.html` file in `~/.agent/diagrams/` (`ls -t ~/.agent/diagrams/*.html | head -1`)
+* No argument: verify the most recently modified `.html` file in `.copilot-tracking/diagrams/` (`ls -t .copilot-tracking/diagrams/*.html | head -1`)
 
 Auto-detect the document type and adjust the verification strategy:
 
@@ -21,11 +21,11 @@ Auto-detect the document type and adjust the verification strategy:
 
 **Phase 1: Extract claims.** Read the file. Extract every verifiable factual claim:
 
-* **Quantitative**: line counts, file counts, function counts, module counts, test counts, any numeric metrics
-* **Naming**: function names, type names, module names, file paths referenced in the document
-* **Behavioral**: descriptions of what code does, how things work, before/after comparisons
-* **Structural**: architecture claims, dependency relationships, import chains, module boundaries
-* **Temporal**: git history claims, commit attributions, timeline entries
+* Line counts, file counts, function counts, module counts, test counts, any numeric metrics (Quantitative)
+* Function names, type names, module names, file paths referenced in the document (Naming)
+* Descriptions of what code does, how things work, before/after comparisons (Behavioral)
+* Architecture claims, dependency relationships, import chains, module boundaries (Structural)
+* Git history claims, commit attributions, timeline entries (Temporal)
 
 Skip subjective analysis (opinions, design judgments, readability assessments) — these aren't verifiable facts.
 
@@ -39,9 +39,9 @@ Skip subjective analysis (opinions, design judgments, readability assessments) �
 
 Classify each claim:
 
-* **Confirmed**: claim matches the code/output exactly
-* **Corrected**: claim was inaccurate — note what was wrong and what the correct value is
-* **Unverifiable**: claim can't be checked (e.g., references a file that doesn't exist, or a behavior that requires runtime testing)
+* Claim matches the code/output exactly (Confirmed)
+* Claim was inaccurate; note what was wrong and what the correct value is (Corrected)
+* Claim can't be checked, e.g., references a file that doesn't exist, or a behavior that requires runtime testing (Unverifiable)
 
 **Phase 3: Correct in place.** Edit the file directly using surgical text replacements:
 

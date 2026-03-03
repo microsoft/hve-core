@@ -62,7 +62,7 @@ Verify each claim against the code. If something cannot be verified, mark it as 
 8. **Next steps** — inferred from recent activity, open TODOs, project trajectory. Not prescriptive — just "here's where the momentum was pointing when you left." Include any explicit next-step notes from progress docs or plan files.
 
 Include responsive section navigation. Use a warm, approachable visual language: muted blues and greens for architecture, amber callouts for cognitive debt hotspots, green/blue/amber/red for state-of-things status.
-Overflow prevention on any side-by-side or grid-based sections: apply `min-width: 0` on all grid/flex children and `overflow-wrap: break-word`. Never use `display: flex` on `<li>` for marker characters — use absolute positioning instead (see css-patterns.md Overflow Protection). Write to `~/.agent/diagrams/` and open in browser.
+Overflow prevention on any side-by-side or grid-based sections: apply `min-width: 0` on all grid/flex children and `overflow-wrap: break-word`. Never use `display: flex` on `<li>` for marker characters — use absolute positioning instead (see css-patterns.md Overflow Protection). Write to `.copilot-tracking/diagrams/` and open in browser.
 
 Ultrathink.
 

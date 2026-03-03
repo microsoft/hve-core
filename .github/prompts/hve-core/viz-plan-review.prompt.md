@@ -71,10 +71,10 @@ Verify each claim against the code and the plan. If something cannot be verified
    * Each risk gets a severity indicator (low/medium/high)
 
 8. **Plan review** — structured Good/Bad/Ugly analysis of the plan itself:
-   * **Good**: Solid design decisions, things the plan gets right, well-reasoned tradeoffs
-   * **Bad**: Gaps in the plan — missing files, unaddressed edge cases, incorrect assumptions about current code
-   * **Ugly**: Subtle concerns — complexity being introduced, maintenance burden, things that will work initially but cause problems at scale
-   * **Questions**: Ambiguities that need the plan author's clarification before implementation begins
+   * Solid design decisions, things the plan gets right, well-reasoned tradeoffs (Good)
+   * Gaps in the plan: missing files, unaddressed edge cases, incorrect assumptions about current code (Bad)
+   * Subtle concerns: complexity being introduced, maintenance burden, things that will work initially but cause problems at scale (Ugly)
+   * Ambiguities that need the plan author's clarification before implementation begins (Questions)
    * Use styled cards with green/red/amber/blue left-border accents. Each item should reference specific plan sections and code files. If nothing to flag in a category, say "None found" rather than omitting the section.
 9. **Understanding gaps** — a closing dashboard that rolls up decision-rationale gaps from section 5 and cognitive complexity flags from section 7:
    * Count of changes with clear rationale vs. missing rationale (visual bar chart or progress indicator)
@@ -86,7 +86,7 @@ Verify each claim against the code and the plan. If something cannot be verified
 
 **Optional illustrations** — if `surf` CLI is available (`which surf`), consider generating a conceptual illustration of the planned system via `surf gemini --generate-image` when it would help the reader visualize the change. Embed as base64 data URI. See css-patterns.md "Generated Images" for container styles. Skip if surf isn't available or the plan is purely structural.
 
-Include responsive section navigation. Use a current-vs-planned visual language throughout: blue/neutral for current state, green/purple for planned additions, amber for areas of concern, red for gaps or risks. Write to `~/.agent/diagrams/` and open in browser.
+Include responsive section navigation. Use a current-vs-planned visual language throughout: blue/neutral for current state, green/purple for planned additions, amber for areas of concern, red for gaps or risks. Write to `.copilot-tracking/diagrams/` and open in browser.
 
 Ultrathink.
 

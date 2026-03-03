@@ -10,4 +10,4 @@ Follow the visual-explainer skill workflow. Read the reference template and CSS 
 
 If `surf` CLI is available (`which surf`), consider generating an AI illustration via `surf gemini --generate-image` when an image would genuinely enhance the page — a hero banner, conceptual illustration, or educational diagram that Mermaid can't express. Match the image style to the page's palette. Embed as base64 data URI. See css-patterns.md "Generated Images" for container styles. Skip images when the topic is purely structural or data-driven.
 
-Write to `~/.agent/diagrams/` and open the result in the browser.
+Write to `.copilot-tracking/diagrams/` and open the result in the browser.

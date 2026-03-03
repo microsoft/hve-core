@@ -1,4 +1,9 @@
-# Responsive Section Navigation
+---
+title: Responsive Section Navigation
+description: Navigation pattern for multi-section visual-explainer pages with sticky sidebar TOC on desktop and horizontal bar on mobile
+---
+
+## Overview
 
 Navigation pattern for multi-section pages (reviews, recaps, dashboards). Provides a sticky sidebar TOC on desktop and a sticky horizontal scrollable bar on mobile.
 
