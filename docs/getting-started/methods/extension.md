@@ -112,9 +112,9 @@ The extension provides all HVE-Core components:
 
 The extension updates automatically through VS Code's extension system:
 
-* **Auto-updates (default):** Extensions update automatically when new versions are released
-* **Manual updates:** Extensions view → Find "HVE Core" → Click **Update**
-* **Pre-release versions:** Right-click extension → "Switch to Pre-Release Version"
+* Extensions update automatically when new versions are released (default)
+* Open Extensions view → find "HVE Core" → click **Update** for manual updates
+* Right-click the extension → "Switch to Pre-Release Version" for pre-release access
 
 ## Comparison with Other Methods
 
@@ -148,7 +148,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Install the extension from marketplace
 
-**Steps:**
+#### Steps
 
 1. Install extension from marketplace
 2. Start using `task-planner` and other agents
@@ -160,7 +160,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Install extension on all machines via Settings Sync
 
-**Steps:**
+#### Steps
 
 1. Enable Settings Sync in VS Code
 2. Install extension on one machine
@@ -172,7 +172,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Share extension link and install instructions
 
-**Steps:**
+#### Steps
 
 1. Share marketplace link with team
 2. Team members install extension
@@ -184,7 +184,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Use extension initially, migrate to Peer Clone when needed
 
-**Steps:**
+#### Steps
 
 1. Start with extension for quick setup
 2. When customization needed, uninstall extension
@@ -194,25 +194,25 @@ The extension updates automatically through VS Code's extension system:
 
 ### Extension Not Appearing
 
-**Check extension is installed:**
+#### Check extension is installed
 
 1. Open Extensions view (`Ctrl+Shift+X`)
 2. Search "HVE Core"
 3. Verify "Installed" badge appears
 
-**Reload VS Code:**
+#### Reload VS Code
 
 1. Command Palette (`Ctrl+Shift+P`)
 2. "Developer: Reload Window"
 
 ### Agents Not Showing in Copilot Chat
 
-**Verify GitHub Copilot is active:**
+#### Verify GitHub Copilot is active
 
 1. Check Copilot icon in status bar
 2. Sign in if needed
 
-**Check extension status:**
+#### Check extension status
 
 1. Extensions view → "HVE Core"
 2. Verify no errors shown
@@ -231,12 +231,12 @@ If you have both extension and manual installation (like Peer Clone):
 
 ### Update Not Appearing
 
-**Force check for updates:**
+#### Force check for updates
 
 1. Extensions view → ⋯ (More Actions)
 2. "Check for Extension Updates"
 
-**Manually update:**
+#### Manually update
 
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button

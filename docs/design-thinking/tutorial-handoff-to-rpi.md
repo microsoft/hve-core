@@ -225,21 +225,21 @@ The Implementation Space provides the richest artifacts of any exit point, givin
 
 Open the generated handoff artifact and verify the contents match your exit tier:
 
-**All tiers (Method 7+):**
+#### All tiers (Method 7+)
 
 * Architecture decisions and technical trade-offs with comparison results
 * Fidelity mapping matrix and performance benchmarks
 * Integration validation results with confidence markers
 * Specification drafts connected to prototype evidence
 
-**Tier 2+ (Methods 7-8):**
+#### Tier 2+ (Methods 7-8)
 
 * Test protocols and participant profiles
 * Behavioral observation data (not just opinions)
 * Severity-frequency matrix findings
 * Assumption validation results showing which assumptions were confirmed, challenged, or invalidated
 
-**Tier 3 (Methods 7-9):**
+#### Tier 3 (Methods 7-9)
 
 * Refinement log with baseline measurements
 * Scaling assessment across technical, user, process, and constraint dimensions

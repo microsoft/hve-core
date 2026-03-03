@@ -9,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Instructions File?
 
@@ -55,7 +55,7 @@ Instruction files are typically organized in a collection subdirectory by conven
 > Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
 > accepts any valid repo-relative path regardless of the artifact's parent directory.
 
-**Examples**:
+#### Examples
 
 * `.github/instructions/coding-standards/python-script.instructions.md`
 * `.github/instructions/hve-core/markdown.instructions.md`
@@ -71,7 +71,7 @@ Instruction files are typically organized in a collection subdirectory by conven
 
 ### File Format
 
-Instruction files **MUST**:
+Instruction files MUST:
 
 1. Use the `.instructions.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
@@ -83,39 +83,45 @@ Instruction files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of instruction scope and target
-* **Format**: Single sentence, 10-200 characters
-* **Style**: Sentence case with proper punctuation
-* **Example**: `'Required instructions for Python script implementation with type hints and docstrings'`
+| Property | Value                                                                                     |
+|----------|-------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of instruction scope and target                                       |
+| Format   | Single sentence, 10-200 characters                                                        |
+| Style    | Sentence case with proper punctuation                                                     |
+| Example  | `'Required instructions for Python script implementation with type hints and docstrings'` |
 
 **`applyTo`** (string, MANDATORY for auto-applied instructions)
 
-* **Purpose**: Glob pattern(s) defining when these instructions activate
-* **Format**: Valid glob pattern or comma-separated patterns
-* **Scope**: Matches from repository root
-* **Examples**:
-  * Single pattern: `**/*.py`
-  * Multiple files: `**/*.py, **/*.ipynb`
-  * Directory scope: `**/src/**/*.sh`
-  * Specific paths: `**/.copilot-tracking/pr/new/**`
+| Property | Value                                                     |
+|----------|-----------------------------------------------------------|
+| Purpose  | Glob pattern(s) defining when these instructions activate |
+| Format   | Valid glob pattern or comma-separated patterns            |
+| Scope    | Matches from repository root                              |
+
+Examples:
+
+* Single pattern: `**/*.py`
+* Multiple files: `**/*.py, **/*.ipynb`
+* Directory scope: `**/src/**/*.sh`
+* Specific paths: `**/.copilot-tracking/pr/new/**`
 
 ### Optional Fields
 
 **`version`** (string)
 
-* **Purpose**: Tracks instruction file revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
-* **Pattern**: `^\d+\.\d+(\.\d+)?$` (major.minor or major.minor.patch)
+| Property | Value                                                   |
+|----------|---------------------------------------------------------|
+| Purpose  | Tracks instruction file revisions                       |
+| Format   | Semantic versioning (e.g., `1.0.0`)                     |
+| Pattern  | `^\d+\.\d+(\.\d+)?$` (major.minor or major.minor.patch) |
 
 **`author`** (string)
 
-* **Purpose**: Attribution for instruction creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+Attribution for the instruction creator (e.g., `microsoft/hve-core`, `your-team-name`).
 
 **`lastUpdated`** (string)
 
-* **Purpose**: Timestamp of last modification
-* **Format**: ISO 8601 date (YYYY-MM-DD)
+Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
 
 ### Frontmatter Example
 
@@ -231,11 +237,11 @@ Scripts MUST follow this organization:
 ```markdown
 ## Naming Conventions
 
-* **Files**: `snake_case.py` (e.g., `data_processor.py`)
-* **Functions**: `snake_case()` (e.g., `process_data()`)
-* **Classes**: `PascalCase` (e.g., `DataProcessor`)
-* **Constants**: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRIES`)
-* **Private**: `_leading_underscore` (e.g., `_internal_helper()`)
+* Files: `snake_case.py` (e.g., `data_processor.py`)
+* Functions: `snake_case()` (e.g., `process_data()`)
+* Classes: `PascalCase` (e.g., `DataProcessor`)
+* Constants: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRIES`)
+* Private: `_leading_underscore` (e.g., `_internal_helper()`)
 ```
 
 #### 5. Code Examples
@@ -278,7 +284,7 @@ def calculate_average(numbers: list[float]) -> float:
 ```markdown
 ## Anti-Patterns
 
-❌ **Bare except clauses**:
+❌ Bare except clauses:
 ```python
 try:
     risky_operation()
@@ -286,7 +292,7 @@ except:  # DON'T DO THIS
     pass
 ```
 
-✅ **Specific exception handling**:
+✅ Specific exception handling:
 
 ```python
 try:
@@ -307,15 +313,15 @@ except FileNotFoundError as e:
 
 All Python code MUST pass:
 
-* **Linting**: `ruff check .`
-* **Type checking**: `mypy --strict .`
-* **Testing**: `pytest tests/ --cov=src`
-* **Coverage**: Minimum 80% line coverage
+* Linting: `ruff check .`
+* Type checking: `mypy --strict .`
+* Testing: `pytest tests/ --cov=src`
+* Coverage: Minimum 80% line coverage
 ```
 
 #### 8. Attribution Footer
 
-* **MANDATORY**: Include at end of file
+Always include an attribution footer at the end of the file.
 
 ```markdown
 ---
@@ -431,12 +437,12 @@ Formatting and style rules:
 ```markdown
 ## Style Conventions
 
-* **Indentation**: 4 spaces (no tabs)
-* **Line length**: 88 characters (Black formatter default)
-* **Quotes**: Double quotes for strings, single for dict keys
-* **Imports**: Organized by isort with Black-compatible settings
-* **Trailing commas**: Use in multi-line collections
-* **Type hints**: Use modern syntax (`list[str]` not `List[str]`)
+* Indentation: 4 spaces (no tabs)
+* Line length: 88 characters (Black formatter default)
+* Quotes: Double quotes for strings, single for dict keys
+* Imports: Organized by isort with Black-compatible settings
+* Trailing commas: Use in multi-line collections
+* Type hints: Use modern syntax (`list[str]` not `List[str]`)
 ```
 
 ## Validation and Tooling
@@ -472,11 +478,11 @@ Define test expectations:
 ```markdown
 ## Testing Requirements
 
-* **Coverage**: Minimum 80% line coverage
-* **Test location**: `tests/` directory mirroring `src/` structure
-* **Test naming**: `test_*.py` files, `test_*` functions
-* **Fixtures**: Use pytest fixtures for shared test data
-* **Mocking**: Mock external dependencies (file I/O, network calls)
+* Coverage: Minimum 80% line coverage
+* Test location: `tests/` directory mirroring `src/` structure
+* Test naming: `test_*.py` files, `test_*` functions
+* Fixtures: Use pytest fixtures for shared test data
+* Mocking: Mock external dependencies (file I/O, network calls)
 
 <!-- <example-pytest-test> -->
 ```python
@@ -623,13 +629,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ### Invalid Glob Pattern
 
-* **Problem**: Glob patterns that only match root directory or contain syntax errors
-* **Solution**: Use `**/` prefix for recursive matching (e.g., `**/*.py` for all Python files recursively)
+Glob patterns that only match root directory or contain syntax errors cause matching failures. Use the `**/` prefix for recursive matching (e.g., `**/*.py` for all Python files recursively).
 
 ### Conflicting Patterns
 
-* **Problem**: Multiple instruction files with overlapping glob patterns causing ambiguity
-* **Solution**: Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets
+Multiple instruction files with overlapping glob patterns cause ambiguity. Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets.
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 

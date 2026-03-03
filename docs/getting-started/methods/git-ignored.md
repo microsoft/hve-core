@@ -72,7 +72,7 @@ Add the HVE-Core folder to your `.gitignore`:
 
 ### Step 2: Clone HVE-Core
 
-**PowerShell:**
+#### PowerShell
 
 ```powershell
 # Create folder and clone
@@ -83,7 +83,7 @@ if (-not (Test-Path $hveCoreFolder)) {
 }
 ```
 
-**Bash:**
+#### Bash
 
 ```bash
 HVE_CORE_FOLDER=".hve-core"
@@ -202,18 +202,18 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
 
 ## Updating HVE-Core
 
-**Manual update:**
+### Manual update
 
 ```bash
 cd .hve-core
 git pull
 ```
 
-**Auto-update on container rebuild:**
+### Auto-update on container rebuild
 
 The `postCreateCommand` re-clones on each container creation. To update, rebuild the container.
 
-**Auto-update with version check:**
+### Auto-update with version check
 
 ```jsonc
 {
@@ -227,13 +227,13 @@ The `postCreateCommand` re-clones on each container creation. To update, rebuild
 
 ### Agents Not Appearing
 
-**Check the folder exists:**
+#### Check the folder exists
 
 ```bash
 ls .hve-core/.github/agents
 ```
 
-**Check settings are applied:**
+#### Check settings are applied
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open Workspace Settings (JSON)"

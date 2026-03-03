@@ -357,10 +357,10 @@ This project uses [release-please](https://github.com/googleapis/release-please)
 
 ### How Releases Work
 
-1. **Commit with Conventional Commits** - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md))
-2. **Release PR Creation** - After commits are pushed to `main`, release-please automatically creates or updates a "release PR"
-3. **Review Release PR** - Maintainers review the release PR to verify version bump and changelog accuracy
-4. **Merge to Release** - When the release PR is merged, a git tag and GitHub Release are automatically created
+1. Commit with Conventional Commits - All commits to `main` must follow conventional commit format (see [commit message instructions](./.github/instructions/hve-core/commit-message.instructions.md))
+2. Release PR Creation - After commits are pushed to `main`, release-please automatically creates or updates a "release PR"
+3. Review Release PR - Maintainers review the release PR to verify version bump and changelog accuracy
+4. Merge to Release - When the release PR is merged, a git tag and GitHub Release are automatically created
 
 ### Version Determination
 

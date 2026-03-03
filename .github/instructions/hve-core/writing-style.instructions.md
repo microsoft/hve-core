@@ -62,6 +62,7 @@ Avoid these common patterns that reduce clarity and create clutter.
 
 ### Em Dashes
 
+<!-- markdownlint-disable-next-line search-replace -->
 Do not use em dashes (—) for parenthetical statements, explanations, or dramatic pauses. Use these alternatives instead:
 
 | Instead of Em Dash  | Use This    | Example                                         |

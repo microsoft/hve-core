@@ -65,8 +65,8 @@ The tutor begins by assessing your experience level and learning goals. Answer i
 
 You have two options:
 
-* **Full curriculum**: Work through all nine modules sequentially from Method 1 to Method 9
-* **Targeted modules**: Jump to specific methods you want to learn or review
+* Full curriculum: Work through all nine modules sequentially from Method 1 to Method 9
+* Targeted modules: Jump to specific methods you want to learn or review
 
 ### Step 4: Learn and Practice
 

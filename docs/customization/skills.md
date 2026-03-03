@@ -18,10 +18,10 @@ Skills are self-contained knowledge packages that Copilot loads on demand. Unlik
 
 Use a skill when the knowledge you want to share is:
 
-* **Domain-specific**: Relevant to a narrow topic rather than all files
-* **Reference-heavy**: Includes data schemas, API specs, or compliance checklists
-* **Reusable across agents**: Multiple agents or prompts can reference the same skill
-* **Large**: Exceeds the practical size of an instruction file
+* Domain-specific: Relevant to a narrow topic rather than all files
+* Reference-heavy: Includes data schemas, API specs, or compliance checklists
+* Reusable across agents: Multiple agents or prompts can reference the same skill
+* Large: Exceeds the practical size of an instruction file
 
 Instructions work better for coding conventions and file-level rules that should apply passively to every edit. Skills work better for structured knowledge that Copilot should pull in selectively.
 

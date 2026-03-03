@@ -35,10 +35,10 @@ The security scripts share common modules and follow a consistent pattern:
 
 Verifies dependency pinning compliance for all dependencies in GitHub Actions workflows.
 
-**Purpose**: Detect unpinned or improperly pinned dependencies to maintain
+Purpose: Detect unpinned or improperly pinned dependencies to maintain
 supply chain security.
 
-**Features**:
+#### Features
 
 * Scans workflow files for GitHub Actions, Docker images, and other dependency
   types
@@ -48,7 +48,7 @@ supply chain security.
 * Supports auto-remediation with `-Remediate`
 * Configurable compliance threshold
 
-**Parameters**:
+#### Parameters
 
 * `-Path` - Root path to scan (defaults to repository root)
 * `-Recursive` (switch) - Scan subdirectories
@@ -60,7 +60,7 @@ supply chain security.
 * `-Threshold` - Minimum compliance percentage
 * `-Remediate` (switch) - Attempt automatic remediation
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Scan all workflows with table output
@@ -78,17 +78,17 @@ supply chain security.
 Monitors SHA-pinned dependencies for staleness by checking whether newer
 versions are available.
 
-**Purpose**: Identify pinned dependencies that have fallen behind upstream
+Purpose: Identify pinned dependencies that have fallen behind upstream
 releases.
 
-**Features**:
+#### Features
 
 * Queries GitHub API for latest releases of pinned actions
 * Supports multiple output formats (JSON, Azure DevOps, GitHub, console)
 * Configurable maximum age threshold
 * Batch GraphQL queries for efficient API usage
 
-**Parameters**:
+#### Parameters
 
 * `-OutputFormat` - Output format: `json`, `azdo`, `github`, `console`
 * `-MaxAge` - Maximum age in days before a pin is considered stale
@@ -97,7 +97,7 @@ releases.
 * `-FailOnStale` (switch) - Exit with non-zero code when stale pins exist
 * `-GraphQLBatchSize` - Number of repositories per GraphQL batch query
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Check for stale SHAs with console output
@@ -115,16 +115,16 @@ releases.
 Validates that GitHub Actions version comments match their corresponding SHA
 pins across workflow files.
 
-**Purpose**: Detect mismatches between version comments and pinned SHAs that
+Purpose: Detect mismatches between version comments and pinned SHAs that
 could indicate incomplete updates.
 
-**Features**:
+#### Features
 
 * Compares version comment annotations with resolved SHA references
 * Outputs results in table, JSON, or SARIF format
 * Integrates with `lint:version-consistency` npm script
 
-**Parameters**:
+#### Parameters
 
 * `-Path` - Root path containing workflow files
 * `-Format` - Output format: `Table`, `Json`, `Sarif`
@@ -132,7 +132,7 @@ could indicate incomplete updates.
 * `-FailOnMismatch` (switch) - Exit with non-zero code when mismatches exist
 * `-FailOnMissingComment` (switch) - Fail when SHA pins lack version comments
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Check version consistency
@@ -150,24 +150,24 @@ could indicate incomplete updates.
 Updates GitHub Actions workflow files to use SHA-pinned references. Supports
 `WhatIf` via `SupportsShouldProcess`.
 
-**Purpose**: Automate the process of resolving and updating SHA pins for GitHub
+Purpose: Automate the process of resolving and updating SHA pins for GitHub
 Actions dependencies.
 
-**Features**:
+#### Features
 
 * Resolves current SHA for each action reference
 * Supports dry-run via `-WhatIf`
 * Updates stale pins with `-UpdateStale`
 * Generates update reports
 
-**Parameters**:
+#### Parameters
 
 * `-WorkflowPath` - Path to workflow file(s) to update
 * `-OutputReport` - Path for the update report
 * `-OutputFormat` - Report format
 * `-UpdateStale` (switch) - Update only stale pins rather than all
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Preview changes without modifying files
