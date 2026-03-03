@@ -100,7 +100,33 @@ def add_textbox(slide, left, top, width, height, text, font_name=None,
     if elem:
         apply_text_properties(tf, elem)
 
-    # Split on newlines and vertical tabs (\v / \x0b) which map to <a:br/>
+    # Per-paragraph formatting when available
+    paragraphs = (elem or {}).get("paragraphs")
+    if paragraphs:
+        for i, p_def in enumerate(paragraphs):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            p_align = p_def.get("alignment", alignment)
+            if p_align:
+                p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
+            apply_paragraph_properties(p, p_def)
+            apply_bullet_properties(p, p_def)
+            run = p.add_run()
+            run.text = p_def.get("text", "")
+            p_font = p_def.get("font", font_name)
+            if p_font:
+                run.font.name = p_font
+            run.font.size = Pt(p_def.get("font_size", font_size))
+            p_color = p_def.get("font_color")
+            if p_color:
+                apply_color_to_font(run.font.color, resolve_color(p_color))
+            elif font_color:
+                apply_color_to_font(run.font.color, font_color)
+            run.font.bold = p_def.get("font_bold", bold)
+            run.font.italic = p_def.get("italic", italic)
+            apply_run_properties(run, p_def, colors or {})
+        return txBox
+
+    # Flat format: split on newlines and apply element-level formatting
     lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
 
     for i, line in enumerate(lines):
@@ -152,25 +178,48 @@ def add_shape_element(slide, elem, colors, typography):
         tf = shape.text_frame
         tf.word_wrap = True
         apply_text_properties(tf, elem)
-        text = elem["text"]
-        lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-        for i, line in enumerate(lines):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            if "alignment" in elem:
-                p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
-            apply_paragraph_properties(p, elem)
-            apply_bullet_properties(p, elem)
-            run = p.add_run()
-            run.text = line
-            text_font = elem.get("text_font")
-            if text_font:
-                run.font.name = text_font
-            run.font.size = Pt(elem.get("text_size", 16))
-            if "text_color" in elem:
-                color_spec = resolve_color(elem["text_color"])
-                apply_color_to_font(run.font.color, color_spec)
-            run.font.bold = elem.get("text_bold", False)
-            apply_run_properties(run, elem, colors)
+
+        # Per-paragraph formatting when available
+        paragraphs = elem.get("paragraphs")
+        if paragraphs:
+            for i, p_def in enumerate(paragraphs):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p_align = p_def.get("alignment", elem.get("alignment"))
+                if p_align:
+                    p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
+                apply_paragraph_properties(p, p_def)
+                apply_bullet_properties(p, p_def)
+                run = p.add_run()
+                run.text = p_def.get("text", "")
+                text_font = p_def.get("text_font", elem.get("text_font"))
+                if text_font:
+                    run.font.name = text_font
+                run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
+                p_color = p_def.get("text_color", elem.get("text_color"))
+                if p_color:
+                    apply_color_to_font(run.font.color, resolve_color(p_color))
+                run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
+                apply_run_properties(run, p_def, colors)
+        else:
+            text = elem["text"]
+            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
+            for i, line in enumerate(lines):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                if "alignment" in elem:
+                    p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
+                apply_paragraph_properties(p, elem)
+                apply_bullet_properties(p, elem)
+                run = p.add_run()
+                run.text = line
+                text_font = elem.get("text_font")
+                if text_font:
+                    run.font.name = text_font
+                run.font.size = Pt(elem.get("text_size", 16))
+                if "text_color" in elem:
+                    color_spec = resolve_color(elem["text_color"])
+                    apply_color_to_font(run.font.color, color_spec)
+                run.font.bold = elem.get("text_bold", False)
+                apply_run_properties(run, elem, colors)
 
     return shape
 
@@ -511,21 +560,38 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             tf = shape.text_frame
             tf.word_wrap = True
             apply_text_properties(tf, elem)
-            text = elem["text"]
-            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-            for i, line in enumerate(lines):
-                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                apply_bullet_properties(p, elem)
-                run = p.add_run()
-                run.text = line
-                text_font = elem.get("text_font")
-                if text_font:
-                    run.font.name = text_font
-                run.font.size = Pt(elem.get("text_size", 16))
-                if "text_color" in elem:
-                    apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
-                run.font.bold = elem.get("text_bold", False)
-                apply_run_properties(run, elem, colors)
+            paragraphs = elem.get("paragraphs")
+            if paragraphs:
+                for i, p_def in enumerate(paragraphs):
+                    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                    apply_bullet_properties(p, p_def)
+                    run = p.add_run()
+                    run.text = p_def.get("text", "")
+                    text_font = p_def.get("text_font", elem.get("text_font"))
+                    if text_font:
+                        run.font.name = text_font
+                    run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
+                    p_color = p_def.get("text_color", elem.get("text_color"))
+                    if p_color:
+                        apply_color_to_font(run.font.color, resolve_color(p_color, colors))
+                    run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
+                    apply_run_properties(run, p_def, colors)
+            else:
+                text = elem["text"]
+                lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
+                for i, line in enumerate(lines):
+                    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                    apply_bullet_properties(p, elem)
+                    run = p.add_run()
+                    run.text = line
+                    text_font = elem.get("text_font")
+                    if text_font:
+                        run.font.name = text_font
+                    run.font.size = Pt(elem.get("text_size", 16))
+                    if "text_color" in elem:
+                        apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
+                    run.font.bold = elem.get("text_bold", False)
+                    apply_run_properties(run, elem, colors)
     elif elem_type == "textbox":
         txBox = shapes.add_textbox(
             Inches(elem["left"]), Inches(elem["top"]),
@@ -536,25 +602,47 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
         tf = txBox.text_frame
         tf.word_wrap = True
         apply_text_properties(tf, elem)
-        text = elem.get("text", "")
-        lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-        for i, line in enumerate(lines):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            if "alignment" in elem:
-                p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
-            apply_paragraph_properties(p, elem)
-            apply_bullet_properties(p, elem)
-            run = p.add_run()
-            run.text = line
-            grp_font = elem.get("font")
-            if grp_font:
-                run.font.name = grp_font
-            run.font.size = Pt(elem.get("font_size", 16))
-            if "font_color" in elem:
-                apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
-            run.font.bold = elem.get("font_bold", False)
-            run.font.italic = elem.get("italic", False)
-            apply_run_properties(run, elem, colors)
+        paragraphs = elem.get("paragraphs")
+        if paragraphs:
+            for i, p_def in enumerate(paragraphs):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p_align = p_def.get("alignment", elem.get("alignment"))
+                if p_align:
+                    p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
+                apply_paragraph_properties(p, p_def)
+                apply_bullet_properties(p, p_def)
+                run = p.add_run()
+                run.text = p_def.get("text", "")
+                grp_font = p_def.get("font", elem.get("font"))
+                if grp_font:
+                    run.font.name = grp_font
+                run.font.size = Pt(p_def.get("font_size", elem.get("font_size", 16)))
+                p_color = p_def.get("font_color", elem.get("font_color"))
+                if p_color:
+                    apply_color_to_font(run.font.color, resolve_color(p_color, colors))
+                run.font.bold = p_def.get("font_bold", elem.get("font_bold", False))
+                run.font.italic = p_def.get("italic", elem.get("italic", False))
+                apply_run_properties(run, p_def, colors)
+        else:
+            text = elem.get("text", "")
+            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
+            for i, line in enumerate(lines):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                if "alignment" in elem:
+                    p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
+                apply_paragraph_properties(p, elem)
+                apply_bullet_properties(p, elem)
+                run = p.add_run()
+                run.text = line
+                grp_font = elem.get("font")
+                if grp_font:
+                    run.font.name = grp_font
+                run.font.size = Pt(elem.get("font_size", 16))
+                if "font_color" in elem:
+                    apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
+                run.font.bold = elem.get("font_bold", False)
+                run.font.italic = elem.get("italic", False)
+                apply_run_properties(run, elem, colors)
     elif elem_type == "connector":
         add_connector_element(group, elem, colors)
     elif elem_type == "image":
