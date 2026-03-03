@@ -96,3 +96,5 @@ Mark a managed file as ejected so upgrades no longer overwrite it.
 ```powershell
 ./scripts/eject.ps1 -FilePath .github/agents/task-researcher.agent.md
 ```
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
