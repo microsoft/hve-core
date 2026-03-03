@@ -44,7 +44,7 @@ permissions:
 
 jobs:
   scan:
-    name: Validate Dependency Pinning Compliance
+    name: Validate SHA Pinning Compliance
     runs-on: ubuntu-latest
     permissions:
       contents: read
