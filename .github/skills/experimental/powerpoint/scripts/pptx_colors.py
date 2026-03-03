@@ -1,7 +1,6 @@
 """Color resolution and conversion utilities for PowerPoint skill scripts.
 
-Supports $name references against a color dictionary, #RRGGBB hex values,
-and @theme_name references for theme colors.
+Supports #RRGGBB hex values and @theme_name references for theme colors.
 """
 
 from pptx.dml.color import RGBColor
@@ -29,17 +28,16 @@ THEME_COLOR_MAP = {
 _THEME_COLOR_REVERSE = {v: k for k, v in THEME_COLOR_MAP.items()}
 
 
-def resolve_color(value: str | dict, colors: dict) -> dict:
+def resolve_color(value: str | dict, colors: dict | None = None) -> dict:
     """Resolve a color value to an RGB or theme color specification.
 
     Supports:
-      $name — resolves against colors dict (recursively)
       #RRGGBB — direct hex value
       @theme_name — theme color reference
       dict — {theme: name, brightness: float} for theme with brightness
 
     Returns:
-      {"rgb": RGBColor(...)} for $name and #hex values
+      {"rgb": RGBColor(...)} for #hex values
       {"theme": MSO_THEME_COLOR.X} for @theme_name values
       {"theme": MSO_THEME_COLOR.X, "brightness": float} for dict with brightness
     """
@@ -51,14 +49,10 @@ def resolve_color(value: str | dict, colors: dict) -> dict:
             if "brightness" in value:
                 result["brightness"] = value["brightness"]
             return result
-        return resolve_color(value.get("color", "#000000"), colors)
+        return resolve_color(value.get("color", "#000000"))
 
     if not isinstance(value, str):
         return {"rgb": RGBColor(0, 0, 0)}
-
-    if value.startswith("$"):
-        resolved = colors.get(value[1:], "#000000")
-        return resolve_color(resolved, colors)
 
     if value.startswith("@"):
         theme_color = THEME_COLOR_MAP.get(value[1:])

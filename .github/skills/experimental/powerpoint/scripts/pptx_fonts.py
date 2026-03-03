@@ -23,11 +23,8 @@ ALIGNMENT_MAP = {
 ALIGNMENT_REVERSE_MAP = {1: "left", 2: "center", 3: "right", 4: "justify"}
 
 
-def resolve_font(value: str, typography: dict) -> str:
-    """Resolve a font reference ($name) or return the literal font name."""
-    if value.startswith("$"):
-        key = value[1:]
-        return typography.get(key, "Segoe UI")
+def resolve_font(value: str, typography: dict | None = None) -> str:
+    """Return the literal font name."""
     return value
 
 
@@ -77,7 +74,26 @@ def extract_font_info(font) -> dict:
         info["italic"] = True
     if font.underline:
         info["underline"] = True
+    # Character spacing (spc attribute in hundredths of a point)
+    spc = _extract_char_spacing(font)
+    if spc is not None:
+        info["char_spacing"] = spc
     return info
+
+
+def _extract_char_spacing(font) -> float | None:
+    """Extract character spacing from font's underlying XML (a:rPr spc attribute).
+
+    Returns spacing in points (spc is stored in hundredths of a point).
+    """
+    try:
+        rpr = font._element
+        spc_val = rpr.get('spc')
+        if spc_val is not None:
+            return int(spc_val) / 100.0
+    except (AttributeError, TypeError):
+        pass
+    return None
 
 
 def extract_paragraph_font(paragraph) -> dict:

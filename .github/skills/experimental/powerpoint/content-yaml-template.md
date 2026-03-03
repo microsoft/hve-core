@@ -5,12 +5,12 @@ Use this template when creating or updating a slide's `content.yaml` file. Each 
 ## Instructions
 
 * All position and size values (`left`, `top`, `width`, `height`) are in inches.
-* Color values use `$color_name` references (resolved from `style.yaml`) or direct hex (`#RRGGBB`).
+* Color values use `#RRGGBB` hex format or `@theme_name` references. Named color references (`$color_name`) are not supported.
+* Font names are specified as literal font family names (e.g., `Segoe UI`, `Cascadia Code`).
 * Elements render in the order listed — later elements draw on top of earlier ones.
 * Speaker notes are required on all content slides when `speaker_notes_required: true` is set in the global style.
-* Use `style_overrides` to change colors or typography for a specific slide without modifying the global style.
 * The `layout` field is informational and helps describe the slide structure; it does not auto-apply a PowerPoint layout.
-* The `background` block sets a per-slide background fill. When omitted, the `bg_dark` color from the global style applies.
+* The `background` block sets a per-slide background fill. When omitted, no background fill is applied.
 * The `rotation` field (degrees, 0–360) is supported on `shape`, `textbox`, and `image` elements. Omit or set to 0 for no rotation.
 
 ## Template
@@ -22,16 +22,9 @@ title: "Production-Grade AI-Assisted Software Engineering"
 section: "Introduction"
 layout: "title"       # title | content | divider | two-column | blank
 
-# Optional per-slide background (overrides global bg_dark)
+# Optional per-slide background
 background:
-  fill: "#1B1B1F"     # solid color fill; use $color_name or #RRGGBB
-
-# Optional per-slide style overrides (merged over global style.yaml)
-style_overrides:
-  colors:
-    bg_dark: "#0D1117"
-  typography:
-    heading_size: 36
+  fill: "#1B1B1F"     # solid color fill; use #RRGGBB or @theme_name
 
 # Elements placed on the slide, rendered in order
 elements:
@@ -41,7 +34,7 @@ elements:
     top: 0
     width: 13.333
     height: 0.12
-    fill: "$accent_blue"
+    fill: "#0078D4"
 
   - type: textbox
     left: 0.8
@@ -49,9 +42,9 @@ elements:
     width: 11.0
     height: 1.8
     text: "Production-Grade AI-Assisted\nSoftware Engineering"
-    font: "$body_font"
+    font: "Segoe UI"
     font_size: 36
-    font_color: "$text_white"
+    font_color: "#F8F8FC"
     font_bold: true
     alignment: left       # left | center | right | justify
 
@@ -61,9 +54,9 @@ elements:
     width: 10.0
     height: 0.8
     text: "Beyond Vibe Coding: Engineering with AI for Real-World Software"
-    font: "$body_font"
+    font: "Segoe UI"
     font_size: 20
-    font_color: "$text_gray"
+    font_color: "#9CA3AF"
 
   - type: shape
     shape: rounded_rectangle
@@ -71,13 +64,13 @@ elements:
     top: 1.5
     width: 2.8
     height: 0.55
-    fill: "$accent_blue"
+    fill: "#0078D4"
     corner_radius: 0.1
     rotation: 270           # degrees; vertical text bottom-to-top
     text: "HYPER-VELOCITY ENGINEERING"
-    text_font: "$body_font"
+    text_font: "Segoe UI"
     text_size: 11
-    text_color: "$text_white"
+    text_color: "#F8F8FC"
     text_bold: true
 
   - type: image
@@ -95,17 +88,17 @@ elements:
     height: 0.6
     segments:
       - text: "GitHub Copilot  |  "
-        font: "$body_font"
+        font: "Segoe UI"
         size: 14
-        color: "$text_gray"
+        color: "#9CA3AF"
       - text: "context engineering"
-        font: "$code_font"
+        font: "Cascadia Code"
         size: 14
-        color: "$code_inline"
+        color: "#FFD700"
       - text: "  |  RPI Workflow"
-        font: "$body_font"
+        font: "Segoe UI"
         size: 14
-        color: "$text_gray"
+        color: "#9CA3AF"
 
   - type: card
     left: 0.8
@@ -113,16 +106,16 @@ elements:
     width: 5.5
     height: 2.8
     title: "WHAT MOST TEAMS DO"
-    title_color: "$text_white"
+    title_color: "#F8F8FC"
     title_size: 16
     title_bold: true
     accent_bar: true
-    accent_color: "$accent_teal"
+    accent_color: "#00B4D8"
     content:
       - bullet: "Open Copilot Chat, type a prompt, paste the result"
-        color: "$text_white"
+        color: "#F8F8FC"
       - bullet: "No structure, no verification, no persistence"
-        color: "$text_gray"
+        color: "#9CA3AF"
 
   - type: arrow_flow
     left: 1.0
@@ -131,11 +124,11 @@ elements:
     height: 1.5
     items:
       - label: "Research"
-        color: "$accent_blue"
+        color: "#0078D4"
       - label: "Plan"
-        color: "$accent_teal"
+        color: "#00B4D8"
       - label: "Implement"
-        color: "$accent_green"
+        color: "#10B981"
 
   - type: numbered_step
     left: 1.0
@@ -145,7 +138,7 @@ elements:
     number: 1
     label: "Configure VS Code Extensions"
     description: "Install the HVE extension pack."
-    accent_color: "$accent_blue"
+    accent_color: "#0078D4"
 
   - type: table
     left: 1.0
@@ -160,20 +153,20 @@ elements:
       - cells:
           - text: "Feature"
             font_bold: true
-            fill: "$accent_blue"
-            font_color: "$text_white"
+            fill: "#0078D4"
+            font_color: "#F8F8FC"
           - text: "Status"
             font_bold: true
-            fill: "$accent_blue"
-            font_color: "$text_white"
+            fill: "#0078D4"
+            font_color: "#F8F8FC"
           - text: "Notes"
             font_bold: true
-            fill: "$accent_blue"
-            font_color: "$text_white"
+            fill: "#0078D4"
+            font_color: "#F8F8FC"
       - cells:
           - text: "Authentication"
           - text: "Complete"
-            font_color: "$accent_green"
+            font_color: "#10B981"
           - text: "OAuth 2.0 with PKCE"
       - cells:
           - text: "Merge status"
@@ -208,7 +201,7 @@ elements:
     begin_y: 3.0
     end_x: 8.0
     end_y: 5.0
-    line_color: "$accent_blue"
+    line_color: "#0078D4"
     line_width: 2
     dash_style: solid             # see Line Dash Styles table
     head_end: none                # none | arrow | triangle | stealth | diamond | oval
@@ -226,14 +219,14 @@ elements:
         top: 2.0
         width: 2.0
         height: 1.0
-        fill: "$accent_blue"
+        fill: "#0078D4"
       - type: textbox
         left: 1.2
         top: 2.2
         width: 1.6
         height: 0.6
         text: "Group Title"
-        font_color: "$text_white"
+        font_color: "#F8F8FC"
 
 # Speaker notes (required for all content slides)
 speaker_notes: |
@@ -330,8 +323,7 @@ speaker_notes: |
 | `title` | `string` | Slide title (informational) |
 | `section` | `string` | Optional section grouping |
 | `layout` | `string` | Informational layout hint: `title`, `content`, `divider`, `two-column`, `blank` |
-| `background` | `object` | Per-slide background; contains `fill` with a color value. Overrides global `bg_dark` |
-| `style_overrides` | `object` | Per-slide color and typography overrides merged over global style |
+| `background` | `object` | Per-slide background; contains `fill` with a color value (`#RRGGBB` or `@theme_name`) |
 | `speaker_notes` | `string` | Speaker notes text; required when `speaker_notes_required` is true |
 
 ## Common Element Fields
@@ -352,9 +344,9 @@ These optional fields apply to `shape`, `textbox`, and `image` element types:
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | — | Text content; use `\n` for line breaks |
-| `font` | `string` | `$body_font` | Font family name or `$reference` |
-| `font_size` | `int` | `body_size` | Font size in points |
-| `font_color` | `string` | `$text_white` | Text color as `$name`, `#RRGGBB`, or `@theme_name` |
+| `font` | `string` | `Segoe UI` | Font family name |
+| `font_size` | `int` | `16` | Font size in points |
+| `font_color` | `string` | — | Text color as `#RRGGBB` or `@theme_name` |
 | `font_bold` | `bool` | `false` | Bold text weight. `bold` is accepted as an alias |
 | `italic` | `bool` | `false` | Italic text style |
 | `underline` | `bool` | `false` | Underline text decoration |
@@ -378,18 +370,17 @@ When a shape contains inline text, use these prefixed fields:
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `text` | `string` | — | Text displayed inside the shape |
-| `text_font` | `string` | `$body_font` | Font family for shape text |
+| `text_font` | `string` | `Segoe UI` | Font family for shape text |
 | `text_size` | `int` | `16` | Font size in points for shape text |
-| `text_color` | `string` | — | Text color as `$name` or `#RRGGBB` |
+| `text_color` | `string` | — | Text color as `#RRGGBB` or `@theme_name` |
 | `text_bold` | `bool` | `false` | Bold text weight for shape text |
 
 ## Color Syntax
 
-Color values in content YAML accept four formats:
+Color values in content YAML accept three formats:
 
 | Syntax | Example | Description |
 |---|---|---|
-| Named reference | `"$accent_blue"` | Resolves against the `colors` map in `style.yaml` |
 | Hex value | `"#0078D4"` | Direct RGB hex color |
 | Theme reference | `"@accent_1"` | Maps to the presentation theme's `MSO_THEME_COLOR` enum |
 | Theme with brightness | `{theme: "accent_1", brightness: 0.4}` | Theme color with brightness adjustment (-1.0 to 1.0) |
@@ -403,7 +394,6 @@ The `fill` field on shapes and backgrounds accepts three formats:
 ### Solid fill
 
 ```yaml
-fill: "$accent_blue"       # named reference
 fill: "#0078D4"             # hex value
 fill: "@accent_1"           # theme color
 ```

@@ -79,12 +79,33 @@ def apply_paragraph_properties(paragraph, elem: dict):
 def apply_run_properties(run, elem: dict, colors: dict):
     """Apply run-level font properties beyond basic font/size/color/bold/italic.
 
-    Supports: underline, hyperlink.
+    Supports: underline, hyperlink, char_spacing.
+    When a hyperlink is set, the font color is re-applied afterward to prevent
+    the automatic theme hyperlink color from overriding the intended color.
     """
     if elem.get("underline"):
         run.font.underline = True
     if "hyperlink" in elem:
         run.hyperlink.address = elem["hyperlink"]
+        # Re-apply font color after hyperlink to override auto-coloring
+        from pptx_colors import apply_color_to_font, resolve_color
+        color_key = next((k for k in ("font_color", "text_color", "color") if k in elem), None)
+        if color_key:
+            apply_color_to_font(run.font.color, resolve_color(elem[color_key], colors))
+    if "char_spacing" in elem:
+        _apply_char_spacing(run.font, elem["char_spacing"])
+
+
+def _apply_char_spacing(font, spacing_pt: float):
+    """Apply character spacing to a font via the spc attribute on a:rPr.
+
+    Args:
+        font: python-pptx font object.
+        spacing_pt: Spacing in points (converted to hundredths of a point for XML).
+    """
+    rpr = font._element
+    spc_val = str(int(spacing_pt * 100))
+    rpr.set('spc', spc_val)
 
 
 def extract_text_frame_properties(text_frame) -> dict:
@@ -127,7 +148,7 @@ def extract_paragraph_properties(paragraph) -> dict:
 
 
 def extract_run_properties(run) -> dict:
-    """Extract run-level properties beyond basic font info (underline, hyperlink)."""
+    """Extract run-level properties beyond basic font info (underline, hyperlink, char_spacing)."""
     props = {}
     if run.font.underline:
         props["underline"] = True
@@ -136,4 +157,9 @@ def extract_run_properties(run) -> dict:
             props["hyperlink"] = run.hyperlink.address
     except (AttributeError, TypeError):
         pass
+    # Character spacing
+    from pptx_fonts import _extract_char_spacing
+    spc = _extract_char_spacing(run.font)
+    if spc is not None:
+        props["char_spacing"] = spc
     return props
