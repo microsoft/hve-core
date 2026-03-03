@@ -1,17 +1,20 @@
 ---
 description: "Compare current codebase against a proposed plan with visual architecture diagrams and risk assessment"
+argument-hint: "[planFile=...] [codebase=.]"
 ---
 
 # Plan Review
 
+## Inputs
+
+* ${input:planFile}: (Required) Path to a markdown plan, spec, or RFC document.
+* ${input:codebase:.}: (Optional, defaults to current directory) Path to the codebase to compare against.
+
+---
+
 Load the visual-explainer skill, then generate a comprehensive visual plan review as a self-contained HTML page, comparing the current codebase against a proposed implementation plan.
 
 Follow the visual-explainer skill workflow. Read the reference template, CSS patterns, and mermaid theming references before generating. Use a blueprint/editorial aesthetic with current-state vs. planned-state panels, but vary fonts and palette from previous diagrams.
-
-**Inputs:**
-
-* Plan file: `$1` (path to a markdown plan, spec, or RFC document)
-* Codebase: `$2` if provided, otherwise the current working directory
 
 **Data gathering phase** — read and cross-reference these before generating:
 
@@ -44,24 +47,24 @@ Verify each claim against the code and the plan. If something cannot be verified
 
 **Diagram structure** — the page should include:
 
-1. **Plan summary** — lead with the *intuition*: what problem does this plan solve, and what's the core insight behind the approach? Then the scope: how many files touched, estimated scale of changes, new modules or tests planned. A reader who only sees this section should understand the plan's essence. *Visual treatment: this is the visual anchor — use hero depth (larger type 20-24px, subtle accent-tinted background, more padding than other sections).*
+1. Plan summary: lead with the *intuition*: what problem does this plan solve, and what's the core insight behind the approach? Then the scope: how many files touched, estimated scale of changes, new modules or tests planned. A reader who only sees this section should understand the plan's essence. *Visual treatment: this is the visual anchor; use hero depth (larger type 20-24px, subtle accent-tinted background, more padding than other sections).*
 
-2. **Impact dashboard** — files to modify, files to create, files to delete, estimated lines added/removed, new test files planned, dependencies affected. Include a **completeness** indicator: whether the plan covers tests (green/red), docs updates (green/yellow/red), and migration/rollback (green/grey for N/A).
+2. Impact dashboard: files to modify, files to create, files to delete, estimated lines added/removed, new test files planned, dependencies affected. Include a completeness indicator: whether the plan covers tests (green/red), docs updates (green/yellow/red), and migration/rollback (green/grey for N/A).
 
-3. **Current architecture** — Mermaid diagram of how the affected subsystem works *today*. Focus only on the parts the plan touches — don't diagram the entire codebase.
+3. Current architecture: Mermaid diagram of how the affected subsystem works *today*. Focus only on the parts the plan touches; don't diagram the entire codebase.
    Show the data flow, dependencies, and call paths that will change. Wrap in `.mermaid-wrap` with zoom controls (+/−/reset buttons), Ctrl/Cmd+scroll zoom, and click-and-drag panning (grab/grabbing cursors). See css-patterns.md "Mermaid Zoom Controls" for the full pattern. *Visual treatment: use matching Mermaid layout direction and node names as section 4 so the visual diff is obvious.*
 
-4. **Planned architecture** — Mermaid diagram of how the subsystem will work *after* the plan is implemented. Use the same node names and layout direction as the current architecture diagram so the differences are visually obvious. Same zoom controls as section 3. *Highlight new nodes with a glow or accent border, removed nodes with strikethrough or reduced opacity, changed edges with a different stroke color.*
+4. Planned architecture: Mermaid diagram of how the subsystem will work *after* the plan is implemented. Use the same node names and layout direction as the current architecture diagram so the differences are visually obvious. Same zoom controls as section 3. *Highlight new nodes with a glow or accent border, removed nodes with strikethrough or reduced opacity, changed edges with a different stroke color.*
 
-5. **Change-by-change breakdown** — for each change in the plan, a side-by-side panel. Overflow prevention: apply `min-width: 0` on all grid/flex children and `overflow-wrap: break-word` on panels. Never use `display: flex` on `<li>` for marker characters — use absolute positioning instead (see css-patterns.md Overflow Protection).
+5. Change-by-change breakdown: for each change in the plan, a side-by-side panel. Overflow prevention: apply `min-width: 0` on all grid/flex children and `overflow-wrap: break-word` on panels. Never use `display: flex` on `<li>` for marker characters; use absolute positioning instead (see css-patterns.md Overflow Protection).
    * **Left (current):** what the code does now, with relevant snippets or function signatures
    * **Right (planned):** what the plan proposes, with the plan's own code examples if provided
    * **Rationale:** below each side-by-side panel, extract *why* the plan chose this approach. Pull from the plan's reasoning, rejected alternatives section, or inline justifications. If the plan includes a "rejected alternatives" section, map those rejections to the specific changes they apply to. Flag changes where the plan says *what* to do but not *why* — these are pre-implementation cognitive debt.
    * Flag any discrepancies where the plan's description of current behavior doesn't match the actual code
 
-6. **Dependency & ripple analysis** — *visual treatment: compact — consider `<details>` collapsed by default for pages with many sections.* What other code depends on the files being changed. Table or Mermaid graph showing callers, importers, and downstream effects the plan may not explicitly address. Color-code: covered by plan (green), not mentioned but likely affected (amber), definitely missed (red).
+6. Dependency & ripple analysis: *visual treatment: compact; consider `<details>` collapsed by default for pages with many sections.* What other code depends on the files being changed. Table or Mermaid graph showing callers, importers, and downstream effects the plan may not explicitly address. Color-code: covered by plan (green), not mentioned but likely affected (amber), definitely missed (red).
 
-7. **Risk assessment** — styled cards for:
+7. Risk assessment: styled cards for:
    * **Edge cases** the plan doesn't address
    * **Assumptions** the plan makes about the codebase that should be verified
    * **Ordering risks** if changes need to be applied in a specific sequence
@@ -70,13 +73,13 @@ Verify each claim against the code and the plan. If something cannot be verified
      Distinct from bug risk — these are "you'll forget how this works in a month" risks. Each cognitive complexity flag gets a brief mitigation suggestion (e.g., "add a comment explaining the ordering requirement" or "consider a runtime assertion that validates the invariant"). Note: cognitive complexity flags belong here when they're about specific code patterns; broader concerns about the plan's overall approach (overengineering, lock-in, maintenance burden) belong in section 8's Ugly category.
    * Each risk gets a severity indicator (low/medium/high)
 
-8. **Plan review** — structured Good/Bad/Ugly analysis of the plan itself:
+8. Plan review: structured Good/Bad/Ugly analysis of the plan itself:
    * Solid design decisions, things the plan gets right, well-reasoned tradeoffs (Good)
    * Gaps in the plan: missing files, unaddressed edge cases, incorrect assumptions about current code (Bad)
    * Subtle concerns: complexity being introduced, maintenance burden, things that will work initially but cause problems at scale (Ugly)
    * Ambiguities that need the plan author's clarification before implementation begins (Questions)
    * Use styled cards with green/red/amber/blue left-border accents. Each item should reference specific plan sections and code files. If nothing to flag in a category, say "None found" rather than omitting the section.
-9. **Understanding gaps** — a closing dashboard that rolls up decision-rationale gaps from section 5 and cognitive complexity flags from section 7:
+9. Understanding gaps: a closing dashboard that rolls up decision-rationale gaps from section 5 and cognitive complexity flags from section 7:
    * Count of changes with clear rationale vs. missing rationale (visual bar chart or progress indicator)
    * List of cognitive complexity flags with severity
    * Explicit recommendations: "Before implementing, document the rationale for changes X and Y — the plan doesn't explain why these approaches were chosen over alternatives"
@@ -87,7 +90,3 @@ Verify each claim against the code and the plan. If something cannot be verified
 **Optional illustrations** — if `surf` CLI is available (`which surf`), consider generating a conceptual illustration of the planned system via `surf gemini --generate-image` when it would help the reader visualize the change. Embed as base64 data URI. See css-patterns.md "Generated Images" for container styles. Skip if surf isn't available or the plan is purely structural.
 
 Include responsive section navigation. Use a current-vs-planned visual language throughout: blue/neutral for current state, green/purple for planned additions, amber for areas of concern, red for gaps or risks. Write to `.copilot-tracking/diagrams/` and open in browser.
-
-Ultrathink.
-
-$@

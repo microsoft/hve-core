@@ -1,23 +1,30 @@
 ---
 description: "Verify factual accuracy of documents against the codebase using the visual-explainer skill"
+argument-hint: "[targetFile=...]"
 ---
 
 # Fact Check
+
+## Inputs
+
+* ${input:targetFile}: (Optional) Path to the file to verify. Defaults to the most recently modified `.html` file in `.copilot-tracking/diagrams/`.
+
+---
 
 Load the visual-explainer skill, then verify the factual accuracy of a document that makes claims about a codebase. Read the file, extract every verifiable claim, check each against the actual code and git history, correct inaccuracies in place, and add a verification summary.
 
 For HTML files: read the visual-explainer skill's `references/css-patterns.md` to match the existing page's styling when inserting the verification summary.
 
-**Target file** — determine what to verify from `$1`:
+Target file: determine what to verify from the provided input.
 
 * Explicit path: verify that specific file (`.html`, `.md`, or any text document)
 * No argument: verify the most recently modified `.html` file in `.copilot-tracking/diagrams/` (`ls -t .copilot-tracking/diagrams/*.html | head -1`)
 
 Auto-detect the document type and adjust the verification strategy:
 
-* **HTML review pages** (diff-review, plan-review, project-recap): detect from page content, verify against the git ref or plan file the review was based on
-* **Plan/spec documents** (markdown): verify file references, function/type names, behavior descriptions, and architecture claims against the current codebase
-* **Any other document**: extract and verify whatever factual claims about code it contains
+* HTML review pages (diff-review, plan-review, project-recap): detect from page content, verify against the git ref or plan file the review was based on
+* Plan/spec documents (markdown): verify file references, function/type names, behavior descriptions, and architecture claims against the current codebase
+* Any other document: extract and verify whatever factual claims about code it contains
 
 **Phase 1: Extract claims.** Read the file. Extract every verifiable factual claim:
 
@@ -53,8 +60,8 @@ Classify each claim:
 
 **Phase 4: Add verification summary.**
 
-* **HTML files**: insert a verification section as a banner at the top or final section, matching the page's existing styling. Use a subtle card with muted colors.
-* **Markdown files**: append a `## Verification Summary` section at the end of the document.
+* HTML files: insert a verification section as a banner at the top or final section, matching the page's existing styling. Use a subtle card with muted colors.
+* Markdown files: append a `## Verification Summary` section at the end of the document.
 
 Include in the summary:
 
@@ -68,7 +75,3 @@ Include in the summary:
 This is not a re-review. It does not second-guess analysis, opinions, or design judgments. It does not change the document's structure or organization. It is a fact-checker — it verifies that the data presented matches reality, corrects what doesn't, and leaves everything else alone.
 
 Write corrections to the original file.
-
-Ultrathink.
-
-$@

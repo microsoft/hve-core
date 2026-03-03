@@ -9,6 +9,8 @@ items:
   # Skills
   - path: .github/skills/experimental/video-to-gif
     kind: skill
+  - path: .github/skills/experimental/visual-explainer
+    kind: skill
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

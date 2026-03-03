@@ -1,10 +1,17 @@
 ---
 description: "Generate a magazine-quality HTML slide deck with distinctive aesthetics using the visual-explainer skill"
+argument-hint: "topic=..."
 ---
 
 # Generate Slides
 
-Load the visual-explainer skill, then generate a slide deck for: $@
+## Inputs
+
+* ${input:topic}: (Required) Subject, narrative, or content to present as a slide deck.
+
+---
+
+Load the visual-explainer skill, then generate a slide deck for the provided topic.
 
 Follow the visual-explainer skill workflow. Read the reference template at `./templates/slide-deck.html` and slide patterns at `./references/slide-patterns.md` before generating. Also read `./references/css-patterns.md` for shared patterns (Mermaid zoom controls, depth tiers, overflow protection) and `./references/libraries.md` for Mermaid theming, Chart.js, and font pairings.
 

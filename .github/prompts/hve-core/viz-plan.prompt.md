@@ -1,10 +1,17 @@
 ---
 description: "Generate a visual implementation plan with state machines, API signatures, and edge case tables"
+argument-hint: "topic=..."
 ---
 
 # Visual Plan
 
-Load the visual-explainer skill, then generate a comprehensive visual implementation plan for `$@` as a self-contained HTML page.
+## Inputs
+
+* ${input:topic}: (Required) Feature, component, or system to generate an implementation plan for.
+
+---
+
+Load the visual-explainer skill, then generate a comprehensive visual implementation plan for the provided topic as a self-contained HTML page.
 
 Follow the visual-explainer skill workflow. Read the reference template, CSS patterns, and mermaid theming references before generating. Use an editorial or blueprint aesthetic, but vary fonts and palette from previous diagrams.
 
@@ -54,29 +61,29 @@ Verify each against the code. If something cannot be verified, mark it as uncert
 
 **Diagram structure** — the page should include:
 
-1. **Header** — feature name, one-line description, scope summary. *Visual treatment: use a distinctive header with monospace label ("Feature Plan", "Implementation Spec", etc.), large italic title, and muted subtitle. Set the tone for the page.*
+1. Header: feature name, one-line description, scope summary. *Visual treatment: use a distinctive header with monospace label ("Feature Plan", "Implementation Spec", etc.), large italic title, and muted subtitle. Set the tone for the page.*
 
-2. **The Problem** — side-by-side comparison panels showing current behavior vs. desired behavior. Use concrete examples, not abstract descriptions. Show what the user experiences or what the code does, step by step. *Visual treatment: two-column grid with rose-tinted "Before" header and sage-tinted "After" header. Numbered flow steps with arrows between them.*
+2. The Problem: side-by-side comparison panels showing current behavior vs. desired behavior. Use concrete examples, not abstract descriptions. Show what the user experiences or what the code does, step by step. *Visual treatment: two-column grid with rose-tinted "Before" header and sage-tinted "After" header. Numbered flow steps with arrows between them.*
 
-3. **State Machine** — Mermaid flowchart or stateDiagram showing the states and transitions. Label edges with the triggers (commands, events, conditions). *Wrap in `.mermaid-wrap` with zoom controls. Use `flowchart TD` instead of `stateDiagram-v2` if labels need special characters like colons or parentheses. Add explanatory caption below the diagram.*
+3. State Machine: Mermaid flowchart or stateDiagram showing the states and transitions. Label edges with the triggers (commands, events, conditions). *Wrap in `.mermaid-wrap` with zoom controls. Use `flowchart TD` instead of `stateDiagram-v2` if labels need special characters like colons or parentheses. Add explanatory caption below the diagram.*
 
-4. **State Variables** — card grid showing new state and existing state (if modified). Use code blocks with proper `white-space: pre-wrap`. *Visual treatment: two cards side-by-side, elevated depth, monospace labels.*
+4. State Variables: card grid showing new state and existing state (if modified). Use code blocks with proper `white-space: pre-wrap`. *Visual treatment: two cards side-by-side, elevated depth, monospace labels.*
 
-5. **Modified Functions** — for each function that needs changes, show:
+5. Modified Functions: for each function that needs changes, show:
    * Function name and file path
    * Key code snippet (not full implementation — 10-20 lines showing the pattern)
    * Explanation of what changed and why
    *Visual treatment: file path as monospace dim text above code block, code in recessed card with accent-dim background.*
 
-6. **Commands / API** — table with command/function name, parameters, and behavior description. Use `<code>` for technical names. *Visual treatment: bordered table with sticky header, alternating row backgrounds.*
+6. Commands / API: table with command/function name, parameters, and behavior description. Use `<code>` for technical names. *Visual treatment: bordered table with sticky header, alternating row backgrounds.*
 
-7. **Edge Cases** — table listing scenarios and expected behaviors. Be thorough — include error conditions, concurrent operations, boundary values. *Visual treatment: same table style as Commands section.*
+7. Edge Cases: table listing scenarios and expected behaviors. Be thorough; include error conditions, concurrent operations, boundary values. *Visual treatment: same table style as Commands section.*
 
-8. **Test Requirements** — table or card grid showing test categories and specific tests to add. Group by: unit tests, integration tests, edge case tests. *Visual treatment: compact table with file references.*
+8. Test Requirements: table or card grid showing test categories and specific tests to add. Group by: unit tests, integration tests, edge case tests. *Visual treatment: compact table with file references.*
 
-9. **File References** — table mapping files to the changes needed. Include file paths and brief descriptions. *Visual treatment: compact reference table, can use `<details>` if many files.*
+9. File References: table mapping files to the changes needed. Include file paths and brief descriptions. *Visual treatment: compact reference table, can use `<details>` if many files.*
 
-10. **Implementation Notes** — callout boxes for:
+10. Implementation Notes: callout boxes for:
     * Backward compatibility considerations (gold border)
     * Critical implementation warnings (rose border)
     * Performance considerations if relevant (amber border)
@@ -111,5 +118,3 @@ Verify each against the code. If something cannot be verified, mark it as uncert
 * Test tables with wide content don't overflow their container
 
 Write to `.copilot-tracking/diagrams/` with a descriptive filename (e.g., `feature-name-plan.html`). Open the result in the browser. Tell the user the file path.
-
-Ultrathink.
