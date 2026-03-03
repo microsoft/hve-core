@@ -23,7 +23,7 @@ flowchart TD
 
     subgraph MAIN["Main Branch"]
         direction TB
-        MERGE[Merge to Main] --> MN[main.yml]
+        MERGE[Merge to Main] --> MN[release-stable.yml]
         MN --> VAL[Validation]
         VAL --> PKG[Extension Package]
         PKG --> REL[Release Please]
@@ -37,28 +37,28 @@ flowchart TD
 
     subgraph MANUAL["Manual"]
         direction TB
-        DISPATCH[Manual Trigger] --> PUB[extension-publish.yml]
+        DISPATCH[Manual Trigger] --> PUB[release-marketplace-stable.yml]
         PUB --> VSCE[Publish to Marketplace]
     end
 ```
 
 ## Workflow Inventory
 
-| Workflow                           | Trigger                 | Purpose                                         |
-|------------------------------------|-------------------------|-------------------------------------------------|
-| `pr-validation.yml`                | Pull request, manual    | Pre-merge quality gate with parallel validation |
-| `main.yml`                         | Push to main, manual    | Post-merge validation and release automation    |
-| `weekly-security-maintenance.yml`  | Sunday 2 AM UTC, manual | Scheduled security posture review               |
-| `security-scan.yml`                | Push to main/develop    | CodeQL security validation                      |
-| `extension-publish.yml`            | Manual                  | VS Code extension marketplace publishing        |
-| `extension-publish-prerelease.yml` | Manual                  | VS Code extension pre-release publishing        |
-| `copilot-setup-steps.yml`          | Manual                  | Coding agent environment setup                  |
-| `prerelease-release.yml`           | PR closed               | Pre-release tag and publish on merge to main    |
-| `prerelease.yml`                   | Push to main            | Pre-release companion PR management             |
-| `scorecard.yml`                    | Schedule, push          | OpenSSF Scorecard security analysis             |
-| `codeql-analysis.yml`              | Schedule                | Weekly CodeQL security scan (also reusable)     |
-| `dependency-review.yml`            | Pull request            | Dependency vulnerability review (also reusable) |
-| `sha-staleness-check.yml`          | Manual                  | SHA reference freshness check (also reusable)   |
+| Workflow                             | Trigger                 | Purpose                                         |
+|--------------------------------------|-------------------------|-------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual    | Pre-merge quality gate with parallel validation |
+| `release-stable.yml`                 | Push to main, manual    | Post-merge validation and release automation    |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual | Scheduled security posture review               |
+| `security-scan.yml`                  | Push to main/develop    | CodeQL security validation                      |
+| `release-marketplace-stable.yml`     | Manual                  | VS Code extension marketplace publishing        |
+| `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing        |
+| `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                  |
+| `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main    |
+| `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management             |
+| `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis             |
+| `codeql-analysis.yml`                | Schedule                | Weekly CodeQL security scan (also reusable)     |
+| `dependency-review.yml`              | Pull request            | Dependency vulnerability review (also reusable) |
+| `sha-staleness-check.yml`            | Manual                  | SHA reference freshness check (also reusable)   |
 
 ### Reusable Workflows
 
@@ -85,7 +85,7 @@ Individual validation workflows called by orchestration workflows:
 | `gitleaks-scan.yml`                 | Secret detection scanning        | N/A (gitleaks direct)               |
 | `plugin-package.yml`                | Plugin collection packaging      | N/A                                 |
 | `plugin-validation.yml`             | Plugin and collection metadata   | `npm run lint:collections-metadata` |
-| `extension-publish-marketplace.yml` | Extension marketplace publishing | N/A                                 |
+| `extension-marketplace-publish.yml` | Extension marketplace publishing | N/A                                 |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
 
@@ -146,7 +146,7 @@ All jobs run in parallel with no dependencies, enabling fast feedback (typically
 
 ## Main Branch Pipeline
 
-The `main.yml` workflow runs after merges to main, performing validation and release automation.
+The `release-stable.yml` workflow runs after merges to main, performing validation and release automation.
 
 ```mermaid
 flowchart LR
@@ -220,15 +220,15 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 
 ## Extension Publishing
 
-The `extension-publish.yml` and `extension-publish-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per collection.
+The `release-marketplace-stable.yml` and `release-marketplace-prerelease.yml` workflows handle VS Code extension marketplace publishing through manual dispatch. Both workflows use collection-based packaging to produce and publish a separate VSIX per collection.
 
 ```mermaid
 flowchart TD
-    subgraph Stable["extension-publish.yml"]
+    subgraph Stable["release-marketplace-stable.yml"]
         NV[normalize-version] --> PKG1["package (matrix)"]
         PKG1 --> PUB1["publish (matrix)"]
     end
-    subgraph PreRelease["extension-publish-prerelease.yml"]
+    subgraph PreRelease["release-marketplace-prerelease.yml"]
         VV[validate-version] --> PKG2["package (matrix)"]
         PKG2 --> PUB2["publish (matrix)"]
     end
@@ -236,12 +236,12 @@ flowchart TD
 
 ### Publishing Jobs
 
-| Job               | Purpose                                                     | Workflow                           |
-|-------------------|-------------------------------------------------------------|------------------------------------|
-| normalize-version | Ensure version consistency                                  | `extension-publish.yml`            |
-| validate-version  | Enforce odd minor version for pre-release channel           | `extension-publish-prerelease.yml` |
-| package (matrix)  | Build one VSIX per collection using `extension-package.yml` | Both                               |
-| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce     | Both                               |
+| Job               | Purpose                                                     | Workflow                             |
+|-------------------|-------------------------------------------------------------|--------------------------------------|
+| normalize-version | Ensure version consistency                                  | `release-marketplace-stable.yml`     |
+| validate-version  | Enforce odd minor version for pre-release channel           | `release-marketplace-prerelease.yml` |
+| package (matrix)  | Build one VSIX per collection using `extension-package.yml` | Both                                 |
+| publish (matrix)  | Upload each VSIX to VS Code Marketplace via OIDC + vsce     | Both                                 |
 
 ### Collection-Based Packaging
 

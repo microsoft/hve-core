@@ -311,8 +311,8 @@ Affected workflow jobs:
 
 | Workflow                          | Job                          |
 |-----------------------------------|------------------------------|
-| `main.yml`                        | `dependency-pinning-scan`    |
-| `main.yml`                        | `gitleaks-scan`              |
+| `release-stable.yml`              | `dependency-pinning-scan`    |
+| `release-stable.yml`              | `gitleaks-scan`              |
 | `pr-validation.yml`               | `dependency-pinning-check`   |
 | `pr-validation.yml`               | `workflow-permissions-check` |
 | `pr-validation.yml`               | `gitleaks-scan`              |
@@ -916,7 +916,7 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 | Workflow                        | Trigger            | Security Checks                                                |
 |---------------------------------|--------------------|----------------------------------------------------------------|
 | pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
-| main.yml                        | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
+| release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
 | codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
 | dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
 | weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL                                     |

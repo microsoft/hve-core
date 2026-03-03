@@ -1,4 +1,4 @@
-name: Publish Extension to Marketplace
+name: Extension Marketplace Publish
 
 on:
   workflow_call:

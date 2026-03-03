@@ -55,11 +55,11 @@ Install-Module -Name PowerShell-Yaml -Scope CurrentUser
 
 The extension is automatically packaged and published through GitHub Actions:
 
-| Workflow                                  | Trigger           | Purpose                                     |
-|-------------------------------------------|-------------------|---------------------------------------------|
-| `.github/workflows/extension-package.yml` | Reusable workflow | Packages extension with flexible versioning |
-| `.github/workflows/extension-publish.yml` | Release/manual    | Publishes to VS Code Marketplace            |
-| `.github/workflows/main.yml`              | Push to main      | Includes extension packaging in CI          |
+| Workflow                                           | Trigger           | Purpose                                     |
+|----------------------------------------------------|-------------------|---------------------------------------------|
+| `.github/workflows/extension-package.yml`          | Reusable workflow | Packages extension with flexible versioning |
+| `.github/workflows/release-marketplace-stable.yml` | Release/manual    | Publishes to VS Code Marketplace            |
+| `.github/workflows/release-stable.yml`             | Push to main      | Includes extension packaging in CI          |
 
 ## Packaging Pipeline Overview
 

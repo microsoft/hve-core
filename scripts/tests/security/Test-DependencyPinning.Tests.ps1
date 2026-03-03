@@ -602,7 +602,7 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
         }
 
         It 'Passes through non-matching paths' {
-            $filePath = 'C:\repo\.github\workflows\main.yml'
+            $filePath = 'C:\repo\.github\workflows\release-stable.yml'
             $pattern = 'vendor'
 
             $filePath -notlike "*$pattern*" | Should -BeTrue

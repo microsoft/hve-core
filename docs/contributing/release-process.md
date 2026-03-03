@@ -98,7 +98,7 @@ VS Code extension publishing is manual via GitHub Actions workflow dispatch.
 
 ### Publishing Steps
 
-1. Navigate to **Actions → Publish Extension** in the repository (see [extension-publish.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/extension-publish.yml) for workflow details)
+1. Navigate to **Actions → Stable Marketplace Publish** in the repository (see [release-marketplace-stable.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml) for workflow details)
 2. Select **Run workflow**
 3. Choose the `main` branch
 4. Optionally specify a version (defaults to `package.json` version)

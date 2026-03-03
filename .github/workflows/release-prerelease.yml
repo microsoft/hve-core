@@ -1,4 +1,4 @@
-name: Pre-Release Publish
+name: Pre-Release Pipeline
 
 on:
   pull_request:
