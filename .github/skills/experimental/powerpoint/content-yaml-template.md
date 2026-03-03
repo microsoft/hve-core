@@ -10,6 +10,8 @@ Use this template when creating or updating a slide's `content.yaml` file. Each 
 * Speaker notes are required on all content slides when `speaker_notes_required: true` is set in the global style.
 * Use `style_overrides` to change colors or typography for a specific slide without modifying the global style.
 * The `layout` field is informational and helps describe the slide structure; it does not auto-apply a PowerPoint layout.
+* The `background` block sets a per-slide background fill. When omitted, the `bg_dark` color from the global style applies.
+* The `rotation` field (degrees, 0–360) is supported on `shape`, `textbox`, and `image` elements. Omit or set to 0 for no rotation.
 
 ## Template
 
@@ -19,6 +21,10 @@ slide: 1
 title: "Production-Grade AI-Assisted Software Engineering"
 section: "Introduction"
 layout: "title"       # title | content | divider | two-column | blank
+
+# Optional per-slide background (overrides global bg_dark)
+background:
+  fill: "#1B1B1F"     # solid color fill; use $color_name or #RRGGBB
 
 # Optional per-slide style overrides (merged over global style.yaml)
 style_overrides:
@@ -46,7 +52,8 @@ elements:
     font: "$body_font"
     font_size: 36
     font_color: "$text_white"
-    bold: true
+    font_bold: true
+    alignment: left       # left | center | right | justify
 
   - type: textbox
     left: 0.8
@@ -66,6 +73,7 @@ elements:
     height: 0.55
     fill: "$accent_blue"
     corner_radius: 0.1
+    rotation: 270           # degrees; vertical text bottom-to-top
     text: "HYPER-VELOCITY ENGINEERING"
     text_font: "$body_font"
     text_size: 11
@@ -78,6 +86,7 @@ elements:
     top: 0
     width: 13.333
     height: 7.5
+    rotation: 0              # optional; degrees 0-360
 
   - type: rich_text
     left: 0.8
@@ -170,3 +179,52 @@ speaker_notes: |
 | `pentagon` | `MSO_SHAPE.PENTAGON` |
 | `hexagon` | `MSO_SHAPE.HEXAGON` |
 | `right_triangle` | `MSO_SHAPE.RIGHT_TRIANGLE` |
+
+## Slide-Level Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `slide` | `int` | 1-based slide number |
+| `title` | `string` | Slide title (informational) |
+| `section` | `string` | Optional section grouping |
+| `layout` | `string` | Informational layout hint: `title`, `content`, `divider`, `two-column`, `blank` |
+| `background` | `object` | Per-slide background; contains `fill` with a color value. Overrides global `bg_dark` |
+| `style_overrides` | `object` | Per-slide color and typography overrides merged over global style |
+| `speaker_notes` | `string` | Speaker notes text; required when `speaker_notes_required` is true |
+
+## Common Element Fields
+
+These optional fields apply to `shape`, `textbox`, and `image` element types:
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `left` | `float` | — | Horizontal position in inches |
+| `top` | `float` | — | Vertical position in inches |
+| `width` | `float` | — | Element width in inches |
+| `height` | `float` | — | Element height in inches |
+| `name` | `string` | auto | Shape name for identification |
+| `rotation` | `float` | `0` | Rotation in degrees (0–360); 90 = clockwise quarter turn, 270 = counter-clockwise |
+
+## Textbox Fields
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `text` | `string` | — | Text content; use `\n` for line breaks |
+| `font` | `string` | `$body_font` | Font family name or `$reference` |
+| `font_size` | `int` | `body_size` | Font size in points |
+| `font_color` | `string` | `$text_white` | Text color as `$name` or `#RRGGBB` |
+| `font_bold` | `bool` | `false` | Bold text weight. `bold` is accepted as an alias |
+| `italic` | `bool` | `false` | Italic text style |
+| `alignment` | `string` | inherited | Paragraph alignment: `left`, `center`, `right`, `justify` |
+
+## Shape Text Fields
+
+When a shape contains inline text, use these prefixed fields:
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `text` | `string` | — | Text displayed inside the shape |
+| `text_font` | `string` | `$body_font` | Font family for shape text |
+| `text_size` | `int` | `16` | Font size in points for shape text |
+| `text_color` | `string` | — | Text color as `$name` or `#RRGGBB` |
+| `text_bold` | `bool` | `false` | Bold text weight for shape text |

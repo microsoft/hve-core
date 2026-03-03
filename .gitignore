@@ -345,6 +345,8 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
 *.pyc
+venv/
+.venv/
 
 # Cake - Uncomment if you are using it
 #tools/**
