@@ -51,6 +51,36 @@ def _is_freeform(shape) -> bool:
     return shape._element.find(".//a:custGeom", nsmap) is not None
 
 
+def _is_background_image(shape, slide_w: float, slide_h: float) -> bool:
+    """Detect whether a PICTURE shape covers the full slide as a background.
+
+    A shape qualifies if it covers at least 95% of slide dimensions.
+    """
+    w = emu_to_inches(shape.width)
+    h = emu_to_inches(shape.height)
+    return (w >= slide_w * 0.95) and (h >= slide_h * 0.95)
+
+
+def _save_image_blob(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
+    """Save an image shape's blob to disk and return a path dict."""
+    try:
+        img = shape.image
+    except ValueError:
+        return {"path": "LINKED_IMAGE_NOT_EMBEDDED"}
+
+    ext = img.content_type.split("/")[-1]
+    if ext == "jpeg":
+        ext = "jpg"
+    img_name = f"image-{img_count:02d}.{ext}"
+    img_path = output_dir / "images" / img_name
+    img_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(img_path, "wb") as f:
+        f.write(img.blob)
+
+    return {"path": f"images/{img_name}"}
+
+
 def extract_freeform(shape) -> dict:
     """Extract a freeform shape with its path vertices."""
     elem = {
@@ -378,7 +408,11 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
 
 
 def detect_global_style(prs) -> dict:
-    """Analyze the presentation to detect common styling patterns."""
+    """Analyze the presentation to detect common styling patterns.
+
+    Detects multiple theme zones (e.g., light and dark slides) by clustering
+    slides based on background brightness and dominant text colors.
+    """
     bg_colors = Counter()
     text_colors = Counter()
     accent_colors = Counter()
@@ -386,26 +420,45 @@ def detect_global_style(prs) -> dict:
     font_names = Counter()
     font_sizes = Counter()
 
-    for slide in prs.slides:
+    # Per-slide analysis for theme clustering
+    slide_profiles = []
+
+    slide_w = emu_to_inches(prs.slide_width)
+    slide_h = emu_to_inches(prs.slide_height)
+
+    for slide_idx, slide in enumerate(prs.slides):
+        slide_num = slide_idx + 1
+        slide_bg = None
+        slide_text_colors = Counter()
+        slide_fill_colors = Counter()
+        has_bg_image = False
+
         # Detect background colors
         try:
             fill_result = extract_fill(slide.background.fill)
             if isinstance(fill_result, str):
                 bg_colors[fill_result] += 1
+                slide_bg = fill_result
         except (AttributeError, TypeError):
             pass
 
-        for shape in slide.shapes:
+        for i, shape in enumerate(slide.shapes):
+            # Detect full-slide background images
+            if (i == 0 and shape.shape_type == 13
+                    and _is_background_image(shape, slide_w, slide_h)):
+                has_bg_image = True
+                continue
+
             # Collect fill colors
             try:
                 fill_result = extract_fill(shape.fill)
                 if isinstance(fill_result, str):
-                    # Thin horizontal bars are accent colors
                     h = emu_to_inches(shape.height)
                     if h < 0.1:
                         accent_colors[fill_result] += 1
                     else:
                         fill_colors[fill_result] += 1
+                        slide_fill_colors[fill_result] += 1
             except (AttributeError, TypeError):
                 pass
 
@@ -414,7 +467,6 @@ def detect_global_style(prs) -> dict:
                 for para in shape.text_frame.paragraphs:
                     for run in para.runs:
                         if run.font.name:
-                            # Separate font family from weight suffix
                             base_name = normalize_font_family(run.font.name)
                             font_names[base_name] += 1
                         if run.font.size:
@@ -423,33 +475,28 @@ def detect_global_style(prs) -> dict:
                             color = extract_color(run.font.color)
                             if isinstance(color, str) and color.startswith("#"):
                                 text_colors[color] += 1
+                                slide_text_colors[color] += 1
                         except (AttributeError, TypeError):
                             pass
 
-    # Build color map from frequency analysis
-    colors = {}
-    if bg_colors:
-        colors["bg_dark"] = bg_colors.most_common(1)[0][0]
-    if fill_colors:
-        colors["bg_card"] = fill_colors.most_common(1)[0][0]
+        # Classify slide brightness
+        bg_brightness = _classify_slide_brightness(slide_bg, slide_text_colors, has_bg_image)
+        slide_profiles.append({
+            "slide": slide_num,
+            "bg_color": slide_bg,
+            "bg_brightness": bg_brightness,
+            "has_bg_image": has_bg_image,
+            "text_colors": dict(slide_text_colors),
+            "fill_colors": dict(slide_fill_colors),
+        })
 
-    # Assign text colors by brightness
-    for color_hex, _count in text_colors.most_common(5):
-        brightness = hex_brightness(color_hex)
-        if brightness > 200 and "text_white" not in colors:
-            colors["text_white"] = color_hex
-        elif brightness < 80 and "text_dark" not in colors:
-            colors["text_dark"] = color_hex
-        elif 80 <= brightness <= 200 and "text_gray" not in colors:
-            colors["text_gray"] = color_hex
+    # Build global color map from frequency analysis
+    colors = _build_color_map(bg_colors, fill_colors, text_colors, accent_colors)
 
-    # Assign accent colors from thin bars
-    accent_names = ["accent_blue", "accent_teal", "accent_green"]
-    for i, (color_hex, _count) in enumerate(accent_colors.most_common(3)):
-        if i < len(accent_names):
-            colors[accent_names[i]] = color_hex
+    # Detect themes by clustering slides into light/dark groups
+    themes = _cluster_themes(slide_profiles, text_colors, fill_colors, accent_colors)
 
-    # Determine primary fonts (base family, not weight-specific)
+    # Determine primary fonts
     body_font = "Segoe UI"
     code_font = "Cascadia Code"
     for f, _count in font_names.most_common():
@@ -459,11 +506,10 @@ def detect_global_style(prs) -> dict:
             body_font = f
             break
 
-    # Determine font sizes using frequency-based median for body, 75th percentile for heading
+    # Determine font sizes
     heading_size = 28
     body_size = 16
     if font_sizes:
-        # Filter outliers: ignore sizes below 8pt and above 60pt
         filtered = {s: c for s, c in font_sizes.items() if 8 < s < 60}
         if filtered:
             sorted_sizes = sorted(filtered.keys())
@@ -488,6 +534,9 @@ def detect_global_style(prs) -> dict:
         },
     }
 
+    if themes:
+        style["themes"] = themes
+
     # Extract presentation metadata
     metadata = {}
     props = prs.core_properties
@@ -501,7 +550,125 @@ def detect_global_style(prs) -> dict:
     return style
 
 
-def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
+def _classify_slide_brightness(bg_color: str | None, text_colors: Counter,
+                                has_bg_image: bool) -> str:
+    """Classify a slide as 'light' or 'dark' based on background and text colors."""
+    if has_bg_image and bg_color is None:
+        # Slides with background images and no solid bg — infer from text colors
+        dark_text = sum(c for hex_c, c in text_colors.items()
+                        if hex_brightness(hex_c) < 100)
+        light_text = sum(c for hex_c, c in text_colors.items()
+                         if hex_brightness(hex_c) > 150)
+        return "light" if dark_text >= light_text else "dark"
+
+    if bg_color and isinstance(bg_color, str) and bg_color.startswith("#"):
+        return "light" if hex_brightness(bg_color) > 128 else "dark"
+
+    # Default: infer from text colors
+    dark_text = sum(c for hex_c, c in text_colors.items()
+                    if hex_brightness(hex_c) < 100)
+    light_text = sum(c for hex_c, c in text_colors.items()
+                     if hex_brightness(hex_c) > 150)
+    if dark_text > light_text:
+        return "light"
+    if light_text > dark_text:
+        return "dark"
+    return "dark"
+
+
+def _build_color_map(bg_colors: Counter, fill_colors: Counter,
+                     text_colors: Counter, accent_colors: Counter) -> dict:
+    """Build the global color map from frequency analysis."""
+    colors = {}
+    if bg_colors:
+        colors["bg_dark"] = bg_colors.most_common(1)[0][0]
+    if fill_colors:
+        colors["bg_card"] = fill_colors.most_common(1)[0][0]
+
+    for color_hex, _count in text_colors.most_common(5):
+        brightness = hex_brightness(color_hex)
+        if brightness > 200 and "text_white" not in colors:
+            colors["text_white"] = color_hex
+        elif brightness < 80 and "text_dark" not in colors:
+            colors["text_dark"] = color_hex
+        elif 80 <= brightness <= 200 and "text_gray" not in colors:
+            colors["text_gray"] = color_hex
+
+    accent_names = ["accent_blue", "accent_teal", "accent_green"]
+    for i, (color_hex, _count) in enumerate(accent_colors.most_common(3)):
+        if i < len(accent_names):
+            colors[accent_names[i]] = color_hex
+
+    return colors
+
+
+def _cluster_themes(slide_profiles: list[dict], text_colors: Counter,
+                    fill_colors: Counter, accent_colors: Counter) -> list[dict]:
+    """Cluster slides into theme groups based on brightness classification."""
+    light_slides = [p for p in slide_profiles if p["bg_brightness"] == "light"]
+    dark_slides = [p for p in slide_profiles if p["bg_brightness"] == "dark"]
+
+    # Only produce themes when both light and dark groups exist
+    if not light_slides or not dark_slides:
+        return []
+
+    themes = []
+
+    # Light theme
+    light_text = Counter()
+    light_fills = Counter()
+    for p in light_slides:
+        light_text.update(p["text_colors"])
+        light_fills.update(p["fill_colors"])
+
+    light_colors = {}
+    for color_hex, _count in light_text.most_common(5):
+        brightness = hex_brightness(color_hex)
+        if brightness < 80 and "text_primary" not in light_colors:
+            light_colors["text_primary"] = color_hex
+        elif 80 <= brightness <= 200 and "text_secondary" not in light_colors:
+            light_colors["text_secondary"] = color_hex
+    if light_fills:
+        light_colors["bg_card"] = light_fills.most_common(1)[0][0]
+
+    themes.append({
+        "name": "light",
+        "slides": sorted(p["slide"] for p in light_slides),
+        "colors": light_colors,
+    })
+
+    # Dark theme
+    dark_text = Counter()
+    dark_fills = Counter()
+    dark_bgs = Counter()
+    for p in dark_slides:
+        dark_text.update(p["text_colors"])
+        dark_fills.update(p["fill_colors"])
+        if p["bg_color"]:
+            dark_bgs[p["bg_color"]] += 1
+
+    dark_colors = {}
+    if dark_bgs:
+        dark_colors["bg_dark"] = dark_bgs.most_common(1)[0][0]
+    for color_hex, _count in dark_text.most_common(5):
+        brightness = hex_brightness(color_hex)
+        if brightness > 200 and "text_primary" not in dark_colors:
+            dark_colors["text_primary"] = color_hex
+        elif 80 <= brightness <= 200 and "text_secondary" not in dark_colors:
+            dark_colors["text_secondary"] = color_hex
+    if dark_fills:
+        dark_colors["bg_card"] = dark_fills.most_common(1)[0][0]
+
+    themes.append({
+        "name": "dark",
+        "slides": sorted(p["slide"] for p in dark_slides),
+        "colors": dark_colors,
+    })
+
+    return themes
+
+
+def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[float, float] | None = None) -> dict:
     """Extract all elements from a slide into a content.yaml structure."""
     slide_dir = output_dir / f"slide-{slide_num:03d}"
     slide_dir.mkdir(parents=True, exist_ok=True)
@@ -537,16 +704,41 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
     except (AttributeError, TypeError):
         pass
 
+    # Use provided slide dimensions for background image detection
+    slide_w = slide_dims[0] if slide_dims else 13.333
+    slide_h = slide_dims[1] if slide_dims else 7.5
+
     img_count = 0
-    for shape in slide.shapes:
+    # Detect background images: full-slide pictures at the bottom of the z-order.
+    # Check z=0 and z=1 independently — some decks layer decorative images under
+    # the main background image.
+    bg_image_indices = set()
+    shapes_list = list(slide.shapes)
+    for z_index in range(min(2, len(shapes_list))):
+        shape = shapes_list[z_index]
+        if (shape.shape_type == 13
+                and _is_background_image(shape, slide_w, slide_h)):
+            bg_image_indices.add(z_index)
+
+    for z_index, shape in enumerate(shapes_list):
         shape_type = shape.shape_type
+
+        # Convert detected background images to background entries
+        if z_index in bg_image_indices:
+            img_count += 1
+            img = _save_image_blob(shape, slide_dir, slide_num, img_count)
+            # Use the last (topmost) background image as the slide background
+            content["background"] = {"image": img["path"]}
+            continue
 
         if shape_type == 13:  # PICTURE
             img_count += 1
             elem = extract_image(shape, slide_dir, slide_num, img_count)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif shape_type == 17:  # TEXT_BOX
             elem = extract_textbox(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
             # Detect title (first large text near top)
             if not content["title"] and emu_to_inches(shape.top) < 1.5:
@@ -555,29 +747,36 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
                     content["title"] = text
         elif shape_type == 1:  # AUTO_SHAPE
             elem = extract_shape(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif shape_type == 14:  # PLACEHOLDER
             # Placeholders may contain text; extract like textboxes
             if shape.has_text_frame:
                 elem = extract_textbox(shape)
                 elem["_placeholder"] = True
+                elem["z_order"] = z_index
                 content["elements"].append(elem)
         elif shape_type == 6:  # GROUP
             elem = extract_group(shape, slide_num, slide_dir, img_count)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif shape_type == 9:  # LINE / CONNECTOR
             elem = extract_connector(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif hasattr(shape, "has_table") and shape.has_table:
             from pptx_tables import extract_table
             elem = extract_table(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif hasattr(shape, "has_chart") and shape.has_chart:
             from pptx_charts import extract_chart
             elem = extract_chart(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         elif _is_freeform(shape):
             elem = extract_freeform(shape)
+            elem["z_order"] = z_index
             content["elements"].append(elem)
         else:
             # Log unrecognized shape types for manual review
@@ -589,6 +788,7 @@ def extract_slide(slide, slide_num: int, output_dir: Path) -> dict:
                 "width": emu_to_inches(shape.width),
                 "height": emu_to_inches(shape.height),
                 "name": shape.name,
+                "z_order": z_index,
             }
             if shape_type is not None:
                 elem_data["_unrecognized_shape_type"] = int(shape_type)
@@ -627,12 +827,13 @@ def main():
     print(f"Global style saved to {style_path}")
 
     # Extract slides (filtered or all)
+    slide_dims = (emu_to_inches(prs.slide_width), emu_to_inches(prs.slide_height))
     extracted = 0
     for i, slide in enumerate(prs.slides):
         slide_num = i + 1
         if slide_filter and slide_num not in slide_filter:
             continue
-        content, slide_dir = extract_slide(slide, slide_num, output_dir)
+        content, slide_dir = extract_slide(slide, slide_num, output_dir, slide_dims=slide_dims)
 
         content_path = slide_dir / "content.yaml"
         with open(content_path, "w", encoding="utf-8") as f:

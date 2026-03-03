@@ -36,6 +36,49 @@ def set_slide_bg(slide, fill_spec, colors: dict):
     apply_fill(slide.background, fill_spec, colors)
 
 
+def set_slide_bg_image(slide, image_path: str, content_dir: Path):
+    """Set a background image on a slide using blipFill in the background element."""
+    img_file = content_dir / image_path
+    if not img_file.exists():
+        return
+
+    from pptx.opc.constants import RELATIONSHIP_TYPE as RT
+    from pptx.parts.image import Image, ImagePart
+
+    cSld = slide.background._element  # p:cSld element
+    spTree = cSld.find(qn("p:spTree"))
+
+    # Remove existing p:bg element if present
+    existing_bg = cSld.find(qn("p:bg"))
+    if existing_bg is not None:
+        cSld.remove(existing_bg)
+
+    # Create image part and relate to slide
+    image = Image.from_file(str(img_file))
+    image_part = ImagePart.new(slide.part.package, image)
+    rel = slide.part.relate_to(image_part, RT.IMAGE)
+
+    # Build p:bg > p:bgPr > a:blipFill structure
+    bg = etree.SubElement(cSld, qn("p:bg"))
+    bgPr = etree.SubElement(bg, qn("p:bgPr"))
+    blipFill = etree.SubElement(bgPr, qn("a:blipFill"))
+    blipFill.set("dpi", "0")
+    blipFill.set("rotWithShape", "1")
+
+    blip = etree.SubElement(blipFill, qn("a:blip"))
+    blip.set(qn("r:embed"), rel)
+
+    stretch = etree.SubElement(blipFill, qn("a:stretch"))
+    etree.SubElement(stretch, qn("a:fillRect"))
+
+    etree.SubElement(bgPr, qn("a:effectLst"))
+
+    # Ensure p:bg appears before p:spTree (required by schema)
+    if spTree is not None:
+        cSld.remove(bg)
+        cSld.insert(list(cSld).index(spTree), bg)
+
+
 
 def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
                 font_size=16, font_color=None, bold=False, italic=False,
@@ -549,13 +592,16 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
 
     # Set background from per-slide definition or global style
     bg_block = slide_content.get("background")
-    if bg_block and "fill" in bg_block:
+    if bg_block and "image" in bg_block:
+        set_slide_bg_image(slide, bg_block["image"], content_dir)
+    elif bg_block and "fill" in bg_block:
         set_slide_bg(slide, bg_block["fill"], colors)
     else:
         set_slide_bg(slide, colors.get("bg_dark", "#1B1B1F"), colors)
 
-    # Enable turbo mode for dense slides
+    # Sort elements by z_order to preserve stacking order
     elements = slide_content.get("elements", [])
+    elements = sorted(elements, key=lambda e: e.get("z_order", 0))
     turbo_enabled = len(elements) > 20
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = True
