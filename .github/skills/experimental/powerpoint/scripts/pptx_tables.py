@@ -38,8 +38,8 @@ def add_table_element(slide, elem: dict, colors: dict, typography: dict):
       rows:
         - cells:
             - text: "Header"
-              fill: "$accent_blue"
-              font_color: "$text_white"
+              fill: "#0078D4"
+              font_color: "#F8F8FC"
               font_bold: true
               merge_right: 2
     """

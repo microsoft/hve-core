@@ -19,10 +19,10 @@ from pptx.util import Inches, Pt
 
 from pptx_colors import apply_color_to_font, resolve_color
 from pptx_fills import apply_fill, apply_line
-from pptx_fonts import ALIGNMENT_MAP, resolve_font
+from pptx_fonts import ALIGNMENT_MAP
 from pptx_shapes import SHAPE_MAP, apply_rotation
 from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties
-from pptx_utils import load_yaml, merge_styles
+from pptx_utils import load_yaml
 
 CONNECTOR_TYPE_MAP = {
     "straight": MSO_CONNECTOR_TYPE.STRAIGHT,
@@ -96,7 +96,8 @@ def add_textbox(slide, left, top, width, height, text, font_name="Segoe UI",
     if elem:
         apply_text_properties(tf, elem)
 
-    lines = text.split("\n") if "\n" in text else [text]
+    # Split on newlines and vertical tabs (\v / \x0b) which map to <a:br/>
+    lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
 
     for i, line in enumerate(lines):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
@@ -142,17 +143,20 @@ def add_shape_element(slide, elem, colors, typography):
         tf = shape.text_frame
         tf.word_wrap = True
         apply_text_properties(tf, elem)
-        p = tf.paragraphs[0]
-        p.text = elem["text"]
-        apply_paragraph_properties(p, elem)
-        run = p.runs[0]
-        run.font.name = resolve_font(elem.get("text_font", "$body_font"), typography)
-        run.font.size = Pt(elem.get("text_size", 16))
-        if "text_color" in elem:
-            color_spec = resolve_color(elem["text_color"], colors)
-            apply_color_to_font(run.font.color, color_spec)
-        run.font.bold = elem.get("text_bold", False)
-        apply_run_properties(run, elem, colors)
+        text = elem["text"]
+        lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
+        for i, line in enumerate(lines):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            apply_paragraph_properties(p, elem)
+            run = p.add_run()
+            run.text = line
+            run.font.name = elem.get("text_font", "Segoe UI")
+            run.font.size = Pt(elem.get("text_size", 16))
+            if "text_color" in elem:
+                color_spec = resolve_color(elem["text_color"])
+                apply_color_to_font(run.font.color, color_spec)
+            run.font.bold = elem.get("text_bold", False)
+            apply_run_properties(run, elem, colors)
 
     return shape
 
@@ -195,10 +199,10 @@ def add_rich_text_element(slide, elem, colors, typography):
     for i, seg in enumerate(elem.get("segments", [])):
         run = p.add_run() if i > 0 else (p.runs[0] if p.runs else p.add_run())
         run.text = seg["text"]
-        run.font.name = resolve_font(seg.get("font", "$body_font"), typography)
+        run.font.name = seg.get("font", "Segoe UI")
         run.font.size = Pt(seg.get("size", 16))
         if "color" in seg:
-            color_spec = resolve_color(seg["color"], colors)
+            color_spec = resolve_color(seg["color"])
             apply_color_to_font(run.font.color, color_spec)
         run.font.bold = seg.get("bold", False)
         run.font.italic = seg.get("italic", False)
@@ -216,7 +220,7 @@ def add_card_element(slide, elem, colors, typography):
 
     # Card background
     shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
-    apply_fill(shape, elem.get("fill", "$bg_card"), colors)
+    apply_fill(shape, elem.get("fill", "#2D2D35"), colors)
     if "border_color" in elem:
         apply_line(shape, {"line_color": elem["border_color"], "line_width": elem.get("border_width", 1)}, colors)
     else:
@@ -229,7 +233,7 @@ def add_card_element(slide, elem, colors, typography):
             Inches(elem["left"] + 0.15), Inches(elem["top"] + 0.1),
             Inches(elem["width"] - 0.3), Inches(0.04)
         )
-        apply_fill(bar, elem.get("accent_color", "$accent_blue"), colors)
+        apply_fill(bar, elem.get("accent_color", "#0078D4"), colors)
         bar.line.fill.background()
 
     # Title
@@ -239,9 +243,9 @@ def add_card_element(slide, elem, colors, typography):
             slide, elem["left"] + 0.2, elem["top"] + y_offset,
             elem["width"] - 0.4, 0.4,
             elem["title"],
-            font_name=resolve_font("$body_font", typography),
+            font_name="Segoe UI",
             font_size=elem.get("title_size", 16),
-            font_color=resolve_color(elem.get("title_color", "$text_white"), colors),
+            font_color=resolve_color(elem.get("title_color", "#F8F8FC")),
             bold=elem.get("title_bold", True)
         )
         y_offset += 0.5
@@ -249,12 +253,12 @@ def add_card_element(slide, elem, colors, typography):
     # Content bullets
     for item in elem.get("content", []):
         bullet_text = f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
-        color = resolve_color(item.get("color", "$text_white"), colors)
+        color = resolve_color(item.get("color", "#F8F8FC"))
         add_textbox(
             slide, elem["left"] + 0.2, elem["top"] + y_offset,
             elem["width"] - 0.4, 0.35,
             bullet_text,
-            font_name=resolve_font("$body_font", typography),
+            font_name="Segoe UI",
             font_size=item.get("size", 14),
             font_color=color
         )
@@ -279,7 +283,7 @@ def add_arrow_flow_element(slide, elem, colors, typography):
             Inches(x), Inches(elem["top"]),
             Inches(item_width), Inches(elem["height"])
         )
-        apply_fill(shape, item.get("color", "$accent_blue"), colors)
+        apply_fill(shape, item.get("color", "#0078D4"), colors)
         shape.line.fill.background()
 
         tf = shape.text_frame
@@ -288,9 +292,9 @@ def add_arrow_flow_element(slide, elem, colors, typography):
         p.text = item["label"]
         p.alignment = ALIGNMENT_MAP["center"]
         run = p.runs[0]
-        run.font.name = resolve_font("$body_font", typography)
+        run.font.name = "Segoe UI"
         run.font.size = Pt(14)
-        apply_color_to_font(run.font.color, resolve_color("$text_white", colors))
+        apply_color_to_font(run.font.color, resolve_color("#F8F8FC"))
         run.font.bold = True
 
         x += item_width + 0.3
@@ -306,16 +310,16 @@ def add_numbered_step_element(slide, elem, colors, typography):
         Inches(elem["left"]), Inches(elem["top"]),
         Inches(0.5), Inches(0.5)
     )
-    apply_fill(circle, elem.get("accent_color", "$accent_blue"), colors)
+    apply_fill(circle, elem.get("accent_color", "#0078D4"), colors)
     circle.line.fill.background()
     tf = circle.text_frame
     p = tf.paragraphs[0]
     p.text = str(number)
     p.alignment = ALIGNMENT_MAP["center"]
     run = p.runs[0]
-    run.font.name = resolve_font("$body_font", typography)
+    run.font.name = "Segoe UI"
     run.font.size = Pt(16)
-    apply_color_to_font(run.font.color, resolve_color("$text_white", colors))
+    apply_color_to_font(run.font.color, resolve_color("#F8F8FC"))
     run.font.bold = True
 
     # Label
@@ -323,9 +327,9 @@ def add_numbered_step_element(slide, elem, colors, typography):
         slide, elem["left"] + 0.6, elem["top"],
         elem["width"] - 0.6, 0.35,
         elem["label"],
-        font_name=resolve_font("$body_font", typography),
+        font_name="Segoe UI",
         font_size=16,
-        font_color=resolve_color("$text_white", colors),
+        font_color=resolve_color("#F8F8FC"),
         bold=True
     )
 
@@ -335,9 +339,9 @@ def add_numbered_step_element(slide, elem, colors, typography):
             slide, elem["left"] + 0.6, elem["top"] + 0.35,
             elem["width"] - 0.6, 0.4,
             elem["description"],
-            font_name=resolve_font("$body_font", typography),
+            font_name="Segoe UI",
             font_size=14,
-            font_color=resolve_color("$text_gray", colors)
+            font_color=resolve_color("#9CA3AF")
         )
 
 
@@ -351,7 +355,7 @@ def add_connector_element(slide, elem: dict, colors: dict):
       begin_y: 2.0
       end_x: 7.0
       end_y: 4.0
-      line_color: "$accent_blue"
+      line_color: "#0078D4"
       line_width: 2
       dash_style: solid
       head_end: none
@@ -407,7 +411,7 @@ def add_group_element(slide, elem: dict, colors: dict, typography: dict,
           top: 0
           width: 5.0
           height: 3.0
-          fill: "$bg_card"
+          fill: "#2D2D35"
         - type: textbox
           left: 0.2
           top: 0.2
@@ -457,14 +461,18 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             tf = shape.text_frame
             tf.word_wrap = True
             apply_text_properties(tf, elem)
-            p = tf.paragraphs[0]
-            p.text = elem["text"]
-            run = p.runs[0]
-            run.font.name = resolve_font(elem.get("text_font", "$body_font"), typography)
-            run.font.size = Pt(elem.get("text_size", 16))
-            if "text_color" in elem:
-                apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
-            run.font.bold = elem.get("text_bold", False)
+            text = elem["text"]
+            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
+            for i, line in enumerate(lines):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                run = p.add_run()
+                run.text = line
+                run.font.name = elem.get("text_font", "Segoe UI")
+                run.font.size = Pt(elem.get("text_size", 16))
+                if "text_color" in elem:
+                    apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
+                run.font.bold = elem.get("text_bold", False)
+                apply_run_properties(run, elem, colors)
     elif elem_type == "textbox":
         txBox = shapes.add_textbox(
             Inches(elem["left"]), Inches(elem["top"]),
@@ -476,7 +484,7 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
         tf.word_wrap = True
         apply_text_properties(tf, elem)
         text = elem.get("text", "")
-        lines = text.split("\n") if "\n" in text else [text]
+        lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
         for i, line in enumerate(lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             if "alignment" in elem:
@@ -484,12 +492,13 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
             apply_paragraph_properties(p, elem)
             run = p.add_run()
             run.text = line
-            run.font.name = resolve_font(elem.get("font", "$body_font"), typography)
+            run.font.name = elem.get("font", "Segoe UI")
             run.font.size = Pt(elem.get("font_size", 16))
             if "font_color" in elem:
                 apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
             run.font.bold = elem.get("font_bold", False)
             run.font.italic = elem.get("italic", False)
+            apply_run_properties(run, elem, colors)
     elif elem_type == "connector":
         add_connector_element(group, elem, colors)
     elif elem_type == "image":
@@ -506,6 +515,12 @@ def clear_slide_shapes(slide):
         sp_tree.remove(sp)
 
 
+def _all_layouts(prs):
+    """Iterate layouts across all slide masters."""
+    for master in prs.slide_masters:
+        yield from master.slide_layouts
+
+
 def _find_blank_layout(prs):
     """Find the best blank layout in the presentation, with fallbacks."""
     # Try index 6 first (default blank in standard templates)
@@ -513,11 +528,11 @@ def _find_blank_layout(prs):
         return prs.slide_layouts[6]
     except IndexError:
         pass
-    # Search by name
-    for layout in prs.slide_layouts:
+    # Search by name across all masters
+    for layout in _all_layouts(prs):
         if layout.name.lower() in ("blank", "blank slide"):
             return layout
-    # Fall back to last layout
+    # Fall back to last layout of first master
     return prs.slide_layouts[len(prs.slide_layouts) - 1]
 
 
@@ -538,13 +553,13 @@ def get_slide_layout(prs, slide_content: dict, style: dict):
             except IndexError:
                 return _find_blank_layout(prs)
         elif isinstance(layout_ref, str):
-            for layout in prs.slide_layouts:
+            for layout in _all_layouts(prs):
                 if layout.name == layout_ref:
                     return layout
 
-    # Direct name lookup
+    # Direct name lookup across all slide masters
     if isinstance(layout_spec, str):
-        for layout in prs.slide_layouts:
+        for layout in _all_layouts(prs):
             if layout.name == layout_spec:
                 return layout
 
@@ -565,15 +580,14 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
     When existing_slide is provided, clears its shapes and rebuilds in place
     instead of appending a new slide.
     """
-    merged_style = merge_styles(style, slide_content.get("style_overrides"))
-    colors = merged_style.get("colors", {})
-    typography = merged_style.get("typography", {})
+    colors = {}
+    typography = {}
 
     if existing_slide is not None:
         slide = existing_slide
         clear_slide_shapes(slide)
     else:
-        layout = get_slide_layout(prs, slide_content, merged_style)
+        layout = get_slide_layout(prs, slide_content, style)
         slide = prs.slides.add_slide(layout)
 
     # Populate themed layout placeholders
@@ -590,18 +604,20 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
                 for line in value[1:]:
                     tf.add_paragraph().text = line
 
-    # Set background from per-slide definition or global style
+    # Set background from per-slide definition only
     bg_block = slide_content.get("background")
     if bg_block and "image" in bg_block:
         set_slide_bg_image(slide, bg_block["image"], content_dir)
     elif bg_block and "fill" in bg_block:
         set_slide_bg(slide, bg_block["fill"], colors)
-    else:
-        set_slide_bg(slide, colors.get("bg_dark", "#1B1B1F"), colors)
 
     # Sort elements by z_order to preserve stacking order
     elements = slide_content.get("elements", [])
     elements = sorted(elements, key=lambda e: e.get("z_order", 0))
+
+    # Filter out empty placeholder elements
+    elements = [e for e in elements if not (e.get("_placeholder") and not e.get("text", "").strip())]
+
     turbo_enabled = len(elements) > 20
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = True
@@ -613,14 +629,14 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         if elem_type == "shape":
             add_shape_element(slide, elem, colors, typography)
         elif elem_type == "textbox":
-            font_name = resolve_font(elem.get("font", "$body_font"), typography)
-            font_color = resolve_color(elem.get("font_color", "$text_white"), colors) if "font_color" in elem else None
+            font_name = elem.get("font", "Segoe UI")
+            font_color = resolve_color(elem["font_color"]) if "font_color" in elem else None
             is_bold = elem.get("font_bold", elem.get("bold", False))
             add_textbox(
                 slide, elem["left"], elem["top"], elem["width"], elem["height"],
                 elem.get("text", ""),
                 font_name=font_name,
-                font_size=elem.get("font_size", typography.get("body_size", 16)),
+                font_size=elem.get("font_size", 16),
                 font_color=font_color,
                 bold=is_bold,
                 italic=elem.get("italic", False),
@@ -658,16 +674,17 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
-            mod.render(slide, merged_style, content_dir)
+            mod.render(slide, style, content_dir)
 
     if turbo_enabled:
         slide.shapes.turbo_add_enabled = False
 
-    # Add speaker notes
-    notes = slide_content.get("speaker_notes", "")
-    if notes:
+    # Add speaker notes (preserve empty strings when notes slide exists)
+    notes = slide_content.get("speaker_notes")
+    if notes is not None:
         notes_slide = slide.notes_slide
-        notes_slide.notes_text_frame.text = notes
+        notes_text = re.sub(r'\v', '\n', notes) if notes else ""
+        notes_slide.notes_text_frame.text = notes_text
 
     return slide
 

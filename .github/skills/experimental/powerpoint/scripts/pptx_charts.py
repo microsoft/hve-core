@@ -49,7 +49,7 @@ def add_chart_element(slide, elem: dict, colors: dict):
       series:
         - name: "East"
           values: [19.2, 22.3, 18.4, 23.1]
-          color: "$accent_blue"
+          color: "#0078D4"
     """
     chart_type_name = elem.get("chart_type", "column_clustered")
     chart_type = CHART_TYPE_MAP.get(chart_type_name, XL_CHART_TYPE.COLUMN_CLUSTERED)

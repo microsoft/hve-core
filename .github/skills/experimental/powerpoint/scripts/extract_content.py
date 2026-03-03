@@ -9,6 +9,7 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
+from lxml import etree
 import yaml
 from pptx import Presentation
 
@@ -270,6 +271,8 @@ def extract_shape(shape) -> dict:
                     elem["underline"] = True
                 if merged.get("hyperlink"):
                     elem["hyperlink"] = merged["hyperlink"]
+                if "char_spacing" in merged:
+                    elem["char_spacing"] = merged["char_spacing"]
                 if para_spacing:
                     elem.update(para_spacing)
                 break
@@ -352,6 +355,8 @@ def extract_textbox(shape) -> dict:
             elem["underline"] = True
         if merged.get("hyperlink"):
             elem["hyperlink"] = merged["hyperlink"]
+        if "char_spacing" in merged:
+            elem["char_spacing"] = merged["char_spacing"]
         if alignment:
             elem["alignment"] = alignment
         if para_spacing:
@@ -521,13 +526,6 @@ def detect_global_style(prs) -> dict:
             "width_inches": emu_to_inches(prs.slide_width),
             "height_inches": emu_to_inches(prs.slide_height),
             "format": "16:9",
-        },
-        "colors": colors,
-        "typography": {
-            "body_font": body_font,
-            "code_font": code_font,
-            "heading_size": heading_size,
-            "body_size": body_size,
         },
         "defaults": {
             "speaker_notes_required": True,
@@ -797,11 +795,85 @@ def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[flo
     return content, slide_dir
 
 
+def _resolve_theme_colors(prs) -> dict:
+    """Extract theme color name→hex mappings from the presentation's theme XML.
+
+    Reads clrScheme from the slide master's theme and maps theme names
+    (background_1, text_1, accent_1, etc.) to their actual hex values.
+    """
+    color_map = {}
+    scheme_names = {
+        'dk1': 'dark_1', 'dk2': 'dark_2',
+        'lt1': 'light_1', 'lt2': 'light_2',
+        'accent1': 'accent_1', 'accent2': 'accent_2',
+        'accent3': 'accent_3', 'accent4': 'accent_4',
+        'accent5': 'accent_5', 'accent6': 'accent_6',
+        'hlink': 'hyperlink', 'folHlink': 'followed_hyperlink',
+    }
+    # Map canonical aliases
+    aliases = {
+        'dark_1': 'text_1', 'dark_2': 'text_2',
+        'light_1': 'background_1', 'light_2': 'background_2',
+    }
+    try:
+        ns_a = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        master = prs.slide_masters[0]
+        theme_el = None
+        # Theme is stored as a related part (generic Part, not XmlPart),
+        # so parse its blob directly with lxml.
+        for rel in master.part.rels.values():
+            if 'theme' in rel.reltype:
+                theme_el = etree.fromstring(rel.target_part.blob)
+                break
+
+        if theme_el is not None:
+            clr_scheme = theme_el.find(f'.//{{{ns_a}}}clrScheme')
+            if clr_scheme is not None:
+                for child in clr_scheme:
+                    tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    theme_name = scheme_names.get(tag)
+                    if theme_name is None:
+                        continue
+                    # Extract hex value from srgbClr or sysClr
+                    srgb = child.find(f'{{{ns_a}}}srgbClr')
+                    if srgb is not None:
+                        color_map[theme_name] = f"#{srgb.get('val', '000000')}"
+                    else:
+                        sys_clr = child.find(f'{{{ns_a}}}sysClr')
+                        if sys_clr is not None:
+                            color_map[theme_name] = f"#{sys_clr.get('lastClr', '000000')}"
+                    # Add alias mappings
+                    if theme_name in aliases:
+                        alias = aliases[theme_name]
+                        if theme_name in color_map:
+                            color_map[alias] = color_map[theme_name]
+    except (AttributeError, TypeError, IndexError):
+        pass
+    return color_map
+
+
+def _resolve_theme_refs_in_content(content: dict, theme_colors: dict) -> dict:
+    """Replace @theme_name references with resolved hex values in content."""
+    def resolve_value(val):
+        if isinstance(val, str) and val.startswith('@'):
+            theme_name = val[1:]
+            return theme_colors.get(theme_name, val)
+        if isinstance(val, dict):
+            return {k: resolve_value(v) for k, v in val.items()}
+        if isinstance(val, list):
+            return [resolve_value(item) for item in val]
+        return val
+
+    return resolve_value(content)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Extract content from a PPTX into YAML")
     parser.add_argument("--input", required=True, help="Input PPTX file path")
     parser.add_argument("--output-dir", required=True, help="Output content directory")
     parser.add_argument("--slides", help="Comma-separated slide numbers to extract (default: all)")
+    parser.add_argument("--resolve-themes", action="store_true",
+                        help="Resolve @theme references to actual hex RGB values from the deck's theme")
     args = parser.parse_args()
 
     pptx_path = Path(args.input)
@@ -819,6 +891,15 @@ def main():
 
     # Detect and save global style
     global_style = detect_global_style(prs)
+
+    # Resolve theme colors when requested
+    theme_colors = {}
+    if args.resolve_themes:
+        theme_colors = _resolve_theme_colors(prs)
+        if theme_colors:
+            global_style["theme_colors"] = theme_colors
+            print(f"Resolved {len(theme_colors)} theme colors")
+
     global_dir = output_dir / "global"
     global_dir.mkdir(parents=True, exist_ok=True)
     style_path = global_dir / "style.yaml"
@@ -834,6 +915,10 @@ def main():
         if slide_filter and slide_num not in slide_filter:
             continue
         content, slide_dir = extract_slide(slide, slide_num, output_dir, slide_dims=slide_dims)
+
+        # Resolve @theme references to hex values when --resolve-themes is set
+        if args.resolve_themes and theme_colors:
+            content = _resolve_theme_refs_in_content(content, theme_colors)
 
         content_path = slide_dir / "content.yaml"
         with open(content_path, "w", encoding="utf-8") as f:

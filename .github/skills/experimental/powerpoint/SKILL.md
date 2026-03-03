@@ -9,7 +9,7 @@ Generates, updates, and manages PowerPoint slide decks using `python-pptx` with 
 
 ## Overview
 
-This skill provides Python scripts that consume YAML configuration files to produce PowerPoint slide decks. Each slide is defined by a `content.yaml` file describing its layout, text, and shapes. A global `style.yaml` file defines colors, typography, and shared styling. Per-slide content files can override global styles.
+This skill provides Python scripts that consume YAML configuration files to produce PowerPoint slide decks. Each slide is defined by a `content.yaml` file describing its layout, text, and shapes. A `style.yaml` file defines dimensions, template configuration, layout mappings, metadata, and defaults.
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ copilot --version
 
 ### Required Files
 
-* `style.yaml` — Global styling configuration (colors, fonts, dimensions)
+* `style.yaml` — Dimensions, defaults, template configuration, and metadata
 * `content.yaml` — Per-slide content definition (text, shapes, images, layout)
 * (Optional) `content-extra.py` — Custom Python for complex slide drawings
 
@@ -71,7 +71,7 @@ All slide content lives under the working directory's `content/` folder:
 ```text
 content/
 ├── global/
-│   ├── style.yaml              # Global styling for all slides
+│   ├── style.yaml              # Dimensions, defaults, template config, and theme metadata
 │   └── voice-guide.md          # Voice and tone guidelines
 ├── slide-001/
 │   ├── content.yaml            # Slide 1 content and layout
@@ -93,13 +93,13 @@ content/
 
 ## Global Style Definition (`style.yaml`)
 
-The global `style.yaml` defines shared styling applied to all slides unless overridden per-slide. Color references using `$color_name` resolve against the `colors` map.
+The global `style.yaml` defines dimensions, template configuration, layout mappings, metadata, and defaults. Color and font choices are specified per-element in each slide's `content.yaml` rather than centralized in the style file.
 
 See the [style.yaml template](style-yaml-template.md) for the full template, field reference, and usage instructions.
 
 ## Per-Slide Content Definition (`content.yaml`)
 
-Each slide's `content.yaml` defines layout, text, shapes, and optional style overrides. All position and size values are in inches. Color values use `$color_name` references or direct hex (`#RRGGBB`).
+Each slide's `content.yaml` defines layout, text, shapes, and positioning. All position and size values are in inches. Color values use `#RRGGBB` hex format or `@theme_name` references.
 
 See the [content.yaml template](content-yaml-template.md) for the full template, supported element types, supported shape types, and usage instructions.
 
@@ -331,8 +331,8 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 
 | Module | Purpose |
 |---|---|
-| `pptx_utils.py` | Unit conversion (`emu_to_inches()`), YAML loading, style merging |
-| `pptx_colors.py` | Color resolution (`$name`, `#hex`, `@theme`, dict with brightness), theme color map (16 entries) |
+| `pptx_utils.py` | Unit conversion (`emu_to_inches()`), YAML loading |
+| `pptx_colors.py` | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries) |
 | `pptx_fonts.py` | Font resolution, family normalization, weight suffix handling, alignment mapping |
 | `pptx_shapes.py` | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities |
 | `pptx_fills.py` | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles |

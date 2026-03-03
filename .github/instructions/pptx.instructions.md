@@ -16,7 +16,7 @@ All artifacts live under `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/` wi
 ├── changes/          # Change tracking logs
 ├── content/          # YAML content definitions and images
 │   ├── global/
-│   │   ├── style.yaml       # Global styling for all slides
+│   │   ├── style.yaml       # Dimensions, defaults, template config, and theme metadata
 │   │   └── voice-guide.md   # Voice and tone guidelines
 │   ├── slide-001/
 │   │   ├── content.yaml     # Slide 1 content and layout
@@ -36,13 +36,12 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 ## Content Conventions
 
 * Each slide is defined by a `content.yaml` file describing layout, text, shapes, and speaker notes.
-* A global `style.yaml` defines colors, typography, and shared element styling.
-* Per-slide `content.yaml` files can override global styles via `style_overrides`.
+* A global `style.yaml` defines dimensions, template configuration, layout mappings, metadata, and defaults. It does not enforce colors or fonts.
 * Complex drawings that cannot be expressed in `content.yaml` go in a `content-extra.py` file with a `render(slide, style, content_dir)` function.
 * All text content lives in `content.yaml` files; scripts do not hardcode text.
 * All images live in slide `images/` directories.
-* Color references use `$color_name` syntax resolving against the global `style.yaml` colors map.
-* Font references use `$body_font` or `$code_font` resolving against the global typography.
+* All color values use `#RRGGBB` hex format or `@theme_name` references. Named color references (`$color_name`) are not supported.
+* All font names are specified as literal font family names (e.g., `Segoe UI`, `Cascadia Code`). Named font references (`$body_font`) are not supported.
 
 ## Image Conventions
 
@@ -101,16 +100,24 @@ The validation pipeline writes outputs to `{{working-directory}}/slide-deck/vali
 ### Content Completeness
 
 * **Speaker notes**: Required on all content slides.
-* **Consistent styling**: Fonts, colors, and element styling must be consistent across all slides.
+* **Consistent styling**: Fonts, colors, and element styling must be consistent with the visual theme of surrounding slides. Use contextual styling from nearby slides to maintain coherence across the deck.
 * **Proper fonts**: No mismatched or fallback fonts.
 * **Leftover placeholders**: No leftover placeholder content from templates.
 
 ## Color Conventions
 
-* Use `$color_name` references for colors defined in `style.yaml`. This keeps colors centralized and easy to update.
-* Use `#RRGGBB` hex values only for one-off colors not part of the design system.
+* Use `#RRGGBB` hex values for all colors. Named color references (`$color_name`) are not supported.
 * Use `@theme_name` references (e.g., `@accent_1`) when building from a template PPTX and the slide should adapt to the template's theme colors. Theme colors change when the user switches the PowerPoint theme.
 * Use the dict syntax (`{theme: "accent_1", brightness: 0.4}`) when a theme color needs brightness adjustment. Brightness ranges from -1.0 (darkest) to 1.0 (lightest).
+
+## Contextual Styling
+
+Slide decks often contain multiple visual themes (title slides, content slides, section dividers, dark vs. light themes). Rather than enforcing a single global style, derive colors, fonts, and layout patterns from context:
+
+* **Creating new slides**: Examine existing slides in the deck that serve a similar purpose (title, content, divider, closing). Match the visual treatment — background, text colors, fonts, accent colors — from those reference slides.
+* **Inserting between existing slides**: Look at the slides immediately before and after the insertion point. Match the visual theme of the surrounding slides.
+* **Extracted decks**: The `themes` section in `style.yaml` identifies which slides use light vs. dark treatments. Use this as a guide when authoring new content for the deck.
+* **Template-based builds**: Use `@theme_name` references so slides adapt to whatever theme the template defines.
 
 ## Gradient Fill Conventions
 
@@ -136,22 +143,4 @@ The validation pipeline writes outputs to `{{working-directory}}/slide-deck/vali
 * Gradient fills use `GradientStop` objects with position (0–100) and color. Theme colors adjust brightness through the color format's `brightness` property.
 * Template-based builds resolve layouts by name or index. Unmatched layout names fall back to blank layout (index 6).
 
-## Default Color Palette
 
-```python
-BG_DARK      = RGBColor(0x1B, 0x1B, 0x1F)   # Near-black background
-BG_CARD      = RGBColor(0x2D, 0x2D, 0x35)   # Card/panel background
-ACCENT_BLUE  = RGBColor(0x00, 0x78, 0xD4)   # Microsoft Blue
-ACCENT_TEAL  = RGBColor(0x00, 0xB4, 0xD8)   # Teal highlight
-ACCENT_GREEN = RGBColor(0x10, 0xB9, 0x81)   # Success green
-TEXT_WHITE    = RGBColor(0xF8, 0xF8, 0xFC)   # Primary text
-TEXT_GRAY     = RGBColor(0x9C, 0xA3, 0xAF)   # Secondary text
-CODE_INLINE   = RGBColor(0xFF, 0xD7, 0x00)   # Gold for inline code
-```
-
-## Default Typography
-
-| Role | Font | Usage |
-|---|---|---|
-| Body text | Segoe UI | All non-code text |
-| Inline code | Cascadia Code | Code references within text |

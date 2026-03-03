@@ -29,17 +29,28 @@ QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️"}
 def check_speaker_notes(slide, slide_num: int) -> list[dict]:
     """Check for missing or empty speaker notes.
 
+    Distinguishes between: notes slide present with content, notes slide
+    present but empty, and notes slide absent entirely.
+
     Returns:
         List of issue dicts with check_type, severity, description, location.
     """
     issues = []
     try:
+        if not slide.has_notes_slide:
+            issues.append({
+                "check_type": "speaker_notes",
+                "severity": "warning",
+                "description": "Missing speaker notes (no notes slide)",
+                "location": "notes",
+            })
+            return issues
         notes = slide.notes_slide.notes_text_frame.text.strip()
         if not notes:
             issues.append({
                 "check_type": "speaker_notes",
-                "severity": "warning",
-                "description": "Empty speaker notes",
+                "severity": "info",
+                "description": "Speaker notes present but empty",
                 "location": "notes",
             })
     except (AttributeError, TypeError):

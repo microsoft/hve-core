@@ -35,14 +35,18 @@ SYSTEM_MESSAGE = (
     "You are a slide presentation quality inspector. Analyze each slide image "
     "and return your findings as valid JSON only — no additional text, no "
     "markdown formatting, no code fences.\n\n"
+    "CRITICAL: Each slide is unique. Examine the SPECIFIC content, layout, "
+    "colors, and text visible in THIS slide image. Do NOT copy or repeat "
+    "findings from other slides. Your response must reflect what you actually "
+    "see in the provided image.\n\n"
     "Response schema:\n"
     "{\n"
     '    "issues": [\n'
     "        {\n"
     '            "check_type": "<check name>",\n'
     '            "severity": "error|warning|info",\n'
-    '            "description": "<what is wrong>",\n'
-    '            "location": "<where on the slide>"\n'
+    '            "description": "<what is wrong — be specific about the actual content>",\n'
+    '            "location": "<where on the slide — reference actual text or elements>"\n'
     "        }\n"
     "    ],\n"
     '    "overall_quality": "good|needs-attention|poor"\n'
@@ -92,8 +96,8 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--concurrency",
         type=int,
-        default=3,
-        help="Max concurrent slide validations (default: 3)",
+        default=1,
+        help="Max concurrent slide validations (default: 1)",
     )
     parser.add_argument(
         "--cache-dir",
@@ -266,6 +270,26 @@ def generate_report(results: dict, cached_count: int, validated_count: int) -> s
     # Per-slide details
     lines.append("## Per-Slide Findings")
     lines.append("")
+
+    # Detect duplicate responses across slides
+    response_hashes = {}
+    duplicates = set()
+    for slide in results["slides"]:
+        if slide.get("parse_error"):
+            continue
+        issues_key = json.dumps(slide.get("issues", []), sort_keys=True)
+        num = slide.get("slide_number", "?")
+        if issues_key in response_hashes:
+            duplicates.add(num)
+            duplicates.add(response_hashes[issues_key])
+        else:
+            response_hashes[issues_key] = num
+
+    if duplicates:
+        lines.append("> **⚠️ Duplicate Detection**: Slides {} returned identical findings. "
+                     "These may need re-validation.".format(", ".join(str(s) for s in sorted(duplicates))))
+        lines.append("")
+
     for slide in results["slides"]:
         num = slide.get("slide_number", "?")
         quality = slide.get("overall_quality", "unknown")
@@ -307,32 +331,56 @@ def generate_report(results: dict, cached_count: int, validated_count: int) -> s
 
 
 async def validate_slide(
-    session, slide_num: int, image_path: Path, prompt: str
+    session, slide_num: int, image_path: Path, prompt: str,
+    max_retries: int = 3,
 ) -> dict:
     """Send a single slide image to the vision model for evaluation.
+
+    Retries with exponential backoff on failure.
 
     Args:
         session: Active Copilot SDK session.
         slide_num: Slide number for context.
         image_path: Path to the slide JPG image.
         prompt: Validation prompt describing what to check.
+        max_retries: Maximum number of retry attempts.
 
     Returns:
         Dict with slide_number, image_path, issues, and overall_quality.
     """
-    logger.info("Validating slide %d: %s", slide_num, image_path.name)
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            logger.info("Validating slide %d: %s (attempt %d)", slide_num, image_path.name, attempt + 1)
 
-    response = await session.send_and_wait(
-        {
-            "prompt": f"Slide {slide_num}:\n\n{prompt}",
-            "attachments": [{"type": "file", "path": str(image_path.resolve())}],
-        }
-    )
+            response = await session.send_and_wait(
+                {
+                    "prompt": f"Slide {slide_num}:\n\n{prompt}",
+                    "attachments": [{"type": "file", "path": str(image_path.resolve())}],
+                }
+            )
 
-    result = parse_model_response(response.data.content)
-    result["slide_number"] = slide_num
-    result["image_path"] = image_path.name
-    return result
+            result = parse_model_response(response.data.content)
+            result["slide_number"] = slide_num
+            result["image_path"] = image_path.name
+            return result
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                delay = 2 ** attempt
+                logger.warning("Slide %d failed (attempt %d): %s. Retrying in %ds...",
+                              slide_num, attempt + 1, e, delay)
+                await asyncio.sleep(delay)
+
+    logger.error("Slide %d failed after %d attempts: %s", slide_num, max_retries, last_error)
+    return {
+        "slide_number": slide_num,
+        "image_path": image_path.name,
+        "issues": [],
+        "overall_quality": "error",
+        "parse_error": True,
+        "raw_response": f"Validation failed after {max_retries} attempts: {last_error}",
+    }
 
 
 async def run(args: argparse.Namespace) -> int:

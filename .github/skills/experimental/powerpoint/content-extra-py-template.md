@@ -6,7 +6,8 @@ Use this template when a slide requires complex drawings that cannot be expresse
 
 * The `render()` function signature is fixed — do not change the parameter list.
 * The build script calls `render()` after placing standard `content.yaml` elements, so custom shapes draw on top of YAML-defined elements.
-* Use the `style` dictionary to access resolved colors, typography, and defaults for consistency with the rest of the deck.
+* Use the `style` dictionary to access defaults and metadata.
+* Use `#RRGGBB` hex values for all colors. Named color references (`$color_name`) are not supported.
 * Use the `content_dir` path to reference images or other assets in the slide's folder.
 * Import only from `pptx` and Python standard library modules. Do not add external dependencies beyond those listed in the skill prerequisites.
 
@@ -23,16 +24,15 @@ def render(slide, style, content_dir):
 
     Args:
         slide: python-pptx slide object (already created with base elements).
-        style: Resolved style dictionary (global merged with per-slide overrides).
+        style: Style dictionary with defaults and metadata.
         content_dir: Path to this slide's content directory for image references.
     """
-    colors = style["colors"]
     # Custom drawing logic here
     # Example: complex layered architecture diagram
     layers = [
-        ("Application Layer", colors["accent_blue"], 1.0),
-        ("Service Layer", colors["accent_teal"], 2.5),
-        ("Data Layer", colors["accent_green"], 4.0),
+        ("Application Layer", "#0078D4", 1.0),
+        ("Service Layer", "#00B4D8", 2.5),
+        ("Data Layer", "#10B981", 4.0),
     ]
     for label, color, top in layers:
         shape = slide.shapes.add_shape(
@@ -50,11 +50,11 @@ def render(slide, style, content_dir):
 | Parameter | Type | Description |
 |---|---|---|
 | `slide` | `pptx.slide.Slide` | The slide object with base elements already placed from `content.yaml` |
-| `style` | `dict` | Resolved style dictionary with `colors`, `typography`, and `defaults` keys |
+| `style` | `dict` | Style dictionary with `defaults` and `metadata` keys |
 | `content_dir` | `pathlib.Path` | Path to the slide's content directory for referencing local assets |
 
 ## Guidelines
 
 * Keep custom scripts focused on a single slide's needs. If the same drawing pattern repeats across slides, consider defining a new element type in `content.yaml` instead.
-* Use `style["colors"]` for all color values rather than hardcoding hex strings to maintain consistency when the palette changes.
+* Use `#RRGGBB` hex values for all colors to keep the script self-contained and independent of global style configuration.
 * Test the script independently by importing the function and passing mock objects before running the full build.

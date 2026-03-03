@@ -60,10 +60,11 @@ Execute based on the task type:
 Extract content from an existing PPTX into YAML structure.
 
 1. Run `extract_content.py` from the `powerpoint` skill with the source PPTX and output directory.
-2. Review extracted `style.yaml` for completeness.
-3. Review extracted `content.yaml` files for accuracy.
-4. Document detected problems: styles copied per-slide instead of using global style, images pasted as backgrounds rather than set as background fills, hidden elements, off-boundary content, overlapping elements.
-5. Update the execution log with extraction findings.
+2. When the deck will be rebuilt without `--template` (no access to original PPTX as template), add `--resolve-themes` to convert `@theme_name` references to actual hex RGB values. Without this flag, theme references resolve to Office defaults which may not match the original deck.
+3. Review extracted `style.yaml` for completeness.
+4. Review extracted `content.yaml` files for accuracy.
+5. Document detected problems: styles copied per-slide instead of using global style, images pasted as backgrounds rather than set as background fills, hidden elements, off-boundary content, overlapping elements.
+6. Update the execution log with extraction findings.
 
 #### Task: `build-content`
 
@@ -89,10 +90,11 @@ Create or update YAML content files for slides.
 Generate or update the PPTX from content YAML.
 
 1. Run `build_deck.py` from the `powerpoint` skill with content directory, style path, and output path.
-2. When updating specific slides, use the `--source` and `--slides` options.
-3. When creating a new deck from existing styling, open the source PPTX as a template to inherit masters.
-4. Verify the output file was generated successfully.
-5. Update the execution log with build results.
+2. **For roundtrip workflows** (extract→rebuild): Always use `--template` pointing to the original PPTX file. This preserves the theme, slide masters, layouts, and color scheme. Without `--template`, theme colors (`@background_1`, `@accent_1`, etc.) resolve to Office defaults, producing incorrect colors, darker backgrounds, and styling mismatches.
+3. When updating specific slides, use the `--source` and `--slides` options.
+4. When `--template` is not available, ensure `--resolve-themes` was used during extraction so all theme references are already resolved to hex values.
+5. Verify the output file was generated successfully.
+6. Update the execution log with build results.
 
 #### Task: `validate`
 
