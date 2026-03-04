@@ -125,7 +125,7 @@ This fallback activates automatically. No manual configuration is needed.
 
 | Skill        | Category     | Description                             |
 |--------------|--------------|-----------------------------------------|
-| installer    | Installation | HVE Core collection installation        |
+| installer    | Installation | HVE Core customized installation        |
 | video-to-gif | Media        | FFmpeg two-pass video-to-GIF conversion |
 
 ## Tips

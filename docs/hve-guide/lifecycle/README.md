@@ -22,7 +22,7 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 
 | Stage   | Name               | Asset Count | Key Tools                                                                                 | Guide                                       |
 |---------|--------------------|-------------|-------------------------------------------------------------------------------------------|---------------------------------------------|
-| Stage 1 | Setup              | 3           | installer (skill), memory                                                                 | [Setup](setup.md)                           |
+| Stage 1 | Setup              | 3           | hve-core-installer (skill), memory                                                        | [Setup](setup.md)                           |
 | Stage 2 | Discovery          | 14          | task-researcher, brd-builder, security-plan-creator                                       | [Discovery](discovery.md)                   |
 | Stage 3 | Product Definition | 6           | prd-builder, product-manager-advisor, adr-creation                                        | [Product Definition](product-definition.md) |
 | Stage 4 | Decomposition      | 5           | ado-prd-to-wit, github-backlog-manager                                                    | [Decomposition](decomposition.md)           |

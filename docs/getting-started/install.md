@@ -89,7 +89,7 @@ Answer these questions to find your recommended installation method:
 
 ## Collection Packages
 
-HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. For customization, use the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-hve-core-installer) or clone-based methods to select specific collections during setup.
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. For customization, use the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) or clone-based methods to select specific collections during setup.
 
 | Collection        | Collection ID       | Maturity     | Description                                                      |
 |-------------------|---------------------|--------------|------------------------------------------------------------------|
@@ -100,7 +100,7 @@ HVE-Core organizes artifacts into role-based collections. The VS Code extension 
 | Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
 | Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
 | GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
-| Installer         | `installer`         | Stable       | Interactive installer agent for workspace configuration          |
+| Installer         | `installer`         | Stable       | Interactive installer skill for workspace configuration          |
 | Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
 | Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
 | Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
@@ -113,7 +113,7 @@ The VS Code Marketplace extension installs the **Full** collection containing al
 
 Clone-based installation methods support collection-based agent filtering through the HVE Core installer skill:
 
-1. Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=hve-installer) to get the installer skill
+1. Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) to get the installer skill
 2. Ask any agent: "help me customize hve-core installation"
 3. Select your role-based collection or install all agents
 
