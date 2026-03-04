@@ -339,7 +339,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 
 | Module | Purpose |
 |---|---|
-| `pptx_utils.py` | Unit conversion (`emu_to_inches()`), YAML loading |
+| `pptx_utils.py` | Shared utilities: exit codes, logging configuration, slide filter parsing, unit conversion (`emu_to_inches()`), YAML loading |
 | `pptx_colors.py` | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries) |
 | `pptx_fonts.py` | Font resolution, family normalization, weight suffix handling, alignment mapping |
 | `pptx_shapes.py` | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities |

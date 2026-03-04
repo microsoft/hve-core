@@ -12,15 +12,21 @@ Usage:
 
 import argparse
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 from pptx import Presentation
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    configure_logging,
+    parse_slide_filter,
+)
 
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-EXIT_ERROR = 2
+logger = logging.getLogger(__name__)
 
 SEVERITY_ICON = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}
 QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️"}
@@ -272,6 +278,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", type=Path, help="Output JSON file path (default: stdout)"
     )
     parser.add_argument("--report", type=Path, help="Output Markdown report file path")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose logging"
+    )
     return parser
 
 
@@ -279,17 +288,16 @@ def main() -> int:
     """Main entry point."""
     parser = create_parser()
     args = parser.parse_args()
+    configure_logging(getattr(args, "verbose", False))
 
     pptx_path = args.input
     if not pptx_path.exists():
-        print(f"Error: File not found: {pptx_path}", file=sys.stderr)
+        logger.error("File not found: %s", pptx_path)
         return EXIT_ERROR
 
-    slide_filter = None
-    if args.slides:
-        slide_filter = {int(s.strip()) for s in args.slides.split(",")}
+    slide_filter = parse_slide_filter(args.slides)
 
-    print(f"Validating PPTX properties: {pptx_path}")
+    logger.info("Validating PPTX properties: %s", pptx_path)
     results = validate_deck(pptx_path, args.content_dir, slide_filter=slide_filter)
 
     # Output JSON
@@ -297,7 +305,7 @@ def main() -> int:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(output_json, encoding="utf-8")
-        print(f"Results written to {args.output}")
+        logger.info("Results written to %s", args.output)
     else:
         print(output_json)
 
@@ -306,14 +314,18 @@ def main() -> int:
         report_md = generate_report(results)
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(report_md, encoding="utf-8")
-        print(f"Report written to {args.report}")
+        logger.info("Report written to %s", args.report)
 
     # Report summary
     total_issues = sum(len(s.get("issues", [])) for s in results["slides"])
     total_issues += len(results.get("deck_issues", []))
     severity = max_severity(results)
     slide_count = results["slide_count"]
-    print(f"Validation complete: {total_issues} issue(s) across {slide_count} slide(s)")
+    logger.info(
+        "Validation complete: %d issue(s) across %d slide(s)",
+        total_issues,
+        slide_count,
+    )
 
     # Exit code: info-only → success, warning/error → failure
     if severity in ("error", "warning"):

@@ -25,10 +25,13 @@ import sys
 from pathlib import Path
 
 from copilot import CopilotClient, PermissionHandler
-
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-EXIT_ERROR = 2
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    configure_logging,
+    parse_slide_filter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -133,12 +136,6 @@ DEFAULT_RESPONSE_SCHEMA = json.dumps(
 IMAGE_PATTERN = re.compile(r"slide[-_](\d+)\.jpe?g$", re.IGNORECASE)
 
 
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity level."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
-
-
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
@@ -207,13 +204,6 @@ def load_prompt(args: argparse.Namespace) -> str:
         logger.error("Prompt file not found: %s", prompt_path)
         sys.exit(EXIT_ERROR)
     return prompt_path.read_text(encoding="utf-8").strip()
-
-
-def parse_slide_filter(slides_arg: str | None) -> set[int] | None:
-    """Parse comma-separated slide numbers into a filter set."""
-    if not slides_arg:
-        return None
-    return {int(s.strip()) for s in slides_arg.split(",")}
 
 
 def discover_images(
