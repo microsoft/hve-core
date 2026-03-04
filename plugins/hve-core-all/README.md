@@ -181,11 +181,12 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill        | Description  |
-|--------------|--------------|
-| powerpoint   | powerpoint   |
-| video-to-gif | video-to-gif |
-| pr-reference | pr-reference |
+| Skill             | Description       |
+|-------------------|-------------------|
+| powerpoint        | powerpoint        |
+| video-to-gif      | video-to-gif      |
+| vscode-playwright | vscode-playwright |
+| pr-reference      | pr-reference      |
 
 ---
 
