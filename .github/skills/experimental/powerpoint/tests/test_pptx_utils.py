@@ -2,7 +2,14 @@
 
 import pytest
 import yaml
-from pptx_utils import emu_to_inches, load_yaml
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    emu_to_inches,
+    load_yaml,
+    parse_slide_filter,
+)
 
 
 class TestEmuToInches:
@@ -56,3 +63,32 @@ class TestLoadYaml:
         f.write_text(yaml.dump(data), encoding="utf-8")
         result = load_yaml(f)
         assert result == data
+
+
+class TestExitCodes:
+    """Tests for shared exit code constants."""
+
+    def test_exit_success(self):
+        assert EXIT_SUCCESS == 0
+
+    def test_exit_failure(self):
+        assert EXIT_FAILURE == 1
+
+    def test_exit_error(self):
+        assert EXIT_ERROR == 2
+
+
+class TestParseSlideFilter:
+    """Tests for parse_slide_filter."""
+
+    @pytest.mark.parametrize(
+        "input_str,expected",
+        [
+            (None, None),
+            ("3", {3}),
+            ("1,3,5", {1, 3, 5}),
+            (" 2 , 4 ", {2, 4}),
+        ],
+    )
+    def test_parse(self, input_str, expected):
+        assert parse_slide_filter(input_str) == expected
