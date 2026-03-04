@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import {
   GettingStartedIcon,
   AgentsPromptsIcon,
@@ -9,6 +10,8 @@ import {
   DesignThinkingIcon,
   TemplatesExamplesIcon,
 } from '..';
+
+expect.extend(toHaveNoViolations);
 
 const icons = [
   { name: 'GettingStartedIcon', Component: GettingStartedIcon },
@@ -31,5 +34,13 @@ describe('Icons', () => {
     const { container } = render(<Component className="custom-class" />);
     const svg = container.querySelector('svg');
     expect(svg).toHaveClass('custom-class');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<GettingStartedIcon />);
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });

@@ -1,6 +1,7 @@
 ---
 title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
+sidebar_position: 16
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial
@@ -182,7 +183,7 @@ Design Thinking produces validated understanding; RPI delivers implementation. T
 | Concept Validated          | 4-6     | Exit 1 plus tested concepts with D/F/V scores, lo-fi prototype feedback, constraint discoveries      | Moderate: concept feasibility, integration paths, risk areas       |
 | Implementation Spec Ready  | 7-9     | Exits 1-2 plus hi-fi specs, architecture decisions, benchmarks, test protocols, scaling plan         | Narrow: implementation refinement, deployment strategy, edge cases |
 
-**Exit 1 assets — Problem Space (Methods 1-3):**
+### Exit 1 Assets: Problem Space (Methods 1-3)
 
 * Stakeholder map with roles, perspectives, and influence levels
 * Scope boundaries with frozen/fluid classification
@@ -193,7 +194,9 @@ Design Thinking produces validated understanding; RPI delivers implementation. T
 * Constraint inventory (technical, environmental, workflow)
 * Assumptions log with each item tagged `validated`, `assumed`, `unknown`, or `conflicting`
 
-**Exit 2 assets — Solution Space (Methods 4-6),** cumulative with Exit 1:
+### Exit 2 Assets: Solution Space (Methods 4-6)
+
+Cumulative with Exit 1.
 
 * Brainstorming theme clusters with selected directions
 * `concepts.yml` with desirability/feasibility/viability evaluations per concept
@@ -203,7 +206,9 @@ Design Thinking produces validated understanding; RPI delivers implementation. T
 * User behavior patterns observed during prototype interactions
 * 1-2 narrowed concept directions advanced from initial ideation
 
-**Exit 3 assets — Validation Space (Methods 7-9),** cumulative with Exits 1-2:
+### Exit 3 Assets: Validation Space (Methods 7-9)
+
+Cumulative with Exits 1-2.
 
 * Architecture decisions and technical trade-offs
 * Implementation comparison results across 2-3 approaches

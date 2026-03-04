@@ -1,6 +1,7 @@
 ---
 title: "Method 6: Lo-Fi Prototypes"
 description: "Build fast, scrappy prototypes that test concept assumptions through real-environment feedback and constraint discovery."
+sidebar_position: 10
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

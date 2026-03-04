@@ -91,15 +91,15 @@ Collections support four maturity tiers that control inclusion in generated plug
 | Tier           | Meaning                                    | Plugin Inclusion            |
 |----------------|--------------------------------------------|-----------------------------|
 | `stable`       | Production-ready, fully tested             | Included in all channels    |
-| `preview`      | Feature-complete but undergoing validation | Included in preview channel |
+| `preview`      | Feature-complete but undergoing validation | Included in all channels    |
 | `experimental` | Early-stage, may change significantly      | Excluded from stable builds |
 | `deprecated`   | Scheduled for removal                      | Excluded from new builds    |
 
 Maturity applies at two levels:
 
-* **Collection-level**: Set the `maturity` field on the manifest root. A collection marked
+* Collection-level: Set the `maturity` field on the manifest root. A collection marked
   `experimental` excludes all its items from the stable release channel.
-* **Item-level**: Set the `maturity` field on individual items within the `items` array.
+* Item-level: Set the `maturity` field on individual items within the `items` array.
   This overrides the collection-level default for specific artifacts.
 
 When `maturity` is omitted at either level, it defaults to `stable`.
