@@ -68,6 +68,21 @@
     ./Invoke-PptxPipeline.ps1 -Action Export -InputPath slide-deck/presentation.pptx -ImageOutputDir slide-deck/validation/ -Slides "1,3,5" -Resolution 150
 #>
 
+# Invoke-* functions consume these script-level parameters through dynamic scoping
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'TemplatePath',
+    Justification = 'Consumed by Invoke-BuildDeck through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Resolution',
+    Justification = 'Consumed by Invoke-ExportSlides through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationPrompt',
+    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationPromptFile',
+    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationModel',
+    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationConcurrency',
+    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationCacheDir',
+    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -197,7 +212,22 @@ function Assert-BuildParameters {
     #>
     [CmdletBinding()]
     [OutputType([void])]
-    param()
+    param(
+        [Parameter()]
+        [string]$ContentDir,
+
+        [Parameter()]
+        [string]$StylePath,
+
+        [Parameter()]
+        [string]$OutputPath,
+
+        [Parameter()]
+        [string]$Slides,
+
+        [Parameter()]
+        [string]$SourcePath
+    )
 
     if (-not $ContentDir) {
         throw 'Build action requires -ContentDir.'
@@ -220,7 +250,13 @@ function Assert-ExtractParameters {
     #>
     [CmdletBinding()]
     [OutputType([void])]
-    param()
+    param(
+        [Parameter()]
+        [string]$InputPath,
+
+        [Parameter()]
+        [string]$OutputDir
+    )
 
     if (-not $InputPath) {
         throw 'Extract action requires -InputPath.'
@@ -237,7 +273,10 @@ function Assert-ValidateParameters {
     #>
     [CmdletBinding()]
     [OutputType([void])]
-    param()
+    param(
+        [Parameter()]
+        [string]$InputPath
+    )
 
     if (-not $InputPath) {
         throw 'Validate action requires -InputPath.'
@@ -251,7 +290,13 @@ function Assert-ExportParameters {
     #>
     [CmdletBinding()]
     [OutputType([void])]
-    param()
+    param(
+        [Parameter()]
+        [string]$InputPath,
+
+        [Parameter()]
+        [string]$ImageOutputDir
+    )
 
     if (-not $InputPath) {
         throw 'Export action requires -InputPath.'
@@ -568,19 +613,19 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     switch ($Action) {
         'Build' {
-            Assert-BuildParameters
+            Assert-BuildParameters -ContentDir $ContentDir -StylePath $StylePath -OutputPath $OutputPath -Slides $Slides -SourcePath $SourcePath
             Invoke-BuildDeck
         }
         'Extract' {
-            Assert-ExtractParameters
+            Assert-ExtractParameters -InputPath $InputPath -OutputDir $OutputDir
             Invoke-ExtractContent
         }
         'Validate' {
-            Assert-ValidateParameters
+            Assert-ValidateParameters -InputPath $InputPath
             Invoke-ValidateDeck
         }
         'Export' {
-            Assert-ExportParameters
+            Assert-ExportParameters -InputPath $InputPath -ImageOutputDir $ImageOutputDir
             Invoke-ExportSlides
         }
     }

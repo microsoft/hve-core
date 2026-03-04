@@ -69,104 +69,68 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
 Describe 'Assert-BuildParameters' -Tag 'Unit' {
     Context 'when required parameters are missing' {
         It 'Throws when ContentDir is missing' {
-            $ContentDir = ''
-            $StylePath = 'style.yaml'
-            $OutputPath = 'output.pptx'
-            { Assert-BuildParameters } | Should -Throw '*requires -ContentDir*'
+            { Assert-BuildParameters -ContentDir '' -StylePath 'style.yaml' -OutputPath 'output.pptx' } | Should -Throw '*requires -ContentDir*'
         }
 
         It 'Throws when StylePath is missing' {
-            $ContentDir = 'content/'
-            $StylePath = ''
-            $OutputPath = 'output.pptx'
-            { Assert-BuildParameters } | Should -Throw '*requires -StylePath*'
+            { Assert-BuildParameters -ContentDir 'content/' -StylePath '' -OutputPath 'output.pptx' } | Should -Throw '*requires -StylePath*'
         }
 
         It 'Throws when OutputPath is missing' {
-            $ContentDir = 'content/'
-            $StylePath = 'style.yaml'
-            $OutputPath = ''
-            { Assert-BuildParameters } | Should -Throw '*requires -OutputPath*'
+            { Assert-BuildParameters -ContentDir 'content/' -StylePath 'style.yaml' -OutputPath '' } | Should -Throw '*requires -OutputPath*'
         }
 
         It 'Throws when Slides specified without SourcePath' {
-            $ContentDir = 'content/'
-            $StylePath = 'style.yaml'
-            $OutputPath = 'output.pptx'
-            $Slides = '1,2,3'
-            $SourcePath = ''
-            { Assert-BuildParameters } | Should -Throw '*-Slides requires -SourcePath*'
+            { Assert-BuildParameters -ContentDir 'content/' -StylePath 'style.yaml' -OutputPath 'output.pptx' -Slides '1,2,3' -SourcePath '' } | Should -Throw '*-Slides requires -SourcePath*'
         }
     }
 
     Context 'when all required parameters are provided' {
         It 'Does not throw' {
-            $ContentDir = 'content/'
-            $StylePath = 'style.yaml'
-            $OutputPath = 'output.pptx'
-            { Assert-BuildParameters } | Should -Not -Throw
+            { Assert-BuildParameters -ContentDir 'content/' -StylePath 'style.yaml' -OutputPath 'output.pptx' } | Should -Not -Throw
         }
 
         It 'Does not throw with Slides and SourcePath' {
-            $ContentDir = 'content/'
-            $StylePath = 'style.yaml'
-            $OutputPath = 'output.pptx'
-            $Slides = '1,2,3'
-            $SourcePath = 'source.pptx'
-            { Assert-BuildParameters } | Should -Not -Throw
+            { Assert-BuildParameters -ContentDir 'content/' -StylePath 'style.yaml' -OutputPath 'output.pptx' -Slides '1,2,3' -SourcePath 'source.pptx' } | Should -Not -Throw
         }
     }
 }
 
 Describe 'Assert-ExtractParameters' -Tag 'Unit' {
     It 'Throws when InputPath is missing' {
-        $InputPath = ''
-        $OutputDir = 'output/'
-        { Assert-ExtractParameters } | Should -Throw '*requires -InputPath*'
+        { Assert-ExtractParameters -InputPath '' -OutputDir 'output/' } | Should -Throw '*requires -InputPath*'
     }
 
     It 'Throws when OutputDir is missing' {
-        $InputPath = 'input.pptx'
-        $OutputDir = ''
-        { Assert-ExtractParameters } | Should -Throw '*requires -OutputDir*'
+        { Assert-ExtractParameters -InputPath 'input.pptx' -OutputDir '' } | Should -Throw '*requires -OutputDir*'
     }
 
     It 'Does not throw when all parameters provided' {
-        $InputPath = 'input.pptx'
-        $OutputDir = 'output/'
-        { Assert-ExtractParameters } | Should -Not -Throw
+        { Assert-ExtractParameters -InputPath 'input.pptx' -OutputDir 'output/' } | Should -Not -Throw
     }
 }
 
 Describe 'Assert-ValidateParameters' -Tag 'Unit' {
     It 'Throws when InputPath is missing' {
-        $InputPath = ''
-        { Assert-ValidateParameters } | Should -Throw '*requires -InputPath*'
+        { Assert-ValidateParameters -InputPath '' } | Should -Throw '*requires -InputPath*'
     }
 
     It 'Does not throw when InputPath provided' {
-        $InputPath = 'input.pptx'
-        { Assert-ValidateParameters } | Should -Not -Throw
+        { Assert-ValidateParameters -InputPath 'input.pptx' } | Should -Not -Throw
     }
 }
 
 Describe 'Assert-ExportParameters' -Tag 'Unit' {
     It 'Throws when InputPath is missing' {
-        $InputPath = ''
-        $ImageOutputDir = 'images/'
-        { Assert-ExportParameters } | Should -Throw '*requires -InputPath*'
+        { Assert-ExportParameters -InputPath '' -ImageOutputDir 'images/' } | Should -Throw '*requires -InputPath*'
     }
 
     It 'Throws when ImageOutputDir is missing' {
-        $InputPath = 'input.pptx'
-        $ImageOutputDir = ''
-        { Assert-ExportParameters } | Should -Throw '*requires -ImageOutputDir*'
+        { Assert-ExportParameters -InputPath 'input.pptx' -ImageOutputDir '' } | Should -Throw '*requires -ImageOutputDir*'
     }
 
     It 'Does not throw when all parameters provided' {
-        $InputPath = 'input.pptx'
-        $ImageOutputDir = 'images/'
-        { Assert-ExportParameters } | Should -Not -Throw
+        { Assert-ExportParameters -InputPath 'input.pptx' -ImageOutputDir 'images/' } | Should -Not -Throw
     }
 }
 
