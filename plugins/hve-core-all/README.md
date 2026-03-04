@@ -54,7 +54,9 @@ copilot plugin install hve-core-all@hve-core
 
 | Command                                     | Description                                                                                                                                      |
 |---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| ado-add-work-item                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                                |
 | ado-create-pull-request                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages.      |
+| ado-discover-work-items                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                             |
 | ado-get-build-info                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                             |
 | ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                                 |
 | ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |

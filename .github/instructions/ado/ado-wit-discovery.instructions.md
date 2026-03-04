@@ -5,6 +5,8 @@ applyTo: '**/.copilot-tracking/workitems/discovery/**'
 
 # Azure DevOps Work Item Discovery
 
+When invoked via the ADO Backlog Manager, honor the active autonomy mode from the [Three-Tier Autonomy Model](./ado-wit-planning.instructions.md#three-tier-autonomy-model) for operations that create or modify planning files.
+
 Discover Azure DevOps work items through two paths: user-centric queries ("show me my work items") or artifact-driven analysis (documents, branches, commits). Follow #file:ado-wit-planning.instructions.md for templates, field definitions, and search protocols.
 
 ## Scope

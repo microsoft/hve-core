@@ -22,6 +22,10 @@ items:
     kind: prompt
   - path: .github/prompts/ado/ado-update-wit-items.prompt.md
     kind: prompt
+  - path: .github/prompts/ado/ado-add-work-item.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado/ado-discover-work-items.prompt.md
+    kind: prompt
   - path: .github/prompts/ado/ado-sprint-plan.prompt.md
     kind: prompt
   - path: .github/prompts/ado/ado-triage-work-items.prompt.md
