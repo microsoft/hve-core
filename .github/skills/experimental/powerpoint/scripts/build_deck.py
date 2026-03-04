@@ -16,12 +16,19 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_CONNECTOR_TYPE, MSO_SHAPE
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
-
+from pptx_charts import add_chart_element
 from pptx_colors import apply_color_to_font, resolve_color
-from pptx_fills import apply_fill, apply_line, apply_effect_list
+from pptx_fills import apply_effect_list, apply_fill, apply_line
 from pptx_fonts import ALIGNMENT_MAP
 from pptx_shapes import SHAPE_MAP, apply_rotation
-from pptx_text import apply_paragraph_properties, apply_run_properties, apply_text_properties, apply_bullet_properties
+from pptx_tables import add_table_element
+from pptx_text import (
+    SHAPE_KEYS,
+    TEXTBOX_KEYS,
+    apply_run_properties,
+    apply_text_properties,
+    populate_text_frame,
+)
 from pptx_utils import load_yaml
 
 CONNECTOR_TYPE_MAP = {
@@ -104,84 +111,24 @@ def add_textbox(slide, left, top, width, height, text, font_name=None,
                 font_size=16, font_color=None, bold=False, italic=False,
                 alignment=None, name=None, rotation=None, elem=None,
                 colors=None):
-    """Add a text box to a slide. Splits text on newlines into separate paragraphs."""
+    """Add a text box to a slide."""
     txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     if name:
         txBox.name = name
     apply_rotation(txBox, rotation)
-    tf = txBox.text_frame
-    tf.word_wrap = True
 
-    # Apply text frame-level properties (margins, auto_size, vertical_anchor)
-    if elem:
-        apply_text_properties(tf, elem)
-
-    # Per-paragraph formatting when available
-    paragraphs = (elem or {}).get("paragraphs")
-    if paragraphs:
-        for i, p_def in enumerate(paragraphs):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            p_align = p_def.get("alignment", alignment)
-            if p_align:
-                p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
-            apply_paragraph_properties(p, p_def)
-            apply_bullet_properties(p, p_def)
-            p_runs = p_def.get("runs")
-            if p_runs:
-                # Multi-run paragraph: apply each run with its own formatting
-                for j, seg in enumerate(p_runs):
-                    run = p.add_run() if j > 0 else (p.runs[0] if p.runs else p.add_run())
-                    run.text = seg.get("text", "")
-                    seg_font = seg.get("font", font_name)
-                    if seg_font:
-                        run.font.name = seg_font
-                    run.font.size = Pt(seg.get("size", font_size))
-                    if "color" in seg:
-                        apply_color_to_font(run.font.color, resolve_color(seg["color"]))
-                    elif font_color:
-                        apply_color_to_font(run.font.color, font_color)
-                    run.font.bold = seg.get("bold", False)
-                    run.font.italic = seg.get("italic", False)
-                    apply_run_properties(run, seg, colors or {})
-            else:
-                # Single-run paragraph
-                run = p.add_run()
-                run.text = p_def.get("text", "")
-                p_font = p_def.get("font", font_name)
-                if p_font:
-                    run.font.name = p_font
-                run.font.size = Pt(p_def.get("font_size", font_size))
-                p_color = p_def.get("font_color")
-                if p_color:
-                    apply_color_to_font(run.font.color, resolve_color(p_color))
-                elif font_color:
-                    apply_color_to_font(run.font.color, font_color)
-                run.font.bold = p_def.get("font_bold", bold)
-                run.font.italic = p_def.get("italic", italic)
-                apply_run_properties(run, p_def, colors or {})
-        return txBox
-
-    # Flat format: split on newlines and apply element-level formatting
-    lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-
-    for i, line in enumerate(lines):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        if alignment:
-            p.alignment = ALIGNMENT_MAP.get(alignment, ALIGNMENT_MAP["left"])
-        if elem:
-            apply_paragraph_properties(p, elem)
-            apply_bullet_properties(p, elem)
-        run = p.add_run()
-        run.text = line
-        if font_name:
-            run.font.name = font_name
-        run.font.size = Pt(font_size)
-        if font_color:
-            apply_color_to_font(run.font.color, font_color)
-        run.font.bold = bold
-        run.font.italic = italic
-        if elem:
-            apply_run_properties(run, elem, colors or {})
+    defaults = {
+        "font": font_name,
+        "size": font_size,
+        "color": font_color,
+        "bold": bold,
+        "italic": italic,
+        "alignment": alignment,
+    }
+    source = elem or {"text": text}
+    if "text" not in source:
+        source = {**source, "text": text}
+    populate_text_frame(txBox.text_frame, source, colors or {}, TEXTBOX_KEYS, defaults)
     return txBox
 
 
@@ -195,14 +142,12 @@ def add_shape_element(slide, elem, colors, typography):
 
     shape = slide.shapes.add_shape(shape_type, left, top, width, height)
 
-    # Reset effectRef to prevent theme shadow inheritance (python-pptx defaults to idx=2)
     _reset_effect_ref(shape)
 
     if "name" in elem:
         shape.name = elem["name"]
 
     apply_rotation(shape, elem.get("rotation"))
-
     apply_fill(shape, elem.get("fill"), colors)
     apply_line(shape, elem, colors)
 
@@ -213,70 +158,7 @@ def add_shape_element(slide, elem, colors, typography):
         apply_effect_list(shape, elem["effect"])
 
     if "text" in elem:
-        tf = shape.text_frame
-        tf.word_wrap = True
-        apply_text_properties(tf, elem)
-
-        # Per-paragraph formatting when available
-        paragraphs = elem.get("paragraphs")
-        if paragraphs:
-            for i, p_def in enumerate(paragraphs):
-                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                p_align = p_def.get("alignment", elem.get("alignment"))
-                if p_align:
-                    p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
-                apply_paragraph_properties(p, p_def)
-                apply_bullet_properties(p, p_def)
-                p_runs = p_def.get("runs")
-                if p_runs:
-                    for j, seg in enumerate(p_runs):
-                        run = p.add_run() if j > 0 else (p.runs[0] if p.runs else p.add_run())
-                        run.text = seg.get("text", "")
-                        seg_font = seg.get("font", elem.get("text_font"))
-                        if seg_font:
-                            run.font.name = seg_font
-                        run.font.size = Pt(seg.get("size", elem.get("text_size", 16)))
-                        if "color" in seg:
-                            apply_color_to_font(run.font.color, resolve_color(seg["color"]))
-                        elif "text_color" in elem:
-                            apply_color_to_font(run.font.color, resolve_color(elem["text_color"]))
-                        run.font.bold = seg.get("bold", False)
-                        run.font.italic = seg.get("italic", False)
-                        apply_run_properties(run, seg, colors)
-                else:
-                    run = p.add_run()
-                    run.text = p_def.get("text", "")
-                    text_font = p_def.get("text_font", elem.get("text_font"))
-                    if text_font:
-                        run.font.name = text_font
-                    run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
-                    p_color = p_def.get("text_color", elem.get("text_color"))
-                    if p_color:
-                        apply_color_to_font(run.font.color, resolve_color(p_color))
-                    run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
-                    run.font.italic = p_def.get("italic", elem.get("italic", False))
-                    apply_run_properties(run, p_def, colors)
-        else:
-            text = elem["text"]
-            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-            for i, line in enumerate(lines):
-                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                if "alignment" in elem:
-                    p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
-                apply_paragraph_properties(p, elem)
-                apply_bullet_properties(p, elem)
-                run = p.add_run()
-                run.text = line
-                text_font = elem.get("text_font")
-                if text_font:
-                    run.font.name = text_font
-                run.font.size = Pt(elem.get("text_size", 16))
-                if "text_color" in elem:
-                    color_spec = resolve_color(elem["text_color"])
-                    apply_color_to_font(run.font.color, color_spec)
-                run.font.bold = elem.get("text_bold", False)
-                run.font.italic = elem.get("italic", False)
-                apply_run_properties(run, elem, colors)
+        populate_text_frame(shape.text_frame, elem, colors, SHAPE_KEYS)
 
     return shape
 
@@ -595,115 +477,116 @@ def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
                            content_dir: Path):
     """Dispatch a child element build within a group shape.
 
-    Uses group.shapes as the target shapes collection so children are added
-    inside the group rather than on the slide.
+    Reuses top-level builders for shape and textbox. Groups do not support
+    table or chart elements.
     """
     elem_type = elem.get("type", "textbox")
-    shapes = group.shapes
 
     if elem_type == "shape":
-        shape_type = SHAPE_MAP.get(elem.get("shape", "rectangle"), MSO_SHAPE.RECTANGLE)
-        shape = shapes.add_shape(
-            shape_type,
-            Inches(elem["left"]), Inches(elem["top"]),
-            Inches(elem["width"]), Inches(elem["height"]),
-        )
-        if "name" in elem:
-            shape.name = elem["name"]
-        apply_rotation(shape, elem.get("rotation"))
-        apply_fill(shape, elem.get("fill"), colors)
-        apply_line(shape, elem, colors)
-        if "text" in elem:
-            tf = shape.text_frame
-            tf.word_wrap = True
-            apply_text_properties(tf, elem)
-            paragraphs = elem.get("paragraphs")
-            if paragraphs:
-                for i, p_def in enumerate(paragraphs):
-                    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                    apply_bullet_properties(p, p_def)
-                    run = p.add_run()
-                    run.text = p_def.get("text", "")
-                    text_font = p_def.get("text_font", elem.get("text_font"))
-                    if text_font:
-                        run.font.name = text_font
-                    run.font.size = Pt(p_def.get("text_size", elem.get("text_size", 16)))
-                    p_color = p_def.get("text_color", elem.get("text_color"))
-                    if p_color:
-                        apply_color_to_font(run.font.color, resolve_color(p_color, colors))
-                    run.font.bold = p_def.get("text_bold", elem.get("text_bold", False))
-                    apply_run_properties(run, p_def, colors)
-            else:
-                text = elem["text"]
-                lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-                for i, line in enumerate(lines):
-                    p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                    apply_bullet_properties(p, elem)
-                    run = p.add_run()
-                    run.text = line
-                    text_font = elem.get("text_font")
-                    if text_font:
-                        run.font.name = text_font
-                    run.font.size = Pt(elem.get("text_size", 16))
-                    if "text_color" in elem:
-                        apply_color_to_font(run.font.color, resolve_color(elem["text_color"], colors))
-                    run.font.bold = elem.get("text_bold", False)
-                    apply_run_properties(run, elem, colors)
+        _add_shape_to_collection(group.shapes, elem, colors)
     elif elem_type == "textbox":
-        txBox = shapes.add_textbox(
-            Inches(elem["left"]), Inches(elem["top"]),
-            Inches(elem["width"]), Inches(elem["height"]),
-        )
-        if "name" in elem:
-            txBox.name = elem["name"]
-        tf = txBox.text_frame
-        tf.word_wrap = True
-        apply_text_properties(tf, elem)
-        paragraphs = elem.get("paragraphs")
-        if paragraphs:
-            for i, p_def in enumerate(paragraphs):
-                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                p_align = p_def.get("alignment", elem.get("alignment"))
-                if p_align:
-                    p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
-                apply_paragraph_properties(p, p_def)
-                apply_bullet_properties(p, p_def)
-                run = p.add_run()
-                run.text = p_def.get("text", "")
-                grp_font = p_def.get("font", elem.get("font"))
-                if grp_font:
-                    run.font.name = grp_font
-                run.font.size = Pt(p_def.get("font_size", elem.get("font_size", 16)))
-                p_color = p_def.get("font_color", elem.get("font_color"))
-                if p_color:
-                    apply_color_to_font(run.font.color, resolve_color(p_color, colors))
-                run.font.bold = p_def.get("font_bold", elem.get("font_bold", False))
-                run.font.italic = p_def.get("italic", elem.get("italic", False))
-                apply_run_properties(run, p_def, colors)
-        else:
-            text = elem.get("text", "")
-            lines = re.split(r'\n|\v', text) if ('\n' in text or '\v' in text) else [text]
-            for i, line in enumerate(lines):
-                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                if "alignment" in elem:
-                    p.alignment = ALIGNMENT_MAP.get(elem["alignment"], ALIGNMENT_MAP["left"])
-                apply_paragraph_properties(p, elem)
-                apply_bullet_properties(p, elem)
-                run = p.add_run()
-                run.text = line
-                grp_font = elem.get("font")
-                if grp_font:
-                    run.font.name = grp_font
-                run.font.size = Pt(elem.get("font_size", 16))
-                if "font_color" in elem:
-                    apply_color_to_font(run.font.color, resolve_color(elem["font_color"], colors))
-                run.font.bold = elem.get("font_bold", False)
-                run.font.italic = elem.get("italic", False)
-                apply_run_properties(run, elem, colors)
+        _add_textbox_to_collection(group.shapes, elem, colors)
     elif elem_type == "connector":
         add_connector_element(group, elem, colors)
     elif elem_type == "image":
         add_image_element(group, elem, content_dir)
+
+
+def _add_shape_to_collection(shapes, elem: dict, colors: dict):
+    """Add a shape to any shapes collection (slide or group)."""
+    shape_type = SHAPE_MAP.get(elem.get("shape", "rectangle"), MSO_SHAPE.RECTANGLE)
+    shape = shapes.add_shape(
+        shape_type,
+        Inches(elem["left"]), Inches(elem["top"]),
+        Inches(elem["width"]), Inches(elem["height"]),
+    )
+    if "name" in elem:
+        shape.name = elem["name"]
+    apply_rotation(shape, elem.get("rotation"))
+    apply_fill(shape, elem.get("fill"), colors)
+    apply_line(shape, elem, colors)
+    if "text" in elem:
+        populate_text_frame(shape.text_frame, elem, colors, SHAPE_KEYS)
+    return shape
+
+
+def _add_textbox_to_collection(shapes, elem: dict, colors: dict):
+    """Add a textbox to any shapes collection (slide or group)."""
+    txBox = shapes.add_textbox(
+        Inches(elem["left"]), Inches(elem["top"]),
+        Inches(elem["width"]), Inches(elem["height"]),
+    )
+    if "name" in elem:
+        txBox.name = elem["name"]
+    populate_text_frame(txBox.text_frame, elem, colors, TEXTBOX_KEYS)
+    return txBox
+
+
+def _build_textbox_element(slide, elem, colors, typography, content_dir):
+    """Build a textbox element with full parameter resolution for YAML keys."""
+    font_name = elem.get("font")
+    font_color = resolve_color(elem["font_color"]) if "font_color" in elem else None
+    is_bold = elem.get("font_bold", elem.get("bold", False))
+    add_textbox(
+        slide, elem["left"], elem["top"], elem["width"], elem["height"],
+        elem.get("text", ""),
+        font_name=font_name,
+        font_size=elem.get("font_size", 16),
+        font_color=font_color,
+        bold=is_bold,
+        italic=elem.get("italic", False),
+        alignment=elem.get("alignment"),
+        name=elem.get("name"),
+        rotation=elem.get("rotation"),
+        elem=elem,
+        colors=colors,
+    )
+
+
+def _build_image_element(slide, elem, colors, typography, content_dir):
+    add_image_element(slide, elem, content_dir)
+
+
+def _build_group_element(slide, elem, colors, typography, content_dir):
+    add_group_element(slide, elem, colors, typography, content_dir)
+
+
+def _build_connector_element(slide, elem, colors, typography, content_dir):
+    add_connector_element(slide, elem, colors)
+
+
+def _build_chart_element(slide, elem, colors, typography, content_dir):
+    add_chart_element(slide, elem, colors)
+
+
+def _build_table_element(slide, elem, colors, typography, content_dir):
+    add_table_element(slide, elem, colors, typography)
+
+
+# Element builder registry: maps element type names to builder functions.
+# All builders share the signature (slide, elem, colors, typography, content_dir).
+ELEMENT_BUILDERS = {
+    "shape": lambda slide, elem, colors, typography, content_dir: add_shape_element(slide, elem, colors, typography),
+    "textbox": _build_textbox_element,
+    "image": _build_image_element,
+    "rich_text": lambda slide, elem, colors, typography, content_dir: add_rich_text_element(slide, elem, colors, typography),
+    "card": lambda slide, elem, colors, typography, content_dir: add_card_element(slide, elem, colors, typography),
+    "arrow_flow": lambda slide, elem, colors, typography, content_dir: add_arrow_flow_element(slide, elem, colors, typography),
+    "numbered_step": lambda slide, elem, colors, typography, content_dir: add_numbered_step_element(slide, elem, colors, typography),
+    "table": _build_table_element,
+    "chart": _build_chart_element,
+    "connector": _build_connector_element,
+    "group": _build_group_element,
+}
+
+
+def _build_element(slide, elem: dict, colors: dict, typography: dict,
+                   content_dir: Path):
+    """Dispatch element building via registry lookup."""
+    elem_type = elem.get("type", "textbox")
+    builder = ELEMENT_BUILDERS.get(elem_type)
+    if builder:
+        builder(slide, elem, colors, typography, content_dir)
 
 
 def clear_slide_shapes(slide):
@@ -841,48 +724,7 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
 
     # Process elements in order
     for elem in elements:
-        elem_type = elem.get("type", "textbox")
-
-        if elem_type == "shape":
-            add_shape_element(slide, elem, colors, typography)
-        elif elem_type == "textbox":
-            font_name = elem.get("font")
-            font_color = resolve_color(elem["font_color"]) if "font_color" in elem else None
-            is_bold = elem.get("font_bold", elem.get("bold", False))
-            add_textbox(
-                slide, elem["left"], elem["top"], elem["width"], elem["height"],
-                elem.get("text", ""),
-                font_name=font_name,
-                font_size=elem.get("font_size", 16),
-                font_color=font_color,
-                bold=is_bold,
-                italic=elem.get("italic", False),
-                alignment=elem.get("alignment"),
-                name=elem.get("name"),
-                rotation=elem.get("rotation"),
-                elem=elem,
-                colors=colors
-            )
-        elif elem_type == "image":
-            add_image_element(slide, elem, content_dir)
-        elif elem_type == "rich_text":
-            add_rich_text_element(slide, elem, colors, typography)
-        elif elem_type == "card":
-            add_card_element(slide, elem, colors, typography)
-        elif elem_type == "arrow_flow":
-            add_arrow_flow_element(slide, elem, colors, typography)
-        elif elem_type == "numbered_step":
-            add_numbered_step_element(slide, elem, colors, typography)
-        elif elem_type == "table":
-            from pptx_tables import add_table_element
-            add_table_element(slide, elem, colors, typography)
-        elif elem_type == "chart":
-            from pptx_charts import add_chart_element
-            add_chart_element(slide, elem, colors)
-        elif elem_type == "connector":
-            add_connector_element(slide, elem, colors)
-        elif elem_type == "group":
-            add_group_element(slide, elem, colors, typography, content_dir)
+        _build_element(slide, elem, colors, typography, content_dir)
 
     # Execute content-extra.py if present
     extra_script = content_dir / "content-extra.py"

@@ -9,13 +9,13 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
-from lxml import etree
 import yaml
+from lxml import etree
 from pptx import Presentation
-
 from pptx.oxml.ns import qn
+from pptx_charts import extract_chart
 from pptx_colors import extract_color, hex_brightness
-from pptx_fills import extract_fill, extract_line, extract_effect_list
+from pptx_fills import extract_effect_list, extract_fill, extract_line
 from pptx_fonts import (
     extract_alignment,
     extract_font_info,
@@ -23,11 +23,12 @@ from pptx_fonts import (
     normalize_font_family,
 )
 from pptx_shapes import AUTO_SHAPE_NAME_MAP, extract_rotation
+from pptx_tables import extract_table
 from pptx_text import (
+    extract_bullet_properties,
     extract_paragraph_properties,
     extract_run_properties,
     extract_text_frame_properties,
-    extract_bullet_properties,
 )
 from pptx_utils import emu_to_inches
 
@@ -169,28 +170,44 @@ def extract_group(shape, slide_num: int, output_dir, img_count: int) -> dict:
     return elem
 
 
-def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
-    """Extract a single child shape within a group."""
+def _extract_shape_by_type(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
+    """Dispatch shape extraction based on shape_type, table/chart presence, or freeform geometry."""
     shape_type = shape.shape_type
+
+    # Simple shape_type dispatch (these extractors need no extra context)
+    _SIMPLE_EXTRACTORS = {
+        17: extract_textbox,   # TEXT_BOX
+        1: extract_shape,      # AUTO_SHAPE
+        9: extract_connector,  # LINE / CONNECTOR
+    }
+    extractor = _SIMPLE_EXTRACTORS.get(shape_type)
+    if extractor:
+        return extractor(shape)
+
     if shape_type == 13:  # PICTURE
         return extract_image(shape, output_dir, slide_num, img_count)
-    elif shape_type == 17:  # TEXT_BOX
-        return extract_textbox(shape)
-    elif shape_type == 1:  # AUTO_SHAPE
-        return extract_shape(shape)
-    elif shape_type == 9:  # LINE / CONNECTOR
-        return extract_connector(shape)
-    elif shape_type == 6:  # Nested GROUP
+    if shape_type == 6:  # GROUP
         return extract_group(shape, slide_num, output_dir, img_count)
-    elif hasattr(shape, "has_table") and shape.has_table:
-        from pptx_tables import extract_table
+
+    # Table and chart detection via attribute check
+    if hasattr(shape, "has_table") and shape.has_table:
         return extract_table(shape)
-    elif hasattr(shape, "has_chart") and shape.has_chart:
-        from pptx_charts import extract_chart
+    if hasattr(shape, "has_chart") and shape.has_chart:
         return extract_chart(shape)
-    elif _is_freeform(shape):
+    if _is_freeform(shape):
         return extract_freeform(shape)
-    result = {
+
+    return None
+
+
+def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
+    """Extract a single child shape within a group."""
+    result = _extract_shape_by_type(shape, slide_num, output_dir, img_count)
+    if result is not None:
+        return result
+
+    # Fallback for unrecognized shape types
+    elem = {
         "type": "shape",
         "shape": "rectangle",
         "left": emu_to_inches(shape.left),
@@ -199,9 +216,9 @@ def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> di
         "height": emu_to_inches(shape.height),
         "name": shape.name,
     }
-    if shape_type is not None:
-        result["_unrecognized_shape_type"] = int(shape_type)
-    return result
+    if shape.shape_type is not None:
+        elem["_unrecognized_shape_type"] = int(shape.shape_type)
+    return elem
 
 
 def _has_formatting_variation(runs: list) -> bool:
@@ -216,6 +233,106 @@ def _has_formatting_variation(runs: list) -> bool:
     underlines = {r.get("underline", False) for r in runs}
     return (len(fonts) > 1 or len(sizes) > 1 or len(colors) > 1
             or len(bolds) > 1 or len(italics) > 1 or len(underlines) > 1)
+
+
+# Key-mapping for extraction: maps canonical keys to output YAML key names
+_SHAPE_EXTRACT_KEYS = {"font": "text_font", "size": "text_size", "color": "text_color", "bold": "text_bold"}
+_TEXTBOX_EXTRACT_KEYS = {"font": "font", "size": "font_size", "color": "font_color", "bold": "font_bold"}
+
+# Keys to promote from first paragraph to element level
+_SHAPE_PROMOTE_KEYS = ("text_font", "text_size", "text_color", "text_bold",
+                       "italic", "alignment", "char_spacing")
+_TEXTBOX_PROMOTE_KEYS = ("font", "font_size", "font_color", "font_bold",
+                         "italic", "alignment", "char_spacing")
+
+
+def _extract_text_content(text_frame, keys: dict, promote_keys: tuple) -> dict:
+    """Extract text content from a text frame into an element dict fragment.
+
+    Handles paragraph iteration, run extraction, rich-text detection, and
+    paragraph/element-level key promotion.
+
+    Args:
+        text_frame: python-pptx TextFrame object.
+        keys: Key-mapping dict for font/size/color/bold output names.
+        promote_keys: Tuple of keys to promote from first paragraph to element level.
+
+    Returns:
+        Dict with text, text frame properties, paragraph data, and promoted defaults.
+    """
+    result = {}
+    text = text_frame.text.strip()
+    if not text:
+        return result
+
+    result["text"] = text
+
+    tf_props = extract_text_frame_properties(text_frame)
+    if tf_props:
+        result.update(tf_props)
+
+    para_dicts = []
+    for para in text_frame.paragraphs:
+        run_info = {}
+        para_runs = []
+        for run in para.runs:
+            font_info = extract_font_info(run.font)
+            run_extra = extract_run_properties(run)
+            para_runs.append({"text": run.text, **font_info, **run_extra})
+            if not run_info:
+                run_info = {**font_info, **run_extra}
+
+        para_info = extract_paragraph_font(para)
+        para_spacing = extract_paragraph_properties(para)
+        bullet_props = extract_bullet_properties(para)
+        alignment = extract_alignment(para)
+        merged = {**para_info, **run_info}
+
+        p_dict = {"text": para.text}
+        if "font" in merged:
+            p_dict[keys["font"]] = merged["font"]
+        if "size" in merged:
+            p_dict[keys["size"]] = merged["size"]
+        if "color" in merged:
+            p_dict[keys["color"]] = merged["color"]
+        if merged.get("bold"):
+            p_dict[keys["bold"]] = True
+        if merged.get("italic"):
+            p_dict["italic"] = True
+        if merged.get("underline"):
+            p_dict["underline"] = True
+        if merged.get("hyperlink"):
+            p_dict["hyperlink"] = merged["hyperlink"]
+        if "char_spacing" in merged:
+            p_dict["char_spacing"] = merged["char_spacing"]
+        if "effect" in merged:
+            p_dict["text_effect"] = merged["effect"]
+        if alignment:
+            p_dict["alignment"] = alignment
+        if para_spacing:
+            p_dict.update(para_spacing)
+        if bullet_props:
+            p_dict.update(bullet_props)
+        if _has_formatting_variation(para_runs):
+            p_dict["runs"] = para_runs
+        para_dicts.append(p_dict)
+
+    non_empty = [p for p in para_dicts if p["text"].strip()]
+    any_has_runs = any("runs" in p for p in para_dicts)
+    if len(para_dicts) > 1 or any_has_runs:
+        result["paragraphs"] = para_dicts
+        if non_empty:
+            first = non_empty[0]
+            for key in promote_keys:
+                if key in first:
+                    result[key] = first[key]
+    elif non_empty:
+        first = non_empty[0]
+        for key, val in first.items():
+            if key != "text":
+                result[key] = val
+
+    return result
 
 
 def extract_shape(shape) -> dict:
@@ -267,78 +384,8 @@ def extract_shape(shape) -> dict:
 
     # Extract text if present
     if shape.has_text_frame:
-        text = shape.text_frame.text.strip()
-        if text:
-            elem["text"] = text
-
-            # Extract text frame-level properties
-            tf_props = extract_text_frame_properties(shape.text_frame)
-            if tf_props:
-                elem.update(tf_props)
-
-            # Extract per-paragraph formatting with per-paragraph rich text detection
-            para_dicts = []
-            for para in shape.text_frame.paragraphs:
-                run_info = {}
-                para_runs = []
-                for run in para.runs:
-                    font_info = extract_font_info(run.font)
-                    run_extra = extract_run_properties(run)
-                    para_runs.append({"text": run.text, **font_info, **run_extra})
-                    if not run_info:
-                        run_info = {**font_info, **run_extra}
-                para_info = extract_paragraph_font(para)
-                para_spacing = extract_paragraph_properties(para)
-                bullet_props = extract_bullet_properties(para)
-                alignment = extract_alignment(para)
-                merged = {**para_info, **run_info}
-                p_dict = {"text": para.text}
-                if "font" in merged:
-                    p_dict["text_font"] = merged["font"]
-                if "size" in merged:
-                    p_dict["text_size"] = merged["size"]
-                if "color" in merged:
-                    p_dict["text_color"] = merged["color"]
-                if merged.get("bold"):
-                    p_dict["text_bold"] = True
-                if merged.get("italic"):
-                    p_dict["italic"] = True
-                if merged.get("underline"):
-                    p_dict["underline"] = True
-                if merged.get("hyperlink"):
-                    p_dict["hyperlink"] = merged["hyperlink"]
-                if "char_spacing" in merged:
-                    p_dict["char_spacing"] = merged["char_spacing"]
-                if "effect" in merged:
-                    p_dict["text_effect"] = merged["effect"]
-                if alignment:
-                    p_dict["alignment"] = alignment
-                if para_spacing:
-                    p_dict.update(para_spacing)
-                if bullet_props:
-                    p_dict.update(bullet_props)
-                if _has_formatting_variation(para_runs):
-                    p_dict["runs"] = para_runs
-                para_dicts.append(p_dict)
-
-            non_empty = [p for p in para_dicts if p["text"].strip()]
-            any_has_runs = any("runs" in p for p in para_dicts)
-            if len(para_dicts) > 1 or any_has_runs:
-                # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
-                elem["paragraphs"] = para_dicts
-                # Also set element-level defaults from first non-empty paragraph
-                if non_empty:
-                    first = non_empty[0]
-                    for key in ("text_font", "text_size", "text_color", "text_bold",
-                                "italic", "alignment", "char_spacing"):
-                        if key in first:
-                            elem[key] = first[key]
-            elif non_empty:
-                # Single paragraph: flatten to element level
-                first = non_empty[0]
-                for key, val in first.items():
-                    if key != "text":
-                        elem[key] = val
+        text_data = _extract_text_content(shape.text_frame, _SHAPE_EXTRACT_KEYS, _SHAPE_PROMOTE_KEYS)
+        elem.update(text_data)
 
     return elem
 
@@ -359,77 +406,9 @@ def extract_textbox(shape) -> dict:
     if rot is not None:
         elem["rotation"] = rot
 
-    # Check if this is a rich text element (multiple runs with different formatting)
     if shape.has_text_frame:
-        # Extract text frame-level properties (margins, auto_size, vertical_anchor)
-        tf_props = extract_text_frame_properties(shape.text_frame)
-        if tf_props:
-            elem.update(tf_props)
-
-        para_dicts = []
-        for para in shape.text_frame.paragraphs:
-            run_info = {}
-            para_runs = []
-            for run in para.runs:
-                font_info = extract_font_info(run.font)
-                run_extra = extract_run_properties(run)
-                para_runs.append({"text": run.text, **font_info, **run_extra})
-                if not run_info:
-                    run_info = {**font_info, **run_extra}
-
-            p_info = extract_paragraph_font(para)
-            p_spacing = extract_paragraph_properties(para)
-            p_bullets = extract_bullet_properties(para)
-            p_alignment = extract_alignment(para)
-            merged = {**p_info, **run_info}
-            p_dict = {"text": para.text}
-            if "font" in merged:
-                p_dict["font"] = merged["font"]
-            if "size" in merged:
-                p_dict["font_size"] = merged["size"]
-            if "color" in merged:
-                p_dict["font_color"] = merged["color"]
-            if merged.get("bold"):
-                p_dict["font_bold"] = True
-            if merged.get("italic"):
-                p_dict["italic"] = True
-            if merged.get("underline"):
-                p_dict["underline"] = True
-            if merged.get("hyperlink"):
-                p_dict["hyperlink"] = merged["hyperlink"]
-            if "char_spacing" in merged:
-                p_dict["char_spacing"] = merged["char_spacing"]
-            if "effect" in merged:
-                p_dict["text_effect"] = merged["effect"]
-            if p_alignment:
-                p_dict["alignment"] = p_alignment
-            if p_spacing:
-                p_dict.update(p_spacing)
-            if p_bullets:
-                p_dict.update(p_bullets)
-            # Per-paragraph rich text: store runs when formatting varies within paragraph
-            if _has_formatting_variation(para_runs):
-                p_dict["runs"] = para_runs
-            para_dicts.append(p_dict)
-
-        non_empty = [p for p in para_dicts if p["text"].strip()]
-        any_has_runs = any("runs" in p for p in para_dicts)
-        if len(para_dicts) > 1 or any_has_runs:
-            # Multi-paragraph: store per-paragraph formatting (including empty spacing paragraphs)
-            elem["paragraphs"] = para_dicts
-            # Set element-level defaults from first non-empty paragraph
-            if non_empty:
-                first = non_empty[0]
-                for key in ("font", "font_size", "font_color", "font_bold",
-                            "italic", "alignment", "char_spacing"):
-                    if key in first:
-                        elem[key] = first[key]
-        elif non_empty:
-            # Single-style text box: flatten to element level
-            first = non_empty[0]
-            for key, val in first.items():
-                if key != "text":
-                    elem[key] = val
+        text_data = _extract_text_content(shape.text_frame, _TEXTBOX_EXTRACT_KEYS, _TEXTBOX_PROMOTE_KEYS)
+        elem.update(text_data)
 
     return elem
 
@@ -630,7 +609,16 @@ def detect_global_style(prs) -> dict:
         "defaults": {
             "speaker_notes_required": True,
         },
+        "typography": {
+            "body_font": body_font,
+            "code_font": code_font,
+            "heading_size": heading_size,
+            "body_size": body_size,
+        },
     }
+
+    if colors:
+        style["colors"] = colors
 
     if themes:
         style["themes"] = themes
@@ -807,68 +795,48 @@ def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[flo
     for z_index, shape in enumerate(list(slide.shapes)):
         shape_type = shape.shape_type
 
-        if shape_type == 13:  # PICTURE
+        # Track image count for filename generation
+        if shape_type == 13:
             img_count += 1
-            elem = extract_image(shape, slide_dir, slide_num, img_count)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif shape_type == 17:  # TEXT_BOX
+
+        # Handle placeholders specially (extract as textbox with marker)
+        if shape_type == 14:
+            if not shape.has_text_frame:
+                continue
             elem = extract_textbox(shape)
+            elem["_placeholder"] = True
             elem["z_order"] = z_index
             content["elements"].append(elem)
-            # Detect title (first large text near top)
-            if not content["title"] and emu_to_inches(shape.top) < 1.5:
+            continue
+
+        # Use shared dispatcher for all other shape types
+        elem = _extract_shape_by_type(shape, slide_num, slide_dir, img_count)
+        if elem is not None:
+            elem["z_order"] = z_index
+            content["elements"].append(elem)
+
+            # Detect title from textbox near top of slide
+            if (shape_type == 17 and not content["title"]
+                    and emu_to_inches(shape.top) < 1.5):
                 text = shape.text_frame.text.strip() if shape.has_text_frame else ""
                 if text and len(text) < 100:
                     content["title"] = text
-        elif shape_type == 1:  # AUTO_SHAPE
-            elem = extract_shape(shape)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif shape_type == 14:  # PLACEHOLDER
-            # Placeholders may contain text; extract like textboxes
-            if shape.has_text_frame:
-                elem = extract_textbox(shape)
-                elem["_placeholder"] = True
-                elem["z_order"] = z_index
-                content["elements"].append(elem)
-        elif shape_type == 6:  # GROUP
-            elem = extract_group(shape, slide_num, slide_dir, img_count)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif shape_type == 9:  # LINE / CONNECTOR
-            elem = extract_connector(shape)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif hasattr(shape, "has_table") and shape.has_table:
-            from pptx_tables import extract_table
-            elem = extract_table(shape)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif hasattr(shape, "has_chart") and shape.has_chart:
-            from pptx_charts import extract_chart
-            elem = extract_chart(shape)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        elif _is_freeform(shape):
-            elem = extract_freeform(shape)
-            elem["z_order"] = z_index
-            content["elements"].append(elem)
-        else:
-            # Log unrecognized shape types for manual review
-            elem_data = {
-                "type": "shape",
-                "shape": "rectangle",
-                "left": emu_to_inches(shape.left),
-                "top": emu_to_inches(shape.top),
-                "width": emu_to_inches(shape.width),
-                "height": emu_to_inches(shape.height),
-                "name": shape.name,
-                "z_order": z_index,
-            }
-            if shape_type is not None:
-                elem_data["_unrecognized_shape_type"] = int(shape_type)
-            content["elements"].append(elem_data)
+            continue
+
+        # Fallback for unrecognized shape types
+        elem_data = {
+            "type": "shape",
+            "shape": "rectangle",
+            "left": emu_to_inches(shape.left),
+            "top": emu_to_inches(shape.top),
+            "width": emu_to_inches(shape.width),
+            "height": emu_to_inches(shape.height),
+            "name": shape.name,
+            "z_order": z_index,
+        }
+        if shape_type is not None:
+            elem_data["_unrecognized_shape_type"] = int(shape_type)
+        content["elements"].append(elem_data)
 
     return content, slide_dir
 

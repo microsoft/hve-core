@@ -13,21 +13,7 @@ from pptx_fonts import (
     extract_paragraph_font,
     font_family_matches,
     normalize_font_family,
-    resolve_font,
 )
-
-
-class TestResolveFont:
-    """Tests for resolve_font."""
-
-    def test_returns_literal_name(self):
-        assert resolve_font("Arial") == "Arial"
-
-    def test_returns_theme_ref(self):
-        assert resolve_font("+mj-lt") == "+mj-lt"
-
-    def test_with_typography_dict(self):
-        assert resolve_font("Calibri", {"heading": "Arial"}) == "Calibri"
 
 
 class TestNormalizeFontFamily:
