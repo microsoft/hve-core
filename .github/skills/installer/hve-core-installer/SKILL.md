@@ -46,12 +46,13 @@ Present the following and await explicit consent:
 ```text
 🚀 HVE-Core Installer
 
-I'll help you install HVE-Core agents, prompts, and instructions.
+I'll help you install HVE-Core agents, prompts, instructions and skills.
 
 Available content:
 • 25+ specialized agents (task-researcher, task-planner, etc.)
 • Reusable prompt templates for common workflows
 • Technology-specific coding instructions (bash, python, markdown, etc.)
+• Domain-specific skills (pr-reference, etc.)
 
 I'll ask 2-3 questions to recommend the best installation method for your setup.
 
@@ -113,7 +114,7 @@ If user selects Option 2 (Clone-Based):
 
 **When to choose Clone over Extension:**
 
-* Need to customize agents, prompts, or instructions
+* Need to customize agents, prompts, instructions, or skills
 * Team requires version-controlled HVE-Core
 * Offline or air-gapped environment
 
@@ -377,7 +378,7 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Include nested subdirectories such as `hve-core/subagents`. Create one entry per subdirectory.
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/` and `.github/skills/` from the cloned HVE-Core directory. Include all nested subdirectories such as `hve-core/subagents`. Create one entry per subdirectory.
 
 <!-- <settings-template> -->
 ```json
@@ -1253,7 +1254,7 @@ Use these exact emojis for consistency:
 
 ## Success Criteria
 
-**Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions), settings configured, user directed to reload.
+**Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions, skills), settings configured, user directed to reload.
 
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
 
