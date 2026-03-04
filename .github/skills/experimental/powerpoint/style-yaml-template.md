@@ -1,3 +1,7 @@
+---
+description: 'Global style YAML schema template with dimensions, layout mappings, metadata, and defaults'
+---
+
 # Style YAML Template
 
 Use this template when creating or updating the `global/style.yaml` file for a slide deck. This file defines dimensions, template configuration, layout mappings, metadata, defaults, and theme information.
@@ -74,3 +78,5 @@ defaults:
 | `defaults` | `title_bar`, `accent_bar` | Default bar dimensions and colors (`#RRGGBB` hex) |
 | `defaults` | `card` | Default card fill, corner radius, and border |
 | `defaults` | `speaker_notes_required` | Whether speaker notes are enforced during validation |
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

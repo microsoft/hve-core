@@ -1,3 +1,7 @@
+---
+description: 'Custom Python rendering template for complex slide drawings beyond content.yaml capabilities'
+---
+
 # Content Extra Python Template
 
 Use this template when a slide requires complex drawings that cannot be expressed through `content.yaml` element definitions. Create a `content-extra.py` file in the slide's content folder alongside its `content.yaml`.
@@ -58,3 +62,5 @@ def render(slide, style, content_dir):
 * Keep custom scripts focused on a single slide's needs. If the same drawing pattern repeats across slides, consider defining a new element type in `content.yaml` instead.
 * Use `#RRGGBB` hex values for all colors to keep the script self-contained and independent of global style configuration.
 * Test the script independently by importing the function and passing mock objects before running the full build.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -42,6 +42,11 @@ Describe 'Test-UvAvailability' -Tag 'Unit' {
 }
 
 Describe 'Initialize-PythonEnvironment' -Tag 'Unit' {
+    BeforeAll {
+        # Define stub so Pester can mock uv when it is not installed
+        function uv { }
+    }
+
     It 'Completes when uv sync succeeds' {
         Mock uv { $global:LASTEXITCODE = 0 }
         { Initialize-PythonEnvironment } | Should -Not -Throw

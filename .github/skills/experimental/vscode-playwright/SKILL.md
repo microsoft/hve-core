@@ -184,3 +184,5 @@ Never use separate `mcp_microsoft_pla_browser_press_key` -> `mcp_microsoft_pla_b
 | Copilot Chat responses non-deterministic | Streaming token-by-token output | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay |
 
 > Brought to you by microsoft/hve-core
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

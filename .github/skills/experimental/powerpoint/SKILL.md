@@ -440,3 +440,5 @@ This recreates the virtual environment from scratch using `pyproject.toml` as th
 When `uv` itself is not available, install it first (see Installing uv above), then retry. When Python 3.11+ is not available, run `uv python install 3.11` to have uv fetch and manage the interpreter.
 
 > Brought to you by microsoft/hve-core
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
