@@ -122,9 +122,13 @@ Validate the generated deck against quality criteria using PPTX property checks 
 3. Read the vision validation results from `{{working-directory}}/slide-deck/validation/validation-results.json`.
 4. Read the PPTX property results from `{{working-directory}}/slide-deck/validation/deck-validation-results.json`.
 5. Read the PPTX property report from `{{working-directory}}/slide-deck/validation/deck-validation-report.md` for speaker notes and slide count findings.
-6. For each slide, list issues or areas of concern, even if minor.
-5. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
-6. Update the execution log with all validation findings including the path to exported slide images and the vision results JSON.
+6. For individual slide findings, read per-slide files next to the slide images:
+   * `slide-NNN-validation.json` — Vision validation result for slide NNN (description, issues, quality).
+   * `slide-NNN-deck-validation.json` — PPTX property validation result for slide NNN.
+7. For each slide, list issues or areas of concern, even if minor.
+8. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
+9. When validating changed or added slides, always validate a block that includes one slide before and one slide after the changed slides. This catches edge-proximity issues and transition inconsistencies.
+10. Update the execution log with all validation findings including the path to exported slide images and the per-slide validation JSON files.
 
 #### Task: `export`
 

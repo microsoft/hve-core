@@ -120,16 +120,20 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
 * Validation prompt containing these visual checks: text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative line positioning, citation collisions, column alignment, readable fill combinations, and background images.
-* Optional overrides: validation model (default: `claude-haiku-4.5`), concurrency.
+* Optional overrides: validation model (default: `claude-haiku-4.5`).
 
 The subagent runs `Invoke-PptxPipeline.ps1 -Action Validate` which chains export (PPTX → images), PPTX property checks (`validate_deck.py`), and Copilot SDK vision validation (`validate_slides.py`). Results are written to the image output directory as JSON.
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**
 
 Read the subagent's execution log and review all validation findings from:
-* `slide-deck/validation/deck-validation-results.json` — PPTX property findings (speaker notes, slide count).
+* `slide-deck/validation/deck-validation-results.json` — Consolidated PPTX property findings (speaker notes, slide count).
 * `slide-deck/validation/deck-validation-report.md` — Human-readable PPTX property report.
-* `slide-deck/validation/validation-results.json` — Vision-based quality findings with visual descriptions.
+* `slide-deck/validation/validation-results.json` — Consolidated vision-based quality findings with visual descriptions.
+* `slide-deck/validation/slide-NNN-validation.json` — Per-slide vision validation result (next to `slide-NNN.jpg`).
+* `slide-deck/validation/slide-NNN-deck-validation.json` — Per-slide PPTX property validation result.
+
+When validating changed or added slides, always pass a `-Slides` range that includes one slide before and one slide after the changed slides. This catches edge-proximity issues and transition inconsistencies between adjacent slides.
 
 #### After Validation
 

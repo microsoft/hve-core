@@ -79,8 +79,6 @@
     Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationModel',
     Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationConcurrency',
-    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -125,9 +123,6 @@ param(
 
     [Parameter()]
     [string]$ValidationModel = 'claude-haiku-4.5',
-
-    [Parameter()]
-    [int]$ValidationConcurrency = 3,
 
     [Parameter()]
     [switch]$SkipVenvSetup
@@ -423,6 +418,8 @@ function Invoke-ValidateDeck {
     $deckReportPath = Join-Path $ImageOutputDir 'deck-validation-report.md'
     $pptxArgs += '--report'
     $pptxArgs += $deckReportPath
+    $pptxArgs += '--per-slide-dir'
+    $pptxArgs += $ImageOutputDir
 
     & $python @pptxArgs
     if ($LASTEXITCODE -eq 2) {
@@ -439,8 +436,7 @@ function Invoke-ValidateDeck {
         $visionArgs = @(
             $visionScript,
             '--image-dir', $ImageOutputDir,
-            '--model', $ValidationModel,
-            '--concurrency', $ValidationConcurrency
+            '--model', $ValidationModel
         )
         if ($ValidationPrompt) {
             $visionArgs += '--prompt'

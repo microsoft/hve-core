@@ -99,7 +99,6 @@ class TestCreateParser:
             ["--image-dir", "images/", "--prompt", "Check"]
         )
         assert args.model == "claude-haiku-4.5"
-        assert args.concurrency == 1
         assert args.system_message is None
         assert args.system_message_file is None
         assert args.response_schema is None
@@ -198,6 +197,31 @@ class TestLoadResponseSchema:
         )
         result = load_response_schema(args)
         assert result == '{"from_file": true}'
+
+    def test_default_schema_is_valid_json(self):
+        parsed = json.loads(DEFAULT_RESPONSE_SCHEMA)
+        assert "slide_description" in parsed
+
+    def test_default_schema_has_expected_sections(self):
+        parsed = json.loads(DEFAULT_RESPONSE_SCHEMA)
+        desc = parsed["slide_description"]
+        assert "background" in desc
+        assert "shapes" in desc
+        assert "text_boxes" in desc
+        assert "images" in desc
+        assert "issues" in parsed
+        assert "overall_quality" in parsed
+
+
+class TestCreateParserNoConcurrency:
+    """Verify concurrency flag was removed."""
+
+    def test_no_concurrency_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--image-dir", "images/", "--prompt", "Check"]
+        )
+        assert not hasattr(args, "concurrency")
 
     def test_default_schema_is_valid_json(self):
         parsed = json.loads(DEFAULT_RESPONSE_SCHEMA)

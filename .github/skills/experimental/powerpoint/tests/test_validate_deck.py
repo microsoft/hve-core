@@ -303,3 +303,57 @@ class TestMain:
         # Slide 2 has empty notes (info severity) → exit success
         # unless it has warnings
         assert result in (0, 1)
+
+    def test_per_slide_dir_output(self, simple_deck, tmp_path):
+        per_slide_dir = tmp_path / "per-slide"
+        with patch(
+            "sys.argv",
+            [
+                "validate_deck.py",
+                "--input",
+                str(simple_deck),
+                "--per-slide-dir",
+                str(per_slide_dir),
+            ],
+        ):
+            result = main()
+        assert result in (0, 1)
+        assert per_slide_dir.exists()
+        slide_1 = per_slide_dir / "slide-001-deck-validation.json"
+        slide_2 = per_slide_dir / "slide-002-deck-validation.json"
+        assert slide_1.exists()
+        assert slide_2.exists()
+        data = json.loads(slide_1.read_text())
+        assert data["slide_number"] == 1
+        assert "issues" in data
+        assert "overall_quality" in data
+
+    def test_per_slide_dir_with_filter(self, simple_deck, tmp_path):
+        per_slide_dir = tmp_path / "per-slide-filtered"
+        with patch(
+            "sys.argv",
+            [
+                "validate_deck.py",
+                "--input",
+                str(simple_deck),
+                "--slides",
+                "1",
+                "--per-slide-dir",
+                str(per_slide_dir),
+            ],
+        ):
+            result = main()
+        assert result in (0, 1)
+        assert (per_slide_dir / "slide-001-deck-validation.json").exists()
+        assert not (per_slide_dir / "slide-002-deck-validation.json").exists()
+
+
+class TestCreateParserPerSlideDir:
+    """Tests for --per-slide-dir argument."""
+
+    def test_per_slide_dir_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--input", "test.pptx", "--per-slide-dir", "output/"]
+        )
+        assert str(args.per_slide_dir) == "output"

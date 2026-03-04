@@ -325,7 +325,6 @@ Describe 'Invoke-ValidateDeck' -Tag 'Unit' {
             $ValidationPrompt = 'Check slide quality'
             $ValidationPromptFile = ''
             $ValidationModel = 'test-model'
-            $ValidationConcurrency = 1
         }
 
         It 'Completes without error' {

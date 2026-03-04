@@ -279,6 +279,11 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--report", type=Path, help="Output Markdown report file path")
     parser.add_argument(
+        "--per-slide-dir",
+        type=Path,
+        help="Directory for per-slide JSON files (slide-NNN-deck-validation.json)",
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
     )
     return parser
@@ -299,6 +304,18 @@ def main() -> int:
 
     logger.info("Validating PPTX properties: %s", pptx_path)
     results = validate_deck(pptx_path, args.content_dir, slide_filter=slide_filter)
+
+    # Write per-slide deck validation JSON files
+    if args.per_slide_dir:
+        args.per_slide_dir.mkdir(parents=True, exist_ok=True)
+        for slide_result in results["slides"]:
+            slide_num = slide_result.get("slide_number", 0)
+            per_slide_path = (
+                args.per_slide_dir / f"slide-{slide_num:03d}-deck-validation.json"
+            )
+            per_slide_json = json.dumps(slide_result, indent=2)
+            per_slide_path.write_text(per_slide_json, encoding="utf-8")
+            logger.debug("Per-slide deck results written to %s", per_slide_path)
 
     # Output JSON
     output_json = json.dumps(results, indent=2)
