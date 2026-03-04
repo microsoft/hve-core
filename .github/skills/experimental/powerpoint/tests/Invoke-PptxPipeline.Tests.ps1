@@ -277,7 +277,6 @@ Describe 'Invoke-ValidateDeck' -Tag 'Unit' {
         BeforeAll {
             $InputPath = Join-Path $TestDrive 'deck.pptx'
             $ImageOutputDir = ''
-            $ValidationCacheDir = ''
             $ValidationPrompt = ''
             $ValidationPromptFile = ''
         }
@@ -291,7 +290,6 @@ Describe 'Invoke-ValidateDeck' -Tag 'Unit' {
         BeforeAll {
             $InputPath = Join-Path $TestDrive 'deck.pptx'
             $ImageOutputDir = ''
-            $ValidationCacheDir = ''
             $ValidationPrompt = ''
             $ValidationPromptFile = ''
         }
@@ -308,7 +306,6 @@ Describe 'Invoke-ValidateDeck' -Tag 'Unit' {
         BeforeAll {
             $InputPath = Join-Path $TestDrive 'deck.pptx'
             $ImageOutputDir = ''
-            $ValidationCacheDir = ''
             $ValidationPrompt = ''
             $ValidationPromptFile = ''
         }
@@ -325,7 +322,6 @@ Describe 'Invoke-ValidateDeck' -Tag 'Unit' {
         BeforeAll {
             $InputPath = Join-Path $TestDrive 'deck.pptx'
             $ImageOutputDir = ''
-            $ValidationCacheDir = ''
             $ValidationPrompt = 'Check slide quality'
             $ValidationPromptFile = ''
             $ValidationModel = 'test-model'

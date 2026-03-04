@@ -4,46 +4,20 @@ The validate_slides module depends on the Copilot SDK for vision model
 interaction. Tests mock external dependencies and focus on pure logic.
 """
 
+import argparse
+import json
+
 import pytest
 from validate_slides import (
+    DEFAULT_RESPONSE_SCHEMA,
+    DEFAULT_SYSTEM_MESSAGE,
     IMAGE_PATTERN,
-    compute_cache_key,
     create_parser,
     discover_images,
-    generate_report,
-    load_cached_result,
-    parse_model_response,
+    load_response_schema,
+    load_system_message,
     parse_slide_filter,
-    save_cached_result,
 )
-
-
-class TestParseModelResponse:
-    """Tests for parse_model_response."""
-
-    def test_valid_json(self):
-        content = '{"issues": [], "overall_quality": "good"}'
-        result = parse_model_response(content)
-        assert result["overall_quality"] == "good"
-        assert result["issues"] == []
-
-    def test_json_in_code_fence(self):
-        content = '```json\n{"issues": [], "overall_quality": "good"}\n```'
-        result = parse_model_response(content)
-        assert result["overall_quality"] == "good"
-
-    def test_invalid_json(self):
-        result = parse_model_response("not json at all")
-        assert result.get("parse_error") is True
-        assert "raw_response" in result
-
-    def test_none_input(self):
-        result = parse_model_response(None)
-        assert result.get("parse_error") is True
-
-    def test_empty_string(self):
-        result = parse_model_response("")
-        assert result.get("parse_error") is True
 
 
 class TestParseSlideFilter:
@@ -91,104 +65,6 @@ class TestDiscoverImages:
         assert len(images) == 1
 
 
-class TestComputeCacheKey:
-    """Tests for compute_cache_key."""
-
-    def test_deterministic(self, tmp_path):
-        img = tmp_path / "test.jpg"
-        img.write_bytes(b"image data")
-        key1 = compute_cache_key(img, "prompt", "model")
-        key2 = compute_cache_key(img, "prompt", "model")
-        assert key1 == key2
-
-    def test_different_prompt_different_key(self, tmp_path):
-        img = tmp_path / "test.jpg"
-        img.write_bytes(b"image data")
-        key1 = compute_cache_key(img, "prompt1", "model")
-        key2 = compute_cache_key(img, "prompt2", "model")
-        assert key1 != key2
-
-    def test_different_model_different_key(self, tmp_path):
-        img = tmp_path / "test.jpg"
-        img.write_bytes(b"image data")
-        key1 = compute_cache_key(img, "prompt", "model-a")
-        key2 = compute_cache_key(img, "prompt", "model-b")
-        assert key1 != key2
-
-
-class TestCacheOperations:
-    """Tests for load_cached_result and save_cached_result."""
-
-    def test_save_and_load(self, tmp_path):
-        cache_dir = tmp_path / "cache"
-        result = {"issues": [], "overall_quality": "good"}
-        save_cached_result(cache_dir, "test-key", result)
-        loaded = load_cached_result(cache_dir, "test-key")
-        assert loaded == result
-
-    def test_load_missing(self, tmp_path):
-        assert load_cached_result(tmp_path, "missing-key") is None
-
-    def test_creates_cache_dir(self, tmp_path):
-        cache_dir = tmp_path / "nested" / "cache"
-        save_cached_result(cache_dir, "key", {"data": True})
-        assert cache_dir.exists()
-
-
-class TestGenerateReport:
-    """Tests for generate_report."""
-
-    def test_report_header(self):
-        results = {"model": "test-model", "slide_count": 2, "slides": []}
-        report = generate_report(results, cached_count=0, validated_count=2)
-        assert "# Slide Validation Report" in report
-        assert "test-model" in report
-
-    def test_report_cache_stats(self):
-        results = {"model": "m", "slide_count": 3, "slides": []}
-        report = generate_report(results, cached_count=2, validated_count=1)
-        assert "Cache hits" in report
-        assert "2" in report
-
-    def test_report_per_slide(self):
-        results = {
-            "model": "m",
-            "slide_count": 1,
-            "slides": [
-                {
-                    "slide_number": 1,
-                    "issues": [
-                        {
-                            "check_type": "overlap",
-                            "severity": "warning",
-                            "description": "Elements overlap",
-                            "location": "center",
-                        },
-                    ],
-                    "overall_quality": "needs-attention",
-                },
-            ],
-        }
-        report = generate_report(results, cached_count=0, validated_count=1)
-        assert "Slide 1" in report
-        assert "overlap" in report.lower()
-
-    def test_report_parse_error(self):
-        results = {
-            "model": "m",
-            "slide_count": 1,
-            "slides": [
-                {
-                    "slide_number": 1,
-                    "parse_error": True,
-                    "raw_response": "bad output",
-                },
-            ],
-        }
-        report = generate_report(results, cached_count=0, validated_count=1)
-        assert "Could not parse" in report
-
-
 class TestImagePattern:
     """Tests for IMAGE_PATTERN regex."""
 
@@ -212,12 +88,7 @@ class TestCreateParser:
     def test_required_args(self):
         parser = create_parser()
         args = parser.parse_args(
-            [
-                "--image-dir",
-                "images/",
-                "--prompt",
-                "Check slides",
-            ]
+            ["--image-dir", "images/", "--prompt", "Check slides"]
         )
         assert str(args.image_dir) == "images"
         assert args.prompt == "Check slides"
@@ -225,51 +96,120 @@ class TestCreateParser:
     def test_defaults(self):
         parser = create_parser()
         args = parser.parse_args(
-            [
-                "--image-dir",
-                "images/",
-                "--prompt",
-                "Check",
-            ]
+            ["--image-dir", "images/", "--prompt", "Check"]
         )
         assert args.model == "claude-haiku-4.5"
         assert args.concurrency == 1
-        assert args.no_cache is False
+        assert args.system_message is None
+        assert args.system_message_file is None
+        assert args.response_schema is None
+        assert args.response_schema_file is None
+
+    def test_system_message_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--image-dir", "images/", "--prompt", "Check",
+             "--system-message", "Custom message"]
+        )
+        assert args.system_message == "Custom message"
+
+    def test_system_message_file_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--image-dir", "images/", "--prompt", "Check",
+             "--system-message-file", "msg.txt"]
+        )
+        assert str(args.system_message_file) == "msg.txt"
+
+    def test_response_schema_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--image-dir", "images/", "--prompt", "Check",
+             "--response-schema", '{"key": "value"}']
+        )
+        assert args.response_schema == '{"key": "value"}'
+
+    def test_response_schema_file_arg(self):
+        parser = create_parser()
+        args = parser.parse_args(
+            ["--image-dir", "images/", "--prompt", "Check",
+             "--response-schema-file", "schema.json"]
+        )
+        assert str(args.response_schema_file) == "schema.json"
 
 
-class TestConfigureLogging:
-    """Tests for configure_logging."""
+class TestLoadSystemMessage:
+    """Tests for load_system_message."""
 
-    def test_verbose_sets_debug(self):
-        from validate_slides import configure_logging
+    def test_returns_default_when_no_args(self):
+        args = argparse.Namespace(
+            system_message=None, system_message_file=None
+        )
+        result = load_system_message(args)
+        assert result == DEFAULT_SYSTEM_MESSAGE
 
-        configure_logging(verbose=True)
+    def test_returns_arg_value(self):
+        args = argparse.Namespace(
+            system_message="Custom prompt", system_message_file=None
+        )
+        result = load_system_message(args)
+        assert result == "Custom prompt"
 
-    def test_non_verbose(self):
-        from validate_slides import configure_logging
+    def test_reads_from_file(self, tmp_path):
+        msg_file = tmp_path / "message.txt"
+        msg_file.write_text("File message content")
+        args = argparse.Namespace(
+            system_message=None, system_message_file=msg_file
+        )
+        result = load_system_message(args)
+        assert result == "File message content"
 
-        configure_logging(verbose=False)
+    def test_default_contains_visual_analysis(self):
+        assert "BACKGROUND" in DEFAULT_SYSTEM_MESSAGE
+        assert "SHAPES" in DEFAULT_SYSTEM_MESSAGE
+        assert "TEXT BOXES" in DEFAULT_SYSTEM_MESSAGE
+        assert "IMAGES" in DEFAULT_SYSTEM_MESSAGE
+        assert "ADDITIONAL CHARACTERISTICS" in DEFAULT_SYSTEM_MESSAGE
 
 
-class TestLoadPrompt:
-    """Tests for load_prompt."""
+class TestLoadResponseSchema:
+    """Tests for load_response_schema."""
 
-    def test_loads_from_prompt_arg(self):
-        import argparse
+    def test_returns_default_when_no_args(self):
+        args = argparse.Namespace(
+            response_schema=None, response_schema_file=None
+        )
+        result = load_response_schema(args)
+        assert result == DEFAULT_RESPONSE_SCHEMA
 
-        from validate_slides import load_prompt
+    def test_returns_arg_value(self):
+        custom_schema = '{"custom": true}'
+        args = argparse.Namespace(
+            response_schema=custom_schema, response_schema_file=None
+        )
+        result = load_response_schema(args)
+        assert result == custom_schema
 
-        args = argparse.Namespace(prompt="Evaluate the slide", prompt_file=None)
-        result = load_prompt(args)
-        assert result == "Evaluate the slide"
+    def test_reads_from_file(self, tmp_path):
+        schema_file = tmp_path / "schema.json"
+        schema_file.write_text('{"from_file": true}')
+        args = argparse.Namespace(
+            response_schema=None, response_schema_file=schema_file
+        )
+        result = load_response_schema(args)
+        assert result == '{"from_file": true}'
 
-    def test_loads_from_file(self, tmp_path):
-        import argparse
+    def test_default_schema_is_valid_json(self):
+        parsed = json.loads(DEFAULT_RESPONSE_SCHEMA)
+        assert "slide_description" in parsed
+        assert "issues" in parsed
+        assert "overall_quality" in parsed
 
-        from validate_slides import load_prompt
-
-        prompt_file = tmp_path / "prompt.txt"
-        prompt_file.write_text("From file prompt")
-        args = argparse.Namespace(prompt=None, prompt_file=prompt_file)
-        result = load_prompt(args)
-        assert result == "From file prompt"
+    def test_default_schema_has_expected_sections(self):
+        parsed = json.loads(DEFAULT_RESPONSE_SCHEMA)
+        desc = parsed["slide_description"]
+        assert "background" in desc
+        assert "shapes" in desc
+        assert "text_boxes" in desc
+        assert "images" in desc
+        assert "additional_characteristics" in desc
