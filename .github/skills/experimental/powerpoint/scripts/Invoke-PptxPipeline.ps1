@@ -81,8 +81,6 @@
     Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationConcurrency',
     Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ValidationCacheDir',
-    Justification = 'Consumed by Invoke-ValidateDeck through dynamic scoping')]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -130,9 +128,6 @@ param(
 
     [Parameter()]
     [int]$ValidationConcurrency = 3,
-
-    [Parameter()]
-    [string]$ValidationCacheDir,
 
     [Parameter()]
     [switch]$SkipVenvSetup
@@ -403,11 +398,6 @@ function Invoke-ValidateDeck {
         $ImageOutputDir = Join-Path (Split-Path $InputPath) 'validation'
     }
 
-    # Default cache directory alongside images
-    if (-not $ValidationCacheDir) {
-        $ValidationCacheDir = Join-Path $ImageOutputDir 'cache'
-    }
-
     # Step 1: Export slides to images
     Write-Host "Step 1/$totalSteps`: Exporting slides to images..."
     Invoke-ExportSlides
@@ -463,15 +453,10 @@ function Invoke-ValidateDeck {
         $visionOutputPath = Join-Path $ImageOutputDir 'validation-results.json'
         $visionArgs += '--output'
         $visionArgs += $visionOutputPath
-        $visionReportPath = Join-Path $ImageOutputDir 'validation-report.md'
-        $visionArgs += '--report'
-        $visionArgs += $visionReportPath
         if ($Slides) {
             $visionArgs += '--slides'
             $visionArgs += $Slides
         }
-        $visionArgs += '--cache-dir'
-        $visionArgs += $ValidationCacheDir
 
         & $python @visionArgs
         if ($LASTEXITCODE -ne 0) {

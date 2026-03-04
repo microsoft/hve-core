@@ -246,7 +246,7 @@ The Validate action runs a two- or three-step pipeline:
   -ValidationModel claude-haiku-4.5
 ```
 
-Vision validation results are written to `validation-results.json` in the image output directory. A Markdown report is written to `validation-report.md` alongside the JSON, providing per-slide findings, severity counts, and cache statistics.
+Vision validation results are written to `validation-results.json` in the image output directory, containing raw model responses per slide with visual descriptions and quality findings.
 
 #### Validate with Concurrency
 
@@ -258,7 +258,7 @@ Vision validation results are written to `validation-results.json` in the image 
   -ValidationConcurrency 5
 ```
 
-Concurrent validation processes multiple slides in parallel (default: 3). Caching is auto-enabled at `{ImageOutputDir}/cache/` — results are keyed by image hash + prompt + model and subsequent runs skip unchanged slides. Pass `--no-cache` to `validate_slides.py` (or omit `-ValidationCacheDir` and override manually) to force re-validation.
+Concurrent validation processes multiple slides in parallel (default: 3).
 
 #### Validate Specific Slides
 
@@ -280,11 +280,12 @@ Validates only the specified slides. When content directories cover fewer slides
 | `--prompt-file` | One of `--prompt` / `--prompt-file` | — | Path to file containing the validation prompt |
 | `--model` | No | `claude-haiku-4.5` | Vision model ID |
 | `--output` | No | stdout | JSON results file path |
-| `--report` | No | — | Markdown report file path |
 | `--slides` | No | all | Comma-separated slide numbers to validate |
-| `--concurrency` | No | `3` | Max concurrent slide validations |
-| `--cache-dir` | No | `{image-dir}/cache` | Cache directory for validation results by image hash |
-| `--no-cache` | No | — | Disable caching and re-validate all slides |
+| `--concurrency` | No | `1` | Max concurrent slide validations |
+| `--system-message` | No | built-in | Custom system message text for the vision model |
+| `--system-message-file` | No | built-in | Path to file containing a custom system message |
+| `--response-schema` | No | built-in | Custom response schema JSON text |
+| `--response-schema-file` | No | built-in | Path to file containing a custom response schema JSON |
 | `-v`, `--verbose` | No | — | Enable debug-level logging |
 
 #### validate_deck.py CLI Reference
@@ -305,9 +306,7 @@ When run through the pipeline, validation produces these files in the image outp
 |---|---|---|
 | `deck-validation-results.json` | JSON | Per-slide PPTX property issues (speaker notes, slide count) |
 | `deck-validation-report.md` | Markdown | Human-readable report for PPTX property validation |
-| `validation-results.json` | JSON | Per-slide vision issues with check type, severity, description, and location |
-| `validation-report.md` | Markdown | Human-readable report with severity summary, cache statistics, and per-slide findings |
-| `cache/{hash}.json` | JSON | Cached per-slide results keyed by SHA-256 of image + prompt + model |
+| `validation-results.json` | JSON | Per-slide raw vision model responses with visual descriptions and quality findings |
 
 ### Export Slides to Images
 
@@ -349,7 +348,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
 | `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
 | `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
-| `validate_slides.py` | Vision-based slide validation via Copilot SDK with auto-caching and Markdown report generation |
+| `validate_slides.py` | Vision-based slide analysis and quality validation via Copilot SDK with configurable system message and response schema |
 
 ## python-pptx Constraints
 

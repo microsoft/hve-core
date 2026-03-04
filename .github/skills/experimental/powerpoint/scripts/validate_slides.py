@@ -18,12 +18,10 @@ Usage::
 
 import argparse
 import asyncio
-import hashlib
 import json
 import logging
 import re
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 from copilot import CopilotClient, PermissionHandler
@@ -34,27 +32,102 @@ EXIT_ERROR = 2
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_MESSAGE = (
-    "You are a slide presentation quality inspector. Analyze each slide image "
-    "and return your findings as valid JSON only — no additional text, no "
-    "markdown formatting, no code fences.\n\n"
+DEFAULT_SYSTEM_MESSAGE = (
+    "You are a slide presentation visual analyst and quality inspector. "
+    "Analyze each slide image and return your findings as valid JSON only "
+    "-- no additional text, no markdown formatting, no code fences.\n\n"
     "CRITICAL: Each slide is unique. Examine the SPECIFIC content, layout, "
     "colors, and text visible in THIS slide image. Do NOT copy or repeat "
-    "findings from other slides. Your response must reflect what you actually "
-    "see in the provided image.\n\n"
-    "Response schema:\n"
-    "{\n"
-    '    "issues": [\n'
-    "        {\n"
-    '            "check_type": "<check name>",\n'
-    '            "severity": "error|warning|info",\n'
-    '            "description": "<what is wrong>",\n'
-    '            "location": "<where on the slide>"\n'
-    "        }\n"
-    "    ],\n"
-    '    "overall_quality": "good|needs-attention|poor"\n'
-    "}\n\n"
-    'If no issues are found, return: {"issues": [], "overall_quality": "good"}'
+    "findings from other slides. Your response must reflect what you "
+    "actually see in the provided image.\n\n"
+    "For each slide, describe everything you observe:\n\n"
+    "1. BACKGROUND: Describe background images or solid colors, gradients, "
+    "patterns, or any visual treatment applied to the slide background.\n\n"
+    "2. SHAPES: For each shape, describe its type, any image inside it, "
+    "fill colors, alpha/transparency, visual effects (shadow, glow, "
+    "reflection, soft edges), rotation angle, position on the slide, "
+    "and size.\n\n"
+    "3. TEXT BOXES: For each text box, describe the text content, font "
+    "family, font styles (bold, italic, underline), font size, text "
+    "color, alpha/transparency, visual effects (shadow, outline, glow), "
+    "rotation angle, position on the slide, size, line and paragraph "
+    "spacing, text orientation (horizontal, vertical, rotated), and "
+    "alignment (left, center, right, justify).\n\n"
+    "4. IMAGES: For each image, describe what the image shows, its "
+    "dominant colors, alpha/transparency, visual effects (shadow, border, "
+    "reflection), rotation angle, position on the slide, any visible "
+    "cropping, and size.\n\n"
+    "5. ADDITIONAL CHARACTERISTICS: Note any other unique or notable "
+    "visual features not covered above, such as animations indicators, "
+    "grouped elements, layering order, or decorative elements.\n\n"
+    "Also evaluate the slide for quality issues including text overlay, "
+    "overflow, font consistency, edge margins, element spacing, color "
+    "contrast, narrow text boxes, leftover placeholders, decorative line "
+    "positioning, citation collisions, column alignment, and readable "
+    "fill combinations."
+)
+
+DEFAULT_RESPONSE_SCHEMA = json.dumps(
+    {
+        "slide_description": {
+            "background": {
+                "type": "solid_color|gradient|image|pattern",
+                "details": "description of background",
+            },
+            "shapes": [
+                {
+                    "type": "shape type",
+                    "image": "description if shape contains image, or null",
+                    "fill_color": "color value or null",
+                    "alpha": "transparency value 0-100",
+                    "effects": "shadow, glow, reflection, etc. or none",
+                    "rotation": "degrees",
+                    "position": {"left": "inches from left", "top": "inches from top"},
+                    "size": {"width": "inches", "height": "inches"},
+                }
+            ],
+            "text_boxes": [
+                {
+                    "content": "text content",
+                    "font": "font family",
+                    "font_style": "bold, italic, underline, or normal",
+                    "font_size": "size in points",
+                    "color": "text color",
+                    "alpha": "transparency value 0-100",
+                    "effects": "shadow, outline, glow, or none",
+                    "rotation": "degrees",
+                    "position": {"left": "inches from left", "top": "inches from top"},
+                    "size": {"width": "inches", "height": "inches"},
+                    "spacing": "line and paragraph spacing",
+                    "orientation": "horizontal, vertical, or rotated",
+                    "alignment": "left, center, right, or justify",
+                }
+            ],
+            "images": [
+                {
+                    "description": "what the image shows",
+                    "colors": "dominant colors",
+                    "alpha": "transparency value 0-100",
+                    "effects": "shadow, border, reflection, or none",
+                    "rotation": "degrees",
+                    "position": {"left": "inches from left", "top": "inches from top"},
+                    "size": {"width": "inches", "height": "inches"},
+                    "cropping": "any visible cropping or none",
+                }
+            ],
+            "additional_characteristics": "any other notable features",
+        },
+        "issues": [
+            {
+                "check_type": "check name",
+                "severity": "error|warning|info",
+                "description": "what is wrong",
+                "location": "where on the slide",
+            }
+        ],
+        "overall_quality": "good|needs-attention|poor",
+    },
+    indent=4,
 )
 
 IMAGE_PATTERN = re.compile(r"slide[-_](\d+)\.jpe?g$", re.IGNORECASE)
@@ -91,11 +164,6 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", type=Path, help="Output JSON file path (default: stdout)"
     )
     parser.add_argument(
-        "--report",
-        type=Path,
-        help="Output Markdown report file path",
-    )
-    parser.add_argument(
         "--slides", help="Comma-separated slide numbers to validate (default: all)"
     )
     parser.add_argument(
@@ -104,18 +172,25 @@ def create_parser() -> argparse.ArgumentParser:
         default=1,
         help="Max concurrent slide validations (default: 1)",
     )
-    parser.add_argument(
-        "--cache-dir",
-        type=Path,
-        help=(
-            "Directory for caching validation results"
-            " by image hash (default: {image-dir}/cache)"
-        ),
+    sys_group = parser.add_mutually_exclusive_group()
+    sys_group.add_argument(
+        "--system-message",
+        help="Custom system message text (default: built-in visual analysis prompt)",
     )
-    parser.add_argument(
-        "--no-cache",
-        action="store_true",
-        help="Disable caching and re-validate all slides",
+    sys_group.add_argument(
+        "--system-message-file",
+        type=Path,
+        help="Path to file containing a custom system message",
+    )
+    schema_group = parser.add_mutually_exclusive_group()
+    schema_group.add_argument(
+        "--response-schema",
+        help="Custom response schema JSON text (default: built-in schema)",
+    )
+    schema_group.add_argument(
+        "--response-schema-file",
+        type=Path,
+        help="Path to file containing a custom response schema JSON",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
@@ -163,183 +238,44 @@ def discover_images(
     return images
 
 
-def parse_model_response(content: str) -> dict:
-    """Parse model response as JSON, handling markdown code fences.
+def load_system_message(args: argparse.Namespace) -> str:
+    """Load the system message from argument, file, or default.
 
     Args:
-        content: Raw model response text.
+        args: Parsed CLI arguments.
 
     Returns:
-        Parsed JSON dict or a dict with raw_response and parse_error flag.
+        System message string.
     """
-    try:
-        return json.loads(content)
-    except (json.JSONDecodeError, TypeError):
-        pass
-
-    # Try extracting JSON from markdown code block
-    json_match = re.search(r"```(?:json)?\s*\n(.*?)\n```", content or "", re.DOTALL)
-    if json_match:
-        try:
-            return json.loads(json_match.group(1))
-        except json.JSONDecodeError:
-            pass
-
-    return {"raw_response": content, "parse_error": True}
+    if args.system_message:
+        return args.system_message
+    if args.system_message_file:
+        path = args.system_message_file
+        if not path.exists():
+            logger.error("System message file not found: %s", path)
+            sys.exit(EXIT_ERROR)
+        return path.read_text(encoding="utf-8").strip()
+    return DEFAULT_SYSTEM_MESSAGE
 
 
-def compute_cache_key(image_path: Path, prompt: str, model: str) -> str:
-    """Compute a SHA-256 cache key from image content, prompt, and model."""
-    h = hashlib.sha256()
-    h.update(image_path.read_bytes())
-    h.update(prompt.encode("utf-8"))
-    h.update(model.encode("utf-8"))
-    return h.hexdigest()
-
-
-def load_cached_result(cache_dir: Path, cache_key: str) -> dict | None:
-    """Load a cached validation result if it exists."""
-    cache_file = cache_dir / f"{cache_key}.json"
-    if cache_file.exists():
-        return json.loads(cache_file.read_text(encoding="utf-8"))
-    return None
-
-
-def save_cached_result(cache_dir: Path, cache_key: str, result: dict) -> None:
-    """Save a validation result to the cache directory."""
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / f"{cache_key}.json"
-    cache_file.write_text(json.dumps(result, indent=2), encoding="utf-8")
-
-
-SEVERITY_ICON = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}
-QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️", "poor": "❌"}
-
-
-def generate_report(results: dict, cached_count: int, validated_count: int) -> str:
-    """Generate a Markdown validation report from results.
+def load_response_schema(args: argparse.Namespace) -> str:
+    """Load the response schema from argument, file, or default.
 
     Args:
-        results: Validation results dict with model, slide_count, slides.
-        cached_count: Number of slides served from cache.
-        validated_count: Number of slides validated fresh.
+        args: Parsed CLI arguments.
 
     Returns:
-        Markdown report string.
+        Response schema JSON string.
     """
-    lines = ["# Slide Validation Report", ""]
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    lines.append(f"**Generated**: {ts}  ")
-    lines.append(f"**Model**: {results['model']}  ")
-    lines.append(f"**Slides**: {results['slide_count']}")
-    lines.append("")
-
-    # Cache statistics
-    if cached_count > 0 or validated_count > 0:
-        total = cached_count + validated_count
-        lines.append("## Cache Statistics")
-        lines.append("")
-        lines.append("| Metric | Count |")
-        lines.append("|-|-|")
-        lines.append(f"| Cache hits | {cached_count} |")
-        lines.append(f"| Validated | {validated_count} |")
-        lines.append(f"| Total | {total} |")
-        lines.append("")
-
-    # Summary counts
-    error_count = 0
-    warning_count = 0
-    info_count = 0
-    parse_errors = 0
-    for slide in results["slides"]:
-        if slide.get("parse_error"):
-            parse_errors += 1
-            continue
-        for issue in slide.get("issues", []):
-            sev = issue.get("severity", "info")
-            if sev == "error":
-                error_count += 1
-            elif sev == "warning":
-                warning_count += 1
-            else:
-                info_count += 1
-
-    lines.append("## Summary")
-    lines.append("")
-    lines.append("| Severity | Count |")
-    lines.append("|-|-|")
-    lines.append(f"| ❌ Errors | {error_count} |")
-    lines.append(f"| ⚠️ Warnings | {warning_count} |")
-    lines.append(f"| ℹ️ Info | {info_count} |")
-    if parse_errors:
-        lines.append(f"| 🔴 Parse failures | {parse_errors} |")
-    lines.append("")
-
-    # Per-slide details
-    lines.append("## Per-Slide Findings")
-    lines.append("")
-
-    # Detect duplicate responses across slides
-    response_hashes = {}
-    duplicates = set()
-    for slide in results["slides"]:
-        if slide.get("parse_error"):
-            continue
-        issues_key = json.dumps(slide.get("issues", []), sort_keys=True)
-        num = slide.get("slide_number", "?")
-        if issues_key in response_hashes:
-            duplicates.add(num)
-            duplicates.add(response_hashes[issues_key])
-        else:
-            response_hashes[issues_key] = num
-
-    if duplicates:
-        lines.append(
-            "> **⚠️ Duplicate Detection**: Slides {} returned identical findings. "
-            "These may need re-validation.".format(
-                ", ".join(str(s) for s in sorted(duplicates))
-            )
-        )
-        lines.append("")
-
-    for slide in results["slides"]:
-        num = slide.get("slide_number", "?")
-        quality = slide.get("overall_quality", "unknown")
-        icon = QUALITY_ICON.get(quality, "❓")
-        lines.append(f"### Slide {num} {icon} {quality}")
-        lines.append("")
-
-        if slide.get("parse_error"):
-            lines.append("**Could not parse model response.**")
-            raw = slide.get("raw_response", "")
-            if raw:
-                lines.append("")
-                lines.append("<details><summary>Raw response</summary>")
-                lines.append("")
-                lines.append(f"```\n{raw}\n```")
-                lines.append("")
-                lines.append("</details>")
-            lines.append("")
-            continue
-
-        issues = slide.get("issues", [])
-        if not issues:
-            lines.append("No issues found.")
-            lines.append("")
-            continue
-
-        lines.append("| Severity | Check | Location | Description |")
-        lines.append("|-|-|-|-|")
-        for issue in issues:
-            sev = issue.get("severity", "info")
-            sev_icon = SEVERITY_ICON.get(sev, "")
-            check = issue.get("check_type", "")
-            loc = issue.get("location", "")
-            desc = issue.get("description", "")
-            lines.append(f"| {sev_icon} {sev} | {check} | {loc} | {desc} |")
-        lines.append("")
-
-    return "\n".join(lines)
+    if args.response_schema:
+        return args.response_schema
+    if args.response_schema_file:
+        path = args.response_schema_file
+        if not path.exists():
+            logger.error("Response schema file not found: %s", path)
+            sys.exit(EXIT_ERROR)
+        return path.read_text(encoding="utf-8").strip()
+    return DEFAULT_RESPONSE_SCHEMA
 
 
 async def validate_slide(
@@ -351,7 +287,8 @@ async def validate_slide(
 ) -> dict:
     """Send a single slide image to the vision model for evaluation.
 
-    Retries with exponential backoff on failure.
+    Retries with exponential backoff on failure. Returns the raw model
+    response content without parsing.
 
     Args:
         session: Active Copilot SDK session.
@@ -361,7 +298,7 @@ async def validate_slide(
         max_retries: Maximum number of retry attempts.
 
     Returns:
-        Dict with slide_number, image_path, issues, and overall_quality.
+        Dict with slide_number, image_path, and raw response content.
     """
     last_error = None
     for attempt in range(max_retries):
@@ -382,10 +319,11 @@ async def validate_slide(
                 }
             )
 
-            result = parse_model_response(response.data.content)
-            result["slide_number"] = slide_num
-            result["image_path"] = image_path.name
-            return result
+            return {
+                "slide_number": slide_num,
+                "image_path": image_path.name,
+                "response": response.data.content,
+            }
         except Exception as e:
             last_error = e
             if attempt < max_retries - 1:
@@ -405,10 +343,7 @@ async def validate_slide(
     return {
         "slide_number": slide_num,
         "image_path": image_path.name,
-        "issues": [],
-        "overall_quality": "error",
-        "parse_error": True,
-        "raw_response": f"Validation failed after {max_retries} attempts: {last_error}",
+        "error": f"Validation failed after {max_retries} attempts: {last_error}",
     }
 
 
@@ -424,6 +359,8 @@ async def run(args: argparse.Namespace) -> int:
     prompt = load_prompt(args)
     slide_filter = parse_slide_filter(args.slides)
     image_dir = args.image_dir.resolve()
+    system_message = load_system_message(args)
+    response_schema = load_response_schema(args)
 
     if not image_dir.is_dir():
         logger.error("Image directory not found: %s", image_dir)
@@ -438,77 +375,46 @@ async def run(args: argparse.Namespace) -> int:
         "Found %d slide image(s) to validate with model %s", len(images), args.model
     )
 
-    # Resolve cache directory: default to {image_dir}/cache when not specified
-    cache_dir = args.cache_dir if args.cache_dir else image_dir / "cache"
-    use_cache = not args.no_cache
-    cached_results = []
-    to_validate = []
+    # Build the full system message with response schema
+    full_system_message = (
+        f"{system_message}\n\n"
+        f"Response schema:\n{response_schema}\n\n"
+        "If no issues are found, return the response schema with an empty "
+        "issues array and overall_quality set to \"good\"."
+    )
 
-    for slide_num, image_path in images:
-        if use_cache:
-            key = compute_cache_key(image_path, prompt, args.model)
-            cached = load_cached_result(cache_dir, key)
-            if cached is not None:
-                logger.debug("Cache hit for slide %d", slide_num)
-                cached_results.append(cached)
-                continue
-            logger.debug("Cache miss for slide %d", slide_num)
-        to_validate.append((slide_num, image_path))
+    client = CopilotClient()
+    await client.start()
 
-    if use_cache and cached_results:
-        logger.info(
-            "Cache: %d hit(s), %d to validate", len(cached_results), len(to_validate)
+    try:
+        session = await client.create_session(
+            {
+                "model": args.model,
+                "system_message": {"mode": "replace", "content": full_system_message},
+                "on_permission_request": PermissionHandler.approve_all,
+            }
         )
 
-    # Validate uncached slides concurrently
-    fresh_results = []
-    if to_validate:
-        client = CopilotClient()
-        await client.start()
+        semaphore = asyncio.Semaphore(args.concurrency)
 
-        try:
-            session = await client.create_session(
-                {
-                    "model": args.model,
-                    "system_message": {"mode": "replace", "content": SYSTEM_MESSAGE},
-                    "on_permission_request": PermissionHandler.approve_all,
-                }
-            )
+        async def validate_with_limit(slide_num, image_path):
+            async with semaphore:
+                return await validate_slide(session, slide_num, image_path, prompt)
 
-            semaphore = asyncio.Semaphore(args.concurrency)
+        tasks = [validate_with_limit(sn, ip) for sn, ip in images]
+        slide_results = list(await asyncio.gather(*tasks))
 
-            async def validate_with_limit(slide_num, image_path):
-                async with semaphore:
-                    return await validate_slide(session, slide_num, image_path, prompt)
+        await session.destroy()
+    finally:
+        await client.stop()
 
-            tasks = [validate_with_limit(sn, ip) for sn, ip in to_validate]
-            fresh_results = list(await asyncio.gather(*tasks))
-
-            # Cache fresh results
-            if use_cache:
-                for (slide_num, image_path), result in zip(to_validate, fresh_results):
-                    key = compute_cache_key(image_path, prompt, args.model)
-                    save_cached_result(cache_dir, key, result)
-
-            for result in fresh_results:
-                if result.get("parse_error"):
-                    logger.warning(
-                        "Slide %d: Could not parse JSON response",
-                        result.get("slide_number", "?"),
-                    )
-
-            await session.destroy()
-        finally:
-            await client.stop()
-
-    # Merge and sort results by slide number
-    all_slides = cached_results + fresh_results
-    all_slides.sort(key=lambda r: r.get("slide_number", 0))
+    # Sort results by slide number
+    slide_results.sort(key=lambda r: r.get("slide_number", 0))
 
     results = {
         "model": args.model,
         "slide_count": len(images),
-        "slides": all_slides,
+        "slides": slide_results,
     }
 
     # Output results
@@ -520,19 +426,12 @@ async def run(args: argparse.Namespace) -> int:
     else:
         print(output_json)
 
-    # Generate Markdown report
-    if args.report:
-        report_md = generate_report(results, len(cached_results), len(to_validate))
-        args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(report_md, encoding="utf-8")
-        logger.info("Report written to %s", args.report)
-
     # Report summary
-    total_issues = sum(
-        len(s.get("issues", [])) for s in results["slides"] if not s.get("parse_error")
-    )
+    error_count = sum(1 for s in slide_results if s.get("error"))
     logger.info(
-        "Validation complete: %d issue(s) across %d slide(s)", total_issues, len(images)
+        "Validation complete: %d slide(s) processed, %d error(s)",
+        len(images),
+        error_count,
     )
 
     return EXIT_SUCCESS
