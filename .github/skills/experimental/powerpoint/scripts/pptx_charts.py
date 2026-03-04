@@ -7,7 +7,6 @@ and extract_chart() for extracting chart data from existing presentations.
 from pptx.chart.data import BubbleChartData, CategoryChartData, XyChartData
 from pptx.enum.chart import XL_CHART_TYPE
 from pptx.util import Inches
-
 from pptx_colors import apply_color_to_fill, resolve_color
 from pptx_utils import emu_to_inches
 

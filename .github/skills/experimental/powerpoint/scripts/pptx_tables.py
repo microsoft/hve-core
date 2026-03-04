@@ -4,21 +4,12 @@ Provides add_table_element() for building tables from YAML definitions
 and extract_table() for extracting table data from existing presentations.
 """
 
-from pptx.enum.text import MSO_VERTICAL_ANCHOR
 from pptx.util import Inches, Pt
-
 from pptx_colors import apply_color_to_font, resolve_color
 from pptx_fills import apply_fill, extract_fill
-from pptx_fonts import extract_font_info, resolve_font
+from pptx_fonts import extract_font_info
+from pptx_text import VERTICAL_ANCHOR_MAP, VERTICAL_ANCHOR_REVERSE
 from pptx_utils import emu_to_inches
-
-VERTICAL_ANCHOR_MAP = {
-    "top": MSO_VERTICAL_ANCHOR.TOP,
-    "middle": MSO_VERTICAL_ANCHOR.MIDDLE,
-    "bottom": MSO_VERTICAL_ANCHOR.BOTTOM,
-}
-
-VERTICAL_ANCHOR_REVERSE = {v: k for k, v in VERTICAL_ANCHOR_MAP.items()}
 
 
 def add_table_element(slide, elem: dict, colors: dict, typography: dict):
@@ -111,7 +102,7 @@ def add_table_element(slide, elem: dict, colors: dict, typography: dict):
                     if "font_size" in cell_data:
                         run.font.size = Pt(cell_data["font_size"])
                     if "font" in cell_data:
-                        run.font.name = resolve_font(cell_data["font"], typography)
+                        run.font.name = cell_data["font"]
 
             # Vertical anchor
             if "vertical_anchor" in cell_data:

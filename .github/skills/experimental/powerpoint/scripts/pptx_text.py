@@ -1,13 +1,19 @@
 """Text frame, paragraph, and run property utilities for PowerPoint skill scripts.
 
-Centralizes enhanced text properties (margins, auto-size, spacing, underline,
-hyperlinks, bullets) used by build_deck.py and extract_content.py.
+Centralizes text properties (margins, auto-size, spacing, underline,
+hyperlinks, bullets) and shared text-frame population used by build_deck.py
+and extract_content.py.
 """
+
+import re
 
 from lxml import etree
 from pptx.enum.text import MSO_AUTO_SIZE, MSO_VERTICAL_ANCHOR
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
+from pptx_colors import apply_color_to_font, resolve_color
+from pptx_fills import build_shadow_xml, parse_shadow_xml
+from pptx_fonts import ALIGNMENT_MAP, _extract_char_spacing
 
 AUTO_SIZE_MAP = {
     "none": MSO_AUTO_SIZE.NONE,
@@ -35,6 +41,139 @@ VERTICAL_ANCHOR_REVERSE = {
 
 # EMU per inch constant for margin conversions
 _EMU_PER_INCH = 914400
+
+# Key-mapping specifications for YAML schema differences per element type.
+# Maps canonical keys (font, size, color, bold) to the actual YAML key names.
+TEXTBOX_KEYS = {"font": "font", "size": "font_size", "color": "font_color", "bold": "font_bold"}
+SHAPE_KEYS = {"font": "text_font", "size": "text_size", "color": "text_color", "bold": "text_bold"}
+
+
+def split_lines(text: str) -> list[str]:
+    """Split text on newline and vertical-tab characters."""
+    if '\n' in text or '\v' in text:
+        return re.split(r'\n|\v', text)
+    return [text]
+
+
+def _apply_run_formatting(run, elem: dict, keys: dict, defaults: dict,
+                          colors: dict):
+    """Apply font properties to a single run using key-mapped element values.
+
+    Args:
+        run: python-pptx Run object.
+        elem: Dict with run or paragraph properties.
+        keys: Key-mapping dict (TEXTBOX_KEYS or SHAPE_KEYS).
+        defaults: Fallback values for font, size, color, bold, italic.
+        colors: Color resolution dict.
+    """
+    font_name = elem.get(keys["font"], defaults.get("font"))
+    if font_name:
+        run.font.name = font_name
+    run.font.size = Pt(elem.get(keys["size"], defaults.get("size", 16)))
+
+    color_val = elem.get(keys["color"])
+    if color_val:
+        apply_color_to_font(run.font.color, resolve_color(color_val, colors))
+    elif defaults.get("color"):
+        apply_color_to_font(run.font.color, defaults["color"])
+
+    run.font.bold = elem.get(keys["bold"], defaults.get("bold", False))
+    run.font.italic = elem.get("italic", defaults.get("italic", False))
+    apply_run_properties(run, elem, colors)
+
+
+def _apply_rich_run_formatting(run, seg: dict, defaults: dict, colors: dict):
+    """Apply formatting from a rich-text run segment.
+
+    Rich-text segments use short keys: font, size, color, bold, italic.
+    """
+    seg_font = seg.get("font", defaults.get("font"))
+    if seg_font:
+        run.font.name = seg_font
+    run.font.size = Pt(seg.get("size", defaults.get("size", 16)))
+
+    if "color" in seg:
+        apply_color_to_font(run.font.color, resolve_color(seg["color"], colors))
+    elif defaults.get("color"):
+        apply_color_to_font(run.font.color, defaults["color"])
+
+    run.font.bold = seg.get("bold", False)
+    run.font.italic = seg.get("italic", False)
+    apply_run_properties(run, seg, colors)
+
+
+def populate_text_frame(tf, elem: dict, colors: dict, keys: dict,
+                        defaults: dict | None = None):
+    """Populate a text frame from an element definition.
+
+    Handles three text layouts:
+    1. Per-paragraph with optional rich-text runs (elem has "paragraphs" key)
+    2. Flat text with newline splitting (elem has "text" key)
+    3. No text (no-op)
+
+    Args:
+        tf: python-pptx TextFrame object.
+        elem: Element definition dict from content.yaml.
+        colors: Color resolution dict.
+        keys: Key-mapping dict (TEXTBOX_KEYS or SHAPE_KEYS).
+        defaults: Fallback values for font, size, color, bold, italic, alignment.
+    """
+    defaults = defaults or {}
+    tf.word_wrap = True
+    apply_text_properties(tf, elem)
+
+    paragraphs = elem.get("paragraphs")
+    if paragraphs:
+        _populate_paragraphs(tf, paragraphs, elem, colors, keys, defaults)
+        return
+
+    text = elem.get("text")
+    if text is None:
+        return
+
+    _populate_flat_text(tf, text, elem, colors, keys, defaults)
+
+
+def _populate_paragraphs(tf, paragraphs: list[dict], elem: dict,
+                         colors: dict, keys: dict, defaults: dict):
+    """Populate text frame from per-paragraph definitions."""
+    alignment = defaults.get("alignment")
+
+    for i, p_def in enumerate(paragraphs):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p_align = p_def.get("alignment", alignment)
+        if p_align:
+            p.alignment = ALIGNMENT_MAP.get(p_align, ALIGNMENT_MAP["left"])
+        apply_paragraph_properties(p, p_def)
+        apply_bullet_properties(p, p_def)
+
+        runs = p_def.get("runs")
+        if runs:
+            for j, seg in enumerate(runs):
+                run = p.add_run() if j > 0 else (p.runs[0] if p.runs else p.add_run())
+                run.text = seg.get("text", "")
+                _apply_rich_run_formatting(run, seg, defaults, colors)
+        else:
+            run = p.add_run()
+            run.text = p_def.get("text", "")
+            _apply_run_formatting(run, p_def, keys, defaults, colors)
+
+
+def _populate_flat_text(tf, text: str, elem: dict, colors: dict,
+                        keys: dict, defaults: dict):
+    """Populate text frame with flat text split on newlines."""
+    alignment = defaults.get("alignment") or elem.get("alignment")
+    lines = split_lines(text)
+
+    for i, line in enumerate(lines):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        if alignment:
+            p.alignment = ALIGNMENT_MAP.get(alignment, ALIGNMENT_MAP["left"])
+        apply_paragraph_properties(p, elem)
+        apply_bullet_properties(p, elem)
+        run = p.add_run()
+        run.text = line
+        _apply_run_formatting(run, elem, keys, defaults, colors)
 
 
 def apply_text_properties(text_frame, elem: dict):
@@ -90,7 +229,6 @@ def apply_run_properties(run, elem: dict, colors: dict):
     if "hyperlink" in elem:
         run.hyperlink.address = elem["hyperlink"]
         # Re-apply font color after hyperlink to override auto-coloring
-        from pptx_colors import apply_color_to_font, resolve_color
         color_key = next((k for k in ("font_color", "text_color", "color") if k in elem), None)
         if color_key:
             apply_color_to_font(run.font.color, resolve_color(elem[color_key], colors))
@@ -106,32 +244,12 @@ def _apply_run_effect(run, effect: dict):
     if not effect or effect.get("type") != "outer_shadow":
         return
     rpr = run.font._element
-    # Remove existing effectLst
     existing = rpr.find(qn('a:effectLst'))
     if existing is not None:
         rpr.remove(existing)
 
     effect_lst = etree.SubElement(rpr, qn('a:effectLst'))
-    shadow = etree.SubElement(effect_lst, qn('a:outerShdw'))
-    for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
-        if attr in effect:
-            shadow.set(attr, str(effect[attr]))
-
-    color_type = effect.get("color_type", "preset")
-    color_val = effect.get("color", "black")
-    if color_type == "preset":
-        color_el = etree.SubElement(shadow, qn('a:prstClr'))
-        color_el.set('val', color_val)
-    elif color_type == "rgb":
-        color_el = etree.SubElement(shadow, qn('a:srgbClr'))
-        color_el.set('val', color_val.lstrip('#'))
-    else:
-        color_el = etree.SubElement(shadow, qn('a:prstClr'))
-        color_el.set('val', 'black')
-
-    if "alpha" in effect:
-        alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
-        alpha_sub.set('val', str(int(effect["alpha"] * 1000)))
+    build_shadow_xml(effect_lst, effect)
 
 
 def _apply_char_spacing(font, spacing_pt: float):
@@ -195,12 +313,9 @@ def extract_run_properties(run) -> dict:
             props["hyperlink"] = run.hyperlink.address
     except (AttributeError, TypeError):
         pass
-    # Character spacing
-    from pptx_fonts import _extract_char_spacing
     spc = _extract_char_spacing(run.font)
     if spc is not None:
         props["char_spacing"] = spc
-    # Outer shadow effect on text run
     effect = _extract_run_effect(run)
     if effect:
         props["effect"] = effect
@@ -217,29 +332,9 @@ def _extract_run_effect(run) -> dict | None:
         shadow = effect_lst.find(qn('a:outerShdw'))
         if shadow is None:
             return None
-        result = {"type": "outer_shadow"}
-        for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
-            val = shadow.get(attr)
-            if val is not None:
-                result[attr] = val
-        color_el = shadow[0] if len(shadow) > 0 else None
-        if color_el is not None:
-            tag = color_el.tag.split('}')[-1]
-            if tag == 'prstClr':
-                result["color"] = color_el.get('val', 'black')
-                result["color_type"] = "preset"
-            elif tag == 'srgbClr':
-                result["color"] = '#' + color_el.get('val', '000000')
-                result["color_type"] = "rgb"
-            alpha_el = color_el.find(qn('a:alpha'))
-            if alpha_el is not None:
-                result["alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
-        return result
+        return parse_shadow_xml(shadow)
     except (AttributeError, TypeError, IndexError):
         return None
-
-
-_NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 
 
 def extract_bullet_properties(paragraph) -> dict:

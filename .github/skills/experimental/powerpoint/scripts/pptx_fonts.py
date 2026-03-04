@@ -5,7 +5,6 @@ extract_content.py, and validate_deck.py.
 """
 
 from pptx.enum.text import PP_ALIGN
-
 from pptx_colors import rgb_to_hex
 
 FONT_WEIGHT_SUFFIXES = (
@@ -21,11 +20,6 @@ ALIGNMENT_MAP = {
 }
 
 ALIGNMENT_REVERSE_MAP = {1: "left", 2: "center", 3: "right", 4: "justify"}
-
-
-def resolve_font(value: str, typography: dict | None = None) -> str:
-    """Return the literal font name."""
-    return value
 
 
 def normalize_font_family(name: str) -> str:
