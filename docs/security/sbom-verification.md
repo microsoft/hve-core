@@ -107,9 +107,11 @@ The SBOM follows the SPDX 2.3 specification. These fields are most relevant for 
 
 You can feed the SPDX JSON file into security and compliance tooling:
 
-* **Vulnerability scanning**: Import into tools like Grype, Trivy, or Dependabot to check for known CVEs in bundled components.
-* **License compliance**: Parse `licenseConcluded` and `licenseDeclared` fields to validate that all included licenses meet your organization's policy.
-* **Inventory tracking**: Use the package list to maintain an accurate record of third-party components in your environment.
+| Use Case               | Description                                                                                                                   |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| Vulnerability scanning | Import into tools like Grype, Trivy, or Dependabot to check for known CVEs in bundled components.                             |
+| License compliance     | Parse `licenseConcluded` and `licenseDeclared` fields to validate that all included licenses meet your organization's policy. |
+| Inventory tracking     | Use the package list to maintain an accurate record of third-party components in your environment.                            |
 
 ## Related Resources
 

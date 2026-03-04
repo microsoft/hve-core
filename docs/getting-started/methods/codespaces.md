@@ -121,8 +121,8 @@ git push
 
 ### Step 3: Create or Rebuild Codespace
 
-* **New Codespace:** Create from the updated branch
-* **Existing Codespace:** Rebuild (`Ctrl+Shift+P` → "Codespaces: Rebuild Container")
+* Create a new Codespace from the updated branch
+* Rebuild an existing Codespace (`Ctrl+Shift+P` → "Codespaces: Rebuild Container")
 
 ### Step 4: Validate Installation
 
@@ -354,13 +354,13 @@ To always get the latest version on rebuild:
 
 ### Agents Not Appearing
 
-**Check HVE-Core was cloned:**
+#### Check HVE-Core was cloned
 
 ```bash
 ls /workspaces/hve-core/.github/agents
 ```
 
-**Check postCreateCommand ran:**
+#### Check postCreateCommand ran
 
 Look at the Codespace creation log for clone output or errors.
 
@@ -376,11 +376,11 @@ gh auth status
 
 ### Settings Not Applied
 
-**Check devcontainer.json paths:**
+#### Check devcontainer.json paths
 
 Settings must use absolute paths (`/workspaces/hve-core/...`).
 
-**Verify settings in VS Code:**
+#### Verify settings in VS Code
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open User Settings (JSON)"

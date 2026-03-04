@@ -54,7 +54,7 @@ flowchart LR
 | Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                     |
 | Stage 9 | Operations         | doc-ops, doc-ops-update, incident-response                                                                  |
 
-> **Cross-cutting**: memory is available at every stage and is not tied to any single phase.
+> Cross-cutting: memory is available at every stage and is not tied to any single phase.
 
 **[AI-Assisted Project Lifecycle Overview →](lifecycle/)**
 

@@ -46,8 +46,8 @@ DT Coach creates session artifacts at:
 
 This directory contains:
 
-* `coaching-state.md` — Session state with method progress, transition log, and recovery points
-* `method-{NN}-*/` — Per-method working artifacts (notes, themes, prototypes)
+* `coaching-state.md`: Session state with method progress, transition log, and recovery points
+* `method-{NN}-*/`: Per-method working artifacts (notes, themes, prototypes)
 * Handoff artifacts when transitioning to RPI agents
 
 ## How to Use DT Coach
@@ -121,9 +121,9 @@ Session state persists in `.copilot-tracking/dt/{project-slug}/coaching-state.md
 
 ## Next Steps
 
-* [Design Thinking Guide](README.md) — Overview of all nine methods and three spaces
-* [DT to RPI Integration](dt-rpi-integration.md) — How DT outputs feed into the RPI workflow
-* [DT Learning Tutor](dt-learning-tutor.md) — Curriculum-based training across all methods
+* [Design Thinking Guide](README.md): Overview of all nine methods and three spaces
+* [DT to RPI Integration](dt-rpi-integration.md): How DT outputs feed into the RPI workflow
+* [DT Learning Tutor](dt-learning-tutor.md): Curriculum-based training across all methods
 
 > Brought to you by microsoft/hve-core
 

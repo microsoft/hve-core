@@ -26,7 +26,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 
 **Or visit:** [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-**Why choose the extension:**
+### Why choose the extension
 
 * ✅ Zero configuration required
 * ✅ Automatic updates via VS Code
@@ -34,7 +34,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 * ✅ No project files needed
 * ✅ Instant availability
 
-**When to use alternatives:**
+### When to use alternatives
 
 * ❌ You need to customize components → Use custom installation methods below
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
@@ -56,17 +56,17 @@ For clone-based customization, answer the questions below to find the best metho
 
 Answer these questions to find your recommended installation method:
 
-1. **What's your development environment?**
+1. What's your development environment?
    * Local VS Code (no devcontainer)
    * Local devcontainer (Docker Desktop)
    * GitHub Codespaces
    * Both local and Codespaces
 
-2. **Solo or team development?**
+2. Solo or team development?
    * Solo: Just you, no version control of HVE-Core needed
    * Team: Multiple people, need reproducible setup
 
-3. **Update preference?**
+3. Update preference?
    * Auto: Always get latest HVE-Core
    * Controlled: Pin to specific version, update explicitly
 
@@ -182,7 +182,7 @@ After installation, verify everything works:
 
 HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. These files include research documents, implementation plans, PR review tracking, and other machine-generated content that should typically not be committed to version control.
 
-**Add this line to your project's `.gitignore`:**
+### Add this line to your project's `.gitignore`
 
 ```text
 .copilot-tracking/
@@ -191,7 +191,7 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 > [!IMPORTANT]
 > This applies to all installation methods (extension, submodule, peer clone, etc.). The `.copilot-tracking/` folder is created in your project directory, not in HVE-Core itself.
 
-**What gets stored there:**
+### What gets stored there
 
 * Research documents from `task-researcher`
 * Implementation plans from `task-planner`
