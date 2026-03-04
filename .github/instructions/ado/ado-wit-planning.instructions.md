@@ -32,6 +32,15 @@ Discovery and retrieval:
 * `mcp_ado_search_workitem`: Search work items by text, project, type, or state. Key params: `searchText` (required), `project`, `workItemType`, `state`, `top`, `skip`.
 * `mcp_ado_wit_get_work_item`: Retrieve a single work item. Key params: `id` (required), `project` (required), `expand`, `fields`.
 * `mcp_ado_wit_get_work_items_batch_by_ids`: Retrieve multiple work items. Key params: `ids` (required), `project` (required), `fields`.
+* `mcp_ado_wit_my_work_items`: Retrieve work items assigned to or modified by the current user. Key params: `project` (required), `type` (enum: `assignedtome` | `myactivity`), `includeCompleted` (boolean, default: `false`), `top` (number, default: 50).
+* `mcp_ado_wit_get_work_items_for_iteration`: Retrieve work items for a specific sprint. Key params: `project` (required), `iterationId` (required), `team`.
+* `mcp_ado_wit_list_backlog_work_items`: List backlog work items not assigned to an iteration. Key params: `project` (required), `team`, `backlogId`.
+* `mcp_ado_wit_list_backlogs`: List available backlogs for a project. Key params: `project` (required), `team`.
+* `mcp_ado_wit_get_query_results_by_id`: Execute a saved ADO query by ID or path. Key params: `id` (required), `project`, `team`, `responseType` (enum: `full` | `ids`, default: `full`), `top` (number, default: 50).
+
+Iteration:
+
+* `mcp_ado_work_list_team_iterations`: List team iterations and sprints. Key params: `project` (required), `team`, `timeframe`.
 
 Creation and updates:
 
@@ -48,8 +57,13 @@ Relationships and linking:
 
 History and comments:
 
+* `mcp_ado_wit_list_work_item_comments`: List comments on a work item. Key params: `workItemId` (required), `project` (required).
 * `mcp_ado_wit_list_work_item_revisions`: Get revision history. Key params: `workItemId` (required), `project` (required), `top`.
 * `mcp_ado_wit_add_work_item_comment`: Add a comment. Key params: `workItemId` (required), `project` (required), `comment` (required).
+
+Identity:
+
+* `mcp_ado_core_get_identity_ids`: Resolve identity GUIDs from email or name. Key params: `searchFilter` (required, email or name string).
 
 ## Planning File Definitions & Directory Conventions
 
@@ -457,3 +471,82 @@ Next steps:
 
 Proceed with this approach?
 ```
+
+## Three-Tier Autonomy Model
+
+Autonomy mode determines which operations require user confirmation before execution. The ADO Backlog Manager defaults to Partial. Users override via the `autonomy` input parameter.
+
+| Mode              | Create | Update | Link | State Change |
+|-------------------|--------|--------|------|--------------|
+| Full              | Auto   | Auto   | Auto | Auto         |
+| Partial (default) | Gate   | Auto   | Auto | Gate         |
+| Manual            | Gate   | Gate   | Gate | Gate         |
+
+Gate means the agent presents its recommendation and waits for user confirmation before executing. Auto means the agent executes without prompting.
+
+Autonomy applies to all MCP tool calls that create, modify, or delete ADO entities. Read-only queries (search, get, list) never require gating.
+
+## Content Sanitization Guards
+
+Apply these guards before any ADO API call that writes user-visible content (work item descriptions, comments, field updates).
+
+### Local-Only Path Guard
+
+Detect `.copilot-tracking/` paths in outbound content. When found:
+
+1. Read the referenced file to extract relevant details.
+2. Replace the path with an inline summary of the extracted details.
+3. Never send `.copilot-tracking/` paths to ADO APIs.
+
+### Planning Reference ID Guard
+
+Detect `WI` followed by digits (WI001, WI002, etc.) in outbound content. When found:
+
+1. If the WI reference maps to a known ADO work item ID, replace with the ADO ID (e.g., `#12345`).
+2. If the WI reference has no known mapping, replace with a descriptive phrase.
+3. If the WI reference is self-referential, remove it entirely.
+
+Never send planning reference IDs (`WI[NNN]`) to ADO APIs.
+
+## Content Format Detection
+
+Azure DevOps supports two rendering formats for rich-text fields (`System.Description`, `Microsoft.VSTS.Common.AcceptanceCriteria`, `Microsoft.VSTS.TCM.ReproSteps`):
+
+| Format   | ADO Version                                         | `format` Parameter Value |
+|----------|-----------------------------------------------------|--------------------------|
+| Markdown | Azure DevOps Services (dev.azure.com)               | `"Markdown"`             |
+| HTML     | Azure DevOps Server (on-premises, visualstudio.com) | `"Html"`                 |
+
+### Detection Protocol
+
+1. When the user provides a `contentFormat` input, use it directly.
+2. When the organization URL contains `dev.azure.com`, use Markdown.
+3. When the organization URL contains a custom domain or `visualstudio.com`, use HTML.
+4. When the format cannot be determined, default to Markdown and inform the user that HTML is available for Azure DevOps Server instances.
+
+The detected format applies to all `format` parameters in MCP ADO tool calls for rich-text fields. Record the detected format in planning-log.md under the Status section.
+
+### Format in Planning Files
+
+The `work-items.md` template uses fenced code blocks with a format annotation. Set the annotation to match the detected format:
+
+* Markdown: ` ```markdown `
+* HTML: ` ```html `
+
+Execution workflows read this annotation to determine the `format` parameter value for MCP ADO tool calls.
+
+### Format Conversion
+
+When the detected format is HTML, convert markdown template content to HTML before writing to ADO fields. The content structure remains identical; only the syntax changes.
+
+| Markdown              | HTML Equivalent                           |
+|-----------------------|-------------------------------------------|
+| `## Heading`          | `<h2>Heading</h2>`                        |
+| `* list item`         | `<ul><li>list item</li></ul>`             |
+| `1. ordered item`     | `<ol><li>ordered item</li></ol>`          |
+| `- [ ] checkbox item` | `<ul><li>&#9744; checkbox item</li></ul>` |
+| `- [x] checked item`  | `<ul><li>&#9745; checked item</li></ul>`  |
+| `**bold**`            | `<strong>bold</strong>`                   |
+| `*italic*`            | `<em>italic</em>`                         |
+| `text\n\ntext`        | `<p>text</p><p>text</p>`                  |
+| `> blockquote`        | `<blockquote>blockquote</blockquote>`     |

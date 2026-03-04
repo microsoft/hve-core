@@ -88,6 +88,10 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md
   kind: prompt
+- path: .github/prompts/ado/ado-sprint-plan.prompt.md
+  kind: prompt
+- path: .github/prompts/ado/ado-triage-work-items.prompt.md
+  kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
 - path: .github/prompts/code-review/functional-code-review.prompt.md
@@ -175,9 +179,15 @@ items:
   kind: prompt
 - path: .github/prompts/security-planning/risk-register.prompt.md
   kind: prompt
+- path: .github/instructions/ado/ado-backlog-sprint.instructions.md
+  kind: instruction
+- path: .github/instructions/ado/ado-backlog-triage.instructions.md
+  kind: instruction
 - path: .github/instructions/ado/ado-create-pull-request.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-get-build-info.instructions.md
+  kind: instruction
+- path: .github/instructions/ado/ado-interaction-templates.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-update-wit-items.instructions.md
   kind: instruction
