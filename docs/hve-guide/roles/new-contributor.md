@@ -20,10 +20,10 @@ This guide helps you get started with HVE Core from your first install through i
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> For custom installations, select the **hve-core-installer** agent and install the starter collection:
+> For custom installations, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-installer) and ask any agent:
 >
 > ```text
-> install hve-core
+> help me customize hve-core installation
 > ```
 >
 > The `hve-core` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.

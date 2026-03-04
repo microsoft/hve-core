@@ -75,10 +75,10 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 
 | Component    | Count | Description                                                          | Documentation                                  |
 |--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | 35    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
+| Agents       | 34    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
 | Instructions | 68    | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | 40    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Skills       | 2     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
+| Skills       | 3     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
 | Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Prompt Engineering Framework

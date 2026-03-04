@@ -36,7 +36,6 @@ VS Code → Extensions → Search "HVE Core" → Install
 
 ### When to use alternatives
 
-* ❌ You need to customize components → Use custom installation methods below
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
 * ❌ Contributing to HVE-Core → Use [Peer Clone](methods/peer-clone.md)
 
@@ -49,6 +48,8 @@ If you need customization or version control of HVE-Core, choose from the method
 ## Quick Start
 
 > **Recommended:** Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for zero-config setup (~30 seconds).
+>
+> **For customization:** Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent "help me customize hve-core installation".
 
 For clone-based customization, answer the questions below to find the best method for your environment.
 
@@ -88,7 +89,7 @@ Answer these questions to find your recommended installation method:
 
 ## Collection Packages
 
-HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. Clone-based methods let you select any collection during setup.
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. For customization, use the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-hve-core-installer) or clone-based methods to select specific collections during setup.
 
 | Collection        | Collection ID       | Maturity     | Description                                                      |
 |-------------------|---------------------|--------------|------------------------------------------------------------------|
@@ -110,10 +111,10 @@ The VS Code Marketplace extension installs the **Full** collection containing al
 
 ### Clone Methods (Collection Filtering)
 
-Clone-based installation methods support collection-based agent filtering through the hve-core-installer skill:
+Clone-based installation methods support collection-based agent filtering through the HVE Core installer skill:
 
-1. Clone the repository using your preferred method
-2. Use the hve-core-installer skill to configure your workspace
+1. Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=hve-installer) to get the installer skill
+2. Ask any agent: "help me customize hve-core installation"
 3. Select your role-based collection or install all agents
 
 The skill reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection.
