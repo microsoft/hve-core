@@ -52,30 +52,38 @@ HVE-Core documents these four MCP servers:
 
 Library and SDK documentation lookup.
 
-* **Type**: stdio
-* **Package**: `@upstash/context7-mcp`
+| Property | Value                   |
+|----------|-------------------------|
+| Type     | stdio                   |
+| Package  | `@upstash/context7-mcp` |
 
 ### microsoft-docs
 
 Microsoft Learn documentation access.
 
-* **Type**: http
-* **URL**: `https://learn.microsoft.com/api/mcp`
+| Property | Value                                 |
+|----------|---------------------------------------|
+| Type     | http                                  |
+| URL      | `https://learn.microsoft.com/api/mcp` |
 
 ### ado (Azure DevOps)
 
 Azure DevOps work items, pipelines, and repositories.
 
-* **Type**: stdio
-* **Package**: `@azure-devops/mcp`
-* **Requires**: Organization name, optional tenant ID
+| Property | Value                                 |
+|----------|---------------------------------------|
+| Type     | stdio                                 |
+| Package  | `@azure-devops/mcp`                   |
+| Requires | Organization name, optional tenant ID |
 
 ### github
 
 GitHub repository and issue management.
 
-* **Type**: http
-* **URL**: `https://api.githubcopilot.com/mcp/`
+| Property | Value                                |
+|----------|--------------------------------------|
+| Type     | http                                 |
+| URL      | `https://api.githubcopilot.com/mcp/` |
 
 ## Complete Configuration Template
 
@@ -148,8 +156,8 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 
 ### Authentication Errors
 
-* **GitHub**: Uses VS Code's built-in GitHub authentication
-* **ADO**: Verify organization name and tenant ID are correct
+* GitHub: Uses VS Code's built-in GitHub authentication
+* ADO: Verify organization name and tenant ID are correct
 
 ### MCP Server Not Starting
 

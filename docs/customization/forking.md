@@ -18,7 +18,7 @@ Forking creates an independent copy of HVE Core that you fully control. Consider
 when in-place customization (adding instructions, creating collections, extending
 validation) is insufficient for your needs.
 
-**Fork when you need to:**
+### Fork when you need to
 
 * Replace core workflow agents with organization-specific versions
 * Modify the plugin generation pipeline or build system
@@ -26,7 +26,7 @@ validation) is insufficient for your needs.
 * Maintain a private distribution channel with proprietary artifacts
 * Integrate with internal systems that require changes to core scripts
 
-**Stay with in-place customization when you:**
+### Stay with in-place customization when you
 
 * Add new agents, prompts, or instructions without modifying existing ones
 * Create organization-specific collections alongside existing collections

@@ -58,9 +58,9 @@ A pre-configured development environment that includes all tools, extensions, an
 
 ### Code Quality
 
-* **Markdown**: markdownlint, markdown-table-formatter
-* **Spelling**: Code Spell Checker (VS Code extension)
-* **Shell**: shellcheck
+* Markdown: markdownlint, markdown-table-formatter
+* Spelling: Code Spell Checker (VS Code extension)
+* Shell: shellcheck
 
 ### Security
 
@@ -74,9 +74,9 @@ A pre-configured development environment that includes all tools, extensions, an
 
 ## Pre-installed VS Code Extensions
 
-* **Spell Checking**: Street Side Software Spell Checker
-* **Markdown**: markdownlint, Markdown All in One, Mermaid support
-* **GitHub**: GitHub Pull Requests
+* Spell Checking: Street Side Software Spell Checker
+* Markdown: markdownlint, Markdown All in One, Mermaid support
+* GitHub: GitHub Pull Requests
 
 ## Common Commands
 
@@ -98,9 +98,9 @@ gitleaks detect --source . --verbose
 
 ## Troubleshooting
 
-**Container won't build**: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
+Container won't build: Ensure Docker Desktop is running and you have sufficient disk space (5GB+).
 
-**Extensions not loading**: Reload the window (`F1` → **Developer: Reload Window**).
+Extensions not loading: Reload the window (`F1` → **Developer: Reload Window**).
 
 For more help, see [SUPPORT.md](../SUPPORT.md).
 

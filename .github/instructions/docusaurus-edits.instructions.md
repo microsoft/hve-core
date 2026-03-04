@@ -109,11 +109,12 @@ Adding a new top-level category changes the site information architecture. Discu
 1. Getting Started
 2. HVE Guide
 3. RPI
-4. Agents
-5. Architecture
-6. Contributing
-7. Security
-8. Templates
+4. Design Thinking
+5. Agents
+6. Architecture
+7. Contributing
+8. Security
+9. Templates
 
 ## Images
 

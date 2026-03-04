@@ -24,6 +24,7 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | Tech Lead / Architect    | 19               | 23+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [Tech Lead](tech-lead.md)                               |
 | Security Architect       | 3                | 9                 | Stage 2, Stage 3, Stage 7, Stage 9          | [Security Architect](security-architect.md)             |
 | Data Scientist           | 6                | 13                | Stage 2, Stage 3, Stage 6, Stage 7, Stage 8 | [Data Scientist](data-scientist.md)                     |
+| UX Designer              | 58               | 63+               | Stage 2, Stage 3, Stage 6, Stage 7, Stage 9 | [UX Designer](ux-designer.md)                           |
 | SRE / Operations         | 8                | 13+               | Stage 1, Stage 3, Stage 6, Stage 8, Stage 9 | [SRE / Operations](sre-operations.md)                   |
 | Business Program Manager | N/A              | N/A               | Stage 2, Stage 3, Stage 4, Stage 5          | [Business Program Manager](business-program-manager.md) |
 | New Contributor          | 2                | 10                | Stage 1, Stage 2, Stage 6, Stage 7          | [New Contributor](new-contributor.md)                   |
@@ -33,17 +34,18 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 
 ## Find Your Role
 
-| I want to...                                                | Recommended Role Guide                                  |
-|-------------------------------------------------------------|---------------------------------------------------------|
-| Write code, implement features, or fix bugs                 | [Engineer](engineer.md)                                 |
-| Plan projects, manage requirements, or track work           | [TPM](tpm.md)                                           |
-| Design architecture, review code, or set standards          | [Tech Lead](tech-lead.md)                               |
-| Assess security, create threat models, or review compliance | [Security Architect](security-architect.md)             |
-| Analyze data, build notebooks, or create dashboards         | [Data Scientist](data-scientist.md)                     |
-| Manage infrastructure, handle incidents, or deploy          | [SRE / Operations](sre-operations.md)                   |
-| Define business outcomes or manage stakeholder alignment    | [Business Program Manager](business-program-manager.md) |
-| Get started contributing to the project                     | [New Contributor](new-contributor.md)                   |
-| Use cross-cutting utilities (memory, docs, media)           | [Utility](utility.md)                                   |
+| I want to...                                                  | Recommended Role Guide                                  |
+|---------------------------------------------------------------|---------------------------------------------------------|
+| Write code, implement features, or fix bugs                   | [Engineer](engineer.md)                                 |
+| Plan projects, manage requirements, or track work             | [TPM](tpm.md)                                           |
+| Design architecture, review code, or set standards            | [Tech Lead](tech-lead.md)                               |
+| Assess security, create threat models, or review compliance   | [Security Architect](security-architect.md)             |
+| Analyze data, build notebooks, or create dashboards           | [Data Scientist](data-scientist.md)                     |
+| Run DT workshops, design user experiences, or test prototypes | [UX Designer](ux-designer.md)                           |
+| Manage infrastructure, handle incidents, or deploy            | [SRE / Operations](sre-operations.md)                   |
+| Define business outcomes or manage stakeholder alignment      | [Business Program Manager](business-program-manager.md) |
+| Get started contributing to the project                       | [New Contributor](new-contributor.md)                   |
+| Use cross-cutting utilities (memory, docs, media)             | [Utility](utility.md)                                   |
 
 ## Collaboration Patterns
 
@@ -53,23 +55,24 @@ Roles frequently collaborate across workflows. These scenarios illustrate common
 * TPMs and security architects coordinate secure product launches combining requirements gathering, threat modeling, and compliance verification. See the [TPM](tpm.md) and [Security Architect](security-architect.md) guides.
 * Data scientists and engineers bridge analytics pipeline development with data specification, notebook prototyping, and production integration. See the [Data Scientist](data-scientist.md) and [Engineer](engineer.md) guides.
 * New contributors progress to engineers through onboarding from guided workflows to full autonomous engineering. See the [New Contributor](new-contributor.md) and [Engineer](engineer.md) guides.
+* UX designers and engineers connect validated Design Thinking concepts to RPI implementation workflows, bridging user research to engineering sprints. See the [UX Designer](ux-designer.md) and [Engineer](engineer.md) guides.
 
 ## Coverage Notes
 
-Each role intersects with 9 lifecycle stages, producing 72 role-stage pairs. Coverage levels across those pairs:
+Each role intersects with 9 lifecycle stages, producing 81 role-stage pairs. Coverage levels across those pairs:
 
 | Level    | Role-Stage Pairs | Percent |
 |----------|-----------------:|--------:|
-| Strong   |               11 |     15% |
-| Moderate |               15 |     21% |
-| Thin     |               18 |     25% |
-| None     |               28 |     39% |
+| Strong   |               13 |     16% |
+| Moderate |               18 |     22% |
+| Thin     |               18 |     22% |
+| None     |               32 |     40% |
 
-**Strongest coverage**: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations).
+Strongest coverage: Engineer at Stages 6-7 (implementation and review), TPM at Stages 2-5 (requirements through sprint planning), SRE at Stage 9 (operations), UX Designer at Stages 2-3 (discovery and design via Design Thinking).
 
-**Thinnest roles**: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
+Thinnest roles: Security Architect (3 dedicated assets, 6 of 9 stages at None or Thin) and Business Program Manager (beta, all tooling borrowed from shared collections).
 
-**Least-covered stage**: Stage 4 Decomposition: 7 of 8 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
+Least-covered stage: Stage 4 Decomposition: 8 of 9 roles have no dedicated tooling. Only TPM has strong coverage at this stage.
 
 > [!NOTE]
 > Gaps represent contribution opportunities. See the [lifecycle stage guides](../lifecycle/) for per-stage details and [Contributing](../../contributing/) for guidance on creating new agents, prompts, and instructions.

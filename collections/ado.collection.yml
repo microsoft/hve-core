@@ -26,6 +26,10 @@ items:
     kind: prompt
   - path: .github/prompts/ado/ado-discover-work-items.prompt.md
     kind: prompt
+  - path: .github/prompts/ado/ado-sprint-plan.prompt.md
+    kind: prompt
+  - path: .github/prompts/ado/ado-triage-work-items.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/ado/ado-create-pull-request.instructions.md
     kind: instruction
@@ -36,6 +40,12 @@ items:
   - path: .github/instructions/ado/ado-wit-discovery.instructions.md
     kind: instruction
   - path: .github/instructions/ado/ado-wit-planning.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado/ado-backlog-triage.instructions.md
+    kind: instruction
+  - path: .github/instructions/ado/ado-interaction-templates.instructions.md
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

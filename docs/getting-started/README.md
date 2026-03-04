@@ -86,9 +86,9 @@ Copy the scripts you need to your project's `scripts/` directory and adjust path
 
 For projects requiring user-centered requirements discovery before implementation:
 
-* [Design Thinking Guide](../design-thinking/README.md) — Start here for DT overview
-* [Using the DT Coach](../design-thinking/dt-coach.md) — Learn to use the dt-coach agent
-* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md) — Transition from DT to implementation
+* [Design Thinking Guide](../design-thinking/README.md): Start here for DT overview
+* [Using the DT Coach](../design-thinking/dt-coach.md): Learn to use the dt-coach agent
+* [DT to RPI Integration](../design-thinking/dt-rpi-integration.md): Transition from DT to implementation
 
 ## See Also
 

@@ -3,7 +3,7 @@ title: Security Documentation
 description: Index of security documentation including threat model and assurance case for HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-01-23
+ms.date: 2026-03-01
 ms.topic: overview
 keywords:
   - security
@@ -21,6 +21,7 @@ This directory contains security documentation for HVE Core, demonstrating defen
 | Document                                                                   | Description                                            |
 |----------------------------------------------------------------------------|--------------------------------------------------------|
 | [Threat Model](threat-model.md)                                            | Comprehensive threat model and security assurance case |
+| [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide    |
 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) | Vulnerability disclosure and reporting process         |
 
 ## Security Posture
@@ -29,7 +30,7 @@ HVE Core is an enterprise prompt engineering framework that:
 
 * Contains no runtime services or user data storage
 * Operates as development-time tooling consumed by GitHub Copilot
-* Relies on defense-in-depth with 18+ automated security controls
+* Relies on defense-in-depth with 20+ automated security controls
 
 The [threat model](threat-model.md) documents:
 

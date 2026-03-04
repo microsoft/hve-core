@@ -148,7 +148,7 @@ No VS Code restart required. Changes take effect immediately.
 
 ### Agents Not Appearing
 
-**Check the relative path:**
+#### Check the relative path
 
 ```bash
 # From your project directory
@@ -161,7 +161,7 @@ If the path doesn't resolve, verify:
 2. Your terminal is in your project directory
 3. The relative path in settings.json is correct
 
-**Check VS Code settings:**
+#### Check VS Code settings
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open User Settings (JSON)"
@@ -179,7 +179,7 @@ Relative paths break if your project moves. Options:
 
 Peer directory clone doesn't work in devcontainers because the container can't access files outside the mounted workspace.
 
-**Solutions:**
+#### Solutions
 
 * Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
 * Use [Mounted Directory](mounted.md) to share HVE-Core across projects

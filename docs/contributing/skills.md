@@ -14,7 +14,7 @@ estimated_reading_time: 8
 
 This guide defines the requirements, standards, and best practices for contributing skill packages to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is a Skill?
 
@@ -40,12 +40,14 @@ Create a skill when you need to:
 
 ## Skills Not Accepted
 
-The following skill types will likely be **rejected**:
+The following skill types will likely be rejected:
 
-* **Duplicate Skills**: Skills that replicate functionality of existing tools or skills
-* **Missing PowerShell Scripts**: Skills that include a `scripts/` directory without a `.ps1` file (PowerShell is required; bash is recommended)
-* **Undocumented Utilities**: Scripts without comprehensive SKILL.md documentation
-* **Untested Skills**: Skills that lack unit tests or fail to achieve 80% code coverage
+| Reason                     | Details                                                                                                        |
+|----------------------------|----------------------------------------------------------------------------------------------------------------|
+| Duplicate Skills           | Skills that replicate functionality of existing tools or skills                                                |
+| Missing PowerShell Scripts | Skills that include a `scripts/` directory without a `.ps1` file (PowerShell is required; bash is recommended) |
+| Undocumented Utilities     | Scripts without comprehensive SKILL.md documentation                                                           |
+| Untested Skills            | Skills that lack unit tests or fail to achieve 80% code coverage                                               |
 
 ## File Structure Requirements
 
@@ -88,15 +90,19 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`name`** (string, MANDATORY)
 
-* **Purpose**: Unique identifier for the skill
-* **Format**: Lowercase kebab-case matching the directory name
-* **Example**: `video-to-gif`
+| Property | Value                                            |
+|----------|--------------------------------------------------|
+| Purpose  | Unique identifier for the skill                  |
+| Format   | Lowercase kebab-case matching the directory name |
+| Example  | `video-to-gif`                                   |
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of skill functionality
-* **Format**: Single sentence ending with attribution
-* **Example**: `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'`
+| Property | Value                                                                                                      |
+|----------|------------------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                                                                 |
+| Format   | Single sentence ending with attribution                                                                    |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'` |
 
 ### Frontmatter Example
 
@@ -111,26 +117,32 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 
 **`user-invocable`** (boolean, optional)
 
-* **Purpose**: Controls visibility in the VS Code slash command menu
-* **Default**: `true`
-* **When true**: Skill appears in the `/` menu for manual invocation via `/skill-name`
-* **When false**: Skill does not appear in the `/` menu; loaded only by semantic matching or explicit `#file:` reference
-* **Use case**: Set `false` for background skills that support other workflows without direct user invocation
+| Property   | Value                                                                                                  |
+|------------|--------------------------------------------------------------------------------------------------------|
+| Purpose    | Controls visibility in the VS Code slash command menu                                                  |
+| Default    | `true`                                                                                                 |
+| When true  | Skill appears in the `/` menu for manual invocation via `/skill-name`                                  |
+| When false | Skill does not appear in the `/` menu; loaded only by semantic matching or explicit `#file:` reference |
+| Use case   | Set `false` for background skills that support other workflows without direct user invocation          |
 
 **`disable-model-invocation`** (boolean, optional)
 
-* **Purpose**: Controls whether Copilot automatically loads the skill via semantic matching
-* **Default**: `false`
-* **When false**: Copilot loads the skill automatically when the task description semantically matches the `description` field
-* **When true**: Skill is only loaded via manual `/skill-name` slash command invocation
-* **Use case**: Set `true` for skills with high token cost or niche applicability that should not load automatically
+| Property   | Value                                                                                                        |
+|------------|--------------------------------------------------------------------------------------------------------------|
+| Purpose    | Controls whether Copilot automatically loads the skill via semantic matching                                 |
+| Default    | `false`                                                                                                      |
+| When false | Copilot loads the skill automatically when the task description semantically matches the `description` field |
+| When true  | Skill is only loaded via manual `/skill-name` slash command invocation                                       |
+| Use case   | Set `true` for skills with high token cost or niche applicability that should not load automatically         |
 
 **`argument-hint`** (string, optional)
 
-* **Purpose**: Displays expected inputs in the VS Code prompt picker
-* **Format**: Brief text with required arguments first, then optional arguments
-* **Conventions**: Use `[]` for positional arguments, `key=value` for named parameters, `{option1|option2}` for enumerations, `...` for free-form text
-* **Example**: `"input=video.mp4 [--fps={5|10|15|24}] [--width=1280]"`
+| Property    | Value                                                                                                                                |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| Purpose     | Displays expected inputs in the VS Code prompt picker                                                                                |
+| Format      | Brief text with required arguments first, then optional arguments                                                                    |
+| Conventions | Use `[]` for positional arguments, `key=value` for named parameters, `{option1\|option2}` for enumerations, `...` for free-form text |
+| Example     | `"input=video.mp4 [--fps={5\|10\|15\|24}] [--width=1280]"`                                                                           |
 
 ### Invocation Control Matrix
 
@@ -304,7 +316,7 @@ Scripts are **optional** for skills. A skill can function purely as a documentat
 
 ### Bash Scripts
 
-Bash scripts **MUST**:
+Bash scripts MUST:
 
 * Use `#!/usr/bin/env bash` shebang
 * Enable strict mode: `set -euo pipefail`
@@ -317,7 +329,7 @@ See [bash.instructions.md](https://github.com/microsoft/hve-core/blob/main/.gith
 
 ### PowerShell Scripts
 
-PowerShell scripts **MUST**:
+PowerShell scripts MUST:
 
 * Use `[CmdletBinding()]` attribute
 * Include comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`)
@@ -428,9 +440,9 @@ Copilot reads the `name` and `description` fields from all SKILL.md files at sta
 
 When a user request or caller description semantically matches a skill's `description`:
 
-1. **Level 1 (Discovery)**: Copilot matches the task against `name` and `description` frontmatter (always loaded, ~100 tokens per skill).
-2. **Level 2 (Instructions)**: The full SKILL.md body loads into context with script usage, parameters, and troubleshooting (under 5000 tokens recommended).
-3. **Level 3 (Resources)**: Scripts, examples, and references in the skill directory load on-demand during execution.
+1. Level 1 (Discovery): Copilot matches the task against `name` and `description` frontmatter (always loaded, ~100 tokens per skill).
+2. Level 2 (Instructions): The full SKILL.md body loads into context with script usage, parameters, and troubleshooting (under 5000 tokens recommended).
+3. Level 3 (Resources): Scripts, examples, and references in the skill directory load on-demand during execution.
 
 ### Writing Effective Descriptions
 

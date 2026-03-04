@@ -11,7 +11,7 @@ This document defines shared standards, conventions, and quality gates that appl
 
 ## Agents Not Accepted
 
-The following agent types will likely be **rejected or closed automatically** because **equivalent agents already exist in hve-core**:
+The following agent types will likely be **rejected or closed automatically** because equivalent agents already exist in hve-core:
 
 ### Duplicate Agent Categories
 
@@ -48,20 +48,20 @@ General-purpose coding agents that implement features.
 
 These agent types are rejected because:
 
-1. Existing agents are hardened and heavily used — the hve-core library already contains production-tested agents in these categories
-2. Consistency and maintenance — coalescing around existing agents reduces fragmentation and maintenance burden
-3. Avoid duplication — multiple agents serving the same purpose create confusion and divergent behavior
-4. Standard tooling already integrated — VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
+1. Existing agents are hardened and heavily used: the hve-core library already contains production-tested agents in these categories
+2. Consistency and maintenance: coalescing around existing agents reduces fragmentation and maintenance burden
+3. Avoid duplication: multiple agents serving the same purpose create confusion and divergent behavior
+4. Standard tooling already integrated: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
 
 ### Before Submitting
 
 When planning to submit an agent that falls into these categories:
 
-1. Question necessity — does your use case truly require a new agent, or can existing agents meet your needs?
-2. Review existing agents — examine `.github/agents/` to identify agents that already serve your purpose
-3. Check tool integration — verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
-4. Consider enhancement over creation — if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
-5. Propose enhancements — submit a PR to enhance an existing agent rather than creating a duplicate
+1. Question necessity: does your use case truly require a new agent, or can existing agents meet your needs?
+2. Review existing agents: examine `.github/agents/` to identify agents that already serve your purpose
+3. Check tool integration: verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. Consider enhancement over creation: if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
+5. Propose enhancements: submit a PR to enhance an existing agent rather than creating a duplicate
 
 ### What Makes a Good New Agent
 
@@ -95,10 +95,10 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ### Rationale
 
-1. Feature parity — latest models support the most advanced features and capabilities
-2. Maintenance burden — supporting multiple model versions creates testing and compatibility overhead
-3. Performance — latest models provide superior reasoning, accuracy, and efficiency
-4. Future-proofing — older models will be deprecated and removed from service
+1. Feature parity: latest models support the most advanced features and capabilities
+2. Maintenance burden: supporting multiple model versions creates testing and compatibility overhead
+3. Performance: latest models provide superior reasoning, accuracy, and efficiency
+4. Future-proofing: older models will be deprecated and removed from service
 
 ## Collections
 
@@ -137,19 +137,19 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection          | Tags                                                                                 |
-|---------------------|--------------------------------------------------------------------------------------|
-| `hve-core-all`      | `hve`, `complete`, `bundle`                                                          |
-| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                       |
-| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `python`, `terraform`, `uv`           |
-| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`        |
-| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                   |
-| `experimental`      | `experimental`, `media`, `utilities`                                                 |
-| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                    |
-| `installer`         | `installer`, `setup`, `onboarding`                                                   |
-| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`         |
-| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review` |
-| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                  |
+| Collection          | Tags                                                                                     |
+|---------------------|------------------------------------------------------------------------------------------|
+| `hve-core-all`      | `hve`, `complete`, `bundle`                                                              |
+| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                           |
+| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `terraform`, `uv` |
+| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`            |
+| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                       |
+| `experimental`      | `experimental`, `media`, `utilities`                                                     |
+| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                        |
+| `installer`         | `installer`, `setup`, `onboarding`                                                       |
+| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`             |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review`     |
+| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                      |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
@@ -238,29 +238,29 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 
 ### Defined Collections
 
-| Collection            | Identifier          | Description                                                                          |
-|-----------------------|---------------------|--------------------------------------------------------------------------------------|
-| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
-| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation       |
-| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
-| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
-| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions |
-| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                               |
-| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution               |
-| **Installer**         | `installer`         | HVE Core installation and environment setup                                          |
-| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
-| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                        |
-| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                       |
+| Collection            | Identifier          | Description                                                                                  |
+|-----------------------|---------------------|----------------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills                 |
+| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation               |
+| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform |
+| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards                   |
+| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions         |
+| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                                       |
+| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution                       |
+| **Installer**         | `installer`         | HVE Core installation and environment setup                                                  |
+| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                        |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                                |
+| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                               |
 
 ### Collection Assignment Guidelines
 
 When assigning collections to artifacts:
 
-* **Universal artifacts** should include `hve-core-all` plus any role-specific collections that particularly benefit
-* **Role-specific artifacts** should include only the relevant collections (omit `hve-core-all` for highly specialized artifacts)
-* **Cross-cutting tools** like RPI workflow artifacts (`task-researcher`, `task-planner`) should include multiple relevant collections
+* Include `hve-core-all` plus any role-specific collections that particularly benefit for universal artifacts
+* Include only the relevant collections for role-specific artifacts (omit `hve-core-all` for highly specialized artifacts)
+* Assign cross-cutting tools like RPI workflow artifacts (`task-researcher`, `task-planner`) to multiple relevant collections
 
-**Example collection assignments:**
+#### Example Collection Assignments
 
 Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
 
@@ -301,10 +301,10 @@ During VS Code Extension packaging, agent handoff dependencies are automatically
 
 The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) includes the `Resolve-HandoffDependencies` function:
 
-1. **Seed agents**: Starts with agents listed in the collection manifest
-2. **Parse frontmatter**: Reads the `handoffs` field from each agent's frontmatter
-3. **BFS traversal**: Performs breadth-first search to find all reachable agents through handoff chains
-4. **Include all**: Adds all discovered agents to the extension package
+1. Seed agents: Starts with agents listed in the collection manifest
+2. Parse frontmatter: Reads the `handoffs` field from each agent's frontmatter
+3. BFS traversal: Performs breadth-first search to find all reachable agents through handoff chains
+4. Include all: Adds all discovered agents to the extension package
 
 #### Collection Manifests and Dependencies
 
@@ -375,7 +375,7 @@ items:
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
-**Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+Before submitting: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
 
 ## Plugin Generation
 
@@ -385,11 +385,11 @@ The `plugins/` directory contains **auto-generated plugin bundles** created from
 
 When you add an artifact to a collection manifest:
 
-1. **Author artifact**: Create your agent, prompt, instruction, or skill in `.github/`
-2. **Update collection**: Add an `items[]` entry to one or more `collections/*.collection.yml` files
-3. **Validate collections**: Run `npm run plugin:validate` to check manifest correctness
-4. **Generate plugins**: Run `npm run plugin:generate` to regenerate all plugin directories
-5. **Commit both**: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
+1. Author artifact: Create your agent, prompt, instruction, or skill in `.github/`
+2. Update collection: Add an `items[]` entry to one or more `collections/*.collection.yml` files
+3. Validate collections: Run `npm run plugin:validate` to check manifest correctness
+4. Generate plugins: Run `npm run plugin:generate` to regenerate all plugin directories
+5. Commit both: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
 
 ### Plugin Directory Structure
 
@@ -548,7 +548,7 @@ All AI artifacts MUST follow these markdown quality requirements:
 * Use proper language identifiers: `bash`, `python`, `json`, `yaml`, `markdown`, `text`, `plaintext`
 * No naked code blocks without language specification
 
-❌ **Bad**:
+❌ Bad:
 
 ````markdown
 ```
@@ -556,7 +556,7 @@ code without language tag
 ```
 ````
 
-✅ **Good**:
+✅ Good:
 
 ````markdown
 ```python
@@ -570,13 +570,13 @@ def example(): pass
 * Wrap in angle brackets: `<https://example.com>`
 * Use markdown links: `[text](https://example.com)`
 
-❌ **Bad**:
+❌ Bad:
 
 ```markdown
 See https://example.com for details.
 ```
 
-✅ **Good**:
+✅ Good:
 
 ```markdown
 See <https://example.com> for details.
@@ -606,7 +606,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Ends with attribution footer
+* Includes attribution in frontmatter `description` field
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -615,11 +615,9 @@ Use standardized keywords for clarity and enforceability:
 
 ### Required Behavior
 
-* **MUST** / **WILL** / **MANDATORY** / **REQUIRED** / **CRITICAL**
-* Indicates absolute requirement
-* Non-compliance is a defect
+MUST, WILL, MANDATORY, REQUIRED, and CRITICAL indicate absolute requirements. Non-compliance is a defect.
 
-**Example**:
+#### Example: Required Behavior
 
 ```markdown
 All functions MUST include type hints for parameters and return values.
@@ -628,12 +626,9 @@ You WILL validate frontmatter before proceeding (MANDATORY).
 
 ### Strong Recommendations
 
-* **SHOULD** / **RECOMMENDED**
-* Indicates best practice
-* Valid reasons may exist for exceptions
-* Non-compliance requires justification
+SHOULD and RECOMMENDED indicate best practices. Valid reasons may exist for exceptions, but non-compliance requires justification.
 
-**Example**:
+#### Example: Strong Recommendations
 
 ```markdown
 Examples SHOULD be wrapped in XML-style blocks for reusability.
@@ -642,11 +637,9 @@ Functions SHOULD include docstrings with parameter descriptions.
 
 ### Optional/Permitted
 
-* **MAY** / **OPTIONAL** / **CAN**
-* Indicates permitted but not required
-* Implementer choice
+MAY, OPTIONAL, and CAN indicate permitted but not required behavior. The choice is left to the implementer.
 
-**Example**:
+#### Example: Optional Behavior
 
 ```markdown
 You MAY include version fields in frontmatter.
@@ -655,7 +648,7 @@ Contributors CAN organize examples by complexity level.
 
 ### Avoid Ambiguous Language
 
-❌ **Ambiguous (Never Use)**:
+❌ Ambiguous (Never Use):
 
 ```markdown
 You might want to validate the input...
@@ -665,7 +658,7 @@ Try to follow the pattern...
 Maybe include tests...
 ```
 
-✅ **Clear (Always Use)**:
+✅ Clear (Always Use):
 
 ```markdown
 You MUST validate all input before processing.
@@ -804,22 +797,19 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution footer at the end:
+All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
 
-```markdown
----
-
-Brought to you by microsoft/hve-core
+```yaml
+description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
 ```
 
-**Placement**: After all content, before final closing fence.
+Format: `- Brought to you by organization/repository-name` appended to the description value.
 
-**Format**:
+Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 
-* Horizontal rule (`---`)
-* Blank line
-* Exact text: "Brought to you by microsoft/hve-core"
-* Or team-specific: "Brought to you by microsoft/edge-ai"
+```markdown
+> Brought to you by microsoft/hve-core
+```
 
 ## GitHub Issue Title Conventions
 

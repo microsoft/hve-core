@@ -1,6 +1,7 @@
 ---
 title: "Method 3: Input Synthesis"
 description: "Transform raw research data into structured insights, themes, and problem statements that frame the transition from understanding to ideation."
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

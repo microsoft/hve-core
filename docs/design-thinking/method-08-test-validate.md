@@ -1,6 +1,7 @@
 ---
 title: "Method 8: Test and Validate"
 description: "Conduct structured user testing of hi-fi prototypes to gather evidence for go, iterate, or revisit decisions across the nine-method sequence."
+sidebar_position: 12
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

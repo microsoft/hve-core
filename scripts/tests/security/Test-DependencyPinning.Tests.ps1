@@ -344,7 +344,7 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
         }
 
         It 'Passes through non-matching paths' {
-            $filePath = 'C:\repo\.github\workflows\main.yml'
+            $filePath = 'C:\repo\.github\workflows\release-stable.yml'
             $pattern = 'vendor'
 
             $filePath -notlike "*$pattern*" | Should -BeTrue
@@ -1168,6 +1168,129 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
             Should -Invoke Write-Host -ParameterFilter { $ForegroundColor -eq 'Green' -and $Object -match 'SHA-pinned' }
+        }
+    }
+}
+
+Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
+    BeforeAll {
+        # Source the script to get functions
+        . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+
+        $script:fixtureDir = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    }
+
+    Context 'when workflow contains npm install commands' {
+        It 'should detect npm install in single-line run step' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 4
+        }
+
+        It 'should return DependencyViolation objects' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | ForEach-Object {
+                $_.GetType().Name | Should -Be 'DependencyViolation'
+                $_.Type | Should -Be 'workflow-npm-commands'
+                $_.Severity | Should -Be 'Medium'
+                $_.ViolationType | Should -Be 'Unpinned'
+            }
+        }
+
+        It 'should report accurate line numbers' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | ForEach-Object {
+                $_.Line | Should -BeGreaterThan 0
+            }
+        }
+    }
+
+    Context 'when workflow contains only safe npm commands' {
+        It 'should return no violations for npm ci and npm run' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-ci-only.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-ci-only.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+    }
+
+    Context 'when file does not exist' {
+        It 'should return empty array' {
+            $fileInfo = @{
+                Path         = '/tmp/nonexistent-workflow.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'nonexistent.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+    }
+
+    Context 'edge cases with inline test data' {
+        It 'should not flag commented-out npm install' {
+            $yaml = @'
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: |
+          # npm install
+          npm ci
+'@
+            $tempFile = Join-Path $TestDrive 'commented-npm.yml'
+            Set-Content -Path $tempFile -Value $yaml
+            $fileInfo = @{
+                Path         = $tempFile
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'commented-npm.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+
+        It 'should detect npm install in multi-line block alongside safe commands' {
+            $yaml = @'
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        run: |
+          npm install
+          npm run build
+'@
+            $tempFile = Join-Path $TestDrive 'mixed-npm.yml'
+            Set-Content -Path $tempFile -Value $yaml
+            $fileInfo = @{
+                Path         = $tempFile
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'mixed-npm.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 1
+            $violations[0].Name | Should -BeLike 'npm install*'
         }
     }
 }

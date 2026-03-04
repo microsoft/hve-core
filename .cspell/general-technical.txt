@@ -28,6 +28,7 @@ allowlisting
 ammp
 amqp
 amsr
+anchore
 amet
 ansible
 antipattern
@@ -1568,3 +1569,5 @@ streamlit
 Streamlit
 Overreliance
 Contestability
+LASTEXITCODE
+scriptblock

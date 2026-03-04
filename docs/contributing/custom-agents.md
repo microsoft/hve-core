@@ -9,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot agent files (`.agent.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Agent?
 
@@ -27,7 +27,7 @@ Create an agent when you need to:
 
 ## Agents Not Accepted
 
-The following agent types will likely be **rejected or closed automatically** because **equivalent agents already exist in hve-core**:
+The following agent types will likely be **rejected or closed automatically** because equivalent agents already exist in hve-core:
 
 ### Duplicate Agent Categories
 
@@ -64,20 +64,20 @@ General-purpose coding agents that implement features.
 
 These agent types are rejected because:
 
-1. Existing agents are hardened and heavily used — the hve-core library already contains production-tested agents in these categories
-2. Consistency and maintenance — coalescing around existing agents reduces fragmentation and maintenance burden
-3. Avoid duplication — multiple agents serving the same purpose create confusion and divergent behavior
-4. Standard tooling already integrated — VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
+1. Existing agents are hardened and heavily used: the hve-core library already contains production-tested agents in these categories
+2. Consistency and maintenance: coalescing around existing agents reduces fragmentation and maintenance burden
+3. Avoid duplication: multiple agents serving the same purpose create confusion and divergent behavior
+4. Standard tooling already integrated: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
 
 ### Before Submitting
 
 When planning to submit an agent that falls into these categories:
 
-1. Question necessity — does your use case truly require a new agent, or can existing agents meet your needs?
-2. Review existing agents — examine `.github/agents/` to identify agents that already serve your purpose
-3. Check tool integration — verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
-4. Consider enhancement over creation — if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
-5. Propose enhancements — submit a PR to enhance an existing agent rather than creating a duplicate
+1. Question necessity: does your use case truly require a new agent, or can existing agents meet your needs?
+2. Review existing agents: examine `.github/agents/` to identify agents that already serve your purpose
+3. Check tool integration: verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. Consider enhancement over creation: if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
+5. Propose enhancements: submit a PR to enhance an existing agent rather than creating a duplicate
 
 ### What Makes a Good New Agent
 
@@ -95,11 +95,11 @@ Focus on agents that:
 
 All agents **MUST** target the **latest available models** from **Anthropic and OpenAI only**.
 
-**Accepted**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) and latest GPT models (e.g., GPT-5.1, o1)
+Accepted: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) and latest GPT models (e.g., GPT-5.1, o1)
 
-**Not Accepted**: Older model versions (e.g., GPT-3.5, GPT-4.1, Claude 2), models from other providers, custom/fine-tuned models
+Not Accepted: Older model versions (e.g., GPT-3.5, GPT-4.1, Claude 2), models from other providers, custom/fine-tuned models
 
-**Rationale**: Latest models provide superior capabilities, reduce maintenance burden, and ensure future compatibility. Older model versions will be deprecated.
+Rationale: Latest models provide superior capabilities, reduce maintenance burden, and ensure future compatibility. Older model versions will be deprecated.
 
 ## File Structure Requirements
 
@@ -126,7 +126,7 @@ Agent files are typically organized in a collection subdirectory by convention:
 
 ### File Format
 
-Agent files **MUST**:
+Agent files MUST:
 
 1. Use the `.agent.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
@@ -326,13 +326,13 @@ For complete collection documentation, see [AI Artifacts Common Standards - Coll
 
 When agents reference MCP tools in their `tools:` frontmatter or body content, document the dependencies clearly.
 
-**Frontmatter declaration:**
+#### Frontmatter Declaration
 
 ```yaml
 tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
 ```
 
-**Curated MCP servers referenced by HVE-Core agents:**
+#### Curated MCP Servers Referenced by HVE-Core Agents
 
 | Server         | Tool Pattern       | Purpose                                   |
 |----------------|--------------------|-------------------------------------------|
@@ -341,7 +341,7 @@ tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
 | context7       | `context7/*`       | Library and SDK documentation lookup      |
 | microsoft-docs | `microsoft-docs/*` | Microsoft Learn documentation             |
 
-**Guidelines for MCP tool references:**
+#### Guidelines for MCP Tool References
 
 * Document MCP dependencies in agent body text when using `mcp_*` tool patterns
 * Agents should gracefully handle missing MCP servers (tools unavailable)
@@ -377,9 +377,9 @@ before they're merged into the library.
 
 * Uses clear, imperative language
 * Employs RFC 2119 keywords consistently:
-  * **MUST/WILL/MANDATORY/CRITICAL** - Required behavior
-  * **SHOULD/RECOMMENDED** - Strong guidance
-  * **MAY/OPTIONAL** - Permitted but not required
+  * MUST, WILL, MANDATORY, and CRITICAL indicate required behavior
+  * SHOULD and RECOMMENDED indicate strong guidance
+  * MAY and OPTIONAL indicate permitted but not required behavior
 * Provides step-by-step workflows
 * Includes decision points and branching logic
 
@@ -422,7 +422,7 @@ When agents use tools, they **MUST** follow these patterns:
 Before any batch of tool calls, include a one-sentence explanation:
 
 ```markdown
-**Tool Usage Preamble**: "Analyzing file structure, reading schemas, and checking
+Tool Usage Preamble: "Analyzing file structure, reading schemas, and checking
 repository conventions to establish validation baseline."
 ```
 
@@ -431,7 +431,7 @@ repository conventions to establish validation baseline."
 After 3-5 tool calls or more than 3 file edits, provide a compact checkpoint:
 
 ```markdown
-**Checkpoint After Discovery**: "Identified [file type], loaded [schema name],
+Checkpoint After Discovery: "Identified [file type], loaded [schema name],
 found [N] related files for comparison."
 ```
 
@@ -447,7 +447,7 @@ Define how the agent communicates with users:
 
 ### Response Format
 
-* Start all responses with: `## **[Agent Name]**: [Action Description]`
+* Start all responses with: `## [Agent Name]: [Action Description]`
 * Use short, action-oriented section headers
 * Employ proper markdown formatting
 * Include emojis for visual clarity (when appropriate)
@@ -480,9 +480,9 @@ Report validation status:
 ```markdown
 ### Quality Gates
 
-- **Build**: PASS
-- **Lint**: FAIL - Markdownlint flagged: bare URLs (lines 45, 67)
-- **Schema**: PASS - Frontmatter validates
+- Build: PASS
+- Lint: FAIL - Markdownlint flagged: bare URLs (lines 45, 67)
+- Schema: PASS - Frontmatter validates
 ```
 
 ## Research and External Sources
