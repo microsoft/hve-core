@@ -68,13 +68,6 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: 'img/microsoft-logo.svg',
-      announcementBar: {
-        id: 'draft_notice',
-        content: '⚠️ <strong>Draft Content</strong> — This documentation site is under active development. Content is preliminary and subject to change.',
-        backgroundColor: '#fff3cd',
-        textColor: '#664d03',
-        isCloseable: false,
-      },
       colorMode: {
         respectPrefersColorScheme: true,
       },

@@ -1,6 +1,7 @@
 ---
 title: Using the DT Learning Tutor
 description: Guide to using the dt-learning-tutor agent for self-paced Design Thinking education
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial
@@ -64,8 +65,8 @@ The tutor begins by assessing your experience level and learning goals. Answer i
 
 You have two options:
 
-* **Full curriculum**: Work through all nine modules sequentially from Method 1 to Method 9
-* **Targeted modules**: Jump to specific methods you want to learn or review
+* Full curriculum: Work through all nine modules sequentially from Method 1 to Method 9
+* Targeted modules: Jump to specific methods you want to learn or review
 
 ### Step 4: Learn and Practice
 

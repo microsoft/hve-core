@@ -150,7 +150,8 @@ function New-PluginReadmeContent {
 
     .PARAMETER Maturity
         Optional collection-level maturity string. When 'experimental', an
-        experimental notice is injected after the description.
+        experimental notice is injected after the description. When 'preview',
+        a preview notice is injected.
 
     .OUTPUTS
     [string] Complete README markdown content.
@@ -177,11 +178,15 @@ function New-PluginReadmeContent {
     [void]$sb.AppendLine()
     [void]$sb.AppendLine($Collection.description)
 
-    # Inject experimental notice when collection is experimental
+    # Inject maturity notice when collection is not stable
     $effectiveMaturity = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity }
     if ($effectiveMaturity -eq 'experimental') {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Experimental** `u{2014} This collection is experimental. Contents and behavior may change or be removed without notice.")
+    }
+    elseif ($effectiveMaturity -eq 'preview') {
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine("> **`u{1F50D} Preview** `u{2014} This collection is in preview. Core features are complete and functional but refinements may follow.")
     }
 
     [void]$sb.AppendLine()
@@ -516,7 +521,7 @@ function Write-PluginDirectory {
 
     .PARAMETER Maturity
         Optional collection-level maturity string. Forwarded to
-        New-PluginReadmeContent for experimental notice injection.
+        New-PluginReadmeContent for maturity notice injection.
 
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.

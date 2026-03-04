@@ -144,13 +144,13 @@ Update `.devcontainer/devcontainer.json` to initialize submodules automatically:
 
 When team members clone your project, they need to initialize submodules.
 
-**Option A: Clone with submodules (recommended):**
+### Option A: Clone with submodules (recommended)
 
 ```bash
 git clone --recurse-submodules https://github.com/your-org/your-project.git
 ```
 
-**Option B: Initialize after clone:**
+### Option B: Initialize after clone
 
 ```bash
 git clone https://github.com/your-org/your-project.git
@@ -158,7 +158,7 @@ cd your-project
 git submodule update --init --recursive
 ```
 
-**Option C: Configure git to auto-recurse:**
+### Option C: Configure git to auto-recurse
 
 ```bash
 git config --global submodule.recurse true
@@ -174,7 +174,7 @@ git config --global submodule.recurse true
 | Pin to specific commit | `cd lib/hve-core && git checkout <sha>`                               |
 | Track different branch | `git config submodule.lib/hve-core.branch develop`                    |
 
-**After updating, commit the change:**
+### After updating, commit the change
 
 ```bash
 git add lib/hve-core
@@ -195,14 +195,14 @@ To update HVE-Core when rebuilding your devcontainer:
 
 Submodules pin to a specific commit by default. To verify or change the pinned version:
 
-**Check current version:**
+### Check current version
 
 ```bash
 cd lib/hve-core
 git log -1 --oneline
 ```
 
-**Pin to a specific tag or commit:**
+### Pin to a specific tag or commit
 
 ```bash
 cd lib/hve-core
@@ -233,9 +233,9 @@ git submodule update --init --recursive
 
 ### Agents not appearing
 
-* **Check settings paths:** Verify `.vscode/settings.json` paths match submodule location
-* **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
-* **Verify submodule content:** `ls lib/hve-core/.github/agents/`
+* Verify `.vscode/settings.json` paths match submodule location
+* Reload the window with `Ctrl+Shift+P` → "Developer: Reload Window"
+* Confirm submodule content exists with `ls lib/hve-core/.github/agents/`
 
 ### "Detached HEAD" warning in submodule
 

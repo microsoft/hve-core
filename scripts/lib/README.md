@@ -21,15 +21,15 @@ This directory contains shared utility scripts and modules used across the
 
 Downloads and verifies artifacts using SHA256 checksums.
 
-**Purpose**: Provide tamper-evident file downloads for CI tooling.
+Purpose: Provide tamper-evident file downloads for CI tooling.
 
-**Features**:
+#### Features
 
 * Downloads files from a URL and verifies against an expected SHA256 hash
 * Supports optional extraction of archives
 * Exposes `Get-FileHashValue` and `Test-HashMatch` functions for reuse
 
-**Parameters**:
+#### Parameters
 
 * `-Url` - Download URL
 * `-ExpectedSHA256` - Expected SHA256 hash for verification
@@ -37,7 +37,7 @@ Downloads and verifies artifacts using SHA256 checksums.
 * `-Extract` (switch) - Extract the downloaded archive after verification
 * `-ExtractPath` - Destination path for extraction
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Download and verify a tool

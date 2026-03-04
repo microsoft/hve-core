@@ -115,7 +115,7 @@ npm run test:ps
 
 All scripts are designed to run both locally and in GitHub Actions workflows. They support common parameters like `-Verbose` and `-Debug` for troubleshooting.
 
-**Local Testing**:
+### Local Testing
 
 ```powershell
 # Test PSScriptAnalyzer on changed files
@@ -128,7 +128,7 @@ All scripts are designed to run both locally and in GitHub Actions workflows. Th
 ./scripts/linting/Invoke-LinkLanguageCheck.ps1 -Verbose
 ```
 
-**GitHub Actions Integration**:
+### GitHub Actions Integration
 
 All scripts automatically detect GitHub Actions environment and provide appropriate output formatting (annotations, summaries, artifacts).
 

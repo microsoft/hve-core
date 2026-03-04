@@ -1,6 +1,7 @@
 ---
 title: Why Design Thinking?
 description: Understanding when and why to use Design Thinking in your projects
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: concept

@@ -126,7 +126,7 @@ Update `.devcontainer/devcontainer.json`:
 }
 ```
 
-**Alternative object format:**
+#### Alternative object format
 
 ```jsonc
 {
@@ -148,7 +148,7 @@ Update `.devcontainer/devcontainer.json`:
 2. Type "Dev Containers: Rebuild Container"
 3. Press Enter and wait for rebuild (1-3 minutes)
 
-**What happens during rebuild:**
+#### What happens during rebuild
 
 * Current container stops
 * New container builds with mount configuration
@@ -243,7 +243,7 @@ After rebuild, update `.vscode/settings.json`:
 2. Click the agent picker dropdown
 3. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
 
-**Verify mount from container terminal:**
+#### Verify mount from container terminal
 
 ```bash
 ls /workspaces/hve-core/.github/agents
@@ -301,7 +301,7 @@ ls /workspaces/hve-core/.github/agents
 
 ## Updating HVE-Core
 
-Update on your **host machine**:
+Update on your host machine:
 
 ```bash
 cd /path/to/projects/hve-core
@@ -316,14 +316,14 @@ Changes are immediately available in all containers using the mount. No rebuild 
 
 **Cause:** HVE-Core wasn't cloned on the host, or was cloned in the wrong location.
 
-**Fix:**
+#### Fix
 
 1. Exit the container
 2. Clone HVE-Core on your host machine (see Phase 1)
 3. Verify the path matches the mount source
 4. Rebuild the container
 
-**Check from host terminal:**
+#### Check from host terminal
 
 ```bash
 # On host, not in container
@@ -334,7 +334,7 @@ ls /path/to/projects/hve-core/.github
 
 **Cause:** Mount source path doesn't exist.
 
-**Fix:**
+#### Fix
 
 1. Check `devcontainer.json` mount path
 2. Ensure HVE-Core exists at `${localWorkspaceFolder}/../hve-core`
@@ -343,14 +343,14 @@ ls /path/to/projects/hve-core/.github
 
 ### Agents Not Appearing
 
-**Check mount is working:**
+#### Check mount is working
 
 ```bash
 # Inside container
 ls /workspaces/hve-core/.github/agents
 ```
 
-**Check settings paths match:**
+#### Check settings paths match
 
 Settings must use absolute container paths (`/workspaces/hve-core/...`), not relative paths.
 

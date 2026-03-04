@@ -9,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is a Prompt?
 
@@ -49,7 +49,7 @@ Prompt files are typically organized in a collection subdirectory by convention:
 
 ### File Format
 
-Prompt files **MUST**:
+Prompt files MUST:
 
 1. Use the `.prompt.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
@@ -62,47 +62,52 @@ Prompt files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of prompt purpose and use case
-* **Format**: Single sentence, 10-200 characters
-* **Style**: Sentence case with proper punctuation
-* **Example**: `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'`
+| Property | Value                                                                                                              |
+|----------|--------------------------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of prompt purpose and use case                                                                 |
+| Format   | Single sentence, 10-200 characters                                                                                 |
+| Style    | Sentence case with proper punctuation                                                                              |
+| Example  | `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'` |
 
 **`mode`** (string enum, MANDATORY for prompts)
 
-* **Purpose**: Defines when/how the prompt is invoked
-* **Valid values**:
-  * `agent` - Used by specialized AI agents
-  * `assistant` - General-purpose assistance context
-  * `copilot` - GitHub Copilot-specific workflows
-  * `workflow` - Automated workflow/pipeline context
-* **Example**: `workflow`
+| Property | Value                                  |
+|----------|----------------------------------------|
+| Purpose  | Defines when/how the prompt is invoked |
+| Example  | `workflow`                             |
+
+Valid values:
+
+* `agent` - Used by specialized AI agents
+* `assistant` - General-purpose assistance context
+* `copilot` - GitHub Copilot-specific workflows
+* `workflow` - Automated workflow/pipeline context
 
 ### Optional Fields
 
 **`category`** (string enum)
 
-* **Purpose**: Organizes prompts by domain
-* **Valid values**:
-  * `ado` - Azure DevOps workflows
-  * `git` - Git operations
-  * `documentation` - Documentation generation/maintenance
-  * `workflow` - General workflow automation
-  * `development` - Development tasks
+Organizes prompts by domain.
+
+Valid values:
+
+* `ado` - Azure DevOps workflows
+* `git` - Git operations
+* `documentation` - Documentation generation/maintenance
+* `workflow` - General workflow automation
+* `development` - Development tasks
 
 **`version`** (string)
 
-* **Purpose**: Tracks prompt revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
+Tracks prompt revisions using semantic versioning (e.g., `1.0.0`).
 
 **`author`** (string)
 
-* **Purpose**: Attribution for prompt creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+Attribution for the prompt creator (e.g., `microsoft/hve-core`, `your-team-name`).
 
 **`lastUpdated`** (string)
 
-* **Purpose**: Timestamp of last modification
-* **Format**: ISO 8601 date (YYYY-MM-DD)
+Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
 
 ### Frontmatter Example
 
@@ -198,10 +203,10 @@ work item discovery, reviewer identification, and compliance validation.
 ```markdown
 ## Workflow Steps
 
-1. **Discovery Phase**: Identify related work items from branch name or commit messages
-2. **Reviewer Selection**: Query ADO for default reviewers based on repository policies
-3. **PR Creation**: Generate PR with title, description, and work item links
-4. **Validation**: Verify PR was created successfully with correct metadata
+1. Discovery Phase: Identify related work items from branch name or commit messages
+2. Reviewer Selection: Query ADO for default reviewers based on repository policies
+3. PR Creation: Generate PR with title, description, and work item links
+4. Validation: Verify PR was created successfully with correct metadata
 ```
 
 #### 5. Success Criteria
@@ -233,7 +238,7 @@ work item discovery, reviewer identification, and compliance validation.
 
 #### 8. Attribution Footer
 
-* **MANDATORY**: Include at end of file
+Always include an attribution footer at the end of the file.
 
 ```markdown
 ---
@@ -267,7 +272,7 @@ assignee: "<user.email>"
 ```
 <!-- </example-template-variables> -->
 
-**Variable Naming**:
+#### Variable Naming
 
 * Use snake_case: `{{work_item_id}}`, `{{user_name}}`
 * Be descriptive: `{{target_branch}}` not `{{tb}}`
@@ -308,7 +313,7 @@ Where choices affect flow:
 **Else if** work items in commit messages:
   → Extract and use those work items
 
-**Else**:
+Else:
   → Prompt user for work item IDs
 ```
 
@@ -331,9 +336,9 @@ What artifacts are produced:
 ```markdown
 ## Output Artifacts
 
-1. **Pull Request**: Created in ADO with metadata
-2. **Handoff Document**: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
-3. **Validation Report**: Summary of PR creation status
+1. Pull Request: Created in ADO with metadata
+2. Handoff Document: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
+3. Validation Report: Summary of PR creation status
 ```
 
 ## Context Requirements
@@ -391,11 +396,11 @@ Structure for user-facing output:
 
 ### PR Creation Summary
 
-**Status**: [Success|Failed]
-**PR ID**: [ID]
-**PR URL**: [URL]
-**Work Items Linked**: [IDs]
-**Reviewers Added**: [Names]
+Status: [Success|Failed]
+PR ID: [ID]
+PR URL: [URL]
+Work Items Linked: [IDs]
+Reviewers Added: [Names]
 
 ### Validation Results
 
@@ -428,9 +433,9 @@ Format for failure scenarios:
 ```markdown
 ## Error Format
 
-**Error Type**: [Authentication|Validation|Network]
-**Message**: [Detailed error description]
-**Recovery Steps**:
+Error Type: [Authentication|Validation|Network]
+Message: [Detailed error description]
+Recovery Steps:
 
 1. [Step to resolve]
 2. [Alternative approach]
@@ -504,13 +509,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ### Template Variables with Wrong Format
 
-* **Problem**: Using incorrect syntax for template variables (angle brackets or shell-style)
-* **Solution**: Always use `{{variable_name}}` handlebars format for template variables
+Using incorrect syntax for template variables (angle brackets or shell-style) causes failures. Always use `{{variable_name}}` handlebars format for template variables.
 
 ### Ambiguous Workflow Steps
 
-* **Problem**: Vague workflow steps without specific tools, conditions, or decision logic
-* **Solution**: Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic
+Vague workflow steps without specific tools, conditions, or decision logic cause confusion. Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic.
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 

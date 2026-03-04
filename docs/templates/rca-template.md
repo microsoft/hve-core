@@ -130,11 +130,11 @@ All times in UTC.
 
 ## Usage Guidelines
 
-1. **Start the document immediately** when an incident is declared
-2. **Update continuously** during the incident - don't rely on memory afterward
-3. **Be blameless** - focus on systems and processes, not individuals
-4. **Be thorough** - future responders will thank you
-5. **Track action items** - incidents without follow-through will repeat
+1. Start the document immediately when an incident is declared
+2. Update continuously during the incident - don't rely on memory afterward
+3. Be blameless - focus on systems and processes, not individuals
+4. Be thorough - future responders will thank you
+5. Track action items - incidents without follow-through will repeat
 
 ## References
 

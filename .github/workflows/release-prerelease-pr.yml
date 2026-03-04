@@ -1,4 +1,4 @@
-name: Pre-Release Companion
+name: Pre-Release PR Update
 
 on:
   push:
