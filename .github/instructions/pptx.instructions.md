@@ -69,9 +69,15 @@ Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholde
 
 The validation pipeline writes outputs to `{{working-directory}}/slide-deck/validation/`:
 
-* `deck-validation-results.json` — Per-slide PPTX property findings (speaker notes, slide count).
+* `deck-validation-results.json` — Consolidated PPTX property findings (speaker notes, slide count).
 * `deck-validation-report.md` — Human-readable Markdown report for PPTX property validation.
-* `validation-results.json` — Per-slide raw vision model responses with visual descriptions and quality findings.
+* `validation-results.json` — Consolidated vision model responses with visual descriptions and quality findings.
+* `slide-NNN-validation.json` — Per-slide vision validation result (next to `slide-NNN.jpg`). Contains the `response` with slide description and `issues` array.
+* `slide-NNN-deck-validation.json` — Per-slide PPTX property validation result (next to `slide-NNN.jpg`). Contains `issues` array and `overall_quality`.
+
+### Validation Scope for Changed Slides
+
+When validating after modifying or adding specific slides, validate a block that includes one slide before and one slide after the changed or added slides. This catches edge-proximity issues, transition inconsistencies, and spacing problems between adjacent slides.
 
 ### Element Positioning
 

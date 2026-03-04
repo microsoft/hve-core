@@ -248,18 +248,6 @@ The Validate action runs a two- or three-step pipeline:
 
 Vision validation results are written to `validation-results.json` in the image output directory, containing raw model responses per slide with visual descriptions and quality findings.
 
-#### Validate with Concurrency
-
-```powershell
-./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
-  -InputPath slide-deck/presentation.pptx `
-  -ContentDir content/ `
-  -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast" `
-  -ValidationConcurrency 5
-```
-
-Concurrent validation processes multiple slides in parallel (default: 3).
-
 #### Validate Specific Slides
 
 ```powershell
@@ -281,7 +269,6 @@ Validates only the specified slides. When content directories cover fewer slides
 | `--model` | No | `claude-haiku-4.5` | Vision model ID |
 | `--output` | No | stdout | JSON results file path |
 | `--slides` | No | all | Comma-separated slide numbers to validate |
-| `--concurrency` | No | `1` | Max concurrent slide validations |
 | `--system-message` | No | built-in | Custom system message text for the vision model |
 | `--system-message-file` | No | built-in | Path to file containing a custom system message |
 | `--response-schema` | No | built-in | Custom response schema JSON text |
@@ -297,6 +284,7 @@ Validates only the specified slides. When content directories cover fewer slides
 | `--slides` | No | all | Comma-separated slide numbers to validate |
 | `--output` | No | stdout | JSON results file path |
 | `--report` | No | — | Markdown report file path |
+| `--per-slide-dir` | No | — | Directory for per-slide JSON files (`slide-NNN-deck-validation.json`) |
 
 #### Validation Outputs
 
@@ -306,7 +294,25 @@ When run through the pipeline, validation produces these files in the image outp
 |---|---|---|
 | `deck-validation-results.json` | JSON | Per-slide PPTX property issues (speaker notes, slide count) |
 | `deck-validation-report.md` | Markdown | Human-readable report for PPTX property validation |
-| `validation-results.json` | JSON | Per-slide raw vision model responses with visual descriptions and quality findings |
+| `validation-results.json` | JSON | Consolidated vision model responses with visual descriptions and quality findings |
+| `slide-NNN-validation.json` | JSON | Per-slide vision validation result with description and issues (next to `slide-NNN.jpg`) |
+| `slide-NNN-deck-validation.json` | JSON | Per-slide PPTX property validation result (next to `slide-NNN.jpg`) |
+
+Per-slide JSON files are written alongside their corresponding `slide-NNN.jpg` images, enabling agents to read validation findings for individual slides without parsing the consolidated file.
+
+#### Validation Scope for Changed Slides
+
+When validating after modifying or adding specific slides, always validate a block that includes **one slide before** and **one slide after** the changed or added slides. This catches edge-proximity issues, transition inconsistencies, and spacing problems that arise between adjacent slides.
+
+For example, when slides 5 and 6 were changed, validate slides 4 through 7:
+
+```powershell
+./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
+  -InputPath slide-deck/presentation.pptx `
+  -ContentDir content/ `
+  -Slides "4,5,6,7" `
+  -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast"
+```
 
 ### Export Slides to Images
 

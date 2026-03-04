@@ -163,12 +163,6 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--slides", help="Comma-separated slide numbers to validate (default: all)"
     )
-    parser.add_argument(
-        "--concurrency",
-        type=int,
-        default=1,
-        help="Max concurrent slide validations (default: 1)",
-    )
     sys_group = parser.add_mutually_exclusive_group()
     sys_group.add_argument(
         "--system-message",
@@ -385,14 +379,10 @@ async def run(args: argparse.Namespace) -> int:
             }
         )
 
-        semaphore = asyncio.Semaphore(args.concurrency)
-
-        async def validate_with_limit(slide_num, image_path):
-            async with semaphore:
-                return await validate_slide(session, slide_num, image_path, prompt)
-
-        tasks = [validate_with_limit(sn, ip) for sn, ip in images]
-        slide_results = list(await asyncio.gather(*tasks))
+        slide_results = []
+        for slide_num, image_path in images:
+            result = await validate_slide(session, slide_num, image_path, prompt)
+            slide_results.append(result)
 
         await session.destroy()
     finally:
@@ -401,13 +391,21 @@ async def run(args: argparse.Namespace) -> int:
     # Sort results by slide number
     slide_results.sort(key=lambda r: r.get("slide_number", 0))
 
+    # Write per-slide validation JSON files next to slide images
+    for result in slide_results:
+        slide_num = result.get("slide_number", 0)
+        per_slide_path = image_dir / f"slide-{slide_num:03d}-validation.json"
+        per_slide_json = json.dumps(result, indent=2)
+        per_slide_path.write_text(per_slide_json, encoding="utf-8")
+        logger.debug("Per-slide results written to %s", per_slide_path)
+
     results = {
         "model": args.model,
         "slide_count": len(images),
         "slides": slide_results,
     }
 
-    # Output results
+    # Output consolidated results
     output_json = json.dumps(results, indent=2)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
