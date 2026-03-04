@@ -1,3 +1,7 @@
+---
+description: 'Per-slide content YAML schema template with supported element types, fields, and usage instructions'
+---
+
 # Content YAML Template
 
 Use this template when creating or updating a slide's `content.yaml` file. Each slide folder (`content/slide-NNN/`) contains one `content.yaml` that defines the slide's layout, text, shapes, and optional style overrides.
@@ -510,3 +514,5 @@ speaker_notes: |
 ```
 
 Placeholder indices correspond to the layout's placeholder positions. Use the `--template` argument with `build_deck.py` to load layouts from the template file, and define layout name mappings in `style.yaml` under the `layouts` section.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
