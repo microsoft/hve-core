@@ -87,7 +87,6 @@ Run a `PowerPoint Subagent` with task type `build-content` providing:
 * User requirements and design specifications.
 * Slide numbers to create or modify (or all slides for new decks).
 * Execution log path: `changes/build-content-{{timestamp}}.md`.
-* Additional skills to use (such as `vscode-playwright` for VS Code screenshots when needed).
 
 Read the subagent's execution log after completion. Review content files created or modified.
 
@@ -100,14 +99,15 @@ Run a `PowerPoint Subagent` with task type `build-deck` providing:
 * Content directory path.
 * Style path: `content/global/style.yaml`.
 * Output path: `slide-deck/{{ppt-name}}.pptx`.
-* Source PPTX path (for update workflows).
-* Slide numbers to regenerate (or all for new decks).
+* **Build mode** — choose one based on the workflow:
+  * **Full rebuild**: Use `--template` pointing to the original PPTX. Creates a new presentation with only the slides defined in `content/`. All other slides from the template are discarded.
+  * **Partial rebuild** (updating specific slides): Use `--source` pointing to the existing deck (typically the same file as the output path). Specify `--slides` with the slide numbers to regenerate. Do NOT use `--template` — it would discard all slides not specified in `--slides`.
 * Execution log path: `changes/build-deck-{{timestamp}}.md`.
 * Instructions to use the `powerpoint` skill's `build_deck.py` script.
 
-Read the subagent's execution log after completion.
+Read the subagent's execution log after completion. **Verify the output slide count** matches expectations before proceeding to validation. For partial rebuilds, the total slide count must match the original deck.
 
-Proceed to Phase 3 after the deck is generated.
+Proceed to Phase 3 after the deck is generated and verified.
 
 ### Phase 3: Validate
 
@@ -119,10 +119,10 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Content directory path.
 * Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
-* Validation prompt containing these visual checks: text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative line positioning, citation collisions, column alignment, readable fill combinations, and background images.
+* The `validate_slides.py` script has a comprehensive built-in system message covering all standard visual quality checks. Do not pass a `-ValidationPrompt` unless the user requests additional task-specific checks. To activate vision validation, pass `-ValidationPrompt "Validate visual quality"` — this triggers the vision step without duplicating the built-in checks.
 * Optional overrides: validation model (default: `claude-haiku-4.5`).
 
-The subagent runs `Invoke-PptxPipeline.ps1 -Action Validate` which chains export (PPTX → images), PPTX property checks (`validate_deck.py`), and Copilot SDK vision validation (`validate_slides.py`). Results are written to the image output directory as JSON.
+The pipeline automatically clears stale images before exporting and names output files to match original slide numbers when `-Slides` is used. This ensures `validate_slides.py` reads the correct, freshly-exported images.
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**
 
@@ -154,10 +154,12 @@ When validating changed or added slides, always pass a `-Slides` range that incl
 2. Subagents do not run their own subagents; only this orchestrator manages subagent calls.
 3. Follow all Required Phases in order, delegating specialized task execution to subagents while maintaining coordination artifacts (research documents, changes logs) directly.
 4. Phases repeat as needed based on validation findings or user feedback. The iteration limit for Phase 3 validation is five cycles.
-5. For VS Code or code screenshots, instruct the subagent to follow the `vscode-playwright` skill workflow.
-6. All side effects (file creation, script execution, PPTX generation) stay within the working directory under `.copilot-tracking/ppt/`.
-7. Read subagent output artifacts after each delegation and integrate findings before proceeding.
-8. Create the working directory structure in Phase 1's pre-requisite step before delegating any subagent work.
+5. All side effects (file creation, script execution, PPTX generation) stay within the working directory under `.copilot-tracking/ppt/`.
+6. Read subagent output artifacts after each delegation and integrate findings before proceeding.
+7. Create the working directory structure in Phase 1's pre-requisite step before delegating any subagent work.
+8. **Handle subagent clarifying questions**: When a subagent returns clarifying questions, either surface them to the user for decision or make explicit default decisions with documented rationale in the changes log. Do not silently proceed without addressing them.
+9. **Handle subagent blocking failures**: When a subagent reports status `blocked`, do not delegate follow-on phases to other subagents. Diagnose the root cause, fix the inputs, and re-run the failed task before proceeding.
+10. **Verify build output before validation**: After Phase 2 Step 2 (Build Deck), verify the output slide count and file integrity before delegating validation. For partial rebuilds with `--source` and `--slides`, the output must have the same slide count as the source deck.
 
 ## Workflow Variants
 
@@ -173,7 +175,7 @@ Phase 1 Step 2: Extract styling from the source deck. Edit the resulting YAML to
 
 ### Updating an Existing Slide Deck (`update`)
 
-Phase 1 Step 2: Extract everything (text, styling, notes, images, structure). Phase 1 Step 3: Document existing problems. Phase 2: Preserve existing content and add or modify as requested. Phase 3: Validate the regenerated deck.
+Phase 1 Step 2: Extract everything (text, styling, notes, images, structure). Phase 1 Step 3: Document existing problems. Phase 2 Step 1: Preserve existing content and add or modify as requested. Phase 2 Step 2: Use `--source` (not `--template`) pointing to the existing deck, with `--slides` specifying only the modified slides. For partial rebuilds, copy the original PPTX to the output location first if source and output are different paths. Phase 3: Validate the regenerated deck.
 
 ### Cleaning Up an Existing Slide Deck (`cleanup`)
 

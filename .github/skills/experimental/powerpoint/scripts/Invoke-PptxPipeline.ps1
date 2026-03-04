@@ -494,6 +494,14 @@ function Invoke-ExportSlides {
         New-Item -ItemType Directory -Path $ImageOutputDir -Force | Out-Null
     }
 
+    # Clear stale slide images from prior runs to prevent validate_slides.py
+    # from picking up outdated images that no longer represent the current deck.
+    $staleImages = Get-ChildItem -Path $ImageOutputDir -Filter 'slide-*.jpg' -ErrorAction SilentlyContinue
+    if ($staleImages) {
+        $staleImages | Remove-Item -Force
+        Write-Host "Cleared $($staleImages.Count) stale slide image(s) from $ImageOutputDir"
+    }
+
     $pdfOutput = Join-Path $ImageOutputDir 'slides.pdf'
 
     # Build arguments for export_slides.py
@@ -514,7 +522,7 @@ function Invoke-ExportSlides {
     }
 
     # Convert PDF to JPG images
-    ConvertTo-SlideImages -PdfPath $pdfOutput -OutputDir $ImageOutputDir -Dpi $Resolution
+    ConvertTo-SlideImages -PdfPath $pdfOutput -OutputDir $ImageOutputDir -Dpi $Resolution -SlideNumbers $Slides
 
     # Clean up intermediate PDF
     if (Test-Path $pdfOutput) {
@@ -527,12 +535,21 @@ function ConvertTo-SlideImages {
     <#
     .SYNOPSIS
         Converts PDF pages to JPG images using pdftoppm or PyMuPDF fallback.
+    .DESCRIPTION
+        When SlideNumbers is provided, output images are named to match the
+        original slide numbers (e.g. slide-023.jpg) instead of sequential
+        numbering (slide-001.jpg). This ensures validate_slides.py can find
+        images by their actual slide number after filtered exports.
     .PARAMETER PdfPath
         Path to the PDF file to convert.
     .PARAMETER OutputDir
         Directory where JPG files will be saved.
     .PARAMETER Dpi
         Resolution in DPI for the rendered images.
+    .PARAMETER SlideNumbers
+        Comma-separated original slide numbers for output naming. When the
+        PDF contains a filtered subset of slides, this maps each sequential
+        PDF page to the correct original slide number in the filename.
     #>
     [CmdletBinding()]
     [OutputType([void])]
@@ -544,7 +561,10 @@ function ConvertTo-SlideImages {
         [string]$OutputDir,
 
         [Parameter()]
-        [int]$Dpi = 150
+        [int]$Dpi = 150,
+
+        [Parameter()]
+        [string]$SlideNumbers
     )
 
     $pdftoppm = Get-Command 'pdftoppm' -ErrorAction SilentlyContinue
@@ -556,13 +576,34 @@ function ConvertTo-SlideImages {
             throw "pdftoppm failed with exit code $LASTEXITCODE."
         }
 
-        # Rename pdftoppm output (slide-1.jpg → slide-001.jpg) for consistency
-        Get-ChildItem -Path $OutputDir -Filter 'slide-*.jpg' | ForEach-Object {
-            if ($_.Name -match '^slide-(\d+)\.jpg$') {
-                $num = [int]$Matches[1]
-                $newName = 'slide-{0:D3}.jpg' -f $num
-                if ($_.Name -ne $newName) {
-                    Rename-Item -Path $_.FullName -NewName $newName
+        # Collect sequentially-numbered output files sorted by number
+        $seqFiles = Get-ChildItem -Path $OutputDir -Filter 'slide-*.jpg' |
+            Where-Object { $_.Name -match '^slide-(\d+)\.jpg$' } |
+            Sort-Object { [int]($_.Name -replace '^slide-(\d+)\.jpg$', '$1') }
+
+        if ($SlideNumbers) {
+            # Rename from sequential numbers to original slide numbers
+            $targetNums = $SlideNumbers -split ',' | ForEach-Object { [int]$_.Trim() }
+            $idx = 0
+            foreach ($file in $seqFiles) {
+                if ($idx -lt $targetNums.Count) {
+                    $newName = 'slide-{0:D3}.jpg' -f $targetNums[$idx]
+                    if ($file.Name -ne $newName) {
+                        Rename-Item -Path $file.FullName -NewName $newName
+                    }
+                    $idx++
+                }
+            }
+        }
+        else {
+            # Zero-pad to 3 digits for consistency (slide-1.jpg -> slide-001.jpg)
+            foreach ($file in $seqFiles) {
+                if ($file.Name -match '^slide-(\d+)\.jpg$') {
+                    $num = [int]$Matches[1]
+                    $newName = 'slide-{0:D3}.jpg' -f $num
+                    if ($file.Name -ne $newName) {
+                        Rename-Item -Path $file.FullName -NewName $newName
+                    }
                 }
             }
         }
@@ -572,7 +613,13 @@ function ConvertTo-SlideImages {
         $python = Get-VenvPythonPath
         $renderScript = Join-Path $ScriptDir 'render_pdf_images.py'
 
-        & $python $renderScript --input $PdfPath --output-dir $OutputDir --dpi $Dpi
+        $renderArgs = @($renderScript, '--input', $PdfPath, '--output-dir', $OutputDir, '--dpi', $Dpi)
+        if ($SlideNumbers) {
+            $renderArgs += '--slide-numbers'
+            $renderArgs += $SlideNumbers
+        }
+
+        & $python @renderArgs
         if ($LASTEXITCODE -ne 0) {
             throw "render_pdf_images.py failed with exit code $LASTEXITCODE."
         }

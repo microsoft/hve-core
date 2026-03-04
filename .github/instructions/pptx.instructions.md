@@ -61,9 +61,31 @@ Include `<!-- markdownlint-disable-file -->` at the top of all markdown files cr
 * All dependencies are declared in `pyproject.toml` at the skill root. The `Invoke-PptxPipeline.ps1` orchestrator manages the virtual environment automatically. Never install packages with `pip install` directly.
 * When scripts fail due to missing modules or import errors, follow the Environment Recovery steps in the `powerpoint` skill instructions.
 
+### Build Mode: `--template` vs `--source`
+
+The `build_deck.py` script has two mutually exclusive modes for working with existing PPTX files:
+
+* **`--template`** creates a NEW presentation from the template, inheriting only slide masters, layouts, and theme colors. All existing slides in the template are discarded. Only slides defined in `content/` are added. Use for full rebuilds and new decks with corporate branding.
+* **`--source`** opens an existing deck and rebuilds specified slides in-place. All slides not in `--slides` remain untouched. Use for partial rebuilds when updating specific slides in a large deck.
+* **Never combine `--template` and `--source`** in the same command. If both are provided, `--template` behavior takes precedence and all non-specified slides are lost.
+
+For partial rebuild workflows (update a few slides in an existing deck):
+
+1. Copy the original PPTX to the output location if source and output paths differ.
+2. Run `build_deck.py --source <deck> --output <deck> --slides N,M`.
+3. Verify the output slide count matches the original.
+
 ## Validation Criteria
 
-Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholders, narrow text boxes, font consistency) are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. Speaker notes validation remains PPTX-based via `validate_deck.py`.
+Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholders, narrow text boxes, font consistency) are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. The script has a comprehensive built-in system message covering all standard visual checks. The `-ValidationPrompt` / `-ValidationPromptFile` parameter provides additional user-level context and does not need to duplicate the built-in checks. Speaker notes validation remains PPTX-based via `validate_deck.py`.
+
+### Validation Directory Cleanup
+
+The `Invoke-PptxPipeline.ps1` pipeline automatically clears stale `slide-*.jpg` images from the output directory before each export. This prevents prior-run images from being picked up by `validate_slides.py`. When running exports or validation outside the pipeline (calling scripts directly), manually clear the image output directory first.
+
+### Validation Image Naming
+
+When `-Slides` is used for filtered exports, the pipeline names output images to match the original slide numbers (e.g., `slide-023.jpg` for slide 23), not sequential numbers from the filtered PDF. This ensures `validate_slides.py --slides 23,24,25` finds `slide-023.jpg`, `slide-024.jpg`, `slide-025.jpg` as expected.
 
 ### Validation Outputs
 
