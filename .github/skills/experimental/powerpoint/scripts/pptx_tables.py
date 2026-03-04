@@ -37,14 +37,19 @@ def add_table_element(slide, elem: dict, colors: dict, typography: dict):
     rows_data = elem.get("rows", [])
     cols_data = elem.get("columns", [])
     n_rows = len(rows_data)
-    n_cols = len(cols_data) if cols_data else max(
-        (len(r.get("cells", [])) for r in rows_data), default=1
+    n_cols = (
+        len(cols_data)
+        if cols_data
+        else max((len(r.get("cells", [])) for r in rows_data), default=1)
     )
 
     table_shape = slide.shapes.add_table(
-        n_rows, n_cols,
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(elem["width"]), Inches(elem["height"]),
+        n_rows,
+        n_cols,
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(elem["width"]),
+        Inches(elem["height"]),
     )
     table = table_shape.table
 

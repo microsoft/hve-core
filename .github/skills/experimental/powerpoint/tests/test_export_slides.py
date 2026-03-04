@@ -21,27 +21,19 @@ from export_slides import (
 class TestParseSlideNumbers:
     """Tests for parse_slide_numbers."""
 
-    def test_single(self):
-        assert parse_slide_numbers("3") == [3]
-
-    def test_multiple(self):
-        assert parse_slide_numbers("1,3,5") == [1, 3, 5]
-
-    def test_deduplicates(self):
-        result = parse_slide_numbers("2,2,3")
-        assert result == [2, 3]
-
-    def test_sorts(self):
-        result = parse_slide_numbers("5,1,3")
-        assert result == [1, 3, 5]
-
-    def test_whitespace(self):
-        result = parse_slide_numbers(" 2 , 4 , 6 ")
-        assert result == [2, 4, 6]
-
-    def test_empty_parts(self):
-        result = parse_slide_numbers("1,,3")
-        assert result == [1, 3]
+    @pytest.mark.parametrize(
+        "input_str,expected",
+        [
+            ("3", [3]),
+            ("1,3,5", [1, 3, 5]),
+            ("2,2,3", [2, 3]),
+            ("5,1,3", [1, 3, 5]),
+            (" 2 , 4 , 6 ", [2, 4, 6]),
+            ("1,,3", [1, 3]),
+        ],
+    )
+    def test_parse(self, input_str, expected):
+        assert parse_slide_numbers(input_str) == expected
 
 
 class TestFindLibreoffice:

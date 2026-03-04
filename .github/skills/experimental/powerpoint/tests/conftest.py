@@ -4,7 +4,6 @@ import struct
 import zlib
 
 import pytest
-import yaml
 from pptx import Presentation
 from pptx.util import Inches, Pt
 
@@ -82,44 +81,3 @@ def sample_image_path(tmp_path):
     img = tmp_path / "test.png"
     img.write_bytes(_minimal_png_bytes())
     return img
-
-
-@pytest.fixture()
-def sample_content_dir(tmp_path):
-    """Content directory structure with minimal YAML files."""
-    slide_dir = tmp_path / "slide-1"
-    slide_dir.mkdir()
-    content = {
-        "elements": [
-            {
-                "type": "textbox",
-                "left": 1.0,
-                "top": 1.0,
-                "width": 4.0,
-                "height": 1.0,
-                "text": "Hello World",
-            }
-        ]
-    }
-    (slide_dir / "content.yaml").write_text(
-        yaml.dump(content, default_flow_style=False), encoding="utf-8"
-    )
-    global_dir = tmp_path / "global"
-    global_dir.mkdir()
-    style = {"slide_width": 13.333, "slide_height": 7.5}
-    (global_dir / "style.yaml").write_text(
-        yaml.dump(style, default_flow_style=False), encoding="utf-8"
-    )
-    return tmp_path
-
-
-@pytest.fixture(scope="session")
-def colors_dict():
-    """Empty colors dictionary (session-scoped)."""
-    return {}
-
-
-@pytest.fixture(scope="session")
-def typography_dict():
-    """Empty typography dictionary (session-scoped)."""
-    return {}

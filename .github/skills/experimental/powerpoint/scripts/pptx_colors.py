@@ -61,7 +61,11 @@ def resolve_color(value: str | dict, colors: dict | None = None) -> dict:
         return {"rgb": RGBColor(0, 0, 0)}
 
     hex_str = value.lstrip("#")
-    return {"rgb": RGBColor(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))}
+    return {
+        "rgb": RGBColor(
+            int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16)
+        )
+    }
 
 
 def apply_color_spec(color_format, color_spec: dict):

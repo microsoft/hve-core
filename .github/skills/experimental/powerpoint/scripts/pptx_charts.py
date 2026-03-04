@@ -82,8 +82,10 @@ def add_chart_element(slide, elem: dict, colors: dict):
 
     chart_shape = slide.shapes.add_chart(
         chart_type,
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(elem["width"]), Inches(elem["height"]),
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(elem["width"]),
+        Inches(elem["height"]),
         chart_data,
     )
     chart = chart_shape.chart

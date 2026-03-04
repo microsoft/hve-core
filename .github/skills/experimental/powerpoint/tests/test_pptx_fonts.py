@@ -1,5 +1,6 @@
 """Tests for pptx_fonts module."""
 
+import pytest
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
@@ -19,57 +20,41 @@ from pptx_fonts import (
 class TestNormalizeFontFamily:
     """Tests for normalize_font_family."""
 
-    def test_no_suffix(self):
-        assert normalize_font_family("Segoe UI") == "Segoe UI"
-
-    def test_semibold(self):
-        assert normalize_font_family("Segoe UI Semibold") == "Segoe UI"
-
-    def test_semibold_camelcase(self):
-        assert normalize_font_family("Segoe UI SemiBold") == "Segoe UI"
-
-    def test_bold(self):
-        assert normalize_font_family("Arial Bold") == "Arial"
-
-    def test_light(self):
-        assert normalize_font_family("Segoe UI Light") == "Segoe UI"
-
-    def test_thin(self):
-        assert normalize_font_family("Roboto Thin") == "Roboto"
-
-    def test_black(self):
-        assert normalize_font_family("Montserrat Black") == "Montserrat"
-
-    def test_medium(self):
-        assert normalize_font_family("Inter Medium") == "Inter"
-
-    def test_extrabold(self):
-        assert normalize_font_family("Open Sans ExtraBold") == "Open Sans"
-
-    def test_extralight(self):
-        assert normalize_font_family("Noto Sans ExtraLight") == "Noto Sans"
+    @pytest.mark.parametrize(
+        "input_name,expected",
+        [
+            ("Segoe UI", "Segoe UI"),
+            ("Segoe UI Semibold", "Segoe UI"),
+            ("Segoe UI SemiBold", "Segoe UI"),
+            ("Arial Bold", "Arial"),
+            ("Segoe UI Light", "Segoe UI"),
+            ("Roboto Thin", "Roboto"),
+            ("Montserrat Black", "Montserrat"),
+            ("Inter Medium", "Inter"),
+            ("Open Sans ExtraBold", "Open Sans"),
+            ("Noto Sans ExtraLight", "Noto Sans"),
+        ],
+    )
+    def test_normalize(self, input_name, expected):
+        assert normalize_font_family(input_name) == expected
 
 
 class TestFontFamilyMatches:
     """Tests for font_family_matches."""
 
-    def test_exact_match(self):
-        assert font_family_matches("Arial", {"Arial", "Segoe UI"}) is True
-
-    def test_no_match(self):
-        assert font_family_matches("Comic Sans", {"Arial", "Segoe UI"}) is False
-
-    def test_weight_variant_match(self):
-        assert font_family_matches("Segoe UI Semibold", {"Segoe UI"}) is True
-
-    def test_expected_has_weight_variant(self):
-        assert font_family_matches("Segoe UI", {"Segoe UI Bold"}) is True
-
-    def test_different_base_no_match(self):
-        assert font_family_matches("Arial Bold", {"Segoe UI"}) is False
-
-    def test_empty_expected(self):
-        assert font_family_matches("Arial", set()) is False
+    @pytest.mark.parametrize(
+        "font,expected_set,result",
+        [
+            ("Arial", {"Arial", "Segoe UI"}, True),
+            ("Comic Sans", {"Arial", "Segoe UI"}, False),
+            ("Segoe UI Semibold", {"Segoe UI"}, True),
+            ("Segoe UI", {"Segoe UI Bold"}, True),
+            ("Arial Bold", {"Segoe UI"}, False),
+            ("Arial", set(), False),
+        ],
+    )
+    def test_matches(self, font, expected_set, result):
+        assert font_family_matches(font, expected_set) is result
 
 
 class TestExtractFontInfo:
@@ -173,25 +158,19 @@ class TestExtractParagraphFont:
 class TestExtractAlignment:
     """Tests for extract_alignment."""
 
-    def test_left(self, sample_textbox):
+    @pytest.mark.parametrize(
+        "alignment,expected",
+        [
+            (PP_ALIGN.LEFT, "left"),
+            (PP_ALIGN.CENTER, "center"),
+            (PP_ALIGN.RIGHT, "right"),
+            (PP_ALIGN.JUSTIFY, "justify"),
+        ],
+    )
+    def test_alignment(self, sample_textbox, alignment, expected):
         para = sample_textbox.text_frame.paragraphs[0]
-        para.alignment = PP_ALIGN.LEFT
-        assert extract_alignment(para) == "left"
-
-    def test_center(self, sample_textbox):
-        para = sample_textbox.text_frame.paragraphs[0]
-        para.alignment = PP_ALIGN.CENTER
-        assert extract_alignment(para) == "center"
-
-    def test_right(self, sample_textbox):
-        para = sample_textbox.text_frame.paragraphs[0]
-        para.alignment = PP_ALIGN.RIGHT
-        assert extract_alignment(para) == "right"
-
-    def test_justify(self, sample_textbox):
-        para = sample_textbox.text_frame.paragraphs[0]
-        para.alignment = PP_ALIGN.JUSTIFY
-        assert extract_alignment(para) == "justify"
+        para.alignment = alignment
+        assert extract_alignment(para) == expected
 
     def test_none(self, blank_slide):
         txBox = blank_slide.shapes.add_textbox(

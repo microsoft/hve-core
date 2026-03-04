@@ -1,15 +1,22 @@
-"""Font resolution, normalization, matching, and extraction for PowerPoint skill scripts.
+"""Font normalization, matching, and extraction utilities.
 
-Centralizes font-related constants and functions used by build_deck.py,
-extract_content.py, and validate_deck.py.
+Centralizes font-related constants and functions used by
+build_deck.py, extract_content.py, and validate_deck.py.
 """
 
 from pptx.enum.text import PP_ALIGN
 from pptx_colors import rgb_to_hex
 
 FONT_WEIGHT_SUFFIXES = (
-    " Semibold", " SemiBold", " Bold", " Light", " Thin",
-    " Black", " Medium", " ExtraBold", " ExtraLight",
+    " Semibold",
+    " SemiBold",
+    " Bold",
+    " Light",
+    " Thin",
+    " Black",
+    " Medium",
+    " ExtraBold",
+    " ExtraLight",
 )
 
 ALIGNMENT_MAP = {
@@ -31,7 +38,11 @@ def normalize_font_family(name: str) -> str:
 
 
 def font_family_matches(font_name: str, expected_fonts: set[str]) -> bool:
-    """Check if a font name matches any expected font, treating weight variants as compatible."""
+    """Check if a font matches expected fonts.
+
+    Weight variants (e.g. Segoe UI Semibold) are treated as
+    compatible with the base family.
+    """
     if font_name in expected_fonts:
         return True
     base = font_name
@@ -82,7 +93,7 @@ def _extract_char_spacing(font) -> float | None:
     """
     try:
         rpr = font._element
-        spc_val = rpr.get('spc')
+        spc_val = rpr.get("spc")
         if spc_val is not None:
             return int(spc_val) / 100.0
     except (AttributeError, TypeError):

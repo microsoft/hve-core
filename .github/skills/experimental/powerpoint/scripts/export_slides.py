@@ -34,16 +34,20 @@ def configure_logging(verbose: bool = False) -> None:
 
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
-    parser = argparse.ArgumentParser(
-        description="Export PowerPoint slides to PDF"
+    parser = argparse.ArgumentParser(description="Export PowerPoint slides to PDF")
+    parser.add_argument(
+        "--input", required=True, type=Path, help="Input PPTX file path"
     )
-    parser.add_argument("--input", required=True, type=Path, help="Input PPTX file path")
-    parser.add_argument("--output", required=True, type=Path, help="Output PDF file path")
+    parser.add_argument(
+        "--output", required=True, type=Path, help="Output PDF file path"
+    )
     parser.add_argument(
         "--slides",
         help="Comma-separated slide numbers to export (1-based, default: all)",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    )
     return parser
 
 
@@ -105,8 +109,10 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
             [
                 soffice,
                 "--headless",
-                "--convert-to", "pdf",
-                "--outdir", str(output_dir),
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(output_dir),
                 str(pptx_path),
             ],
             capture_output=True,
@@ -144,7 +150,9 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
     try:
         import fitz  # noqa: PLC0415 — PyMuPDF
     except ImportError:
-        logger.error("PyMuPDF is required for slide filtering. Install via: pip install pymupdf")
+        logger.error(
+            "PyMuPDF is required for slide filtering. Install via: pip install pymupdf"
+        )
         sys.exit(EXIT_FAILURE)
 
     doc = fitz.open(str(pdf_path))
@@ -155,7 +163,9 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
         if 1 <= page_num <= total_pages:
             new_doc.insert_pdf(doc, from_page=page_num - 1, to_page=page_num - 1)
         else:
-            logger.warning("Slide %d out of range (1-%d), skipping", page_num, total_pages)
+            logger.warning(
+                "Slide %d out of range (1-%d), skipping", page_num, total_pages
+            )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     new_doc.save(str(output_path))

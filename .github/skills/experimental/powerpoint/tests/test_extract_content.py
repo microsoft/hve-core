@@ -46,45 +46,21 @@ class TestHasFormattingVariation:
         ]
         assert _has_formatting_variation(runs) is False
 
-    def test_different_fonts(self):
+    @pytest.mark.parametrize(
+        "diff_key,val_a,val_b",
+        [
+            ("font", "Arial", "Calibri"),
+            ("size", 12, 16),
+            ("color", "#000000", "#FF0000"),
+            ("bold", True, False),
+            ("italic", True, False),
+            ("underline", True, False),
+        ],
+    )
+    def test_variation_detected(self, diff_key, val_a, val_b):
         runs = [
-            {"text": "a", "font": "Arial"},
-            {"text": "b", "font": "Calibri"},
-        ]
-        assert _has_formatting_variation(runs) is True
-
-    def test_different_sizes(self):
-        runs = [
-            {"text": "a", "size": 12},
-            {"text": "b", "size": 16},
-        ]
-        assert _has_formatting_variation(runs) is True
-
-    def test_different_colors(self):
-        runs = [
-            {"text": "a", "color": "#000000"},
-            {"text": "b", "color": "#FF0000"},
-        ]
-        assert _has_formatting_variation(runs) is True
-
-    def test_different_bold(self):
-        runs = [
-            {"text": "a", "bold": True},
-            {"text": "b", "bold": False},
-        ]
-        assert _has_formatting_variation(runs) is True
-
-    def test_different_italic(self):
-        runs = [
-            {"text": "a", "italic": True},
-            {"text": "b", "italic": False},
-        ]
-        assert _has_formatting_variation(runs) is True
-
-    def test_different_underline(self):
-        runs = [
-            {"text": "a", "underline": True},
-            {"text": "b", "underline": False},
+            {"text": "a", diff_key: val_a},
+            {"text": "b", diff_key: val_b},
         ]
         assert _has_formatting_variation(runs) is True
 
@@ -138,23 +114,19 @@ class TestIsFreeform:
 class TestIsBackgroundImage:
     """Tests for _is_background_image."""
 
-    def test_full_coverage(self):
+    @pytest.mark.parametrize(
+        "w_factor,h_factor,expected",
+        [
+            (1.0, 1.0, True),
+            (0.375, 0.4, False),
+            (0.96, 0.96, True),
+        ],
+    )
+    def test_coverage(self, w_factor, h_factor, expected):
         shape = MagicMock()
-        shape.width = Inches(13.333)
-        shape.height = Inches(7.5)
-        assert _is_background_image(shape, 13.333, 7.5) is True
-
-    def test_partial_coverage(self):
-        shape = MagicMock()
-        shape.width = Inches(5)
-        shape.height = Inches(3)
-        assert _is_background_image(shape, 13.333, 7.5) is False
-
-    def test_threshold_95_percent(self):
-        shape = MagicMock()
-        shape.width = Inches(13.333 * 0.96)
-        shape.height = Inches(7.5 * 0.96)
-        assert _is_background_image(shape, 13.333, 7.5) is True
+        shape.width = Inches(13.333 * w_factor)
+        shape.height = Inches(7.5 * h_factor)
+        assert _is_background_image(shape, 13.333, 7.5) is expected
 
 
 class TestExtractShape:

@@ -68,11 +68,11 @@ def apply_fill(shape, fill_spec, colors: dict):
 
 def _set_alpha_on_color_element(color_el, alpha_val: str):
     """Set or update an alpha child element on a color XML element."""
-    existing = color_el.find(qn('a:alpha'))
+    existing = color_el.find(qn("a:alpha"))
     if existing is not None:
-        existing.set('val', alpha_val)
+        existing.set("val", alpha_val)
     else:
-        etree.SubElement(color_el, qn('a:alpha')).set('val', alpha_val)
+        etree.SubElement(color_el, qn("a:alpha")).set("val", alpha_val)
 
 
 def _apply_solid_fill(shape, fill_spec: dict, colors: dict):
@@ -96,12 +96,12 @@ def _apply_gradient_fill(shape, fill_spec: dict, colors: dict):
 
     existing_count = len(shape.fill.gradient_stops)
     if len(stops_data) > existing_count:
-        gs_lst = shape.fill._fill._element.find(qn('a:gsLst'))
+        gs_lst = shape.fill._fill._element.find(qn("a:gsLst"))
         if gs_lst is not None:
             for _ in range(len(stops_data) - existing_count):
-                new_gs = etree.SubElement(gs_lst, qn('a:gs'))
-                new_gs.set('pos', '0')
-                etree.SubElement(new_gs, qn('a:srgbClr')).set('val', '000000')
+                new_gs = etree.SubElement(gs_lst, qn("a:gs"))
+                new_gs.set("pos", "0")
+                etree.SubElement(new_gs, qn("a:srgbClr")).set("val", "000000")
 
     for i, stop in enumerate(stops_data):
         if i >= len(shape.fill.gradient_stops):
@@ -122,9 +122,7 @@ def _apply_pattern_fill(shape, fill_spec: dict, colors: dict):
     """Apply a pattern fill with fore/back colors and optional alpha."""
     shape.fill.patterned()
     pattern_name = fill_spec.get("pattern", "CROSS").upper()
-    shape.fill.pattern = getattr(
-        MSO_PATTERN_TYPE, pattern_name, MSO_PATTERN_TYPE.CROSS
-    )
+    shape.fill.pattern = getattr(MSO_PATTERN_TYPE, pattern_name, MSO_PATTERN_TYPE.CROSS)
     fore_spec = resolve_color(fill_spec.get("fore_color", "#000000"), colors)
     back_spec = resolve_color(fill_spec.get("back_color", "#FFFFFF"), colors)
     apply_color_spec(shape.fill.fore_color, fore_spec)
@@ -134,11 +132,11 @@ def _apply_pattern_fill(shape, fill_spec: dict, colors: dict):
     if patt_el is None:
         return
     if "fore_alpha" in fill_spec:
-        fg = patt_el.find(qn('a:fgClr'))
+        fg = patt_el.find(qn("a:fgClr"))
         if fg is not None and len(fg) > 0:
             _set_alpha_on_color_element(fg[0], str(int(fill_spec["fore_alpha"] * 1000)))
     if "back_alpha" in fill_spec:
-        bg = patt_el.find(qn('a:bgClr'))
+        bg = patt_el.find(qn("a:bgClr"))
         if bg is not None and len(bg) > 0:
             _set_alpha_on_color_element(bg[0], str(int(fill_spec["back_alpha"] * 1000)))
 
@@ -162,10 +160,14 @@ def extract_fill(fill) -> dict | str | None:
             try:
                 solid_el = fill._fill._solidFill
                 if solid_el is not None and len(solid_el) > 0:
-                    alpha_el = solid_el[0].find(qn('a:alpha'))
+                    alpha_el = solid_el[0].find(qn("a:alpha"))
                     if alpha_el is not None:
-                        alpha_val = int(alpha_el.get('val', '100000'))
-                        return {"type": "solid", "color": color, "alpha": round(alpha_val / 1000, 1)}
+                        alpha_val = int(alpha_el.get("val", "100000"))
+                        return {
+                            "type": "solid",
+                            "color": color,
+                            "alpha": round(alpha_val / 1000, 1),
+                        }
             except (AttributeError, TypeError):
                 pass
             return color
@@ -180,9 +182,9 @@ def extract_fill(fill) -> dict | str | None:
                         "color": color,
                     }
                     # Extract alpha from the gradient stop's color element
-                    alpha_el = gs._element.find('.//' + qn('a:alpha'))
+                    alpha_el = gs._element.find(".//" + qn("a:alpha"))
                     if alpha_el is not None:
-                        alpha_val = int(alpha_el.get('val', '100000'))
+                        alpha_val = int(alpha_el.get("val", "100000"))
                         stop_data["alpha"] = round(alpha_val / 1000, 1)
                     stops.append(stop_data)
             result = {"type": "gradient", "stops": stops}
@@ -207,23 +209,29 @@ def extract_fill(fill) -> dict | str | None:
             result = {
                 "type": "pattern",
                 "pattern": pattern_name,
-                "fore_color": extract_color(fill.fore_color) or rgb_to_hex(fill.fore_color.rgb),
-                "back_color": extract_color(fill.back_color) or rgb_to_hex(fill.back_color.rgb),
+                "fore_color": extract_color(fill.fore_color)
+                or rgb_to_hex(fill.fore_color.rgb),
+                "back_color": extract_color(fill.back_color)
+                or rgb_to_hex(fill.back_color.rgb),
             }
             # Extract alpha from pattern fore/back color elements
             try:
                 patt_el = fill._fill._pattFill
                 if patt_el is not None:
-                    fg = patt_el.find(qn('a:fgClr'))
+                    fg = patt_el.find(qn("a:fgClr"))
                     if fg is not None and len(fg) > 0:
-                        alpha_el = fg[0].find(qn('a:alpha'))
+                        alpha_el = fg[0].find(qn("a:alpha"))
                         if alpha_el is not None:
-                            result["fore_alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
-                    bg = patt_el.find(qn('a:bgClr'))
+                            result["fore_alpha"] = round(
+                                int(alpha_el.get("val", "100000")) / 1000, 1
+                            )
+                    bg = patt_el.find(qn("a:bgClr"))
                     if bg is not None and len(bg) > 0:
-                        alpha_el = bg[0].find(qn('a:alpha'))
+                        alpha_el = bg[0].find(qn("a:alpha"))
                         if alpha_el is not None:
-                            result["back_alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+                            result["back_alpha"] = round(
+                                int(alpha_el.get("val", "100000")) / 1000, 1
+                            )
             except (AttributeError, TypeError):
                 pass
             return result
@@ -256,13 +264,13 @@ def extract_line(shape) -> dict:
     try:
         line = shape.line
         if line.color and line.color.type is not None:
-            result["line_color"] = extract_color(line.color) or rgb_to_hex(line.color.rgb)
+            result["line_color"] = extract_color(line.color) or rgb_to_hex(
+                line.color.rgb
+            )
         if line.width:
             result["line_width"] = round(line.width.pt, 1)
         if line.dash_style and line.dash_style != MSO_LINE_DASH_STYLE.SOLID:
-            result["dash_style"] = DASH_STYLE_REVERSE.get(
-                line.dash_style, "solid"
-            )
+            result["dash_style"] = DASH_STYLE_REVERSE.get(line.dash_style, "solid")
     except (AttributeError, TypeError):
         pass
     return result
@@ -275,10 +283,10 @@ def extract_effect_list(shape) -> dict | None:
     """
     try:
         sp = shape._element
-        effect_lst = sp.find('.//' + qn('a:effectLst'))
+        effect_lst = sp.find(".//" + qn("a:effectLst"))
         if effect_lst is None or len(effect_lst) == 0:
             return None
-        shadow = effect_lst.find(qn('a:outerShdw'))
+        shadow = effect_lst.find(qn("a:outerShdw"))
         if shadow is None:
             return None
         return parse_shadow_xml(shadow)
@@ -290,59 +298,59 @@ def apply_effect_list(shape, effect: dict):
     """Apply outer shadow effect to a shape's spPr element."""
     if not effect or effect.get("type") != "outer_shadow":
         return
-    sp_pr = shape._element.find(qn('p:spPr'))
+    sp_pr = shape._element.find(qn("p:spPr"))
     if sp_pr is None:
         sp_pr = shape._element.spPr
 
-    existing = sp_pr.find(qn('a:effectLst'))
+    existing = sp_pr.find(qn("a:effectLst"))
     if existing is not None:
         sp_pr.remove(existing)
 
-    effect_lst = etree.SubElement(sp_pr, qn('a:effectLst'))
+    effect_lst = etree.SubElement(sp_pr, qn("a:effectLst"))
     build_shadow_xml(effect_lst, effect)
 
 
 def parse_shadow_xml(shadow) -> dict:
     """Parse an outerShdw XML element into a shadow effect dict."""
     result = {"type": "outer_shadow"}
-    for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+    for attr in ("blurRad", "dist", "dir", "algn", "rotWithShape"):
         val = shadow.get(attr)
         if val is not None:
             result[attr] = val
     color_el = shadow[0] if len(shadow) > 0 else None
     if color_el is not None:
-        tag = color_el.tag.split('}')[-1]
-        if tag == 'prstClr':
-            result["color"] = color_el.get('val', 'black')
+        tag = color_el.tag.split("}")[-1]
+        if tag == "prstClr":
+            result["color"] = color_el.get("val", "black")
             result["color_type"] = "preset"
-        elif tag == 'srgbClr':
-            result["color"] = '#' + color_el.get('val', '000000')
+        elif tag == "srgbClr":
+            result["color"] = "#" + color_el.get("val", "000000")
             result["color_type"] = "rgb"
-        alpha_el = color_el.find(qn('a:alpha'))
+        alpha_el = color_el.find(qn("a:alpha"))
         if alpha_el is not None:
-            result["alpha"] = round(int(alpha_el.get('val', '100000')) / 1000, 1)
+            result["alpha"] = round(int(alpha_el.get("val", "100000")) / 1000, 1)
     return result
 
 
 def build_shadow_xml(parent, effect: dict):
     """Build an outerShdw XML element under the given parent element."""
-    shadow = etree.SubElement(parent, qn('a:outerShdw'))
-    for attr in ('blurRad', 'dist', 'dir', 'algn', 'rotWithShape'):
+    shadow = etree.SubElement(parent, qn("a:outerShdw"))
+    for attr in ("blurRad", "dist", "dir", "algn", "rotWithShape"):
         if attr in effect:
             shadow.set(attr, str(effect[attr]))
 
     color_type = effect.get("color_type", "preset")
     color_val = effect.get("color", "black")
     if color_type == "preset":
-        color_el = etree.SubElement(shadow, qn('a:prstClr'))
-        color_el.set('val', color_val)
+        color_el = etree.SubElement(shadow, qn("a:prstClr"))
+        color_el.set("val", color_val)
     elif color_type == "rgb":
-        color_el = etree.SubElement(shadow, qn('a:srgbClr'))
-        color_el.set('val', color_val.lstrip('#'))
+        color_el = etree.SubElement(shadow, qn("a:srgbClr"))
+        color_el.set("val", color_val.lstrip("#"))
     else:
-        color_el = etree.SubElement(shadow, qn('a:prstClr'))
-        color_el.set('val', 'black')
+        color_el = etree.SubElement(shadow, qn("a:prstClr"))
+        color_el.set("val", "black")
 
     if "alpha" in effect:
-        alpha_sub = etree.SubElement(color_el, qn('a:alpha'))
-        alpha_sub.set('val', str(int(effect["alpha"] * 1000)))
+        alpha_sub = etree.SubElement(color_el, qn("a:alpha"))
+        alpha_sub.set("val", str(int(effect["alpha"] * 1000)))

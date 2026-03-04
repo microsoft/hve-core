@@ -8,30 +8,24 @@ from pptx_utils import emu_to_inches, load_yaml
 class TestEmuToInches:
     """Tests for emu_to_inches conversion."""
 
-    def test_one_inch(self):
-        assert emu_to_inches(914400) == 1.0
-
-    def test_zero(self):
-        assert emu_to_inches(0) == 0.0
-
-    def test_none(self):
-        assert emu_to_inches(None) == 0.0
-
-    def test_half_inch(self):
-        assert emu_to_inches(457200) == 0.5
+    @pytest.mark.parametrize(
+        "emu,expected",
+        [
+            (914400, 1.0),
+            (0, 0.0),
+            (None, 0.0),
+            (457200, 0.5),
+            (-914400, -1.0),
+            (914400 * 13, 13.0),
+        ],
+    )
+    def test_conversion(self, emu, expected):
+        assert emu_to_inches(emu) == expected
 
     def test_fractional(self):
         result = emu_to_inches(914401)
         assert isinstance(result, float)
         assert result == pytest.approx(1.0, abs=0.001)
-
-    def test_negative(self):
-        result = emu_to_inches(-914400)
-        assert result == -1.0
-
-    def test_large_value(self):
-        result = emu_to_inches(914400 * 13)
-        assert result == 13.0
 
 
 class TestLoadYaml:

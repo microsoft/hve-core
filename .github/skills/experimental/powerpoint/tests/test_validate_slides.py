@@ -4,6 +4,7 @@ The validate_slides module depends on the Copilot SDK for vision model
 interaction. Tests mock external dependencies and focus on pure logic.
 """
 
+import pytest
 from validate_slides import (
     IMAGE_PATTERN,
     compute_cache_key,
@@ -48,17 +49,17 @@ class TestParseModelResponse:
 class TestParseSlideFilter:
     """Tests for parse_slide_filter."""
 
-    def test_none(self):
-        assert parse_slide_filter(None) is None
-
-    def test_single(self):
-        assert parse_slide_filter("3") == {3}
-
-    def test_multiple(self):
-        assert parse_slide_filter("1,3,5") == {1, 3, 5}
-
-    def test_whitespace(self):
-        assert parse_slide_filter(" 2 , 4 ") == {2, 4}
+    @pytest.mark.parametrize(
+        "input_str,expected",
+        [
+            (None, None),
+            ("3", {3}),
+            ("1,3,5", {1, 3, 5}),
+            (" 2 , 4 ", {2, 4}),
+        ],
+    )
+    def test_parse(self, input_str, expected):
+        assert parse_slide_filter(input_str) == expected
 
 
 class TestDiscoverImages:

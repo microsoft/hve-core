@@ -1,8 +1,13 @@
 """Extract content from an existing PPTX into YAML content and style definitions.
 
-Usage:
-    python extract_content.py --input existing-deck.pptx --output-dir content/
-    python extract_content.py --input existing-deck.pptx --output-dir content/ --slides 3,7,15
+Usage::
+
+    python extract_content.py \
+        --input existing-deck.pptx --output-dir content/
+
+    python extract_content.py \
+        --input existing-deck.pptx --output-dir content/ \
+        --slides 3,7,15
 """
 
 import argparse
@@ -122,25 +127,34 @@ def extract_freeform(shape) -> dict:
             if tag == "moveTo":
                 pt = child.find("a:pt", nsmap)
                 if pt is not None:
-                    commands.append({
-                        "cmd": "moveTo",
-                        "x": int(pt.get("x", 0)),
-                        "y": int(pt.get("y", 0)),
-                    })
+                    commands.append(
+                        {
+                            "cmd": "moveTo",
+                            "x": int(pt.get("x", 0)),
+                            "y": int(pt.get("y", 0)),
+                        }
+                    )
             elif tag == "lnTo":
                 pt = child.find("a:pt", nsmap)
                 if pt is not None:
-                    commands.append({
-                        "cmd": "lineTo",
-                        "x": int(pt.get("x", 0)),
-                        "y": int(pt.get("y", 0)),
-                    })
+                    commands.append(
+                        {
+                            "cmd": "lineTo",
+                            "x": int(pt.get("x", 0)),
+                            "y": int(pt.get("y", 0)),
+                        }
+                    )
             elif tag == "cubicBezTo":
                 pts = child.findall("a:pt", nsmap)
-                commands.append({
-                    "cmd": "cubicBezTo",
-                    "pts": [{"x": int(p.get("x", 0)), "y": int(p.get("y", 0))} for p in pts],
-                })
+                commands.append(
+                    {
+                        "cmd": "cubicBezTo",
+                        "pts": [
+                            {"x": int(p.get("x", 0)), "y": int(p.get("y", 0))}
+                            for p in pts
+                        ],
+                    }
+                )
             elif tag == "close":
                 commands.append({"cmd": "close"})
         if commands:
@@ -170,14 +184,16 @@ def extract_group(shape, slide_num: int, output_dir, img_count: int) -> dict:
     return elem
 
 
-def _extract_shape_by_type(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
-    """Dispatch shape extraction based on shape_type, table/chart presence, or freeform geometry."""
+def _extract_shape_by_type(
+    shape, slide_num: int, output_dir, img_count: int
+) -> dict | None:
+    """Dispatch extraction based on shape_type, table/chart, or freeform."""
     shape_type = shape.shape_type
 
     # Simple shape_type dispatch (these extractors need no extra context)
     _SIMPLE_EXTRACTORS = {
-        17: extract_textbox,   # TEXT_BOX
-        1: extract_shape,      # AUTO_SHAPE
+        17: extract_textbox,  # TEXT_BOX
+        1: extract_shape,  # AUTO_SHAPE
         9: extract_connector,  # LINE / CONNECTOR
     }
     extractor = _SIMPLE_EXTRACTORS.get(shape_type)
@@ -200,7 +216,9 @@ def _extract_shape_by_type(shape, slide_num: int, output_dir, img_count: int) ->
     return None
 
 
-def extract_child_shape(shape, slide_num: int, output_dir, img_count: int) -> dict | None:
+def extract_child_shape(
+    shape, slide_num: int, output_dir, img_count: int
+) -> dict | None:
     """Extract a single child shape within a group."""
     result = _extract_shape_by_type(shape, slide_num, output_dir, img_count)
     if result is not None:
@@ -231,19 +249,49 @@ def _has_formatting_variation(runs: list) -> bool:
     bolds = {r.get("bold", False) for r in runs}
     italics = {r.get("italic", False) for r in runs}
     underlines = {r.get("underline", False) for r in runs}
-    return (len(fonts) > 1 or len(sizes) > 1 or len(colors) > 1
-            or len(bolds) > 1 or len(italics) > 1 or len(underlines) > 1)
+    return (
+        len(fonts) > 1
+        or len(sizes) > 1
+        or len(colors) > 1
+        or len(bolds) > 1
+        or len(italics) > 1
+        or len(underlines) > 1
+    )
 
 
 # Key-mapping for extraction: maps canonical keys to output YAML key names
-_SHAPE_EXTRACT_KEYS = {"font": "text_font", "size": "text_size", "color": "text_color", "bold": "text_bold"}
-_TEXTBOX_EXTRACT_KEYS = {"font": "font", "size": "font_size", "color": "font_color", "bold": "font_bold"}
+_SHAPE_EXTRACT_KEYS = {
+    "font": "text_font",
+    "size": "text_size",
+    "color": "text_color",
+    "bold": "text_bold",
+}
+_TEXTBOX_EXTRACT_KEYS = {
+    "font": "font",
+    "size": "font_size",
+    "color": "font_color",
+    "bold": "font_bold",
+}
 
 # Keys to promote from first paragraph to element level
-_SHAPE_PROMOTE_KEYS = ("text_font", "text_size", "text_color", "text_bold",
-                       "italic", "alignment", "char_spacing")
-_TEXTBOX_PROMOTE_KEYS = ("font", "font_size", "font_color", "font_bold",
-                         "italic", "alignment", "char_spacing")
+_SHAPE_PROMOTE_KEYS = (
+    "text_font",
+    "text_size",
+    "text_color",
+    "text_bold",
+    "italic",
+    "alignment",
+    "char_spacing",
+)
+_TEXTBOX_PROMOTE_KEYS = (
+    "font",
+    "font_size",
+    "font_color",
+    "font_bold",
+    "italic",
+    "alignment",
+    "char_spacing",
+)
 
 
 def _extract_text_content(text_frame, keys: dict, promote_keys: tuple) -> dict:
@@ -384,7 +432,9 @@ def extract_shape(shape) -> dict:
 
     # Extract text if present
     if shape.has_text_frame:
-        text_data = _extract_text_content(shape.text_frame, _SHAPE_EXTRACT_KEYS, _SHAPE_PROMOTE_KEYS)
+        text_data = _extract_text_content(
+            shape.text_frame, _SHAPE_EXTRACT_KEYS, _SHAPE_PROMOTE_KEYS
+        )
         elem.update(text_data)
 
     return elem
@@ -407,7 +457,9 @@ def extract_textbox(shape) -> dict:
         elem["rotation"] = rot
 
     if shape.has_text_frame:
-        text_data = _extract_text_content(shape.text_frame, _TEXTBOX_EXTRACT_KEYS, _TEXTBOX_PROMOTE_KEYS)
+        text_data = _extract_text_content(
+            shape.text_frame, _TEXTBOX_EXTRACT_KEYS, _TEXTBOX_PROMOTE_KEYS
+        )
         elem.update(text_data)
 
     return elem
@@ -459,21 +511,21 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
         elem["rotation"] = rot
 
     # Extract image crop from srcRect on blipFill
-    blipFill = shape._element.find(qn('p:blipFill'))
+    blipFill = shape._element.find(qn("p:blipFill"))
     if blipFill is not None:
         # Preserve blipFill attributes (rotWithShape, dpi, etc.)
         blip_fill_attrs = {}
-        for attr_name in ('rotWithShape', 'dpi'):
+        for attr_name in ("rotWithShape", "dpi"):
             val = blipFill.get(attr_name)
             if val is not None:
                 blip_fill_attrs[attr_name] = val
         if blip_fill_attrs:
             elem["blip_fill_attrs"] = blip_fill_attrs
 
-        srcRect = blipFill.find(qn('a:srcRect'))
+        srcRect = blipFill.find(qn("a:srcRect"))
         if srcRect is not None and srcRect.attrib:
             crop = {}
-            for side in ('l', 't', 'r', 'b'):
+            for side in ("l", "t", "r", "b"):
                 val = srcRect.get(side)
                 if val is not None:
                     crop[side] = int(val)
@@ -481,11 +533,11 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
                 elem["crop"] = crop
 
     # Extract image opacity from alphaModFix on the blip element
-    blip = shape._element.find('.//' + qn('a:blip'))
+    blip = shape._element.find(".//" + qn("a:blip"))
     if blip is not None:
-        amf = blip.find(qn('a:alphaModFix'))
+        amf = blip.find(qn("a:alphaModFix"))
         if amf is not None:
-            amt = int(amf.get('amt', '100000'))
+            amt = int(amf.get("amt", "100000"))
             elem["opacity"] = round(amt / 1000, 1)
 
     return elem
@@ -528,8 +580,11 @@ def detect_global_style(prs) -> dict:
 
         for i, shape in enumerate(slide.shapes):
             # Detect full-slide background images
-            if (i == 0 and shape.shape_type == 13
-                    and _is_background_image(shape, slide_w, slide_h)):
+            if (
+                i == 0
+                and shape.shape_type == 13
+                and _is_background_image(shape, slide_w, slide_h)
+            ):
                 has_bg_image = True
                 continue
 
@@ -564,15 +619,19 @@ def detect_global_style(prs) -> dict:
                             pass
 
         # Classify slide brightness
-        bg_brightness = _classify_slide_brightness(slide_bg, slide_text_colors, has_bg_image)
-        slide_profiles.append({
-            "slide": slide_num,
-            "bg_color": slide_bg,
-            "bg_brightness": bg_brightness,
-            "has_bg_image": has_bg_image,
-            "text_colors": dict(slide_text_colors),
-            "fill_colors": dict(slide_fill_colors),
-        })
+        bg_brightness = _classify_slide_brightness(
+            slide_bg, slide_text_colors, has_bg_image
+        )
+        slide_profiles.append(
+            {
+                "slide": slide_num,
+                "bg_color": slide_bg,
+                "bg_brightness": bg_brightness,
+                "has_bg_image": has_bg_image,
+                "text_colors": dict(slide_text_colors),
+                "fill_colors": dict(slide_fill_colors),
+            }
+        )
 
     # Build global color map from frequency analysis
     colors = _build_color_map(bg_colors, fill_colors, text_colors, accent_colors)
@@ -636,25 +695,30 @@ def detect_global_style(prs) -> dict:
     return style
 
 
-def _classify_slide_brightness(bg_color: str | None, text_colors: Counter,
-                                has_bg_image: bool) -> str:
+def _classify_slide_brightness(
+    bg_color: str | None, text_colors: Counter, has_bg_image: bool
+) -> str:
     """Classify a slide as 'light' or 'dark' based on background and text colors."""
     if has_bg_image and bg_color is None:
         # Slides with background images and no solid bg — infer from text colors
-        dark_text = sum(c for hex_c, c in text_colors.items()
-                        if hex_brightness(hex_c) < 100)
-        light_text = sum(c for hex_c, c in text_colors.items()
-                         if hex_brightness(hex_c) > 150)
+        dark_text = sum(
+            c for hex_c, c in text_colors.items() if hex_brightness(hex_c) < 100
+        )
+        light_text = sum(
+            c for hex_c, c in text_colors.items() if hex_brightness(hex_c) > 150
+        )
         return "light" if dark_text >= light_text else "dark"
 
     if bg_color and isinstance(bg_color, str) and bg_color.startswith("#"):
         return "light" if hex_brightness(bg_color) > 128 else "dark"
 
     # Default: infer from text colors
-    dark_text = sum(c for hex_c, c in text_colors.items()
-                    if hex_brightness(hex_c) < 100)
-    light_text = sum(c for hex_c, c in text_colors.items()
-                     if hex_brightness(hex_c) > 150)
+    dark_text = sum(
+        c for hex_c, c in text_colors.items() if hex_brightness(hex_c) < 100
+    )
+    light_text = sum(
+        c for hex_c, c in text_colors.items() if hex_brightness(hex_c) > 150
+    )
     if dark_text > light_text:
         return "light"
     if light_text > dark_text:
@@ -662,8 +726,12 @@ def _classify_slide_brightness(bg_color: str | None, text_colors: Counter,
     return "dark"
 
 
-def _build_color_map(bg_colors: Counter, fill_colors: Counter,
-                     text_colors: Counter, accent_colors: Counter) -> dict:
+def _build_color_map(
+    bg_colors: Counter,
+    fill_colors: Counter,
+    text_colors: Counter,
+    accent_colors: Counter,
+) -> dict:
     """Build the global color map from frequency analysis."""
     colors = {}
     if bg_colors:
@@ -688,8 +756,12 @@ def _build_color_map(bg_colors: Counter, fill_colors: Counter,
     return colors
 
 
-def _cluster_themes(slide_profiles: list[dict], text_colors: Counter,
-                    fill_colors: Counter, accent_colors: Counter) -> list[dict]:
+def _cluster_themes(
+    slide_profiles: list[dict],
+    text_colors: Counter,
+    fill_colors: Counter,
+    accent_colors: Counter,
+) -> list[dict]:
     """Cluster slides into theme groups based on brightness classification."""
     light_slides = [p for p in slide_profiles if p["bg_brightness"] == "light"]
     dark_slides = [p for p in slide_profiles if p["bg_brightness"] == "dark"]
@@ -717,11 +789,13 @@ def _cluster_themes(slide_profiles: list[dict], text_colors: Counter,
     if light_fills:
         light_colors["bg_card"] = light_fills.most_common(1)[0][0]
 
-    themes.append({
-        "name": "light",
-        "slides": sorted(p["slide"] for p in light_slides),
-        "colors": light_colors,
-    })
+    themes.append(
+        {
+            "name": "light",
+            "slides": sorted(p["slide"] for p in light_slides),
+            "colors": light_colors,
+        }
+    )
 
     # Dark theme
     dark_text = Counter()
@@ -745,16 +819,23 @@ def _cluster_themes(slide_profiles: list[dict], text_colors: Counter,
     if dark_fills:
         dark_colors["bg_card"] = dark_fills.most_common(1)[0][0]
 
-    themes.append({
-        "name": "dark",
-        "slides": sorted(p["slide"] for p in dark_slides),
-        "colors": dark_colors,
-    })
+    themes.append(
+        {
+            "name": "dark",
+            "slides": sorted(p["slide"] for p in dark_slides),
+            "colors": dark_colors,
+        }
+    )
 
     return themes
 
 
-def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[float, float] | None = None) -> dict:
+def extract_slide(
+    slide,
+    slide_num: int,
+    output_dir: Path,
+    slide_dims: tuple[float, float] | None = None,
+) -> dict:
     """Extract all elements from a slide into a content.yaml structure."""
     slide_dir = output_dir / f"slide-{slide_num:03d}"
     slide_dir.mkdir(parents=True, exist_ok=True)
@@ -816,8 +897,11 @@ def extract_slide(slide, slide_num: int, output_dir: Path, slide_dims: tuple[flo
             content["elements"].append(elem)
 
             # Detect title from textbox near top of slide
-            if (shape_type == 17 and not content["title"]
-                    and emu_to_inches(shape.top) < 1.5):
+            if (
+                shape_type == 17
+                and not content["title"]
+                and emu_to_inches(shape.top) < 1.5
+            ):
                 text = shape.text_frame.text.strip() if shape.has_text_frame else ""
                 if text and len(text) < 100:
                     content["title"] = text
@@ -849,45 +933,55 @@ def _resolve_theme_colors(prs) -> dict:
     """
     color_map = {}
     scheme_names = {
-        'dk1': 'dark_1', 'dk2': 'dark_2',
-        'lt1': 'light_1', 'lt2': 'light_2',
-        'accent1': 'accent_1', 'accent2': 'accent_2',
-        'accent3': 'accent_3', 'accent4': 'accent_4',
-        'accent5': 'accent_5', 'accent6': 'accent_6',
-        'hlink': 'hyperlink', 'folHlink': 'followed_hyperlink',
+        "dk1": "dark_1",
+        "dk2": "dark_2",
+        "lt1": "light_1",
+        "lt2": "light_2",
+        "accent1": "accent_1",
+        "accent2": "accent_2",
+        "accent3": "accent_3",
+        "accent4": "accent_4",
+        "accent5": "accent_5",
+        "accent6": "accent_6",
+        "hlink": "hyperlink",
+        "folHlink": "followed_hyperlink",
     }
     # Map canonical aliases
     aliases = {
-        'dark_1': 'text_1', 'dark_2': 'text_2',
-        'light_1': 'background_1', 'light_2': 'background_2',
+        "dark_1": "text_1",
+        "dark_2": "text_2",
+        "light_1": "background_1",
+        "light_2": "background_2",
     }
     try:
-        ns_a = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+        ns_a = "http://schemas.openxmlformats.org/drawingml/2006/main"
         master = prs.slide_masters[0]
         theme_el = None
         # Theme is stored as a related part (generic Part, not XmlPart),
         # so parse its blob directly with lxml.
         for rel in master.part.rels.values():
-            if 'theme' in rel.reltype:
+            if "theme" in rel.reltype:
                 theme_el = etree.fromstring(rel.target_part.blob)
                 break
 
         if theme_el is not None:
-            clr_scheme = theme_el.find(f'.//{{{ns_a}}}clrScheme')
+            clr_scheme = theme_el.find(f".//{{{ns_a}}}clrScheme")
             if clr_scheme is not None:
                 for child in clr_scheme:
-                    tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                    tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
                     theme_name = scheme_names.get(tag)
                     if theme_name is None:
                         continue
                     # Extract hex value from srgbClr or sysClr
-                    srgb = child.find(f'{{{ns_a}}}srgbClr')
+                    srgb = child.find(f"{{{ns_a}}}srgbClr")
                     if srgb is not None:
                         color_map[theme_name] = f"#{srgb.get('val', '000000')}"
                     else:
-                        sys_clr = child.find(f'{{{ns_a}}}sysClr')
+                        sys_clr = child.find(f"{{{ns_a}}}sysClr")
                         if sys_clr is not None:
-                            color_map[theme_name] = f"#{sys_clr.get('lastClr', '000000')}"
+                            color_map[theme_name] = (
+                                f"#{sys_clr.get('lastClr', '000000')}"
+                            )
                     # Add alias mappings
                     if theme_name in aliases:
                         alias = aliases[theme_name]
@@ -900,8 +994,9 @@ def _resolve_theme_colors(prs) -> dict:
 
 def _resolve_theme_refs_in_content(content: dict, theme_colors: dict) -> dict:
     """Replace @theme_name references with resolved hex values in content."""
+
     def resolve_value(val):
-        if isinstance(val, str) and val.startswith('@'):
+        if isinstance(val, str) and val.startswith("@"):
             theme_name = val[1:]
             return theme_colors.get(theme_name, val)
         if isinstance(val, dict):
@@ -914,12 +1009,20 @@ def _resolve_theme_refs_in_content(content: dict, theme_colors: dict) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract content from a PPTX into YAML")
+    """CLI entry point for extracting PPTX content into YAML."""
+    parser = argparse.ArgumentParser(
+        description="Extract content from a PPTX into YAML"
+    )
     parser.add_argument("--input", required=True, help="Input PPTX file path")
     parser.add_argument("--output-dir", required=True, help="Output content directory")
-    parser.add_argument("--slides", help="Comma-separated slide numbers to extract (default: all)")
-    parser.add_argument("--resolve-themes", action="store_true",
-                        help="Resolve @theme references to actual hex RGB values from the deck's theme")
+    parser.add_argument(
+        "--slides", help="Comma-separated slide numbers to extract (default: all)"
+    )
+    parser.add_argument(
+        "--resolve-themes",
+        action="store_true",
+        help="Resolve @theme references to actual hex RGB values from the deck's theme",
+    )
     args = parser.parse_args()
 
     pptx_path = Path(args.input)
@@ -933,7 +1036,9 @@ def main():
     prs = Presentation(str(pptx_path))
     print(f"Extracting from: {pptx_path}")
     print(f"Slides: {len(prs.slides)}")
-    print(f"Dimensions: {emu_to_inches(prs.slide_width)}\" x {emu_to_inches(prs.slide_height)}\"")
+    w = emu_to_inches(prs.slide_width)
+    h = emu_to_inches(prs.slide_height)
+    print(f'Dimensions: {w}" x {h}"')
 
     # Detect and save global style
     global_style = detect_global_style(prs)
@@ -951,7 +1056,13 @@ def main():
     global_dir.mkdir(parents=True, exist_ok=True)
     style_path = global_dir / "style.yaml"
     with open(style_path, "w", encoding="utf-8") as f:
-        yaml.dump(global_style, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        yaml.dump(
+            global_style,
+            f,
+            default_flow_style=False,
+            sort_keys=False,
+            allow_unicode=True,
+        )
     print(f"Global style saved to {style_path}")
 
     # Extract slides (filtered or all)
@@ -961,7 +1072,9 @@ def main():
         slide_num = i + 1
         if slide_filter and slide_num not in slide_filter:
             continue
-        content, slide_dir = extract_slide(slide, slide_num, output_dir, slide_dims=slide_dims)
+        content, slide_dir = extract_slide(
+            slide, slide_num, output_dir, slide_dims=slide_dims
+        )
 
         # Resolve @theme references to hex values when --resolve-themes is set
         if args.resolve_themes and theme_colors:
@@ -969,8 +1082,16 @@ def main():
 
         content_path = slide_dir / "content.yaml"
         with open(content_path, "w", encoding="utf-8") as f:
-            yaml.dump(content, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-        print(f"Slide {slide_num}: {content.get('title', 'Untitled')} -> {content_path}")
+            yaml.dump(
+                content,
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+                allow_unicode=True,
+            )
+        print(
+            f"Slide {slide_num}: {content.get('title', 'Untitled')} -> {content_path}"
+        )
         extracted += 1
 
     print(f"\nExtraction complete. {extracted} slide(s) extracted to {output_dir}")

@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Validate slide images using Copilot SDK vision models.
 
-Sends each rendered slide image to a vision-capable model via the GitHub
-Copilot SDK and returns structured JSON validation findings.
+Sends each rendered slide image to a vision-capable model via the
+GitHub Copilot SDK and returns structured JSON validation findings.
 
-Usage:
-    python validate_slides.py --image-dir /path/to/images/ --prompt "Check for..."
-    python validate_slides.py --image-dir images/ --prompt-file prompt.txt --model claude-haiku-4.5
-    python validate_slides.py --image-dir images/ --prompt "..." --output results.json
-    python validate_slides.py --image-dir images/ --prompt "..." --report validation-report.md
-    python validate_slides.py --image-dir images/ --prompt "..." --concurrency 5
-    python validate_slides.py --image-dir images/ --prompt "..." --no-cache
+Usage::
+
+    python validate_slides.py \
+        --image-dir /path/to/images/ \
+        --prompt "Check for..."
+
+    python validate_slides.py \
+        --image-dir images/ \
+        --prompt-file prompt.txt \
+        --model claude-haiku-4.5
 """
 
 import argparse
@@ -45,8 +48,8 @@ SYSTEM_MESSAGE = (
     "        {\n"
     '            "check_type": "<check name>",\n'
     '            "severity": "error|warning|info",\n'
-    '            "description": "<what is wrong — be specific about the actual content>",\n'
-    '            "location": "<where on the slide — reference actual text or elements>"\n'
+    '            "description": "<what is wrong>",\n'
+    '            "location": "<where on the slide>"\n'
     "        }\n"
     "    ],\n"
     '    "overall_quality": "good|needs-attention|poor"\n'
@@ -88,7 +91,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", type=Path, help="Output JSON file path (default: stdout)"
     )
     parser.add_argument(
-        "--report", type=Path, help="Output Markdown report file path",
+        "--report",
+        type=Path,
+        help="Output Markdown report file path",
     )
     parser.add_argument(
         "--slides", help="Comma-separated slide numbers to validate (default: all)"
@@ -102,7 +107,10 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        help="Directory for caching validation results by image hash (default: {image-dir}/cache)",
+        help=(
+            "Directory for caching validation results"
+            " by image hash (default: {image-dir}/cache)"
+        ),
     )
     parser.add_argument(
         "--no-cache",
@@ -286,8 +294,12 @@ def generate_report(results: dict, cached_count: int, validated_count: int) -> s
             response_hashes[issues_key] = num
 
     if duplicates:
-        lines.append("> **⚠️ Duplicate Detection**: Slides {} returned identical findings. "
-                     "These may need re-validation.".format(", ".join(str(s) for s in sorted(duplicates))))
+        lines.append(
+            "> **⚠️ Duplicate Detection**: Slides {} returned identical findings. "
+            "These may need re-validation.".format(
+                ", ".join(str(s) for s in sorted(duplicates))
+            )
+        )
         lines.append("")
 
     for slide in results["slides"]:
@@ -331,7 +343,10 @@ def generate_report(results: dict, cached_count: int, validated_count: int) -> s
 
 
 async def validate_slide(
-    session, slide_num: int, image_path: Path, prompt: str,
+    session,
+    slide_num: int,
+    image_path: Path,
+    prompt: str,
     max_retries: int = 3,
 ) -> dict:
     """Send a single slide image to the vision model for evaluation.
@@ -351,12 +366,19 @@ async def validate_slide(
     last_error = None
     for attempt in range(max_retries):
         try:
-            logger.info("Validating slide %d: %s (attempt %d)", slide_num, image_path.name, attempt + 1)
+            logger.info(
+                "Validating slide %d: %s (attempt %d)",
+                slide_num,
+                image_path.name,
+                attempt + 1,
+            )
 
             response = await session.send_and_wait(
                 {
                     "prompt": f"Slide {slide_num}:\n\n{prompt}",
-                    "attachments": [{"type": "file", "path": str(image_path.resolve())}],
+                    "attachments": [
+                        {"type": "file", "path": str(image_path.resolve())}
+                    ],
                 }
             )
 
@@ -367,12 +389,19 @@ async def validate_slide(
         except Exception as e:
             last_error = e
             if attempt < max_retries - 1:
-                delay = 2 ** attempt
-                logger.warning("Slide %d failed (attempt %d): %s. Retrying in %ds...",
-                              slide_num, attempt + 1, e, delay)
+                delay = 2**attempt
+                logger.warning(
+                    "Slide %d failed (attempt %d): %s. Retrying in %ds...",
+                    slide_num,
+                    attempt + 1,
+                    e,
+                    delay,
+                )
                 await asyncio.sleep(delay)
 
-    logger.error("Slide %d failed after %d attempts: %s", slide_num, max_retries, last_error)
+    logger.error(
+        "Slide %d failed after %d attempts: %s", slide_num, max_retries, last_error
+    )
     return {
         "slide_number": slide_num,
         "image_path": image_path.name,
@@ -502,7 +531,9 @@ async def run(args: argparse.Namespace) -> int:
     total_issues = sum(
         len(s.get("issues", [])) for s in results["slides"] if not s.get("parse_error")
     )
-    logger.info("Validation complete: %d issue(s) across %d slide(s)", total_issues, len(images))
+    logger.info(
+        "Validation complete: %d issue(s) across %d slide(s)", total_issues, len(images)
+    )
 
     return EXIT_SUCCESS
 

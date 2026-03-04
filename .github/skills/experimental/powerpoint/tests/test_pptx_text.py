@@ -6,6 +6,8 @@ from pptx.util import Inches, Pt
 from pptx_text import (
     AUTO_SIZE_MAP,
     AUTO_SIZE_REVERSE,
+    SHAPE_KEYS,
+    TEXTBOX_KEYS,
     VERTICAL_ANCHOR_MAP,
     VERTICAL_ANCHOR_REVERSE,
     _apply_char_spacing,
@@ -19,6 +21,8 @@ from pptx_text import (
     extract_paragraph_properties,
     extract_run_properties,
     extract_text_frame_properties,
+    populate_text_frame,
+    split_lines,
 )
 
 # ----- Helpers -----
@@ -37,40 +41,32 @@ def _make_textbox(slide, text="Test"):
 class TestApplyTextProperties:
     """Tests for apply_text_properties."""
 
-    def test_margin_left(self, blank_slide):
+    @pytest.mark.parametrize(
+        "prop,value",
+        [
+            ("margin_left", 0.5),
+            ("margin_right", 0.25),
+            ("margin_top", 0.1),
+            ("margin_bottom", 0.2),
+        ],
+    )
+    def test_margin(self, blank_slide, prop, value):
         txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"margin_left": 0.5})
-        assert txBox.text_frame.margin_left == Inches(0.5)
+        apply_text_properties(txBox.text_frame, {prop: value})
+        assert getattr(txBox.text_frame, prop) == Inches(value)
 
-    def test_margin_right(self, blank_slide):
+    @pytest.mark.parametrize(
+        "key,auto_size_enum",
+        [
+            ("none", MSO_AUTO_SIZE.NONE),
+            ("fit", MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT),
+            ("shrink", MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE),
+        ],
+    )
+    def test_auto_size(self, blank_slide, key, auto_size_enum):
         txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"margin_right": 0.25})
-        assert txBox.text_frame.margin_right == Inches(0.25)
-
-    def test_margin_top(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"margin_top": 0.1})
-        assert txBox.text_frame.margin_top == Inches(0.1)
-
-    def test_margin_bottom(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"margin_bottom": 0.2})
-        assert txBox.text_frame.margin_bottom == Inches(0.2)
-
-    def test_auto_size_none(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"auto_size": "none"})
-        assert txBox.text_frame.auto_size == MSO_AUTO_SIZE.NONE
-
-    def test_auto_size_fit(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"auto_size": "fit"})
-        assert txBox.text_frame.auto_size == MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
-
-    def test_auto_size_shrink(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        apply_text_properties(txBox.text_frame, {"auto_size": "shrink"})
-        assert txBox.text_frame.auto_size == MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+        apply_text_properties(txBox.text_frame, {"auto_size": key})
+        assert txBox.text_frame.auto_size == auto_size_enum
 
     def test_vertical_anchor_middle(self, blank_slide):
         txBox = _make_textbox(blank_slide)
@@ -337,23 +333,19 @@ class TestRunEffect:
 class TestApplyCharSpacing:
     """Tests for _apply_char_spacing."""
 
-    def test_positive(self, blank_slide):
+    @pytest.mark.parametrize(
+        "value,expected_spc",
+        [
+            (2.0, "200"),
+            (-1.0, "-100"),
+            (0.0, "0"),
+        ],
+    )
+    def test_char_spacing(self, blank_slide, value, expected_spc):
         txBox = _make_textbox(blank_slide)
         run = txBox.text_frame.paragraphs[0].runs[0]
-        _apply_char_spacing(run.font, 2.0)
-        assert run.font._element.get("spc") == "200"
-
-    def test_negative(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        run = txBox.text_frame.paragraphs[0].runs[0]
-        _apply_char_spacing(run.font, -1.0)
-        assert run.font._element.get("spc") == "-100"
-
-    def test_zero(self, blank_slide):
-        txBox = _make_textbox(blank_slide)
-        run = txBox.text_frame.paragraphs[0].runs[0]
-        _apply_char_spacing(run.font, 0.0)
-        assert run.font._element.get("spc") == "0"
+        _apply_char_spacing(run.font, value)
+        assert run.font._element.get("spc") == expected_spc
 
 
 # ----- bullet_properties -----
@@ -461,3 +453,122 @@ class TestTextConstants:
 
     def test_vertical_anchor_reverse(self):
         assert set(VERTICAL_ANCHOR_REVERSE.values()) == {"top", "middle", "bottom"}
+
+
+# ----- split_lines -----
+
+
+class TestSplitLines:
+    """Tests for split_lines helper."""
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("hello", ["hello"]),
+            ("line1\nline2", ["line1", "line2"]),
+            ("line1\vline2", ["line1", "line2"]),
+            ("a\nb\nc", ["a", "b", "c"]),
+            ("", [""]),
+            ("no breaks", ["no breaks"]),
+        ],
+    )
+    def test_split(self, text, expected):
+        assert split_lines(text) == expected
+
+
+# ----- populate_text_frame -----
+
+
+class TestPopulateTextFrame:
+    """Tests for populate_text_frame shared text-frame population."""
+
+    def test_flat_text(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        populate_text_frame(
+            txBox.text_frame,
+            {"text": "Hello World"},
+            {},
+            TEXTBOX_KEYS,
+        )
+        assert txBox.text_frame.text == "Hello World"
+
+    def test_multiline_text(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        populate_text_frame(
+            txBox.text_frame,
+            {"text": "Line 1\nLine 2\nLine 3"},
+            {},
+            TEXTBOX_KEYS,
+        )
+        paras = txBox.text_frame.paragraphs
+        assert len(paras) == 3
+        assert paras[0].text == "Line 1"
+        assert paras[2].text == "Line 3"
+
+    def test_paragraphs_with_text(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        elem = {
+            "paragraphs": [
+                {"text": "First paragraph"},
+                {"text": "Second paragraph"},
+            ],
+        }
+        populate_text_frame(txBox.text_frame, elem, {}, TEXTBOX_KEYS)
+        paras = txBox.text_frame.paragraphs
+        assert len(paras) == 2
+        assert paras[0].text == "First paragraph"
+        assert paras[1].text == "Second paragraph"
+
+    def test_no_text_noop(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="Original")
+        populate_text_frame(txBox.text_frame, {}, {}, TEXTBOX_KEYS)
+        # Word wrap is set but text frame is unchanged
+        assert txBox.text_frame.word_wrap is True
+
+    def test_textbox_keys_apply_font(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        defaults = {"font": "Arial", "size": 20}
+        populate_text_frame(
+            txBox.text_frame,
+            {"text": "Styled"},
+            {},
+            TEXTBOX_KEYS,
+            defaults,
+        )
+        run = txBox.text_frame.paragraphs[0].runs[0]
+        assert run.font.name == "Arial"
+        assert run.font.size == Pt(20)
+
+    def test_shape_keys_apply_font(self, blank_slide):
+        from pptx.enum.shapes import MSO_SHAPE
+
+        shape = blank_slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE, 0, 0, Inches(4), Inches(2)
+        )
+        populate_text_frame(
+            shape.text_frame,
+            {"text": "Shape text", "text_font": "Calibri"},
+            {},
+            SHAPE_KEYS,
+        )
+        run = shape.text_frame.paragraphs[0].runs[0]
+        assert run.font.name == "Calibri"
+
+    def test_paragraphs_with_runs(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        elem = {
+            "paragraphs": [
+                {
+                    "runs": [
+                        {"text": "bold ", "bold": True},
+                        {"text": "normal"},
+                    ],
+                },
+            ],
+        }
+        populate_text_frame(txBox.text_frame, elem, {}, TEXTBOX_KEYS)
+        runs = txBox.text_frame.paragraphs[0].runs
+        assert len(runs) == 2
+        assert runs[0].text == "bold "
+        assert runs[0].font.bold is True
+        assert runs[1].text == "normal"
