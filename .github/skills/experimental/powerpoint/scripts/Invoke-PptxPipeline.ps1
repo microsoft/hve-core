@@ -560,27 +560,29 @@ function ConvertTo-SlideImages {
 
 #region Main
 
-if (-not $SkipVenvSetup) {
-    Test-UvAvailability | Out-Null
-    Initialize-PythonEnvironment
-}
+if ($MyInvocation.InvocationName -ne '.') {
+    if (-not $SkipVenvSetup) {
+        Test-UvAvailability | Out-Null
+        Initialize-PythonEnvironment
+    }
 
-switch ($Action) {
-    'Build' {
-        Assert-BuildParameters
-        Invoke-BuildDeck
-    }
-    'Extract' {
-        Assert-ExtractParameters
-        Invoke-ExtractContent
-    }
-    'Validate' {
-        Assert-ValidateParameters
-        Invoke-ValidateDeck
-    }
-    'Export' {
-        Assert-ExportParameters
-        Invoke-ExportSlides
+    switch ($Action) {
+        'Build' {
+            Assert-BuildParameters
+            Invoke-BuildDeck
+        }
+        'Extract' {
+            Assert-ExtractParameters
+            Invoke-ExtractContent
+        }
+        'Validate' {
+            Assert-ValidateParameters
+            Invoke-ValidateDeck
+        }
+        'Export' {
+            Assert-ExportParameters
+            Invoke-ExportSlides
+        }
     }
 }
 
