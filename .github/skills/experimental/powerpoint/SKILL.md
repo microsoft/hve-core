@@ -142,6 +142,8 @@ Reads all `content/slide-*/content.yaml` files in numeric order and generates th
 
 ### Build from a Template
 
+> **Warning**: `--template` creates a NEW presentation inheriting only slide masters, layouts, and theme from the template. All existing slides in the template are discarded. Only slides defined in `content/` are added. Do not use `--template` for partial rebuilds — use `--source` instead.
+
 ```powershell
 ./scripts/Invoke-PptxPipeline.ps1 -Action Build `
   -ContentDir content/ `
@@ -162,6 +164,8 @@ Loads slide masters and layouts from the template PPTX. Layout names in each sli
 
 ### Update Specific Slides
 
+> **Important**: Use `--source` (not `--template`) for partial rebuilds. The `--template` flag creates a new presentation and discards all slides not specified in `--slides`. Combining `--template` and `--source` is not supported — `--template` behavior takes precedence.
+
 ```powershell
 ./scripts/Invoke-PptxPipeline.ps1 -Action Build `
   -ContentDir content/ `
@@ -180,7 +184,7 @@ python scripts/build_deck.py \
   --slides 3,7,15
 ```
 
-Opens the existing deck, clears shapes on the specified slides, rebuilds them in-place from their `content.yaml`, and saves. All other slides remain untouched.
+Opens the existing deck, clears shapes on the specified slides, rebuilds them in-place from their `content.yaml`, and saves. All other slides remain untouched. After building, verify the output slide count matches the original deck.
 
 ### Extract Content from Existing PPTX
 
@@ -232,9 +236,13 @@ Extracts only the specified slides (plus the global style). Useful for targeted 
 
 The Validate action runs a two- or three-step pipeline:
 
-1. **Export** — Renders slides to JPG images via LibreOffice (PPTX → PDF → JPG).
+1. **Export** — Clears stale slide images from the output directory, then renders slides to JPG images via LibreOffice (PPTX → PDF → JPG). When `-Slides` is used, output images are named to match original slide numbers (e.g., `slide-023.jpg` for slide 23), not sequential PDF page numbers.
 2. **PPTX validation** — Checks PPTX-only properties (`validate_deck.py`) for speaker notes and slide count.
 3. **Vision validation** (optional) — Sends slide images to a vision-capable model via the Copilot SDK (`validate_slides.py`) for visual quality checks. Runs when `-ValidationPrompt` or `-ValidationPromptFile` is provided.
+
+#### Built-in System Message
+
+The `validate_slides.py` script includes a comprehensive built-in system message that instructs the vision model to analyze backgrounds, shapes, text boxes, images, and additional characteristics, then evaluate for all standard quality checks (text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative line positioning, citation collisions, column alignment, readable fill combinations). The `-ValidationPrompt` parameter provides supplementary user-level context and does not need to repeat these checks.
 
 #### Validate with Vision Checks
 
@@ -242,7 +250,7 @@ The Validate action runs a two- or three-step pipeline:
 ./scripts/Invoke-PptxPipeline.ps1 -Action Validate `
   -InputPath slide-deck/presentation.pptx `
   -ContentDir content/ `
-  -ValidationPrompt "Check for text overlay, overflow, margin issues, color contrast" `
+  -ValidationPrompt "Validate visual quality. Focus on recently modified slides for content accuracy." `
   -ValidationModel claude-haiku-4.5
 ```
 
@@ -335,7 +343,17 @@ python scripts/export_slides.py \
 pdftoppm -jpeg -r 150 slide-deck/validation/slides.pdf slide-deck/validation/slide
 ```
 
-Converts specified slides to JPG images for visual inspection. The PowerShell orchestrator handles both steps automatically and uses a PyMuPDF fallback when `pdftoppm` is not installed.
+Converts specified slides to JPG images for visual inspection. The PowerShell orchestrator handles both steps automatically, clears stale images before exporting, names output images to match original slide numbers when `-Slides` is used, and uses a PyMuPDF fallback when `pdftoppm` is not installed.
+
+When running the two-step process manually (outside the pipeline), note that `render_pdf_images.py` uses sequential numbering by default. Pass `--slide-numbers` to map output images to original slide positions:
+
+```bash
+python scripts/render_pdf_images.py \
+  --input slide-deck/validation/slides.pdf \
+  --output-dir slide-deck/validation/ \
+  --dpi 150 \
+  --slide-numbers 1,3,5
+```
 
 **Dependencies**: Requires LibreOffice for PPTX-to-PDF conversion and either `pdftoppm` (from `poppler`) or `pymupdf` (pip) for PDF-to-JPG rendering.
 
@@ -355,6 +373,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
 | `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
 | `validate_slides.py` | Vision-based slide analysis and quality validation via Copilot SDK with configurable system message and response schema |
+| `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming |
 
 ## python-pptx Constraints
 

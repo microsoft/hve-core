@@ -2,9 +2,12 @@
 
 Converts each page of a PDF file to a JPG image at the specified DPI.
 Output files follow the naming pattern slide-001.jpg, slide-002.jpg, etc.
+When --slide-numbers is provided, uses those numbers instead of sequential
+numbering so output filenames match the original slide positions.
 
 Usage:
     python render_pdf_images.py --input slides.pdf --output-dir validation/ --dpi 150
+    python render_pdf_images.py --input slides.pdf --output-dir validation/ --slide-numbers 23,24,25
 """
 
 import argparse
@@ -38,18 +41,45 @@ def create_parser() -> argparse.ArgumentParser:
         "--dpi", type=int, default=150, help="Resolution in DPI (default: 150)"
     )
     parser.add_argument(
+        "--slide-numbers",
+        help=(
+            "Comma-separated original slide numbers for output naming. "
+            "When provided, page N of the PDF is named slide-{slide_numbers[N]}.jpg "
+            "instead of slide-{N+1}.jpg. Use when the PDF contains a filtered "
+            "subset of slides so output filenames match original slide positions."
+        ),
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output"
     )
     return parser
 
 
-def render_pages(pdf_path: Path, output_dir: Path, dpi: int) -> int:
+def parse_slide_numbers(slide_numbers_str: str) -> list[int]:
+    """Parse comma-separated slide numbers into a list of integers."""
+    numbers = []
+    for part in slide_numbers_str.split(","):
+        part = part.strip()
+        if part:
+            numbers.append(int(part))
+    return numbers
+
+
+def render_pages(
+    pdf_path: Path,
+    output_dir: Path,
+    dpi: int,
+    slide_numbers: list[int] | None = None,
+) -> int:
     """Render each PDF page to a JPG image.
 
     Args:
         pdf_path: Path to the input PDF file.
         output_dir: Directory where JPG files will be written.
         dpi: Resolution for rendered images.
+        slide_numbers: Original slide numbers for output naming. When provided,
+            page i of the PDF is named slide-{slide_numbers[i]}.jpg instead
+            of slide-{i+1}.jpg. Must have the same length as the PDF page count.
 
     Returns:
         Number of pages rendered.
@@ -64,9 +94,19 @@ def render_pages(pdf_path: Path, output_dir: Path, dpi: int) -> int:
     doc = fitz.open(str(pdf_path))
     page_count = len(doc)
 
+    if slide_numbers and len(slide_numbers) != page_count:
+        logger.warning(
+            "Slide numbers count (%d) does not match PDF page count (%d). "
+            "Falling back to sequential numbering.",
+            len(slide_numbers),
+            page_count,
+        )
+        slide_numbers = None
+
     for i, page in enumerate(doc):
         pix = page.get_pixmap(dpi=dpi)
-        output_file = output_dir / f"slide-{i + 1:03d}.jpg"
+        num = slide_numbers[i] if slide_numbers else i + 1
+        output_file = output_dir / f"slide-{num:03d}.jpg"
         pix.save(str(output_file))
         logger.debug("Rendered page %d -> %s", i + 1, output_file.name)
 
@@ -88,7 +128,11 @@ def run(args: argparse.Namespace) -> int:
         logger.error("Input file must be a .pdf file: %s", pdf_path)
         return EXIT_ERROR
 
-    render_pages(pdf_path, output_dir, args.dpi)
+    slide_numbers = None
+    if args.slide_numbers:
+        slide_numbers = parse_slide_numbers(args.slide_numbers)
+
+    render_pages(pdf_path, output_dir, args.dpi, slide_numbers)
     return EXIT_SUCCESS
 
 
