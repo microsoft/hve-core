@@ -20,4 +20,3 @@ def load_yaml(path: Path) -> dict:
     """Load a YAML file and return the parsed dictionary."""
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
-

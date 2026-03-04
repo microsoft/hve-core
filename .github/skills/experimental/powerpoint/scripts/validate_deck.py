@@ -38,33 +38,42 @@ def check_speaker_notes(slide, slide_num: int) -> list[dict]:
     issues = []
     try:
         if not slide.has_notes_slide:
-            issues.append({
-                "check_type": "speaker_notes",
-                "severity": "warning",
-                "description": "Missing speaker notes (no notes slide)",
-                "location": "notes",
-            })
+            issues.append(
+                {
+                    "check_type": "speaker_notes",
+                    "severity": "warning",
+                    "description": "Missing speaker notes (no notes slide)",
+                    "location": "notes",
+                }
+            )
             return issues
         notes = slide.notes_slide.notes_text_frame.text.strip()
         if not notes:
-            issues.append({
-                "check_type": "speaker_notes",
-                "severity": "info",
-                "description": "Speaker notes present but empty",
-                "location": "notes",
-            })
+            issues.append(
+                {
+                    "check_type": "speaker_notes",
+                    "severity": "info",
+                    "description": "Speaker notes present but empty",
+                    "location": "notes",
+                }
+            )
     except (AttributeError, TypeError):
-        issues.append({
-            "check_type": "speaker_notes",
-            "severity": "warning",
-            "description": "Missing speaker notes",
-            "location": "notes",
-        })
+        issues.append(
+            {
+                "check_type": "speaker_notes",
+                "severity": "warning",
+                "description": "Missing speaker notes",
+                "location": "notes",
+            }
+        )
     return issues
 
 
-def validate_deck(pptx_path: Path, content_dir: Path | None = None,
-                  slide_filter: set[int] | None = None) -> dict:
+def validate_deck(
+    pptx_path: Path,
+    content_dir: Path | None = None,
+    slide_filter: set[int] | None = None,
+) -> dict:
     """Run PPTX-only validation checks (speaker notes, slide count).
 
     Returns:
@@ -82,38 +91,49 @@ def validate_deck(pptx_path: Path, content_dir: Path | None = None,
             continue
         issues = check_speaker_notes(slide, slide_num)
         quality = "good" if not issues else "needs-attention"
-        slides.append({
-            "slide_number": slide_num,
-            "issues": issues,
-            "overall_quality": quality,
-        })
+        slides.append(
+            {
+                "slide_number": slide_num,
+                "issues": issues,
+                "overall_quality": quality,
+            }
+        )
 
     if content_dir and not slide_filter:
         slide_dirs = sorted(
-            [d for d in content_dir.iterdir() if d.is_dir() and d.name.startswith("slide-")]
+            [
+                d
+                for d in content_dir.iterdir()
+                if d.is_dir() and d.name.startswith("slide-")
+            ]
         )
         if len(slide_dirs) != total_slides:
             if len(slide_dirs) < total_slides:
-                top_level_issues.append({
-                    "check_type": "slide_count",
-                    "severity": "info",
-                    "description": (
-                        f"Partial content detected — {total_slides} slides in PPTX, "
-                        f"{len(slide_dirs)} content directories "
-                        f"(expected for incremental updates)"
-                    ),
-                    "location": "deck",
-                })
+                top_level_issues.append(
+                    {
+                        "check_type": "slide_count",
+                        "severity": "info",
+                        "description": (
+                            "Partial content detected"
+                            f" — {total_slides} slides in PPTX, "
+                            f"{len(slide_dirs)} content directories"
+                            " (expected for incremental updates)"
+                        ),
+                        "location": "deck",
+                    }
+                )
             else:
-                top_level_issues.append({
-                    "check_type": "slide_count",
-                    "severity": "warning",
-                    "description": (
-                        f"Slide count mismatch: {total_slides} slides in PPTX, "
-                        f"{len(slide_dirs)} content directories"
-                    ),
-                    "location": "deck",
-                })
+                top_level_issues.append(
+                    {
+                        "check_type": "slide_count",
+                        "severity": "warning",
+                        "description": (
+                            f"Slide count mismatch: {total_slides} slides in PPTX, "
+                            f"{len(slide_dirs)} content directories"
+                        ),
+                        "location": "deck",
+                    }
+                )
 
     result = {
         "source": "pptx-properties",
@@ -239,10 +259,18 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Validate PPTX-only properties (speaker notes, slide count)"
     )
-    parser.add_argument("--input", required=True, type=Path, help="Input PPTX file path")
-    parser.add_argument("--content-dir", type=Path, help="Content directory for slide count comparison")
-    parser.add_argument("--slides", help="Comma-separated slide numbers to validate (default: all)")
-    parser.add_argument("--output", type=Path, help="Output JSON file path (default: stdout)")
+    parser.add_argument(
+        "--input", required=True, type=Path, help="Input PPTX file path"
+    )
+    parser.add_argument(
+        "--content-dir", type=Path, help="Content directory for slide count comparison"
+    )
+    parser.add_argument(
+        "--slides", help="Comma-separated slide numbers to validate (default: all)"
+    )
+    parser.add_argument(
+        "--output", type=Path, help="Output JSON file path (default: stdout)"
+    )
     parser.add_argument("--report", type=Path, help="Output Markdown report file path")
     return parser
 
@@ -284,7 +312,8 @@ def main() -> int:
     total_issues = sum(len(s.get("issues", [])) for s in results["slides"])
     total_issues += len(results.get("deck_issues", []))
     severity = max_severity(results)
-    print(f"Validation complete: {total_issues} issue(s) across {results['slide_count']} slide(s)")
+    slide_count = results["slide_count"]
+    print(f"Validation complete: {total_issues} issue(s) across {slide_count} slide(s)")
 
     # Exit code: info-only → success, warning/error → failure
     if severity in ("error", "warning"):

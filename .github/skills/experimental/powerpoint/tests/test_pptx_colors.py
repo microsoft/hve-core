@@ -143,39 +143,34 @@ class TestExtractColor:
 class TestRgbToHex:
     """Tests for rgb_to_hex."""
 
-    def test_valid_rgb(self):
-        assert rgb_to_hex(RGBColor(0x00, 0x78, 0xD4)) == "#0078D4"
-
-    def test_white(self):
-        assert rgb_to_hex(RGBColor(0xFF, 0xFF, 0xFF)) == "#FFFFFF"
-
-    def test_black(self):
-        assert rgb_to_hex(RGBColor(0, 0, 0)) == "#000000"
-
-    def test_none(self):
-        assert rgb_to_hex(None) is None
+    @pytest.mark.parametrize(
+        "rgb,expected",
+        [
+            (RGBColor(0x00, 0x78, 0xD4), "#0078D4"),
+            (RGBColor(0xFF, 0xFF, 0xFF), "#FFFFFF"),
+            (RGBColor(0, 0, 0), "#000000"),
+            (None, None),
+        ],
+    )
+    def test_conversion(self, rgb, expected):
+        assert rgb_to_hex(rgb) == expected
 
 
 class TestHexBrightness:
     """Tests for hex_brightness."""
 
-    def test_white(self):
-        assert hex_brightness("#FFFFFF") == 255
-
-    def test_black(self):
-        assert hex_brightness("#000000") == 0
-
-    def test_pure_red(self):
-        # 0.299 * 255 = 76.245
-        assert hex_brightness("#FF0000") == 76
-
-    def test_pure_green(self):
-        # 0.587 * 255 = 149.685
-        assert hex_brightness("#00FF00") == 149
-
-    def test_pure_blue(self):
-        # 0.114 * 255 = 29.07
-        assert hex_brightness("#0000FF") == 29
+    @pytest.mark.parametrize(
+        "hex_val,expected",
+        [
+            ("#FFFFFF", 255),
+            ("#000000", 0),
+            ("#FF0000", 76),
+            ("#00FF00", 149),
+            ("#0000FF", 29),
+        ],
+    )
+    def test_brightness(self, hex_val, expected):
+        assert hex_brightness(hex_val) == expected
 
     def test_mid_gray(self):
         result = hex_brightness("#808080")

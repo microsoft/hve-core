@@ -31,9 +31,15 @@ def create_parser() -> argparse.ArgumentParser:
         description="Render PDF pages to JPG images via PyMuPDF"
     )
     parser.add_argument("--input", required=True, type=Path, help="Input PDF file path")
-    parser.add_argument("--output-dir", required=True, type=Path, help="Output directory for JPG files")
-    parser.add_argument("--dpi", type=int, default=150, help="Resolution in DPI (default: 150)")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "--output-dir", required=True, type=Path, help="Output directory for JPG files"
+    )
+    parser.add_argument(
+        "--dpi", type=int, default=150, help="Resolution in DPI (default: 150)"
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    )
     return parser
 
 

@@ -1,8 +1,15 @@
 """Build a PowerPoint slide deck from YAML content and style definitions.
 
-Usage:
-    python build_deck.py --content-dir content/ --style content/global/style.yaml --output slide-deck/presentation.pptx
-    python build_deck.py --content-dir content/ --style content/global/style.yaml --source existing.pptx --output slide-deck/presentation.pptx --slides 3,7,15
+Usage::
+
+    python build_deck.py --content-dir content/ \
+        --style content/global/style.yaml \
+        --output slide-deck/presentation.pptx
+
+    python build_deck.py --content-dir content/ \
+        --style content/global/style.yaml \
+        --source existing.pptx \
+        --output slide-deck/presentation.pptx --slides 3,7,15
 """
 
 import argparse
@@ -106,13 +113,51 @@ def set_slide_bg_image(slide, image_path: str, content_dir: Path):
         cSld.insert(list(cSld).index(spTree), bg)
 
 
+def add_textbox(
+    slide,
+    left,
+    top,
+    width,
+    height,
+    text,
+    font_name=None,
+    font_size=16,
+    font_color=None,
+    bold=False,
+    italic=False,
+    alignment=None,
+    name=None,
+    rotation=None,
+    elem=None,
+    colors=None,
+):
+    """Add a text box to a slide with font and layout properties.
 
-def add_textbox(slide, left, top, width, height, text, font_name=None,
-                font_size=16, font_color=None, bold=False, italic=False,
-                alignment=None, name=None, rotation=None, elem=None,
-                colors=None):
-    """Add a text box to a slide."""
-    txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
+    Args:
+        slide: Target slide object.
+        left: Left position in inches.
+        top: Top position in inches.
+        width: Width in inches.
+        height: Height in inches.
+        text: Text content for the box.
+        font_name: Font family name.
+        font_size: Font size in points.
+        font_color: Resolved color spec dict.
+        bold: Apply bold formatting.
+        italic: Apply italic formatting.
+        alignment: Paragraph alignment name.
+        name: Shape name identifier.
+        rotation: Rotation angle in degrees.
+        elem: Full element dict from content.yaml for
+            paragraph-level and run-level properties.
+        colors: Color resolution dict.
+
+    Returns:
+        The created textbox shape object.
+    """
+    txBox = slide.shapes.add_textbox(
+        Inches(left), Inches(top), Inches(width), Inches(height)
+    )
     if name:
         txBox.name = name
     apply_rotation(txBox, rotation)
@@ -168,8 +213,15 @@ def add_image_element(slide, elem, content_dir: Path):
     img_path = content_dir / elem["path"]
     if not img_path.exists():
         # Fallback: add a text box with the path as placeholder
-        add_textbox(slide, elem["left"], elem["top"], elem["width"], elem["height"],
-                    f"[Image: {elem['path']}]", font_size=12)
+        add_textbox(
+            slide,
+            elem["left"],
+            elem["top"],
+            elem["width"],
+            elem["height"],
+            f"[Image: {elem['path']}]",
+            font_size=12,
+        )
         return None
 
     left = Inches(elem["left"])
@@ -183,36 +235,36 @@ def add_image_element(slide, elem, content_dir: Path):
 
     # Restore blipFill attributes (rotWithShape, dpi, etc.)
     if "blip_fill_attrs" in elem:
-        blipFill = pic._element.find(qn('p:blipFill'))
+        blipFill = pic._element.find(qn("p:blipFill"))
         if blipFill is not None:
             for attr_name, attr_val in elem["blip_fill_attrs"].items():
                 blipFill.set(attr_name, attr_val)
 
     # Apply image crop via srcRect on blipFill
     if "crop" in elem:
-        blipFill = pic._element.find(qn('p:blipFill'))
+        blipFill = pic._element.find(qn("p:blipFill"))
         if blipFill is not None:
-            srcRect = blipFill.find(qn('a:srcRect'))
+            srcRect = blipFill.find(qn("a:srcRect"))
             if srcRect is None:
                 # Insert srcRect after a:blip
-                blip_el = blipFill.find(qn('a:blip'))
+                blip_el = blipFill.find(qn("a:blip"))
                 idx = list(blipFill).index(blip_el) + 1 if blip_el is not None else 0
-                srcRect = etree.Element(qn('a:srcRect'))
+                srcRect = etree.Element(qn("a:srcRect"))
                 blipFill.insert(idx, srcRect)
             crop = elem["crop"]
-            for side in ('l', 't', 'r', 'b'):
+            for side in ("l", "t", "r", "b"):
                 if side in crop:
                     srcRect.set(side, str(crop[side]))
 
     # Apply image opacity via alphaModFix on the blip element
     if "opacity" in elem:
-        blip = pic._element.find('.//' + qn('a:blip'))
+        blip = pic._element.find(".//" + qn("a:blip"))
         if blip is not None:
             amt = str(int(elem["opacity"] * 1000))
-            amf = blip.find(qn('a:alphaModFix'))
+            amf = blip.find(qn("a:alphaModFix"))
             if amf is None:
-                amf = etree.SubElement(blip, qn('a:alphaModFix'))
-            amf.set('amt', amt)
+                amf = etree.SubElement(blip, qn("a:alphaModFix"))
+            amf.set("amt", amt)
 
     return pic
 
@@ -220,8 +272,10 @@ def add_image_element(slide, elem, content_dir: Path):
 def add_rich_text_element(slide, elem, colors, typography):
     """Add a rich text element with mixed font/color segments."""
     txBox = slide.shapes.add_textbox(
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(elem["width"]), Inches(elem["height"])
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(elem["width"]),
+        Inches(elem["height"]),
     )
     if "name" in elem:
         txBox.name = elem["name"]
@@ -257,10 +311,19 @@ def add_card_element(slide, elem, colors, typography):
     height = Inches(elem["height"])
 
     # Card background
-    shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
+    shape = slide.shapes.add_shape(
+        MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
+    )
     apply_fill(shape, elem.get("fill", "#2D2D35"), colors)
     if "border_color" in elem:
-        apply_line(shape, {"line_color": elem["border_color"], "line_width": elem.get("border_width", 1)}, colors)
+        apply_line(
+            shape,
+            {
+                "line_color": elem["border_color"],
+                "line_width": elem.get("border_width", 1),
+            },
+            colors,
+        )
     else:
         shape.line.fill.background()
 
@@ -268,8 +331,10 @@ def add_card_element(slide, elem, colors, typography):
     if elem.get("accent_bar"):
         bar = slide.shapes.add_shape(
             MSO_SHAPE.RECTANGLE,
-            Inches(elem["left"] + 0.15), Inches(elem["top"] + 0.1),
-            Inches(elem["width"] - 0.3), Inches(0.04)
+            Inches(elem["left"] + 0.15),
+            Inches(elem["top"] + 0.1),
+            Inches(elem["width"] - 0.3),
+            Inches(0.04),
         )
         apply_fill(bar, elem.get("accent_color", "#0078D4"), colors)
         bar.line.fill.background()
@@ -278,27 +343,35 @@ def add_card_element(slide, elem, colors, typography):
     y_offset = 0.2
     if "title" in elem:
         add_textbox(
-            slide, elem["left"] + 0.2, elem["top"] + y_offset,
-            elem["width"] - 0.4, 0.4,
+            slide,
+            elem["left"] + 0.2,
+            elem["top"] + y_offset,
+            elem["width"] - 0.4,
+            0.4,
             elem["title"],
             font_name="Segoe UI",
             font_size=elem.get("title_size", 16),
             font_color=resolve_color(elem.get("title_color", "#F8F8FC")),
-            bold=elem.get("title_bold", True)
+            bold=elem.get("title_bold", True),
         )
         y_offset += 0.5
 
     # Content bullets
     for item in elem.get("content", []):
-        bullet_text = f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
+        bullet_text = (
+            f"\u2022 {item['bullet']}" if "bullet" in item else item.get("text", "")
+        )
         color = resolve_color(item.get("color", "#F8F8FC"))
         add_textbox(
-            slide, elem["left"] + 0.2, elem["top"] + y_offset,
-            elem["width"] - 0.4, 0.35,
+            slide,
+            elem["left"] + 0.2,
+            elem["top"] + y_offset,
+            elem["width"] - 0.4,
+            0.35,
             bullet_text,
             font_name="Segoe UI",
             font_size=item.get("size", 14),
-            font_color=color
+            font_color=color,
         )
         y_offset += 0.35
 
@@ -318,8 +391,10 @@ def add_arrow_flow_element(slide, elem, colors, typography):
     for item in items:
         shape = slide.shapes.add_shape(
             MSO_SHAPE.CHEVRON,
-            Inches(x), Inches(elem["top"]),
-            Inches(item_width), Inches(elem["height"])
+            Inches(x),
+            Inches(elem["top"]),
+            Inches(item_width),
+            Inches(elem["height"]),
         )
         apply_fill(shape, item.get("color", "#0078D4"), colors)
         shape.line.fill.background()
@@ -345,8 +420,10 @@ def add_numbered_step_element(slide, elem, colors, typography):
     # Number circle
     circle = slide.shapes.add_shape(
         MSO_SHAPE.OVAL,
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(0.5), Inches(0.5)
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(0.5),
+        Inches(0.5),
     )
     apply_fill(circle, elem.get("accent_color", "#0078D4"), colors)
     circle.line.fill.background()
@@ -362,24 +439,30 @@ def add_numbered_step_element(slide, elem, colors, typography):
 
     # Label
     add_textbox(
-        slide, elem["left"] + 0.6, elem["top"],
-        elem["width"] - 0.6, 0.35,
+        slide,
+        elem["left"] + 0.6,
+        elem["top"],
+        elem["width"] - 0.6,
+        0.35,
         elem["label"],
         font_name="Segoe UI",
         font_size=16,
         font_color=resolve_color("#F8F8FC"),
-        bold=True
+        bold=True,
     )
 
     # Description
     if "description" in elem:
         add_textbox(
-            slide, elem["left"] + 0.6, elem["top"] + 0.35,
-            elem["width"] - 0.6, 0.4,
+            slide,
+            elem["left"] + 0.6,
+            elem["top"] + 0.35,
+            elem["width"] - 0.6,
+            0.4,
             elem["description"],
             font_name="Segoe UI",
             font_size=14,
-            font_color=resolve_color("#9CA3AF")
+            font_color=resolve_color("#9CA3AF"),
         )
 
 
@@ -405,8 +488,10 @@ def add_connector_element(slide, elem: dict, colors: dict):
 
     connector = slide.shapes.add_connector(
         conn_type,
-        Inches(elem["begin_x"]), Inches(elem["begin_y"]),
-        Inches(elem["end_x"]), Inches(elem["end_y"]),
+        Inches(elem["begin_x"]),
+        Inches(elem["begin_y"]),
+        Inches(elem["end_x"]),
+        Inches(elem["end_y"]),
     )
 
     apply_line(connector, elem, colors)
@@ -432,8 +517,9 @@ def add_connector_element(slide, elem: dict, colors: dict):
     return connector
 
 
-def add_group_element(slide, elem: dict, colors: dict, typography: dict,
-                      content_dir: Path):
+def add_group_element(
+    slide, elem: dict, colors: dict, typography: dict, content_dir: Path
+):
     """Add a group element containing nested child elements.
 
     YAML schema:
@@ -473,8 +559,9 @@ def add_group_element(slide, elem: dict, colors: dict, typography: dict,
     return group
 
 
-def build_element_in_group(group, elem: dict, colors: dict, typography: dict,
-                           content_dir: Path):
+def build_element_in_group(
+    group, elem: dict, colors: dict, typography: dict, content_dir: Path
+):
     """Dispatch a child element build within a group shape.
 
     Reuses top-level builders for shape and textbox. Groups do not support
@@ -497,8 +584,10 @@ def _add_shape_to_collection(shapes, elem: dict, colors: dict):
     shape_type = SHAPE_MAP.get(elem.get("shape", "rectangle"), MSO_SHAPE.RECTANGLE)
     shape = shapes.add_shape(
         shape_type,
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(elem["width"]), Inches(elem["height"]),
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(elem["width"]),
+        Inches(elem["height"]),
     )
     if "name" in elem:
         shape.name = elem["name"]
@@ -513,8 +602,10 @@ def _add_shape_to_collection(shapes, elem: dict, colors: dict):
 def _add_textbox_to_collection(shapes, elem: dict, colors: dict):
     """Add a textbox to any shapes collection (slide or group)."""
     txBox = shapes.add_textbox(
-        Inches(elem["left"]), Inches(elem["top"]),
-        Inches(elem["width"]), Inches(elem["height"]),
+        Inches(elem["left"]),
+        Inches(elem["top"]),
+        Inches(elem["width"]),
+        Inches(elem["height"]),
     )
     if "name" in elem:
         txBox.name = elem["name"]
@@ -528,7 +619,11 @@ def _build_textbox_element(slide, elem, colors, typography, content_dir):
     font_color = resolve_color(elem["font_color"]) if "font_color" in elem else None
     is_bold = elem.get("font_bold", elem.get("bold", False))
     add_textbox(
-        slide, elem["left"], elem["top"], elem["width"], elem["height"],
+        slide,
+        elem["left"],
+        elem["top"],
+        elem["width"],
+        elem["height"],
         elem.get("text", ""),
         font_name=font_name,
         font_size=elem.get("font_size", 16),
@@ -544,35 +639,50 @@ def _build_textbox_element(slide, elem, colors, typography, content_dir):
 
 
 def _build_image_element(slide, elem, colors, typography, content_dir):
+    """Delegate image element building to add_image_element."""
     add_image_element(slide, elem, content_dir)
 
 
 def _build_group_element(slide, elem, colors, typography, content_dir):
+    """Delegate group element building to add_group_element."""
     add_group_element(slide, elem, colors, typography, content_dir)
 
 
 def _build_connector_element(slide, elem, colors, typography, content_dir):
+    """Delegate connector building to add_connector_element."""
     add_connector_element(slide, elem, colors)
 
 
 def _build_chart_element(slide, elem, colors, typography, content_dir):
+    """Delegate chart building to add_chart_element."""
     add_chart_element(slide, elem, colors)
 
 
 def _build_table_element(slide, elem, colors, typography, content_dir):
+    """Delegate table building to add_table_element."""
     add_table_element(slide, elem, colors, typography)
 
 
 # Element builder registry: maps element type names to builder functions.
 # All builders share the signature (slide, elem, colors, typography, content_dir).
 ELEMENT_BUILDERS = {
-    "shape": lambda slide, elem, colors, typography, content_dir: add_shape_element(slide, elem, colors, typography),
+    "shape": lambda slide, elem, colors, typography, content_dir: add_shape_element(
+        slide, elem, colors, typography
+    ),
     "textbox": _build_textbox_element,
     "image": _build_image_element,
-    "rich_text": lambda slide, elem, colors, typography, content_dir: add_rich_text_element(slide, elem, colors, typography),
-    "card": lambda slide, elem, colors, typography, content_dir: add_card_element(slide, elem, colors, typography),
-    "arrow_flow": lambda slide, elem, colors, typography, content_dir: add_arrow_flow_element(slide, elem, colors, typography),
-    "numbered_step": lambda slide, elem, colors, typography, content_dir: add_numbered_step_element(slide, elem, colors, typography),
+    "rich_text": lambda slide, elem, colors, typography, content_dir: (
+        add_rich_text_element(slide, elem, colors, typography)
+    ),
+    "card": lambda slide, elem, colors, typography, content_dir: add_card_element(
+        slide, elem, colors, typography
+    ),
+    "arrow_flow": lambda slide, elem, colors, typography, content_dir: (
+        add_arrow_flow_element(slide, elem, colors, typography)
+    ),
+    "numbered_step": lambda slide, elem, colors, typography, content_dir: (
+        add_numbered_step_element(slide, elem, colors, typography)
+    ),
     "table": _build_table_element,
     "chart": _build_chart_element,
     "connector": _build_connector_element,
@@ -580,8 +690,9 @@ ELEMENT_BUILDERS = {
 }
 
 
-def _build_element(slide, elem: dict, colors: dict, typography: dict,
-                   content_dir: Path):
+def _build_element(
+    slide, elem: dict, colors: dict, typography: dict, content_dir: Path
+):
     """Dispatch element building via registry lookup."""
     elem_type = elem.get("type", "textbox")
     builder = ELEMENT_BUILDERS.get(elem_type)
@@ -592,9 +703,14 @@ def _build_element(slide, elem: dict, colors: dict, typography: dict,
 def clear_slide_shapes(slide):
     """Remove all shapes from a slide, preserving the slide itself."""
     sp_tree = slide.shapes._spTree
-    shapes_to_remove = [sp for sp in sp_tree.iterchildren() if sp.tag.endswith('}sp')
-                        or sp.tag.endswith('}pic') or sp.tag.endswith('}grpSp')
-                        or sp.tag.endswith('}cxnSp')]
+    shapes_to_remove = [
+        sp
+        for sp in sp_tree.iterchildren()
+        if sp.tag.endswith("}sp")
+        or sp.tag.endswith("}pic")
+        or sp.tag.endswith("}grpSp")
+        or sp.tag.endswith("}cxnSp")
+    ]
     for sp in shapes_to_remove:
         sp_tree.remove(sp)
 
@@ -658,7 +774,9 @@ def get_slide_layout(prs, slide_content: dict, style: dict):
     return _find_blank_layout(prs)
 
 
-def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None):
+def build_slide(
+    prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None
+):
     """Build a single slide from content.yaml data and style context.
 
     When existing_slide is provided, clears its shapes and rebuilds in place
@@ -692,15 +810,15 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
     used_ph_indices = {int(k) for k in placeholders}
     sp_tree = slide.shapes._spTree
     for sp in list(sp_tree.iterchildren()):
-        nvSpPr = sp.find(qn('p:nvSpPr'))
+        nvSpPr = sp.find(qn("p:nvSpPr"))
         if nvSpPr is None:
             continue
-        nvPr = nvSpPr.find(qn('p:nvPr'))
+        nvPr = nvSpPr.find(qn("p:nvPr"))
         if nvPr is None:
             continue
-        ph = nvPr.find(qn('p:ph'))
+        ph = nvPr.find(qn("p:ph"))
         if ph is not None:
-            idx = int(ph.get('idx', '0'))
+            idx = int(ph.get("idx", "0"))
             if idx not in used_ph_indices:
                 sp_tree.remove(sp)
 
@@ -716,7 +834,11 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
     elements = sorted(elements, key=lambda e: e.get("z_order", 0))
 
     # Filter out empty placeholder elements
-    elements = [e for e in elements if not (e.get("_placeholder") and not e.get("text", "").strip())]
+    elements = [
+        e
+        for e in elements
+        if not (e.get("_placeholder") and not e.get("text", "").strip())
+    ]
 
     turbo_enabled = len(elements) > 20
     if turbo_enabled:
@@ -729,7 +851,9 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
     # Execute content-extra.py if present
     extra_script = content_dir / "content-extra.py"
     if extra_script.exists():
-        spec = importlib.util.spec_from_file_location("content_extra", str(extra_script))
+        spec = importlib.util.spec_from_file_location(
+            "content_extra", str(extra_script)
+        )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
@@ -742,7 +866,7 @@ def build_slide(prs, slide_content: dict, style: dict, content_dir: Path, existi
     notes = slide_content.get("speaker_notes")
     if notes is not None:
         notes_slide = slide.notes_slide
-        notes_text = re.sub(r'\v', '\n', notes) if notes else ""
+        notes_text = re.sub(r"\v", "\n", notes) if notes else ""
         notes_slide.notes_text_frame.text = notes_text
 
     return slide
@@ -763,13 +887,20 @@ def discover_slides(content_dir: Path) -> list[tuple[int, Path]]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build a PowerPoint deck from YAML content")
-    parser.add_argument("--content-dir", required=True, help="Path to the content/ directory")
+    """CLI entry point for building a PowerPoint deck from YAML."""
+    parser = argparse.ArgumentParser(
+        description="Build a PowerPoint deck from YAML content"
+    )
+    parser.add_argument(
+        "--content-dir", required=True, help="Path to the content/ directory"
+    )
     parser.add_argument("--style", required=True, help="Path to the global style.yaml")
     parser.add_argument("--output", required=True, help="Output PPTX file path")
     parser.add_argument("--template", help="Template PPTX file path for themed builds")
     parser.add_argument("--source", help="Source PPTX to update (for partial rebuilds)")
-    parser.add_argument("--slides", help="Comma-separated slide numbers to rebuild (requires --source)")
+    parser.add_argument(
+        "--slides", help="Comma-separated slide numbers to rebuild (requires --source)"
+    )
     args = parser.parse_args()
 
     content_dir = Path(args.content_dir)
@@ -817,7 +948,9 @@ def main():
         prs = Presentation(args.source)
         slide_nums = [int(s.strip()) for s in args.slides.split(",")]
         slides_data = discover_slides(content_dir)
-        slides_to_rebuild = {num: path for num, path in slides_data if num in slide_nums}
+        slides_to_rebuild = {
+            num: path for num, path in slides_data if num in slide_nums
+        }
 
         for num in slide_nums:
             if num not in slides_to_rebuild:
@@ -829,10 +962,17 @@ def main():
             idx = num - 1
             if idx < len(prs.slides):
                 existing_slide = prs.slides[idx]
-                build_slide(prs, slide_content, style, slide_dir, existing_slide=existing_slide)
+                build_slide(
+                    prs, slide_content, style, slide_dir, existing_slide=existing_slide
+                )
                 print(f"Rebuilt slide {num} in-place")
             else:
-                print(f"Warning: Slide {num} does not exist in deck (has {len(prs.slides)} slides), skipping")
+                slide_count = len(prs.slides)
+                print(
+                    f"Warning: Slide {num} does not exist"
+                    f" in deck (has {slide_count} slides),"
+                    f" skipping"
+                )
     else:
         # Full build
         prs = Presentation()

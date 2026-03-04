@@ -44,19 +44,28 @@ _EMU_PER_INCH = 914400
 
 # Key-mapping specifications for YAML schema differences per element type.
 # Maps canonical keys (font, size, color, bold) to the actual YAML key names.
-TEXTBOX_KEYS = {"font": "font", "size": "font_size", "color": "font_color", "bold": "font_bold"}
-SHAPE_KEYS = {"font": "text_font", "size": "text_size", "color": "text_color", "bold": "text_bold"}
+TEXTBOX_KEYS = {
+    "font": "font",
+    "size": "font_size",
+    "color": "font_color",
+    "bold": "font_bold",
+}
+SHAPE_KEYS = {
+    "font": "text_font",
+    "size": "text_size",
+    "color": "text_color",
+    "bold": "text_bold",
+}
 
 
 def split_lines(text: str) -> list[str]:
     """Split text on newline and vertical-tab characters."""
-    if '\n' in text or '\v' in text:
-        return re.split(r'\n|\v', text)
+    if "\n" in text or "\v" in text:
+        return re.split(r"\n|\v", text)
     return [text]
 
 
-def _apply_run_formatting(run, elem: dict, keys: dict, defaults: dict,
-                          colors: dict):
+def _apply_run_formatting(run, elem: dict, keys: dict, defaults: dict, colors: dict):
     """Apply font properties to a single run using key-mapped element values.
 
     Args:
@@ -102,8 +111,9 @@ def _apply_rich_run_formatting(run, seg: dict, defaults: dict, colors: dict):
     apply_run_properties(run, seg, colors)
 
 
-def populate_text_frame(tf, elem: dict, colors: dict, keys: dict,
-                        defaults: dict | None = None):
+def populate_text_frame(
+    tf, elem: dict, colors: dict, keys: dict, defaults: dict | None = None
+):
     """Populate a text frame from an element definition.
 
     Handles three text layouts:
@@ -134,8 +144,9 @@ def populate_text_frame(tf, elem: dict, colors: dict, keys: dict,
     _populate_flat_text(tf, text, elem, colors, keys, defaults)
 
 
-def _populate_paragraphs(tf, paragraphs: list[dict], elem: dict,
-                         colors: dict, keys: dict, defaults: dict):
+def _populate_paragraphs(
+    tf, paragraphs: list[dict], elem: dict, colors: dict, keys: dict, defaults: dict
+):
     """Populate text frame from per-paragraph definitions."""
     alignment = defaults.get("alignment")
 
@@ -159,8 +170,9 @@ def _populate_paragraphs(tf, paragraphs: list[dict], elem: dict,
             _apply_run_formatting(run, p_def, keys, defaults, colors)
 
 
-def _populate_flat_text(tf, text: str, elem: dict, colors: dict,
-                        keys: dict, defaults: dict):
+def _populate_flat_text(
+    tf, text: str, elem: dict, colors: dict, keys: dict, defaults: dict
+):
     """Populate text frame with flat text split on newlines."""
     alignment = defaults.get("alignment") or elem.get("alignment")
     lines = split_lines(text)
@@ -179,7 +191,8 @@ def _populate_flat_text(tf, text: str, elem: dict, colors: dict,
 def apply_text_properties(text_frame, elem: dict):
     """Apply text frame-level properties from element definition.
 
-    Supports: margin_left/right/top/bottom (inches), auto_size, vertical_anchor, word_wrap.
+    Supports: margin_left/right/top/bottom (inches), auto_size,
+    vertical_anchor, word_wrap.
     """
     if "margin_left" in elem:
         text_frame.margin_left = Inches(elem["margin_left"])
@@ -229,7 +242,9 @@ def apply_run_properties(run, elem: dict, colors: dict):
     if "hyperlink" in elem:
         run.hyperlink.address = elem["hyperlink"]
         # Re-apply font color after hyperlink to override auto-coloring
-        color_key = next((k for k in ("font_color", "text_color", "color") if k in elem), None)
+        color_key = next(
+            (k for k in ("font_color", "text_color", "color") if k in elem), None
+        )
         if color_key:
             apply_color_to_font(run.font.color, resolve_color(elem[color_key], colors))
     if "char_spacing" in elem:
@@ -244,11 +259,11 @@ def _apply_run_effect(run, effect: dict):
     if not effect or effect.get("type") != "outer_shadow":
         return
     rpr = run.font._element
-    existing = rpr.find(qn('a:effectLst'))
+    existing = rpr.find(qn("a:effectLst"))
     if existing is not None:
         rpr.remove(existing)
 
-    effect_lst = etree.SubElement(rpr, qn('a:effectLst'))
+    effect_lst = etree.SubElement(rpr, qn("a:effectLst"))
     build_shadow_xml(effect_lst, effect)
 
 
@@ -261,7 +276,7 @@ def _apply_char_spacing(font, spacing_pt: float):
     """
     rpr = font._element
     spc_val = str(int(spacing_pt * 100))
-    rpr.set('spc', spc_val)
+    rpr.set("spc", spc_val)
 
 
 def extract_text_frame_properties(text_frame) -> dict:
@@ -304,7 +319,10 @@ def extract_paragraph_properties(paragraph) -> dict:
 
 
 def extract_run_properties(run) -> dict:
-    """Extract run-level properties beyond basic font info (underline, hyperlink, char_spacing, effects)."""
+    """Extract run-level properties beyond basic font info.
+
+    Extracts underline, hyperlink, char_spacing, and effects.
+    """
     props = {}
     if run.font.underline:
         props["underline"] = True
@@ -326,10 +344,10 @@ def _extract_run_effect(run) -> dict | None:
     """Extract outer shadow effect from a run's rPr effectLst."""
     try:
         rpr = run.font._element
-        effect_lst = rpr.find(qn('a:effectLst'))
+        effect_lst = rpr.find(qn("a:effectLst"))
         if effect_lst is None or len(effect_lst) == 0:
             return None
-        shadow = effect_lst.find(qn('a:outerShdw'))
+        shadow = effect_lst.find(qn("a:outerShdw"))
         if shadow is None:
             return None
         return parse_shadow_xml(shadow)
@@ -344,45 +362,45 @@ def extract_bullet_properties(paragraph) -> dict:
     when present. Returns {"bullet_none": True} when buNone is set.
     """
     props = {}
-    pPr = paragraph._p.find(qn('a:pPr'))
+    pPr = paragraph._p.find(qn("a:pPr"))
     if pPr is None:
         return props
 
-    buNone = pPr.find(qn('a:buNone'))
+    buNone = pPr.find(qn("a:buNone"))
     if buNone is not None:
-        props['bullet_none'] = True
+        props["bullet_none"] = True
         return props
 
-    buChar = pPr.find(qn('a:buChar'))
+    buChar = pPr.find(qn("a:buChar"))
     if buChar is not None:
-        props['bullet_char'] = buChar.get('char', '•')
+        props["bullet_char"] = buChar.get("char", "•")
 
-    buFont = pPr.find(qn('a:buFont'))
+    buFont = pPr.find(qn("a:buFont"))
     if buFont is not None:
-        typeface = buFont.get('typeface')
+        typeface = buFont.get("typeface")
         if typeface:
-            props['bullet_font'] = typeface
+            props["bullet_font"] = typeface
 
-    buSzPct = pPr.find(qn('a:buSzPct'))
+    buSzPct = pPr.find(qn("a:buSzPct"))
     if buSzPct is not None:
-        val = buSzPct.get('val')
+        val = buSzPct.get("val")
         if val:
-            props['bullet_size_pct'] = int(val)
+            props["bullet_size_pct"] = int(val)
 
-    buClr = pPr.find(qn('a:buClr'))
+    buClr = pPr.find(qn("a:buClr"))
     if buClr is not None:
-        srgb = buClr.find(qn('a:srgbClr'))
+        srgb = buClr.find(qn("a:srgbClr"))
         if srgb is not None:
-            props['bullet_color'] = f"#{srgb.get('val', '000000')}"
+            props["bullet_color"] = f"#{srgb.get('val', '000000')}"
 
     # Extract paragraph margin and indent (controls bullet-to-text spacing)
-    marL = pPr.get('marL')
+    marL = pPr.get("marL")
     if marL is not None:
-        props['bullet_margin_left'] = int(marL)
+        props["bullet_margin_left"] = int(marL)
 
-    indent = pPr.get('indent')
+    indent = pPr.get("indent")
     if indent is not None:
-        props['bullet_indent'] = int(indent)
+        props["bullet_indent"] = int(indent)
 
     return props
 
@@ -393,39 +411,43 @@ def apply_bullet_properties(paragraph, elem: dict):
     Reads bullet_char, bullet_font, bullet_size_pct, bullet_color,
     bullet_margin_left, bullet_indent from elem.
     """
-    has_bullet_props = ('bullet_char' in elem or 'bullet_none' in elem
-                        or 'bullet_margin_left' in elem or 'bullet_indent' in elem)
+    has_bullet_props = (
+        "bullet_char" in elem
+        or "bullet_none" in elem
+        or "bullet_margin_left" in elem
+        or "bullet_indent" in elem
+    )
     if not has_bullet_props:
         return
 
-    pPr = paragraph._p.find(qn('a:pPr'))
+    pPr = paragraph._p.find(qn("a:pPr"))
     if pPr is None:
-        pPr = etree.SubElement(paragraph._p, qn('a:pPr'))
+        pPr = etree.SubElement(paragraph._p, qn("a:pPr"))
         paragraph._p.insert(0, pPr)
 
     # Apply margin and indent (controls bullet-to-text spacing)
-    if 'bullet_margin_left' in elem:
-        pPr.set('marL', str(elem['bullet_margin_left']))
-    if 'bullet_indent' in elem:
-        pPr.set('indent', str(elem['bullet_indent']))
+    if "bullet_margin_left" in elem:
+        pPr.set("marL", str(elem["bullet_margin_left"]))
+    if "bullet_indent" in elem:
+        pPr.set("indent", str(elem["bullet_indent"]))
 
-    if elem.get('bullet_none'):
-        etree.SubElement(pPr, qn('a:buNone'))
+    if elem.get("bullet_none"):
+        etree.SubElement(pPr, qn("a:buNone"))
         return
 
-    if 'bullet_font' in elem:
-        buFont = etree.SubElement(pPr, qn('a:buFont'))
-        buFont.set('typeface', elem['bullet_font'])
+    if "bullet_font" in elem:
+        buFont = etree.SubElement(pPr, qn("a:buFont"))
+        buFont.set("typeface", elem["bullet_font"])
 
-    if 'bullet_size_pct' in elem:
-        buSzPct = etree.SubElement(pPr, qn('a:buSzPct'))
-        buSzPct.set('val', str(elem['bullet_size_pct']))
+    if "bullet_size_pct" in elem:
+        buSzPct = etree.SubElement(pPr, qn("a:buSzPct"))
+        buSzPct.set("val", str(elem["bullet_size_pct"]))
 
-    if 'bullet_color' in elem:
-        buClr = etree.SubElement(pPr, qn('a:buClr'))
-        srgb = etree.SubElement(buClr, qn('a:srgbClr'))
-        srgb.set('val', elem['bullet_color'].lstrip('#'))
+    if "bullet_color" in elem:
+        buClr = etree.SubElement(pPr, qn("a:buClr"))
+        srgb = etree.SubElement(buClr, qn("a:srgbClr"))
+        srgb.set("val", elem["bullet_color"].lstrip("#"))
 
-    if 'bullet_char' in elem:
-        buChar = etree.SubElement(pPr, qn('a:buChar'))
-        buChar.set('char', elem['bullet_char'])
+    if "bullet_char" in elem:
+        buChar = etree.SubElement(pPr, qn("a:buChar"))
+        buChar.set("char", elem["bullet_char"])
