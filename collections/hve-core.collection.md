@@ -28,3 +28,14 @@ Supporting subagents included:
 Skills included:
 
 - **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
+- **Visual Explainer** — Generates self-contained HTML pages that visually explain systems, code changes, plans, and data with distinctive aesthetics
+
+Visual Explainer prompts:
+
+- **viz-diff-review** — Visual HTML diff review with before/after architecture diagrams and decision log
+- **viz-fact-check** — Verify factual accuracy of documents against the codebase
+- **viz-slides** — Generate magazine-quality HTML slide decks
+- **viz-plan** — Visual implementation plan with state machines and edge case tables
+- **viz-diagram** — Generate standalone HTML diagrams with distinctive aesthetics
+- **viz-plan-review** — Compare codebase against a proposed plan with risk assessment
+- **viz-project-recap** — Rebuild mental model of project state with architecture snapshots
