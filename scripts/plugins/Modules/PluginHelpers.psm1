@@ -214,10 +214,19 @@ function New-PluginReadmeContent {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine("## $($meta.Title)")
         [void]$sb.AppendLine()
-        [void]$sb.AppendLine("| $($meta.Header) | Description |")
-        [void]$sb.AppendLine('| ' + ('-' * $meta.Header.Length) + ' | ----------- |')
+
+        # Calculate column widths for aligned table output
+        $col1Width = $meta.Header.Length
+        $col2Width = 'Description'.Length
         foreach ($item in $kindItems) {
-            [void]$sb.AppendLine("| $($item.Name) | $($item.Description) |")
+            if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
+            if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
+        }
+
+        [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
+        [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
+        foreach ($item in $kindItems) {
+            [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
         }
     }
 
