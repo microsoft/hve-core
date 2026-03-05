@@ -59,6 +59,22 @@ defaults:
     border_color: "#3D3D45"
     border_width_pt: 1
   speaker_notes_required: true
+
+# Detected visual themes (populated during extraction)
+themes:
+  - name: "light"
+    slides: [1, 3, 5]
+    colors:
+      text_primary: "#1A1A2E"
+      text_secondary: "#6B6B7B"
+      bg_card: "#E8E8F0"
+  - name: "dark"
+    slides: [2, 4, 6]
+    colors:
+      bg_dark: "#1A1A2E"
+      text_primary: "#FFFFFF"
+      text_secondary: "#B0B0C0"
+      bg_card: "#2D2D35"
 ```
 
 ## Field Reference
@@ -78,5 +94,8 @@ defaults:
 | `defaults` | `title_bar`, `accent_bar` | Default bar dimensions and colors (`#RRGGBB` hex) |
 | `defaults` | `card` | Default card fill, corner radius, and border |
 | `defaults` | `speaker_notes_required` | Whether speaker notes are enforced during validation |
+| `themes[]` | `name` | Theme identifier (`light` or `dark`) |
+| `themes[]` | `slides` | Sorted list of slide numbers belonging to this theme |
+| `themes[]` | `colors` | Role-to-hex color map (`text_primary`, `text_secondary`, `bg_card`, `bg_dark`) |
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
