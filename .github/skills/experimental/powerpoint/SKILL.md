@@ -11,6 +11,8 @@ Generates, updates, and manages PowerPoint slide decks using `python-pptx` with 
 
 This skill provides Python scripts that consume YAML configuration files to produce PowerPoint slide decks. Each slide is defined by a `content.yaml` file describing its layout, text, and shapes. A `style.yaml` file defines dimensions, template configuration, layout mappings, metadata, and defaults.
 
+SKILL.md covers technical reference: prerequisites, commands, script architecture, API constraints, and troubleshooting. For conventions and design rules (element positioning, visual quality, color and contrast, contextual styling), follow `pptx.instructions.md`.
+
 ## Prerequisites
 
 ### PowerShell
@@ -142,7 +144,8 @@ Reads all `content/slide-*/content.yaml` files in numeric order and generates th
 
 ### Build from a Template
 
-> **Warning**: `--template` creates a NEW presentation inheriting only slide masters, layouts, and theme from the template. All existing slides in the template are discarded. Only slides defined in `content/` are added. Do not use `--template` for partial rebuilds — use `--source` instead.
+> [!WARNING]
+> `--template` creates a NEW presentation inheriting only slide masters, layouts, and theme from the template. All existing slides are discarded. Use `--source` for partial rebuilds.
 
 ```powershell
 ./scripts/Invoke-PptxPipeline.ps1 -Action Build `
@@ -164,7 +167,8 @@ Loads slide masters and layouts from the template PPTX. Layout names in each sli
 
 ### Update Specific Slides
 
-> **Important**: Use `--source` (not `--template`) for partial rebuilds. The `--template` flag creates a new presentation and discards all slides not specified in `--slides`. Combining `--template` and `--source` is not supported — `--template` behavior takes precedence.
+> [!IMPORTANT]
+> Use `--source` (not `--template`) for partial rebuilds. Combining `--template` and `--source` is not supported.
 
 ```powershell
 ./scripts/Invoke-PptxPipeline.ps1 -Action Build `
@@ -222,9 +226,9 @@ Extracts only the specified slides (plus the global style). Useful for targeted 
 
 #### Extraction Limitations
 
-* **Linked images**: Picture shapes that reference external (linked) images instead of embedded blobs are recorded with `path: LINKED_IMAGE_NOT_EMBEDDED`. The script does not crash but the image must be re-embedded manually.
-* **Inherited styling**: When text elements inherit font, size, or color from the slide master or layout, the extraction records no inline styling. Content YAML for these elements needs explicit font properties added before rebuild.
-* **Style detection heuristics**: The `detect_global_style()` function uses frequency analysis across all slides. For decks with mixed styling, review and adjust `style.yaml` values manually after extraction.
+* Picture shapes that reference external (linked) images instead of embedded blobs are recorded with `path: LINKED_IMAGE_NOT_EMBEDDED`. The script does not crash but the image must be re-embedded manually.
+* When text elements inherit font, size, or color from the slide master or layout, the extraction records no inline styling. Content YAML for these elements needs explicit font properties added before rebuild.
+* The `detect_global_style()` function uses frequency analysis across all slides. For decks with mixed styling, review and adjust `style.yaml` values manually after extraction.
 
 ### Validate a Deck
 
@@ -239,6 +243,8 @@ The Validate action runs a two- or three-step pipeline:
 1. **Export** — Clears stale slide images from the output directory, then renders slides to JPG images via LibreOffice (PPTX → PDF → JPG). When `-Slides` is used, output images are named to match original slide numbers (e.g., `slide-023.jpg` for slide 23), not sequential PDF page numbers.
 2. **PPTX validation** — Checks PPTX-only properties (`validate_deck.py`) for speaker notes and slide count.
 3. **Vision validation** (optional) — Sends slide images to a vision-capable model via the Copilot SDK (`validate_slides.py`) for visual quality checks. Runs when `-ValidationPrompt` or `-ValidationPromptFile` is provided.
+
+For validation criteria (element positioning, visual quality, color contrast, content completeness), see `pptx.instructions.md` Validation Criteria.
 
 #### Built-in System Message
 
@@ -383,35 +389,13 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 * Theme colors resolve via `MSO_THEME_COLOR` enum. Brightness adjustments apply through the color format's `brightness` property.
 * Template-based builds load layouts by name or index. Layout name resolution falls back to index 6 (blank) when no match is found.
 
-## Validation Rules
-
-### Visual Checks (via `validate_slides.py`)
-
-These checks are performed by `validate_slides.py` using a vision-capable model through the Copilot SDK. The script receives a validation prompt describing what to check and sends each slide image to the model:
-
-* **Text overlay**: Text overlapping other elements; verified visually from rendered images.
-* **Width overflow**: Elements exceeding slide width; visible as clipped content at edges.
-* **Height overflow**: Elements exceeding slide height; visible as clipped content at edges.
-* **Font consistency**: Inconsistent font families across slides; detected visually.
-* **Edge margins**: Elements within 0.5" of slide edges; detected from rendered layout.
-* **Element spacing**: Overlapping or colliding elements with insufficient gaps.
-* **Color contrast**: Low contrast between text color and background fill.
-* **Narrow text boxes**: Text boxes too narrow for their content; visible as excessive wrapping.
-* **Leftover placeholders**: Unused template placeholder text remaining in slides.
-
-### PPTX-Only Checks (via `validate_deck.py`)
-
-These checks require direct PPTX inspection and cannot be detected from images:
-
-* **Speaker notes**: Required on all content slides; notes are invisible in rendered images.
-
 ## Troubleshooting
 
 | Issue | Cause | Solution |
 |---|---|---|
 | SVG runtime error | python-pptx cannot embed SVG | Convert to PNG via `cairosvg` before adding |
-| Text overlay between elements | Insufficient vertical spacing | Verify `bottom + 0.2 < next_element_top` for all adjacent elements |
-| Width overflow off-slide | Element extends beyond slide boundary | Ensure `left + width <= 13.333` for widescreen 16:9 |
+| Text overlay between elements | Insufficient vertical spacing | Follow element positioning conventions in `pptx.instructions.md` |
+| Width overflow off-slide | Element extends beyond slide boundary | Follow element positioning conventions in `pptx.instructions.md` |
 | Bright accent color unreadable as fill | White text on bright background | Darken accent to ~60% saturation for box fills |
 | Background fill replaced with NoFill | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing |
 | Missing speaker notes | Notes not specified in `content.yaml` | Add `speaker_notes` field to every content slide |
