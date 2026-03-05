@@ -65,6 +65,52 @@ Describe 'Test-SHAPinning' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-NpmExactVersion' -Tag 'Unit' {
+    Context 'Exact versions' {
+        It 'Returns true for simple semver' {
+            Test-NpmExactVersion -Version '1.2.3' | Should -BeTrue
+        }
+
+        It 'Returns true for semver with prerelease tag' {
+            Test-NpmExactVersion -Version '1.0.0-beta.1' | Should -BeTrue
+        }
+
+        It 'Returns true for semver with build metadata' {
+            Test-NpmExactVersion -Version '2.0.0+build.42' | Should -BeTrue
+        }
+    }
+
+    Context 'Range specifiers' {
+        It 'Returns false for caret range' {
+            Test-NpmExactVersion -Version '^4.17.21' | Should -BeFalse
+        }
+
+        It 'Returns false for tilde range' {
+            Test-NpmExactVersion -Version '~4.18.2' | Should -BeFalse
+        }
+
+        It 'Returns false for wildcard' {
+            Test-NpmExactVersion -Version '*' | Should -BeFalse
+        }
+
+        It 'Returns false for greater-than-or-equal range' {
+            Test-NpmExactVersion -Version '>=17.0.0' | Should -BeFalse
+        }
+
+        It 'Returns false for URL dependency' {
+            Test-NpmExactVersion -Version 'https://example.com/pkg.tgz' | Should -BeFalse
+        }
+
+        It 'Returns false for git dependency' {
+            Test-NpmExactVersion -Version 'git+ssh://git@github.com/user/repo.git' | Should -BeFalse
+        }
+
+        It 'Returns false for dist-tag like latest' {
+            Test-NpmExactVersion -Version 'latest' | Should -BeFalse
+        }
+    }
+}
+
 Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
     Context 'Insecure downloads' {
         It 'Detects curl without checksum verification' {
@@ -76,7 +122,166 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
             }
             $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
             $result | Should -Not -BeNullOrEmpty
-            $result[0].Severity | Should -Be 'warning'
+            $result[0].Severity | Should -Be 'Medium'
+        }
+
+        It 'Detects both curl and wget violations in the same file' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 2
+        }
+
+        It 'Populates violation object fields correctly' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result[0].File | Should -Be 'insecure-download.sh'
+            $result[0].Type | Should -Be 'shell-downloads'
+            $result[0].Line | Should -BeGreaterThan 0
+            $result[0].Description | Should -Be 'Download without checksum verification'
+            $result[0].Name | Should -Match 'curl.*https://'
+            $result[0].Severity | Should -Be 'Medium'
+            $result[0].ViolationType | Should -Be 'Unpinned'
+        }
+
+        It 'Detects insecure download when checksum is beyond lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'beyond-lookahead.sh'
+            # Download at line 1, checksum at line 8 (beyond 6-line window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'echo "line 6"'
+                'echo "line 7"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'beyond-lookahead.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 1
+        }
+    }
+
+    Context 'Secure downloads' {
+        It 'Returns no violations for downloads with checksum verification' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'secure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'secure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts sha256sum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'sha256sum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'sha256sum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts shasum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'shasum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.tar.gz -O /tmp/tool.tar.gz'
+                'shasum -a 256 /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'shasum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts Get-FileHash within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'get-filehash-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'Get-FileHash /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'get-filehash-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts openssl dgst -sha256 within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'openssl-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.zip -O /tmp/tool.zip'
+                'openssl dgst -sha256 /tmp/tool.zip'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'openssl-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts checksum at lookahead boundary (line 5 after download)' {
+            $scriptPath = Join-Path $TestDrive 'boundary-check.sh'
+            # Download at line 1, checksum at line 6 (index 0+5 = within window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'boundary-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+    }
+
+    Context 'Edge cases' {
+        It 'Returns empty array for empty file' {
+            $scriptPath = Join-Path $TestDrive 'empty.sh'
+            Set-Content -Path $scriptPath -Value ''
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'empty.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
         }
     }
 
@@ -129,6 +334,8 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
             $result[0].Type | Should -Be 'github-actions'
+            $result[0].Severity | Should -Be 'High'
+            $result[0].ViolationType | Should -Be 'Unpinned'
         }
     }
 
@@ -209,14 +416,65 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
     }
 
     Context 'SARIF format' {
-        It 'Generates valid SARIF report' {
-            $outputFile = Join-Path $script:TestOutputPath 'report.sarif'
+        BeforeAll {
+            $script:SarifFile = Join-Path $script:TestOutputPath 'report.sarif'
 
-            Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $outputFile
+            # Add a Medium severity violation for severity mapping coverage
+            $mediumViolation = [DependencyViolation]::new()
+            $mediumViolation.File = 'requirements.txt'
+            $mediumViolation.Line = 5
+            $mediumViolation.Type = 'pip'
+            $mediumViolation.Name = 'requests'
+            $mediumViolation.Version = '2.31.*'
+            $mediumViolation.Severity = 'Medium'
+            $mediumViolation.Description = 'Version range not pinned'
+            $mediumViolation.Remediation = 'Pin to exact version'
+            $script:MockReport.Violations += $mediumViolation
 
-            Test-Path $outputFile | Should -BeTrue
-            $content = Get-Content $outputFile -Raw | ConvertFrom-Json
-            $content.'$schema' | Should -Match 'sarif'
+            Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $script:SarifFile
+            $script:SarifContent = Get-Content $script:SarifFile -Raw | ConvertFrom-Json
+        }
+
+        It 'Has valid SARIF version 2.1.0' {
+            $script:SarifContent.version | Should -BeExactly '2.1.0'
+        }
+
+        It 'References the SARIF 2.1.0 schema' {
+            $script:SarifContent.'$schema' | Should -Match 'sarif-2\.1\.0'
+        }
+
+        It 'Identifies dependency-pinning-analyzer as the tool driver' {
+            $script:SarifContent.runs[0].tool.driver.name | Should -BeExactly 'dependency-pinning-analyzer'
+        }
+
+        It 'Produces one result per violation' {
+            $script:SarifContent.runs[0].results.Count | Should -Be 2
+        }
+
+        It 'Maps High severity to error level' {
+            $highResult = $script:SarifContent.runs[0].results | Where-Object {
+                $_.properties.dependencyName -eq 'actions/checkout'
+            }
+            $highResult.level | Should -BeExactly 'error'
+        }
+
+        It 'Maps Medium severity to warning level' {
+            $mediumResult = $script:SarifContent.runs[0].results | Where-Object {
+                $_.properties.dependencyName -eq 'requests'
+            }
+            $mediumResult.level | Should -BeExactly 'warning'
+        }
+
+        It 'Includes file location with startLine greater than zero' {
+            $result = $script:SarifContent.runs[0].results[0]
+            $result.locations[0].physicalLocation.artifactLocation.uri | Should -Not -BeNullOrEmpty
+            $result.locations[0].physicalLocation.region.startLine | Should -BeGreaterThan 0
+        }
+
+        It 'Includes dependencyName and remediation in properties' {
+            $result = $script:SarifContent.runs[0].results[0]
+            $result.properties.dependencyName | Should -Not -BeNullOrEmpty
+            $result.properties.remediation | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -349,6 +607,62 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
 
             $filePath -notlike "*$pattern*" | Should -BeTrue
         }
+    }
+}
+
+Describe 'pip ExcludePatterns integration' -Tag 'Unit' {
+    BeforeAll {
+        $pipTestRoot = Join-Path $TestDrive 'pip-exclude-test'
+        New-Item -Path $pipTestRoot -ItemType Directory -Force | Out-Null
+
+        # Root-level requirements file (should be scanned)
+        Set-Content -Path (Join-Path $pipTestRoot 'requirements.txt') -Value 'requests==2.31.0'
+
+        # Files inside excluded virtual environment directories (should be excluded)
+        $excludedDirs = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
+        foreach ($dir in $excludedDirs) {
+            $dirPath = Join-Path $pipTestRoot $dir
+            New-Item -Path $dirPath -ItemType Directory -Force | Out-Null
+            Set-Content -Path (Join-Path $dirPath 'requirements.txt') -Value 'flask==3.0.0'
+        }
+    }
+
+    It 'Excludes virtual environment directories from pip scans' {
+        $files = @(Get-FilesToScan -ScanPath $pipTestRoot -Types 'pip')
+        $files | Should -HaveCount 1
+        $files[0].RelativePath | Should -Be 'requirements.txt'
+    }
+
+    It 'Returns correct type metadata for pip files' {
+        $files = @(Get-FilesToScan -ScanPath $pipTestRoot -Types 'pip')
+        $files[0].Type | Should -Be 'pip'
+    }
+}
+
+Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
+    BeforeAll {
+        $shellTestRoot = Join-Path $TestDrive 'shell-exclude-test'
+        $scriptsDir = Join-Path $shellTestRoot 'scripts'
+        New-Item -Path $scriptsDir -ItemType Directory -Force | Out-Null
+
+        # Script file that should be scanned
+        Set-Content -Path (Join-Path $scriptsDir 'install.sh') -Value 'echo hello'
+
+        # File inside Fixtures directory (should be excluded)
+        $fixturesDir = Join-Path $scriptsDir 'Fixtures'
+        New-Item -Path $fixturesDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $fixturesDir 'test-download.sh') -Value 'echo fixture'
+    }
+
+    It 'Excludes Fixtures directory from shell-downloads scans' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files | Should -HaveCount 1
+        $files[0].RelativePath | Should -Be (Join-Path 'scripts' 'install.sh')
+    }
+
+    It 'Returns correct type metadata for shell-downloads files' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files[0].Type | Should -Be 'shell-downloads'
     }
 }
 
@@ -630,6 +944,33 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             $lodashViolation | Should -Not -BeNullOrEmpty
             $lodashViolation.Name | Should -Be 'lodash'
             $lodashViolation.Version | Should -Be '^4.17.21'
+            $lodashViolation.Severity | Should -Be 'Medium'
+            $lodashViolation.ViolationType | Should -Be 'Unpinned'
+        }
+
+        It 'Assigns valid line numbers to violations' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations | ForEach-Object { $_.Line | Should -BeGreaterOrEqual 1 }
+        }
+
+        It 'Excludes exact-version dependencies from violations' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $violations | ForEach-Object { $_.Name }
+
+            $packageNames | Should -Not -Contain 'jest'
         }
     }
 
@@ -772,6 +1113,7 @@ Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
             $violations = Get-DependencyViolation -FileInfo $fileInfo
             $violations | Should -Not -BeNullOrEmpty
             $violations[0].GetType().Name | Should -Be 'DependencyViolation'
+            $violations[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Sets File from FileInfo when missing' {
@@ -809,7 +1151,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         It 'emits success Write-Host message when no violations' {
             Invoke-DependencyPinningAnalysis -Path TestDrive:
             Should -Invoke Write-Host -ParameterFilter {
-                $Object -like '*✅*' -and $Object -like '*SHA-pinned*'
+                $Object -like '*✅*' -and $Object -like '*properly pinned*'
             }
         }
 
@@ -1093,8 +1435,8 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            # Write-SecurityLog -CIAnnotation "N dependencies require SHA pinning..." emits a Warning annotation
-            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'SHA pinning' }
+            # Write-SecurityLog -CIAnnotation "N dependencies require pinning..." emits a Warning annotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'pinning' }
         }
 
         It 'Forwards Error-level log messages as CI Error annotations' {
@@ -1167,7 +1509,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
             Invoke-DependencyPinningAnalysis -Path TestDrive:
 
-            Should -Invoke Write-Host -ParameterFilter { $ForegroundColor -eq 'Green' -and $Object -match 'SHA-pinned' }
+            Should -Invoke Write-Host -ParameterFilter { $ForegroundColor -eq 'Green' -and $Object -match 'properly pinned' }
         }
     }
 }

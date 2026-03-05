@@ -5,6 +5,8 @@ applyTo: '**/.copilot-tracking/workitems/**/handoff-logs.md'
 
 # Azure DevOps Work Item Update Instructions
 
+When invoked via the ADO Backlog Manager, honor the active autonomy mode from the [Three-Tier Autonomy Model](./ado-wit-planning.instructions.md#three-tier-autonomy-model) for all mutation operations. Apply [Content Sanitization Guards](./ado-wit-planning.instructions.md#content-sanitization-guards) before any ADO API call that writes user-visible content.
+
 Follow all instructions from #file:./ado-wit-planning.instructions.md for work item planning, templates, and field definitions.
 
 ## Scope
@@ -61,7 +63,7 @@ Determine processing order:
 For each work item:
 
 * Map temporary WI[Reference Number] to ADO System.Id after creation
-* Include `format: "Markdown"` for Description, Acceptance Criteria, and Repro Steps fields
+* Set the `format` parameter for Description, Acceptance Criteria, and Repro Steps fields using the detected content format per [Content Format Detection](./ado-wit-planning.instructions.md#content-format-detection). Read the fenced code block annotation (`markdown` or `html`) from planning artifacts to determine the format value.
 * Copy field values verbatim from planning artifacts
 * Use `mcp_ado_wit_update_work_items_batch` for Acceptance Criteria fields
 
@@ -159,14 +161,16 @@ Keep the user informed during processing:
   "workItemType": "User Story",
   "fields": [
     { "name": "System.Title", "value": "As a user, I want feature X" },
-    { "name": "System.Description", "value": "## User Goal\nDescription content here.", "format": "Markdown" },
+    { "name": "System.Description", "value": "## User Goal\nDescription content here.", "format": "Markdown" }
+    // Or for Azure DevOps Server (HTML):
+    // { "name": "System.Description", "value": "<h2>User Goal</h2><p>Description content here.</p>", "format": "Html" },
     { "name": "System.AreaPath", "value": "edge-ai\\Team" },
     { "name": "System.IterationPath", "value": "edge-ai\\Sprint 1" }
   ]
 }
 ```
 
-### Batch Update Example
+### Batch Update Example (Markdown)
 
 ```json
 {
@@ -189,6 +193,29 @@ Keep the user informed during processing:
 }
 ```
 
+### Batch Update Example (HTML)
+
+```json
+{
+  "updates": [
+    {
+      "id": 1234,
+      "path": "/fields/System.Description",
+      "value": "<h2>User Goal</h2><p>As a user, I want to update component functionality.</p>",
+      "op": "Add",
+      "format": "Html"
+    },
+    {
+      "id": 1234,
+      "path": "/fields/Microsoft.VSTS.Common.AcceptanceCriteria",
+      "value": "<ul><li>Criterion one from planning artifacts</li><li>Criterion two from planning artifacts</li></ul>",
+      "op": "Add",
+      "format": "Html"
+    }
+  ]
+}
+```
+
 ### Link Work Items Example
 
 ```json
@@ -201,5 +228,9 @@ Keep the user informed during processing:
   ]
 }
 ```
+
+### Dry Run Mode
+
+When `dryRun` is enabled, present all planned operations without executing ADO MCP tool calls. Format each operation as a table row showing: Work Item ID/Reference, Operation (Create/Update/Link), Field changes, and Rationale.
 
 <!-- Brought to you by microsoft/hve-core -->

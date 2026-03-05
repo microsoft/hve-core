@@ -12,7 +12,7 @@ on:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'github-actions'
+        default: 'github-actions,npm,workflow-npm-commands'
       soft-fail:
         description: 'Whether to continue on compliance violations'
         required: false
@@ -59,7 +59,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run SHA Pinning Validation
+      - name: Run Dependency Pinning Validation
         id: pinning
         shell: pwsh
         run: |
@@ -71,7 +71,6 @@ jobs:
           # Build parameter list for JSON output (always generate)
           $params = @{
             Path = '.'
-            Recursive = $true
             Format = 'json'
             OutputPath = 'logs/dependency-pinning-results.json'
           }
@@ -165,7 +164,7 @@ jobs:
           
           ### ⚠️ Action Required
           
-          **$unpinnedCount dependencies are not SHA-pinned.**
+          **$unpinnedCount dependencies are not properly pinned.**
           
           Review the warnings in the workflow log and pin dependencies to specific SHA commits.
           
@@ -175,7 +174,7 @@ jobs:
           
           ### ✅ All Dependencies Pinned
           
-          All dependencies are properly SHA-pinned.
+          All dependencies are properly pinned.
           
           "@
           })

@@ -23,7 +23,8 @@
     "Cargo.lock",
     "**/Cargo.lock",
     "CHANGELOG.md",
-    "logs/**"
+    "logs/**",
+    "docs/docusaurus/build/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",

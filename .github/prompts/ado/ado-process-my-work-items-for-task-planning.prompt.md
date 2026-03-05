@@ -1,5 +1,6 @@
 ---
 description: "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
+agent: ADO Backlog Manager
 ---
 
 # Process My Work Items for Task Planning
@@ -7,19 +8,6 @@ description: "Process retrieved work items for task planning and generate task-p
 Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.
 
 You WILL process work items from the planning file structure created by `ado-get-my-work-items.prompt.md` and generate a comprehensive task planning handoff file. This creates enriched work item documentation ready for task research and detailed implementation planning.
-
-## General User Conversation Guidance
-
-Keep the user up-to-date while processing work items.
-
-Follow these guidelines whenever interacting with the user through conversation:
-
-* Utilize markdown styling whenever interacting with the user.
-* Provide double newlines for each paragraph or new section.
-* Use bolding for title words and italics for emphasis.
-* For all unordered lists use markdown `*` instead of only using newlines.
-* Use emojis to help get your point across.
-* Avoid giving the user an overwhelming amount of information.
 
 ## Inputs
 
