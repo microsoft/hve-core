@@ -312,7 +312,7 @@ Avoid `format()` workarounds or environment variable indirection when the simple
 
 The following scripts enforce compliance:
 
-* `scripts/security/Test-DependencyPinning.ps1` - Validates SHA pinning
+* `scripts/security/Test-DependencyPinning.ps1` - Validates dependency pinning
 * `scripts/security/Test-SHAStaleness.ps1` - Checks for stale dependencies
 * `scripts/security/Test-WorkflowPermissions.ps1` - Validates workflow permissions declarations
 * `scripts/linting/Invoke-YamlLint.ps1` - Runs actionlint validation

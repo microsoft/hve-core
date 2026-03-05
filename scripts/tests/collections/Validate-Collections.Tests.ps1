@@ -521,7 +521,8 @@ items:
     }
 
     It 'Detects shared item missing canonical entry' {
-        # Two collections share the same item but neither is hve-core-all
+        # Two collections share the same item but neither is hve-core-all;
+        # hve-core-all exists but does not include a.agent.md - Check 4 fires.
         $manifest1 = [ordered]@{
             id          = 'share-one'
             name        = 'Share One'
@@ -544,10 +545,28 @@ items:
                 }
             )
         }
+        $canonical = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical - missing a.agent.md'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/test/b.agent.md'
+                    kind = 'agent'
+                },
+                [ordered]@{
+                    path = '.github/instructions/test/test.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
         $yaml1 = ConvertTo-Yaml -Data $manifest1
         $yaml2 = ConvertTo-Yaml -Data $manifest2
+        $yaml3 = ConvertTo-Yaml -Data $canonical
         Set-Content -Path (Join-Path $script:collectionsDir 'share-one.collection.yml') -Value $yaml1
         Set-Content -Path (Join-Path $script:collectionsDir 'share-two.collection.yml') -Value $yaml2
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml3
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -586,5 +605,215 @@ items:
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
+    }
+}
+
+Describe 'Invoke-CollectionValidation - new checks' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'new-checks-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Standard artifact - used by most tests
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+
+        # Orphan artifact - on disk but not necessarily in manifests
+        $orphanDir = Join-Path $script:repoRoot '.github/agents/orphan'
+        New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+        Set-Content -Path (Join-Path $orphanDir 'orphan.agent.md') -Value '---' -Force
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) { Remove-Item -Path $script:collectionsDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+
+        # Reset agent dirs to pristine state - prevents artifact leakage between tests
+        $agentsBaseDir = Join-Path $script:repoRoot '.github/agents'
+        if (Test-Path $agentsBaseDir) { Remove-Item -Path $agentsBaseDir -Recurse -Force }
+        New-Item -ItemType Directory -Path (Join-Path $agentsBaseDir 'test') -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsBaseDir 'test/a.agent.md') -Value '---' -Force
+        New-Item -ItemType Directory -Path (Join-Path $agentsBaseDir 'orphan') -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsBaseDir 'orphan/orphan.agent.md') -Value '---' -Force
+    }
+
+    # Check 3: companion .collection.md
+
+    It 'Warns but passes when .collection.md companion is missing' {
+        $manifest = [ordered]@{
+            id = 'no-companion'; name = 'No Companion'; description = 'Missing companion md'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Passes cleanly when .collection.md companion is present' {
+        $manifest = [ordered]@{
+            id = 'has-companion'; name = 'Has Companion'; description = 'With md'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.md') -Value '# Has Companion'
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    # Check 2: intra-collection duplicate
+
+    It 'Fails when the same item appears twice in one collection' {
+        $manifest = [ordered]@{
+            id = 'intra-dup'; name = 'Intra Dup'; description = 'Dup item'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'intra-dup.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Passes when all items in a collection are distinct' {
+        $agentsDir2 = Join-Path $script:repoRoot '.github/agents/test2'
+        New-Item -ItemType Directory -Path $agentsDir2 -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir2 'b.agent.md') -Value '---' -Force
+
+        $manifest = [ordered]@{
+            id = 'distinct-items'; name = 'Distinct'; description = 'Distinct items'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' }
+            )
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'distinct-items.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'distinct-items.collection.md') -Value '# Distinct'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    # Check 4: hve-core-all coverage
+
+    It 'Fails when a themed collection item is absent from hve-core-all' {
+        $manifest = [ordered]@{
+            id = 'themed-only'; name = 'Themed Only'; description = 'Item not in hve-core-all'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        # Canonical exists but does NOT include a.agent.md - only orphan - so Check 4 fires
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing themed item'
+            items = @([ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-only.collection.md') -Value '# Themed'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Passes when all themed items are present in hve-core-all' {
+        $themed = [ordered]@{
+            id = 'themed-covered'; name = 'Themed Covered'; description = 'Covered by canonical'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-covered.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-covered.collection.md') -Value '# Themed Covered'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+    }
+
+    # Check 1: orphan detection
+
+    It 'Fails when an on-disk artifact is absent from hve-core-all' {
+        # manifest and canonical cover a.agent.md but NOT orphan/orphan.agent.md
+        $manifest = [ordered]@{
+            id = 'partial-coverage'; name = 'Partial'; description = 'Missing orphan'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing orphan'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'partial-coverage.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'partial-coverage.collection.md') -Value '# Partial'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Warns but passes when artifact is in hve-core-all but not in any themed collection' {
+        # Themed covers only a.agent.md; canonical covers both - orphan is canonical-only
+        $themed = [ordered]@{
+            id = 'themed-partial'; name = 'Themed Partial'; description = 'Missing orphan in themed'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical - covers orphan'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.md') -Value '# Themed Partial'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
     }
 }

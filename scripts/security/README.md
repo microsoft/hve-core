@@ -33,7 +33,7 @@ The security scripts share common modules and follow a consistent pattern:
 
 ### `Test-DependencyPinning.ps1`
 
-Verifies SHA pinning compliance for all dependencies in GitHub Actions workflows.
+Verifies dependency pinning compliance for all dependencies in GitHub Actions workflows.
 
 Purpose: Detect unpinned or improperly pinned dependencies to maintain
 supply chain security.

@@ -1,6 +1,10 @@
-Enforce language-specific coding conventions and best practices across your projects. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns.
+Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
 
-This collection includes instructions for:
+This collection includes:
+
+- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+
+Instructions for:
 
 - **Bash** — Shell scripting conventions and best practices
 - **Bicep** — Infrastructure as code implementation standards

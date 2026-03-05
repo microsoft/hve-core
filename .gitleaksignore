@@ -1,5 +1,5 @@
 # False positives: fake GitHub PAT 'ghp_test123456789' used as test fixture data
-# in Pester security test files for SHA pinning and staleness validation.
+# in Pester security test files for dependency pinning and staleness validation.
 # Rule: generic-api-key
 
 # Test-SHAStaleness.Tests.ps1

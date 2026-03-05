@@ -165,8 +165,15 @@ function Invoke-CollectionValidation {
     $itemOccurrences = @{}
 
     foreach ($file in $collectionFiles) {
+        $baseName = $file.Name -replace '\.collection\.yml$', ''
+        $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
+        if (-not (Test-Path -Path $companionPath)) {
+            Write-Host "  WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
+        }
+
         $manifest = Get-CollectionManifest -CollectionPath $file.FullName
         $fileErrors = @()
+        $seenItemKeys = @{}
 
         # Required fields
         $requiredFields = @('id', 'name', 'description', 'items')
@@ -245,6 +252,16 @@ function Invoke-CollectionValidation {
                 $fileErrors += "invalid maturity '$itemMaturity' for item '$itemPath' (allowed: $($allowedMaturities -join ', '))"
             }
 
+            # Check 2: intra-collection duplicate detection
+            if (-not [string]::IsNullOrWhiteSpace($itemPath) -and -not [string]::IsNullOrWhiteSpace($kind)) {
+                $dupKey = Get-CollectionItemKey -Kind $kind -ItemPath $itemPath
+                if ($seenItemKeys.ContainsKey($dupKey)) {
+                    $fileErrors += "duplicate item '$dupKey' appears more than once in collection '$id'"
+                } else {
+                    $seenItemKeys[$dupKey] = $true
+                }
+            }
+
             if (-not [string]::IsNullOrWhiteSpace($itemPath) -and -not [string]::IsNullOrWhiteSpace($kind)) {
                 $itemKey = Get-CollectionItemKey -Kind $kind -ItemPath $itemPath
                 if (-not $itemOccurrences.ContainsKey($itemKey)) {
@@ -280,6 +297,13 @@ function Invoke-CollectionValidation {
         $validatedCount++
     }
 
+    $canonicalManifestFound = ($collectionFiles | Where-Object {
+        ($_.Name -replace '\.collection\.yml$', '') -eq $canonicalCollectionId
+    }).Count -gt 0
+    if (-not $canonicalManifestFound) {
+        Write-Host "  WARN '$canonicalCollectionId.collection.yml' not found; skipping orphan and cross-collection coverage checks" -ForegroundColor Yellow
+    }
+
     # Duplicate artifact key detection across all collections
     $artifactKeyMap = @{}
     foreach ($itemKey in $itemOccurrences.Keys) {
@@ -309,27 +333,44 @@ function Invoke-CollectionValidation {
 
     foreach ($itemKey in $itemOccurrences.Keys) {
         $occurrences = $itemOccurrences[$itemKey]
-        if ($occurrences.Count -le 1) {
-            continue
-        }
-
         $canonicalMatches = @($occurrences | Where-Object { $_.CollectionId -eq $canonicalCollectionId })
-        if ($canonicalMatches.Count -eq 0) {
-            $sharedCollections = ($occurrences | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
-            Write-Host "  FAIL shared item '$itemKey' exists in collections [$sharedCollections] but has no canonical entry in '$canonicalCollectionId'" -ForegroundColor Red
+        $themedMatches    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId })
+
+        # Check 4: item in one or more themed collections but absent from hve-core-all
+        if ($canonicalManifestFound -and $themedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
+            $themedCollections = ($themedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
+            Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
             $errorCount++
             continue
         }
 
-        $canonical = $canonicalMatches[0]
-        foreach ($occurrence in $occurrences) {
-            if ($occurrence.CollectionId -eq $canonicalCollectionId) {
-                continue
+        # Maturity conflict: only when item appears in canonical AND at least one themed
+        if ($canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
+            $canonical = $canonicalMatches[0]
+            foreach ($occurrence in $themedMatches) {
+                if ($occurrence.Maturity -ne $canonical.Maturity) {
+                    Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+                    $errorCount++
+                }
             }
+        }
+    }
 
-            if ($occurrence.Maturity -ne $canonical.Maturity) {
-                Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+    if ($canonicalManifestFound) {
+        # Check 1: Orphan artifact detection
+        $onDiskArtifacts = Get-ArtifactFiles -RepoRoot $RepoRoot
+        foreach ($artifact in $onDiskArtifacts) {
+            $diskKey = Get-CollectionItemKey -Kind $artifact.kind -ItemPath $artifact.path
+            $occurrences = if ($itemOccurrences.ContainsKey($diskKey)) { $itemOccurrences[$diskKey] } else { @() }
+
+            $inCanonical = @($occurrences | Where-Object { $_.CollectionId -eq $canonicalCollectionId }).Count -gt 0
+            $inThemed    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId }).Count -gt 0
+
+            if (-not $inCanonical) {
+                Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
                 $errorCount++
+            } elseif (-not $inThemed) {
+                Write-Host "  WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
             }
         }
     }

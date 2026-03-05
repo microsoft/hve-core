@@ -1,5 +1,0 @@
-{
-  "name": "code-review",
-  "description": "Pre-PR code review agents for functional correctness, error handling, edge cases, and testing gaps",
-  "version": "3.1.46"
-}

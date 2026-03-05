@@ -25,7 +25,7 @@ Always install the following packages in every virtual environment:
 
 * `ipykernel`
 * `ipywidgets`
-* `black`
+* `ruff`
 * `tqdm`
 * `pytest`
 
@@ -91,7 +91,7 @@ When users request help with Python environments:
 
 ```bash
 uv init
-uv add ipykernel ipywidgets black tqdm pytest [additional packages]
+uv add ipykernel ipywidgets ruff tqdm pytest [additional packages]
 uv sync
 uv lock
 ```
