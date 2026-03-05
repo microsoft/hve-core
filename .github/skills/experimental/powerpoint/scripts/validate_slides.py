@@ -2,7 +2,7 @@
 """Validate slide images using Copilot SDK vision models.
 
 Sends each rendered slide image to a vision-capable model via the
-GitHub Copilot SDK and returns structured JSON validation findings.
+GitHub Copilot SDK and returns plain-text validation findings.
 
 Usage::
 
@@ -36,101 +36,37 @@ from pptx_utils import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_SYSTEM_MESSAGE = (
-    "You are a slide presentation visual analyst and quality inspector. "
-    "Analyze each slide image and return your findings as valid JSON only "
-    "-- no additional text, no markdown formatting, no code fences.\n\n"
-    "CRITICAL: Each slide is unique. Examine the SPECIFIC content, layout, "
-    "colors, and text visible in THIS slide image. Do NOT copy or repeat "
-    "findings from other slides. Your response must reflect what you "
-    "actually see in the provided image.\n\n"
-    "For each slide, describe everything you observe:\n\n"
-    "1. BACKGROUND: Describe background images or solid colors, gradients, "
-    "patterns, or any visual treatment applied to the slide background.\n\n"
-    "2. SHAPES: For each shape, describe its type, any image inside it, "
-    "fill colors, alpha/transparency, visual effects (shadow, glow, "
-    "reflection, soft edges), rotation angle, position on the slide, "
-    "and size.\n\n"
-    "3. TEXT BOXES: For each text box, describe the text content, font "
-    "family, font styles (bold, italic, underline), font size, text "
-    "color, alpha/transparency, visual effects (shadow, outline, glow), "
-    "rotation angle, position on the slide, size, line and paragraph "
-    "spacing, text orientation (horizontal, vertical, rotated), and "
-    "alignment (left, center, right, justify).\n\n"
-    "4. IMAGES: For each image, describe what the image shows, its "
-    "dominant colors, alpha/transparency, visual effects (shadow, border, "
-    "reflection), rotation angle, position on the slide, any visible "
-    "cropping, and size.\n\n"
-    "5. ADDITIONAL CHARACTERISTICS: Note any other unique or notable "
-    "visual features not covered above, such as animations indicators, "
-    "grouped elements, layering order, or decorative elements.\n\n"
-    "Also evaluate the slide for quality issues including text overlay, "
-    "overflow, font consistency, edge margins, element spacing, color "
-    "contrast, narrow text boxes, leftover placeholders, decorative line "
-    "positioning, citation collisions, column alignment, and readable "
-    "fill combinations."
-)
-
-DEFAULT_RESPONSE_SCHEMA = json.dumps(
-    {
-        "slide_description": {
-            "background": {
-                "type": "solid_color|gradient|image|pattern",
-                "details": "description of background",
-            },
-            "shapes": [
-                {
-                    "type": "shape type",
-                    "image": "description if shape contains image, or null",
-                    "fill_color": "color value or null",
-                    "alpha": "transparency value 0-100",
-                    "effects": "shadow, glow, reflection, etc. or none",
-                    "rotation": "degrees",
-                    "position": {"left": "inches from left", "top": "inches from top"},
-                    "size": {"width": "inches", "height": "inches"},
-                }
-            ],
-            "text_boxes": [
-                {
-                    "content": "text content",
-                    "font": "font family",
-                    "font_style": "bold, italic, underline, or normal",
-                    "font_size": "size in points",
-                    "color": "text color",
-                    "alpha": "transparency value 0-100",
-                    "effects": "shadow, outline, glow, or none",
-                    "rotation": "degrees",
-                    "position": {"left": "inches from left", "top": "inches from top"},
-                    "size": {"width": "inches", "height": "inches"},
-                    "spacing": "line and paragraph spacing",
-                    "orientation": "horizontal, vertical, or rotated",
-                    "alignment": "left, center, right, or justify",
-                }
-            ],
-            "images": [
-                {
-                    "description": "what the image shows",
-                    "colors": "dominant colors",
-                    "alpha": "transparency value 0-100",
-                    "effects": "shadow, border, reflection, or none",
-                    "rotation": "degrees",
-                    "position": {"left": "inches from left", "top": "inches from top"},
-                    "size": {"width": "inches", "height": "inches"},
-                    "cropping": "any visible cropping or none",
-                }
-            ],
-            "additional_characteristics": "any other notable features",
-        },
-        "issues": [
-            {
-                "check_type": "check name",
-                "severity": "error|warning|info",
-                "description": "what is wrong",
-                "location": "where on the slide",
-            }
-        ],
-        "overall_quality": "good|needs-attention|poor",
-    },
-    indent=4,
+    "You are a slide presentation quality inspector. "
+    "Only report issues and problems you can see in the provided slide image. "
+    "Do not provide a full visual inventory of the slide.\n\n"
+    "Focus on these checks:\n"
+    "- Overlapping elements "
+    "(text through shapes, lines through words, stacked elements)\n"
+    "- Text overflow or cut off at edges/box boundaries\n"
+    "- Decorative lines positioned for single-line text "
+    "but title wrapped to two lines\n"
+    "- Source citations or footers colliding with content above\n"
+    "- Elements too close (< 0.3 in gaps) or cards/sections nearly touching\n"
+    "- Uneven gaps (large empty area in one place, cramped in another)\n"
+    "- Insufficient margin from slide edges (< 0.5 in)\n"
+    "- Columns or similar elements not aligned consistently\n"
+    "- Low-contrast text (for example, light gray text on cream background)\n"
+    "- Low-contrast icons (for example, dark icons on dark backgrounds "
+    "without a contrasting circle)\n"
+    "- Text boxes too narrow causing excessive wrapping\n"
+    "- Leftover placeholder content\n\n"
+    "Important judgment rule for dense slides: some decks intentionally "
+    "pack content near edges or slightly outside ideal margins. "
+    "Do not flag edge proximity or boundary pressure by itself when "
+    "readability remains acceptable and placement appears intentional. "
+    "Flag these only when content is visibly cut off, collisions occur, "
+    "or readability/usability is meaningfully reduced.\n\n"
+    "Return plain text only using this flexible template:\n"
+    "Slide: <slide number>\n"
+    "Status: <no significant issues | issues found>\n"
+    "Findings:\n"
+    "- [error|warning|info] <issue type>: <what is wrong> (location: <where>)\n"
+    "If there are no issues, write: No significant issues found."
 )
 
 IMAGE_PATTERN = re.compile(r"slide[-_](\d+)\.jpe?g$", re.IGNORECASE)
@@ -162,26 +98,6 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--slides", help="Comma-separated slide numbers to validate (default: all)"
-    )
-    sys_group = parser.add_mutually_exclusive_group()
-    sys_group.add_argument(
-        "--system-message",
-        help="Custom system message text (default: built-in visual analysis prompt)",
-    )
-    sys_group.add_argument(
-        "--system-message-file",
-        type=Path,
-        help="Path to file containing a custom system message",
-    )
-    schema_group = parser.add_mutually_exclusive_group()
-    schema_group.add_argument(
-        "--response-schema",
-        help="Custom response schema JSON text (default: built-in schema)",
-    )
-    schema_group.add_argument(
-        "--response-schema-file",
-        type=Path,
-        help="Path to file containing a custom response schema JSON",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
@@ -220,46 +136,6 @@ def discover_images(
             if slide_filter is None or num in slide_filter:
                 images.append((num, f))
     return images
-
-
-def load_system_message(args: argparse.Namespace) -> str:
-    """Load the system message from argument, file, or default.
-
-    Args:
-        args: Parsed CLI arguments.
-
-    Returns:
-        System message string.
-    """
-    if args.system_message:
-        return args.system_message
-    if args.system_message_file:
-        path = args.system_message_file
-        if not path.exists():
-            logger.error("System message file not found: %s", path)
-            sys.exit(EXIT_ERROR)
-        return path.read_text(encoding="utf-8").strip()
-    return DEFAULT_SYSTEM_MESSAGE
-
-
-def load_response_schema(args: argparse.Namespace) -> str:
-    """Load the response schema from argument, file, or default.
-
-    Args:
-        args: Parsed CLI arguments.
-
-    Returns:
-        Response schema JSON string.
-    """
-    if args.response_schema:
-        return args.response_schema
-    if args.response_schema_file:
-        path = args.response_schema_file
-        if not path.exists():
-            logger.error("Response schema file not found: %s", path)
-            sys.exit(EXIT_ERROR)
-        return path.read_text(encoding="utf-8").strip()
-    return DEFAULT_RESPONSE_SCHEMA
 
 
 async def validate_slide(
@@ -343,8 +219,6 @@ async def run(args: argparse.Namespace) -> int:
     prompt = load_prompt(args)
     slide_filter = parse_slide_filter(args.slides)
     image_dir = args.image_dir.resolve()
-    system_message = load_system_message(args)
-    response_schema = load_response_schema(args)
 
     if not image_dir.is_dir():
         logger.error("Image directory not found: %s", image_dir)
@@ -359,14 +233,6 @@ async def run(args: argparse.Namespace) -> int:
         "Found %d slide image(s) to validate with model %s", len(images), args.model
     )
 
-    # Build the full system message with response schema
-    full_system_message = (
-        f"{system_message}\n\n"
-        f"Response schema:\n{response_schema}\n\n"
-        "If no issues are found, return the response schema with an empty "
-        "issues array and overall_quality set to \"good\"."
-    )
-
     client = CopilotClient()
     await client.start()
 
@@ -374,7 +240,10 @@ async def run(args: argparse.Namespace) -> int:
         session = await client.create_session(
             {
                 "model": args.model,
-                "system_message": {"mode": "replace", "content": full_system_message},
+                "system_message": {
+                    "mode": "replace",
+                    "content": DEFAULT_SYSTEM_MESSAGE,
+                },
                 "on_permission_request": PermissionHandler.approve_all,
             }
         )
@@ -391,12 +260,14 @@ async def run(args: argparse.Namespace) -> int:
     # Sort results by slide number
     slide_results.sort(key=lambda r: r.get("slide_number", 0))
 
-    # Write per-slide validation JSON files next to slide images
+    # Write per-slide validation text files next to slide images.
     for result in slide_results:
         slide_num = result.get("slide_number", 0)
-        per_slide_path = image_dir / f"slide-{slide_num:03d}-validation.json"
-        per_slide_json = json.dumps(result, indent=2)
-        per_slide_path.write_text(per_slide_json, encoding="utf-8")
+        per_slide_path = image_dir / f"slide-{slide_num:03d}-validation.txt"
+        per_slide_text = result.get("response", "")
+        if result.get("error"):
+            per_slide_text = f"Validation error: {result['error']}"
+        per_slide_path.write_text(per_slide_text.strip() + "\n", encoding="utf-8")
         logger.debug("Per-slide results written to %s", per_slide_path)
 
     results = {

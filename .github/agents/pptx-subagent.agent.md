@@ -112,20 +112,20 @@ Validate the generated deck against quality criteria using PPTX property checks 
 2. Run the full Validate pipeline via `Invoke-PptxPipeline.ps1 -Action Validate`:
    * Use `-InputPath` pointing to the PPTX file and `-ContentDir` pointing to the content directory.
    * Use `-ImageOutputDir` pointing to `{{working-directory}}/slide-deck/validation/` and `-Resolution 150`.
-   * Do not pass `-ValidationPrompt` unless the orchestrator provides task-specific checks beyond the defaults. The `validate_slides.py` script has a comprehensive built-in system message covering all standard visual quality checks (text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative lines, citation collisions, column alignment, readable fills). Without `-ValidationPrompt`, the pipeline runs PPTX property checks only (no vision step); when vision validation is needed, pass a short prompt such as `"Validate visual quality"` to activate it.
+   * Do not pass `-ValidationPrompt` unless the orchestrator provides task-specific checks beyond the defaults. The `validate_slides.py` script has a built-in issue-only system message that checks overlapping elements, text overflow/cutoff, decorative line mismatch after title wrapping, citation/footer collisions, tight spacing, uneven gaps, insufficient edge margins, alignment inconsistencies, low contrast, narrow text boxes, and leftover placeholders. It treats dense near-edge layouts as acceptable when readability is not materially reduced. Without `-ValidationPrompt`, the pipeline runs PPTX property checks only (no vision step); when vision validation is needed, pass a short prompt such as `"Validate visual quality"` to activate it.
    * Optionally pass `-ValidationModel` to specify the vision model (default: `claude-haiku-4.5`).
    * The pipeline automatically clears stale images before exporting and names output images to match original slide numbers when `-Slides` is used.
 3. Read the vision validation results from `{{working-directory}}/slide-deck/validation/validation-results.json`.
 4. Read the PPTX property results from `{{working-directory}}/slide-deck/validation/deck-validation-results.json`.
 5. Read the PPTX property report from `{{working-directory}}/slide-deck/validation/deck-validation-report.md` for speaker notes and slide count findings.
 6. For individual slide findings, read per-slide files next to the slide images:
-   * `slide-NNN-validation.json` — Vision validation result for slide NNN (description, issues, quality).
+   * `slide-NNN-validation.txt` — Vision validation response text for slide NNN (issues and quality findings).
    * `slide-NNN-deck-validation.json` — PPTX property validation result for slide NNN.
 7. **Verify exported image filenames match expected slide numbers.** When `-Slides` is used, images should be named `slide-023.jpg`, `slide-024.jpg`, etc. — not `slide-001.jpg`, `slide-002.jpg`. If filenames don't match, the pipeline may have a stale image issue; clear the directory and re-export.
 8. For each slide, list issues or areas of concern, even if minor.
 9. Categorize findings by severity: error (must fix), warning (should fix), info (consider fixing).
 10. When validating changed or added slides, always validate a block that includes one slide before and one slide after the changed slides. This catches edge-proximity issues and transition inconsistencies.
-11. Update the execution log with all validation findings including the path to exported slide images and the per-slide validation JSON files.
+11. Update the execution log with all validation findings including the path to exported slide images and the per-slide validation text files.
 
 #### Task: `export`
 

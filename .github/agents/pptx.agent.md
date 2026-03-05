@@ -119,7 +119,7 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Content directory path.
 * Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
-* The `validate_slides.py` script has a comprehensive built-in system message covering all standard visual quality checks. Do not pass a `-ValidationPrompt` unless the user requests additional task-specific checks. To activate vision validation, pass `-ValidationPrompt "Validate visual quality"` — this triggers the vision step without duplicating the built-in checks.
+* The `validate_slides.py` script has a built-in issue-only system message that checks overlapping elements, text overflow/cutoff, decorative line mismatch after title wrapping, citation/footer collisions, spacing/alignment problems, low contrast, narrow text boxes, and leftover placeholders. It treats dense near-edge layouts as acceptable when readability remains acceptable. Do not pass a `-ValidationPrompt` unless the user requests additional task-specific checks. To activate vision validation, pass `-ValidationPrompt "Validate visual quality"`.
 * Optional overrides: validation model (default: `claude-haiku-4.5`).
 
 The pipeline automatically clears stale images before exporting and names output files to match original slide numbers when `-Slides` is used. This ensures `validate_slides.py` reads the correct, freshly-exported images.
@@ -129,8 +129,8 @@ The pipeline automatically clears stale images before exporting and names output
 Read the subagent's execution log and review all validation findings from:
 * `slide-deck/validation/deck-validation-results.json` — Consolidated PPTX property findings (speaker notes, slide count).
 * `slide-deck/validation/deck-validation-report.md` — Human-readable PPTX property report.
-* `slide-deck/validation/validation-results.json` — Consolidated vision-based quality findings with visual descriptions.
-* `slide-deck/validation/slide-NNN-validation.json` — Per-slide vision validation result (next to `slide-NNN.jpg`).
+* `slide-deck/validation/validation-results.json` — Consolidated vision-based quality findings.
+* `slide-deck/validation/slide-NNN-validation.txt` — Per-slide vision validation response text (next to `slide-NNN.jpg`).
 * `slide-deck/validation/slide-NNN-deck-validation.json` — Per-slide PPTX property validation result.
 
 When validating changed or added slides, always pass a `-Slides` range that includes one slide before and one slide after the changed slides. This catches edge-proximity issues and transition inconsistencies between adjacent slides.
