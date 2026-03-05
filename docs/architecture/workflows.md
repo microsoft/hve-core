@@ -76,7 +76,7 @@ Individual validation workflows called by orchestration workflows:
 | `table-format.yml`                  | Markdown table formatting        | `npm run format:tables`             |
 | `pester-tests.yml`                  | PowerShell unit tests            | `npm run test:ps`                   |
 | `skill-validation.yml`              | Skill structure validation       | `npm run validate:skills`           |
-| `dependency-pinning-scan.yml`       | GitHub Actions pinning           | N/A (PowerShell direct)             |
+| `dependency-pinning-scan.yml`       | Dependency pinning validation    | N/A (PowerShell direct)             |
 | `sha-staleness-check.yml`           | SHA reference freshness*         | N/A (PowerShell direct)             |
 | `codeql-analysis.yml`               | CodeQL security scanning*        | N/A (GitHub native)                 |
 | `dependency-review.yml`             | Dependency vulnerability review* | N/A (GitHub native)                 |
@@ -135,7 +135,7 @@ flowchart LR
 | skill-validation         | `skill-validation.yml`        | Skill directory structure      |
 | link-lang-check          | `link-lang-check.yml`         | Link accessibility             |
 | markdown-link-check      | `markdown-link-check.yml`     | Broken links                   |
-| dependency-pinning-check | `dependency-pinning-scan.yml` | Action SHA pinning             |
+| dependency-pinning-check | `dependency-pinning-scan.yml` | Dependency pinning             |
 | npm-audit                | Inline                        | npm dependency vulnerabilities |
 | codeql                   | `codeql-analysis.yml`         | Code security patterns         |
 | copyright-headers        | `copyright-headers.yml`       | Copyright header compliance    |
@@ -200,23 +200,23 @@ When release-please creates a release, parallel jobs build the extension VSIX (`
 
 The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, providing scheduled security posture review.
 
-| Job              | Purpose                               |
-|------------------|---------------------------------------|
-| validate-pinning | Verify GitHub Actions use SHA pinning |
-| check-staleness  | Detect outdated SHA references        |
-| codeql-analysis  | Full CodeQL security scan             |
-| summary          | Aggregate security status report      |
+| Job              | Purpose                              |
+|------------------|--------------------------------------|
+| validate-pinning | Verify dependency pinning compliance |
+| check-staleness  | Detect outdated SHA references       |
+| codeql-analysis  | Full CodeQL security scan            |
+| summary          | Aggregate security status report     |
 
 ### Security Validation Tools
 
-| Tool               | Script                       | Checks                                   |
-|--------------------|------------------------------|------------------------------------------|
-| Dependency Pinning | `Test-DependencyPinning.ps1` | Actions use SHA refs, not tags           |
-| SHA Staleness      | `Test-SHAStaleness.ps1`      | SHAs reference recent commits            |
-| npm Audit          | `npm audit`                  | Known vulnerabilities in dependencies    |
-| CodeQL             | GitHub native                | Code patterns indicating security issues |
-| Gitleaks           | `gitleaks`                   | Secret detection in repository history   |
-| Dependency Review  | GitHub native                | Dependency vulnerability analysis        |
+| Tool               | Script                       | Checks                                        |
+|--------------------|------------------------------|-----------------------------------------------|
+| Dependency Pinning | `Test-DependencyPinning.ps1` | Actions use SHA refs; npm uses exact versions |
+| SHA Staleness      | `Test-SHAStaleness.ps1`      | SHAs reference recent commits                 |
+| npm Audit          | `npm audit`                  | Known vulnerabilities in dependencies         |
+| CodeQL             | GitHub native                | Code patterns indicating security issues      |
+| Gitleaks           | `gitleaks`                   | Secret detection in repository history        |
+| Dependency Review  | GitHub native                | Dependency vulnerability analysis             |
 
 ## Extension Publishing
 

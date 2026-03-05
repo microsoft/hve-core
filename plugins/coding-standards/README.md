@@ -1,13 +1,25 @@
 <!-- markdownlint-disable-file -->
 # Coding Standards
 
-Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
+Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
 
 ## Install
 
 ```bash
 copilot plugin install coding-standards@hve-core
 ```
+
+## Agents
+
+| Agent                  | Description                                                                                                                                 |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| functional-code-review | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
+
+## Commands
+
+| Command                | Description                                                                                                                               |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| functional-code-review | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
 
 ## Instructions
 

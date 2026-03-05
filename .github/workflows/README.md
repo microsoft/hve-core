@@ -98,7 +98,7 @@ Each modular workflow implements comprehensive 4-channel result publishing:
 
 All workflows in this repository follow security best practices:
 
-### SHA Pinning
+### Dependency Pinning
 
 * All GitHub Actions use full 40-character commit SHAs
 * Comments include semantic version tags for human readability
@@ -126,7 +126,7 @@ The repository includes PowerShell scripts in `scripts/security/` for SHA pinnin
 * `Update-DockerSHAPinning.ps1` - Update Docker image SHA pins
 * `Update-ShellScriptSHAPinning.ps1` - Update shell script dependencies
 * `Test-SHAStaleness.ps1` - Check for stale SHA pins
-* `Test-DependencyPinning.ps1` - Validate SHA pinning compliance
+* `Test-DependencyPinning.ps1` - Validate dependency pinning compliance
 
 ### Dependabot Integration
 
@@ -264,7 +264,7 @@ To add a new workflow to the repository:
 
 1. Create `{tool-name}.yml` following existing patterns
 2. Implement 4-channel result publishing (annotations, artifacts, SARIF if security, summaries)
-3. Use SHA pinning for all actions
+3. Use dependency pinning for all dependencies
 4. Use minimal permissions
 5. Add soft-fail input support
 6. Update `pr-validation.yml` and `release-stable.yml` to include new job

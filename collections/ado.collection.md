@@ -6,3 +6,4 @@ This collection includes agents and prompts for:
 - **Build Monitoring** — Query build status, review logs, and diagnose failures
 - **Pull Request Creation** — Generate PRs with linked work items and reviewer identification
 - **PRD-to-Work-Item Conversion** — Transform Product Requirements Documents into ADO feature/user-story/task hierarchies
+- **Backlog Management** — Orchestrated triage, discovery, sprint planning, and work item creation workflows through a central ADO Backlog Manager agent

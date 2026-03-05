@@ -11,6 +11,8 @@ items:
   # Agents
   - path: .github/agents/ado/ado-prd-to-wit.agent.md
     kind: agent
+  - path: .github/agents/ado/ado-backlog-manager.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/ado/ado-create-pull-request.prompt.md
     kind: prompt

@@ -137,19 +137,19 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection          | Tags                                                                                     |
-|---------------------|------------------------------------------------------------------------------------------|
-| `hve-core-all`      | `hve`, `complete`, `bundle`                                                              |
-| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                           |
-| `coding-standards`  | `coding-standards`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `terraform`, `uv` |
-| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`            |
-| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                       |
-| `experimental`      | `experimental`, `media`, `utilities`                                                     |
-| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                        |
-| `installer`         | `installer`, `setup`, `onboarding`                                                       |
-| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`             |
-| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`, `code-review`     |
-| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                      |
+| Collection          | Tags                                                                                                                                       |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `hve-core-all`      | `hve`, `complete`, `bundle`                                                                                                                |
+| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                                                                             |
+| `coding-standards`  | `coding-standards`, `code-review`, `pull-request`, `quality`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `rust`, `terraform`, `uv` |
+| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`                                                              |
+| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                                                                         |
+| `experimental`      | `experimental`, `media`, `utilities`                                                                                                       |
+| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                                                                          |
+| `installer`         | `installer`, `setup`, `onboarding`                                                                                                         |
+| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`                                                               |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`                                                                      |
+| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                                                                        |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
