@@ -6,6 +6,10 @@ tags:
   - experimental
   - preview
 items:
+  # Agents
+  - path: .github/agents/experimental/meeting-analyst.agent.md
+    kind: agent
+    maturity: experimental
   # Skills
   - path: .github/skills/experimental/video-to-gif
     kind: skill
