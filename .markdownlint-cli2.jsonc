@@ -15,6 +15,13 @@
     "plugins/**/commands/**",
     "plugins/**/skills/**",
     "plugins/**/docs/**",
-    "plugins/**/scripts/**"
+    "plugins/**/scripts/**",
+    ".github/instructions/**",
+    ".github/agents/**",
+    ".github/prompts/**",
+    ".github/skills/**"
+  ],
+  "customRules": [
+    "markdownlint-rule-search-replace"
   ]
 }

@@ -1,6 +1,7 @@
 ---
 title: "Method 9: Iteration at Scale"
 description: "Transform user-validated solutions into production systems through telemetry-driven refinement, organizational deployment, and continuous improvement."
+sidebar_position: 13
 author: Microsoft
 ms.date: 2026-02-25
 ms.topic: tutorial

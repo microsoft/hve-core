@@ -36,9 +36,9 @@ platform detection and YAML manifest parsing.
 Prepares extension contents by auto-discovering agents, prompts, instructions,
 and skills from the repository.
 
-**Purpose**: Gather and filter artifacts for inclusion in the extension package.
+Purpose: Gather and filter artifacts for inclusion in the extension package.
 
-**Features**:
+#### Features
 
 * Auto-discovers `.agent.md`, `.prompt.md`, `.instructions.md`, and `SKILL.md`
   files
@@ -46,14 +46,14 @@ and skills from the repository.
 * Supports collection-scoped preparation
 * Dry-run mode for previewing changes
 
-**Parameters**:
+#### Parameters
 
 * `-ChangelogPath` - Path to the changelog file
 * `-Channel` - Release channel: `Stable` or `PreRelease`
 * `-DryRun` (switch) - Preview changes without modifying files
 * `-Collection` - Collection name for scoped preparation
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Prepare stable channel
@@ -70,16 +70,16 @@ and skills from the repository.
 
 Packages the VS Code extension into a `.vsix` file using `vsce`.
 
-**Purpose**: Produce a distributable extension package from prepared contents.
+Purpose: Produce a distributable extension package from prepared contents.
 
-**Features**:
+#### Features
 
 * Sets version from parameters or changelog
 * Supports pre-release and dev patch builds
 * Collection-scoped packaging
 * Dry-run mode for validation
 
-**Parameters**:
+#### Parameters
 
 * `-Version` - Explicit version string
 * `-DevPatchNumber` - Development patch number for dev builds
@@ -88,7 +88,7 @@ Packages the VS Code extension into a `.vsix` file using `vsce`.
 * `-Collection` - Collection name for scoped packaging
 * `-DryRun` (switch) - Preview changes without producing a package
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Package the extension
@@ -105,21 +105,21 @@ Packages the VS Code extension into a `.vsix` file using `vsce`.
 
 Discovers collection manifests for the packaging matrix.
 
-**Purpose**: Build a list of collections to package based on channel and
+Purpose: Build a list of collections to package based on channel and
 maturity rules.
 
-**Features**:
+#### Features
 
 * Scans `collections/` for `.collection.yml` files
 * Filters collections by maturity and channel
 * Outputs a matrix for CI workflow consumption
 
-**Parameters**:
+#### Parameters
 
 * `-Channel` - Release channel filter: `Stable` or `PreRelease`
 * `-CollectionsDir` - Path to the collections directory
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Discover stable collections

@@ -1,0 +1,1 @@
+../../../.github/prompts/ado/ado-add-work-item.prompt.md

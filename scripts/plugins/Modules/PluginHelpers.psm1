@@ -150,7 +150,8 @@ function New-PluginReadmeContent {
 
     .PARAMETER Maturity
         Optional collection-level maturity string. When 'experimental', an
-        experimental notice is injected after the description.
+        experimental notice is injected after the description. When 'preview',
+        a preview notice is injected.
 
     .OUTPUTS
     [string] Complete README markdown content.
@@ -177,11 +178,15 @@ function New-PluginReadmeContent {
     [void]$sb.AppendLine()
     [void]$sb.AppendLine($Collection.description)
 
-    # Inject experimental notice when collection is experimental
+    # Inject maturity notice when collection is not stable
     $effectiveMaturity = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity }
     if ($effectiveMaturity -eq 'experimental') {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Experimental** `u{2014} This collection is experimental. Contents and behavior may change or be removed without notice.")
+    }
+    elseif ($effectiveMaturity -eq 'preview') {
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine("> **`u{1F50D} Preview** `u{2014} This collection is in preview. Core features are complete and functional but refinements may follow.")
     }
 
     [void]$sb.AppendLine()
@@ -209,10 +214,19 @@ function New-PluginReadmeContent {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine("## $($meta.Title)")
         [void]$sb.AppendLine()
-        [void]$sb.AppendLine("| $($meta.Header) | Description |")
-        [void]$sb.AppendLine('| ' + ('-' * $meta.Header.Length) + ' | ----------- |')
+
+        # Calculate column widths for aligned table output
+        $col1Width = $meta.Header.Length
+        $col2Width = 'Description'.Length
         foreach ($item in $kindItems) {
-            [void]$sb.AppendLine("| $($item.Name) | $($item.Description) |")
+            if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
+            if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
+        }
+
+        [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
+        [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
+        foreach ($item in $kindItems) {
+            [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
         }
     }
 
@@ -516,7 +530,7 @@ function Write-PluginDirectory {
 
     .PARAMETER Maturity
         Optional collection-level maturity string. Forwarded to
-        New-PluginReadmeContent for experimental notice injection.
+        New-PluginReadmeContent for maturity notice injection.
 
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.

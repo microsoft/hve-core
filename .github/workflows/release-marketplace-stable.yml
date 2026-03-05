@@ -1,10 +1,8 @@
-name: Publish Extension
+name: Stable Marketplace Publish
 
 on:
-  # Release trigger disabled - extension publishing is manual-only
-  # Uncomment to enable auto-publish on GitHub releases:
-  # release:
-  #   types: [published]
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -28,17 +26,31 @@ concurrency:
 jobs:
   normalize-version:
     name: Normalize Version
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
       version: ${{ steps.normalize.outputs.version }}
     steps:
+      - name: Resolve version from event
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#hve-core-v}"
+            VERSION="${VERSION#v}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "Resolved version from release tag: $VERSION"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Normalize version string
         id: normalize
         env:
           GH_TOKEN: ${{ github.token }}
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ steps.resolve.outputs.version }}
         run: |
           VERSION="$INPUT_VERSION"
           # Strip leading 'v' and component prefix if present
@@ -82,7 +94,7 @@ jobs:
     name: Publish Extensions
     needs: [package]
     if: ${{ !inputs.dry-run }}
-    uses: ./.github/workflows/extension-publish-marketplace.yml
+    uses: ./.github/workflows/extension-marketplace-publish.yml
     with:
       collections-matrix: ${{ needs.package.outputs.collections-matrix }}
       pre-release: false

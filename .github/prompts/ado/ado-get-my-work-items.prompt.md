@@ -1,5 +1,6 @@
 ---
 description: "Retrieve user's current Azure DevOps work items and organize them into planning file definitions"
+agent: ADO Backlog Manager
 ---
 
 # Get My Work Items and Create Planning Files
@@ -7,19 +8,6 @@ description: "Retrieve user's current Azure DevOps work items and organize them 
 Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.
 
 You WILL retrieve all work items assigned to the current user (`@Me`) within the specified Azure DevOps project using Azure DevOps tools, then organize them into the standardized planning file structure. This creates a foundation for future work item planning and execution.
-
-## General User Conversation Guidance
-
-Keep the user up-to-date while processing work items.
-
-Follow these guidelines whenever interacting with the user through conversation:
-
-* Utilize markdown styling whenever interacting with the user.
-* Provide double newlines for each paragraph or new section.
-* Use bolding for title words and italics for emphasis.
-* For all unordered lists use markdown `*` instead of only using newlines.
-* Use emojis to help get your point across.
-* Avoid giving the user an overwhelming amount of information.
 
 ## Inputs
 
@@ -29,6 +17,7 @@ Follow these guidelines whenever interacting with the user through conversation:
 * ${input:types:Bug, Task, User Story}: Comma-separated Work Item Types to fetch (case-insensitive). Default: Bug, Task, User Story.
 * ${input:states:Active, New, Resolved}: (Optional) Comma-separated workflow states to include. Default: Active, New, Resolved.
 * ${input:planningType:current-work}: Planning type for organizing retrieved work items. Default: current-work.
+* `${input:contentFormat:Markdown}`: (Optional) Content format for rich-text fields in planning files. Use `Markdown` for Azure DevOps Services (dev.azure.com) or `Html` for Azure DevOps Server (on-premises). Defaults to Markdown.
 
 ## 1. Required Protocol
 

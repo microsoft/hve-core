@@ -1,0 +1,19 @@
+id: code-review
+name: Code Review
+description: Pre-PR code review agents for functional correctness, error handling, edge cases, and testing gaps
+tags:
+  - code-review
+  - pull-request
+  - quality
+items:
+  # Agents
+  - path: .github/agents/code-review/functional-code-review.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/code-review/functional-code-review.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

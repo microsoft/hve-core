@@ -71,7 +71,7 @@ Use the `hve-core-installer` agent:
 
 If your organization has not already forked HVE-Core, create a fork of `microsoft/hve-core` under your org's GitHub account. Then clone your fork.
 
-**Local VS Code:**
+#### Local VS Code
 
 ```bash
 # Clone your org's fork next to your project

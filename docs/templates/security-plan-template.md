@@ -121,7 +121,7 @@ For each applicable threat, provide detailed analysis following this format:
 **Affected Asset:** [Specific system component]
 **Threat:** [Detailed threat description]
 
-**Recommended Mitigations:**
+#### Recommended Mitigations
 
 1. [Specific, actionable mitigation step]
 2. [Implementation details and configuration]

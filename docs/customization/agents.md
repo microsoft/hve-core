@@ -16,10 +16,10 @@ estimated_reading_time: 7
 
 Agents are specialized Copilot configurations that define behavior, available tools, and domain-specific instructions for complex workflows. In the artifact hierarchy, agents sit between prompts (single-shot tasks) and skills (knowledge packages):
 
-* **Prompts** invoke agents for one-shot execution
-* **Agents** orchestrate multi-turn conversations or autonomous task execution
-* **Instructions** provide scoped guidance that agents inherit automatically
-* **Skills** supply domain knowledge that agents reference on demand
+* Prompts invoke agents for one-shot execution
+* Agents orchestrate multi-turn conversations or autonomous task execution
+* Instructions provide scoped guidance that agents inherit automatically
+* Skills supply domain knowledge that agents reference on demand
 
 An agent file (`.agent.md`) contains YAML frontmatter and a Markdown body. The frontmatter declares metadata, optional tool restrictions, subagent dependencies, and handoff configurations. The body defines the agent's protocol: its purpose, steps or phases, and response format.
 
@@ -145,7 +145,7 @@ tools:
 ---
 ```
 
-**When to use subagents vs. inline logic:**
+### When to use subagents vs. inline logic
 
 * Use subagents when the subtask has its own distinct tool requirements or produces a structured output that the parent consumes.
 * Keep logic inline when the task is a simple step within the parent's protocol and does not benefit from isolation.
@@ -164,8 +164,8 @@ tools:
 
 Tool restrictions serve two purposes:
 
-* **Security**: Prevent agents from modifying files, running terminal commands, or accessing external services when their role is read-only.
-* **Focus**: Reduce noise from irrelevant tool suggestions. A documentation agent does not need terminal access.
+* Agents with read-only roles cannot modify files, run terminal commands, or access external services
+* Restricting irrelevant tools reduces noise. A documentation agent does not need terminal access.
 
 > [!IMPORTANT]
 > Agents that modify files or run commands require explicit tool grants. Read-only agents should omit tools like `run_in_terminal`, `replace_string_in_file`, and `create_file` to enforce safe operation.

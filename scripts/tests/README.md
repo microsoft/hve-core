@@ -22,10 +22,10 @@ production `scripts/` structure.
 
 Pester test runner that writes structured output to `logs/`.
 
-**Purpose**: Provide a consistent entry point for running Pester tests in both
+Purpose: Provide a consistent entry point for running Pester tests in both
 local and CI environments.
 
-**Features**:
+#### Features
 
 * Writes `logs/pester-summary.json` with overall pass/fail counts and duration
 * Writes `logs/pester-failures.json` with failure details including test name,
@@ -33,13 +33,13 @@ local and CI environments.
 * Supports code coverage reporting
 * Integrates with CI for exit codes and NUnit output
 
-**Parameters**:
+#### Parameters
 
 * `-TestPath` - Path to specific test file(s) or directory
 * `-CI` (switch) - Enable CI mode with exit codes and NUnit output
 * `-CodeCoverage` (switch) - Enable code coverage analysis
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Run all tests
@@ -63,23 +63,23 @@ npm run test:ps -- -TestPath "scripts/tests/security/"
 
 Detects changed PowerShell files and resolves corresponding Pester test paths.
 
-**Purpose**: Enable targeted test runs by identifying which tests correspond to
+Purpose: Enable targeted test runs by identifying which tests correspond to
 changed production scripts.
 
-**Features**:
+#### Features
 
 * Compares the current branch against a base branch using `git diff`
 * Maps changed production files to their mirror test files
 * Supports custom file filters and alternate root paths
 
-**Parameters**:
+#### Parameters
 
 * `-BaseBranch` - Git branch to compare against (defaults to `main`)
 * `-FileFilter` - Glob pattern for filtering changed files
 * `-SkillsRoot` - Root path for skill scripts
 * `-TestRoot` - Root path for test files
 
-**Usage**:
+#### Usage
 
 ```powershell
 # Get test files for all changed scripts

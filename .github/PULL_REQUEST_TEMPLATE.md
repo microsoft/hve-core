@@ -33,11 +33,11 @@ Select all that apply:
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
 * [ ] Copilot skill (`.github/skills/*/SKILL.md`)
 
-> **Note for AI Artifact Contributors**:
+> Note for AI Artifact Contributors:
 >
-> * **Agents**: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
-> * **Skills**: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
-> * **Model Versions**: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
+> * Agents: Research, indexing/referencing other project (using standard VS Code GitHub Copilot/MCP tools), planning, and general implementation agents likely already exist. Review `.github/agents/` before creating new ones.
+> * Skills: Must include both bash and PowerShell scripts. See [Skills](../docs/contributing/skills.md).
+> * Model Versions: Only contributions targeting the **latest Anthropic and OpenAI models** will be accepted. Older model versions (e.g., GPT-3.5, Claude 3) will be rejected.
 > * See [Agents Not Accepted](../docs/contributing/custom-agents.md#agents-not-accepted) and [Model Version Requirements](../docs/contributing/ai-artifacts-common.md#model-version-requirements).
 
 **Other:**
@@ -64,11 +64,11 @@ Select all that apply:
 
 For detailed contribution requirements, see:
 
-* **Common Standards**: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
-* **Agents**: [docs/contributing/custom-agents.md](../docs/contributing/custom-agents.md) - Agent configurations with tools and behavior patterns
-* **Prompts**: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
-* **Instructions**: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
-* **Skills**: [docs/contributing/skills.md](../docs/contributing/skills.md) - Task execution utilities with cross-platform scripts
+* Common Standards: [docs/contributing/ai-artifacts-common.md](../docs/contributing/ai-artifacts-common.md) - Shared standards for XML blocks, markdown quality, RFC 2119, validation, and testing
+* Agents: [docs/contributing/custom-agents.md](../docs/contributing/custom-agents.md) - Agent configurations with tools and behavior patterns
+* Prompts: [docs/contributing/prompts.md](../docs/contributing/prompts.md) - Workflow-specific guidance with template variables
+* Instructions: [docs/contributing/instructions.md](../docs/contributing/instructions.md) - Technology-specific standards with glob patterns
+* Skills: [docs/contributing/skills.md](../docs/contributing/skills.md) - Task execution utilities with cross-platform scripts
 
 ## Testing
 <!-- Describe how you tested these changes -->

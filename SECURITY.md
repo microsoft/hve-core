@@ -2,7 +2,7 @@
 title: Security
 description: Security vulnerability reporting procedures and Microsoft's coordinated disclosure policy
 author: Microsoft Security Response Center
-ms.date: 2025-11-04
+ms.date: 2026-03-01
 ms.topic: reference
 keywords:
   - security
@@ -10,7 +10,10 @@ keywords:
   - MSRC
   - responsible disclosure
   - coordinated disclosure
-estimated_reading_time: 3
+  - SBOM
+  - software bill of materials
+  - SPDX
+estimated_reading_time: 5
 ---
 
 <!-- BEGIN MICROSOFT SECURITY.MD V0.0.9 BLOCK -->
@@ -91,11 +94,18 @@ A successful verification confirms:
 * The build occurred in GitHub Actions
 * The artifact has not been modified since signing
 
+### Verifying the SBOM
+
+Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format, cryptographically attested using Sigstore. For verification steps, download instructions, inspection commands, and SPDX field reference, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
+
 ### What Gets Signed
 
 | Artifact               | Channel         | Signed                |
 |------------------------|-----------------|-----------------------|
 | VSIX extension package | GitHub Releases | Yes                   |
+| Per-extension SBOM     | GitHub Releases | Yes                   |
+| Dependency SBOM        | GitHub Releases | Yes                   |
+| Dependency diff        | GitHub Releases | No                    |
 | VS Code Marketplace    | Stable          | Marketplace signature |
 | VS Code Marketplace    | Pre-Release     | Marketplace signature |
 
