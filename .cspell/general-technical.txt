@@ -1569,5 +1569,8 @@ streamlit
 Streamlit
 Overreliance
 Contestability
+burndown
+unreviewed
+WIQL
 LASTEXITCODE
 scriptblock
