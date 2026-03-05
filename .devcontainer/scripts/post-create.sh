@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MIT
 #
 # post-create.sh
-# Install NPM dependencies for HVE Core development container
+# Post-creation setup for HVE Core development container
 
 set -euo pipefail
 
 main() {
-  echo "Installing NPM dependencies..."
-  npm ci
-  echo "NPM dependencies installed successfully"
+  echo "Creating logs directory..."
+  mkdir -p logs
 }
 
 main "$@"

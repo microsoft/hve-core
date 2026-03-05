@@ -1,6 +1,7 @@
 ---
 title: Git-Ignored Folder Installation
 description: Install HVE-Core in a git-ignored folder for devcontainer environments
+sidebar_position: 3
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -71,7 +72,7 @@ Add the HVE-Core folder to your `.gitignore`:
 
 ### Step 2: Clone HVE-Core
 
-**PowerShell:**
+#### PowerShell
 
 ```powershell
 # Create folder and clone
@@ -82,7 +83,7 @@ if (-not (Test-Path $hveCoreFolder)) {
 }
 ```
 
-**Bash:**
+#### Bash
 
 ```bash
 HVE_CORE_FOLDER=".hve-core"
@@ -99,9 +100,36 @@ Create or update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.agentFilesLocations": { ".hve-core/.github/agents": true },
-  "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
-  "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
+  "chat.agentFilesLocations": {
+    ".hve-core/.github/agents/ado": true,
+    ".hve-core/.github/agents/data-science": true,
+    ".hve-core/.github/agents/design-thinking": true,
+    ".hve-core/.github/agents/github": true,
+    ".hve-core/.github/agents/installer": true,
+    ".hve-core/.github/agents/project-planning": true,
+    ".hve-core/.github/agents/hve-core": true,
+    ".hve-core/.github/agents/hve-core/subagents": true,
+    ".hve-core/.github/agents/security-planning": true
+  },
+  "chat.promptFilesLocations": {
+    ".hve-core/.github/prompts/ado": true,
+    ".hve-core/.github/prompts/design-thinking": true,
+    ".hve-core/.github/prompts/github": true,
+    ".hve-core/.github/prompts/hve-core": true,
+    ".hve-core/.github/prompts/security-planning": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".hve-core/.github/instructions/ado": true,
+    ".hve-core/.github/instructions/coding-standards": true,
+    ".hve-core/.github/instructions/design-thinking": true,
+    ".hve-core/.github/instructions/github": true,
+    ".hve-core/.github/instructions/hve-core": true,
+    ".hve-core/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    ".hve-core/.github/skills": true,
+    ".hve-core/.github/skills/shared": true
+  }
 }
 ```
 
@@ -136,9 +164,36 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.agentFilesLocations": { ".hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          ".hve-core/.github/agents/ado": true,
+          ".hve-core/.github/agents/data-science": true,
+          ".hve-core/.github/agents/design-thinking": true,
+          ".hve-core/.github/agents/github": true,
+          ".hve-core/.github/agents/installer": true,
+          ".hve-core/.github/agents/project-planning": true,
+          ".hve-core/.github/agents/hve-core": true,
+          ".hve-core/.github/agents/hve-core/subagents": true,
+          ".hve-core/.github/agents/security-planning": true
+        },
+        "chat.promptFilesLocations": {
+          ".hve-core/.github/prompts/ado": true,
+          ".hve-core/.github/prompts/design-thinking": true,
+          ".hve-core/.github/prompts/github": true,
+          ".hve-core/.github/prompts/hve-core": true,
+          ".hve-core/.github/prompts/security-planning": true
+        },
+        "chat.instructionsFilesLocations": {
+          ".hve-core/.github/instructions/ado": true,
+          ".hve-core/.github/instructions/coding-standards": true,
+          ".hve-core/.github/instructions/design-thinking": true,
+          ".hve-core/.github/instructions/github": true,
+          ".hve-core/.github/instructions/hve-core": true,
+          ".hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          ".hve-core/.github/skills": true,
+          ".hve-core/.github/skills/shared": true
+        }
       }
     }
   }
@@ -147,18 +202,18 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
 
 ## Updating HVE-Core
 
-**Manual update:**
+### Manual update
 
 ```bash
 cd .hve-core
 git pull
 ```
 
-**Auto-update on container rebuild:**
+### Auto-update on container rebuild
 
 The `postCreateCommand` re-clones on each container creation. To update, rebuild the container.
 
-**Auto-update with version check:**
+### Auto-update with version check
 
 ```jsonc
 {
@@ -172,13 +227,13 @@ The `postCreateCommand` re-clones on each container creation. To update, rebuild
 
 ### Agents Not Appearing
 
-**Check the folder exists:**
+#### Check the folder exists
 
 ```bash
 ls .hve-core/.github/agents
 ```
 
-**Check settings are applied:**
+#### Check settings are applied
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open Workspace Settings (JSON)"

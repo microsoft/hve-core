@@ -1,6 +1,7 @@
 ---
 title: ADR Title
 description: '[The title should be unique within the library, provide a longer title if needed to differentiate with other ADRs]'
+sidebar_position: 1
 author: Name of author(s)
 ms.date: 2025-06-06
 ms.topic: architecture
@@ -187,56 +188,56 @@ After completing the YAML drafting guide above, use this structure for your fina
 
 [Mark the most applicable status for tracking purposes]
 
-- [ ] Draft
-- [ ] Proposed
-- [ ] Accepted
-- [ ] Deprecated
+* [ ] Draft
+* [ ] Proposed
+* [ ] Accepted
+* [ ] Deprecated
 
 ### Context
 
-**Scenario Context**: [Describe the business scenario or use case]
+Scenario Context: [Describe the business scenario or use case]
 
-**Problem Statement**: [Clearly articulate the problem being solved]
+Problem Statement: [Clearly articulate the problem being solved]
 
-**Constraints and Requirements**: [Document technical, business, and organizational boundaries]
+Constraints and Requirements: [Document technical, business, and organizational boundaries]
 
-**Success Criteria**: [Define measurable outcomes for success]
+Success Criteria: [Define measurable outcomes for success]
 
 ### Decision
 
-**Decision Statement**: [Clear, single sentence stating what was decided]
+Decision Statement: [Clear, single sentence stating what was decided]
 
-**Decision Rationale**: [Explain the reasoning behind this decision]
+Decision Rationale: [Explain the reasoning behind this decision]
 
-**Implementation Approach**: [Outline how this decision will be implemented]
+Implementation Approach: [Outline how this decision will be implemented]
 
 ### Decision Drivers (optional)
 
 List the key factors that influenced this decision:
 
-- [Driver 1]
-- [Driver 2]
-- [Driver 3]
+* [Driver 1]
+* [Driver 2]
+* [Driver 3]
 
 ### Considered Options (optional)
 
-**Option Evaluation Framework**: [For each option considered, provide:]
+Option Evaluation Framework: [For each option considered, provide:]
 
 #### Option [Number]: [Option Name]
 
-**Description**: [What this option entails]
+Description: [What this option entails]
 
-**Technical Details**: [Architecture, components, requirements]
+Technical Details: [Architecture, components, requirements]
 
-**Pros**: [Specific advantages with supporting detail]
+Pros: [Specific advantages with supporting detail]
 
-**Cons**: [Specific disadvantages with impact assessment]
+Cons: [Specific disadvantages with impact assessment]
 
-**Risks and Mitigation**: [Risks with probability, impact, and mitigation strategies]
+Risks and Mitigation: [Risks with probability, impact, and mitigation strategies]
 
-**Dependencies**: [External dependencies and prerequisites]
+Dependencies: [External dependencies and prerequisites]
 
-**Cost Analysis**: [Implementation and operational costs]
+Cost Analysis: [Implementation and operational costs]
 
 ### Comparison Matrix (optional)
 
@@ -247,17 +248,17 @@ List the key factors that influenced this decision:
 
 ### Consequences
 
-**Positive Consequences**: [Benefits and positive outcomes]
+Positive Consequences: [Benefits and positive outcomes]
 
-**Negative Consequences**: [Risks and negative impacts]
+Negative Consequences: [Risks and negative impacts]
 
-**Neutral Consequences**: [Other changes or considerations]
+Neutral Consequences: [Other changes or considerations]
 
 ### Future Considerations (optional)
 
-**Monitoring and Evolution**: [What to watch for and when to re-evaluate]
+Monitoring and Evolution: [What to watch for and when to re-evaluate]
 
-**Review Triggers**: [Conditions that would require re-evaluation of this decision]
+Review Triggers: [Conditions that would require re-evaluation of this decision]
 
 ---
 

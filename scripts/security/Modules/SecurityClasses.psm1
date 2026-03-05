@@ -26,14 +26,15 @@ class DependencyViolation {
         Represents a single dependency pinning violation.
 
     .DESCRIPTION
-        Contains information about a dependency that is not properly SHA-pinned,
+        Contains information about a dependency that is not properly pinned,
         including file location, dependency details, and remediation guidance.
 
         ViolationType values:
-        - Unpinned: Dependency uses tag or branch instead of SHA
-        - Stale: SHA is pinned but newer version available
-        - VersionMismatch: Version comment does not match resolved SHA
-        - MissingVersionComment: SHA pinned but no version comment present
+        - Unpinned: Dependency is not pinned to an immutable reference
+        - Stale: Pinned dependency has a newer version available
+        - VersionMismatch: Version comment does not match the resolved pinned reference
+        - MissingVersionComment: Dependency is pinned but lacks a human-readable version comment
+        - MissingPermissions: Workflow file lacks required permissions declarations
         - Empty string: Default or unclassified violation
     #>
 
@@ -44,7 +45,7 @@ class DependencyViolation {
     [string]$Version
     [string]$CurrentRef
     [string]$Severity
-    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', '')]
+    [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', '')]
     [string]$ViolationType
     [string]$Description
     [string]$Remediation

@@ -1,0 +1,1 @@
+../../../.github/instructions/hve-core/writing-style.instructions.md

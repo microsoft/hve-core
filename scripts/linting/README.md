@@ -19,11 +19,13 @@ This directory contains PowerShell scripts for validating code quality and docum
 
 The linting scripts follow a **modular architecture** with shared helper functions:
 
-* **Wrapper Scripts** (`Invoke-*.ps1`) - Entry points that orchestrate validation logic
-* **Core Scripts** - Existing validation logic (e.g., `Link-Lang-Check.ps1`, `Validate-MarkdownFrontmatter.ps1`)
-* **Shared Module** (`Modules/LintingHelpers.psm1`) - Common functions for file discovery and git operations
-* **CI Helpers** (`scripts/lib/Modules/CIHelpers.psm1`) - CI annotations, outputs, env flags, and step summaries
-* **Configuration Files** - Tool-specific settings (e.g., `PSScriptAnalyzer.psd1`, `markdown-link-check.config.json`)
+| Component                                         | Description                                                                                 |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Wrapper Scripts (`Invoke-*.ps1`)                  | Entry points that orchestrate validation logic                                              |
+| Core Scripts                                      | Existing validation logic (e.g., `Link-Lang-Check.ps1`, `Validate-MarkdownFrontmatter.ps1`) |
+| Shared Module (`Modules/LintingHelpers.psm1`)     | Common functions for file discovery and git operations                                      |
+| CI Helpers (`scripts/lib/Modules/CIHelpers.psm1`) | CI annotations, outputs, env flags, and step summaries                                      |
+| Configuration Files                               | Tool-specific settings (e.g., `PSScriptAnalyzer.psd1`, `markdown-link-check.config.json`)   |
 
 ## Scripts
 
@@ -33,9 +35,9 @@ The linting scripts follow a **modular architecture** with shared helper functio
 
 Static analysis for PowerShell scripts using PSScriptAnalyzer.
 
-**Purpose**: Enforce PowerShell best practices and detect common issues.
+Purpose: Enforce PowerShell best practices and detect common issues.
 
-**Features**:
+##### Features
 
 * Detects changed PowerShell files via Git
 * Supports analyzing all files or changed files only
@@ -43,11 +45,11 @@ Static analysis for PowerShell scripts using PSScriptAnalyzer.
 * Exports JSON results and markdown summary
 * Configurable via `PSScriptAnalyzer.psd1`
 
-**Parameters**:
+##### Parameters
 
 * `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
 
-**Usage**:
+##### Usage
 
 ```powershell
 # Analyze all PowerShell files
@@ -60,9 +62,9 @@ Static analysis for PowerShell scripts using PSScriptAnalyzer.
 ./scripts/linting/Invoke-PSScriptAnalyzer.ps1 -Verbose -Debug
 ```
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
-* Workflow: `.github/workflows/psscriptanalyzer.yml`
+* Workflow: `.github/workflows/ps-script-analyzer.yml`
 * Artifacts: `psscriptanalyzer-results` (JSON + markdown)
 * Exit Code: Non-zero if violations found
 
@@ -70,15 +72,17 @@ Static analysis for PowerShell scripts using PSScriptAnalyzer.
 
 Configuration file for PSScriptAnalyzer rules.
 
-**Enforced Rules**:
+##### Enforced Rules
 
-* **Severity**: Error and Warning levels
-* **Best Practices**: Avoid aliases, use approved verbs, singular nouns
-* **Help**: Require comment-based help
-* **Security**: Check for credentials in code
-* **Performance**: Identify inefficient patterns
+| Rule Category  | Description                                       |
+|----------------|---------------------------------------------------|
+| Severity       | Error and Warning levels                          |
+| Best Practices | Avoid aliases, use approved verbs, singular nouns |
+| Help           | Require comment-based help                        |
+| Security       | Check for credentials in code                     |
+| Performance    | Identify inefficient patterns                     |
 
-**Excluded Rules**:
+##### Excluded Rules
 
 * `PSAvoidUsingWriteHost` - Allowed for script output
 
@@ -88,9 +92,9 @@ Configuration file for PSScriptAnalyzer rules.
 
 Static analysis for GitHub Actions workflow files using actionlint.
 
-**Purpose**: Validate GitHub Actions workflow YAML syntax and best practices.
+Purpose: Validate GitHub Actions workflow YAML syntax and best practices.
 
-**Features**:
+##### Features
 
 * Validates `.github/workflows/*.yml` and `.yaml` files
 * Detects changed workflow files via Git
@@ -99,13 +103,13 @@ Static analysis for GitHub Actions workflow files using actionlint.
 * Exports JSON results and markdown summary
 * Configurable via `.github/actionlint.yaml`
 
-**Parameters**:
+##### Parameters
 
 * `-ChangedFilesOnly` (switch) - Analyze only files changed in current branch
 * `-BaseBranch` (string) - Base branch for comparison (default: `origin/main`)
 * `-OutputPath` (string) - Output path for JSON results (default: `logs/yaml-lint-results.json`)
 
-**Usage**:
+##### Usage
 
 ```powershell
 # Analyze all workflow files
@@ -118,7 +122,7 @@ Static analysis for GitHub Actions workflow files using actionlint.
 ./scripts/linting/Invoke-YamlLint.ps1 -Verbose -Debug
 ```
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/yaml-lint.yml`
 * Configuration: `.github/actionlint.yaml`
@@ -131,9 +135,9 @@ Static analysis for GitHub Actions workflow files using actionlint.
 
 Validates YAML frontmatter and footer format in markdown files.
 
-**Purpose**: Ensure consistent metadata across documentation.
+Purpose: Ensure consistent metadata across documentation.
 
-**Features**:
+##### Features
 
 * Validates required frontmatter fields
 * Checks footer format and copyright notice
@@ -143,20 +147,21 @@ Validates YAML frontmatter and footer format in markdown files.
 * Exports JSON results with detailed statistics
 * Generates comprehensive step summary
 
-**Parameters**:
+##### Parameters
 
 * `-ChangedFilesOnly` (switch) - Validate only changed markdown files
 * `-SkipFooterValidation` (switch) - Skip footer checks
 * `-WarningsAsErrors` (switch) - Treat warnings as errors
+* `-EnableSchemaValidation` (switch) - Enable JSON Schema validation (advisory only)
 
-**Artifacts Generated**:
+##### Artifacts Generated
 
 * `logs/frontmatter-validation-results.json` - Complete validation results including:
   * Timestamp and script name
   * Summary statistics (total files, error/warning counts)
   * Lists of all errors and warnings
 
-**Usage**:
+##### Usage
 
 ```powershell
 # Validate all markdown files
@@ -169,7 +174,7 @@ Validates YAML frontmatter and footer format in markdown files.
 ./scripts/linting/Validate-MarkdownFrontmatter.ps1 -SkipFooterValidation
 ```
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/frontmatter-validation.yml`
 * Artifacts: `frontmatter-validation-results` (JSON)
@@ -180,16 +185,16 @@ Validates YAML frontmatter and footer format in markdown files.
 
 Detects URLs with language paths (e.g., `/en-us/`) that should be removed.
 
-**Purpose**: Ensure language-agnostic URLs for better internationalization.
+Purpose: Ensure language-agnostic URLs for better internationalization.
 
-**Features**:
+##### Features
 
 * Scans all markdown files recursively
 * Calls `Link-Lang-Check.ps1` for detection logic
 * Creates CI warning annotations
 * Provides fix instructions in summary
 
-**Usage**:
+##### Usage
 
 ```powershell
 # Check all markdown files
@@ -199,7 +204,7 @@ Detects URLs with language paths (e.g., `/en-us/`) that should be removed.
 ./scripts/linting/Invoke-LinkLanguageCheck.ps1 -Debug
 ```
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/link-lang-check.yml`
 * Annotations: Warnings on files with language paths
@@ -209,15 +214,15 @@ Detects URLs with language paths (e.g., `/en-us/`) that should be removed.
 
 Core logic for detecting language paths in URLs.
 
-**Detection Pattern**: Matches `/[a-z]{2}-[a-z]{2}/` patterns in Microsoft domain URLs.
+Detection Pattern: Matches `/[a-z]{2}-[a-z]{2}/` patterns in Microsoft domain URLs.
 
 #### `Markdown-Link-Check.ps1`
 
 Validates all links in markdown files using markdown-link-check npm package.
 
-**Purpose**: Detect broken links before deployment.
+Purpose: Detect broken links before deployment.
 
-**Features**:
+##### Features
 
 * Checks internal and external links
 * Configurable via `markdown-link-check.config.json`
@@ -227,14 +232,14 @@ Validates all links in markdown files using markdown-link-check npm package.
 * Exports JSON results with link statistics
 * Generates detailed step summary
 
-**Artifacts Generated**:
+##### Artifacts Generated
 
 * `logs/markdown-link-check-results.json` - Complete validation results including:
   * Timestamp and script name
   * Summary statistics (total files, broken links count)
   * List of all broken links with file paths
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/markdown-link-check.yml`
 * Configuration: `markdown-link-check.config.json`
@@ -242,15 +247,60 @@ Validates all links in markdown files using markdown-link-check npm package.
 * Annotations: Error for each broken link
 * Exit Code: Non-zero if broken links found
 
+### Skill Structure Validation
+
+#### `Validate-SkillStructure.ps1`
+
+Validates the structural integrity of skill directories under `.github/skills/`.
+
+Purpose: Ensure all skill packages comply with the agentskills.io specification and hve-core conventions.
+
+##### Features
+
+* Validates SKILL.md presence in each skill directory
+* Checks frontmatter for required `name` and `description` fields
+* Verifies `name` matches directory name
+* When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
+* Warns on unrecognized directories
+* Supports changed-files-only mode via Git
+* Creates CI annotations for violations
+* Exports JSON results to `logs/skill-validation-results.json`
+
+##### Parameters
+
+* `-SkillsPath` (string) - Root path containing skill directories (default: `.github/skills`)
+* `-WarningsAsErrors` (switch) - Treat warnings as errors
+* `-ChangedFilesOnly` (switch) - Validate only skills with changed files
+* `-BaseBranch` (string) - Git reference for changed file detection (default: `origin/main`)
+
+##### Usage
+
+```powershell
+# Validate all skills
+./scripts/linting/Validate-SkillStructure.ps1
+
+# Validate with warnings as errors
+./scripts/linting/Validate-SkillStructure.ps1 -WarningsAsErrors
+
+# Validate only changed skills
+./scripts/linting/Validate-SkillStructure.ps1 -ChangedFilesOnly
+```
+
+##### GitHub Actions Integration
+
+* Workflow: `.github/workflows/skill-validation.yml`
+* Artifacts: `skill-validation-results` (JSON)
+* Exit Code: Non-zero if validation fails
+
 ### Copyright Header Validation
 
 #### `Test-CopyrightHeaders.ps1`
 
 Validates copyright and SPDX license headers in source files.
 
-**Purpose**: Ensure all PowerShell and shell scripts include the required Microsoft copyright notice and MIT SPDX license identifier in their first 15 lines.
+Purpose: Ensure all PowerShell and shell scripts include the required Microsoft copyright notice and MIT SPDX license identifier in their first 15 lines.
 
-**Features**:
+##### Features
 
 * Scans `.ps1`, `.psm1`, `.psd1`, and `.sh` files recursively
 * Checks for `Copyright (c) Microsoft Corporation` header
@@ -259,7 +309,7 @@ Validates copyright and SPDX license headers in source files.
 * Exports JSON results with per-file compliance details
 * Calculates compliance percentage across all scanned files
 
-**Parameters**:
+##### Parameters
 
 * `-Path` (string) - Root path to scan (default: repository root via `git rev-parse --show-toplevel`)
 * `-FileExtensions` (string[]) - File extensions to check (default: `@('*.ps1', '*.psm1', '*.psd1', '*.sh')`)
@@ -267,7 +317,7 @@ Validates copyright and SPDX license headers in source files.
 * `-FailOnMissing` (switch) - Exit with code 1 if any files lack required headers
 * `-ExcludePaths` (string[]) - Directories to exclude (default: `@('node_modules', '.git', 'vendor', 'logs')`)
 
-**Usage**:
+##### Usage
 
 ```powershell
 # Check all source files (report only)
@@ -280,7 +330,7 @@ Validates copyright and SPDX license headers in source files.
 ./scripts/linting/Test-CopyrightHeaders.ps1 -Path ./scripts -FailOnMissing -Verbose
 ```
 
-**GitHub Actions Integration**:
+##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/copyright-headers.yml`
 * Artifacts: `copyright-header-results` (JSON)
@@ -292,20 +342,20 @@ Validates copyright and SPDX license headers in source files.
 
 Common helper functions for file discovery and git operations.
 
-**Exported Functions**:
+#### Exported Functions
 
 #### `Get-ChangedFilesFromGit`
 
 Detects files changed in current branch compared to main.
 
-**Parameters**:
+##### Parameters
 
 * `-BaseBranch` (string) - Base branch to compare against (default: `origin/main`)
 * `-FileExtensions` (string[]) - Array of file patterns to filter (e.g., `@('*.ps1', '*.md')`)
 
-**Returns**: Array of changed file paths
+Returns: Array of changed file paths
 
-**Fallbacks**:
+##### Fallbacks
 
 1. `git merge-base` with specified base branch
 2. `git diff HEAD~1` when merge-base fails
@@ -313,39 +363,42 @@ Detects files changed in current branch compared to main.
 
 #### `Get-FilesRecursive`
 
-Recursively finds files matching patterns with gitignore support.
+Finds files matching patterns using `git ls-files` with a `Get-ChildItem` fallback.
 
-**Parameters**:
+##### Parameters
 
 * `-Path` (string, required) - Root directory to search from
 * `-Include` (string[], required) - File patterns to include (e.g., `@('*.ps1', '*.psm1')`)
-* `-GitIgnorePath` (string) - Path to `.gitignore` file for exclusion patterns
+* `-GitIgnorePath` (string) - Path to `.gitignore` file for exclusion patterns (fallback path only)
 
-**Returns**: Array of FileInfo objects
+Returns: Array of FileInfo objects
 
-**Respects**: `.gitignore` patterns when `-GitIgnorePath` is provided
+##### Behavior
+
+* Inside a git repository, uses `git ls-files --cached --others --exclude-standard` scoped to the given path. Git natively handles `.gitignore` exclusions.
+* Outside a git repository (or when `git` is unavailable), falls back to `Get-ChildItem -Recurse` with optional `-GitIgnorePath` filtering.
 
 #### `Get-GitIgnorePatterns`
 
 Parses `.gitignore` into PowerShell wildcard patterns.
 
-**Parameters**:
+##### Parameters
 
 * `-GitIgnorePath` (string, required) - Path to `.gitignore` file
 
-**Returns**: Array of wildcard patterns using platform-appropriate separators
+Returns: Array of wildcard patterns using platform-appropriate separators
 
 ### `scripts/lib/Modules/CIHelpers.psm1`
 
 CI helper functions for annotations, outputs, environment flags, and summaries.
 
-**Exported Functions**:
+#### Exported Functions
 
 #### `Write-CIAnnotation`
 
 Creates a CI annotation.
 
-**Parameters**:
+##### Parameters
 
 * `-Level` ('Error'|'Warning'|'Notice') - Annotation severity
 * `-Message` (string) - Annotation text
@@ -353,13 +406,13 @@ Creates a CI annotation.
 * `-Line` (int, optional) - Line number
 * `-Column` (int, optional) - Column number
 
-**Output**: CI annotation command
+Output: CI annotation command
 
 #### `Write-CIAnnotations`
 
 Writes CI annotations from a validation summary.
 
-**Parameters**:
+##### Parameters
 
 * `-Summary` (ValidationSummary) - Validation results to annotate
 
@@ -367,7 +420,7 @@ Writes CI annotations from a validation summary.
 
 Sets a CI output variable.
 
-**Parameters**:
+##### Parameters
 
 * `-Name` (string) - Variable name
 * `-Value` (string) - Variable value
@@ -376,7 +429,7 @@ Sets a CI output variable.
 
 Sets a CI environment variable.
 
-**Parameters**:
+##### Parameters
 
 * `-Name` (string) - Variable name
 * `-Value` (string) - Variable value
@@ -385,11 +438,11 @@ Sets a CI environment variable.
 
 Appends content to the CI step summary.
 
-**Parameters**:
+##### Parameters
 
 * `-Content` (string) - Markdown content
 
-**Usage Example**:
+#### Usage Example
 
 ```powershell
 Import-Module ./Modules/LintingHelpers.psm1
@@ -413,7 +466,7 @@ Write-CIStepSummary -Content "## Results`n`nAnalyzed $($files.Count) files"
 
 PSScriptAnalyzer rule configuration.
 
-**Key Settings**:
+#### Key Settings
 
 * Severity: Error, Warning
 * IncludeRules: Best practices, security, performance
@@ -423,7 +476,7 @@ PSScriptAnalyzer rule configuration.
 
 Markdown link checker configuration.
 
-**Key Settings**:
+#### Key Settings
 
 * Retry attempts: 3
 * Timeout: 10 seconds
@@ -455,11 +508,13 @@ Get-Command -Module LintingHelpers
 
 All linting scripts are integrated into GitHub Actions workflows:
 
-* **PSScriptAnalyzer**: `.github/workflows/psscriptanalyzer.yml`
-* **YAML Lint**: `.github/workflows/yaml-lint.yml`
-* **Frontmatter Validation**: `.github/workflows/frontmatter-validation.yml`
-* **Link Language Check**: `.github/workflows/link-lang-check.yml`
-* **Markdown Link Check**: `.github/workflows/markdown-link-check.yml`
+| Script                 | Workflow                                       |
+|------------------------|------------------------------------------------|
+| PSScriptAnalyzer       | `.github/workflows/ps-script-analyzer.yml`     |
+| YAML Lint              | `.github/workflows/yaml-lint.yml`              |
+| Frontmatter Validation | `.github/workflows/frontmatter-validation.yml` |
+| Link Language Check    | `.github/workflows/link-lang-check.yml`        |
+| Markdown Link Check    | `.github/workflows/markdown-link-check.yml`    |
 
 See [GitHub Workflows Documentation](../../.github/workflows/README.md) for details.
 
@@ -470,13 +525,13 @@ To add a new linting script:
 1. **Create wrapper script** following `Invoke-*.ps1` naming convention
 2. **Import LintingHelpers and CIHelpers modules** for file discovery and CI integration
 3. **Implement core validation logic** with clear error reporting
-4. **Support common parameters**: `-Verbose`, `-Debug`, `-ChangedFilesOnly` (if applicable)
+4. Support common parameters: `-Verbose`, `-Debug`, `-ChangedFilesOnly` (if applicable)
 5. **Create GitHub Actions workflow** in `.github/workflows/`
 6. **Add to PR validation** in `.github/workflows/pr-validation.yml`
 7. **Document** in this README and workflows README
 8. **Test locally** before creating PR
 
-**Template**:
+### Template
 
 ```powershell
 #!/usr/bin/env pwsh

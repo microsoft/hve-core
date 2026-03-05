@@ -19,13 +19,13 @@ permissions:
   contents: read
 
 jobs:
-  # Job 1: Validate all dependencies are SHA-pinned
+    # Job 1: Validate dependency pinning
   validate-pinning:
-    name: Validate SHA Pinning Compliance
+    name: Validate Dependency Pinning Compliance
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     with:
       soft-fail: true
       upload-sarif: true
@@ -46,7 +46,7 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
       actions: read
 
   # Job 4: Generate consolidated summary
@@ -81,7 +81,7 @@ jobs:
           
           | Metric | Status | Details |
           |--------|--------|---------|
-          | SHA Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
+          | Dependency Pinning Compliance | $(if ($unpinnedCount -eq '0') { '✅ Pass' } else { '⚠️ Warning' }) | Score: $pinningScore% |
           | Unpinned Dependencies | $(if ($unpinnedCount -eq '0') { '✅ None' } else { "⚠️ $unpinnedCount found" }) | $(if ($unpinnedCount -ne '0') { 'Review warnings above' } else { 'All pinned' }) |
           | Stale SHAs (>${{ inputs.max-age-days }} days) | $(if ($staleCount -eq '0') { '✅ None' } else { "⚠️ $staleCount found" }) | $(if ($staleCount -ne '0') { 'Review warnings above' } else { 'All current' }) |
           
@@ -98,12 +98,12 @@ jobs:
           
           ## ⚠️ Action Required: Unpinned Dependencies
           
-          **$unpinnedCount dependencies are not SHA-pinned.** This is a security risk.
+          **$unpinnedCount dependencies are not properly pinned.** This is a security risk.
           
           **To fix:**
           ``````powershell
           # Review the warnings above, then pin each dependency to a SHA
-          # Example: Change 'uses: actions/checkout@v4' to 'uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v4.2.2'
+          # Example: Change 'actions/checkout@v4' to 'actions/checkout@<commit-sha> # v4.2.2'
           ``````
           
           "@
@@ -151,7 +151,7 @@ jobs:
           ## ✅ All Clear!
           
           Repository security posture is excellent:
-          - All dependencies are SHA-pinned
+          - All dependencies are properly pinned
           - All SHAs are current (< ${{ inputs.max-age-days || 30 }} days old)
           - CodeQL analysis completed successfully
           - GitHub Secret Scanning and Dependabot actively monitoring

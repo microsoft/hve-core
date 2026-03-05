@@ -22,7 +22,7 @@ Describe 'DependencyViolation' -Tag 'Unit' {
     Context 'Parameterized constructor' {
         BeforeAll {
             $script:violation = [DependencyViolation]::new(
-                'workflow.yml', 10, 'github-actions', 'actions/checkout', 'High', 'Not SHA-pinned'
+                'workflow.yml', 10, 'github-actions', 'actions/checkout', 'High', 'Not pinned'
             )
         }
 
@@ -47,7 +47,7 @@ Describe 'DependencyViolation' -Tag 'Unit' {
         }
 
         It 'Sets Description property' {
-            $script:violation.Description | Should -Be 'Not SHA-pinned'
+            $script:violation.Description | Should -Be 'Not pinned'
         }
 
         It 'Initializes Metadata as empty hashtable' {
@@ -62,6 +62,7 @@ Describe 'DependencyViolation' -Tag 'Unit' {
             @{ Value = 'Stale' }
             @{ Value = 'VersionMismatch' }
             @{ Value = 'MissingVersionComment' }
+            @{ Value = 'MissingPermissions' }
             @{ Value = '' }
         ) {
             $v = [DependencyViolation]::new()

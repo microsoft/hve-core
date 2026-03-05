@@ -1,6 +1,7 @@
 ---
 title: Peer Directory Clone Installation
 description: Install HVE-Core as a sibling directory for local VS Code development
+sidebar_position: 4
 author: Microsoft
 ms.date: 2025-12-03
 ms.topic: how-to
@@ -84,9 +85,36 @@ Create or update `.vscode/settings.json` in your project:
 
 ```json
 {
-  "chat.agentFilesLocations": { "../hve-core/.github/agents": true },
-  "chat.promptFilesLocations": { "../hve-core/.github/prompts": true },
-  "chat.instructionsFilesLocations": { "../hve-core/.github/instructions": true }
+  "chat.agentFilesLocations": {
+    "../hve-core/.github/agents/ado": true,
+    "../hve-core/.github/agents/data-science": true,
+    "../hve-core/.github/agents/design-thinking": true,
+    "../hve-core/.github/agents/github": true,
+    "../hve-core/.github/agents/installer": true,
+    "../hve-core/.github/agents/project-planning": true,
+    "../hve-core/.github/agents/hve-core": true,
+    "../hve-core/.github/agents/hve-core/subagents": true,
+    "../hve-core/.github/agents/security-planning": true
+  },
+  "chat.promptFilesLocations": {
+    "../hve-core/.github/prompts/ado": true,
+    "../hve-core/.github/prompts/design-thinking": true,
+    "../hve-core/.github/prompts/github": true,
+    "../hve-core/.github/prompts/hve-core": true,
+    "../hve-core/.github/prompts/security-planning": true
+  },
+  "chat.instructionsFilesLocations": {
+    "../hve-core/.github/instructions/ado": true,
+    "../hve-core/.github/instructions/coding-standards": true,
+    "../hve-core/.github/instructions/design-thinking": true,
+    "../hve-core/.github/instructions/github": true,
+    "../hve-core/.github/instructions/hve-core": true,
+    "../hve-core/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    "../hve-core/.github/skills": true,
+    "../hve-core/.github/skills/shared": true
+  }
 }
 ```
 
@@ -120,7 +148,7 @@ No VS Code restart required. Changes take effect immediately.
 
 ### Agents Not Appearing
 
-**Check the relative path:**
+#### Check the relative path
 
 ```bash
 # From your project directory
@@ -133,7 +161,7 @@ If the path doesn't resolve, verify:
 2. Your terminal is in your project directory
 3. The relative path in settings.json is correct
 
-**Check VS Code settings:**
+#### Check VS Code settings
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open User Settings (JSON)"
@@ -151,7 +179,7 @@ Relative paths break if your project moves. Options:
 
 Peer directory clone doesn't work in devcontainers because the container can't access files outside the mounted workspace.
 
-**Solutions:**
+#### Solutions
 
 * Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
 * Use [Mounted Directory](mounted.md) to share HVE-Core across projects

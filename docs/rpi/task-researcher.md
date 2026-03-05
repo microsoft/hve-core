@@ -1,6 +1,7 @@
 ---
 title: Task Researcher Guide
 description: Use the Task Researcher custom agent to conduct deep, evidence-based research before coding
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -33,7 +34,7 @@ Escalate to Task Researcher when your task involves:
 5. **Outputs** a comprehensive research document
 
 > [!NOTE]
-> **Why the constraint matters:** Task Researcher knows it will never write the code. This single constraint transforms its behavior—it searches for existing patterns instead of inventing new ones, cites specific files as evidence, and questions its own assumptions because it can't hide them in implementation.
+> **Why the constraint matters:** Task Researcher knows it will never write the code. This single constraint transforms its behavior: it searches for existing patterns instead of inventing new ones, cites specific files as evidence, and questions its own assumptions because it can't hide them in implementation.
 
 ## Output Artifact
 

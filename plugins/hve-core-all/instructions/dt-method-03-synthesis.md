@@ -1,0 +1,1 @@
+../../../.github/instructions/design-thinking/dt-method-03-synthesis.instructions.md

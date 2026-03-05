@@ -5,11 +5,11 @@
 
 <#
 .SYNOPSIS
-    Verifies and reports on SHA pinning compliance for supply chain security.
+    Verifies and reports on dependency pinning compliance for supply chain security.
 
 .DESCRIPTION
     Cross-platform PowerShell script that analyzes GitHub Actions workflows, Docker images,
-    and other dependency declarations to verify compliance with SHA pinning security practices.
+    and other dependency declarations to verify compliance with dependency pinning security practices.
     Identifies unpinned dependencies and provides remediation guidance.
 
 .PARAMETER Path
@@ -93,9 +93,6 @@ param(
     [string]$Path = ".",
 
     [Parameter(Mandatory = $false)]
-    [switch]$Recursive,
-
-    [Parameter(Mandatory = $false)]
     [ValidateSet('json', 'sarif', 'csv', 'markdown', 'table')]
     [string]$Format = 'json',
 
@@ -109,7 +106,7 @@ param(
     [string]$ExcludePaths = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
+    [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
 
     [Parameter(Mandatory = $false)]
     [ValidateRange(0, 100)]
@@ -123,6 +120,7 @@ $ErrorActionPreference = 'Stop'
 
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
@@ -140,14 +138,15 @@ $DependencyPatterns = @{
     }
 
     'npm'            = @{
-        FilePatterns   = @('**/package.json')
-        ValidationFunc = 'Get-NpmDependencyViolations'
-        SHAPattern     = '^[a-fA-F0-9]{40}$'
-        RemediationUrl = 'https://registry.npmjs.org/{0}/{1}'
+        FilePatterns    = @('**/package.json')
+        ExcludePatterns = @('node_modules')
+        ValidationFunc  = 'Get-NpmDependencyViolations'
+        RemediationUrl  = 'https://registry.npmjs.org/{0}/{1}'
     }
 
     'pip'              = @{
         FilePatterns    = @('**/requirements*.txt', '**/Pipfile', '**/pyproject.toml', '**/setup.py')
+        ExcludePatterns = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
         VersionPatterns = @(
             @{
                 Pattern     = '([a-zA-Z0-9\-_]+)==([^#\s]+)'
@@ -160,15 +159,173 @@ $DependencyPatterns = @{
     }
 
     'shell-downloads'  = @{
-        FilePatterns   = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
-        ValidationFunc = 'Test-ShellDownloadSecurity'
-        Description    = 'Shell script downloads must include checksum verification'
+        FilePatterns    = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
+        ExcludePatterns = @('Fixtures')
+        ValidationFunc  = 'Test-ShellDownloadSecurity'
+        Description     = 'Shell script downloads must include checksum verification'
+    }
+
+    'workflow-npm-commands' = @{
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        ValidationFunc = 'Get-WorkflowNpmCommandViolations'
+        Description    = 'Workflow npm install/update commands should use npm ci'
     }
 }
 
 # DependencyViolation and ComplianceReport classes moved to ./Modules/SecurityClasses.psm1
 
 #region Functions
+
+function Test-NpmCommandLine {
+    <#
+    .SYNOPSIS
+        Tests whether a line contains an unpinned npm command.
+    .DESCRIPTION
+        Matches npm install, npm i, npm update, and npm install-test commands.
+        Does not match npm ci, npm run, npm test, npm audit, or npx.
+    .PARAMETER Line
+        The text line to test for npm commands.
+    .OUTPUTS
+        System.String or $null
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$Line
+    )
+
+    if ($Line -match '\bnpm\s+(install-test|install|update)\b') {
+        return $Matches[0]
+    }
+    if ($Line -match '\bnpm\s+i\b(?!nstall|nit)') {
+        return $Matches[0]
+    }
+
+    return $null
+}
+
+function New-NpmCommandViolation {
+    <#
+    .SYNOPSIS
+        Creates a DependencyViolation for an unpinned npm command.
+    .DESCRIPTION
+        Constructs a DependencyViolation object with standard fields for
+        npm command violations detected in workflow run: steps.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys.
+    .PARAMETER LineNumber
+        1-based line number of the violation.
+    .PARAMETER Line
+        The source line containing the npm command.
+    .PARAMETER Command
+        The matched npm command string.
+    .OUTPUTS
+        DependencyViolation
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo,
+        [Parameter(Mandatory)]
+        [int]$LineNumber,
+        [Parameter(Mandatory)]
+        [string]$Line,
+        [Parameter(Mandatory)]
+        [string]$Command
+    )
+
+    $violation = [DependencyViolation]::new(
+        $FileInfo.RelativePath,
+        $LineNumber,
+        'workflow-npm-commands',
+        $Command,
+        'Medium',
+        "Unpinned npm command detected: '$Command'. Use 'npm ci' for deterministic installs from lockfile."
+    )
+    $violation.ViolationType = 'Unpinned'
+    $violation.CurrentRef = $Line.Trim()
+    $violation.Remediation = "Replace '$Command' with 'npm ci' for reproducible builds."
+    return $violation
+}
+
+function Get-WorkflowNpmCommandViolations {
+    <#
+    .SYNOPSIS
+        Detects unpinned npm install commands in GitHub Actions workflow run: steps.
+    .DESCRIPTION
+        Scans workflow YAML files for run: blocks and detects npm commands that
+        modify the dependency tree (install, i, update, install-test). Commands
+        that use the lockfile deterministically (ci) or do not install packages
+        (run, test, audit) are not flagged.
+
+        Uses indentation-aware parsing to confine detection to actual run: block
+        content, reducing false positives from YAML comments or unrelated keys.
+    .PARAMETER FileInfo
+        Hashtable with Path, Type, and RelativePath keys identifying the file to scan.
+    .OUTPUTS
+        DependencyViolation[]
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $violations = @()
+    $filePath = $FileInfo.Path
+
+    if (-not (Test-Path -LiteralPath $filePath)) {
+        return $violations
+    }
+
+    $lines = Get-Content -LiteralPath $filePath
+    $inRunBlock = $false
+    $runBlockIndent = 0
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.TrimStart()
+
+        if ($trimmed -eq '' -or $trimmed.StartsWith('#')) {
+            continue
+        }
+
+        $currentIndent = $line.Length - $line.TrimStart().Length
+
+        if ($trimmed -match '^run:\s*(.*)$') {
+            $runContent = $Matches[1].Trim()
+            $runBlockIndent = $currentIndent
+
+            if ($runContent -and $runContent -notmatch '^[|>]') {
+                $npmMatch = Test-NpmCommandLine -Line $runContent
+                if ($npmMatch) {
+                    $violations += New-NpmCommandViolation -FileInfo $FileInfo -LineNumber ($i + 1) -Line $runContent -Command $npmMatch
+                }
+                $inRunBlock = $false
+            } else {
+                $inRunBlock = $true
+            }
+            continue
+        }
+
+        if ($inRunBlock) {
+            if ($currentIndent -le $runBlockIndent) {
+                $inRunBlock = $false
+                if ($trimmed -match '^run:\s*(.*)$') {
+                    $i--
+                    continue
+                }
+            } else {
+                if ($trimmed.StartsWith('#')) {
+                    continue
+                }
+                $npmMatch = Test-NpmCommandLine -Line $trimmed
+                if ($npmMatch) {
+                    $violations += New-NpmCommandViolation -FileInfo $FileInfo -LineNumber ($i + 1) -Line $trimmed -Command $npmMatch
+                }
+            }
+        }
+    }
+
+    return $violations
+}
 
 function Test-ShellDownloadSecurity {
     <#
@@ -222,7 +379,8 @@ function Test-ShellDownloadSecurity {
                 $violation.Line = $i + 1
                 $violation.Type = $FileInfo.Type
                 $violation.Name = $line.Trim()
-                $violation.Severity = 'warning'
+                $violation.Severity = 'Medium'
+                $violation.ViolationType = 'Unpinned'
                 $violation.Description = 'Download without checksum verification'
                 $violation.Metadata = @{ Pattern = $line.Trim() }
                 $violations += $violation
@@ -238,10 +396,10 @@ function Get-NpmDependencyViolations {
     .SYNOPSIS
         Analyzes package.json files for unpinned npm dependencies.
     .DESCRIPTION
-        Parses package.json as JSON and checks only actual dependency sections
+        Parses package.json as JSON and checks dependency sections
         (dependencies, devDependencies, peerDependencies, optionalDependencies)
-        for SHA-pinned versions. Ignores metadata fields like name, version,
-        description, contributes, scripts, repository, etc.
+        for exact version pinning. Versions must be exact semver (e.g. 1.2.3)
+        without range operators like ^, ~, *, >=, ||, or URL/git references.
     .PARAMETER FileInfo
         Hashtable with Path, Type, and RelativePath keys from Get-FilesToScan.
     .OUTPUTS
@@ -271,6 +429,9 @@ function Get-NpmDependencyViolations {
         return $violations
     }
 
+    # Build a line-number lookup from raw file content
+    $lines = Get-Content -Path $filePath -ErrorAction SilentlyContinue
+
     $dependencySections = @('dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies')
 
     foreach ($section in $dependencySections) {
@@ -287,16 +448,29 @@ function Get-NpmDependencyViolations {
                 continue
             }
 
-            $isPinned = Test-SHAPinning -Version $version -Type $type
+            $isPinned = Test-NpmExactVersion -Version $version
 
             if (-not $isPinned) {
+                # Find the line number by searching for the package name in the file
+                $lineNumber = 1
+                if ($null -ne $lines) {
+                    $escapedName = [regex]::Escape($packageName)
+                    for ($i = 0; $i -lt $lines.Count; $i++) {
+                        if ($lines[$i] -match """$escapedName""\s*:") {
+                            $lineNumber = $i + 1
+                            break
+                        }
+                    }
+                }
+
                 $violation = [DependencyViolation]::new()
                 $violation.File = $relativePath
-                $violation.Line = 0
+                $violation.Line = $lineNumber
                 $violation.Type = $type
                 $violation.Name = $packageName
                 $violation.Version = $version
-                $violation.Severity = 'warning'
+                $violation.Severity = 'Medium'
+                $violation.ViolationType = 'Unpinned'
                 $violation.Description = "Unpinned npm dependency in $section"
                 $violation.Metadata = @{ Section = $section }
                 $violations += $violation
@@ -307,19 +481,31 @@ function Get-NpmDependencyViolations {
     return $violations
 }
 
-function Write-PinningLog {
+function Test-NpmExactVersion {
+    <#
+    .SYNOPSIS
+        Tests whether an npm version string is an exact pinned version.
+    .DESCRIPTION
+        Returns $true for exact semver versions (e.g. 1.2.3, 1.0.0-beta.1).
+        Returns $false for ranges, wildcards, URLs, tags, and git references.
+    #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Info', 'Warning', 'Error', 'Success')]
-        [string]$Level = 'Info'
+        [Parameter(Mandatory)]
+        [string]$Version
     )
 
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Output "[$timestamp] [$Level] $Message"
+    # Reject range operators, wildcards, URLs, git refs, and tags like "latest"
+    if ($Version -match '^[~^>=<*|]' -or
+        $Version -match '://' -or
+        $Version -match '\.git\b' -or
+        $Version -match '\s*\|\|' -or
+        $Version -match '^\w+$' -and $Version -notmatch '^\d') {
+        return $false
+    }
+
+    # Accept exact semver: major.minor.patch with optional prerelease/build metadata
+    return $Version -match '^\d+\.\d+\.\d+(-[a-zA-Z0-9._-]+)?(\+[a-zA-Z0-9._-]+)?$'
 }
 
 function Get-FilesToScan {
@@ -331,8 +517,7 @@ function Get-FilesToScan {
     param(
         [string]$ScanPath,
         [string[]]$Types,
-        [string[]]$ExcludePatterns,
-        [switch]$Recursive
+        [string[]]$ExcludePatterns
     )
 
     $allFiles = @()
@@ -342,20 +527,38 @@ function Get-FilesToScan {
             $patterns = $DependencyPatterns[$type].FilePatterns
 
             foreach ($pattern in $patterns) {
-                # Convert glob pattern to PowerShell-compatible path
-                $searchPath = Join-Path $ScanPath $pattern
-
                 try {
-                    if ($Recursive) {
-                        $files = Get-ChildItem -Path $searchPath -Recurse -File -ErrorAction SilentlyContinue
+                    # Decompose glob into a directory prefix and a leaf filename filter.
+                    # Get-ChildItem -Path does not expand ** globs on all platforms,
+                    # so we strip the ** segments and use -Recurse with -Filter instead.
+                    $segments = $pattern -split '[/\\]'
+                    $leafFilter = $segments[-1]
+                    $dirSegments = $segments[0..($segments.Length - 2)] | Where-Object { $_ -ne '**' }
+
+                    if ($dirSegments.Count -gt 0) {
+                        $basePath = Join-Path $ScanPath ($dirSegments -join [System.IO.Path]::DirectorySeparatorChar)
                     }
                     else {
-                        $files = Get-ChildItem -Path $searchPath -File -ErrorAction SilentlyContinue
+                        $basePath = $ScanPath
                     }
 
-                    # Apply exclusion filters
+                    if (-not (Test-Path -Path $basePath -PathType Container)) {
+                        continue
+                    }
+
+                    $files = Get-ChildItem -Path $basePath -Filter $leafFilter -Recurse -File -ErrorAction SilentlyContinue
+
+                    # Merge type-specific exclude patterns with caller-provided patterns
+                    $mergedExcludes = @()
                     if ($ExcludePatterns) {
-                        foreach ($exclude in $ExcludePatterns) {
+                        $mergedExcludes += @($ExcludePatterns)
+                    }
+                    if ($DependencyPatterns[$type].ContainsKey('ExcludePatterns')) {
+                        $mergedExcludes += $DependencyPatterns[$type].ExcludePatterns
+                    }
+
+                    if ($mergedExcludes) {
+                        foreach ($exclude in $mergedExcludes) {
                             $files = $files | Where-Object { $_.FullName -notlike "*$exclude*" }
                         }
                     }
@@ -369,7 +572,7 @@ function Get-FilesToScan {
                     }
                 }
                 catch {
-                    Write-PinningLog "Error scanning for $type files with pattern $pattern`: $($_.Exception.Message)" -Level Warning
+                    Write-SecurityLog -CIAnnotation "Error scanning for $type files with pattern $pattern`: $($_.Exception.Message)" -Level Warning
                 }
             }
         }
@@ -439,7 +642,7 @@ function Get-DependencyViolation {
             }
 
             if ($v.Line -lt 1) {
-                $v.Line = 0
+                $v.Line = 1
             }
 
             if (-not $v.Type) {
@@ -487,6 +690,7 @@ function Get-DependencyViolation {
                     $violation.CurrentRef = $match.Value
                     $violation.Description = "Unpinned dependency: $description"
                     $violation.Severity = if ($fileType -eq 'github-actions') { 'High' } else { 'Medium' }
+                    $violation.ViolationType = 'Unpinned'
                     $violation.Metadata['PatternDescription'] = $description
                     $violation.Metadata['LineContent'] = $lines[$lineNumber - 1]
 
@@ -496,7 +700,7 @@ function Get-DependencyViolation {
         }
     }
     catch {
-        Write-PinningLog "Error scanning file $filePath`: $($_.Exception.Message)" -Level Warning
+        Write-SecurityLog -CIAnnotation "Error scanning file $filePath`: $($_.Exception.Message)" -Level Warning
     }
 
     return $violations
@@ -547,7 +751,7 @@ function Get-RemediationSuggestion {
         }
     }
     catch {
-        Write-PinningLog "Could not generate automatic remediation for $($Violation.Name): $($_.Exception.Message)" -Level Warning
+        Write-SecurityLog -CIAnnotation "Could not generate automatic remediation for $($Violation.Name): $($_.Exception.Message)" -Level Warning
     }
 
     return "Manually research and pin to immutable reference"
@@ -743,7 +947,7 @@ function Export-ComplianceReport {
         }
     }
 
-    Write-PinningLog "Compliance report exported to: $OutputPath" -Level Success
+    Write-SecurityLog -CIAnnotation "Compliance report exported to: $OutputPath" -Level Success
 }
 
 function Export-CICDArtifact {
@@ -757,10 +961,10 @@ function Export-CICDArtifact {
         [string]$ReportPath
     )
 
-    Write-PinningLog "Preparing compliance artifacts for CI/CD systems..." -Level Info
+    Write-SecurityLog -CIAnnotation "Preparing compliance artifacts for CI/CD systems..." -Level Info
 
     $platform = Get-CIPlatform
-    Write-PinningLog "Detected $platform environment - setting up artifacts" -Level Info
+    Write-SecurityLog -CIAnnotation "Detected $platform environment - setting up artifacts" -Level Info
 
     # Set CI outputs (works for both GitHub Actions and Azure DevOps)
     Set-CIOutput -Name 'dependency-report' -Value $ReportPath -IsOutput
@@ -791,7 +995,7 @@ $(if ($Report.UnpinnedDependencies -gt 0) { "⚠️ **Action Required:** $($Repo
         Copy-Item -Path $ReportPath -Destination $artifactDir -Force
     }
 
-    Write-PinningLog "Compliance artifacts prepared for CI/CD consumption" -Level Success
+    Write-SecurityLog -CIAnnotation "Compliance artifacts prepared for CI/CD consumption" -Level Success
 }
 
 function Invoke-DependencyPinningAnalysis {
@@ -806,10 +1010,7 @@ function Invoke-DependencyPinningAnalysis {
         [string]$Path = ".",
 
         [Parameter()]
-        [switch]$Recursive,
-
-        [Parameter()]
-        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads",
+        [string]$IncludeTypes = "github-actions,npm,pip,shell-downloads,workflow-npm-commands",
 
         [Parameter()]
         [string]$ExcludePaths = "",
@@ -830,26 +1031,26 @@ function Invoke-DependencyPinningAnalysis {
         [switch]$Remediate
     )
 
-    Write-PinningLog "Starting dependency pinning compliance analysis..." -Level Info
-    Write-PinningLog "PowerShell Version: $($PSVersionTable.PSVersion)" -Level Info
-    Write-PinningLog "Platform: $($PSVersionTable.Platform)" -Level Info
+    Write-SecurityLog -CIAnnotation "Starting dependency pinning compliance analysis..." -Level Info
+    Write-SecurityLog -CIAnnotation "PowerShell Version: $($PSVersionTable.PSVersion)" -Level Info
+    Write-SecurityLog -CIAnnotation "Platform: $($PSVersionTable.Platform)" -Level Info
 
     # Parse include types and exclude paths
     $typesToCheck = $IncludeTypes.Split(',') | ForEach-Object { $_.Trim() }
     $excludePatterns = if ($ExcludePaths) { $ExcludePaths.Split(',') | ForEach-Object { $_.Trim() } } else { @() }
 
-    Write-PinningLog "Scanning path: $Path" -Level Info
-    Write-PinningLog "Include types: $($typesToCheck -join ', ')" -Level Info
-    if ($excludePatterns) { Write-PinningLog "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
+    Write-SecurityLog -CIAnnotation "Scanning path: $Path" -Level Info
+    Write-SecurityLog -CIAnnotation "Include types: $($typesToCheck -join ', ')" -Level Info
+    if ($excludePatterns) { Write-SecurityLog -CIAnnotation "Exclude patterns: $($excludePatterns -join ', ')" -Level Info }
 
     # Discover files to scan
-    $filesToScan = @(Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns -Recursive:$Recursive)
-    Write-PinningLog "Found $(@($filesToScan).Count) files to scan" -Level Info
+    $filesToScan = @(Get-FilesToScan -ScanPath $Path -Types $typesToCheck -ExcludePatterns $excludePatterns)
+    Write-SecurityLog -CIAnnotation "Found $(@($filesToScan).Count) files to scan" -Level Info
 
     # Scan for violations
     $allViolations = @()
     foreach ($fileInfo in $filesToScan) {
-        Write-PinningLog "Scanning: $($fileInfo.RelativePath)" -Level Info
+        Write-SecurityLog -CIAnnotation "Scanning: $($fileInfo.RelativePath)" -Level Info
         $violations = @(Get-DependencyViolation -FileInfo $fileInfo)
 
         # Add remediation suggestions
@@ -860,7 +1061,42 @@ function Invoke-DependencyPinningAnalysis {
         $allViolations += $violations
     }
 
-    Write-PinningLog "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
+    Write-SecurityLog -CIAnnotation "Found $(@($allViolations).Count) dependency pinning violations" -Level Info
+
+    # Emit per-violation CI annotations and console output
+    if ($allViolations.Count -gt 0) {
+        Write-Host "`n❌ Found $($allViolations.Count) unpinned dependencies:" -ForegroundColor Red
+        $groupedByFile = $allViolations | Group-Object -Property File
+        foreach ($fileGroup in $groupedByFile) {
+            Write-Host "`n📄 $($fileGroup.Name)" -ForegroundColor Cyan
+            foreach ($dep in $fileGroup.Group) {
+                $annotationLevel = switch ($dep.Severity) {
+                    'High'   { 'Error' }
+                    'Medium' { 'Warning' }
+                    default  { 'Notice' }
+                }
+                $icon = switch ($dep.Severity) {
+                    'High'   { '❌' }
+                    'Medium' { '⚠️' }
+                    default  { 'ℹ️' }
+                }
+                $color = switch ($dep.Severity) {
+                    'High'   { 'Red' }
+                    'Medium' { 'Yellow' }
+                    default  { 'Cyan' }
+                }
+                Write-Host "  $icon [$($dep.Severity)] $($dep.Name)@$($dep.Version): $($dep.Description) (Line $($dep.Line))" -ForegroundColor $color
+                Write-CIAnnotation `
+                    -Message "[$($dep.ViolationType)] $($dep.Name): $($dep.Description)" `
+                    -Level $annotationLevel `
+                    -File $dep.File `
+                    -Line $dep.Line
+            }
+        }
+    }
+    else {
+        Write-Host "`n✅ All dependencies are properly pinned." -ForegroundColor Green
+    }
 
     # Generate compliance report
     $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
@@ -872,32 +1108,32 @@ function Invoke-DependencyPinningAnalysis {
     Export-CICDArtifact -Report $report -ReportPath $OutputPath
 
     # Display summary
-    Write-PinningLog "Compliance Analysis Complete!" -Level Success
-    Write-PinningLog "Compliance Score: $($report.ComplianceScore)%" -Level Info
-    Write-PinningLog "Total Dependencies: $($report.TotalDependencies)" -Level Info
-    Write-PinningLog "Unpinned Dependencies: $($report.UnpinnedDependencies)" -Level Info
+    Write-SecurityLog -CIAnnotation "Compliance Analysis Complete!" -Level Success
+    Write-SecurityLog -CIAnnotation "Compliance Score: $($report.ComplianceScore)%" -Level Info
+    Write-SecurityLog -CIAnnotation "Total Dependencies: $($report.TotalDependencies)" -Level Info
+    Write-SecurityLog -CIAnnotation "Unpinned Dependencies: $($report.UnpinnedDependencies)" -Level Info
 
     if ($report.UnpinnedDependencies -gt 0) {
-        Write-PinningLog "$($report.UnpinnedDependencies) dependencies require SHA pinning for security compliance" -Level Warning
+        Write-SecurityLog -CIAnnotation "$($report.UnpinnedDependencies) dependencies require pinning for security compliance" -Level Warning
 
         # Check threshold compliance
         if ($report.ComplianceScore -lt $Threshold) {
-            Write-PinningLog "Compliance score $($report.ComplianceScore)% is below threshold $Threshold%" -Level Error
+            Write-SecurityLog -CIAnnotation "Compliance score $($report.ComplianceScore)% is below threshold $Threshold%" -Level Error
 
             if ($FailOnUnpinned) {
-                Write-PinningLog "Failing build due to compliance threshold violation (-FailOnUnpinned enabled)" -Level Error
+                Write-SecurityLog -CIAnnotation "Failing build due to compliance threshold violation (-FailOnUnpinned enabled)" -Level Error
                 throw "Compliance score $($report.ComplianceScore)% is below threshold $Threshold% (-FailOnUnpinned enabled)"
             }
             else {
-                Write-PinningLog "Threshold violation detected but continuing (soft-fail mode)" -Level Warning
+                Write-SecurityLog -CIAnnotation "Threshold violation detected but continuing (soft-fail mode)" -Level Warning
             }
         }
         else {
-            Write-PinningLog "Compliance score $($report.ComplianceScore)% meets threshold $Threshold%" -Level Info
+            Write-SecurityLog -CIAnnotation "Compliance score $($report.ComplianceScore)% meets threshold $Threshold%" -Level Info
         }
     }
     else {
-        Write-PinningLog "All dependencies are properly pinned! ✅ (100% compliance, exceeds $Threshold% threshold)" -Level Success
+        Write-SecurityLog -CIAnnotation "All dependencies are properly pinned! ✅ (100% compliance, exceeds $Threshold% threshold)" -Level Success
     }
 }
 
@@ -908,7 +1144,6 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         Invoke-DependencyPinningAnalysis `
             -Path $Path `
-            -Recursive:$Recursive `
             -IncludeTypes $IncludeTypes `
             -ExcludePaths $ExcludePaths `
             -Format $Format `

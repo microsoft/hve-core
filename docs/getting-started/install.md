@@ -1,6 +1,7 @@
 ---
 title: Installing HVE-Core
 description: Choose the right installation method for your environment
+sidebar_position: 2
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -25,7 +26,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 
 **Or visit:** [HVE Core on Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-**Why choose the extension:**
+### Why choose the extension
 
 * ✅ Zero configuration required
 * ✅ Automatic updates via VS Code
@@ -33,7 +34,7 @@ VS Code → Extensions → Search "HVE Core" → Install
 * ✅ No project files needed
 * ✅ Instant availability
 
-**When to use alternatives:**
+### When to use alternatives
 
 * ❌ You need to customize components → Use custom installation methods below
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
@@ -55,17 +56,17 @@ Open Copilot Chat, select the `hve-core-installer` agent, and use this prompt. T
 
 Answer these questions to find your recommended installation method:
 
-1. **What's your development environment?**
+1. What's your development environment?
    * Local VS Code (no devcontainer)
    * Local devcontainer (Docker Desktop)
    * GitHub Codespaces
    * Both local and Codespaces
 
-2. **Solo or team development?**
+2. Solo or team development?
    * Solo: Just you, no version control of HVE-Core needed
    * Team: Multiple people, need reproducible setup
 
-3. **Update preference?**
+3. Update preference?
    * Auto: Always get latest HVE-Core
    * Controlled: Pin to specific version, update explicitly
 
@@ -84,6 +85,41 @@ Answer these questions to find your recommended installation method:
 | Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
+
+## Collection Packages
+
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. Clone-based methods let you select any collection during setup.
+
+| Collection        | Collection ID       | Maturity     | Description                                                      |
+|-------------------|---------------------|--------------|------------------------------------------------------------------|
+| **Full** ⭐        | `hve-core-all`      | Stable       | All stable artifacts (recommended for most)                      |
+| HVE Core Workflow | `hve-core`          | Stable       | RPI workflow with Git commit, merge, and pull request prompts    |
+| Azure DevOps      | `ado`               | Stable       | Work item management, build monitoring, and PR creation          |
+| Coding Standards  | `coding-standards`  | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc. |
+| Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
+| Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
+| GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
+| Installer         | `installer`         | Stable       | Interactive installer agent for workspace configuration          |
+| Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
+| Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
+| Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
+
+### Extension Installation (Full Collection)
+
+The VS Code Marketplace extension installs the **Full** collection containing all stable artifacts. This is the recommended approach for most users.
+
+### Clone Methods (Collection Filtering)
+
+Clone-based installation methods support collection-based agent filtering through the installer agent:
+
+1. Clone the repository using your preferred method
+2. Run the `hve-core-installer` agent
+3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
+
+The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
+
+> [!NOTE]
+> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
 
 ### Quick Decision Tree
 
@@ -167,7 +203,7 @@ Run the installer in validation mode:
 
 HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` folder within your project. These files include research documents, implementation plans, PR review tracking, and other machine-generated content that should typically not be committed to version control.
 
-**Add this line to your project's `.gitignore`:**
+### Add this line to your project's `.gitignore`
 
 ```text
 .copilot-tracking/
@@ -176,7 +212,7 @@ HVE-Core agents create ephemeral workflow artifacts in a `.copilot-tracking/` fo
 > [!IMPORTANT]
 > This applies to all installation methods (extension, submodule, peer clone, etc.). The `.copilot-tracking/` folder is created in your project directory, not in HVE-Core itself.
 
-**What gets stored there:**
+### What gets stored there
 
 * Research documents from `task-researcher`
 * Implementation plans from `task-planner`
@@ -200,8 +236,8 @@ If you use agents like `ado-prd-to-wit` or `github-backlog-manager`, see [MCP Se
 ## Next Steps
 
 * [Your First Workflow](first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../rpi/README.md) - Research, Plan, Implement methodology
-* [Contributing](../contributing/README.md) - Contribute to HVE-Core
+* [RPI Workflow](../rpi/) - Research, Plan, Implement methodology
+* [Contributing](../contributing/) - Contribute to HVE-Core
 
 ---
 

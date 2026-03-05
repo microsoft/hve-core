@@ -19,12 +19,6 @@
     "applyTo": {
       "type": "string",
       "description": "Optional glob pattern that defines which files the instructions should be applied to automatically, relative to the workspace root. Use ** to apply to all files. If not specified, instructions are not applied automatically."
-    },
-    "maturity": {
-      "type": "string",
-      "enum": ["stable", "preview", "experimental", "deprecated"],
-      "default": "stable",
-      "description": "Maturity level affecting visibility in stable vs pre-release builds. Stable appears in all builds; preview/experimental only in pre-release."
     }
   },
   "additionalProperties": false

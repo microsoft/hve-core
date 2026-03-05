@@ -19,22 +19,14 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
-├── dev-tools/       Development utilities (PR reference generation)
+├── collections/     Collection validation and shared helpers
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
-├── security/        Security scanning and SHA pinning scripts
+├── plugins/         Copilot CLI plugin generation
+└── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
-
-## Dev Tools
-
-Development utilities for working with hve-core.
-
-| Script                     | Purpose                                   |
-|----------------------------|-------------------------------------------|
-| `Generate-PrReference.ps1` | Generate PR reference XML for reviews     |
-| `pr-ref-gen.sh`            | Shell wrapper for PR reference generation |
 
 ## Extension
 
@@ -57,11 +49,16 @@ Shared utility modules used across scripts.
 
 The `linting/` directory contains scripts for validating code quality and documentation:
 
-* **PSScriptAnalyzer**: Static analysis for PowerShell files
-* **Markdown Frontmatter**: Validate YAML frontmatter in markdown files
-* **Link Language Check**: Detect en-us language paths in URLs
-* **Markdown Link Check**: Validate markdown links
-* **Shared Module**: Common helper functions for GitHub Actions integration
+| Script                             | Purpose                                            |
+|------------------------------------|----------------------------------------------------|
+| `Invoke-PSScriptAnalyzer.ps1`      | Static analysis for PowerShell files               |
+| `Validate-MarkdownFrontmatter.ps1` | Validate YAML frontmatter in markdown files        |
+| `Validate-SkillStructure.ps1`      | Validate skill directory structure and frontmatter |
+| `Invoke-LinkLanguageCheck.ps1`     | Detect en-us language paths in URLs                |
+| `Link-Lang-Check.ps1`              | Link language checking entry point                 |
+| `Markdown-Link-Check.ps1`          | Validate markdown links                            |
+| `Invoke-YamlLint.ps1`              | YAML file validation                               |
+| `Test-CopyrightHeaders.ps1`        | Validate copyright headers in source files         |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
@@ -69,33 +66,56 @@ See [linting/README.md](linting/README.md) for detailed documentation.
 
 The `security/` directory contains scripts for security scanning and dependency management:
 
-* **Dependency Pinning**: Validate SHA pinning compliance
-* **SHA Staleness**: Check for outdated SHA pins
-* **SHA Updates**: Automate updating GitHub Actions SHA pins
+| Script                              | Purpose                                   |
+|-------------------------------------|-------------------------------------------|
+| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance    |
+| `Test-SHAStaleness.ps1`             | Check for outdated SHA pins               |
+| `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins |
+| `Test-ActionVersionConsistency.ps1` | Validate action version consistency       |
+
+## Plugins
+
+Copilot CLI plugin generation and validation.
+
+| Script                     | Purpose                                   |
+|----------------------------|-------------------------------------------|
+| `Generate-Plugins.ps1`     | Generate plugin packages from collections |
+| `Validate-Marketplace.ps1` | Validate marketplace metadata             |
+
+## Collections
+
+Collection validation and shared helpers.
+
+| Script                     | Purpose                                    |
+|----------------------------|--------------------------------------------|
+| `Validate-Collections.ps1` | Validate collection metadata and structure |
 
 ## Tests
 
 Pester test organization matching the scripts structure.
 
-| Directory    | Tests For                     |
-|--------------|-------------------------------|
-| `dev-tools/` | PR reference generation tests |
-| `extension/` | Extension packaging tests     |
-| `lib/`       | Library utility tests         |
-| `linting/`   | Linting script tests          |
-| `security/`  | Security validation tests     |
+| Directory      | Tests For                 |
+|----------------|---------------------------|
+| `collections/` | Collection helpers tests  |
+| `extension/`   | Extension packaging tests |
+| `lib/`         | Library utility tests     |
+| `linting/`     | Linting script tests      |
+| `security/`    | Security validation tests |
+| `plugins/`     | Plugin generation tests   |
+| `Fixtures/`    | Shared test fixtures      |
+| `Mocks/`       | Shared mock data          |
 
 Run all tests:
 
 ```bash
-npm run test
+npm run test:ps
 ```
 
 ## Usage
 
 All scripts are designed to run both locally and in GitHub Actions workflows. They support common parameters like `-Verbose` and `-Debug` for troubleshooting.
 
-**Local Testing**:
+### Local Testing
 
 ```powershell
 # Test PSScriptAnalyzer on changed files
@@ -108,7 +128,7 @@ All scripts are designed to run both locally and in GitHub Actions workflows. Th
 ./scripts/linting/Invoke-LinkLanguageCheck.ps1 -Verbose
 ```
 
-**GitHub Actions Integration**:
+### GitHub Actions Integration
 
 All scripts automatically detect GitHub Actions environment and provide appropriate output formatting (annotations, summaries, artifacts).
 
@@ -159,11 +179,17 @@ Key rules:
 * The `if` guard wraps `try`/`catch` (not the reverse)
 * Name the orchestrator `Invoke-*` matching the script noun
 * Use `#region Functions` and `#region Main Execution` markers
-* See [Generate-PrReference.ps1](dev-tools/Generate-PrReference.ps1) for a canonical example
+* See [Package-Extension.ps1](extension/Package-Extension.ps1) for a canonical example
 
 ## Related Documentation
 
+* [Collection Scripts Documentation](collections/README.md)
+* [Extension Packaging Documentation](extension/README.md)
+* [Library Utilities Documentation](lib/README.md)
 * [Linting Scripts Documentation](linting/README.md)
+* [Plugin Generation Documentation](plugins/README.md)
+* [Security Scripts Documentation](security/README.md)
+* [Test Organization Documentation](tests/README.md)
 * [GitHub Workflows Documentation](../.github/workflows/README.md)
 * [Contributing Guidelines](../CONTRIBUTING.md)
 

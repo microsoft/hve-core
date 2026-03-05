@@ -1,0 +1,1 @@
+../../../.github/agents/hve-core/memory.agent.md

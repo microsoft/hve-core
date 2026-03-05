@@ -103,6 +103,33 @@ Describe 'Write-SecurityLog' -Tag 'Unit' {
             }
         }
     }
+
+    Context 'CI annotation forwarding' {
+        BeforeAll {
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
+        }
+
+        It 'Forwards Warning messages as CI annotations when -CIAnnotation is set' {
+            Write-SecurityLog -Message 'Test warning' -Level Warning -CIAnnotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Warning' -and $Message -eq 'Test warning' } -Times 1 -Exactly
+        }
+
+        It 'Forwards Error messages as CI annotations when -CIAnnotation is set' {
+            Write-SecurityLog -Message 'Test error' -Level Error -CIAnnotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Error' -and $Message -eq 'Test error' } -Times 1 -Exactly
+        }
+
+        It 'Does not forward Info messages as CI annotations' {
+            Write-SecurityLog -Message 'Test info' -Level Info -CIAnnotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -Times 0
+        }
+
+        It 'Does not forward any messages when -CIAnnotation is not set' {
+            Write-SecurityLog -Message 'No annotation' -Level Warning
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -Times 0
+        }
+    }
 }
 
 Describe 'New-SecurityIssue' -Tag 'Unit' {

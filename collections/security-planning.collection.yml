@@ -1,0 +1,22 @@
+id: security-planning
+name: Security Planning
+description: Security plan creation, incident response, and risk assessment
+tags:
+  - security
+  - incident-response
+  - risk
+  - planning
+items:
+  # Agents
+  - path: .github/agents/security-planning/security-plan-creator.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/security-planning/incident-response.prompt.md
+    kind: prompt
+  - path: .github/prompts/security-planning/risk-register.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

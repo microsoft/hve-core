@@ -1,6 +1,7 @@
 ---
 title: Root Cause Analysis (RCA) Template
 description: Structured post-incident documentation template for root cause analysis
+sidebar_position: 3
 author: Microsoft
 ms.date: 2026-02-04
 ---
@@ -129,17 +130,17 @@ All times in UTC.
 
 ## Usage Guidelines
 
-1. **Start the document immediately** when an incident is declared
-2. **Update continuously** during the incident - don't rely on memory afterward
-3. **Be blameless** - focus on systems and processes, not individuals
-4. **Be thorough** - future responders will thank you
-5. **Track action items** - incidents without follow-through will repeat
+1. Start the document immediately when an incident is declared
+2. Update continuously during the incident - don't rely on memory afterward
+3. Be blameless - focus on systems and processes, not individuals
+4. Be thorough - future responders will thank you
+5. Track action items - incidents without follow-through will repeat
 
 ## References
 
-- [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
-- [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
-- [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
+* [Google SRE Book: Postmortem Culture](https://sre.google/sre-book/postmortem-culture/)
+* [Google SRE Book: Example Postmortem](https://sre.google/sre-book/example-postmortem/)
+* [Atlassian Incident Management](https://www.atlassian.com/incident-management/postmortem)
 
 ---
 

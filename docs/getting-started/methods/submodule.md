@@ -1,6 +1,7 @@
 ---
 title: Git Submodule Installation
 description: Set up HVE-Core as a git submodule for version-controlled team consumption
+sidebar_position: 7
 author: Microsoft
 ms.date: 2025-12-02
 ms.topic: how-to
@@ -81,16 +82,38 @@ Create or update `.vscode/settings.json`:
 ```jsonc
 {
   "chat.agentFilesLocations": {
-    "lib/hve-core/.github/agents": true,
+    "lib/hve-core/.github/agents/ado": true,
+    "lib/hve-core/.github/agents/data-science": true,
+    "lib/hve-core/.github/agents/design-thinking": true,
+    "lib/hve-core/.github/agents/github": true,
+    "lib/hve-core/.github/agents/installer": true,
+    "lib/hve-core/.github/agents/project-planning": true,
+    "lib/hve-core/.github/agents/hve-core": true,
+    "lib/hve-core/.github/agents/hve-core/subagents": true,
+    "lib/hve-core/.github/agents/security-planning": true,
     ".github/agents": true
   },
   "chat.promptFilesLocations": {
-    "lib/hve-core/.github/prompts": true,
+    "lib/hve-core/.github/prompts/ado": true,
+    "lib/hve-core/.github/prompts/design-thinking": true,
+    "lib/hve-core/.github/prompts/github": true,
+    "lib/hve-core/.github/prompts/hve-core": true,
+    "lib/hve-core/.github/prompts/security-planning": true,
     ".github/prompts": true
   },
   "chat.instructionsFilesLocations": {
-    "lib/hve-core/.github/instructions": true,
+    "lib/hve-core/.github/instructions/ado": true,
+    "lib/hve-core/.github/instructions/coding-standards": true,
+    "lib/hve-core/.github/instructions/design-thinking": true,
+    "lib/hve-core/.github/instructions/github": true,
+    "lib/hve-core/.github/instructions/hve-core": true,
+    "lib/hve-core/.github/instructions/shared": true,
     ".github/instructions": true
+  },
+  "chat.agentSkillsLocations": {
+    "lib/hve-core/.github/skills": true,
+    "lib/hve-core/.github/skills/shared": true,
+    ".github/skills": true
   }
 }
 ```
@@ -121,13 +144,13 @@ Update `.devcontainer/devcontainer.json` to initialize submodules automatically:
 
 When team members clone your project, they need to initialize submodules.
 
-**Option A: Clone with submodules (recommended):**
+### Option A: Clone with submodules (recommended)
 
 ```bash
 git clone --recurse-submodules https://github.com/your-org/your-project.git
 ```
 
-**Option B: Initialize after clone:**
+### Option B: Initialize after clone
 
 ```bash
 git clone https://github.com/your-org/your-project.git
@@ -135,7 +158,7 @@ cd your-project
 git submodule update --init --recursive
 ```
 
-**Option C: Configure git to auto-recurse:**
+### Option C: Configure git to auto-recurse
 
 ```bash
 git config --global submodule.recurse true
@@ -151,7 +174,7 @@ git config --global submodule.recurse true
 | Pin to specific commit | `cd lib/hve-core && git checkout <sha>`                               |
 | Track different branch | `git config submodule.lib/hve-core.branch develop`                    |
 
-**After updating, commit the change:**
+### After updating, commit the change
 
 ```bash
 git add lib/hve-core
@@ -172,14 +195,14 @@ To update HVE-Core when rebuilding your devcontainer:
 
 Submodules pin to a specific commit by default. To verify or change the pinned version:
 
-**Check current version:**
+### Check current version
 
 ```bash
 cd lib/hve-core
 git log -1 --oneline
 ```
 
-**Pin to a specific tag or commit:**
+### Pin to a specific tag or commit
 
 ```bash
 cd lib/hve-core
@@ -210,9 +233,9 @@ git submodule update --init --recursive
 
 ### Agents not appearing
 
-* **Check settings paths:** Verify `.vscode/settings.json` paths match submodule location
-* **Reload window:** `Ctrl+Shift+P` → "Developer: Reload Window"
-* **Verify submodule content:** `ls lib/hve-core/.github/agents/`
+* Verify `.vscode/settings.json` paths match submodule location
+* Reload the window with `Ctrl+Shift+P` → "Developer: Reload Window"
+* Confirm submodule content exists with `ls lib/hve-core/.github/agents/`
 
 ### "Detached HEAD" warning in submodule
 
@@ -248,7 +271,7 @@ git commit
 ## Next Steps
 
 * [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
-* [RPI Workflow](../../rpi/README.md) - Research, Plan, Implement methodology
+* [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 
 ---

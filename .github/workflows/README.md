@@ -50,13 +50,13 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | Workflow                          | Triggers                                | Jobs                                                            | Mode                       | Purpose                              |
 |-----------------------------------|-----------------------------------------|-----------------------------------------------------------------|----------------------------|--------------------------------------|
 | `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
-| `main.yml`                        | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
+| `release-stable.yml`              | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
 
-**pr-validation.yml jobs**: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
+pr-validation.yml jobs: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
 
-**main.yml jobs**: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
+release-stable.yml jobs: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
 
 ## Reusable Workflows
 
@@ -69,12 +69,13 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 | `table-format.yml`           | markdown-table-formatter | Verify table formatting (check-only) | `soft-fail` (false)                                                                                             | table-format-results           |
 | `ps-script-analyzer.yml`     | PSScriptAnalyzer         | PowerShell static analysis           | `soft-fail` (false), `changed-files-only` (true)                                                                | psscriptanalyzer-results       |
 | `frontmatter-validation.yml` | Custom PS script         | YAML frontmatter validation          | `soft-fail` (false), `changed-files-only` (true), `skip-footer-validation` (false), `warnings-as-errors` (true) | frontmatter-validation-results |
+| `skill-validation.yml`       | Custom PS script         | Skill directory structure validation | `soft-fail` (false), `changed-files-only` (true)                                                                | skill-validation-results       |
 | `link-lang-check.yml`        | Custom PS script         | Detect language-specific URLs        | `soft-fail` (false)                                                                                             | link-lang-check-results        |
 | `markdown-link-check.yml`    | markdown-link-check      | Validate links (internal/external)   | `soft-fail` (true)                                                                                              | markdown-link-check-results    |
 
 All validation workflows use `permissions: contents: read`, publish PR annotations, and retain artifacts for 30 days.
 
-**Usage example**:
+Usage example:
 
 ```yaml
 jobs:
@@ -88,16 +89,16 @@ jobs:
 
 Each modular workflow implements comprehensive 4-channel result publishing:
 
-1. **PR Annotations**: Warnings/errors appear on Files Changed tab
-2. **Artifacts**: Raw output files retained for 30 days
-3. **SARIF Reports**: Security tab integration (security workflows only)
-4. **Job Summaries**: Rich markdown summaries in Actions tab
+1. PR Annotations: Warnings/errors appear on Files Changed tab
+2. Artifacts: Raw output files retained for 30 days
+3. SARIF Reports: Security tab integration (security workflows only)
+4. Job Summaries: Rich markdown summaries in Actions tab
 
 ## Security Best Practices
 
 All workflows in this repository follow security best practices:
 
-### SHA Pinning
+### Dependency Pinning
 
 * All GitHub Actions use full 40-character commit SHAs
 * Comments include semantic version tags for human readability
@@ -125,7 +126,7 @@ The repository includes PowerShell scripts in `scripts/security/` for SHA pinnin
 * `Update-DockerSHAPinning.ps1` - Update Docker image SHA pins
 * `Update-ShellScriptSHAPinning.ps1` - Update shell script dependencies
 * `Test-SHAStaleness.ps1` - Check for stale SHA pins
-* `Test-DependencyPinning.ps1` - Validate SHA pinning compliance
+* `Test-DependencyPinning.ps1` - Validate dependency pinning compliance
 
 ### Dependabot Integration
 
@@ -143,40 +144,40 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 #### `codeql-analysis.yml`
 
-**Purpose**: Performs comprehensive security analysis using GitHub CodeQL
+Purpose: Performs comprehensive security analysis using GitHub CodeQL
 
-**Triggers**: `schedule` (Sundays at 4 AM UTC), `workflow_call`
+Triggers: `schedule` (Sundays at 4 AM UTC), `workflow_call`
 
-**Features**:
+Features:
 
-* **Languages**: JavaScript/TypeScript analysis
-* **Queries**: security-extended and security-and-quality query suites
-* **Coverage**: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
-* **Integration**: Results appear in Security > Code Scanning tab
-* **Auto-build**: Automatically detects and builds JavaScript/TypeScript projects
+* Languages: JavaScript/TypeScript analysis
+* Queries: security-extended and security-and-quality query suites
+* Coverage: Detects SQL injection, XSS, command injection, path traversal, and 200+ other vulnerabilities
+* Integration: Results appear in Security > Code Scanning tab
+* Auto-build: Automatically detects and builds JavaScript/TypeScript projects
 
-**Outputs**: SARIF results uploaded to GitHub Security tab, job summary with analysis details
+Outputs: SARIF results uploaded to GitHub Security tab, job summary with analysis details
 
 #### `dependency-review.yml`
 
-**Purpose**: Reviews dependency changes in pull requests for known vulnerabilities
+Purpose: Reviews dependency changes in pull requests for known vulnerabilities
 
-**Triggers**: `pull_request`, `workflow_call`
+Triggers: `pull_request`, `workflow_call`
 
-**Features**:
+Features:
 
-* **Threshold**: Fails on moderate or higher severity vulnerabilities
-* **PR Comments**: Automatically comments on PRs with vulnerability summary
-* **Coverage**: Checks npm packages against GitHub Advisory Database
-* **Integration**: Works with Dependabot alerts and security advisories
+* Threshold: Fails on moderate or higher severity vulnerabilities
+* PR Comments: Automatically comments on PRs with vulnerability summary
+* Coverage: Checks npm packages against GitHub Advisory Database
+* Integration: Works with Dependabot alerts and security advisories
 
-**Behavior**: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
+Behavior: Blocks PRs introducing vulnerable dependencies (moderate+ severity)
 
 #### `dependency-pinning-scan.yml`
 
-**Purpose**: Validates that all GitHub Actions use SHA-pinned versions
+Purpose: Validates that all GitHub Actions use SHA-pinned versions
 
-**Inputs**:
+Inputs:
 
 * `threshold` (number, default: 95): Minimum compliance percentage
 * `dependency-types` (string, default: 'actions,containers'): Types to validate
@@ -184,7 +185,7 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 * `upload-sarif` (boolean, default: false): Upload to Security tab
 * `upload-artifact` (boolean, default: true): Upload JSON results
 
-**Outputs**:
+Outputs:
 
 * `compliance-score`: Percentage of dependencies properly pinned
 * `unpinned-count`: Number of unpinned dependencies
@@ -192,18 +193,18 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 #### `sha-staleness-check.yml`
 
-**Purpose**: Detects outdated GitHub Action SHA pins
+Purpose: Detects outdated GitHub Action SHA pins
 
-**Inputs**:
+Inputs:
 
 * `max-age-days` (number, default: 30): Maximum age before stale
 
-**Outputs**:
+Outputs:
 
 * `stale-count`: Number of stale SHA pins
 * `has-stale`: Boolean indicating stale pins found
 
-**Severity Levels**:
+Severity Levels:
 
 * Info: 0-30 days
 * Low: 31-90 days
@@ -213,18 +214,18 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 #### `scorecard.yml`
 
-**Purpose**: Performs OpenSSF Scorecard analysis for security posture assessment
+Purpose: Performs OpenSSF Scorecard analysis for security posture assessment
 
-**Triggers**: `schedule` (Sundays at 3 AM UTC), `push` to main
+Triggers: `schedule` (Sundays at 3 AM UTC), `push` to main
 
-**Features**:
+Features:
 
-* **Analysis**: Supply chain security, CI/CD best practices, code review practices
-* **Integration**: Results published to OpenSSF Scorecard API and GitHub Security tab
-* **Badge**: Live Scorecard badge available for README display
-* **Artifacts**: SARIF results retained for 90 days
+* Analysis: Supply chain security, CI/CD best practices, code review practices
+* Integration: Results published to OpenSSF Scorecard API and GitHub Security tab
+* Badge: Live Scorecard badge available for README display
+* Artifacts: SARIF results retained for 90 days
 
-**Outputs**: SARIF results uploaded to GitHub Security tab, job summary with badge link
+Outputs: SARIF results uploaded to GitHub Security tab, job summary with badge link
 
 ## Architecture Decisions
 
@@ -234,9 +235,9 @@ The SHA staleness check workflow complements Dependabot by monitoring for stale 
 
 **Current Architecture:** CodeQL now runs exclusively through orchestrator workflows to prevent duplicate runs and ensure consistent security scanning:
 
-* **CodeQL PR validation**: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
-* **Main branch**: Runs via `main.yml` on every push to main
-* **Weekly scan**: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
+* CodeQL PR validation: Runs via `pr-validation.yml` on all PR activity (open, push, reopen)
+* Main branch: Runs via `release-stable.yml` on every push to main
+* Weekly scan: Standalone scheduled run every Sunday at 4 AM UTC for continuous security monitoring
 
 This architecture ensures:
 
@@ -245,13 +246,13 @@ This architecture ensures:
 * Clear ownership of when and why CodeQL executes
 * Reduced GitHub Actions minutes consumption
 
-**Workflow Execution Matrix**:
+Workflow Execution Matrix:
 
 | Event                                | Workflows That Run                                       | CodeQL Included       |
 |--------------------------------------|----------------------------------------------------------|-----------------------|
 | Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
 | Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Merge to main                        | `main.yml` (5 jobs)                                      | ✅  Yes               |
+| Merge to main                        | `release-stable.yml` (5 jobs)                                      | ✅  Yes               |
 | Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
 | Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
 
@@ -263,10 +264,10 @@ To add a new workflow to the repository:
 
 1. Create `{tool-name}.yml` following existing patterns
 2. Implement 4-channel result publishing (annotations, artifacts, SARIF if security, summaries)
-3. Use SHA pinning for all actions
+3. Use dependency pinning for all dependencies
 4. Use minimal permissions
 5. Add soft-fail input support
-6. Update `pr-validation.yml` and `main.yml` to include new job
+6. Update `pr-validation.yml` and `release-stable.yml` to include new job
 7. Document in this README
 
 ## Using Reusable Workflows
@@ -358,10 +359,10 @@ jobs:
 
 ### Artifact Handling
 
-* **Retention**: 30 days for all artifacts
-* **Naming**: `{workflow-name}-results`
-* **Contents**: JSON results, markdown summaries, logs
-* **Condition**: `if: always()` to upload even on failure
+* Retention: 30 days for all artifacts
+* Naming: `{workflow-name}-results`
+* Contents: JSON results, markdown summaries, logs
+* Condition: `if: always()` to upload even on failure
 
 ### GitHub Annotations
 
@@ -554,8 +555,8 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 | `.markdownlint.json`                                  | Markdown formatting rules    | `markdown-lint.yml`         |
 | `scripts/linting/markdown-link-check.config.json`     | Link checking configuration  | `markdown-link-check.yml`   |
 | `.cspell.json`                                        | Spell checking configuration | `spell-check.yml`           |
-| `.github/instructions/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
-| `.github/instructions/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
+| `.github/instructions/hve-core/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
+| `.github/instructions/hve-core/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
 
 ## Resources
 

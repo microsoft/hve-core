@@ -1,0 +1,111 @@
+name: Pre-Release Marketplace Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Pre-release version with odd minor (e.g., 3.1.44). Leave empty to auto-detect."
+        required: false
+        type: string
+        default: ""
+      dry-run:
+        description: "Dry run (package only, do not publish)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-version:
+    name: Validate Pre-Release Version
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == true) }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - name: Resolve version from event
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#hve-core-v}"
+            VERSION="${VERSION#v}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "Resolved version from release tag: $VERSION"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate pre-release version
+        id: validate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          VERSION="$INPUT_VERSION"
+          # Strip leading 'v' or 'hve-core-v' prefix if present
+          VERSION="${VERSION#v}"
+          VERSION="${VERSION#hve-core-v}"
+
+          # Auto-detect from latest pre-release tag when no version specified
+          if [ -z "$VERSION" ]; then
+            TAG=$(gh release list --exclude-drafts --limit 10 --json tagName,isPrerelease \
+              -q '[.[] | select(.isPrerelease)] | .[0].tagName // empty' \
+              -R "${{ github.repository }}")
+            if [ -n "$TAG" ]; then
+              VERSION="${TAG#hve-core-v}"
+              echo "📦 Auto-detected pre-release version: $VERSION"
+            else
+              echo "::error::No pre-release found. Provide a version manually (e.g., 3.1.44)"
+              exit 1
+            fi
+          fi
+
+          # Validate version format (MAJOR.MINOR.PATCH)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected MAJOR.MINOR.PATCH (e.g., 3.1.44)"
+            exit 1
+          fi
+
+          # Even/odd convention: odd minor = pre-release, even minor = stable
+          PUBLISH_MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( PUBLISH_MINOR % 2 == 0 )); then
+            echo "::error::Pre-release channel requires odd minor version. Got: $VERSION (even minor = stable)"
+            echo "::error::Use the stable publish workflow for even-minor versions"
+            exit 1
+          fi
+
+          echo "✅ Valid pre-release version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Package Pre-Release Extensions
+    needs: validate-version
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.validate-version.outputs.version }}
+      channel: PreRelease
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish Pre-Release Extensions
+    needs: [package]
+    if: ${{ !inputs.dry-run }}
+    uses: ./.github/workflows/extension-marketplace-publish.yml
+    with:
+      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      pre-release: true
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit

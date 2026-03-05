@@ -1,6 +1,7 @@
 ---
 title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: tutorial
@@ -31,7 +32,7 @@ Use Task Planner after completing research when you need:
 4. **Organizes** tasks into logical phases with dependencies
 
 > [!NOTE]
-> **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria—the plan becomes a contract that prevents improvisation during implementation.
+> **Why the constraint matters:** Task Planner receives verified research and transforms it into actionable steps. Because it can't implement, it focuses entirely on sequencing, dependencies, and success criteria. The plan becomes a contract that prevents improvisation during implementation.
 
 ## Output Artifacts
 

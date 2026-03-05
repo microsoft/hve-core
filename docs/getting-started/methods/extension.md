@@ -1,6 +1,7 @@
 ---
 title: VS Code Extension Installation
 description: Install HVE-Core as a VS Code extension from the marketplace
+sidebar_position: 1
 author: Microsoft
 ms.date: 2026-01-07
 ms.topic: how-to
@@ -42,7 +43,7 @@ VS Code Extension System
 │   ├── .github/agents/         # All chat agents
 │   ├── .github/prompts/        # All prompt templates
 │   ├── .github/instructions/   # All coding guidelines
-│   └── scripts/dev-tools/      # PR reference generation
+│   └── .github/skills/         # All skill packages
 └── Only optional workspace configuration needed!
 ```
 
@@ -105,35 +106,39 @@ The extension provides all HVE-Core components:
 | Chat Agents  | task-planner, pr-review, adr-creation   |
 | Prompts      | git-commit, pull-request, ado-create-pr |
 | Instructions | markdown, python-script, commit-message |
-| Dev Tools    | Generate-PrReference.ps1, pr-ref-gen.sh |
+| Skills       | pr-reference, video-to-gif              |
 
 ## Updating
 
 The extension updates automatically through VS Code's extension system:
 
-* **Auto-updates (default):** Extensions update automatically when new versions are released
-* **Manual updates:** Extensions view → Find "HVE Core" → Click **Update**
-* **Pre-release versions:** Right-click extension → "Switch to Pre-Release Version"
+* Extensions update automatically when new versions are released (default)
+* Open Extensions view → find "HVE Core" → click **Update** for manual updates
+* Right-click the extension → "Switch to Pre-Release Version" for pre-release access
 
 ## Comparison with Other Methods
 
 ### Pros ✅
 
-* **Zero configuration** - No workspace settings or file cloning required
-* **Works everywhere** - Local, devcontainers, Codespaces, any environment
-* **Automatic updates** - VS Code manages updates seamlessly
-* **No repository pollution** - Nothing added to your project
-* **Instant availability** - Works immediately after installation
-* **No manual setup** - No scripts to run or paths to configure
-* **Marketplace managed** - Centralized distribution and versioning
+| Advantage               | Detail                                            |
+|-------------------------|---------------------------------------------------|
+| Zero configuration      | No workspace settings or file cloning required    |
+| Works everywhere        | Local, devcontainers, Codespaces, any environment |
+| Automatic updates       | VS Code manages updates automatically             |
+| No repository pollution | Nothing added to your project                     |
+| Instant availability    | Works immediately after installation              |
+| No manual setup         | No scripts to run or paths to configure           |
+| Marketplace managed     | Centralized distribution and versioning           |
 
 ### Cons ❌
 
-* **No customization** - Can't modify custom agents, prompts, or instructions
-* **Extension updates only** - Can't easily test development versions
-* **No version pinning** - Uses latest version (or opt into pre-release)
-* **No team control** - Can't enforce specific versions across team
-* **Limited flexibility** - Can't combine with custom local modifications
+| Limitation             | Detail                                               |
+|------------------------|------------------------------------------------------|
+| No customization       | Can't modify custom agents, prompts, or instructions |
+| Extension updates only | Testing development versions requires extra setup    |
+| No version pinning     | Uses latest version (or opt into pre-release)        |
+| No team control        | Can't enforce specific versions across team          |
+| Limited flexibility    | Can't combine with custom local modifications        |
 
 ## Common Scenarios
 
@@ -143,7 +148,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Install the extension from marketplace
 
-**Steps:**
+#### Steps
 
 1. Install extension from marketplace
 2. Start using `task-planner` and other agents
@@ -155,7 +160,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Install extension on all machines via Settings Sync
 
-**Steps:**
+#### Steps
 
 1. Enable Settings Sync in VS Code
 2. Install extension on one machine
@@ -167,7 +172,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Share extension link and install instructions
 
-**Steps:**
+#### Steps
 
 1. Share marketplace link with team
 2. Team members install extension
@@ -179,7 +184,7 @@ The extension updates automatically through VS Code's extension system:
 
 **Solution:** Use extension initially, migrate to Peer Clone when needed
 
-**Steps:**
+#### Steps
 
 1. Start with extension for quick setup
 2. When customization needed, uninstall extension
@@ -189,25 +194,25 @@ The extension updates automatically through VS Code's extension system:
 
 ### Extension Not Appearing
 
-**Check extension is installed:**
+#### Check extension is installed
 
 1. Open Extensions view (`Ctrl+Shift+X`)
 2. Search "HVE Core"
 3. Verify "Installed" badge appears
 
-**Reload VS Code:**
+#### Reload VS Code
 
 1. Command Palette (`Ctrl+Shift+P`)
 2. "Developer: Reload Window"
 
 ### Agents Not Showing in Copilot Chat
 
-**Verify GitHub Copilot is active:**
+#### Verify GitHub Copilot is active
 
 1. Check Copilot icon in status bar
 2. Sign in if needed
 
-**Check extension status:**
+#### Check extension status
 
 1. Extensions view → "HVE Core"
 2. Verify no errors shown
@@ -226,12 +231,12 @@ If you have both extension and manual installation (like Peer Clone):
 
 ### Update Not Appearing
 
-**Force check for updates:**
+#### Force check for updates
 
 1. Extensions view → ⋯ (More Actions)
 2. "Check for Extension Updates"
 
-**Manually update:**
+#### Manually update
 
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button
@@ -242,18 +247,18 @@ If you have both extension and manual installation (like Peer Clone):
 
 If you're currently using manual methods like Peer Clone:
 
-1. **Remove workspace settings** - Delete HVE-Core paths from `.vscode/settings.json`
-2. **Optionally remove cloned folder** - Delete hve-core clone if no longer needed
-3. **Install extension** - Follow Quick Start above
-4. **Verify** - Test agents appear in Copilot Chat
+1. Delete HVE-Core paths from `.vscode/settings.json`
+2. Optionally remove the hve-core clone if no longer needed
+3. Install the extension following the Quick Start above
+4. Verify agents appear in Copilot Chat
 
 ### From Extension to Manual Installation
 
 If you need customization:
 
-1. **Uninstall extension** - Extensions view → Uninstall "HVE Core"
-2. **Follow manual method** - See [Peer Clone](peer-clone.md) for local customization
-3. **Customize** - Edit custom agents, prompts, or instructions as needed
+1. Uninstall the extension from Extensions view
+2. Follow a manual method such as [Peer Clone](peer-clone.md) for local customization
+3. Customize agents, prompts, or instructions as needed
 
 ## Limitations
 

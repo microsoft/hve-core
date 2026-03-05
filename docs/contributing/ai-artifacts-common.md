@@ -1,6 +1,7 @@
 ---
 title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
+sidebar_position: 2
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: reference
@@ -10,57 +11,69 @@ This document defines shared standards, conventions, and quality gates that appl
 
 ## Agents Not Accepted
 
-The following agent types will likely be **rejected or closed automatically** because **equivalent agents already exist in hve-core**:
+The following agent types will likely be **rejected or closed automatically** because equivalent agents already exist in hve-core:
 
 ### Duplicate Agent Categories
 
-* **Research or Discovery Agents**: Agents that search for, gather, or discover information
-  * ❌ Reason: Existing agents already handle research and discovery workflows
-  * ✅ Alternative: Use existing research-focused agents in `.github/agents/`
+#### Research or Discovery Agents
 
-* **Indexing or Referencing Agents**: Agents that catalog, index, or create references to existing projects
-  * ❌ Reason: Existing agents already provide indexing and referencing capabilities
-  * ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
-  * ✅ Alternative: Use existing reference management agents that leverage standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+Agents that search for, gather, or discover information.
 
-* **Planning Agents**: Agents that plan work, break down tasks, or organize backlog items
-  * ❌ Reason: Existing agents already handle work planning and task organization
-  * ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+* ❌ Reason: Existing agents already handle research and discovery workflows
+* ✅ Alternative: Use existing research-focused agents in `.github/agents/`
 
-* **Implementation Agents**: General-purpose coding agents that implement features
-  * ❌ Reason: Existing agents already provide implementation guidance
-  * ✅ Alternative: Use existing implementation-focused agents
+#### Indexing or Referencing Agents
+
+Agents that catalog, index, or create references to existing projects.
+
+* ❌ Reason: Existing agents already provide indexing and referencing capabilities
+* ❌ Tool integration: Widely supported tools built into VS Code GitHub Copilot and MCP tools with extremely wide adoption are already supported by existing hve-core agents
+* ✅ Alternative: Use existing reference management agents that use standard VS Code GitHub Copilot tools and widely-adopted MCP tools
+
+#### Planning Agents
+
+Agents that plan work, break down tasks, or organize backlog items.
+
+* ❌ Reason: Existing agents already handle work planning and task organization
+* ✅ Alternative: Use existing planning-focused agents in `.github/agents/`
+
+#### Implementation Agents
+
+General-purpose coding agents that implement features.
+
+* ❌ Reason: Existing agents already provide implementation guidance
+* ✅ Alternative: Use existing implementation-focused agents
 
 ### Rationale for Rejection
 
 These agent types are rejected because:
 
-1. **Existing agents are hardened and heavily utilized**: The hve-core library already contains production-tested agents in these categories
-2. **Consistency and maintenance**: Coalescing around existing agents reduces fragmentation and maintenance burden
-3. **Avoid duplication**: Multiple agents serving the same purpose create confusion and divergent behavior
-4. **Standard tooling already integrated**: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already leveraged by existing agents
+1. Existing agents are hardened and heavily used: the hve-core library already contains production-tested agents in these categories
+2. Consistency and maintenance: coalescing around existing agents reduces fragmentation and maintenance burden
+3. Avoid duplication: multiple agents serving the same purpose create confusion and divergent behavior
+4. Standard tooling already integrated: VS Code GitHub Copilot built-in tools and widely-adopted MCP tools are already used by existing agents
 
 ### Before Submitting
 
 When planning to submit an agent that falls into these categories:
 
-1. **Question necessity**: Does your use case truly require a new agent, or can existing agents meet your needs?
-2. **Review existing agents**: Examine `.github/agents/` to identify agents that already serve your purpose
-3. **Check tool integration**: Verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
-4. **Consider enhancement over creation**: If existing agents don't fully meet your requirements, evaluate whether your changes are:
-   * **Generic enough** to benefit all users
-   * **Valuable enough** to justify modifying the existing agent
-5. **Propose enhancements**: Submit a PR to enhance an existing agent rather than creating a duplicate
+1. Question necessity: does your use case truly require a new agent, or can existing agents meet your needs?
+2. Review existing agents: examine `.github/agents/` to identify agents that already serve your purpose
+3. Check tool integration: verify whether the VS Code GitHub Copilot tools or MCP tools you need are already used by existing agents
+4. Consider enhancement over creation: if existing agents don't fully meet your requirements, evaluate whether your changes are generic enough to benefit all users and valuable enough to justify modifying the existing agent
+5. Propose enhancements: submit a PR to enhance an existing agent rather than creating a duplicate
 
 ### What Makes a Good New Agent
 
 Focus on agents that:
 
-* **Fill gaps**: Address use cases not covered by existing agents
-* **Provide unique value**: Offer specialized domain expertise or workflow patterns not present in the library
-* **Are non-overlapping**: Have clearly distinct purposes from existing agents
-* **Cannot be merged**: Represent functionality too specialized or divergent to integrate into existing agents
-* **Use standard tooling**: Leverage widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations
+| Criterion            | Description                                                                                     |
+|----------------------|-------------------------------------------------------------------------------------------------|
+| Fill gaps            | Address use cases not covered by existing agents                                                |
+| Provide unique value | Offer specialized domain expertise or workflow patterns not present in the library              |
+| Are non-overlapping  | Have clearly distinct purposes from existing agents                                             |
+| Cannot be merged     | Represent functionality too specialized or divergent to integrate into existing agents          |
+| Use standard tooling | Use widely-supported VS Code GitHub Copilot tools and MCP tools rather than custom integrations |
 
 ## Model Version Requirements
 
@@ -68,8 +81,10 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ### Accepted Models
 
-* **Anthropic**: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4)
-* **OpenAI**: Latest GPT models (e.g., GPT-5, 5.1-COdEX)
+| Provider  | Models                                                      |
+|-----------|-------------------------------------------------------------|
+| Anthropic | Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) |
+| OpenAI    | Latest GPT models (e.g., GPT-5, 5.1-COdEX)                  |
 
 ### Not Accepted
 
@@ -80,23 +95,254 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 
 ### Rationale
 
-1. **Feature parity**: Latest models support the most advanced features and capabilities
-2. **Maintenance burden**: Supporting multiple model versions creates testing and compatibility overhead
-3. **Performance**: Latest models provide superior reasoning, accuracy, and efficiency
-4. **Future-proofing**: Older models will be deprecated and removed from service
+1. Feature parity: latest models support the most advanced features and capabilities
+2. Maintenance burden: supporting multiple model versions creates testing and compatibility overhead
+3. Performance: latest models provide superior reasoning, accuracy, and efficiency
+4. Future-proofing: older models will be deprecated and removed from service
 
-## Maturity Field Requirements
+## Collections
 
-All AI artifacts (agents, instructions, prompts) **MUST** include a `maturity` field in frontmatter.
+Collection manifests in `collections/*.collection.yml` are the source of truth for artifact selection and distribution.
 
-### Purpose
+### Collection Purpose
+
+Collection manifests serve three primary functions:
+
+1. Selection \u2014 determine which artifacts are included in each collection via `items[]`
+2. Maturity filtering \u2014 control channel inclusion with `items[].maturity` (defaults to `stable`)
+3. Packaging inputs \u2014 provide canonical manifest data used by build and distribution flows
+
+### Collection Structure
+
+Each manifest contains top-level collection metadata and an `items` array:
+
+```yaml
+id: coding-standards
+name: Coding Standards
+description: Language-specific coding instructions
+tags:
+  - coding-standards
+  - bash
+  - python
+items:
+  - path: .github/instructions/coding-standards/python-script.instructions.md
+    kind: instruction
+    maturity: stable
+  - path: .github/prompts/hve-core/task-plan.prompt.md
+    kind: prompt
+    maturity: preview
+```
+
+### Collection Tags
+
+Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
+
+| Collection          | Tags                                                                                                                                       |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `hve-core-all`      | `hve`, `complete`, `bundle`                                                                                                                |
+| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                                                                             |
+| `coding-standards`  | `coding-standards`, `code-review`, `pull-request`, `quality`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `rust`, `terraform`, `uv` |
+| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`                                                              |
+| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                                                                         |
+| `experimental`      | `experimental`, `media`, `utilities`                                                                                                       |
+| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                                                                          |
+| `installer`         | `installer`, `setup`, `onboarding`                                                                                                         |
+| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`                                                               |
+| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`                                                                      |
+| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                                                                        |
+
+When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
+
+### Collection Item Format
+
+Each `items[]` entry follows this structure:
+
+```yaml
+- path: .github/agents/hve-core/rpi-agent.agent.md
+  kind: agent
+  maturity: stable
+```
+
+| Field      | Required | Description                                                                    |
+|------------|----------|--------------------------------------------------------------------------------|
+| `path`     | Yes      | Repository-relative path to the artifact source                                |
+| `kind`     | Yes      | Artifact type (`agent`, `prompt`, `instruction`, `skill`, or `hook`)           |
+| `maturity` | No       | Release readiness level; when omitted, effective maturity defaults to `stable` |
+
+### Adding Artifacts to a Collection
+
+When contributing a new artifact:
+
+1. Create the artifact file in the appropriate directory
+2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
+3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
+4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
+5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
+6. Run `npm run plugin:validate` to validate collection manifests
+7. Run `npm run plugin:generate` to regenerate plugin directories
+
+### Repo-Specific Artifact Exclusion
+
+Artifacts placed at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and MUST NOT be added to collection manifests. These files govern internal repository concerns (CI/CD workflows, repo-specific conventions) that do not apply outside this repository.
+
+### Deprecated Artifact Placement
+
+Artifacts that have been superseded or are scheduled for removal MUST be moved to `.github/deprecated/{type}/` (e.g., `.github/deprecated/agents/`, `.github/deprecated/prompts/`). The build system automatically excludes this subtree from collection manifests, plugin generation, and extension packaging.
+
+#### When to Move an Artifact to Deprecated
+
+* A newer artifact fully replaces the existing one
+* The artifact is no longer maintained or tested
+* The artifact targets a retired platform or workflow
+
+#### How to Deprecate an Artifact
+
+1. Move the file with `git mv` to preserve history: `git mv .github/agents/{collection}/old.agent.md .github/deprecated/agents/old.agent.md`
+2. Add a note in the deprecated file's frontmatter or body identifying its replacement
+3. Remove the artifact's entry from all `collections/*.collection.yml` files
+4. Run `npm run plugin:generate` to regenerate plugin outputs
+5. Update any documentation that references the old artifact path
+
+#### Exclusion Scope
+
+Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` are excluded from:
+
+* Collection manifests (`collections/*.collection.yml` items)
+* Plugin generation (`plugins/` directory contents)
+* Extension packaging and distribution
+* Collection builds and bundles
+* Artifact selection for published releases
+
+#### Validation Enforcement
+
+The plugin generation and validation tooling actively enforces this exclusion:
+
+* Collection validation fails if root-level repo-specific paths appear in `items[]`
+* Plugin generation skips root-level artifacts
+* Extension packaging filters out these files during build
+
+#### Placement Guidelines
+
+| Scope                       | Location                                                | Included in Plugins |
+|-----------------------------|---------------------------------------------------------|---------------------|
+| **Repository-specific**     | `.github/instructions/` (root, no subdirectory)         | ❌ No                |
+| **Collection-scoped**       | `.github/instructions/{collection-id}/` (by convention) | ✅ Yes               |
+| **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
+| **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
+
+If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+
+## Collection Taxonomy
+
+Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
+
+### Defined Collections
+
+| Collection            | Identifier          | Description                                                                                  |
+|-----------------------|---------------------|----------------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills                 |
+| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation               |
+| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform |
+| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards                   |
+| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions         |
+| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                                       |
+| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution                       |
+| **Installer**         | `installer`         | HVE Core installation and environment setup                                                  |
+| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                        |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                                |
+| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                               |
+
+### Collection Assignment Guidelines
+
+When assigning collections to artifacts:
+
+* Include `hve-core-all` plus any role-specific collections that particularly benefit for universal artifacts
+* Include only the relevant collections for role-specific artifacts (omit `hve-core-all` for highly specialized artifacts)
+* Assign cross-cutting tools like RPI workflow artifacts (`task-researcher`, `task-planner`) to multiple relevant collections
+
+#### Example Collection Assignments
+
+Adding an artifact to multiple collections means adding its `items[]` entry in each relevant `collections/*.collection.yml`:
+
+```yaml
+# In collections/hve-core-all.collection.yml - Universal
+- path: .github/instructions/hve-core/markdown.instructions.md
+  kind: instruction
+
+# In collections/coding-standards.collection.yml - Coding standards
+- path: .github/instructions/hve-core/markdown.instructions.md
+  kind: instruction
+
+# In collections/hve-core.collection.yml - Core workflow
+- path: .github/agents/hve-core/rpi-agent.agent.md
+  kind: agent
+```
+
+### Selecting Collections for New Artifacts
+
+Answer these questions when determining collection assignments:
+
+1. **Who is the primary user?** Identify the main role that benefits from this artifact
+2. **Who else benefits?** Consider secondary roles that may find value
+3. **Is it foundational?** Core workflow artifacts should include multiple collections
+4. **Is it specialized?** Domain-specific artifacts may target fewer collections
+
+When in doubt, include `hve-core-all` to ensure the artifact appears in the full collection while still enabling targeted distribution.
+
+## Extension Packaging
+
+Collections are consumed during VS Code Extension packaging to determine which artifacts are included in stable and pre-release extension channels.
+
+### Agent Handoff Dependencies
+
+During VS Code Extension packaging, agent handoff dependencies are automatically resolved to ensure UI navigation buttons work correctly.
+
+#### How Handoff Resolution Works
+
+The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) includes the `Resolve-HandoffDependencies` function:
+
+1. Seed agents: Starts with agents listed in the collection manifest
+2. Parse frontmatter: Reads the `handoffs` field from each agent's frontmatter
+3. BFS traversal: Performs breadth-first search to find all reachable agents through handoff chains
+4. Include all: Adds all discovered agents to the extension package
+
+#### Collection Manifests and Dependencies
+
+**Collection manifests do NOT declare dependencies.** They only specify:
+
+* `path`: Repository-relative path to the artifact
+* `kind`: Artifact type (agent, prompt, instruction, skill, hook)
+* `maturity`: Release readiness level (optional, defaults to stable)
+
+Dependencies are resolved through agent frontmatter `handoffs` declarations during extension packaging, not through collection manifest fields.
+
+#### Creating Artifacts with Dependencies
+
+When creating artifacts that reference other artifacts:
+
+| Guideline              | Description                                                                     |
+|------------------------|---------------------------------------------------------------------------------|
+| Agent handoffs         | Use the `handoffs` frontmatter field in agents to declare UI navigation buttons |
+| Document relationships | Clearly describe dependencies in artifact documentation                         |
+| Test in isolation      | Verify your artifact works when only its collection is installed                |
+| Keep coupling minimal  | Avoid unnecessary dependencies between artifacts                                |
+
+For agent handoff configuration details, see [Contributing Custom Agents - Frontmatter Requirements](custom-agents.md#frontmatter-requirements).
+
+### Maturity Field Requirements
+
+Maturity is defined in `collections/*.collection.yml` under `items[].maturity` and MUST NOT appear in artifact frontmatter.
+
+#### Purpose
 
 The maturity field controls which extension channel includes the artifact:
 
-* **Stable channel**: Only artifacts with `maturity: stable`
-* **Pre-release channel**: Artifacts with `stable`, `preview`, or `experimental` maturity
+| Channel             | Description                                                    |
+|---------------------|----------------------------------------------------------------|
+| Stable channel      | Only artifacts with `maturity: stable`                         |
+| Pre-release channel | Artifacts with `stable`, `preview`, or `experimental` maturity |
 
-### Valid Values
+#### Valid Values
 
 | Value          | Description                                 | Stable Channel | Pre-release Channel |
 |----------------|---------------------------------------------|----------------|---------------------|
@@ -105,27 +351,121 @@ The maturity field controls which extension channel includes the artifact:
 | `experimental` | Early development, may change significantly | ❌ Excluded     | ✅ Included          |
 | `deprecated`   | Scheduled for removal                       | ❌ Excluded     | ❌ Excluded          |
 
-### Default for New Contributions
+When `items[].maturity` is omitted, the effective maturity defaults to `stable`.
 
-New artifacts **SHOULD** use `maturity: stable` unless:
+#### Default for New Contributions
+
+New collection items **SHOULD** use `maturity: stable` unless:
 
 * The artifact is a proof-of-concept or experimental feature
 * The artifact requires additional testing or feedback before wide release
 * The contributor explicitly intends to target early adopters
 
-### Example
+#### Setting Maturity
+
+Add or update the maturity value on each collection item in `collections/*.collection.yml`:
 
 ```yaml
----
-description: 'Specialized agent for security analysis'
-maturity: 'stable'
-tools: ['codebase', 'search']
----
+items:
+  # path can reference artifacts from any subfolder
+  - path: .github/agents/{collection-id}/example.agent.md
+    kind: agent
+    maturity: stable
 ```
 
 For detailed channel and lifecycle information, see [Release Process - Extension Channels](release-process.md#extension-channels-and-maturity).
 
-**Before submitting**: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+Before submitting: Verify your artifact targets the current latest model versions from Anthropic or OpenAI. Contributions targeting older or alternative models will be automatically rejected.
+
+## Plugin Generation
+
+The `plugins/` directory contains **auto-generated plugin bundles** created from collection manifests for use with GitHub Copilot CLI. These plugin directories are outputs of the build process and **MUST NOT be edited directly**.
+
+### Generation Workflow
+
+When you add an artifact to a collection manifest:
+
+1. Author artifact: Create your agent, prompt, instruction, or skill in `.github/`
+2. Update collection: Add an `items[]` entry to one or more `collections/*.collection.yml` files
+3. Validate collections: Run `npm run plugin:validate` to check manifest correctness
+4. Generate plugins: Run `npm run plugin:generate` to regenerate all plugin directories
+5. Commit both: Commit the source artifact, collection manifest updates, AND generated plugin outputs together
+
+### Plugin Directory Structure
+
+Each generated plugin directory contains:
+
+| Content              | Description                                                                      |
+|----------------------|----------------------------------------------------------------------------------|
+| Symlinked artifacts  | Direct symlinks to source files in `.github/` (preserves single source of truth) |
+| Generated README     | Auto-generated documentation listing all included artifacts                      |
+| Plugin manifest      | `plugin.json` file for GitHub Copilot CLI plugin system                          |
+| Marketplace metadata | Aggregated data for extension distribution                                       |
+
+### Critical Rules for Plugin Files
+
+> [!WARNING]
+> Files under `plugins/` are generated outputs and MUST NOT be edited directly.
+
+| Rule                     | Description                                                                            |
+|--------------------------|----------------------------------------------------------------------------------------|
+| Regenerate after changes | Always run `npm run plugin:generate` after modifying collection manifests or artifacts |
+| Symlinked files          | Markdown artifacts are symlinked, so edits to plugin files modify source artifacts     |
+| Generated files          | README and JSON files are generated fresh on each run                                  |
+| Durable edits            | Direct edits to plugin files will be overwritten or cause conflicts                    |
+| Source of truth          | Always edit the source artifact in `.github/`, not the plugin copy                     |
+
+### When to Regenerate Plugins
+
+Run `npm run plugin:generate` whenever you:
+
+* Add a new artifact to a collection manifest
+* Remove an artifact from a collection manifest
+* Modify artifact frontmatter (description, dependencies, handoffs)
+* Update artifact file content that affects generated README documentation
+* Change collection manifest metadata (tags, description, name)
+* Update the `hve-core-all` collection (auto-updated during generation)
+
+### Validating Collection Manifests
+
+Before generating plugins, validate collection YAML files to catch errors early:
+
+```bash
+npm run plugin:validate
+```
+
+This command checks:
+
+| Check                 | Description                                                       |
+|-----------------------|-------------------------------------------------------------------|
+| YAML syntax           | Valid YAML structure and formatting                               |
+| Required fields       | Presence of `id`, `name`, `description`, `items`                  |
+| Path references       | All artifact paths exist and are accessible                       |
+| Kind values           | Valid artifact kinds (agent, prompt, instruction, skill, hook)    |
+| Maturity values       | Valid maturity levels (stable, preview, experimental, deprecated) |
+| Duplicate paths       | No duplicate artifact entries within a collection                 |
+| Root-level exclusions | No repo-specific artifacts from `.github/{type}/` root            |
+
+Always validate before generating plugins:
+
+```bash
+# Recommended workflow
+npm run plugin:validate  # Validate collections first
+npm run plugin:generate  # Then regenerate plugins
+```
+
+Validation errors will prevent successful plugin generation, so fixing validation issues first saves time and prevents incomplete plugin outputs.
+
+### Plugin Generation Reference
+
+For detailed documentation on the plugin generation system, including:
+
+* Generation script implementation details
+* Collection validation rules
+* Plugin directory structure specifications
+* Troubleshooting generation errors
+
+See the [Plugin Scripts README](https://github.com/microsoft/hve-core/blob/main/scripts/plugins/README.md).
 
 ## XML-Style Block Standards
 
@@ -133,12 +473,14 @@ All AI artifacts use XML-style HTML comment blocks to wrap examples, schemas, te
 
 ### Requirements
 
-* **Tag naming**: Use kebab-case (e.g., `<!-- <example-valid-frontmatter> -->`)
-* **Matching pairs**: Opening and closing tags MUST match exactly
-* **Unique names**: Each tag name MUST be unique within the file (no duplicates)
-* **Code fence placement**: Place code fences **inside** blocks, never outside
-* **Nested blocks**: Use 4-backtick outer fence when demonstrating blocks with code fences
-* **Single lines**: Opening and closing tags on their own lines
+| Rule                 | Description                                                           |
+|----------------------|-----------------------------------------------------------------------|
+| Tag naming           | Use kebab-case (e.g., `<!-- <example-valid-frontmatter> -->`)         |
+| Matching pairs       | Opening and closing tags MUST match exactly                           |
+| Unique names         | Each tag name MUST be unique within the file (no duplicates)          |
+| Code fence placement | Place code fences inside blocks, never outside                        |
+| Nested blocks        | Use 4-backtick outer fence when demonstrating blocks with code fences |
+| Single lines         | Opening and closing tags on their own lines                           |
 
 ### Valid XML-Style Block Structure
 
@@ -183,13 +525,11 @@ echo "Hello World"
 
 #### Missing Closing Tag
 
-* **Problem**: XML-style comment blocks opened but never closed
-* **Solution**: Always include matching closing tags `<!-- </block-name> -->` for all opened blocks
+XML-style comment blocks opened but never closed. Always include matching closing tags `<!-- </block-name> -->` for all opened blocks.
 
 #### Duplicate Tag Names
 
-* **Problem**: Using the same XML block tag name multiple times in a file
-* **Solution**: Make each tag name unique (e.g., `<example-python-function>` and `<example-bash-script>` instead of multiple `<example-code>` blocks)
+Using the same XML block tag name multiple times in a file. Make each tag name unique (e.g., `<example-python-function>` and `<example-bash-script>` instead of multiple `<example-code>` blocks).
 
 ## Markdown Quality Standards
 
@@ -208,7 +548,7 @@ All AI artifacts MUST follow these markdown quality requirements:
 * Use proper language identifiers: `bash`, `python`, `json`, `yaml`, `markdown`, `text`, `plaintext`
 * No naked code blocks without language specification
 
-❌ **Bad**:
+❌ Bad:
 
 ````markdown
 ```
@@ -216,7 +556,7 @@ code without language tag
 ```
 ````
 
-✅ **Good**:
+✅ Good:
 
 ````markdown
 ```python
@@ -230,13 +570,13 @@ def example(): pass
 * Wrap in angle brackets: `<https://example.com>`
 * Use markdown links: `[text](https://example.com)`
 
-❌ **Bad**:
+❌ Bad:
 
 ```markdown
 See https://example.com for details.
 ```
 
-✅ **Good**:
+✅ Good:
 
 ```markdown
 See <https://example.com> for details.
@@ -266,7 +606,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Ends with attribution footer
+* Includes attribution in frontmatter `description` field
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -275,11 +615,9 @@ Use standardized keywords for clarity and enforceability:
 
 ### Required Behavior
 
-* **MUST** / **WILL** / **MANDATORY** / **REQUIRED** / **CRITICAL**
-* Indicates absolute requirement
-* Non-compliance is a defect
+MUST, WILL, MANDATORY, REQUIRED, and CRITICAL indicate absolute requirements. Non-compliance is a defect.
 
-**Example**:
+#### Example: Required Behavior
 
 ```markdown
 All functions MUST include type hints for parameters and return values.
@@ -288,12 +626,9 @@ You WILL validate frontmatter before proceeding (MANDATORY).
 
 ### Strong Recommendations
 
-* **SHOULD** / **RECOMMENDED**
-* Indicates best practice
-* Valid reasons may exist for exceptions
-* Non-compliance requires justification
+SHOULD and RECOMMENDED indicate best practices. Valid reasons may exist for exceptions, but non-compliance requires justification.
 
-**Example**:
+#### Example: Strong Recommendations
 
 ```markdown
 Examples SHOULD be wrapped in XML-style blocks for reusability.
@@ -302,11 +637,9 @@ Functions SHOULD include docstrings with parameter descriptions.
 
 ### Optional/Permitted
 
-* **MAY** / **OPTIONAL** / **CAN**
-* Indicates permitted but not required
-* Implementer choice
+MAY, OPTIONAL, and CAN indicate permitted but not required behavior. The choice is left to the implementer.
 
-**Example**:
+#### Example: Optional Behavior
 
 ```markdown
 You MAY include version fields in frontmatter.
@@ -315,7 +648,7 @@ Contributors CAN organize examples by complexity level.
 
 ### Avoid Ambiguous Language
 
-❌ **Ambiguous (Never Use)**:
+❌ Ambiguous (Never Use):
 
 ```markdown
 You might want to validate the input...
@@ -325,7 +658,7 @@ Try to follow the pattern...
 Maybe include tests...
 ```
 
-✅ **Clear (Always Use)**:
+✅ Clear (Always Use):
 
 ```markdown
 You MUST validate all input before processing.
@@ -357,17 +690,22 @@ npm run lint:md-links
 
 # PowerShell analysis (if applicable)
 npm run lint:ps
+
+# Validate skill structure (if applicable)
+npm run validate:skills
 ```
 
 ### Quality Gates
 
 All submissions MUST pass:
 
-* **Frontmatter Schema**: Valid YAML with required fields
-* **Markdown Linting**: No markdown rule violations
-* **Spell Check**: No spelling errors (or added to dictionary)
-* **Link Validation**: All links accessible and valid
-* **File Format**: Correct fences and structure
+| Gate               | Description                                 |
+|--------------------|---------------------------------------------|
+| Frontmatter Schema | Valid YAML with required fields             |
+| Markdown Linting   | No markdown rule violations                 |
+| Spell Check        | No spelling errors (or added to dictionary) |
+| Link Validation    | All links accessible and valid              |
+| File Format        | Correct fences and structure                |
 
 ### Validation Checklist Template
 
@@ -431,57 +769,47 @@ Before submitting any AI artifact:
 
 ### Ambiguous Directives
 
-* **Problem**: Using vague, non-committal language that doesn't clearly indicate requirements
-* **Solution**: Use RFC 2119 keywords (MUST, SHOULD, MAY) to specify clear requirements
+Using vague, non-committal language that doesn't clearly indicate requirements. Use RFC 2119 keywords (MUST, SHOULD, MAY) to specify clear requirements.
 
 ### Missing XML Block Closures
 
-* **Problem**: XML-style comment blocks opened but never closed
-* **Solution**: Always include matching closing tags for all XML-style comment blocks
+XML-style comment blocks opened but never closed. Always include matching closing tags for all XML-style comment blocks.
 
 ### Code Blocks Without Language Tags
 
-* **Problem**: Code blocks missing language identifiers for syntax highlighting
-* **Solution**: Always specify the language for code blocks (python, bash, json, yaml, markdown, text, plaintext)
+Code blocks missing language identifiers for syntax highlighting. Always specify the language for code blocks (python, bash, json, yaml, markdown, text, plaintext).
 
 ### Bare URLs
 
-* **Problem**: URLs placed directly in text without proper markdown formatting
-* **Solution**: Wrap URLs in angle brackets `<https://example.com>` or use proper markdown link syntax `[text](url)`
+URLs placed directly in text without proper markdown formatting. Wrap URLs in angle brackets `<https://example.com>` or use proper markdown link syntax `[text](url.md)`.
 
 ### Inconsistent List Markers
 
-* **Problem**: Mixing different bullet point markers (* and -) in the same list
-* **Solution**: Use consistent markers throughout (prefer * for bullets, - for nested or alternatives)
+Mixing different bullet point markers (\* and -) in the same list. Use consistent markers throughout (prefer \* for bullets, - for nested or alternatives).
 
 ### Trailing Whitespace
 
-* **Problem**: Extra spaces at the end of lines (except intentional 2-space line breaks)
-* **Solution**: Remove all trailing whitespace from lines
+Extra spaces at the end of lines (except intentional 2-space line breaks). Remove all trailing whitespace from lines.
 
 ### Skipped Heading Levels
 
-* **Problem**: Jumping from H1 to H3 without an H2, breaking document hierarchy
-* **Solution**: Follow proper heading sequence (H1 → H2 → H3) without skipping levels
+Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper heading sequence (H1 → H2 → H3) without skipping levels.
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution footer at the end:
+All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
 
-```markdown
----
-
-Brought to you by microsoft/hve-core
+```yaml
+description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
 ```
 
-**Placement**: After all content, before final closing fence.
+Format: `- Brought to you by organization/repository-name` appended to the description value.
 
-**Format**:
+Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 
-* Horizontal rule (`---`)
-* Blank line
-* Exact text: "Brought to you by microsoft/hve-core"
-* Or team-specific: "Brought to you by microsoft/edge-ai"
+```markdown
+> Brought to you by microsoft/hve-core
+```
 
 ## GitHub Issue Title Conventions
 
@@ -508,7 +836,7 @@ When filing issues against hve-core, use Conventional Commit-style title prefixe
 
 ### Reference
 
-See [commit-message.instructions.md](../../.github/instructions/commit-message.instructions.md) for the complete list of types and scopes.
+See [commit-message.instructions.md](https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/commit-message.instructions.md) for the complete list of types and scopes.
 
 ## Getting Help
 
@@ -516,9 +844,11 @@ When contributing AI artifacts:
 
 ### Review Examples
 
-* **Agents**: Examine files in `.github/agents/`
-* **Prompts**: Examine files in `.github/prompts/`
-* **Instructions**: Examine files in `.github/instructions/`
+| Artifact Type | Location                                                                     |
+|---------------|------------------------------------------------------------------------------|
+| Agents        | Files in `.github/agents/{collection-id}/` (the conventional location)       |
+| Prompts       | Files in `.github/prompts/{collection-id}/` (the conventional location)      |
+| Instructions  | Files in `.github/instructions/{collection-id}/` (the conventional location) |
 
 ### Check Repository Standards
 
@@ -537,7 +867,7 @@ When contributing AI artifacts:
 * [Contributing Custom Agents](custom-agents.md) - Agent configurations
 * [Contributing Prompts](prompts.md) - Workflow guidance
 * [Contributing Instructions](instructions.md) - Technology standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission checklist
 
 ---
 

@@ -1,0 +1,1 @@
+../../../.github/instructions/ado/ado-wit-planning.instructions.md

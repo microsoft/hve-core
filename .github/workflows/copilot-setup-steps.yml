@@ -12,6 +12,14 @@ name: "Copilot Setup Steps"
 on:
   workflow_dispatch:
 
+# Minimal permissions
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # Job MUST be named 'copilot-setup-steps' to be recognized by Copilot
   copilot-setup-steps:
@@ -44,11 +52,24 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: '1.7.10'
+          ACTIONLINT_SHA256: 'f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f'
+        run: |
+          curl -sLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sha256sum -c -
+          tar -xzf "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" actionlint
+          sudo install actionlint /usr/local/bin/actionlint
+          rm actionlint "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          actionlint --version
+
       - name: Install PowerShell modules
         shell: pwsh
         run: |
           Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
       - name: Verify tool availability
         run: |
@@ -58,6 +79,7 @@ jobs:
           python3 --version
           pwsh --version
           shellcheck --version
+          actionlint --version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list

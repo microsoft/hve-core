@@ -1,6 +1,7 @@
 ---
 title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
+sidebar_position: 4
 author: Microsoft
 ms.date: 2025-11-26
 ms.topic: how-to
@@ -8,7 +9,7 @@ ms.topic: how-to
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot prompt files (`.prompt.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is a Prompt?
 
@@ -28,12 +29,16 @@ Create a prompt when you need to:
 
 ### Location
 
-All prompt files **MUST** be placed in:
+Prompt files are typically organized in a collection subdirectory by convention:
 
 ```text
-.github/prompts/
+.github/prompts/{collection-id}/
 └── your-prompt-name.prompt.md
 ```
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 ### Naming Convention
 
@@ -44,7 +49,7 @@ All prompt files **MUST** be placed in:
 
 ### File Format
 
-Prompt files **MUST**:
+Prompt files MUST:
 
 1. Use the `.prompt.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
@@ -57,58 +62,52 @@ Prompt files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of prompt purpose and use case
-* **Format**: Single sentence, 10-200 characters
-* **Style**: Sentence case with proper punctuation
-* **Example**: `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'`
+| Property | Value                                                                                                              |
+|----------|--------------------------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of prompt purpose and use case                                                                 |
+| Format   | Single sentence, 10-200 characters                                                                                 |
+| Style    | Sentence case with proper punctuation                                                                              |
+| Example  | `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'` |
 
 **`mode`** (string enum, MANDATORY for prompts)
 
-* **Purpose**: Defines when/how the prompt is invoked
-* **Valid values**:
-  * `agent` - Used by specialized AI agents
-  * `assistant` - General-purpose assistance context
-  * `copilot` - GitHub Copilot-specific workflows
-  * `workflow` - Automated workflow/pipeline context
-* **Example**: `workflow`
+| Property | Value                                  |
+|----------|----------------------------------------|
+| Purpose  | Defines when/how the prompt is invoked |
+| Example  | `workflow`                             |
 
-**`maturity`** (string enum, MANDATORY)
+Valid values:
 
-* **Purpose**: Controls which extension channel includes this prompt
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New prompts should use `stable` unless targeting early adopters
-* **Example**: `stable`
+* `agent` - Used by specialized AI agents
+* `assistant` - General-purpose assistance context
+* `copilot` - GitHub Copilot-specific workflows
+* `workflow` - Automated workflow/pipeline context
 
 ### Optional Fields
 
 **`category`** (string enum)
 
-* **Purpose**: Organizes prompts by domain
-* **Valid values**:
-  * `ado` - Azure DevOps workflows
-  * `git` - Git operations
-  * `documentation` - Documentation generation/maintenance
-  * `workflow` - General workflow automation
-  * `development` - Development tasks
+Organizes prompts by domain.
+
+Valid values:
+
+* `ado` - Azure DevOps workflows
+* `git` - Git operations
+* `documentation` - Documentation generation/maintenance
+* `workflow` - General workflow automation
+* `development` - Development tasks
 
 **`version`** (string)
 
-* **Purpose**: Tracks prompt revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
+Tracks prompt revisions using semantic versioning (e.g., `1.0.0`).
 
 **`author`** (string)
 
-* **Purpose**: Attribution for prompt creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+Attribution for the prompt creator (e.g., `microsoft/hve-core`, `your-team-name`).
 
 **`lastUpdated`** (string)
 
-* **Purpose**: Timestamp of last modification
-* **Format**: ISO 8601 date (YYYY-MM-DD)
+Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
 
 ### Frontmatter Example
 
@@ -116,13 +115,43 @@ Prompt files **MUST**:
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
 mode: 'workflow'
-maturity: 'stable'
 category: 'ado'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Collection Entry Requirements
+
+All prompts must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+
+### Adding Your Prompt to a Collection
+
+After creating your prompt file, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+  # path can reference artifacts from any subfolder
+  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
+    kind: prompt
+    maturity: stable
+```
+
+### Selecting Collections for Prompts
+
+Choose collections based on who invokes or benefits from the workflow:
+
+| Prompt Type             | Recommended Collections                   |
+|-------------------------|-------------------------------------------|
+| Git/PR workflows        | `hve-core-all`, `hve-core`                |
+| ADO work item workflows | `hve-core-all`, `ado`, `project-planning` |
+| GitHub issue workflows  | `hve-core-all`, `github`                  |
+| RPI workflow prompts    | `hve-core-all`, `hve-core`                |
+| Documentation workflows | `hve-core-all`, `hve-core`                |
+| Architecture prompts    | `hve-core-all`, `project-planning`        |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## Prompt Content Structure Standards
 
@@ -174,10 +203,10 @@ work item discovery, reviewer identification, and compliance validation.
 ```markdown
 ## Workflow Steps
 
-1. **Discovery Phase**: Identify related work items from branch name or commit messages
-2. **Reviewer Selection**: Query ADO for default reviewers based on repository policies
-3. **PR Creation**: Generate PR with title, description, and work item links
-4. **Validation**: Verify PR was created successfully with correct metadata
+1. Discovery Phase: Identify related work items from branch name or commit messages
+2. Reviewer Selection: Query ADO for default reviewers based on repository policies
+3. PR Creation: Generate PR with title, description, and work item links
+4. Validation: Verify PR was created successfully with correct metadata
 ```
 
 #### 5. Success Criteria
@@ -209,7 +238,7 @@ work item discovery, reviewer identification, and compliance validation.
 
 #### 8. Attribution Footer
 
-* **MANDATORY**: Include at end of file
+Always include an attribution footer at the end of the file.
 
 ```markdown
 ---
@@ -243,7 +272,7 @@ assignee: "<user.email>"
 ```
 <!-- </example-template-variables> -->
 
-**Variable Naming**:
+#### Variable Naming
 
 * Use snake_case: `{{work_item_id}}`, `{{user_name}}`
 * Be descriptive: `{{target_branch}}` not `{{tb}}`
@@ -284,7 +313,7 @@ Where choices affect flow:
 **Else if** work items in commit messages:
   → Extract and use those work items
 
-**Else**:
+Else:
   → Prompt user for work item IDs
 ```
 
@@ -307,9 +336,9 @@ What artifacts are produced:
 ```markdown
 ## Output Artifacts
 
-1. **Pull Request**: Created in ADO with metadata
-2. **Handoff Document**: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
-3. **Validation Report**: Summary of PR creation status
+1. Pull Request: Created in ADO with metadata
+2. Handoff Document: `.copilot-tracking/pr/{{YYYY-MM-DD}}-pr-{{id}}-handoff.md`
+3. Validation Report: Summary of PR creation status
 ```
 
 ## Context Requirements
@@ -367,11 +396,11 @@ Structure for user-facing output:
 
 ### PR Creation Summary
 
-**Status**: [Success|Failed]
-**PR ID**: [ID]
-**PR URL**: [URL]
-**Work Items Linked**: [IDs]
-**Reviewers Added**: [Names]
+Status: [Success|Failed]
+PR ID: [ID]
+PR URL: [URL]
+Work Items Linked: [IDs]
+Reviewers Added: [Names]
 
 ### Validation Results
 
@@ -404,9 +433,9 @@ Format for failure scenarios:
 ```markdown
 ## Error Format
 
-**Error Type**: [Authentication|Validation|Network]
-**Message**: [Detailed error description]
-**Recovery Steps**:
+Error Type: [Authentication|Validation|Network]
+Message: [Detailed error description]
+Recovery Steps:
 
 1. [Step to resolve]
 2. [Alternative approach]
@@ -429,7 +458,7 @@ Before submitting your prompt, verify:
 
 * [ ] Clear H1 title describing workflow
 * [ ] Overview/purpose section
-* [ ] Maturity field set appropriately (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
+* [ ] Maturity set in collection item (see [Common Standards - Maturity](ai-artifacts-common.md#maturity-field-requirements))
 * [ ] Prerequisites or context section
 * [ ] Workflow steps with clear sequence
 * [ ] Success criteria defined
@@ -480,13 +509,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ### Template Variables with Wrong Format
 
-* **Problem**: Using incorrect syntax for template variables (angle brackets or shell-style)
-* **Solution**: Always use `{{variable_name}}` handlebars format for template variables
+Using incorrect syntax for template variables (angle brackets or shell-style) causes failures. Always use `{{variable_name}}` handlebars format for template variables.
 
 ### Ambiguous Workflow Steps
 
-* **Problem**: Vague workflow steps without specific tools, conditions, or decision logic
-* **Solution**: Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic
+Vague workflow steps without specific tools, conditions, or decision logic cause confusion. Provide explicit tool usage, decision trees, and fallback strategies with clear conditional logic.
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
@@ -506,11 +533,11 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Instructions](instructions.md) - Technology-specific standards
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
-See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/`.
+See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For prompt-specific assistance, review existing examples in `.github/prompts/{collection-id}/` (the conventional location for prompt files).
 
 ---
 

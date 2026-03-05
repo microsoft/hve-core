@@ -1,9 +1,12 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
     . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+    # Re-import CIHelpers so Pester can resolve its commands for mocking;
+    # the nested-module import inside SecurityHelpers shadows the standalone copy.
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
@@ -11,6 +14,15 @@ BeforeAll {
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
     $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+
+    # CI helper mocks — suppress console output and enable assertions
+    Mock Write-Host {}
+    Mock Write-CIAnnotation {}
+    Mock Write-CIStepSummary {}
+    # Module-scoped mocks — intercept calls from within SecurityHelpers module
+    Mock Write-Host {} -ModuleName SecurityHelpers
+    Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+    Mock Write-CIStepSummary {} -ModuleName SecurityHelpers
 }
 
 Describe 'Test-SHAPinning' -Tag 'Unit' {
@@ -53,6 +65,52 @@ Describe 'Test-SHAPinning' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-NpmExactVersion' -Tag 'Unit' {
+    Context 'Exact versions' {
+        It 'Returns true for simple semver' {
+            Test-NpmExactVersion -Version '1.2.3' | Should -BeTrue
+        }
+
+        It 'Returns true for semver with prerelease tag' {
+            Test-NpmExactVersion -Version '1.0.0-beta.1' | Should -BeTrue
+        }
+
+        It 'Returns true for semver with build metadata' {
+            Test-NpmExactVersion -Version '2.0.0+build.42' | Should -BeTrue
+        }
+    }
+
+    Context 'Range specifiers' {
+        It 'Returns false for caret range' {
+            Test-NpmExactVersion -Version '^4.17.21' | Should -BeFalse
+        }
+
+        It 'Returns false for tilde range' {
+            Test-NpmExactVersion -Version '~4.18.2' | Should -BeFalse
+        }
+
+        It 'Returns false for wildcard' {
+            Test-NpmExactVersion -Version '*' | Should -BeFalse
+        }
+
+        It 'Returns false for greater-than-or-equal range' {
+            Test-NpmExactVersion -Version '>=17.0.0' | Should -BeFalse
+        }
+
+        It 'Returns false for URL dependency' {
+            Test-NpmExactVersion -Version 'https://example.com/pkg.tgz' | Should -BeFalse
+        }
+
+        It 'Returns false for git dependency' {
+            Test-NpmExactVersion -Version 'git+ssh://git@github.com/user/repo.git' | Should -BeFalse
+        }
+
+        It 'Returns false for dist-tag like latest' {
+            Test-NpmExactVersion -Version 'latest' | Should -BeFalse
+        }
+    }
+}
+
 Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
     Context 'Insecure downloads' {
         It 'Detects curl without checksum verification' {
@@ -64,7 +122,166 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
             }
             $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
             $result | Should -Not -BeNullOrEmpty
-            $result[0].Severity | Should -Be 'warning'
+            $result[0].Severity | Should -Be 'Medium'
+        }
+
+        It 'Detects both curl and wget violations in the same file' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 2
+        }
+
+        It 'Populates violation object fields correctly' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'insecure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'insecure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result[0].File | Should -Be 'insecure-download.sh'
+            $result[0].Type | Should -Be 'shell-downloads'
+            $result[0].Line | Should -BeGreaterThan 0
+            $result[0].Description | Should -Be 'Download without checksum verification'
+            $result[0].Name | Should -Match 'curl.*https://'
+            $result[0].Severity | Should -Be 'Medium'
+            $result[0].ViolationType | Should -Be 'Unpinned'
+        }
+
+        It 'Detects insecure download when checksum is beyond lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'beyond-lookahead.sh'
+            # Download at line 1, checksum at line 8 (beyond 6-line window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'echo "line 6"'
+                'echo "line 7"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'beyond-lookahead.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 1
+        }
+    }
+
+    Context 'Secure downloads' {
+        It 'Returns no violations for downloads with checksum verification' {
+            $testFile = Join-Path $script:SecurityFixturesPath 'secure-download.sh'
+            $fileInfo = @{
+                Path         = $testFile
+                Type         = 'shell-downloads'
+                RelativePath = 'secure-download.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts sha256sum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'sha256sum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'sha256sum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts shasum within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'shasum-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.tar.gz -O /tmp/tool.tar.gz'
+                'shasum -a 256 /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'shasum-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts Get-FileHash within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'get-filehash-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'Get-FileHash /tmp/tool.tar.gz'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'get-filehash-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts openssl dgst -sha256 within lookahead window' {
+            $scriptPath = Join-Path $TestDrive 'openssl-check.sh'
+            Set-Content -Path $scriptPath -Value @(
+                'wget https://example.com/tool.zip -O /tmp/tool.zip'
+                'openssl dgst -sha256 /tmp/tool.zip'
+            )
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'openssl-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+
+        It 'Accepts checksum at lookahead boundary (line 5 after download)' {
+            $scriptPath = Join-Path $TestDrive 'boundary-check.sh'
+            # Download at line 1, checksum at line 6 (index 0+5 = within window)
+            $content = @(
+                'curl -o /tmp/tool.tar.gz https://example.com/tool.tar.gz'
+                'echo "line 2"'
+                'echo "line 3"'
+                'echo "line 4"'
+                'echo "line 5"'
+                'sha256sum -c /tmp/tool.tar.gz.sha256'
+            )
+            Set-Content -Path $scriptPath -Value $content
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'boundary-check.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
+        }
+    }
+
+    Context 'Edge cases' {
+        It 'Returns empty array for empty file' {
+            $scriptPath = Join-Path $TestDrive 'empty.sh'
+            Set-Content -Path $scriptPath -Value ''
+            $fileInfo = @{
+                Path         = $scriptPath
+                Type         = 'shell-downloads'
+                RelativePath = 'empty.sh'
+            }
+            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
+            $result | Should -HaveCount 0
         }
     }
 
@@ -117,6 +334,8 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
             $result[0].Type | Should -Be 'github-actions'
+            $result[0].Severity | Should -Be 'High'
+            $result[0].ViolationType | Should -Be 'Unpinned'
         }
     }
 
@@ -197,14 +416,65 @@ Describe 'Export-ComplianceReport' -Tag 'Unit' {
     }
 
     Context 'SARIF format' {
-        It 'Generates valid SARIF report' {
-            $outputFile = Join-Path $script:TestOutputPath 'report.sarif'
+        BeforeAll {
+            $script:SarifFile = Join-Path $script:TestOutputPath 'report.sarif'
 
-            Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $outputFile
+            # Add a Medium severity violation for severity mapping coverage
+            $mediumViolation = [DependencyViolation]::new()
+            $mediumViolation.File = 'requirements.txt'
+            $mediumViolation.Line = 5
+            $mediumViolation.Type = 'pip'
+            $mediumViolation.Name = 'requests'
+            $mediumViolation.Version = '2.31.*'
+            $mediumViolation.Severity = 'Medium'
+            $mediumViolation.Description = 'Version range not pinned'
+            $mediumViolation.Remediation = 'Pin to exact version'
+            $script:MockReport.Violations += $mediumViolation
 
-            Test-Path $outputFile | Should -BeTrue
-            $content = Get-Content $outputFile -Raw | ConvertFrom-Json
-            $content.'$schema' | Should -Match 'sarif'
+            Export-ComplianceReport -Report $script:MockReport -Format 'sarif' -OutputPath $script:SarifFile
+            $script:SarifContent = Get-Content $script:SarifFile -Raw | ConvertFrom-Json
+        }
+
+        It 'Has valid SARIF version 2.1.0' {
+            $script:SarifContent.version | Should -BeExactly '2.1.0'
+        }
+
+        It 'References the SARIF 2.1.0 schema' {
+            $script:SarifContent.'$schema' | Should -Match 'sarif-2\.1\.0'
+        }
+
+        It 'Identifies dependency-pinning-analyzer as the tool driver' {
+            $script:SarifContent.runs[0].tool.driver.name | Should -BeExactly 'dependency-pinning-analyzer'
+        }
+
+        It 'Produces one result per violation' {
+            $script:SarifContent.runs[0].results.Count | Should -Be 2
+        }
+
+        It 'Maps High severity to error level' {
+            $highResult = $script:SarifContent.runs[0].results | Where-Object {
+                $_.properties.dependencyName -eq 'actions/checkout'
+            }
+            $highResult.level | Should -BeExactly 'error'
+        }
+
+        It 'Maps Medium severity to warning level' {
+            $mediumResult = $script:SarifContent.runs[0].results | Where-Object {
+                $_.properties.dependencyName -eq 'requests'
+            }
+            $mediumResult.level | Should -BeExactly 'warning'
+        }
+
+        It 'Includes file location with startLine greater than zero' {
+            $result = $script:SarifContent.runs[0].results[0]
+            $result.locations[0].physicalLocation.artifactLocation.uri | Should -Not -BeNullOrEmpty
+            $result.locations[0].physicalLocation.region.startLine | Should -BeGreaterThan 0
+        }
+
+        It 'Includes dependencyName and remediation in properties' {
+            $result = $script:SarifContent.runs[0].results[0]
+            $result.properties.dependencyName | Should -Not -BeNullOrEmpty
+            $result.properties.remediation | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -332,11 +602,67 @@ Describe 'ExcludePaths Filtering Logic' -Tag 'Unit' {
         }
 
         It 'Passes through non-matching paths' {
-            $filePath = 'C:\repo\.github\workflows\main.yml'
+            $filePath = 'C:\repo\.github\workflows\release-stable.yml'
             $pattern = 'vendor'
 
             $filePath -notlike "*$pattern*" | Should -BeTrue
         }
+    }
+}
+
+Describe 'pip ExcludePatterns integration' -Tag 'Unit' {
+    BeforeAll {
+        $pipTestRoot = Join-Path $TestDrive 'pip-exclude-test'
+        New-Item -Path $pipTestRoot -ItemType Directory -Force | Out-Null
+
+        # Root-level requirements file (should be scanned)
+        Set-Content -Path (Join-Path $pipTestRoot 'requirements.txt') -Value 'requests==2.31.0'
+
+        # Files inside excluded virtual environment directories (should be excluded)
+        $excludedDirs = @('.venv', 'venv', '.tox', '.nox', '__pypackages__')
+        foreach ($dir in $excludedDirs) {
+            $dirPath = Join-Path $pipTestRoot $dir
+            New-Item -Path $dirPath -ItemType Directory -Force | Out-Null
+            Set-Content -Path (Join-Path $dirPath 'requirements.txt') -Value 'flask==3.0.0'
+        }
+    }
+
+    It 'Excludes virtual environment directories from pip scans' {
+        $files = @(Get-FilesToScan -ScanPath $pipTestRoot -Types 'pip')
+        $files | Should -HaveCount 1
+        $files[0].RelativePath | Should -Be 'requirements.txt'
+    }
+
+    It 'Returns correct type metadata for pip files' {
+        $files = @(Get-FilesToScan -ScanPath $pipTestRoot -Types 'pip')
+        $files[0].Type | Should -Be 'pip'
+    }
+}
+
+Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
+    BeforeAll {
+        $shellTestRoot = Join-Path $TestDrive 'shell-exclude-test'
+        $scriptsDir = Join-Path $shellTestRoot 'scripts'
+        New-Item -Path $scriptsDir -ItemType Directory -Force | Out-Null
+
+        # Script file that should be scanned
+        Set-Content -Path (Join-Path $scriptsDir 'install.sh') -Value 'echo hello'
+
+        # File inside Fixtures directory (should be excluded)
+        $fixturesDir = Join-Path $scriptsDir 'Fixtures'
+        New-Item -Path $fixturesDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $fixturesDir 'test-download.sh') -Value 'echo fixture'
+    }
+
+    It 'Excludes Fixtures directory from shell-downloads scans' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files | Should -HaveCount 1
+        $files[0].RelativePath | Should -Be (Join-Path 'scripts' 'install.sh')
+    }
+
+    It 'Returns correct type metadata for shell-downloads files' {
+        $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
+        $files[0].Type | Should -Be 'shell-downloads'
     }
 }
 
@@ -618,6 +944,33 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
             $lodashViolation | Should -Not -BeNullOrEmpty
             $lodashViolation.Name | Should -Be 'lodash'
             $lodashViolation.Version | Should -Be '^4.17.21'
+            $lodashViolation.Severity | Should -Be 'Medium'
+            $lodashViolation.ViolationType | Should -Be 'Unpinned'
+        }
+
+        It 'Assigns valid line numbers to violations' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+
+            $violations | ForEach-Object { $_.Line | Should -BeGreaterOrEqual 1 }
+        }
+
+        It 'Excludes exact-version dependencies from violations' {
+            $fileInfo = @{
+                Path         = Join-Path $script:FixturesPath 'with-dependencies-package.json'
+                Type         = 'npm'
+                RelativePath = 'with-dependencies-package.json'
+            }
+
+            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $violations | ForEach-Object { $_.Name }
+
+            $packageNames | Should -Not -Contain 'jest'
         }
     }
 
@@ -724,7 +1077,7 @@ Describe 'Get-RemediationSuggestion' -Tag 'Unit' {
             $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'actions/checkout', 'High', 'desc')
             $v.Version = 'v4'
             Mock Invoke-RestMethod { throw 'API error' }
-            Mock Write-PinningLog {}
+            Mock Write-SecurityLog {}
             $result = Get-RemediationSuggestion -Violation $v -Remediate
             $result | Should -Be 'Manually research and pin to immutable reference'
         }
@@ -760,6 +1113,7 @@ Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
             $violations = Get-DependencyViolation -FileInfo $fileInfo
             $violations | Should -Not -BeNullOrEmpty
             $violations[0].GetType().Name | Should -Be 'DependencyViolation'
+            $violations[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Sets File from FileInfo when missing' {
@@ -793,6 +1147,20 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         It 'Logs success message without throwing' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: } | Should -Not -Throw
         }
+
+        It 'emits success Write-Host message when no violations' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*✅*' -and $Object -like '*properly pinned*'
+            }
+        }
+
+        It 'does not emit Write-CIAnnotation warnings when no violations' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+            Should -Not -Invoke Write-CIAnnotation -ParameterFilter {
+                $Level -eq 'Warning'
+            }
+        }
     }
 
     Context 'Violations below threshold with -FailOnUnpinned' {
@@ -824,6 +1192,58 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         }
     }
 
+    Context 'CI output for violations in soft-fail mode' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.CurrentRef = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 50.0
+                    TotalDependencies    = 2
+                    UnpinnedDependencies = 1
+                    Violations           = @()
+                }
+            }
+            Mock Export-ComplianceReport {}
+            Mock Export-CICDArtifact {}
+        }
+
+        It 'emits summary header with violation count' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*unpinned*'
+            }
+        }
+
+        It 'emits file header with file icon' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*📄*'
+            }
+        }
+
+        It 'emits per-violation detail line' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-Host -ParameterFilter {
+                $Object -like '*❌*' -and $Object -like '*a/b*'
+            }
+        }
+
+        It 'emits Write-CIAnnotation with Error level for High severity violation' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Write-CIAnnotation -ParameterFilter {
+                $Level -eq 'Error' -and $File -eq 'f.yml' -and $Line -eq 1
+            }
+        }
+    }
+
     Context 'Score meets threshold' {
         BeforeAll {
             Mock Get-FilesToScan {
@@ -846,6 +1266,373 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
         It 'Does not throw when score meets threshold' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
+        }
+    }
+
+    Context 'CI annotations per violation' {
+        BeforeAll {
+            Mock Write-CIAnnotation {}
+            Mock Write-Host {}
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
+        }
+
+        It 'Emits Write-CIAnnotation per violation' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' -and $File -eq 'f.yml' -and $Line -eq 1 } -Times 1 -Exactly
+        }
+
+        It 'Maps High severity to Error level' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 5, 'github-actions', 'actions/checkout', 'High', 'Unpinned action')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Error' -and $File -eq 'f.yml' } -Times 1 -Exactly
+        }
+
+        It 'Maps Medium severity to Warning level' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 3, 'npm', 'lodash', 'Medium', 'Unpinned npm dep')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = '^4.0.0'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 80.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Warning' -and $File -eq 'f.yml' } -Times 1 -Exactly
+        }
+
+        It 'Maps Low severity to Notice level' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 7, 'github-actions', 'a/b', 'Low', 'Minor issue')
+                $v.ViolationType = 'MissingVersionComment'
+                $v.Version = 'abc123'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'add comment' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 90.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Level -eq 'Notice' } -Times 1 -Exactly
+        }
+
+        It 'Includes violation type in annotation message' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $Message -match 'Unpinned' }
+        }
+
+        It 'Emits no annotations when no violations' {
+            Mock Get-FilesToScan { return @() }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 100.0; TotalDependencies = 0; UnpinnedDependencies = 0; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -Times 0
+        }
+
+        It 'Emits multiple annotations for multiple violations' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v1 = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v1.ViolationType = 'Unpinned'
+                $v1.Version = 'v4'
+                $v2 = [DependencyViolation]::new('f.yml', 5, 'github-actions', 'c/d', 'Medium', 'Also not pinned')
+                $v2.ViolationType = 'Unpinned'
+                $v2.Version = 'v3'
+                return @($v1, $v2)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 2; UnpinnedDependencies = 2; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-CIAnnotation -ParameterFilter { $null -ne $File } -Times 2 -Exactly
+        }
+    }
+
+    Context 'Write-SecurityLog CI annotation forwarding' {
+        BeforeAll {
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
+        }
+
+        It 'Forwards Warning-level log messages as CI Warning annotations' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 90.0; TotalDependencies = 2; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            # Write-SecurityLog -CIAnnotation "N dependencies require pinning..." emits a Warning annotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Warning' -and $null -eq $File -and $Message -match 'pinning' }
+        }
+
+        It 'Forwards Error-level log messages as CI Error annotations' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            # Write-SecurityLog -CIAnnotation "Compliance score ... below threshold" emits an Error annotation
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $Level -eq 'Error' -and $null -eq $File -and $Message -match 'below threshold' }
+        }
+
+        It 'Does not forward Info-level log messages as annotations' {
+            Mock Get-FilesToScan { return @() }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 100.0; TotalDependencies = 0; UnpinnedDependencies = 0; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            # Info and Success levels should not produce CI annotations
+            Should -Invoke Write-CIAnnotation -ModuleName SecurityHelpers -ParameterFilter { $null -eq $File } -Times 0
+        }
+    }
+
+    Context 'Per-violation console output' {
+        BeforeAll {
+            Mock Write-CIAnnotation {}
+            Mock Write-Host {}
+            Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
+            Mock Write-Host {} -ModuleName SecurityHelpers
+        }
+
+        It 'Writes colored output for High severity violations' {
+            Mock Get-FilesToScan {
+                return @(@{ Path = 'TestDrive:\f.yml'; Type = 'github-actions'; RelativePath = 'f.yml' })
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                $v.ViolationType = 'Unpinned'
+                $v.Version = 'v4'
+                return @($v)
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 50.0; TotalDependencies = 1; UnpinnedDependencies = 1; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-Host -ParameterFilter { $ForegroundColor -eq 'Red' -and $Object -match 'a/b' }
+        }
+
+        It 'Writes success message when no violations' {
+            Mock Get-FilesToScan { return @() }
+            Mock Get-ComplianceReportData {
+                return @{ ComplianceScore = 100.0; TotalDependencies = 0; UnpinnedDependencies = 0; Violations = @() }
+            }
+
+            Invoke-DependencyPinningAnalysis -Path TestDrive:
+
+            Should -Invoke Write-Host -ParameterFilter { $ForegroundColor -eq 'Green' -and $Object -match 'properly pinned' }
+        }
+    }
+}
+
+Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
+    BeforeAll {
+        # Source the script to get functions
+        . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
+
+        $script:fixtureDir = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    }
+
+    Context 'when workflow contains npm install commands' {
+        It 'should detect npm install in single-line run step' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 4
+        }
+
+        It 'should return DependencyViolation objects' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | ForEach-Object {
+                $_.GetType().Name | Should -Be 'DependencyViolation'
+                $_.Type | Should -Be 'workflow-npm-commands'
+                $_.Severity | Should -Be 'Medium'
+                $_.ViolationType | Should -Be 'Unpinned'
+            }
+        }
+
+        It 'should report accurate line numbers' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-install.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-install.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | ForEach-Object {
+                $_.Line | Should -BeGreaterThan 0
+            }
+        }
+    }
+
+    Context 'when workflow contains only safe npm commands' {
+        It 'should return no violations for npm ci and npm run' {
+            $fileInfo = @{
+                Path         = Join-Path $script:fixtureDir 'workflow-npm-ci-only.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'workflow-npm-ci-only.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+    }
+
+    Context 'when file does not exist' {
+        It 'should return empty array' {
+            $fileInfo = @{
+                Path         = '/tmp/nonexistent-workflow.yml'
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'nonexistent.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+    }
+
+    Context 'edge cases with inline test data' {
+        It 'should not flag commented-out npm install' {
+            $yaml = @'
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: |
+          # npm install
+          npm ci
+'@
+            $tempFile = Join-Path $TestDrive 'commented-npm.yml'
+            Set-Content -Path $tempFile -Value $yaml
+            $fileInfo = @{
+                Path         = $tempFile
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'commented-npm.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 0
+        }
+
+        It 'should detect npm install in multi-line block alongside safe commands' {
+            $yaml = @'
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        run: |
+          npm install
+          npm run build
+'@
+            $tempFile = Join-Path $TestDrive 'mixed-npm.yml'
+            Set-Content -Path $tempFile -Value $yaml
+            $fileInfo = @{
+                Path         = $tempFile
+                Type         = 'workflow-npm-commands'
+                RelativePath = 'mixed-npm.yml'
+            }
+            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $violations | Should -HaveCount 1
+            $violations[0].Name | Should -BeLike 'npm install*'
         }
     }
 }

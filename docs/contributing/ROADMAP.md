@@ -1,6 +1,7 @@
 ---
 title: Roadmap
 description: Project direction and priorities for HVE Core over the next 12-18 months
+sidebar_position: 10
 author: HVE Core Team
 ms.date: 2026-01-21
 ms.topic: reference
@@ -35,7 +36,7 @@ HVE Core v1.1.0 provides:
 
 ### Agent Framework Evolution
 
-**Will Do:**
+#### Will Do
 
 * Expand MCP (Model Context Protocol) integration for standardized tool connections
 * Develop multi-agent coordination patterns for complex enterprise scenarios
@@ -44,7 +45,7 @@ HVE Core v1.1.0 provides:
 * Add agent metrics and observability for understanding AI decision patterns
 * Implement agent memory and context management capabilities
 
-**Won't Do:**
+#### Won't Do
 
 * Build a custom orchestration runtime; use LangGraph or similar established frameworks instead
 * Create proprietary tool protocols that compete with MCP
@@ -52,7 +53,7 @@ HVE Core v1.1.0 provides:
 
 ### Instructions Expansion
 
-**Will Do:**
+#### Will Do
 
 * Add instructions for emerging Azure services (Azure AI Foundry, Azure Container Apps)
 * Create security-focused instructions for threat modeling and secure coding patterns
@@ -61,7 +62,7 @@ HVE Core v1.1.0 provides:
 * Enhance existing C# instructions with .NET 9+ patterns and minimal API guidance
 * Add instructions for GitHub Actions workflow authoring
 
-**Won't Do:**
+#### Won't Do
 
 * Create instructions for out-of-market Azure services
 * Maintain instructions for non-Microsoft technology stacks unless directly relevant to Azure integration
@@ -69,21 +70,21 @@ HVE Core v1.1.0 provides:
 
 ### Prompt Engineering
 
-**Will Do:**
+#### Will Do
 
 * Develop prompt templates for common Azure architecture patterns (hub-spoke, landing zones)
 * Create code review prompts that understand Azure Well-Architected & Cloud-Adoption Framework principles
 * Add incident response prompts for Azure operations scenarios
 * Develop security audit prompts for Azure resource configurations
 
-**Won't Do:**
+#### Won't Do
 
 * Create prompts for general-purpose coding tasks without Azure context
 * Build prompts that duplicate functionality available in GitHub Copilot's native capabilities
 
 ### Enterprise Readiness
 
-**Will Do:**
+#### Will Do
 
 * Document governance patterns for organization-wide Hypervelocity Engineering adoption
 * Create compliance mapping for Azure Policy and Defender for Cloud alignment
@@ -91,14 +92,14 @@ HVE Core v1.1.0 provides:
 * Develop approval workflow patterns for high-risk AI operations
 * Add data classification guidance for sensitive context handling
 
-**Won't Do:**
+#### Won't Do
 
 * Build enterprise licensing or access control systems
 * Create centralized management infrastructure; organizations should use existing policy mechanisms
 
 ### Documentation and Learning
 
-**Will Do:**
+#### Will Do
 
 * Create video tutorials demonstrating RPI workflow with real Azure projects
 * Develop scenario-based guides (greenfield, modernization, migration)
@@ -106,14 +107,14 @@ HVE Core v1.1.0 provides:
 * Add architecture decision records (ADRs) explaining design choices
 * Create certification-style learning paths for HVE Core proficiency
 
-**Won't Do:**
+#### Won't Do
 
 * Duplicate Azure documentation: link to authoritative sources instead
 * Create marketing materials or promotional content
 
 ### Community and Ecosystem
 
-**Will Do:**
+#### Will Do
 
 * Establish contribution guidelines for new agents and instructions
 * Create agent and instruction quality criteria for inclusion
@@ -121,7 +122,7 @@ HVE Core v1.1.0 provides:
 * Develop community showcase for organization-specific customizations
 * Add integration guides for popular Azure development tools
 
-**Won't Do:**
+#### Won't Do
 
 * Accept agents or instructions that don't align with project scope
 * Maintain community contributions without active maintainers

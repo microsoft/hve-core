@@ -1,0 +1,1 @@
+../../../.github/agents/installer/hve-core-installer.agent.md

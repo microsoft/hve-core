@@ -12,7 +12,7 @@ on:
         description: 'Comma-separated list of dependency types to check'
         required: false
         type: string
-        default: 'github-actions'
+        default: 'github-actions,npm,workflow-npm-commands'
       soft-fail:
         description: 'Whether to continue on compliance violations'
         required: false
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     outputs:
       compliance-score: ${{ steps.pinning.outputs.compliance-score }}
       unpinned-count: ${{ steps.pinning.outputs.unpinned-count }}
@@ -59,7 +59,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run SHA Pinning Validation
+      - name: Run Dependency Pinning Validation
         id: pinning
         shell: pwsh
         run: |
@@ -71,7 +71,6 @@ jobs:
           # Build parameter list for JSON output (always generate)
           $params = @{
             Path = '.'
-            Recursive = $true
             Format = 'json'
             OutputPath = 'logs/dependency-pinning-results.json'
           }
@@ -121,32 +120,6 @@ jobs:
             Write-Host "Compliance Score: $complianceScore%"
             Write-Host "Unpinned Dependencies: $unpinnedCount"
             Write-Host "Is Compliant (>=$threshold%): $isCompliant"
-            
-            # Fire GitHub Actions warnings for each violation
-            if ($unpinnedCount -gt 0) {
-              # Escape function to prevent workflow command injection
-              function ConvertTo-GHAEscaped($Value, [switch]$ForProperty) {
-                if ([string]::IsNullOrEmpty($Value)) { return $Value }
-                $escaped = $Value -replace '%', '%25'
-                $escaped = $escaped -replace "`r", '%0D'
-                $escaped = $escaped -replace "`n", '%0A'
-                $escaped = $escaped -replace '::', '%3A%3A'
-                if ($ForProperty) {
-                  $escaped = $escaped -replace ':', '%3A'
-                  $escaped = $escaped -replace ',', '%2C'
-                }
-                return $escaped
-              }
-              
-              foreach ($violation in $report.Violations) {
-                $escapedFile = ConvertTo-GHAEscaped $violation.File -ForProperty
-                $escapedName = ConvertTo-GHAEscaped $violation.Name
-                $escapedVersion = ConvertTo-GHAEscaped $violation.Version
-                $escapedType = ConvertTo-GHAEscaped $violation.Type
-                $escapedSeverity = ConvertTo-GHAEscaped $violation.Severity
-                Write-Output "::warning file=$escapedFile,line=$($violation.Line)::Unpinned $escapedType dependency: $escapedName@$escapedVersion (Severity: $escapedSeverity)"
-              }
-            }
           }
           else {
             Write-Error "Failed to generate dependency pinning report"
@@ -163,7 +136,7 @@ jobs:
 
       - name: Upload validation report
         if: inputs.upload-artifact && always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v4.4.3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: dependency-pinning-results
           path: logs/dependency-pinning-results.json
@@ -191,7 +164,7 @@ jobs:
           
           ### ⚠️ Action Required
           
-          **$unpinnedCount dependencies are not SHA-pinned.**
+          **$unpinnedCount dependencies are not properly pinned.**
           
           Review the warnings in the workflow log and pin dependencies to specific SHA commits.
           
@@ -201,7 +174,7 @@ jobs:
           
           ### ✅ All Dependencies Pinned
           
-          All dependencies are properly SHA-pinned.
+          All dependencies are properly pinned.
           
           "@
           })

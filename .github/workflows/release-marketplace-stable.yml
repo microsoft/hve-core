@@ -1,0 +1,104 @@
+name: Stable Marketplace Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (leave empty to auto-detect from latest release)"
+        required: false
+        type: string
+        default: ""
+      dry-run:
+        description: "Dry run (package only, do not publish)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  normalize-version:
+    name: Normalize Version
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.normalize.outputs.version }}
+    steps:
+      - name: Resolve version from event
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#hve-core-v}"
+            VERSION="${VERSION#v}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "Resolved version from release tag: $VERSION"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Normalize version string
+        id: normalize
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          VERSION="$INPUT_VERSION"
+          # Strip leading 'v' and component prefix if present
+          VERSION="${VERSION#v}"
+          VERSION="${VERSION#hve-core-v}"
+
+          # Auto-detect from latest release tag when no version specified
+          if [ -z "$VERSION" ]; then
+            TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName' -R "${{ github.repository }}")
+            VERSION="${TAG#hve-core-v}"
+            echo "📦 Auto-detected version from latest release: $VERSION"
+          fi
+
+          # Validate semver format
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION. Expected semantic version (e.g., 2.0.0)"
+            exit 1
+          fi
+
+          # Even/odd convention: even minor = stable, odd minor = pre-release
+          PUBLISH_MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( PUBLISH_MINOR % 2 == 1 )); then
+            echo "::error::Stable channel requires even minor version. Got: $VERSION (odd minor = pre-release)"
+            echo "::error::Use the pre-release publish workflow for odd-minor versions"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Package Extensions
+    needs: [normalize-version]
+    uses: ./.github/workflows/extension-package.yml
+    with:
+      version: ${{ needs.normalize-version.outputs.version }}
+      channel: Stable
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish Extensions
+    needs: [package]
+    if: ${{ !inputs.dry-run }}
+    uses: ./.github/workflows/extension-marketplace-publish.yml
+    with:
+      collections-matrix: ${{ needs.package.outputs.collections-matrix }}
+      pre-release: false
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
