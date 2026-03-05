@@ -24,7 +24,7 @@ scripts/
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
 ├── plugins/         Copilot CLI plugin generation
-├── security/        Security scanning and SHA pinning scripts
+└── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
 
@@ -68,7 +68,7 @@ The `security/` directory contains scripts for security scanning and dependency 
 
 | Script                              | Purpose                                   |
 |-------------------------------------|-------------------------------------------|
-| `Test-DependencyPinning.ps1`        | Validate SHA pinning compliance           |
+| `Test-DependencyPinning.ps1`        | Validate dependency pinning compliance    |
 | `Test-SHAStaleness.ps1`             | Check for outdated SHA pins               |
 | `Update-ActionSHAPinning.ps1`       | Automate updating GitHub Actions SHA pins |
 | `Test-ActionVersionConsistency.ps1` | Validate action version consistency       |
@@ -115,7 +115,7 @@ npm run test:ps
 
 All scripts are designed to run both locally and in GitHub Actions workflows. They support common parameters like `-Verbose` and `-Debug` for troubleshooting.
 
-**Local Testing**:
+### Local Testing
 
 ```powershell
 # Test PSScriptAnalyzer on changed files
@@ -128,7 +128,7 @@ All scripts are designed to run both locally and in GitHub Actions workflows. Th
 ./scripts/linting/Invoke-LinkLanguageCheck.ps1 -Verbose
 ```
 
-**GitHub Actions Integration**:
+### GitHub Actions Integration
 
 All scripts automatically detect GitHub Actions environment and provide appropriate output formatting (annotations, summaries, artifacts).
 

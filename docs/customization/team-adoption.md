@@ -202,63 +202,63 @@ starting points and progression for each of the nine roles.
 
 ### Engineer
 
-* **Quick win:** Create an instructions file for your team's coding standards
-* **Next step:** Build a custom agent for your most common code review patterns
-* **Advanced:** Package domain knowledge into a skill with scripts and references
+1. Create an instructions file for your team's coding standards
+2. Build a custom agent for your most common code review patterns
+3. Package domain knowledge into a skill with scripts and references
 
 ### TPM (Technical Program Manager)
 
-* **Quick win:** Use the RPI workflow to research and document project status
-* **Next step:** Create prompts for generating status reports and risk summaries
-* **Advanced:** Build an agent that tracks cross-team dependencies
+1. Use the RPI workflow to research and document project status
+2. Create prompts for generating status reports and risk summaries
+3. Build an agent that tracks cross-team dependencies
 
 ### Tech Lead
 
-* **Quick win:** Write instructions for architecture decision conventions
-* **Next step:** Create a code review agent that enforces team standards
-* **Advanced:** Establish a collection that bundles your team's full workflow
+1. Write instructions for architecture decision conventions
+2. Create a code review agent that enforces team standards
+3. Establish a collection that bundles your team's full workflow
 
 ### Security Architect
 
-* **Quick win:** Add security-focused instructions for threat modeling
-* **Next step:** Create a security review agent that checks for common
+1. Add security-focused instructions for threat modeling
+2. Create a security review agent that checks for common
   vulnerabilities
-* **Advanced:** Build a skill that integrates with security scanning tools
+3. Build a skill that integrates with security scanning tools
 
 ### Data Scientist
 
-* **Quick win:** Create instructions for notebook conventions and data handling
-* **Next step:** Build prompts for exploratory data analysis patterns
-* **Advanced:** Package statistical methodology into a skill with reference
+1. Create instructions for notebook conventions and data handling
+2. Build prompts for exploratory data analysis patterns
+3. Package statistical methodology into a skill with reference
   datasets
 
 ### SRE/Operations
 
-* **Quick win:** Write instructions for runbook format and incident response
-* **Next step:** Create an agent for infrastructure review workflows
-* **Advanced:** Build a collection integrating monitoring, alerting, and
+1. Write instructions for runbook format and incident response
+2. Create an agent for infrastructure review workflows
+3. Build a collection integrating monitoring, alerting, and
   deployment tools
 
 ### Business PM (Product Manager)
 
-* **Quick win:** Use prompts to generate user story drafts from requirements
-* **Next step:** Create an agent for requirements analysis
-* **Advanced:** Build a Design Thinking workflow with custom agents
+1. Use prompts to generate user story drafts from requirements
+2. Create an agent for requirements analysis
+3. Build a Design Thinking workflow with custom agents
 
 ### New Contributor
 
-* **Quick win:** Follow the [Getting Started](../getting-started/README.md)
+1. Follow the [Getting Started](../getting-started/README.md)
   guide and complete your first interaction
-* **Next step:** Create your first instructions file with the onboarding
+2. Create your first instructions file with the onboarding
   walkthrough above
-* **Advanced:** Propose a new agent or skill for a workflow gap you've
+3. Propose a new agent or skill for a workflow gap you've
   identified
 
 ### Utility
 
-* **Quick win:** Use existing prompts and agents without modification
-* **Next step:** Customize instructions for your specific workflow context
-* **Advanced:** Contribute improvements to shared collections based on
+1. Use existing prompts and agents without modification
+2. Customize instructions for your specific workflow context
+3. Contribute improvements to shared collections based on
   usage patterns
 
 ## Measuring Success

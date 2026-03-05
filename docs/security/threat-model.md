@@ -161,7 +161,7 @@ HVE Core artifacts are consumed by GitHub Copilot, which provides foundational s
 | Boundary              | Assets Protected                       | Controls Enforced                         |
 |-----------------------|----------------------------------------|-------------------------------------------|
 | Repository Contents   | Source code, prompts, scripts          | CODEOWNERS, branch protection, PR review  |
-| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, SHA pinning          |
+| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, dependency pinning   |
 | External Dependencies | npm packages, Actions, MCP servers     | Dependency review, staleness monitoring   |
 | Dev Container         | Development environment, tooling       | SHA256 verification, first-party features |
 
@@ -180,7 +180,7 @@ This section documents threats using [STRIDE](https://learn.microsoft.com/azure/
 | **Threat**        | Attacker compromises upstream Action repository and replaces tag with malicious code |
 | **Likelihood**    | Medium (documented supply chain attacks exist)                                       |
 | **Impact**        | High (full CI/CD compromise, secret exfiltration)                                    |
-| **Mitigations**   | SHA pinning for all Actions, staleness monitoring, CodeQL scanning                   |
+| **Mitigations**   | Dependency pinning for all Actions, staleness monitoring, CodeQL scanning            |
 | **Residual Risk** | Low (SHA immutable; requires GitHub infrastructure compromise)                       |
 | **Status**        | Mitigated                                                                            |
 
@@ -723,7 +723,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | ID   | Control                         | Implementation                                  | Validates Against |
 |------|---------------------------------|-------------------------------------------------|-------------------|
-| SC-1 | SHA Pinning Validation          | Test-DependencyPinning.ps1                      | S-1, S-2          |
+| SC-1 | Dependency Pinning Validation   | Test-DependencyPinning.ps1                      | S-1, S-2          |
 | SC-2 | SHA Staleness Monitoring        | Test-SHAStaleness.ps1                           | S-1               |
 | SC-3 | Dependency Review               | dependency-review.yml                           | S-2, AI-5         |
 | SC-4 | npm Security Audit              | npm audit in pr-validation.yml                  | S-2               |
@@ -746,9 +746,9 @@ The `sbom-diff` job in `main.yml` runs during each release to surface supply cha
 
 The diff script parses SPDX JSON packages, excludes root document entries, and categorizes changes into three groups:
 
-* **Added** packages not present in the previous release
-* **Removed** packages no longer included in the current build
-* **Version changes** where the same package appears in both releases at different versions
+* Added packages not present in the previous release
+* Removed packages no longer included in the current build
+* Version changes where the same package appears in both releases at different versions
 
 When no previous release exists or the prior release lacks a dependency SBOM, the job exits cleanly without producing a diff. This graceful degradation ensures the first release in a repository proceeds without error.
 
@@ -785,7 +785,7 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Top-Level Goal
 
-**G0**: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
+G0: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
 
 ### Supporting Goals
 
@@ -798,12 +798,12 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Evidence Mapping
 
-| Goal | Evidence                                                                                                                    |
-|------|-----------------------------------------------------------------------------------------------------------------------------|
-| G1   | SHA pinning logs, staleness reports, dependency review results, SBOM attestation verification, dependency SBOM diff reports |
-| G2   | Branch protection configuration, CODEOWNERS file, PR review history                                                         |
-| G3   | This threat model document, MCP trust analysis                                                                              |
-| G4   | Writing style guidelines, inclusive language checks, PR reviews                                                             |
+| Goal | Evidence                                                                                                                           |
+|------|------------------------------------------------------------------------------------------------------------------------------------|
+| G1   | Dependency pinning logs, staleness reports, dependency review results, SBOM attestation verification, dependency SBOM diff reports |
+| G2   | Branch protection configuration, CODEOWNERS file, PR review history                                                                |
+| G3   | This threat model document, MCP trust analysis                                                                                     |
+| G4   | Writing style guidelines, inclusive language checks, PR reviews                                                                    |
 
 ### Assumptions and Justifications
 
@@ -818,10 +818,10 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 HVE Core achieves acceptable security through:
 
-1. **Automated Controls**: 20+ security controls execute automatically via CI/CD
-2. **Defense-in-Depth**: Multiple overlapping controls for critical threats
-3. **Transparent Risk Acceptance**: AI-inherent risks documented with clear boundaries
-4. **Inherited Security**: Uses GitHub and Copilot platform security
+1. Automated Controls: 20+ security controls execute automatically via CI/CD
+2. Defense-in-Depth: Multiple overlapping controls for critical threats
+3. Transparent Risk Acceptance: AI-inherent risks documented with clear boundaries
+4. Inherited Security: Uses GitHub and Copilot platform security
 
 ## MCP Server Trust Analysis
 
@@ -889,20 +889,20 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Trust Recommendations
 
-1. **First-party servers (GitHub, Azure DevOps, Microsoft Docs)**: Enable with organization policy controls; GitHub MCP is enabled by default
-2. **Third-party servers (Context7)**: Evaluate data flow, use API key rotation, review Upstash trust center
+1. First-party servers (GitHub, Azure DevOps, Microsoft Docs): Enable with organization policy controls; GitHub MCP is enabled by default
+2. Third-party servers (Context7): Evaluate data flow, use API key rotation, review Upstash trust center
 
 ## Quantitative Security Metrics
 
 ### Configured Thresholds
 
-| Metric                 | Threshold | Source                      |
-|------------------------|-----------|-----------------------------|
-| SHA Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
-| SHA Staleness          | ≤30 days  | sha-staleness-check.yml     |
-| Dependency Review Fail | moderate  | dependency-review.yml       |
-| npm Audit Fail Level   | moderate  | pr-validation.yml           |
-| Required PR Reviewers  | 1         | Branch protection           |
+| Metric                        | Threshold | Source                      |
+|-------------------------------|-----------|-----------------------------|
+| Dependency Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
+| SHA Staleness                 | ≤30 days  | sha-staleness-check.yml     |
+| Dependency Review Fail        | moderate  | dependency-review.yml       |
+| npm Audit Fail Level          | moderate  | pr-validation.yml           |
+| Required PR Reviewers         | 1         | Branch protection           |
 
 ### Security Response Commitments
 

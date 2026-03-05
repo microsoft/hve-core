@@ -17,7 +17,7 @@ HVE Core uses a liberal contribution model where active contributors are recogni
 
 ## Governance Model
 
-This project operates under a **corporate-sponsored maintainer model**:
+This project operates under a corporate-sponsored maintainer model:
 
 * Microsoft provides stewardship, infrastructure, and core maintainer resources
 * Community contributors participate through standard open source workflows
@@ -148,9 +148,9 @@ Nomination process:
 
 When contributors disagree on technical or process matters:
 
-1. **Discussion**: Parties discuss the issue in the relevant pull request or issue
-2. **Maintainer input**: If unresolved, a maintainer provides guidance
-3. **Maintainer decision**: If consensus remains elusive, maintainers make a binding decision
+1. Discussion: Parties discuss the issue in the relevant pull request or issue
+2. Maintainer input: If unresolved, a maintainer provides guidance
+3. Maintainer decision: If consensus remains elusive, maintainers make a binding decision
 
 Code of conduct violations follow the process defined in [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 

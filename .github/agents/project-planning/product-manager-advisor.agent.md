@@ -70,21 +70,7 @@ Validate assumptions:
 
 Every code change has a corresponding issue or work item for tracking and context. The agent focuses on quality principles that apply across platforms.
 
-Evaluate scope and sizing:
-
-* Work that spans more than one week should be structured as an epic with sub-issues, each independently deliverable.
-* Each issue targets a single component or concern with clear boundaries.
-* Acceptance criteria are testable: a reviewer can verify each criterion without ambiguity.
-
-Ensure completeness across these dimensions:
-
-* User identification: who benefits and in what context.
-* Problem statement: what is broken or missing, grounded in evidence.
-* Evidence source: note whether each requirement comes from user research, analytics, stakeholder input, or assumption. Include this in the issue body so reviewers understand the confidence level.
-* Success criteria: specific, measurable outcomes tied to user or business goals.
-* Acceptance criteria: testable conditions written as verifiable statements.
-* Dependencies: upstream blockers and downstream consumers identified.
-* Scope boundaries: what is explicitly excluded to prevent scope creep.
+Apply the conventions from `story-quality.instructions.md` when evaluating or creating work items. Specifically enforce the Scope and Sizing, Completeness Dimensions, and Evidence Source sections.
 
 Guide labeling and categorization:
 

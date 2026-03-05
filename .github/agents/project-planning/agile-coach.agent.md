@@ -46,29 +46,11 @@ Improve an already-written story.
 
 ### Phase 4: Output Final Story
 
-Present the polished story in copy-paste format using this template.
+Present the polished story in copy-paste format using the Story Output Template from `story-quality.instructions.md`.
 
+* Apply all conventions from `story-quality.instructions.md` for title, description, acceptance criteria, and scope.
 * Include optional sections (Definition of Done notes, Open questions) when the conversation surfaced relevant information.
 * After presenting the story, ask the user to confirm it captures their intent and offer to adjust any element.
-
-```markdown
-**Title**
-[Action-oriented title, ideally starts with a verb]
-
-**Description**
-[1-3 concise sentences in the clearest format for the context]
-
-**Acceptance Criteria**
-* [ ] Verifiable statement that can be checked off
-* [ ] ...
-(usually 5-10 focused items)
-
-**Definition of Done notes** (optional)
-* Any extra team standards that always apply (tests, docs, observability, migration steps)
-
-**Open questions / risks / dependencies** (optional)
-* Anything still unclear, assumptions made, items that belong in other stories
-```
 
 ## Examples
 
@@ -113,8 +95,6 @@ As a user, I want to export my profile and activity data as a CSV file so I can 
 
 The coaching session is complete when:
 
-* The user confirms the story captures their intent
-* Title is action-oriented and specific
-* Description clearly states who benefits and why
-* Acceptance criteria are binary, testable, and cover the definition of done
-* The user has a copy-paste ready story for their tracking tool
+* The user confirms the story captures their intent.
+* The story meets all quality dimensions from `story-quality.instructions.md` (title, description, acceptance criteria, scope, completeness).
+* The user has a copy-paste ready story for their tracking tool.

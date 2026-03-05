@@ -28,8 +28,8 @@ extension/
 
 The extension is configured with `"extensionKind": ["workspace", "ui"]` in `package.json` to support multiple execution contexts:
 
-* **Workspace mode**: Extension runs in the workspace (remote) extension host. In this mode, the extension accesses its bundled files from the extension installation directory in the remote/workspace context (for example, the packaged `.github/` folder).
-* **UI mode**: Extension runs in the UI extension host on the user's local machine and accesses the same bundled extension files from the local installation directory.
+* In workspace mode, the extension runs in the workspace (remote) extension host and accesses its bundled files from the extension installation directory in the remote/workspace context (for example, the packaged `.github/` folder).
+* In UI mode, the extension runs in the UI extension host on the user's local machine and accesses the same bundled extension files from the local installation directory.
 
 Access to files in the user's project workspace always uses the standard VS Code workspace APIs and is independent of the extension kind. Both modes use the same packaged extension assets and differ only in execution context (local UI versus remote/workspace). This bundling approach ensures GitHub Copilot can reliably access instruction files and scripts regardless of cross-platform path resolution issues (for example, Windows/WSL environments).
 
@@ -220,7 +220,7 @@ rm -rf .github scripts && cp -r ../.github . && mkdir -p scripts && vsce package
 
 **Important:** Versions are managed by `release-please` via `extension/templates/package.template.json`. The `Prepare-Extension.ps1` script generates all collection package files with the correct version before preparing the extension.
 
-**Setup Personal Access Token (one-time):**
+### Setup Personal Access Token (one-time)
 
 Set your Azure DevOps PAT as an environment variable:
 
@@ -235,7 +235,7 @@ To get a PAT:
 3. Set scope to **Marketplace (Manage)**
 4. Copy the token
 
-**Publish command:**
+### Publish command
 
 ```bash
 # Publish the packaged extension (replace X.Y.Z with actual version)
@@ -468,19 +468,19 @@ pwsh ./scripts/extension/Package-Extension.ps1 -Version "1.0.0-test" -WhatIf
 
 ### Troubleshooting Collection Builds
 
-**Missing artifacts in collection:**
+#### Missing artifacts in collection
 
 1. Verify the artifact has an `items[]` entry in the relevant `collections/*.collection.yml` manifest
 2. Check the collection manifest includes the artifact with the correct `kind` and `path`
 3. Run `npm run lint:collections-metadata` to validate collection consistency
 
-**Dependency not included:**
+#### Dependency not included
 
 1. Check the parent artifact's `requires` field in the collection item
 2. Ensure dependent artifacts exist and have valid collection entries
 3. Dependencies are included regardless of collection filter
 
-**Validation errors:**
+#### Validation errors
 
 ```bash
 # Run full collection metadata validation

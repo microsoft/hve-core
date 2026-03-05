@@ -6,6 +6,8 @@ tags:
 - complete
 - bundle
 items:
+- path: .github/agents/ado/ado-backlog-manager.agent.md
+  kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
 - path: .github/agents/code-review/functional-code-review.agent.md
@@ -80,13 +82,21 @@ items:
   kind: agent
 - path: .github/agents/security-planning/security-plan-creator.agent.md
   kind: agent
+- path: .github/prompts/ado/ado-add-work-item.prompt.md
+  kind: prompt
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
+  kind: prompt
+- path: .github/prompts/ado/ado-discover-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-get-build-info.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-get-my-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md
+  kind: prompt
+- path: .github/prompts/ado/ado-sprint-plan.prompt.md
+  kind: prompt
+- path: .github/prompts/ado/ado-triage-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
@@ -175,9 +185,15 @@ items:
   kind: prompt
 - path: .github/prompts/security-planning/risk-register.prompt.md
   kind: prompt
+- path: .github/instructions/ado/ado-backlog-sprint.instructions.md
+  kind: instruction
+- path: .github/instructions/ado/ado-backlog-triage.instructions.md
+  kind: instruction
 - path: .github/instructions/ado/ado-create-pull-request.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-get-build-info.instructions.md
+  kind: instruction
+- path: .github/instructions/ado/ado-interaction-templates.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-update-wit-items.instructions.md
   kind: instruction
@@ -356,6 +372,8 @@ items:
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
+  kind: instruction
+- path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill

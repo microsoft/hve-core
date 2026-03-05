@@ -33,15 +33,15 @@ Most projects fail not because the code is wrong, but because the team solved th
 
 ```mermaid
 flowchart LR
-    subgraph problem["Problem Space — rough / exploratory"]
+    subgraph problem["Problem Space (rough / exploratory)"]
         M1["1 · Scope<br/>Conversations"] --> M2["2 · Design<br/>Research"] --> M3["3 · Input<br/>Synthesis"]
     end
 
-    subgraph solution["Solution Space — scrappy / concept-grade"]
+    subgraph solution["Solution Space (scrappy / concept-grade)"]
         M4["4 · Brain-<br/>storming"] --> M5["5 · User<br/>Concepts"] --> M6["6 · Lo-Fi<br/>Prototypes"]
     end
 
-    subgraph validation["Validation Space — functionally rigorous"]
+    subgraph validation["Validation Space (functionally rigorous)"]
         M7["7 · Hi-Fi<br/>Prototypes"] --> M8["8 · User<br/>Testing"] --> M9["9 · Iteration<br/>at Scale"]
     end
 
