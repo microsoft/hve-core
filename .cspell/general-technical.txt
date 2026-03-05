@@ -131,6 +131,7 @@ containerd
 contravariance
 coredns
 corent
+coreutils
 corosync
 cortana
 couchbase
@@ -369,6 +370,7 @@ deserialize
 deserialized
 devopsdays
 devtest
+dgst
 diego
 differenced
 dimensionality
@@ -799,6 +801,7 @@ pulsant
 pulumi
 purescale
 pyodbc
+pypackages
 pypi
 pytest
 qgis
@@ -864,6 +867,7 @@ rescaling
 resiliency
 resourcegroups
 resourceless
+retargeted
 retraining
 reuse
 reverification
