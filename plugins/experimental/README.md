@@ -11,6 +11,12 @@ Experimental and preview artifacts not yet promoted to stable collections
 copilot plugin install experimental@hve-core
 ```
 
+## Agents
+
+| Agent           | Description                                                                                                                            |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| meeting-analyst | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core |
+
 ## Instructions
 
 | Instruction       | Description                                                                                                                                                                                                                                                 |

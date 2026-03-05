@@ -215,28 +215,28 @@ Users and personas mentioned in transcripts.
 
 ## Requirements Extracted
 | Req ID | Requirement | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
-|--------|-------------|---------------|------|---------|-----------------|----------|
-| TR-001 | Description | Meeting name | Date | Person | Role | HH:MM:SS |
+|--------|-------------|----------------|------|---------|------------------|----------|
+| TR-001 | Description | Meeting name   | Date | Person  | Role             | HH:MM:SS |
 
 ## Decisions Made
-| Decision | Rationale | Source Meeting | Date |
-|----------|-----------|---------------|------|
-| Decision text | Why | Meeting name | Date |
+| Decision      | Rationale | Source Meeting | Date |
+|---------------|-----------|----------------|------|
+| Decision text | Why       | Meeting name   | Date |
 
 ## Action Items
-| Action | Owner | Due Date | Source Meeting |
-|--------|-------|----------|---------------|
-| Action text | Person | Date | Meeting name |
+| Action      | Owner  | Due Date | Source Meeting |
+|-------------|--------|----------|----------------|
+| Action text | Person | Date     | Meeting name   |
 
 ## Open Questions
-| Question | Context | Source Meeting |
-|----------|---------|---------------|
-| Question text | Why it matters | Meeting name |
+| Question      | Context        | Source Meeting |
+|---------------|----------------|----------------|
+| Question text | Why it matters | Meeting name   |
 
 ## Source Meetings
-| Meeting | Date | Participants | Key Topics | Timecodes Covered |
-|---------|------|-------------|------------|-------------------|
-| Name | Date | People | Topics | HH:MM:SS – HH:MM:SS |
+| Meeting | Date | Participants | Key Topics | Timecodes Covered   |
+|---------|------|--------------|------------|---------------------|
+| Name    | Date | People       | Topics     | HH:MM:SS – HH:MM:SS |
 
 ## Analysis Notes
 Additional observations, patterns, or context from transcript review.
