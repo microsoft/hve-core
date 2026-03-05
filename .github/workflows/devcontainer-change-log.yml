@@ -1,5 +1,3 @@
-# devcontainer-change-log.yml
-# Detects and logs devcontainer infrastructure changes as a structured step summary
 name: "Devcontainer Change Log"
 
 on:
@@ -26,20 +24,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Write infrastructure change summary
-        if: always()
         env:
           GIT_SHA: ${{ github.sha }}
           REF_NAME: ${{ github.ref_name }}
           EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD -- '.devcontainer/' '.github/workflows/copilot-setup-steps.yml' 2>/dev/null || true)
+          set -euo pipefail
 
           {
             echo "## Devcontainer Infrastructure Changes"
@@ -51,33 +49,41 @@ jobs:
             echo "| Trigger | \`${EVENT_NAME}\` |"
             echo ""
 
-            if [ -z "$CHANGED" ]; then
-              echo "_No devcontainer infrastructure files changed in this push._"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "_Triggered via workflow_dispatch. No push range available for automatic diff._"
+            elif [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+              echo "_Initial push to branch — no prior commit range available._"
             else
-              echo "| File | Category | Pre-build Impact |"
-              echo "|------|----------|-----------------|"
-              while IFS= read -r file; do
-                [ -z "$file" ] && continue
-                case "$file" in
-                  .devcontainer/scripts/on-create.sh)
-                    echo "| \`$file\` | Lifecycle Scripts | High |"
-                    ;;
-                  .devcontainer/scripts/post-create.sh)
-                    echo "| \`$file\` | Lifecycle Scripts | Low |"
-                    ;;
-                  .devcontainer/devcontainer.json)
-                    echo "| \`$file\` | Config | High |"
-                    ;;
-                  .github/workflows/copilot-setup-steps.yml)
-                    echo "| \`$file\` | Setup Steps | Medium |"
-                    ;;
-                  .devcontainer/*)
-                    echo "| \`$file\` | Config | Medium |"
-                    ;;
-                  *)
-                    echo "| \`$file\` | Other | Unknown |"
-                    ;;
-                esac
-              done <<< "$CHANGED"
+              CHANGED=$(git diff --name-only "$BEFORE_SHA" "$GIT_SHA" -- '.devcontainer/' '.github/workflows/copilot-setup-steps.yml' 2>/dev/null || true)
+
+              if [ -z "$CHANGED" ]; then
+                echo "_No devcontainer infrastructure files changed in this push._"
+              else
+                echo "| File | Category | Pre-build Impact |"
+                echo "|------|----------|-----------------|"
+                while IFS= read -r file; do
+                  [ -z "$file" ] && continue
+                  case "$file" in
+                    .devcontainer/scripts/on-create.sh)
+                      echo "| \`$file\` | Lifecycle Scripts | High |"
+                      ;;
+                    .devcontainer/scripts/post-create.sh)
+                      echo "| \`$file\` | Lifecycle Scripts | Low |"
+                      ;;
+                    .devcontainer/devcontainer.json)
+                      echo "| \`$file\` | Config | High |"
+                      ;;
+                    .github/workflows/copilot-setup-steps.yml)
+                      echo "| \`$file\` | Setup Steps | Medium |"
+                      ;;
+                    .devcontainer/*)
+                      echo "| \`$file\` | Config | Medium |"
+                      ;;
+                    *)
+                      echo "| \`$file\` | Other | Unknown |"
+                      ;;
+                  esac
+                done <<< "$CHANGED"
+              fi
             fi
           } >> "$GITHUB_STEP_SUMMARY"
