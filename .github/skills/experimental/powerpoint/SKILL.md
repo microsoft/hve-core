@@ -242,7 +242,7 @@ The Validate action runs a two- or three-step pipeline:
 
 #### Built-in System Message
 
-The `validate_slides.py` script includes a comprehensive built-in system message that instructs the vision model to analyze backgrounds, shapes, text boxes, images, and additional characteristics, then evaluate for all standard quality checks (text overlay, overflow, font consistency, edge margins, element spacing, color contrast, narrow text boxes, leftover placeholders, decorative line positioning, citation collisions, column alignment, readable fill combinations). The `-ValidationPrompt` parameter provides supplementary user-level context and does not need to repeat these checks.
+The `validate_slides.py` script includes a built-in system message that focuses on issue detection only (not full slide description). It checks overlapping elements, text overflow/cutoff, decorative line mismatch after title wraps, citation/footer collisions, tight spacing, uneven gaps, insufficient edge margins, alignment inconsistencies, low contrast, narrow text boxes, and leftover placeholders. For dense slides, near-edge placement or tight boundaries are acceptable when readability is not materially affected. The `-ValidationPrompt` parameter provides supplementary user-level context and does not need to repeat these checks.
 
 #### Validate with Vision Checks
 
@@ -254,7 +254,7 @@ The `validate_slides.py` script includes a comprehensive built-in system message
   -ValidationModel claude-haiku-4.5
 ```
 
-Vision validation results are written to `validation-results.json` in the image output directory, containing raw model responses per slide with visual descriptions and quality findings.
+Vision validation results are written to `validation-results.json` in the image output directory, containing raw model responses per slide with quality findings. Per-slide response text is also written to `slide-NNN-validation.txt` files next to each slide image.
 
 #### Validate Specific Slides
 
@@ -277,10 +277,6 @@ Validates only the specified slides. When content directories cover fewer slides
 | `--model` | No | `claude-haiku-4.5` | Vision model ID |
 | `--output` | No | stdout | JSON results file path |
 | `--slides` | No | all | Comma-separated slide numbers to validate |
-| `--system-message` | No | built-in | Custom system message text for the vision model |
-| `--system-message-file` | No | built-in | Path to file containing a custom system message |
-| `--response-schema` | No | built-in | Custom response schema JSON text |
-| `--response-schema-file` | No | built-in | Path to file containing a custom response schema JSON |
 | `-v`, `--verbose` | No | — | Enable debug-level logging |
 
 #### validate_deck.py CLI Reference
@@ -302,11 +298,11 @@ When run through the pipeline, validation produces these files in the image outp
 |---|---|---|
 | `deck-validation-results.json` | JSON | Per-slide PPTX property issues (speaker notes, slide count) |
 | `deck-validation-report.md` | Markdown | Human-readable report for PPTX property validation |
-| `validation-results.json` | JSON | Consolidated vision model responses with visual descriptions and quality findings |
-| `slide-NNN-validation.json` | JSON | Per-slide vision validation result with description and issues (next to `slide-NNN.jpg`) |
+| `validation-results.json` | JSON | Consolidated vision model responses with quality findings |
+| `slide-NNN-validation.txt` | Text | Per-slide vision response text (next to `slide-NNN.jpg`) |
 | `slide-NNN-deck-validation.json` | JSON | Per-slide PPTX property validation result (next to `slide-NNN.jpg`) |
 
-Per-slide JSON files are written alongside their corresponding `slide-NNN.jpg` images, enabling agents to read validation findings for individual slides without parsing the consolidated file.
+Per-slide vision text files are written alongside their corresponding `slide-NNN.jpg` images, enabling agents to read validation findings for individual slides without parsing the consolidated JSON file.
 
 #### Validation Scope for Changed Slides
 
@@ -372,7 +368,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
 | `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
 | `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
-| `validate_slides.py` | Vision-based slide analysis and quality validation via Copilot SDK with configurable system message and response schema |
+| `validate_slides.py` | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output |
 | `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming |
 
 ## python-pptx Constraints

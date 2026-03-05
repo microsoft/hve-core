@@ -77,7 +77,7 @@ For partial rebuild workflows (update a few slides in an existing deck):
 
 ## Validation Criteria
 
-Visual quality checks (overlay, overflow, margins, spacing, contrast, placeholders, narrow text boxes, font consistency) are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. The script has a comprehensive built-in system message covering all standard visual checks. The `-ValidationPrompt` / `-ValidationPromptFile` parameter provides additional user-level context and does not need to duplicate the built-in checks. Speaker notes validation remains PPTX-based via `validate_deck.py`.
+Visual quality checks are performed by `validate_slides.py` using a vision-capable model via the Copilot SDK. The script uses a built-in issue-only system message focused on overlapping elements, text overflow/cutoff, decorative line mismatch after title wrapping, citation/footer collisions, tight spacing, uneven gaps, insufficient edge margins, alignment inconsistencies, low contrast, narrow text boxes, and leftover placeholders. For dense slides, near-edge placement is acceptable when readability is not materially reduced. The `-ValidationPrompt` / `-ValidationPromptFile` parameter provides additional user-level context and does not need to duplicate the built-in checks. Speaker notes validation remains PPTX-based via `validate_deck.py`.
 
 ### Validation Directory Cleanup
 
@@ -93,8 +93,8 @@ The validation pipeline writes outputs to `{{working-directory}}/slide-deck/vali
 
 * `deck-validation-results.json` — Consolidated PPTX property findings (speaker notes, slide count).
 * `deck-validation-report.md` — Human-readable Markdown report for PPTX property validation.
-* `validation-results.json` — Consolidated vision model responses with visual descriptions and quality findings.
-* `slide-NNN-validation.json` — Per-slide vision validation result (next to `slide-NNN.jpg`). Contains the `response` with slide description and `issues` array.
+* `validation-results.json` — Consolidated vision model responses with quality findings.
+* `slide-NNN-validation.txt` — Per-slide vision validation response text (next to `slide-NNN.jpg`).
 * `slide-NNN-deck-validation.json` — Per-slide PPTX property validation result (next to `slide-NNN.jpg`). Contains `issues` array and `overall_quality`.
 
 ### Validation Scope for Changed Slides
