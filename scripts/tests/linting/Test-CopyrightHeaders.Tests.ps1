@@ -271,6 +271,29 @@ Describe 'Test-CopyrightHeaders Parameters' -Tag 'Unit' {
         { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
     }
 
+    It 'Scans Python files with the default extension list' {
+        $pythonFixturePath = Join-Path $script:FixturesPath 'python-default'
+        New-Item -ItemType Directory -Path $pythonFixturePath -Force | Out-Null
+
+        $content = @"
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+print("Hello World")
+"@
+        Set-Content -Path (Join-Path $pythonFixturePath 'valid.py') -Value $content
+
+        $outputPath = Join-Path $pythonFixturePath 'results.json'
+        Invoke-CopyrightHeaderCheck -Path $pythonFixturePath -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $file = $results.results | Where-Object { $_.file -like '*valid.py' }
+
+        $file.hasCopyright | Should -BeTrue
+        $file.hasSpdx | Should -BeTrue
+        $file.valid | Should -BeTrue
+    }
+
     It 'Accepts FileExtensions parameter' {
         { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('*.ps1') -OutputPath (Join-Path $script:FixturesPath 'test.json') } | Should -Not -Throw
     }
