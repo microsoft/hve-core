@@ -10,7 +10,7 @@ items:
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/code-review/functional-code-review.agent.md
+- path: .github/agents/coding-standards/functional-code-review.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
@@ -98,7 +98,7 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
-- path: .github/prompts/code-review/functional-code-review.prompt.md
+- path: .github/prompts/coding-standards/functional-code-review.prompt.md
   kind: prompt
 - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
   kind: prompt
@@ -371,7 +371,7 @@ items:
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
-- path: .github/instructions/shared/story-quality.instructions.md
+- path: .github/instructions/project-planning/story-quality.instructions.md
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill

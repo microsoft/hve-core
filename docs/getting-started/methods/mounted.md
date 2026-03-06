@@ -158,6 +158,7 @@ After rebuild, update `.vscode/settings.json`:
 {
   "chat.agentFilesLocations": {
     "/workspaces/hve-core/.github/agents/ado": true,
+    "/workspaces/hve-core/.github/agents/coding-standards": true,
     "/workspaces/hve-core/.github/agents/data-science": true,
     "/workspaces/hve-core/.github/agents/design-thinking": true,
     "/workspaces/hve-core/.github/agents/github": true,
@@ -168,6 +169,7 @@ After rebuild, update `.vscode/settings.json`:
   },
   "chat.promptFilesLocations": {
     "/workspaces/hve-core/.github/prompts/ado": true,
+    "/workspaces/hve-core/.github/prompts/coding-standards": true,
     "/workspaces/hve-core/.github/prompts/design-thinking": true,
     "/workspaces/hve-core/.github/prompts/github": true,
     "/workspaces/hve-core/.github/prompts/hve-core": true,
@@ -179,6 +181,7 @@ After rebuild, update `.vscode/settings.json`:
     "/workspaces/hve-core/.github/instructions/design-thinking": true,
     "/workspaces/hve-core/.github/instructions/github": true,
     "/workspaces/hve-core/.github/instructions/hve-core": true,
+    "/workspaces/hve-core/.github/instructions/project-planning": true,
     "/workspaces/hve-core/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
@@ -197,6 +200,7 @@ After rebuild, update `.vscode/settings.json`:
       "settings": {
         "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/coding-standards": true,
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
@@ -207,6 +211,7 @@ After rebuild, update `.vscode/settings.json`:
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/coding-standards": true,
           "/workspaces/hve-core/.github/prompts/design-thinking": true,
           "/workspaces/hve-core/.github/prompts/github": true,
           "/workspaces/hve-core/.github/prompts/hve-core": true,
@@ -218,6 +223,7 @@ After rebuild, update `.vscode/settings.json`:
           "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/project-planning": true,
           "/workspaces/hve-core/.github/instructions/shared": true
         },
         "chat.agentSkillsLocations": {
@@ -258,6 +264,7 @@ ls /workspaces/hve-core/.github/agents
       "settings": {
         "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/coding-standards": true,
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
@@ -268,6 +275,7 @@ ls /workspaces/hve-core/.github/agents
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/coding-standards": true,
           "/workspaces/hve-core/.github/prompts/design-thinking": true,
           "/workspaces/hve-core/.github/prompts/github": true,
           "/workspaces/hve-core/.github/prompts/hve-core": true,
@@ -279,6 +287,7 @@ ls /workspaces/hve-core/.github/agents
           "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/project-planning": true,
           "/workspaces/hve-core/.github/instructions/shared": true
         },
         "chat.agentSkillsLocations": {

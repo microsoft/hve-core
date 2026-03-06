@@ -97,6 +97,7 @@ Create or update `.vscode/settings.json`:
 {
   "chat.agentFilesLocations": {
     ".hve-core/.github/agents/ado": true,
+    ".hve-core/.github/agents/coding-standards": true,
     ".hve-core/.github/agents/data-science": true,
     ".hve-core/.github/agents/design-thinking": true,
     ".hve-core/.github/agents/github": true,
@@ -107,6 +108,7 @@ Create or update `.vscode/settings.json`:
   },
   "chat.promptFilesLocations": {
     ".hve-core/.github/prompts/ado": true,
+    ".hve-core/.github/prompts/coding-standards": true,
     ".hve-core/.github/prompts/design-thinking": true,
     ".hve-core/.github/prompts/github": true,
     ".hve-core/.github/prompts/hve-core": true,
@@ -118,6 +120,7 @@ Create or update `.vscode/settings.json`:
     ".hve-core/.github/instructions/design-thinking": true,
     ".hve-core/.github/instructions/github": true,
     ".hve-core/.github/instructions/hve-core": true,
+    ".hve-core/.github/instructions/project-planning": true,
     ".hve-core/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
@@ -160,6 +163,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
       "settings": {
         "chat.agentFilesLocations": {
           ".hve-core/.github/agents/ado": true,
+          ".hve-core/.github/agents/coding-standards": true,
           ".hve-core/.github/agents/data-science": true,
           ".hve-core/.github/agents/design-thinking": true,
           ".hve-core/.github/agents/github": true,
@@ -170,6 +174,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
         },
         "chat.promptFilesLocations": {
           ".hve-core/.github/prompts/ado": true,
+          ".hve-core/.github/prompts/coding-standards": true,
           ".hve-core/.github/prompts/design-thinking": true,
           ".hve-core/.github/prompts/github": true,
           ".hve-core/.github/prompts/hve-core": true,
@@ -181,6 +186,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
           ".hve-core/.github/instructions/design-thinking": true,
           ".hve-core/.github/instructions/github": true,
           ".hve-core/.github/instructions/hve-core": true,
+          ".hve-core/.github/instructions/project-planning": true,
           ".hve-core/.github/instructions/shared": true
         },
         "chat.agentSkillsLocations": {

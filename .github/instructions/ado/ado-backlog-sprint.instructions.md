@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/workitems/sprint/**'
 
 # ADO Sprint Planning
 
-Plan Azure DevOps iterations by analyzing work item coverage, capacity, dependencies, and gaps. Follow all instructions from #file:./ado-wit-planning.instructions.md while executing this workflow. Apply story quality conventions from #file:../shared/story-quality.instructions.md when assessing backlog items and grooming recommendations.
+Plan Azure DevOps iterations by analyzing work item coverage, capacity, dependencies, and gaps. Follow all instructions from #file:./ado-wit-planning.instructions.md while executing this workflow. Apply story quality conventions from #file:../project-planning/story-quality.instructions.md when assessing backlog items and grooming recommendations.
 
 ## Required Phases
 
