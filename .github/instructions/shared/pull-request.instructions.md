@@ -72,7 +72,7 @@ Validate that the working branch is current with the base branch before generati
 5. Execute the selected strategy:
    * Merge: `git merge --no-edit ${baseRef}`
    * Rebase: `git rebase --empty=drop --reapply-cherry-picks ${baseRef}`
-6. If conflicts occur, follow `.github/instructions/hve-core/git-merge.instructions.md` before continuing.
+6. If conflicts occur, follow `.github/instructions/shared/git-merge.instructions.md` before continuing.
 
 Exit criteria:
 

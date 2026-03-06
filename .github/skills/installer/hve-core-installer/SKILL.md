@@ -390,8 +390,8 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/agents/design-thinking": true,
     "<PREFIX>/.github/agents/github": true,
     "<PREFIX>/.github/agents/project-planning": true,
-    "<PREFIX>/.github/agents/hve-core": true,
-    "<PREFIX>/.github/agents/hve-core/subagents": true,
+    "<PREFIX>/.github/agents/shared": true,
+    "<PREFIX>/.github/agents/shared/subagents": true,
     "<PREFIX>/.github/agents/security-planning": true
   },
   "chat.promptFilesLocations": {
@@ -407,7 +407,7 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/instructions/coding-standards": true,
     "<PREFIX>/.github/instructions/design-thinking": true,
     "<PREFIX>/.github/instructions/github": true,
-    "<PREFIX>/.github/instructions/hve-core": true,
+    "<PREFIX>/.github/instructions/shared": true,
     "<PREFIX>/.github/instructions/project-planning": true,
     "<PREFIX>/.github/instructions/shared": true
   },
@@ -479,8 +479,8 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
           "/workspaces/hve-core/.github/agents/project-planning": true,
-          "/workspaces/hve-core/.github/agents/hve-core": true,
-          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/shared": true,
+          "/workspaces/hve-core/.github/agents/shared/subagents": true,
           "/workspaces/hve-core/.github/agents/security-planning": true
         },
         "chat.promptFilesLocations": {
@@ -496,7 +496,7 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
           "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
-          "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/shared": true,
           "/workspaces/hve-core/.github/instructions/project-planning": true,
           "/workspaces/hve-core/.github/instructions/shared": true
         },
@@ -1116,11 +1116,11 @@ Present upgrade summary:
 📋 Upgrade Summary
 
 Files to update (managed):
-  ✅ .github/agents/hve-core/task-researcher.agent.md
-  ✅ .github/agents/hve-core/task-planner.agent.md
+  ✅ .github/agents/shared/task-researcher.agent.md
+  ✅ .github/agents/shared/task-planner.agent.md
 
 Files requiring decision (modified):
-  ⚠️ .github/agents/hve-core/task-implementor.agent.md
+  ⚠️ .github/agents/shared/task-implementor.agent.md
 
 Files skipped (ejected):
   🔒 .github/agents/custom-agent.agent.md
@@ -1142,7 +1142,7 @@ When user requests diff:
 <!-- <diff-display> -->
 ```text
 ─────────────────────────────────────
-File: .github/agents/hve-core/task-implementor.agent.md
+File: .github/agents/shared/task-implementor.agent.md
 Status: modified
 ─────────────────────────────────────
 

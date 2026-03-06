@@ -28,7 +28,7 @@ Every implementation produces self-sufficient, working code aligned with impleme
 * Avoid partial implementations that leave completed steps in an indeterminate state.
 * Implement only what the implementation details specify.
 * Review existing tests and scripts for updates rather than creating new ones.
-* Follow commit-message conventions from `.github/instructions/hve-core/commit-message.instructions.md`.
+* Follow commit-message conventions from `.github/instructions/shared/commit-message.instructions.md`.
 * Reference relevant guidance in `.github/instructions/**` before editing code.
 * Run subagents for inline research when context is missing.
 
@@ -158,7 +158,7 @@ Review planning files and interpret the work completed. Present completion using
 
 * Present phase and step completion summary.
 * Include outstanding clarification requests or blockers.
-* Provide commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
+* Provide commit message in a markdown code block following `.github/instructions/shared/commit-message.instructions.md`, excluding `.copilot-tracking` files.
 * Offer next steps: plan with `/task-plan`, research with `/task-research`, review with `/task-review`, or continue implementation from updated planning files.
 
 ## User Interaction

@@ -24,7 +24,7 @@
     ".github/instructions/coding-standards": true,
     ".github/instructions/design-thinking": true,
     ".github/instructions/github": true,
-    ".github/instructions/hve-core": true,
+    ".github/instructions/shared": true,
     ".github/instructions/project-planning": true,
     ".github/instructions/shared": true,
   },
@@ -35,8 +35,8 @@
     ".github/agents/design-thinking": true,
     ".github/agents/github": true,
     ".github/agents/project-planning": true,
-    ".github/agents/hve-core": true,
-    ".github/agents/hve-core/subagents": true,
+    ".github/agents/shared": true,
+    ".github/agents/shared/subagents": true,
     ".github/agents/security-planning": true,
   },
   "chat.promptFilesLocations": {
@@ -53,7 +53,7 @@
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
-      "file": ".github/instructions/hve-core/commit-message.instructions.md"
+      "file": ".github/instructions/shared/commit-message.instructions.md"
     }
   ],
 }

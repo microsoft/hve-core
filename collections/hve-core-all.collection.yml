@@ -28,39 +28,39 @@ items:
   maturity: preview
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/shared/doc-ops.agent.md
   kind: agent
-- path: .github/agents/hve-core/memory.agent.md
+- path: .github/agents/shared/memory.agent.md
   kind: agent
-- path: .github/agents/hve-core/pr-review.agent.md
+- path: .github/agents/shared/pr-review.agent.md
   kind: agent
-- path: .github/agents/hve-core/prompt-builder.agent.md
+- path: .github/agents/shared/prompt-builder.agent.md
   kind: agent
-- path: .github/agents/hve-core/rpi-agent.agent.md
+- path: .github/agents/shared/rpi-agent.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+- path: .github/agents/shared/subagents/implementation-validator.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+- path: .github/agents/shared/subagents/phase-implementor.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/plan-validator.agent.md
+- path: .github/agents/shared/subagents/plan-validator.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+- path: .github/agents/shared/subagents/prompt-evaluator.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/prompt-tester.agent.md
+- path: .github/agents/shared/subagents/prompt-tester.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/prompt-updater.agent.md
+- path: .github/agents/shared/subagents/prompt-updater.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+- path: .github/agents/shared/subagents/researcher-subagent.agent.md
   kind: agent
-- path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+- path: .github/agents/shared/subagents/rpi-validator.agent.md
   kind: agent
-- path: .github/agents/hve-core/task-implementor.agent.md
+- path: .github/agents/shared/task-implementor.agent.md
   kind: agent
-- path: .github/agents/hve-core/task-planner.agent.md
+- path: .github/agents/shared/task-planner.agent.md
   kind: agent
-- path: .github/agents/hve-core/task-researcher.agent.md
+- path: .github/agents/shared/task-researcher.agent.md
   kind: agent
-- path: .github/agents/hve-core/task-reviewer.agent.md
+- path: .github/agents/shared/task-reviewer.agent.md
   kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
@@ -357,17 +357,17 @@ items:
   kind: instruction
 - path: .github/instructions/github/github-backlog-update.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/commit-message.instructions.md
+- path: .github/instructions/shared/commit-message.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/git-merge.instructions.md
+- path: .github/instructions/shared/git-merge.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/markdown.instructions.md
+- path: .github/instructions/shared/markdown.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/prompt-builder.instructions.md
+- path: .github/instructions/shared/prompt-builder.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/pull-request.instructions.md
+- path: .github/instructions/shared/pull-request.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/writing-style.instructions.md
+- path: .github/instructions/shared/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
