@@ -44,7 +44,7 @@ flowchart LR
 
 | Stage   | Name               | Key Tools                                                                                                   |
 |---------|--------------------|-------------------------------------------------------------------------------------------------------------|
-| Stage 1 | Setup              | hve-core-installer                                                                                          |
+| Stage 1 | Setup              | hve-core-installer (skill), memory                                                                          |
 | Stage 2 | Discovery          | task-researcher, brd-builder, security-plan-creator, dt-coach                                               |
 | Stage 3 | Product Definition | prd-builder, product-manager-advisor, adr-creation, arch-diagram-builder                                    |
 | Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                                      |

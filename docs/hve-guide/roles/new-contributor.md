@@ -20,10 +20,10 @@ This guide helps you get started with HVE Core from your first install through i
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> For custom installations, select the **hve-core-installer** agent and install the starter collection:
+> For custom installations, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent:
 >
 > ```text
-> install hve-core
+> help me customize hve-core installation
 > ```
 >
 > The `hve-core` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
@@ -45,7 +45,7 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 Install HVE Core and run your first agent interaction.
 
 1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
-2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments. For custom installations, use the **hve-core-installer** agent instead.
+2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments.
 3. Open a chat and select the **memory** agent to verify agent responsiveness.
 4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
 

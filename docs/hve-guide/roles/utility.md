@@ -103,11 +103,10 @@ This fallback activates automatically. No manual configuration is needed.
 
 ### Agents
 
-| Agent                  | Category      | Description                                  |
-|------------------------|---------------|----------------------------------------------|
-| **memory**             | Memory        | Session context and preference persistence   |
-| **doc-ops**            | Documentation | Documentation operations and maintenance     |
-| **hve-core-installer** | Installation  | Collection installation and setup management |
+| Agent       | Category      | Description                                |
+|-------------|---------------|--------------------------------------------|
+| **memory**  | Memory        | Session context and preference persistence |
+| **doc-ops** | Documentation | Documentation operations and maintenance   |
 
 ### Prompts
 
@@ -124,19 +123,20 @@ This fallback activates automatically. No manual configuration is needed.
 
 ### Skills
 
-| Skill        | Category | Description                             |
-|--------------|----------|-----------------------------------------|
-| video-to-gif | Media    | FFmpeg two-pass video-to-GIF conversion |
+| Skill        | Category     | Description                             |
+|--------------|--------------|-----------------------------------------|
+| installer    | Installation | HVE Core customized installation        |
+| video-to-gif | Media        | FFmpeg two-pass video-to-GIF conversion |
 
 ## Tips
 
-| Do                                                              | Don't                                                      |
-|-----------------------------------------------------------------|------------------------------------------------------------|
-| Use the **memory** agent to save preferences early in a session | Repeat the same context setup in every conversation        |
-| Use `/checkpoint` during long, multi-step workflows             | Lose progress context in extended sessions                 |
-| Use `/git-commit` for all commits to maintain conventions       | Write ad-hoc commit messages that skip conventional format |
-| Install only the collections your role needs                    | Install `hve-core-all` when you only need one collection   |
-| Refer to the skill docs for media processing parameters         | Guess at FFmpeg options without consulting the skill file  |
+| Do                                                                         | Don't                                                      |
+|----------------------------------------------------------------------------|------------------------------------------------------------|
+| Use the **memory** agent to save preferences early in a session            | Repeat the same context setup in every conversation        |
+| Use `/checkpoint` during long, multi-step workflows                        | Lose progress context in extended sessions                 |
+| Use `/git-commit` for all commits to maintain conventions                  | Write ad-hoc commit messages that skip conventional format |
+| Ask any agent "help me customize hve-core installation" to configure setup | Install `hve-core-all` when you only need one collection   |
+| Refer to the skill docs for media processing parameters                    | Guess at FFmpeg options without consulting the skill file  |
 
 ## Next Steps
 

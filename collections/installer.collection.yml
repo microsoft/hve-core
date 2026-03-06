@@ -1,14 +1,14 @@
 id: installer
 name: HVE Core Installer
-description: Interactive installer agent for deploying HVE Core artifacts across workspace configurations
+description: Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations
 tags:
   - installer
   - setup
   - deployment
 items:
-  # Agents
-  - path: .github/agents/installer/hve-core-installer.agent.md
-    kind: agent
+  # Skills
+  - path: .github/skills/installer/hve-core-installer
+    kind: skill
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

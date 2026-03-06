@@ -27,7 +27,7 @@ This guide is for you if you perform threat modeling, build security plans, asse
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collections are `security-planning` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, use the **hve-core-installer** agent with `install security-planning project-planning`.
+> Your primary collections are `security-planning` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
