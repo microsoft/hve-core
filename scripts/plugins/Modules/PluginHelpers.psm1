@@ -460,23 +460,23 @@ function Test-SymlinkCapability {
 function New-PluginLink {
     <#
     .SYNOPSIS
-    Links a source path into a plugin destination via symlink or text stub.
+    Links a source path into a plugin destination via symlink or inlined content.
 
     .DESCRIPTION
     When SymlinkCapable is set, creates a relative symbolic link from
-    DestinationPath to SourcePath. Otherwise writes a text stub file
-    containing the relative path, matching the format git produces when
-    core.symlinks is false. Text stubs keep git status clean on Windows
-    without Developer Mode or elevated privileges.
+    DestinationPath to SourcePath. Otherwise copies the actual file content
+    to the destination. This ensures agent files have valid YAML frontmatter
+    in the installed plugin rather than path references that Copilot CLI
+    cannot parse.
 
     .PARAMETER SourcePath
     Absolute path to the real file or directory.
 
     .PARAMETER DestinationPath
-    Absolute path where the link or text stub will be created.
+    Absolute path where the link or copied content will be created.
 
     .PARAMETER SymlinkCapable
-    When set, create a symbolic link; otherwise write a text stub.
+    When set, create a symbolic link; otherwise copy the file content.
     #>
     [CmdletBinding()]
     param(
@@ -501,7 +501,9 @@ function New-PluginLink {
         New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
     }
     else {
-        [System.IO.File]::WriteAllText($DestinationPath, $relativePath)
+        # Copy the actual file content instead of writing a path reference
+        # This ensures agent files have valid YAML frontmatter in installed plugins
+        Copy-Item -Path $SourcePath -Destination $DestinationPath -Force
     }
 }
 
