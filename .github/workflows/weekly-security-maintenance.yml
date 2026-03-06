@@ -196,3 +196,67 @@ jobs:
           if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {
             Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
           }
+      - name: Create or Update Staleness Issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const staleCount = Number('${{ needs.check-staleness.outputs.stale-count }}');
+            const threshold = Number('${{ inputs.max-age-days || 30 }}');
+
+            const issueTitle = "Security: Stale dependency SHAs detected";
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open"
+            });
+
+            const existingIssue = issues.find(i => i.title === issueTitle);
+
+            if (staleCount > 0) {
+
+              const body = `
+            ## Stale GitHub Action SHAs Detected
+
+            ${staleCount} dependencies have SHA pins older than ${threshold} days.
+
+            Please run:
+
+            \`\`\`powershell
+            npm run sha-staleness
+            \`\`\`
+
+            Then update outdated SHAs using:
+
+            \`\`\`powershell
+            scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale
+            \`\`\`
+              `;
+
+              if (existingIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: body
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: body
+                });
+              }
+
+            } else if (existingIssue) {
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: "closed"
+              });
+
+            }
