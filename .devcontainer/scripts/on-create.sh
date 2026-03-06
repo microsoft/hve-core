@@ -66,7 +66,34 @@ main() {
   fi
   sudo tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
   rm /tmp/gitleaks.tar.gz
-  
+
+  echo "Installing uv package manager..."
+  # Dependencies are pinned for stability. Dependabot and security workflows manage updates.
+  UV_VERSION="0.10.8"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    UV_ARCH="x86_64-unknown-linux-gnu"
+    UV_SHA256="f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    UV_ARCH="aarch64-unknown-linux-gnu"
+    UV_SHA256="661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d"
+  else
+    echo "ERROR: Unsupported architecture for uv: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz" -o /tmp/uv.tar.gz
+
+  echo "Checking uv tarball integrity..."
+  if ! echo "${UV_SHA256} /tmp/uv.tar.gz" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for uv tarball" >&2
+    rm /tmp/uv.tar.gz
+    exit 1
+  fi
+  sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 "uv-${UV_ARCH}/uv" "uv-${UV_ARCH}/uvx"
+  rm /tmp/uv.tar.gz
+
+  echo "Syncing Python environments for skills..."
+  find .github/skills -name pyproject.toml -execdir uv sync \;
+
   echo "System dependencies installed successfully"
 }
 
