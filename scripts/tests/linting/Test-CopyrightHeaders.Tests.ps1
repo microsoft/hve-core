@@ -260,6 +260,83 @@ Write-Host "Headers too late"
         $file.hasSpdx | Should -BeFalse
         $file.valid | Should -BeFalse
     }
+
+    It 'Detects missing copyright in Python files' {
+        $content = @"
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+
+print("Hello World")
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'missing-copyright.py') -Value $content
+
+        $outputPath = Join-Path $script:FixturesPath 'results-missing-copyright-py.json'
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('missing-copyright.py') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $file = $results.results | Where-Object { $_.file -like '*missing-copyright.py' }
+
+        $file.hasCopyright | Should -BeFalse
+        $file.hasSpdx | Should -BeTrue
+        $file.valid | Should -BeFalse
+    }
+
+    It 'Detects missing SPDX in Python files' {
+        $content = @"
+#!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+
+print("Hello World")
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'missing-spdx.py') -Value $content
+
+        $outputPath = Join-Path $script:FixturesPath 'results-missing-spdx-py.json'
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('missing-spdx.py') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $file = $results.results | Where-Object { $_.file -like '*missing-spdx.py' }
+
+        $file.hasCopyright | Should -BeTrue
+        $file.hasSpdx | Should -BeFalse
+        $file.valid | Should -BeFalse
+    }
+
+    It 'Detects Python headers at incorrect line positions (too late in file)' {
+        $content = @"
+#!/usr/bin/env python3
+# Line 2
+# Line 3
+# Line 4
+# Line 5
+# Line 6
+# Line 7
+# Line 8
+# Line 9
+# Line 10
+# Line 11
+# Line 12
+# Line 13
+# Line 14
+# Line 15
+# Line 16
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+print("Headers too late")
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'headers-too-late.py') -Value $content
+
+        $outputPath = Join-Path $script:FixturesPath 'results-headers-too-late-py.json'
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('headers-too-late.py') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $file = $results.results | Where-Object { $_.file -like '*headers-too-late.py' }
+
+        # Headers should NOT be found because they're past line 15
+        $file.hasCopyright | Should -BeFalse
+        $file.hasSpdx | Should -BeFalse
+        $file.valid | Should -BeFalse
+    }
 }
 
 #endregion
