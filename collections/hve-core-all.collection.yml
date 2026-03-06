@@ -80,6 +80,9 @@ items:
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
+- path: .github/agents/security-planning/security-champion.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security-planning/security-plan-creator.agent.md
   kind: agent
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
@@ -377,6 +380,9 @@ items:
   kind: instruction
 - path: .github/skills/experimental/video-to-gif
   kind: skill
+- path: .github/skills/security-planning/owasp-security
+  kind: skill
+  maturity: experimental
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:

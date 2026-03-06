@@ -8,6 +8,9 @@ tags:
   - planning
 items:
   # Agents
+  - path: .github/agents/security-planning/security-champion.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security-planning/security-plan-creator.agent.md
     kind: agent
   # Prompts
@@ -18,5 +21,9 @@ items:
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/security-planning/owasp-security
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

@@ -1,0 +1,1 @@
+../../../.github/agents/security-planning/security-champion.agent.md

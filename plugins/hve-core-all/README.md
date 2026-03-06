@@ -49,6 +49,7 @@ copilot plugin install hve-core-all@hve-core
 | product-manager-advisor      | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                      |
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
+| security-champion            | Security-focused code reviewer applying Microsoft SDL practices and OWASP guidelines for secure development across the full lifecycle, from design through runtime - Brought to you by microsoft/hve-core  |
 | security-plan-creator        | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
 
 ## Commands
@@ -182,10 +183,11 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill        | Description  |
-|--------------|--------------|
-| video-to-gif | video-to-gif |
-| pr-reference | pr-reference |
+| Skill          | Description    |
+|----------------|----------------|
+| video-to-gif   | video-to-gif   |
+| owasp-security | owasp-security |
+| pr-reference   | pr-reference   |
 
 ---
 

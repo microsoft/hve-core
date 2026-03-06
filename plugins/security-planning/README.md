@@ -11,9 +11,10 @@ copilot plugin install security-planning@hve-core
 
 ## Agents
 
-| Agent                 | Description                                                                                                      |
-|-----------------------|------------------------------------------------------------------------------------------------------------------|
-| security-plan-creator | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core |
+| Agent                 | Description                                                                                                                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| security-champion     | Security-focused code reviewer applying Microsoft SDL practices and OWASP guidelines for secure development across the full lifecycle, from design through runtime - Brought to you by microsoft/hve-core |
+| security-plan-creator | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                          |
 
 ## Commands
 
@@ -27,6 +28,12 @@ copilot plugin install security-planning@hve-core
 | Instruction       | Description                                                                                                                                                                                                                                                 |
 |-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+
+## Skills
+
+| Skill          | Description    |
+|----------------|----------------|
+| owasp-security | owasp-security |
 
 ---
 
