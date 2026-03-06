@@ -38,8 +38,8 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 ### Pre-requisite: Load Evaluation Context
 
 1. Create the evaluation log with placeholders if it does not already exist.
-2. Read and follow instructions from `.github/instructions/hve-core/prompt-builder.instructions.md` in full for prompt engineering quality standards.
-3. Read and follow instructions from `.github/instructions/hve-core/writing-style.instructions.md` in full for style standards.
+2. Read and follow instructions from `.github/instructions/shared/prompt-builder.instructions.md` in full for prompt engineering quality standards.
+3. Read and follow instructions from `.github/instructions/shared/writing-style.instructions.md` in full for style standards.
 
 ### Step 1: Evaluate Execution Log Findings
 

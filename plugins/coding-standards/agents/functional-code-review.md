@@ -1,1 +1,1 @@
-../../../.github/agents/code-review/functional-code-review.agent.md
+../../../.github/agents/coding-standards/functional-code-review.agent.md

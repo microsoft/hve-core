@@ -141,6 +141,8 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── markdown.instructions.md
 │   ├── prompt-builder.instructions.md
 │   └── writing-style.instructions.md
+├── project-planning/                      # Project planning
+│   └── story-quality.instructions.md
 ├── shared/                           # Cross-collection
 │   └── hve-core-location.instructions.md
 └── README.md

@@ -1,1 +1,1 @@
-../../../.github/instructions/shared/story-quality.instructions.md
+../../../.github/instructions/project-planning/story-quality.instructions.md

@@ -230,7 +230,7 @@ The plugin generation and validation tooling actively enforces this exclusion:
 | **Language/tech-specific**  | `.github/instructions/coding-standards/{language}/`     | ✅ Yes               |
 | **Shared cross-collection** | `.github/instructions/shared/`                          | ✅ Yes               |
 
-If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Shared cross-collection artifacts go in `.github/instructions/shared/`.
+If your instructions apply only to this repository and are not intended for distribution to consumers, place them at the root of `.github/instructions/`. Otherwise, by convention, place them in `.github/instructions/{collection-id}/` or a language-specific subdirectory under `coding-standards/` (e.g., `coding-standards/csharp/`, `coding-standards/bash/`). Use `.github/instructions/shared/` only for artifacts referenced by two or more domain collections.
 
 ## Collection Taxonomy
 

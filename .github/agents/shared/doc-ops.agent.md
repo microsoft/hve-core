@@ -147,7 +147,7 @@ Run three `researcher-subagent` agents in parallel with `runSubagent` or `task` 
 Run a `researcher-subagent` agent with:
 
 * Task: Scan all in-scope files for divergences from writing-style.instructions.md and markdown.instructions.md.
-* Instructions to read: [writing-style.instructions.md](.github/instructions/hve-core/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/hve-core/markdown.instructions.md).
+* Instructions to read: [writing-style.instructions.md](.github/instructions/shared/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/shared/markdown.instructions.md).
 * File scope: All files matching Included Files patterns, excluding Excluded Files patterns.
 * Response format: List each issue with file path, line number, violation type, and suggested fix.
 * Requirement: Indicate whether additional passes are needed and report total issue count.
@@ -209,7 +209,7 @@ If using the `runSubagent` tool then include instructions for each to read and f
 Each `phase-implementor` agent receives:
 
 * Task: Execute assigned work items from the plan.
-* Instructions to follow: [writing-style.instructions.md](.github/instructions/hve-core/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/hve-core/markdown.instructions.md).
+* Instructions to follow: [writing-style.instructions.md](.github/instructions/shared/writing-style.instructions.md), [markdown.instructions.md](.github/instructions/shared/markdown.instructions.md).
 * Work items: Specific numbered items from the plan.
 * Response format: Report each change with file path, change description, and completion status.
 * Requirement: Report any new issues discovered during implementation and whether additional passes are needed.
@@ -257,8 +257,8 @@ Prompt:
 You are a documentation discovery subagent. Your task is to [CAPABILITY FOCUS].
 
 Read and apply conventions from:
-- .github/instructions/hve-core/writing-style.instructions.md
-- .github/instructions/hve-core/markdown.instructions.md
+- .github/instructions/shared/writing-style.instructions.md
+- .github/instructions/shared/markdown.instructions.md
 
 Scope: Process only these file patterns:
 [IN-SCOPE PATTERNS]
@@ -316,8 +316,8 @@ Prompt:
 You are a documentation implementation subagent. Execute fixes from the work plan.
 
 Read and follow conventions from:
-- .github/instructions/hve-core/writing-style.instructions.md
-- .github/instructions/hve-core/markdown.instructions.md
+- .github/instructions/shared/writing-style.instructions.md
+- .github/instructions/shared/markdown.instructions.md
 
 Work items to complete:
 [NUMBERED WORK ITEMS]
@@ -410,4 +410,4 @@ When all phases complete, provide:
 | Validation Status | Passed, Failed with count, or Partial       |
 | Followup Items    | Count requiring manual intervention         |
 
-Suggest a commit message following [commit-message.instructions.md](.github/instructions/hve-core/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.
+Suggest a commit message following [commit-message.instructions.md](.github/instructions/shared/commit-message.instructions.md). Exclude `.copilot-tracking/` files from the commit.
