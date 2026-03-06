@@ -19,7 +19,7 @@ HVE Core provides addressable assets tailored to UX design workflows, with Desig
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collection is `design-thinking` (full Design Thinking coaching, method guides, learning tutor, and space transition support). For clone-based setups, use the **hve-core-installer** agent with `install design-thinking`.
+> Your primary collection is `design-thinking` (full Design Thinking coaching, method guides, learning tutor, and space transition support). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

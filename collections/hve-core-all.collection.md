@@ -17,5 +17,6 @@ Supporting subagents included:
 
 Skills included:
 
+- **HVE Core Installer** — Decision-driven installer skill for deploying HVE Core across workspace configurations
 - **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
 - **Video to GIF** — Converts video files to optimized GIF animations using FFmpeg two-pass palette optimization
