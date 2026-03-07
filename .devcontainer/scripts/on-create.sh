@@ -66,7 +66,36 @@ main() {
   fi
   sudo tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
   rm /tmp/gitleaks.tar.gz
-  
+
+  echo "Installing uv..."
+  UV_VERSION="0.10.8"
+  UV_ARCH=$(uname -m)
+  case "${UV_ARCH}" in
+    x86_64)
+      UV_SHA256="f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f"
+      UV_FILE="uv-x86_64-unknown-linux-gnu.tar.gz"
+      ;;
+    aarch64)
+      UV_SHA256="661860e954f87dcd823251191866af3486484d1a9df60eed56f4586ed7559e3d"
+      UV_FILE="uv-aarch64-unknown-linux-gnu.tar.gz"
+      ;;
+    *)
+      echo "ERROR: Unsupported architecture for uv: ${UV_ARCH}" >&2
+      exit 1
+      ;;
+  esac
+  curl -sSfL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/${UV_FILE}" -o "/tmp/${UV_FILE}"
+  if ! echo "${UV_SHA256} /tmp/${UV_FILE}" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for uv" >&2
+    rm -f "/tmp/${UV_FILE}"
+    exit 1
+  fi
+  sudo tar -xzf "/tmp/${UV_FILE}" --strip-components=1 -C /usr/local/bin uv uvx
+  rm "/tmp/${UV_FILE}"
+
+  # Sync Python skill dependencies
+  find .github/skills -name pyproject.toml -type f -execdir uv sync \;
+
   echo "System dependencies installed successfully"
 }
 
