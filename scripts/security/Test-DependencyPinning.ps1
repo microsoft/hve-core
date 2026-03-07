@@ -775,20 +775,20 @@ function Get-ComplianceReportData {
     $report.ScannedFiles = $ScannedFiles.Count
     $report.Violations = $Violations
 
-    # Calculate metrics
+    # Calculate metrics - TotalDependencies is set to the count of all violations found
+    # This represents dependencies that failed validation (unpinned or other violations)
     $totalDeps = @($Violations).Count
-    $unpinnedDeps = @($Violations | Where-Object { $_.Severity -ne 'Info' }).Count
-    $pinnedDeps = $totalDeps - $unpinnedDeps
 
     $report.TotalDependencies = $totalDeps
-    $report.PinnedDependencies = $pinnedDeps
-    $report.UnpinnedDependencies = $unpinnedDeps
+    $report.UnpinnedDependencies = $totalDeps
+    $report.PinnedDependencies = 0
 
-    if ($totalDeps -gt 0) {
-        $report.ComplianceScore = [math]::Round(($pinnedDeps / $totalDeps) * 100, 2)
+    if ($totalDeps -eq 0) {
+        $report.ComplianceScore = 100.0
     }
     else {
-        $report.ComplianceScore = 100.0
+        # When violations are found, compliance score is 0% since all items in Violations array are violations
+        $report.ComplianceScore = 0.0
     }
 
     # Generate summary by type
