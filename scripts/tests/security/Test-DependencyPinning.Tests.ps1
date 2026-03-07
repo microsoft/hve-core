@@ -757,6 +757,30 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $result.UnpinnedDependencies | Should -Be 3
         }
 
+        It 'Computes partial compliance when total dependency count is provided' {
+            $v1 = [DependencyViolation]::new()
+            $v1.Type = 'github-actions'
+            $v1.Severity = 'High'
+
+            $v2 = [DependencyViolation]::new()
+            $v2.Type = 'npm'
+            $v2.Severity = 'Medium'
+
+            $v3 = [DependencyViolation]::new()
+            $v3.Type = 'pip'
+            $v3.Severity = 'Medium'
+
+            $violations = @($v1, $v2, $v3)
+            $scannedFiles = @(@{ Path = 'test1.yml' }, @{ Path = 'test2.json' }, @{ Path = 'requirements.txt' })
+
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 10
+
+            $result.TotalDependencies | Should -Be 10
+            $result.UnpinnedDependencies | Should -Be 3
+            $result.PinnedDependencies | Should -Be 7
+            $result.ComplianceScore | Should -Be 70.0
+        }
+
         It 'Groups violations by type with array coercion' {
             $v1 = [DependencyViolation]::new()
             $v1.Type = 'github-actions'
