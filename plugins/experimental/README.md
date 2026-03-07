@@ -21,6 +21,7 @@ copilot plugin install experimental@hve-core
 
 | Skill        | Description  |
 |--------------|--------------|
+| powerpoint   | powerpoint   |
 | video-to-gif | video-to-gif |
 
 ---

@@ -72,22 +72,22 @@ Each artifact guide below includes an "Accelerating with Prompt Builder" section
 
 Each HVE role benefits from different customization techniques. The table below maps the nine roles to the guides most relevant to their workflow.
 
-| Role                     | Recommended Guides                                                        | Rationale                                                                       |
-|--------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| Engineer                 | [Instructions](instructions.md), [Agents](agents.md)                      | Coding standards and specialized review agents accelerate daily development     |
-| TPM                      | [Prompts](prompts.md), [Collections](collections.md)                      | Reusable planning prompts and curated bundles standardize project workflows     |
-| Tech Lead / Architect    | [Instructions](instructions.md), [Agents](agents.md), [Skills](skills.md) | Standards enforcement, architecture review agents, and deep domain knowledge    |
-| Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                      | Compliance knowledge packages and security-focused coding conventions           |
-| Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                | Analytical domain bundles and repeatable notebook workflows                     |
-| SRE / Operations         | [Instructions](instructions.md), [Environment](environment.md)            | Infrastructure conventions and DevContainer tuning                              |
-| Business Program Manager | [Prompts](prompts.md), [Team Adoption](team-adoption.md)                  | Sprint-planning prompts and governance patterns for stakeholder alignment       |
-| New Contributor          | [Instructions](instructions.md), [Environment](environment.md)            | Quick onboarding through conventions and a ready-to-use development environment |
-| Utility                  | [Collections](collections.md), [Build System](build-system.md)            | Cross-cutting tooling assembly and validation pipeline customization            |
+| Role                     | Recommended Guides                                                               | Rationale                                                                       |
+|--------------------------|----------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| Engineer                 | [Instructions](instructions.md), [Agents](custom-agents.md)                      | Coding standards and specialized review agents accelerate daily development     |
+| TPM                      | [Prompts](prompts.md), [Collections](collections.md)                             | Reusable planning prompts and curated bundles standardize project workflows     |
+| Tech Lead / Architect    | [Instructions](instructions.md), [Agents](custom-agents.md), [Skills](skills.md) | Standards enforcement, architecture review agents, and deep domain knowledge    |
+| Security Architect       | [Skills](skills.md), [Instructions](instructions.md)                             | Compliance knowledge packages and security-focused coding conventions           |
+| Data Scientist           | [Skills](skills.md), [Prompts](prompts.md)                                       | Analytical domain bundles and repeatable notebook workflows                     |
+| SRE / Operations         | [Instructions](instructions.md), [Environment](environment.md)                   | Infrastructure conventions and DevContainer tuning                              |
+| Business Program Manager | [Prompts](prompts.md), [Team Adoption](team-adoption.md)                         | Sprint-planning prompts and governance patterns for stakeholder alignment       |
+| New Contributor          | [Instructions](instructions.md), [Environment](environment.md)                   | Quick onboarding through conventions and a ready-to-use development environment |
+| Utility                  | [Collections](collections.md), [Build System](build-system.md)                   | Cross-cutting tooling assembly and validation pipeline customization            |
 
 ## File Index
 
 1. [Customizing with Instructions](instructions.md): Configure Copilot with `copilot-instructions.md` and instruction files
-2. [Creating Custom Agents](agents.md): Build specialized agents with tool restrictions and subagent delegation
+2. [Creating Custom Agents](custom-agents.md): Build specialized agents with tool restrictions and subagent delegation
 3. [Creating Custom Prompts](prompts.md): Author reusable prompt templates with variables
 4. [Authoring Custom Skills](skills.md): Create domain knowledge packages
 5. [Managing Collections](collections.md): Bundle artifacts into distributable packages
