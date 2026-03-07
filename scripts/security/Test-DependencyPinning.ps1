@@ -327,6 +327,196 @@ function Get-WorkflowNpmCommandViolations {
     return $violations
 }
 
+function Get-WorkflowNpmCommandCount {
+    <#
+    .SYNOPSIS
+        Counts npm install/update command occurrences in workflow run blocks.
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $filePath = $FileInfo.Path
+    if (-not (Test-Path -LiteralPath $filePath)) {
+        return 0
+    }
+
+    $lines = Get-Content -LiteralPath $filePath
+    $inRunBlock = $false
+    $runBlockIndent = 0
+    $count = 0
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.TrimStart()
+
+        if ($trimmed -eq '' -or $trimmed.StartsWith('#')) {
+            continue
+        }
+
+        $currentIndent = $line.Length - $line.TrimStart().Length
+
+        if ($trimmed -match '^run:\s*(.*)$') {
+            $runContent = $Matches[1].Trim()
+            $runBlockIndent = $currentIndent
+
+            if ($runContent -and $runContent -notmatch '^[|>]') {
+                if (Test-NpmCommandLine -Line $runContent) {
+                    $count++
+                }
+                $inRunBlock = $false
+            }
+            else {
+                $inRunBlock = $true
+            }
+            continue
+        }
+
+        if ($inRunBlock) {
+            if ($currentIndent -le $runBlockIndent) {
+                $inRunBlock = $false
+                if ($trimmed -match '^run:\s*(.*)$') {
+                    $i--
+                    continue
+                }
+            }
+            else {
+                if ($trimmed.StartsWith('#')) {
+                    continue
+                }
+                if (Test-NpmCommandLine -Line $trimmed) {
+                    $count++
+                }
+            }
+        }
+    }
+
+    return $count
+}
+
+function Get-NpmDependencyCount {
+    <#
+    .SYNOPSIS
+        Counts total npm dependencies declared in package.json sections.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $filePath = $FileInfo.Path
+    if (-not (Test-Path -Path $filePath -PathType Leaf)) {
+        return 0
+    }
+
+    try {
+        $content = Get-Content -Path $filePath -Raw -ErrorAction Stop
+        $packageJson = $content | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        Write-Warning "Failed to parse $($FileInfo.RelativePath) as JSON for dependency counting: $_"
+        return 0
+    }
+
+    $count = 0
+    foreach ($section in @('dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies')) {
+        $deps = $packageJson.$section
+        if ($null -eq $deps) {
+            continue
+        }
+        $count += @($deps.PSObject.Properties).Count
+    }
+
+    return $count
+}
+
+function Get-ShellDownloadCount {
+    <#
+    .SYNOPSIS
+        Counts total download commands in shell scripts.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $filePath = $FileInfo.Path
+    if (-not (Test-Path -Path $filePath -PathType Leaf)) {
+        return 0
+    }
+
+    $lines = Get-Content -Path $filePath
+    $downloadPattern = '(curl|wget)\s+.*https?://[^\s]+'
+    $count = 0
+
+    foreach ($line in $lines) {
+        if ($line -match $downloadPattern) {
+            $count++
+        }
+    }
+
+    return $count
+}
+
+function Get-TotalDependencyCount {
+    <#
+    .SYNOPSIS
+        Counts total scanned dependencies (pinned + unpinned) for a file.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$FileInfo
+    )
+
+    $filePath = $FileInfo.Path
+    $fileType = $FileInfo.Type
+
+    if (-not (Test-Path -Path $filePath -PathType Leaf)) {
+        return 0
+    }
+
+    switch ($fileType) {
+        'npm' {
+            return Get-NpmDependencyCount -FileInfo $FileInfo
+        }
+        'workflow-npm-commands' {
+            return Get-WorkflowNpmCommandCount -FileInfo $FileInfo
+        }
+        'shell-downloads' {
+            return Get-ShellDownloadCount -FileInfo $FileInfo
+        }
+    }
+
+    if (-not $DependencyPatterns.ContainsKey($fileType)) {
+        return 0
+    }
+
+    $patterns = $DependencyPatterns[$fileType].VersionPatterns
+    if (-not $patterns) {
+        return 0
+    }
+
+    try {
+        $content = Get-Content -Path $filePath -Raw -ErrorAction Stop
+    }
+    catch {
+        Write-SecurityLog -CIAnnotation "Error counting dependencies in $filePath`: $($_.Exception.Message)" -Level Warning
+        return 0
+    }
+
+    $count = 0
+    foreach ($patternInfo in $patterns) {
+        $pattern = $patternInfo.Pattern
+        $count += [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::Multiline).Count
+    }
+
+    return $count
+}
+
 function Test-ShellDownloadSecurity {
     <#
     .SYNOPSIS
@@ -767,7 +957,8 @@ function Get-ComplianceReportData {
         [DependencyViolation[]]$Violations,
         [hashtable[]]$ScannedFiles,
         [string]$ScanPath,
-        [switch]$Remediate
+        [switch]$Remediate,
+        [int]$TotalDependencies = -1
     )
 
     $report = [ComplianceReport]::new()
@@ -776,9 +967,12 @@ function Get-ComplianceReportData {
     $report.Violations = $Violations
 
     # Calculate metrics
-    $totalDeps = @($Violations).Count
-    $unpinnedDeps = @($Violations | Where-Object { $_.Severity -ne 'Info' }).Count
-    $pinnedDeps = $totalDeps - $unpinnedDeps
+    $unpinnedDeps = @($Violations).Count
+    $totalDeps = if ($TotalDependencies -ge 0) { $TotalDependencies } else { $unpinnedDeps }
+    if ($totalDeps -lt $unpinnedDeps) {
+        $totalDeps = $unpinnedDeps
+    }
+    $pinnedDeps = [Math]::Max(($totalDeps - $unpinnedDeps), 0)
 
     $report.TotalDependencies = $totalDeps
     $report.PinnedDependencies = $pinnedDeps
@@ -1049,8 +1243,10 @@ function Invoke-DependencyPinningAnalysis {
 
     # Scan for violations
     $allViolations = @()
+    $totalDependenciesScanned = 0
     foreach ($fileInfo in $filesToScan) {
         Write-SecurityLog -CIAnnotation "Scanning: $($fileInfo.RelativePath)" -Level Info
+        $totalDependenciesScanned += Get-TotalDependencyCount -FileInfo $fileInfo
         $violations = @(Get-DependencyViolation -FileInfo $fileInfo)
 
         # Add remediation suggestions
@@ -1099,7 +1295,7 @@ function Invoke-DependencyPinningAnalysis {
     }
 
     # Generate compliance report
-    $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate
+    $report = Get-ComplianceReportData -Violations $allViolations -ScannedFiles $filesToScan -ScanPath $Path -Remediate:$Remediate -TotalDependencies $totalDependenciesScanned
 
     # Export report
     Export-ComplianceReport -Report $report -Format $Format -OutputPath $OutputPath
