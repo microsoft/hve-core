@@ -23,6 +23,9 @@ BeforeAll {
             [switch]$WithScriptsDir,
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
+            [switch]$WithPyprojectToml,
+            [switch]$WithPythonScripts,
+            [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
         )
 
@@ -51,6 +54,27 @@ BeforeAll {
 
         if ($WithUnrecognizedDir) {
             New-Item -ItemType Directory -Path (Join-Path $skillDir 'random-dir') -Force | Out-Null
+        }
+
+        if ($WithPyprojectToml) {
+            Set-Content -Path (Join-Path $skillDir 'pyproject.toml') -Value @"
+[project]
+name = "test-python-skill"
+version = "0.0.0"
+requires-python = ">=3.11"
+"@
+        }
+
+        if ($WithPythonScripts) {
+            $scriptsDir = Join-Path $skillDir 'scripts'
+            New-Item -ItemType Directory -Path $scriptsDir -Force | Out-Null
+            Set-Content -Path (Join-Path $scriptsDir 'main.py') -Value '# Python script'
+        }
+
+        if ($WithPythonPackageDir) {
+            $pkgDir = Join-Path $skillDir $WithPythonPackageDir
+            New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
+            Set-Content -Path (Join-Path $pkgDir '__init__.py') -Value '# Package init'
         }
 
         foreach ($dir in $OptionalDirs) {
@@ -1279,6 +1303,110 @@ description: 'Fallback skill'
             $exitCode = Invoke-SkillStructureValidation -SkillsPath 'error-skills' 2>&1 |
                 Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
             $exitCode | Should -Contain 1
+        }
+    }
+}
+
+Describe 'Python Skill Validation' -Tag 'Unit' {
+    BeforeAll {
+        $script:PythonTestDir = Join-Path $script:TempTestDir 'python-tests'
+        New-Item -ItemType Directory -Path $script:PythonTestDir -Force | Out-Null
+
+        # Override TempTestDir for fixture helper within this Describe
+        $script:TempTestDir = $script:PythonTestDir
+    }
+
+    AfterAll {
+        $script:TempTestDir = (Split-Path $script:PythonTestDir -Parent)
+    }
+
+    Context 'Python skill with scripts directory' {
+        It 'Passes validation for Python skill with .py-only scripts directory' {
+            $dir = New-TestSkillDirectory -SkillName 'py-only-scripts' -WithPyprojectToml -WithPythonScripts -FrontmatterContent @"
+---
+name: py-only-scripts
+description: 'Test Python skill with .py-only scripts'
+---
+# Test
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Passes validation for Python skill with hybrid scripts (.py + .ps1 + .sh)' {
+            $dir = New-TestSkillDirectory -SkillName 'py-hybrid-scripts' -WithPyprojectToml -WithPythonScripts -WithScriptsDir -FrontmatterContent @"
+---
+name: py-hybrid-scripts
+description: 'Test Python skill with hybrid scripts'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'scripts/helper.ps1') -Value 'Write-Host "hello"'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Passes validation for Python skill with no scripts directory' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-scripts' -WithPyprojectToml -FrontmatterContent @"
+---
+name: py-no-scripts
+description: 'Test Python skill without scripts dir'
+---
+# Test
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+    }
+
+    Context 'Python skill with package directories' {
+        It 'Produces no warning for Python package directory with __init__.py' {
+            $dir = New-TestSkillDirectory -SkillName 'py-pkg-dir' -WithPyprojectToml -WithPythonPackageDir 'my_utils' -FrontmatterContent @"
+---
+name: py-pkg-dir
+description: 'Test Python skill with package directory'
+---
+# Test
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Still warns on unrecognized directory without __init__.py in Python skill' {
+            $dir = New-TestSkillDirectory -SkillName 'py-bad-dir' -WithPyprojectToml -WithUnrecognizedDir -FrontmatterContent @"
+---
+name: py-bad-dir
+description: 'Test Python skill with unrecognized dir'
+---
+# Test
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -Not -BeNullOrEmpty
+            $result.Warnings[0] | Should -Match 'Unrecognized subdirectory'
+        }
+    }
+
+    Context 'Non-Python skill regression guard' {
+        It 'Fails validation for non-Python skill with .py-only scripts directory' {
+            $skillName = 'non-py-with-py-scripts'
+            $dir = New-TestSkillDirectory -SkillName $skillName -FrontmatterContent @"
+---
+name: $skillName
+description: 'Non-Python skill should not accept .py-only scripts'
+---
+# Test
+"@
+            $scriptsDir = Join-Path $dir.FullName 'scripts'
+            New-Item -ItemType Directory -Path $scriptsDir -Force | Out-Null
+            Set-Content -Path (Join-Path $scriptsDir 'orphan.py') -Value '# orphan'
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Not -BeNullOrEmpty
         }
     }
 }

@@ -84,6 +84,7 @@ Answer these questions to find your recommended installation method:
 | Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)             |
 | Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) |
 | Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
+| Any (CLI preferred)       | Any  | Manual     | [CLI Plugins](methods/cli-plugins.md)         |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
@@ -139,6 +140,9 @@ The skill reads collection assignments from the collection manifests (`collectio
 │  Working in a team?                                             │
 │  └─ Yes, need version control ───────► Submodule               │
 │                                                                 │
+│  Prefer terminal/CLI workflows?                                 │
+│  └─ Yes ──────────────────────────────► CLI Plugins            │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -169,6 +173,7 @@ These methods are for HVE-Core contributors or advanced scenarios:
 | [Git-Ignored Folder](methods/git-ignored.md)  | Local devcontainer, solo      | Low        |
 | [Mounted Directory](methods/mounted.md)       | Advanced devcontainer sharing | High       |
 | [GitHub Codespaces](methods/codespaces.md)    | Codespaces-only projects      | Medium     |
+| [CLI Plugins](methods/cli-plugins.md)         | Terminal-based CLI workflows  | Low        |
 
 ## Validation
 
