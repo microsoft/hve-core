@@ -85,14 +85,14 @@ main() {
   echo "Checking uv tarball integrity..."
   if ! echo "${UV_SHA256} /tmp/uv.tar.gz" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for uv tarball" >&2
-    rm /tmp/uv.tar.gz
+    rm -f /tmp/uv.tar.gz
     exit 1
   fi
   sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 "uv-${UV_ARCH}/uv" "uv-${UV_ARCH}/uvx"
   rm /tmp/uv.tar.gz
 
   echo "Syncing Python environments for skills..."
-  find .github/skills -name pyproject.toml -execdir uv sync \;
+  find .github/skills -name pyproject.toml -type f -execdir uv sync \;
 
   echo "System dependencies installed successfully"
 }
