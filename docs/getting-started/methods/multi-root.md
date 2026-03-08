@@ -96,6 +96,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
   "settings": {
     "chat.agentFilesLocations": {
       "HVE-Core Fork/.github/agents/ado": true,
+      "HVE-Core Fork/.github/agents/coding-standards": true,
       "HVE-Core Fork/.github/agents/data-science": true,
       "HVE-Core Fork/.github/agents/design-thinking": true,
       "HVE-Core Fork/.github/agents/github": true,
@@ -107,6 +108,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
     },
     "chat.promptFilesLocations": {
       "HVE-Core Fork/.github/prompts/ado": true,
+      "HVE-Core Fork/.github/prompts/coding-standards": true,
       "HVE-Core Fork/.github/prompts/design-thinking": true,
       "HVE-Core Fork/.github/prompts/github": true,
       "HVE-Core Fork/.github/prompts/hve-core": true,
@@ -119,6 +121,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/instructions/design-thinking": true,
       "HVE-Core Fork/.github/instructions/github": true,
       "HVE-Core Fork/.github/instructions/hve-core": true,
+      "HVE-Core Fork/.github/instructions/project-planning": true,
       "HVE-Core Fork/.github/instructions/shared": true,
       "My Project/.github/instructions": true
     },

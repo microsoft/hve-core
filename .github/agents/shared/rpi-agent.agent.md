@@ -341,7 +341,7 @@ Compile all validation findings into a review log at `.copilot-tracking/reviews/
 
 Determine next action based on review status:
 
-* Complete (no critical or major findings): present a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. Proceed to Phase 5 to discover next work items.
+* Complete (no critical or major findings): present a commit message in a markdown code block following `.github/instructions/shared/commit-message.instructions.md`, excluding `.copilot-tracking` files. Proceed to Phase 5 to discover next work items.
 * Iterate (critical or major findings require fixes): return to Phase 3 Step 2 with specific fixes from review findings.
 * Escalate (deeper research or plan revision needed): return to Phase 1 or Phase 2.
 
@@ -465,7 +465,7 @@ When Phase 4 (Review) completes, follow the appropriate pattern:
 
 | Status   | Action                 | Template                                                                                                                                                                                                                         |
 |----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
+| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/shared/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
 | Iterate  | Return to Phase 3      | Show review findings and required fixes                                                                                                                                                                                          |
 | Escalate | Return to Phase 1 or 2 | Show identified gap and investigation focus                                                                                                                                                                                      |
 

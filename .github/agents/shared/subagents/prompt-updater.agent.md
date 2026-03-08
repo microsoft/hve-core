@@ -38,8 +38,8 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 ### Pre-requisite: Prepare Prompt and Tracking File(s)
 
 1. Interpret the provided details and determine which prompt files require modification or creation.
-2. Read and follow instructions from `.github/instructions/hve-core/prompt-builder.instructions.md` in full for prompt engineering quality standards.
-3. Read and follow instructions from `.github/instructions/hve-core/writing-style.instructions.md` in full for style standards.
+2. Read and follow instructions from `.github/instructions/shared/prompt-builder.instructions.md` in full for prompt engineering quality standards.
+3. Read and follow instructions from `.github/instructions/shared/writing-style.instructions.md` in full for style standards.
 4. Create the prompt file(s) with placeholders if they do not already exist.
 5. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
 

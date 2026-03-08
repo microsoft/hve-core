@@ -82,6 +82,7 @@ Create or update `.vscode/settings.json` in your project:
 {
   "chat.agentFilesLocations": {
     "../hve-core/.github/agents/ado": true,
+    "../hve-core/.github/agents/coding-standards": true,
     "../hve-core/.github/agents/data-science": true,
     "../hve-core/.github/agents/design-thinking": true,
     "../hve-core/.github/agents/github": true,
@@ -92,6 +93,7 @@ Create or update `.vscode/settings.json` in your project:
   },
   "chat.promptFilesLocations": {
     "../hve-core/.github/prompts/ado": true,
+    "../hve-core/.github/prompts/coding-standards": true,
     "../hve-core/.github/prompts/design-thinking": true,
     "../hve-core/.github/prompts/github": true,
     "../hve-core/.github/prompts/hve-core": true,
@@ -103,6 +105,7 @@ Create or update `.vscode/settings.json` in your project:
     "../hve-core/.github/instructions/design-thinking": true,
     "../hve-core/.github/instructions/github": true,
     "../hve-core/.github/instructions/hve-core": true,
+    "../hve-core/.github/instructions/project-planning": true,
     "../hve-core/.github/instructions/shared": true
   },
   "chat.agentSkillsLocations": {
