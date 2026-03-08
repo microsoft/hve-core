@@ -1152,6 +1152,7 @@ wireframe
 wireshark
 workgroup
 workstream
+workstreams
 wsus
 wwwroot
 xbox
