@@ -81,12 +81,7 @@ This method requires a multi-phase workflow:
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using mounted directory"
-4. Follow the multi-phase guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. Use the manual steps below for clone-based customization with mount sharing.
 
 ## Manual Setup
 
@@ -166,7 +161,6 @@ After rebuild, update `.vscode/settings.json`:
     "/workspaces/hve-core/.github/agents/data-science": true,
     "/workspaces/hve-core/.github/agents/design-thinking": true,
     "/workspaces/hve-core/.github/agents/github": true,
-    "/workspaces/hve-core/.github/agents/installer": true,
     "/workspaces/hve-core/.github/agents/project-planning": true,
     "/workspaces/hve-core/.github/agents/hve-core": true,
     "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
@@ -206,7 +200,6 @@ After rebuild, update `.vscode/settings.json`:
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/installer": true,
           "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
@@ -268,7 +261,6 @@ ls /workspaces/hve-core/.github/agents
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/installer": true,
           "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,

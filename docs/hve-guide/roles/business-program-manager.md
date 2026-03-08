@@ -23,7 +23,7 @@ This guide is for you if you define business outcomes, manage stakeholder alignm
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collection is `project-planning` (BRD creation, product management guidance, and agile coaching for business requirement gathering and stakeholder alignment). For clone-based setups, use the **hve-core-installer** agent with `install project-planning`.
+> Your primary collection is `project-planning` (BRD creation, product management guidance, and agile coaching for business requirement gathering and stakeholder alignment). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

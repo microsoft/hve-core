@@ -52,12 +52,7 @@ my-project/
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using git-ignored folder"
-4. Follow the guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. Use the manual steps below for clone-based customization.
 
 ## Manual Setup
 
@@ -105,7 +100,6 @@ Create or update `.vscode/settings.json`:
     ".hve-core/.github/agents/data-science": true,
     ".hve-core/.github/agents/design-thinking": true,
     ".hve-core/.github/agents/github": true,
-    ".hve-core/.github/agents/installer": true,
     ".hve-core/.github/agents/project-planning": true,
     ".hve-core/.github/agents/hve-core": true,
     ".hve-core/.github/agents/hve-core/subagents": true,
@@ -169,7 +163,6 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
           ".hve-core/.github/agents/data-science": true,
           ".hve-core/.github/agents/design-thinking": true,
           ".hve-core/.github/agents/github": true,
-          ".hve-core/.github/agents/installer": true,
           ".hve-core/.github/agents/project-planning": true,
           ".hve-core/.github/agents/hve-core": true,
           ".hve-core/.github/agents/hve-core/subagents": true,
