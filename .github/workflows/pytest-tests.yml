@@ -1,0 +1,99 @@
+name: Python Tests
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on test failures'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only test changed Python files'
+        required: false
+        type: boolean
+        default: true
+      code-coverage:
+        description: 'Enable code coverage reporting'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Codecov OIDC
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@4db96194c378e829ef9f41a3c2d9e5414b1ce3bb # v4.1.0
+        with:
+          version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Get changed Python files
+        id: changed-files
+        if: inputs.changed-files-only
+        run: |
+          # Get list of changed Python files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD -- '*.py' | tr '\n' ' ')
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "HAS_CHANGES=true" >> $GITHUB_ENV
+            echo "TEST_PATHS=$CHANGED_FILES" >> $GITHUB_ENV
+          else
+            echo "HAS_CHANGES=false" >> $GITHUB_ENV
+          fi
+
+      - name: Install dependencies
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        run: |
+          uv pip install --system pytest pytest-cov pytest-mock ruff
+
+      - name: Run Python Tests
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        run: |
+          if [ "${{ inputs.code-coverage }}" = "true" ]; then
+            pytest --cov=. --cov-report=xml:logs/coverage.xml --cov-report=term -v
+          else
+            pytest -v
+          fi
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Create logs directory
+        if: always()
+        run: mkdir -p logs
+
+      - name: Upload Coverage Report
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: python-coverage-report
+          path: logs/coverage.xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload to Codecov
+        if: inputs.code-coverage && success() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: logs/coverage.xml
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: pytest
+          name: pytest-coverage
