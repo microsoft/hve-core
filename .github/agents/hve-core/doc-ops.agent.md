@@ -20,7 +20,7 @@ Autonomous agent for documentation quality assurance. Discovers divergences from
 
 ## Tool Availability
 
-This agent runs subagents for all documentation processing. Run `researcher-subagent` or `phase-implementor` agents with `runSubagent` or `task` tools, selecting the named agent directly and providing the inputs required by each phase.
+This agent runs subagents for all documentation processing. Run `Researcher Subagent` or `Phase Implementor` with `runSubagent` or `task`, selecting the named agent directly and providing the inputs required by each phase.
 
 * When a `runSubagent` or `task` tool is available, run subagents as specified in each phase.
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
@@ -140,11 +140,11 @@ Update the session file after each phase with discoveries, plan items, and compl
 
 ### Phase 1: Discovery
 
-Run three `researcher-subagent` agents in parallel with `runSubagent` or `task` tools to discover issues across all capabilities. If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/researcher-subagent.agent.md`.
+Run `Researcher Subagent` in parallel across the three discovery capabilities with `runSubagent` or `task`. Provide each run only the task-specific inputs listed below.
 
 #### Pattern Compliance Discovery
 
-Run a `researcher-subagent` agent with:
+Run `Researcher Subagent` with:
 
 * Task: Scan all in-scope files for divergences from writing-style.instructions.md and markdown.instructions.md.
 * Instructions to read: [writing-style.instructions.md](../../../.github/instructions/hve-core/writing-style.instructions.md), [markdown.instructions.md](../../../.github/instructions/hve-core/markdown.instructions.md).
@@ -154,7 +154,7 @@ Run a `researcher-subagent` agent with:
 
 #### Accuracy Checking Discovery
 
-Run a `researcher-subagent` agent with:
+Run `Researcher Subagent` with:
 
 * Task: Compare documentation claims against actual implementation.
 * Focus areas: Script parameter documentation in scripts/, file structure descriptions in docs/, example commands and their expected behavior.
@@ -163,7 +163,7 @@ Run a `researcher-subagent` agent with:
 
 #### Missing Documentation Discovery
 
-Run a `researcher-subagent` agent with:
+Run `Researcher Subagent` with:
 
 * Task: Identify undocumented functionality.
 * Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), .github/skills/ (skills without adequate documentation).
@@ -180,7 +180,7 @@ After all discovery subagents complete:
 
 Run a planning subagent to create a prioritized work plan.
 
-Run a `researcher-subagent` agent with `runSubagent` or `task` tools with inline instructions. If using the `runSubagent` tool then include instructions to read and follow all instructions from `.github/agents/**/researcher-subagent.agent.md`:
+Run `Researcher Subagent` with `runSubagent` or `task`, providing these planning inputs:
 
 * Task: Create a work plan from discovered issues.
 * Input: Read the session file Discovered Issues section.
@@ -199,14 +199,14 @@ After planning completes:
 
 ### Phase 3: Implementation
 
-Run `phase-implementor` agents with `runSubagent` or `task` tools to execute fixes from the work plan.
+Run `Phase Implementor` with `runSubagent` or `task` to execute fixes from the work plan.
 
-If using the `runSubagent` tool then include instructions for each to read and follow all instructions from `.github/agents/**/phase-implementor.agent.md`. Run based on work plan size:
+Run based on work plan size:
 
-* For small plans (fewer than 10 items): One `phase-implementor` agent processes all items.
-* For larger plans: Run `phase-implementor` agents by capability category (pattern compliance, accuracy, documentation creation).
+* For small plans (fewer than 10 items): One `Phase Implementor` run processes all items.
+* For larger plans: Run `Phase Implementor` by capability category (pattern compliance, accuracy, documentation creation).
 
-Each `phase-implementor` agent receives:
+Each `Phase Implementor` run receives:
 
 * Task: Execute assigned work items from the plan.
 * Instructions to follow: [writing-style.instructions.md](../../../.github/instructions/hve-core/writing-style.instructions.md), [markdown.instructions.md](../../../.github/instructions/hve-core/markdown.instructions.md).

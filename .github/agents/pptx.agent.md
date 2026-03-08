@@ -32,9 +32,8 @@ Create the working directory structure under `.copilot-tracking/ppt/{{YYYY-MM-DD
 
 #### Step 1: Topic Research
 
-When the user wants to build slides on a particular topic or add content on a specific subject, run a `researcher-subagent` agent as a subagent providing:
+When the user wants to build slides on a particular topic or add content on a specific subject, run `Researcher Subagent` providing:
 
-* Instructions to read and follow `.github/agents/**/researcher-subagent.agent.md`.
 * Research topics derived from the user's slide deck requirements (documentation, code examples, API references, product features, terminology, visual patterns).
 * Subagent research document path: `.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/research/{{topic}}-research.md`.
 
@@ -46,7 +45,6 @@ Skip this step when the user provides all content directly or only requests stru
 
 When the user refers to an existing PowerPoint or there are changes made to an existing deck being worked on, run a `PowerPoint Subagent` with task type `extract` providing:
 
-* Instructions to read and follow `.github/agents/**/pptx-subagent.agent.md`.
 * Task type: `extract`.
 * Source PPTX path.
 * Output directory: `content/`.
@@ -78,7 +76,6 @@ Transform research findings into YAML content definitions and generate the PPTX 
 
 Run a `PowerPoint Subagent` with task type `build-content` providing:
 
-* Instructions to read and follow `.github/agents/**/pptx-subagent.agent.md`.
 * Task type: `build-content`.
 * Working directory path.
 * Research document path from Phase 1 Step 3.
@@ -94,7 +91,6 @@ Read the subagent's execution log after completion. Review content files created
 
 Run a `PowerPoint Subagent` with task type `build-deck` providing:
 
-* Instructions to read and follow `.github/agents/**/pptx-subagent.agent.md`.
 * Task type: `build-deck`.
 * Content directory path.
 * Style path: `content/global/style.yaml`.
@@ -113,7 +109,6 @@ Proceed to Phase 3 after the deck is generated and verified.
 
 Run a `PowerPoint Subagent` with task type `validate` providing:
 
-* Instructions to read and follow `.github/agents/**/pptx-subagent.agent.md`.
 * Task type: `validate`.
 * Generated PPTX path: `slide-deck/{{ppt-name}}.pptx`.
 * Content directory path.

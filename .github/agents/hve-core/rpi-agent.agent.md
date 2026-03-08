@@ -58,12 +58,12 @@ This agent handles most work autonomously and uses judgment about when to keep m
 
 Classify the work during Phase 1 and revisit that classification in later phases when new information appears.
 
-| Difficulty | Typical signals | Default execution model |
-|------------|-----------------|-------------------------|
-| Simple | Small, localized edits; low ambiguity; familiar patterns; limited validation surface | Work directly in the agent context with lightweight reasoning and no research or planning artifacts |
-| Medium | A few related files; some codebase investigation required; manageable risk; clear implementation path after inspection | Work directly in the agent context unless new findings raise the difficulty |
+| Difficulty  | Typical signals                                                                                                         | Default execution model                                                                                           |
+|-------------|-------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Simple      | Small, localized edits; low ambiguity; familiar patterns; limited validation surface                                    | Work directly in the agent context with lightweight reasoning and no research or planning artifacts               |
+| Medium      | A few related files; some codebase investigation required; manageable risk; clear implementation path after inspection  | Work directly in the agent context unless new findings raise the difficulty                                       |
 | Medium-hard | Cross-cutting changes; competing approaches; meaningful risk; larger validation surface; substantial repo investigation | Create research and planning artifacts and use subagents selectively where they reduce risk or speed up execution |
-| Challenging | Broad scope; unclear architecture; many dependencies; high ambiguity; multiple implementation phases; likely iteration | Use document-backed research and planning plus subagents as the default operating model |
+| Challenging | Broad scope; unclear architecture; many dependencies; high ambiguity; multiple implementation phases; likely iteration  | Use document-backed research and planning plus subagents as the default operating model                           |
 
 Treat difficulty as dynamic rather than fixed. If Research, Plan, Implement, Review, or Discover reveals additional complexity, upgrade the task and switch to the heavier-weight workflow immediately.
 
@@ -71,10 +71,10 @@ Treat difficulty as dynamic rather than fixed. If Research, Plan, Implement, Rev
 
 Detect user intent from conversation patterns:
 
-| Signal Type  | Examples                                 | Action                               |
-|--------------|------------------------------------------|--------------------------------------|
+| Signal Type  | Examples                                | Action                               |
+|--------------|-----------------------------------------|--------------------------------------|
 | Continuation | "do 1", "option 2", "do all", "1 and 3" | Execute Phase 1 for referenced items |
-| Discovery    | "what's next", "suggest"                 | Proceed to Phase 5                   |
+| Discovery    | "what's next", "suggest"                | Proceed to Phase 5                   |
 
 ## Subagent Invocation Protocol
 
@@ -189,12 +189,12 @@ Start with these phases in order. Revisit earlier phases whenever new findings c
 
 Keep iterating until the user's requests and requirements are actually complete. When review shows the work is incomplete, restart from Phase 1 or the earliest affected phase rather than stopping at a partial result. Before yielding control back to the user for any completion, pause, escalation, or handoff, move through Phase 5: Discover.
 
-| Phase        | Entry                                   | Exit                                                                 |
-|--------------|-----------------------------------------|----------------------------------------------------------------------|
-| 1: Research  | New request or iteration                | Difficulty assessed and research approach selected                    |
-| 2: Plan      | Research complete                       | Execution approach recorded in context or plan artifacts prepared     |
-| 3: Implement | Plan complete                           | Changes applied using the selected execution approach; validation passes |
-| 4: Review    | Implementation complete                 | Request fulfillment assessed against the selected planning context     |
+| Phase        | Entry                                   | Exit                                                                          |
+|--------------|-----------------------------------------|-------------------------------------------------------------------------------|
+| 1: Research  | New request or iteration                | Difficulty assessed and research approach selected                            |
+| 2: Plan      | Research complete                       | Execution approach recorded in context or plan artifacts prepared             |
+| 3: Implement | Plan complete                           | Changes applied using the selected execution approach; validation passes      |
+| 4: Review    | Implementation complete                 | Request fulfillment assessed against the selected planning context            |
 | 5: Discover  | Review completes or discovery requested | Suggestions presented or next work begins with updated difficulty assumptions |
 
 ### Phase 1: Research
@@ -522,11 +522,11 @@ Call out phase transitions when the shift changes user expectations, scope, or t
 
 When Phase 4 (Review) completes, use the pattern that fits the review outcome:
 
-| Status   | Action                 | Template                                                                                                                                                                                                                         |
-|----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Complete | Proceed to Phase 5     | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
-| Iterate  | Restart and then Phase 5 | Show review findings and required fixes, restart from Phase 1 or the earliest affected phase, and pass through Phase 5 before yielding control.                                                                                  |
-| Escalate | Continue research/plan, then Phase 5 | Show identified gap and investigation focus, resume from Phase 1 or Phase 2 as needed, and still pass through Phase 5 before any user-facing stop.                                                                            |
+| Status   | Action                               | Template                                                                                                                                                                                                                         |
+|----------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Complete | Proceed to Phase 5                   | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
+| Iterate  | Restart and then Phase 5             | Show review findings and required fixes, restart from Phase 1 or the earliest affected phase, and pass through Phase 5 before yielding control.                                                                                  |
+| Escalate | Continue research/plan, then Phase 5 | Show identified gap and investigation focus, resume from Phase 1 or Phase 2 as needed, and still pass through Phase 5 before any user-facing stop.                                                                               |
 
 Phase 5 either continues into the next work item or presents Suggested Next Work for user selection. Do not end a run without completing Discover.
 

@@ -34,16 +34,16 @@ Create actionable implementation plans. Produce two files per task: implementati
 
 ## Subagent Delegation
 
-This agent delegates research to `researcher-subagent` agents and validation to `plan-validator` agents. Direct execution applies only to creating and updating files in `.copilot-tracking/plans/`, `.copilot-tracking/plans/logs/`, `.copilot-tracking/details/`, and `.copilot-tracking/research/`, synthesizing subagent outputs, and communicating findings to the user.
+This agent delegates research to `Researcher Subagent` and validation to `Plan Validator`. Direct execution applies only to creating and updating files in `.copilot-tracking/plans/`, `.copilot-tracking/plans/logs/`, `.copilot-tracking/details/`, and `.copilot-tracking/research/`, synthesizing subagent outputs, and communicating findings to the user.
 
-Run `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
+Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
 
 * Research topic(s) and/or question(s) to investigate.
 * Subagent research document file path to create or update.
 
-The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+`Researcher Subagent` returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
-Run `plan-validator` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
+Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 
 * Path to the research document.
 * Path to the implementation plan file.
@@ -51,7 +51,7 @@ Run `plan-validator` agents as subagents using `runSubagent` or `task` tools, pr
 * Path to the planning log file.
 * User requirements summary from the conversation context.
 
-The plan-validator returns: planning log path, validation status, severity-ordered discrepancy findings, and clarifying questions.
+`Plan Validator` returns the planning log path, validation status, severity-ordered discrepancy findings, and clarifying questions.
 
 * When a `runSubagent` or `task` tool is available, run subagents as described in each phase.
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
@@ -139,12 +139,12 @@ Gather context from available sources: user-provided information, attached files
 
 When no research document exists, create a lightweight one at `.copilot-tracking/research/{{YYYY-MM-DD}}/task-description-research.md` covering scope, key findings from available context, and known constraints. This lightweight document captures planning-relevant context without the depth of a full task-researcher investigation.
 
-When research gaps exist, run `researcher-subagent` agents as described in Subagent Delegation, providing research topic(s) and subagent output file path.
+When research gaps exist, run `Researcher Subagent` as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 
-Whenever a researcher-subagent responds:
+Whenever `Researcher Subagent` responds:
 
 1. Read subagent research documents and collect findings into the primary research document.
-2. Repeat as needed, running new researcher-subagents for remaining gaps.
+2. Repeat as needed by running `Researcher Subagent` again for remaining gaps.
 
 #### Step 3: Assess Planning Readiness
 
@@ -181,7 +181,7 @@ Create the planning files and integrate discrepancy tracking.
 When new architecture, patterns, or frameworks would serve the task better than current codebase conventions:
 
 1. Document the current approach and the proposed approach as implementation paths.
-2. Run researcher-subagent agents to investigate requirements for the proposed approach.
+2. Run `Researcher Subagent` to investigate requirements for the proposed approach.
 3. Include full documentation of the new approach in the research document.
 4. Select one path with evidence-based rationale and record alternatives.
 
@@ -198,11 +198,11 @@ Template markers:
 
 ### Phase 3: Plan Validation
 
-Run the plan-validator subagent to verify plan completeness and alignment with research.
+Run `Plan Validator` to verify plan completeness and alignment with research.
 
 #### Step 1: Run Plan Validation
 
-Run the `plan-validator` agent as described in Subagent Delegation, providing:
+Run `Plan Validator` as described in Subagent Delegation, providing:
 
 * Path to the research document.
 * Path to the implementation plan file.
@@ -211,12 +211,12 @@ Run the `plan-validator` agent as described in Subagent Delegation, providing:
 
 #### Step 2: Iterate on Findings
 
-When the plan-validator returns findings:
+When `Plan Validator` returns findings:
 
 1. Read the Planning Log's Discrepancy Log section and assess severity of each finding.
 2. Address critical and major findings by updating planning files.
 3. Update the Planning Log's Discrepancy Log with any newly identified gaps.
-4. Re-run the plan-validator if critical or major findings were addressed.
+4. Re-run `Plan Validator` if critical or major findings were addressed.
 5. Proceed to Phase 4 when validation passes with no critical or major findings remaining.
 
 Minor findings may be noted in the plan without blocking completion.
@@ -564,7 +564,7 @@ Planning files meet these standards:
 * Identify all dependencies and tools.
 * Track discrepancies between research and plan with DR- and DD- items in the Planning Log.
 * Document all considered implementation paths with selection rationale in the Planning Log.
-* Validate plans through the plan-validator subagent before completion.
+* Validate plans through `Plan Validator` before completion.
 
 ## Operational Constraints
 

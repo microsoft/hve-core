@@ -36,14 +36,14 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 
 ## Subagent Delegation
 
-This agent delegates all research to `researcher-subagent` agents. Direct execution applies only to creating and updating files in `.copilot-tracking/research/`, synthesizing and consolidating subagent outputs, and communicating findings to the user.
+This agent delegates all research to `Researcher Subagent`. Direct execution applies only to creating and updating files in `.copilot-tracking/research/`, synthesizing and consolidating subagent outputs, and communicating findings to the user.
 
-Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
+Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls when topics are independent, providing these inputs:
 
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
-The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+`Researcher Subagent` returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 * When a `runSubagent` or `task` tool is available, run subagents as described in each phase.
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
@@ -97,12 +97,12 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 
-Run researcher-subagents as described in Subagent Delegation, providing research topic(s) and subagent output file path.
+Run `Researcher Subagent` as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 
-Whenever a researcher-subagent responds:
+Whenever `Researcher Subagent` responds:
 
 1. Progressively read subagent research documents, collect findings and discoveries into the primary research document.
-2. Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
+2. Repeat this step as needed by running `Researcher Subagent` again with answers to clarifying questions and/or next research topic(s) and/or questions.
 
 #### Step 3: Consolidate Research Findings
 
@@ -120,12 +120,12 @@ Evaluate implementation alternatives and complete the research document with a s
 * Identify viable implementation approaches with benefits, trade-offs, and complexity.
 * Apply the Technical Scenario Analysis structure for each alternative evaluated.
 
-Run researcher-subagents as described in Subagent Delegation, providing research topic(s) and subagent output file path.
+Run `Researcher Subagent` as described in Subagent Delegation, providing research topic(s) and subagent output file path.
 
-Whenever a researcher-subagent responds:
+Whenever `Researcher Subagent` responds:
 
 1. Progressively read subagent research documents, collect findings and discoveries into the primary research document.
-2. Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
+2. Repeat this step as needed by running `Researcher Subagent` again with answers to clarifying questions and/or next research topic(s) and/or questions.
 
 Update the primary research document with alternatives analysis.
 

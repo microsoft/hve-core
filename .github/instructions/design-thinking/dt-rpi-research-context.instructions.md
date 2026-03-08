@@ -1,11 +1,11 @@
 ---
-description: 'DT-aware task-researcher context — frames research around DT methods, stakeholder needs, and empathy-driven inquiry'
+description: 'DT-aware Task Researcher context: frames research around DT methods, stakeholder needs, and empathy-driven inquiry'
 applyTo: '**/.copilot-tracking/dt/**'
 ---
 
 # DT Research Context
 
-When task-researcher receives a handoff from the DT coach, these adjustments augment standard research behavior. The research question originates from a Design Thinking process rather than a technical spec, so stakeholder perspectives and empathy-driven inquiry shape the research framing.
+When Task Researcher receives a handoff from the DT coach, these adjustments augment standard research behavior. The research question originates from a Design Thinking process rather than a technical spec, so stakeholder perspectives and empathy-driven inquiry shape the research framing.
 
 ## Research Framing Adjustments
 

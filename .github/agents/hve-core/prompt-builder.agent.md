@@ -76,7 +76,7 @@ Orchestrates executing and evaluating prompt file(s) with subagents in a sandbox
 
 Determine the sandbox folder path using the Sandbox Environment naming convention.
 
-Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
+Run `Prompt Tester` as a subagent with `runSubagent` or `task`, providing these inputs:
 
 * Target prompt file path(s) identified from the user request.
 * Run number for the current iteration.
@@ -84,20 +84,20 @@ Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools, pr
 * Purpose, requirements, and expectations from the user's request.
 * Prior sandbox run paths when iterating on a previous evaluation.
 
-The prompt-tester returns execution findings: sandbox folder path, execution log path, execution status, key observations from literal execution, and any clarifying questions.
+`Prompt Tester` returns execution findings: sandbox folder path, execution log path, execution status, key observations from literal execution, and any clarifying questions.
 
 * Repeat this step responding to any clarifying questions until execution is complete.
 
 #### Step 2: Prompt File(s) Evaluation
 
-Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
+Run `Prompt Evaluator` as a subagent with `runSubagent` or `task`, providing these inputs:
 
 * Target prompt file path(s).
-* Run number matching the prompt-tester run.
+* Run number matching the `Prompt Tester` run.
 * Sandbox folder path containing the *execution-log.md* from Step 1.
 * Prior evaluation log paths when iterating on a previous evaluation.
 
-The prompt-evaluator returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.
+`Prompt Evaluator` returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.
 
 * Repeat this step, responding to any clarifying questions, until evaluation is complete.
 
@@ -116,7 +116,7 @@ The prompt-evaluator returns evaluation findings: evaluation log path, evaluatio
 Research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
 
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md` - Primary research documents.
-* `.copilot-tracking/research/{{YYYY-MM-DD}}/subagent/{{topic}}-research.md` - Subagent research documents.
+* `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{topic}}-research.md` - Subagent research documents.
 
 #### Step 1: Prepare Primary Research Document
 
@@ -125,15 +125,15 @@ Research files reside in `.copilot-tracking/` at the workspace root unless the u
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 
-Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
+Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls when appropriate, providing these inputs:
 
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
-The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+`Researcher Subagent` returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 * Progressively read subagent research documents, collect findings and discoveries into the primary research document.
-* Repeat this step as needed running new researcher-subagents with answers to clarifying questions and/or next research topic(s) and/or questions.
+* Repeat this step as needed by running `Researcher Subagent` again with answers to clarifying questions and/or next research topic(s) and/or questions.
 
 #### Step 3: Repeat Step 2 or Finalize Primary Research Document
 
@@ -152,7 +152,7 @@ Finalize the primary research document:
 
 #### Step 2: Iterate Parallel Prompt Updater Subagents
 
-Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
+Run `Prompt Updater` as a subagent using `runSubagent` or `task`, and parallelize calls when prompt files are independent, providing these inputs:
 
 * Prompt file(s) to create or modify.
 * User provided requirements and details along with the prompt file(s) specific purpose(s) and objectives.
@@ -162,7 +162,7 @@ Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` 
 * Current sandbox folder path if prompt testing completed.
 * Current *evaluation-log.md* file paths if prompt testing completed.
 
-The prompt-updater returns modification details: prompt updater tracking file path(s), path to prompt file(s), path to related file(s), modification status, important details, checklist of remaining requirements and issues, and any clarifying questions.
+`Prompt Updater` returns modification details: prompt updater tracking file path(s), path to prompt file(s), path to related file(s), modification status, important details, checklist of remaining requirements and issues, and any clarifying questions.
 
 * Repeat this step, responding to any clarifying questions, until all modifications are complete.
 
@@ -177,7 +177,7 @@ The prompt-updater returns modification details: prompt updater tracking file pa
 2. Continue to Phase 2 if more research is needed from repeating Phase 1.
 3. Continue to Phase 3 if modifications are needed from repeating Phase 1.
 
-Repeat until current *evaluation-log* from prompt-evaluator shows no issues.
+Repeat until the current *evaluation-log* from `Prompt Evaluator` shows no issues.
 
 ## Cleanup Before Finishing
 

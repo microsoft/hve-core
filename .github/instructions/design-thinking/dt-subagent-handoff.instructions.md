@@ -7,6 +7,8 @@ applyTo: '**/.copilot-tracking/dt/**'
 
 Defines how the DT coach dispatches subagents during handoff transitions at space boundaries. Mid-session research dispatch (quick queries during active coaching) is governed by the coach agent definition. This instruction governs the multi-step handoff workflow.
 
+When a handoff uses a named agent, refer to it by its human-readable name in prose and reserve filename-style identifiers for file paths or glob references.
+
 ## Readiness Assessment
 
 When the coach detects graduation awareness at a space boundary, dispatch an assessment subagent with:
