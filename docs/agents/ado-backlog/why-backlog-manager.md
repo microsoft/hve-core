@@ -10,6 +10,7 @@ keywords:
   - github copilot
   - backlog management
 estimated_reading_time: 6
+sidebar_position: 2
 ---
 
 Backlog management looks simple from the outside: read work items, assign fields, close duplicates. In practice, teams struggle with it because the work combines several cognitively different tasks into one undifferentiated session. The ADO Backlog Manager addresses this by separating those tasks into focused workflows, each designed for one type of thinking.

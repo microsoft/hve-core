@@ -11,9 +11,23 @@ keywords:
   - sprint planning
   - github copilot
 estimated_reading_time: 6
+sidebar_position: 1
 ---
 
 The ADO Backlog Manager automates work item lifecycle management across Azure DevOps projects. It coordinates nine specialized workflows (discovery, triage, PRD planning, sprint planning, execution, quick add, task planning, build info, and PR creation) through planning files and handoff artifacts, applying consistent field classification, detecting duplicates, and organizing work items into iterations with configurable autonomy levels.
+
+```mermaid
+graph TD
+    A[ado-backlog-manager] --> B[Discovery]
+    A --> C[Triage]
+    A --> D[Sprint Planning]
+    A --> E[PRD Planning]
+    A --> F[Execution]
+    A --> G[PR Creation]
+    A --> H[Build Monitoring]
+    A --> I[Task Planning]
+    A --> J[Quick Add]
+```
 
 > Backlog management is a constraint-satisfaction problem. Each workflow handles a bounded scope, reducing errors by limiting the decisions any single step makes.
 
@@ -61,19 +75,25 @@ See the [Execution workflow guide](execution.md) for handoff consumption and ope
 
 ### ➕ Quick Add
 
-Quick Add creates a single work item without running the full pipeline. Use it when you need to file a bug, story, or task quickly with standard field assignments and interaction templates applied in a single step.
+Quick Add creates a single work item without running the full pipeline. Use it when you need to file a bug, story, or task quickly with standard field assignments and interaction templates applied in a single step. Quick Add is an inline operation with no dedicated workflow page.
 
 ### 📝 Task Planning
 
 Task Planning prioritizes your current work items and recommends what to work on next. It retrieves assigned items, analyzes priority and state, and produces an ordered task list with reasoning.
 
+See the [Task Planning workflow guide](task-planning.md) for prioritization strategies and prompt examples.
+
 ### 🔧 Build Info
 
 Build Info retrieves Azure DevOps pipeline status, build logs, and failure details. Query by PR number, build ID, or branch name to get pipeline status without leaving the chat session.
 
+See the [Build Monitoring workflow guide](build-monitoring.md) for query options and log analysis.
+
 ### 🔀 PR Creation
 
 PR Creation generates Azure DevOps pull requests with work item linking, reviewer identification, and branch management. It follows the structured PR creation protocol to produce complete pull requests from local changes.
+
+See the [PR Creation workflow guide](pr-creation.md) for the complete workflow including confirmation gates.
 
 ## Content Format Detection
 
@@ -164,6 +184,9 @@ The agent provides handoff buttons for transitioning between workflows:
 * [PRD Planning](prd-planning.md): Convert requirements documents to work item hierarchies
 * [Sprint Planning](sprint-planning.md): Organize work items into iterations
 * [Execution](execution.md): Execute planned operations from handoff files
+* [Task Planning](task-planning.md): Prioritize assigned work items and plan your day
+* [Build Monitoring](build-monitoring.md): Check pipeline status and analyze build logs
+* [PR Creation](pr-creation.md): Create Azure DevOps pull requests with work item linking
 * [Using Workflows Together](using-together.md): End-to-end pipeline walkthrough
 * [Why the Backlog Manager Works](why-backlog-manager.md): Design rationale and quality comparison
 
