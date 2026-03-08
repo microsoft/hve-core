@@ -40,7 +40,6 @@ This agent delegates all research to `researcher-subagent` agents. Direct execut
 
 Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
@@ -317,5 +316,5 @@ When the user indicates research is complete, provide the structured handoff tab
 ### Ready for Planning
 
 1. Clear your context by typing `/clear`.
-2. Attach or open [{{task}}-research.md](.copilot-tracking/research/{{YYYY-MM-DD}}/{{task}}-research.md).
+2. Attach or open `../../../.copilot-tracking/research/{{YYYY-MM-DD}}/{{task}}-research.md`.
 3. Start planning by typing `/task-plan`.

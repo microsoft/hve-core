@@ -59,7 +59,7 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 ## High Priority Guidelines and Instructions
 
 * Run subagents as described in each phase with `runSubagent` or `task` tools.
-* If using the `runSubagent` tool, include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/**/{{agent}}.agent.md` file.
+* When using the `runSubagent` tool, select the named agent directly and provide the required inputs listed for that phase.
 * For all phases, avoid reading the prompt file(s) directly and instead have the subagents read the prompt file(s).
 
 ## Required Phases
@@ -78,7 +78,6 @@ Determine the sandbox folder path using the Sandbox Environment naming conventio
 
 Run a `prompt-tester` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/prompt-tester.agent.md`
 * Target prompt file path(s) identified from the user request.
 * Run number for the current iteration.
 * Sandbox folder path.
@@ -93,7 +92,6 @@ The prompt-tester returns execution findings: sandbox folder path, execution log
 
 Run a `prompt-evaluator` agent as a subagent with `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/prompt-evaluator.agent.md`
 * Target prompt file path(s).
 * Run number matching the prompt-tester run.
 * Sandbox folder path containing the *execution-log.md* from Step 1.
@@ -129,7 +127,6 @@ Research files reside in `.copilot-tracking/` at the workspace root unless the u
 
 Run parallel `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
 * Subagent research document file path to create or update.
 
@@ -157,7 +154,6 @@ Finalize the primary research document:
 
 Run parallel `prompt-updater` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/prompt-updater.agent.md`
 * Prompt file(s) to create or modify.
 * User provided requirements and details along with the prompt file(s) specific purpose(s) and objectives.
 * Specific modifications to implement from current *evaluation-log* files if provided.

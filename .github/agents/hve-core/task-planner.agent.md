@@ -38,7 +38,6 @@ This agent delegates research to `researcher-subagent` agents and validation to 
 
 Run `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to investigate.
 * Subagent research document file path to create or update.
 
@@ -46,7 +45,6 @@ The researcher-subagent returns deep research findings: subagent research docume
 
 Run `plan-validator` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/plan-validator.agent.md`
 * Path to the research document.
 * Path to the implementation plan file.
 * Path to the implementation details file.
@@ -633,8 +631,8 @@ When planning files are complete, provide the structured handoff:
 ### ⚡ Ready for Implementation
 
 1. Clear your context by typing `/clear`.
-2. Attach or open [{{task}}-plan.instructions.md](.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task}}-plan.instructions.md).
-3. Review the [Planning Log](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md) for discrepancies and implementation path context.
+2. Attach or open `../../../.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task}}-plan.instructions.md`.
+3. Review `../../../.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md` for discrepancies and implementation path context.
 4. Start implementation by typing `/task-implement`.
 
 ## Resumption
