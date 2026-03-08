@@ -121,8 +121,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 RelativePath = 'insecure-download.sh'
             }
             $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
-            $result | Should -Not -BeNullOrEmpty
-            $result[0].Severity | Should -Be 'Medium'
+            $result.Violations | Should -Not -BeNullOrEmpty
+            $result.Violations[0].Severity | Should -Be 'Medium'
         }
 
         It 'Detects both curl and wget violations in the same file' {
@@ -132,8 +132,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'insecure-download.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 2
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 2
         }
 
         It 'Populates violation object fields correctly' {
@@ -143,14 +143,14 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'insecure-download.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result[0].File | Should -Be 'insecure-download.sh'
-            $result[0].Type | Should -Be 'shell-downloads'
-            $result[0].Line | Should -BeGreaterThan 0
-            $result[0].Description | Should -Be 'Download without checksum verification'
-            $result[0].Name | Should -Match 'curl.*https://'
-            $result[0].Severity | Should -Be 'Medium'
-            $result[0].ViolationType | Should -Be 'Unpinned'
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations[0].File | Should -Be 'insecure-download.sh'
+            $result.Violations[0].Type | Should -Be 'shell-downloads'
+            $result.Violations[0].Line | Should -BeGreaterThan 0
+            $result.Violations[0].Description | Should -Be 'Download without checksum verification'
+            $result.Violations[0].Name | Should -Match 'curl.*https://'
+            $result.Violations[0].Severity | Should -Be 'Medium'
+            $result.Violations[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Detects insecure download when checksum is beyond lookahead window' {
@@ -172,8 +172,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'beyond-lookahead.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 1
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 1
         }
     }
 
@@ -185,8 +185,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'secure-download.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Accepts sha256sum within lookahead window' {
@@ -200,8 +200,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'sha256sum-check.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Accepts shasum within lookahead window' {
@@ -215,8 +215,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'shasum-check.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Accepts Get-FileHash within lookahead window' {
@@ -230,8 +230,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'get-filehash-check.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Accepts openssl dgst -sha256 within lookahead window' {
@@ -245,8 +245,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'openssl-check.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Accepts checksum at lookahead boundary (line 5 after download)' {
@@ -266,8 +266,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'boundary-check.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -280,8 +280,8 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 Type         = 'shell-downloads'
                 RelativePath = 'empty.sh'
             }
-            $result = @(Test-ShellDownloadSecurity -FileInfo $fileInfo)
-            $result | Should -HaveCount 0
+            $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -293,7 +293,7 @@ Describe 'Test-ShellDownloadSecurity' -Tag 'Unit' {
                 RelativePath = 'nonexistent/file.sh'
             }
             $result = Test-ShellDownloadSecurity -FileInfo $fileInfo
-            $result | Should -BeNullOrEmpty
+            $result.Violations | Should -HaveCount 0
         }
     }
 }
@@ -308,7 +308,7 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
                 RelativePath = 'pinned-workflow.yml'
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
-            $result | Should -BeNullOrEmpty
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -321,8 +321,8 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
                 RelativePath = 'unpinned-workflow.yml'
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
-            $result | Should -Not -BeNullOrEmpty
-            $result.Count | Should -BeGreaterThan 0
+            $result.Violations | Should -Not -BeNullOrEmpty
+            $result.Violations.Count | Should -BeGreaterThan 0
         }
 
         It 'Returns correct violation type for unpinned actions' {
@@ -333,9 +333,9 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
                 RelativePath = 'unpinned-workflow.yml'
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
-            $result[0].Type | Should -Be 'github-actions'
-            $result[0].Severity | Should -Be 'High'
-            $result[0].ViolationType | Should -Be 'Unpinned'
+            $result.Violations[0].Type | Should -Be 'github-actions'
+            $result.Violations[0].Severity | Should -Be 'High'
+            $result.Violations[0].ViolationType | Should -Be 'Unpinned'
         }
     }
 
@@ -348,9 +348,9 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
                 RelativePath = 'mixed-pinning-workflow.yml'
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
-            $result | Should -Not -BeNullOrEmpty
+            $result.Violations | Should -Not -BeNullOrEmpty
             # Should only detect the unpinned setup-node action
-            $result.Name | Should -Contain 'actions/setup-node'
+            $result.Violations.Name | Should -Contain 'actions/setup-node'
         }
     }
 
@@ -362,7 +362,7 @@ Describe 'Get-DependencyViolation' -Tag 'Unit' {
                 RelativePath = 'file.yml'
             }
             $result = Get-DependencyViolation -FileInfo $fileInfo
-            $result | Should -BeNullOrEmpty
+            $result.Violations | Should -HaveCount 0
         }
     }
 }
@@ -727,7 +727,7 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
 
     Context 'Array coercion operations' {
         It 'Handles empty violations array' {
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations @() -ScannedFiles @()
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations @() -ScannedFiles @() -TotalDependencies 0
             
             $result.TotalDependencies | Should -Be 0
             $result.UnpinnedDependencies | Should -Be 0
@@ -751,34 +751,10 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $violations = @($v1, $v2, $v3)
             $scannedFiles = @(@{ Path = 'test1.yml' }, @{ Path = 'test2.json' })
             
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 3
             
             $result.TotalDependencies | Should -Be 3
             $result.UnpinnedDependencies | Should -Be 3
-        }
-
-        It 'Computes partial compliance when total dependency count is provided' {
-            $v1 = [DependencyViolation]::new()
-            $v1.Type = 'github-actions'
-            $v1.Severity = 'High'
-
-            $v2 = [DependencyViolation]::new()
-            $v2.Type = 'npm'
-            $v2.Severity = 'Medium'
-
-            $v3 = [DependencyViolation]::new()
-            $v3.Type = 'pip'
-            $v3.Severity = 'Medium'
-
-            $violations = @($v1, $v2, $v3)
-            $scannedFiles = @(@{ Path = 'test1.yml' }, @{ Path = 'test2.json' }, @{ Path = 'requirements.txt' })
-
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 10
-
-            $result.TotalDependencies | Should -Be 10
-            $result.UnpinnedDependencies | Should -Be 3
-            $result.PinnedDependencies | Should -Be 7
-            $result.ComplianceScore | Should -Be 70.0
         }
 
         It 'Groups violations by type with array coercion' {
@@ -797,7 +773,7 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $violations = @($v1, $v2, $v3)
             $scannedFiles = @(@{ Path = 'test.yml' })
             
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 3
             
             $result.Summary.Keys | Should -Contain 'github-actions'
             $result.Summary.Keys | Should -Contain 'npm'
@@ -820,7 +796,7 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             }
             $scannedFiles = @(@{ Path = 'test.yml' })
             
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 4
             
             $result.Summary['github-actions'].High | Should -Be 2
             $result.Summary['github-actions'].Medium | Should -Be 1
@@ -835,11 +811,48 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $violations = @($v)
             $scannedFiles = @(@{ Path = 'test.yml' })
             
-            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 1
             
             $result.TotalDependencies | Should -Be 1
             $result.Summary['github-actions'].Total | Should -Be 1
             $result.Summary['github-actions'].High | Should -Be 1
+        }
+    }
+
+    Context 'Partial compliance scoring' {
+        It 'Computes 60% score for 2 violations out of 5 dependencies' {
+            $v1 = [DependencyViolation]::new()
+            $v1.Type = 'github-actions'
+            $v1.Severity = 'High'
+            $v2 = [DependencyViolation]::new()
+            $v2.Type = 'github-actions'
+            $v2.Severity = 'Medium'
+
+            $violations = @($v1, $v2)
+            $scannedFiles = @(@{ Path = 'test.yml' })
+
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 5
+
+            $result.ComplianceScore | Should -Be 60.0
+            $result.TotalDependencies | Should -Be 5
+            $result.PinnedDependencies | Should -Be 3
+            $result.UnpinnedDependencies | Should -Be 2
+        }
+
+        It 'Computes 90% score for 1 violation out of 10 dependencies' {
+            $v = [DependencyViolation]::new()
+            $v.Type = 'npm'
+            $v.Severity = 'Low'
+
+            $violations = @($v)
+            $scannedFiles = @(@{ Path = 'package.json' })
+
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 10
+
+            $result.ComplianceScore | Should -Be 90.0
+            $result.TotalDependencies | Should -Be 10
+            $result.PinnedDependencies | Should -Be 9
+            $result.UnpinnedDependencies | Should -Be 1
         }
     }
 }
@@ -922,9 +935,9 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'metadata-only-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations.Count | Should -Be 0
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -936,9 +949,9 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'with-dependencies-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations.Count | Should -BeGreaterThan 0
+            $result.Violations.Count | Should -BeGreaterThan 0
         }
 
         It 'Identifies correct dependency sections' {
@@ -948,8 +961,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'with-dependencies-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $sections = $violations | ForEach-Object { $_.Metadata.Section } | Sort-Object -Unique
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $sections = $result.Violations | ForEach-Object { $_.Metadata.Section } | Sort-Object -Unique
 
             $sections | Should -Contain 'dependencies'
             $sections | Should -Contain 'devDependencies'
@@ -962,8 +975,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'with-dependencies-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $lodashViolation = $violations | Where-Object { $_.Name -eq 'lodash' }
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $lodashViolation = $result.Violations | Where-Object { $_.Name -eq 'lodash' }
 
             $lodashViolation | Should -Not -BeNullOrEmpty
             $lodashViolation.Name | Should -Be 'lodash'
@@ -979,9 +992,9 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'with-dependencies-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations | ForEach-Object { $_.Line | Should -BeGreaterOrEqual 1 }
+            $result.Violations | ForEach-Object { $_.Line | Should -BeGreaterOrEqual 1 }
         }
 
         It 'Excludes exact-version dependencies from violations' {
@@ -991,8 +1004,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'with-dependencies-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $packageNames = $violations | ForEach-Object { $_.Name }
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $result.Violations | ForEach-Object { $_.Name }
 
             $packageNames | Should -Not -Contain 'jest'
         }
@@ -1006,9 +1019,9 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'nonexistent/package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations.Count | Should -Be 0
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -1024,9 +1037,9 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'invalid-json-package.json'
             }
 
-            $violations = @(Get-NpmDependencyViolations -FileInfo $fileInfo)
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations | Should -HaveCount 0
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'Emits a warning about parse failure' {
@@ -1036,7 +1049,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'invalid-json-package.json'
             }
 
-            $warnings = Get-NpmDependencyViolations -FileInfo $fileInfo 3>&1
+            $output = Get-NpmDependencyViolations -FileInfo $fileInfo 3>&1
+            $warnings = $output | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
 
             $warnings | Should -Not -BeNullOrEmpty
             $warnings | Should -Match 'Failed to parse.*as JSON'
@@ -1055,8 +1069,8 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'empty-version-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
-            $packageNames = $violations | ForEach-Object { $_.Name }
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $packageNames = $result.Violations | ForEach-Object { $_.Name }
 
             $packageNames | Should -Not -Contain 'empty-version'
             $packageNames | Should -Not -Contain 'whitespace-version'
@@ -1069,10 +1083,10 @@ Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
                 RelativePath = 'empty-version-package.json'
             }
 
-            $violations = Get-NpmDependencyViolations -FileInfo $fileInfo
+            $result = Get-NpmDependencyViolations -FileInfo $fileInfo
 
-            $violations.Count | Should -BeGreaterThan 0
-            $violations | Where-Object { $_.Name -eq 'valid-package' } | Should -Not -BeNullOrEmpty
+            $result.Violations.Count | Should -BeGreaterThan 0
+            $result.Violations | Where-Object { $_.Name -eq 'valid-package' } | Should -Not -BeNullOrEmpty
         }
     }
 }
@@ -1134,10 +1148,10 @@ Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
                 Type         = 'npm'
                 RelativePath = 'test-pkg.json'
             }
-            $violations = Get-DependencyViolation -FileInfo $fileInfo
-            $violations | Should -Not -BeNullOrEmpty
-            $violations[0].GetType().Name | Should -Be 'DependencyViolation'
-            $violations[0].ViolationType | Should -Be 'Unpinned'
+            $result = Get-DependencyViolation -FileInfo $fileInfo
+            $result.Violations | Should -Not -BeNullOrEmpty
+            $result.Violations[0].GetType().Name | Should -Be 'DependencyViolation'
+            $result.Violations[0].ViolationType | Should -Be 'Unpinned'
         }
 
         It 'Sets File from FileInfo when missing' {
@@ -1146,8 +1160,8 @@ Describe 'Get-DependencyViolation with ValidationFunc' -Tag 'Unit' {
                 Type         = 'npm'
                 RelativePath = 'test-pkg.json'
             }
-            $violations = Get-DependencyViolation -FileInfo $fileInfo
-            $violations | ForEach-Object { $_.File | Should -Not -BeNullOrEmpty }
+            $result = Get-DependencyViolation -FileInfo $fileInfo
+            $result.Violations | ForEach-Object { $_.File | Should -Not -BeNullOrEmpty }
         }
     }
 }
@@ -1194,7 +1208,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
             }
             Mock Get-DependencyViolation {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1214,6 +1228,40 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
         It 'Does not throw in soft-fail mode' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
         }
+
+        It 'Passes accumulated TotalDependencies to Get-ComplianceReportData' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Get-ComplianceReportData -ParameterFilter { $TotalDependencies -eq 1 }
+        }
+    }
+
+    Context 'TotalDependencies accumulates across multiple files' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(
+                    @{ Path = 'TestDrive:\a.yml'; Type = 'github-actions'; RelativePath = 'a.yml' }
+                    @{ Path = 'TestDrive:\b.yml'; Type = 'github-actions'; RelativePath = 'b.yml' }
+                )
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('file.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                return @{ TotalCount = 3; Violations = @($v) }
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 66.7
+                    TotalDependencies    = 6
+                    UnpinnedDependencies = 2
+                    Violations           = @()
+                }
+            }
+        }
+
+        It 'Sums TotalCount from each file scan result' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 50
+            Should -Invoke Get-ComplianceReportData -ParameterFilter { $TotalDependencies -eq 6 }
+        }
     }
 
     Context 'CI output for violations in soft-fail mode' {
@@ -1224,7 +1272,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
             Mock Get-DependencyViolation {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.CurrentRef = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1275,7 +1323,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
             }
             Mock Get-DependencyViolation {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'Low', 'desc')
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1309,7 +1357,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1329,7 +1377,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 5, 'github-actions', 'actions/checkout', 'High', 'Unpinned action')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1349,7 +1397,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 3, 'npm', 'lodash', 'Medium', 'Unpinned npm dep')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = '^4.0.0'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1369,7 +1417,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 7, 'github-actions', 'a/b', 'Low', 'Minor issue')
                 $v.ViolationType = 'MissingVersionComment'
                 $v.Version = 'abc123'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'add comment' }
             Mock Get-ComplianceReportData {
@@ -1389,7 +1437,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1423,7 +1471,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v2 = [DependencyViolation]::new('f.yml', 5, 'github-actions', 'c/d', 'Medium', 'Also not pinned')
                 $v2.ViolationType = 'Unpinned'
                 $v2.Version = 'v3'
-                return @($v1, $v2)
+                return @{ TotalCount = 2; Violations = @($v1, $v2) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1450,7 +1498,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1471,7 +1519,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1513,7 +1561,7 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
                 $v = [DependencyViolation]::new('f.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
                 $v.ViolationType = 'Unpinned'
                 $v.Version = 'v4'
-                return @($v)
+                return @{ TotalCount = 1; Violations = @($v) }
             }
             Mock Get-RemediationSuggestion { return 'pin it' }
             Mock Get-ComplianceReportData {
@@ -1553,8 +1601,8 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'workflow-npm-install.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | Should -HaveCount 4
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 4
         }
 
         It 'should return DependencyViolation objects' {
@@ -1563,8 +1611,8 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'workflow-npm-install.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | ForEach-Object {
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | ForEach-Object {
                 $_.GetType().Name | Should -Be 'DependencyViolation'
                 $_.Type | Should -Be 'workflow-npm-commands'
                 $_.Severity | Should -Be 'Medium'
@@ -1578,8 +1626,8 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'workflow-npm-install.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | ForEach-Object {
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | ForEach-Object {
                 $_.Line | Should -BeGreaterThan 0
             }
         }
@@ -1592,8 +1640,8 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'workflow-npm-ci-only.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | Should -HaveCount 0
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -1604,8 +1652,8 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'nonexistent.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | Should -HaveCount 0
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
     }
 
@@ -1630,8 +1678,8 @@ jobs:
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'commented-npm.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | Should -HaveCount 0
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 0
         }
 
         It 'should detect npm install in multi-line block alongside safe commands' {
@@ -1654,9 +1702,9 @@ jobs:
                 Type         = 'workflow-npm-commands'
                 RelativePath = 'mixed-npm.yml'
             }
-            $violations = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
-            $violations | Should -HaveCount 1
-            $violations[0].Name | Should -BeLike 'npm install*'
+            $result = Get-WorkflowNpmCommandViolations -FileInfo $fileInfo
+            $result.Violations | Should -HaveCount 1
+            $result.Violations[0].Name | Should -BeLike 'npm install*'
         }
     }
 }
