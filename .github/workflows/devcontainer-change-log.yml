@@ -1,0 +1,95 @@
+name: "Devcontainer Change Log"
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/copilot-setup-steps.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  log-changes:
+    name: Log Infrastructure Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Write infrastructure change summary
+        env:
+          GIT_SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "## Devcontainer Infrastructure Changes"
+            echo ""
+            echo "| Property | Value |"
+            echo "|----------|-------|"
+            echo "| Commit | \`${GIT_SHA}\` |"
+            echo "| Branch | \`${REF_NAME}\` |"
+            echo "| Trigger | \`${EVENT_NAME}\` |"
+            echo ""
+
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "_Triggered via workflow_dispatch. No push range available for automatic diff._"
+            elif [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+              echo "_Initial push to branch — no prior commit range available._"
+            else
+              if ! CHANGED=$(git diff --name-only "$BEFORE_SHA" "$GIT_SHA" -- '.devcontainer/' '.github/workflows/copilot-setup-steps.yml' 2>&1); then
+                echo "_Could not compute diff: \`$BEFORE_SHA\` may not be reachable (force push?)._"
+              elif [ -z "$CHANGED" ]; then
+                echo "_No devcontainer infrastructure files changed in this push._"
+              else
+                echo "| File | Category | Pre-build Impact |"
+                echo "|------|----------|-----------------|"
+                while IFS= read -r file; do
+                  [ -z "$file" ] && continue
+                  case "$file" in
+                    .devcontainer/scripts/on-create.sh)
+                      echo "| \`$file\` | Lifecycle Scripts | High |"
+                      ;;
+                    .devcontainer/scripts/post-create.sh)
+                      echo "| \`$file\` | Lifecycle Scripts | Low |"
+                      ;;
+                    .devcontainer/Dockerfile*|.devcontainer/*.dockerfile)
+                      echo "| \`$file\` | Base Image | High |"
+                      ;;
+                    .devcontainer/features/*)
+                      echo "| \`$file\` | Features | Medium |"
+                      ;;
+                    .devcontainer/devcontainer.json)
+                      echo "| \`$file\` | Config | High |"
+                      ;;
+                    .github/workflows/copilot-setup-steps.yml)
+                      echo "| \`$file\` | Setup Steps | Medium |"
+                      ;;
+                    .devcontainer/*)
+                      echo "| \`$file\` | Config | Medium |"
+                      ;;
+                    *)
+                      echo "| \`$file\` | Other | Unknown |"
+                      ;;
+                  esac
+                done <<< "$CHANGED"
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
