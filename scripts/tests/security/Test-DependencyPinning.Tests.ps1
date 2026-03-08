@@ -818,6 +818,43 @@ Describe 'Get-ComplianceReportData' -Tag 'Unit' {
             $result.Summary['github-actions'].High | Should -Be 1
         }
     }
+
+    Context 'Partial compliance scoring' {
+        It 'Computes 60% score for 2 violations out of 5 dependencies' {
+            $v1 = [DependencyViolation]::new()
+            $v1.Type = 'github-actions'
+            $v1.Severity = 'High'
+            $v2 = [DependencyViolation]::new()
+            $v2.Type = 'github-actions'
+            $v2.Severity = 'Medium'
+
+            $violations = @($v1, $v2)
+            $scannedFiles = @(@{ Path = 'test.yml' })
+
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 5
+
+            $result.ComplianceScore | Should -Be 60.0
+            $result.TotalDependencies | Should -Be 5
+            $result.PinnedDependencies | Should -Be 3
+            $result.UnpinnedDependencies | Should -Be 2
+        }
+
+        It 'Computes 90% score for 1 violation out of 10 dependencies' {
+            $v = [DependencyViolation]::new()
+            $v.Type = 'npm'
+            $v.Severity = 'Low'
+
+            $violations = @($v)
+            $scannedFiles = @(@{ Path = 'package.json' })
+
+            $result = Get-ComplianceReportData -ScanPath 'TestDrive:/' -Violations $violations -ScannedFiles $scannedFiles -TotalDependencies 10
+
+            $result.ComplianceScore | Should -Be 90.0
+            $result.TotalDependencies | Should -Be 10
+            $result.PinnedDependencies | Should -Be 9
+            $result.UnpinnedDependencies | Should -Be 1
+        }
+    }
 }
 
 Describe 'Main Script Execution' {
@@ -1190,6 +1227,40 @@ Describe 'Invoke-DependencyPinningAnalysis' -Tag 'Unit' {
 
         It 'Does not throw in soft-fail mode' {
             { Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80 } | Should -Not -Throw
+        }
+
+        It 'Passes accumulated TotalDependencies to Get-ComplianceReportData' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 80
+            Should -Invoke Get-ComplianceReportData -ParameterFilter { $TotalDependencies -eq 1 }
+        }
+    }
+
+    Context 'TotalDependencies accumulates across multiple files' {
+        BeforeAll {
+            Mock Get-FilesToScan {
+                return @(
+                    @{ Path = 'TestDrive:\a.yml'; Type = 'github-actions'; RelativePath = 'a.yml' }
+                    @{ Path = 'TestDrive:\b.yml'; Type = 'github-actions'; RelativePath = 'b.yml' }
+                )
+            }
+            Mock Get-DependencyViolation {
+                $v = [DependencyViolation]::new('file.yml', 1, 'github-actions', 'a/b', 'High', 'Not pinned')
+                return @{ TotalCount = 3; Violations = @($v) }
+            }
+            Mock Get-RemediationSuggestion { return 'pin it' }
+            Mock Get-ComplianceReportData {
+                return @{
+                    ComplianceScore      = 66.7
+                    TotalDependencies    = 6
+                    UnpinnedDependencies = 2
+                    Violations           = @()
+                }
+            }
+        }
+
+        It 'Sums TotalCount from each file scan result' {
+            Invoke-DependencyPinningAnalysis -Path TestDrive: -Threshold 50
+            Should -Invoke Get-ComplianceReportData -ParameterFilter { $TotalDependencies -eq 6 }
         }
     }
 
