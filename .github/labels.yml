@@ -1,0 +1,193 @@
+# Type labels
+- name: bug
+  color: "d73a4a"
+  description: "Something isn't working"
+- name: breaking-change
+  color: "B60205"
+  description: "Breaking change requiring major version bump"
+- name: enhancement
+  color: "a2eeef"
+  description: "New feature or request"
+- name: feature
+  color: "1D76DB"
+  description: "New feature triggering minor version bump"
+- name: maintenance
+  color: "FBCA04"
+  description: "Maintenance work, no version bump"
+- name: documentation
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+- name: refactor
+  color: "ededed"
+  description: "Code refactoring without functional changes"
+- name: performance
+  color: "0E8A16"
+  description: "Performance improvement"
+- name: security
+  color: "D93F0B"
+  description: "Security improvement or fix"
+- name: accessibility
+  color: "ededed"
+  description: "Accessibility improvements and compliance"
+- name: meta
+  color: "ededed"
+  description: "Repository meta-issues and planning"
+- name: duplicate
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+- name: invalid
+  color: "e4e669"
+  description: "This doesn't seem right"
+- name: wontfix
+  color: "ffffff"
+  description: "This will not be worked on"
+- name: question
+  color: "d876e3"
+  description: "Further information is requested"
+
+# Area labels
+- name: ado
+  color: "ededed"
+  description: "Azure DevOps integration"
+- name: agents
+  color: "ededed"
+  description: "Custom chat agents (.agent.md)"
+- name: automation
+  color: "ededed"
+  description: "CI/CD and automation improvements"
+- name: build
+  color: "ededed"
+  description: "Build system and compilation"
+- name: chat-mode
+  color: "ededed"
+  description: "Custom chat modes and agents"
+- name: ci
+  color: "ededed"
+  description: "Continuous integration"
+- name: codespaces
+  color: "ededed"
+  description: "GitHub Codespaces configuration and prebuilds"
+- name: configuration
+  color: "ededed"
+  description: "Configuration files and settings"
+- name: copilot
+  color: "ededed"
+  description: "GitHub Copilot integration and features"
+- name: dependencies
+  color: "2827cc"
+  description: "Dependency updates"
+- name: design-thinking
+  color: "ededed"
+  description: "Design thinking methodology and coaching"
+- name: devcontainer
+  color: "ededed"
+  description: "Development container configuration"
+- name: extension
+  color: "ededed"
+  description: "VS Code extension packaging and publishing"
+- name: foundation
+  color: "ededed"
+  description: "Core infrastructure and foundational components"
+- name: github-actions
+  color: "e18fbc"
+  description: "GitHub Actions workflows"
+- name: github-metadata
+  color: "ededed"
+  description: "GitHub repository metadata and settings"
+- name: infrastructure
+  color: "ededed"
+  description: "Repository infrastructure and tooling"
+- name: instructions
+  color: "ededed"
+  description: "Copilot instruction files (.instructions.md)"
+  aliases:
+    - instruction-file
+- name: javascript
+  color: "168700"
+  description: "Pull requests that update javascript code"
+- name: linting
+  color: "ededed"
+  description: "Linting rules and validation"
+- name: npm
+  color: "36da2e"
+  description: "NPM package configuration"
+- name: ossf-compliance
+  color: "D93F0B"
+  description: "OpenSSF security compliance"
+- name: packaging
+  color: "ededed"
+  description: "Extension and plugin packaging"
+- name: prompts
+  color: "ededed"
+  description: "Copilot prompt files (.prompt.md)"
+  aliases:
+    - prompt
+- name: scripts
+  color: "ededed"
+  description: "PowerShell, Bash, or Python scripts"
+- name: skills
+  color: "ededed"
+  description: "Copilot skill packages (SKILL.md)"
+- name: templates
+  color: "ededed"
+  description: "Template files and examples"
+- name: testing
+  color: "ededed"
+  description: "Test infrastructure and test files"
+- name: tooling
+  color: "ededed"
+  description: "Developer tooling and utilities"
+- name: workflows
+  color: "ededed"
+  description: "GitHub Actions workflows"
+
+# Priority labels
+- name: priority-1
+  color: "B60205"
+  description: "Critical priority, address immediately"
+- name: priority-2
+  color: "D93F0B"
+  description: "High priority, address soon"
+- name: priority-3
+  color: "FBCA04"
+  description: "Medium priority, standard queue"
+- name: priority-4
+  color: "C2E0C6"
+  description: "Low priority, when time permits"
+
+# Status / process labels
+- name: needs-triage
+  color: "FBCA04"
+  description: "Requires triage and prioritization"
+- name: closed-stale
+  color: "9E6A03"
+  description: "Closed due to inactivity"
+- name: do-not-close
+  color: "0E8A16"
+  description: "Exempt from inactivity closure"
+- name: maintainers-only
+  color: "B60205"
+  description: "Restricted to maintainers — AI artifact expertise required"
+- name: pinned
+  color: "006B75"
+  description: "Important issue; exempt from inactivity closure"
+- name: stale
+  color: "9E6A03"
+  description: "Inactive for 90 days; will be closed if unaddressed"
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+# Release management labels (release-please managed)
+- name: "autorelease: pending"
+  color: "ededed"
+  description: "Release-please: PR awaiting merge"
+- name: "autorelease: prerelease"
+  color: "FBCA04"
+  description: "Pre-release pull request"
+- name: "autorelease: tagged"
+  color: "ededed"
+  description: "Release-please: Release created and tagged"
