@@ -90,11 +90,11 @@ copilot plugin install hve-core-all@hve-core
 | git-commit                                  | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
 | git-merge                                   | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                                     |
 | git-setup                                   | Interactive, verification-first Git configuration assistant (non-destructive)                                                                    |
-| hooks-rpi                                   | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core                          |
 | prompt-analyze                              | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core                      |
 | prompt-build                                | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core                                  |
 | prompt-refactor                             | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core                        |
 | pull-request                                | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                                     |
+| rpi                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core                          |
 | task-implement                              | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                                          |
 | task-plan                                   | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core                             |
 | task-research                               | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                                 |

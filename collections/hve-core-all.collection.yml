@@ -165,8 +165,6 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/git-setup.prompt.md
   kind: prompt
-- path: .github/prompts/hve-core/hooks-rpi.prompt.md
-  kind: prompt
 - path: .github/prompts/hve-core/prompt-analyze.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/prompt-build.prompt.md
@@ -174,6 +172,8 @@ items:
 - path: .github/prompts/hve-core/prompt-refactor.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/pull-request.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/rpi.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/task-implement.prompt.md
   kind: prompt

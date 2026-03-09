@@ -51,7 +51,7 @@ items:
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # Prompts
-  - path: .github/prompts/hve-core/hooks-rpi.prompt.md
+  - path: .github/prompts/hve-core/rpi.prompt.md
     kind: prompt
   - path: .github/prompts/hve-core/task-research.prompt.md
     kind: prompt

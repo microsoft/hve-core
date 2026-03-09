@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/hooks-rpi.prompt.md
