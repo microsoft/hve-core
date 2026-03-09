@@ -26,9 +26,9 @@ items:
 - path: .github/agents/design-thinking/dt-learning-tutor.agent.md
   kind: agent
   maturity: preview
-- path: .github/agents/experimental/pptx-subagent.agent.md
-  kind: agent
 - path: .github/agents/experimental/pptx.agent.md
+  kind: agent
+- path: .github/agents/experimental/subagents/pptx-subagent.agent.md
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent

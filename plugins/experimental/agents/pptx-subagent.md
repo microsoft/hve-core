@@ -1,1 +1,1 @@
-../../../.github/agents/experimental/pptx-subagent.agent.md
+../../../.github/agents/experimental/subagents/pptx-subagent.agent.md

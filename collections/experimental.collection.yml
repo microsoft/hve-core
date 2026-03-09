@@ -9,7 +9,7 @@ items:
   # Agents
   - path: .github/agents/experimental/pptx.agent.md
     kind: agent
-  - path: .github/agents/experimental/pptx-subagent.agent.md
+  - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
   # Skills
   - path: .github/skills/experimental/powerpoint
