@@ -28,6 +28,8 @@
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
+    "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1",
+    "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
     "plugin:validate": "npm run lint:collections-metadata",
     "docs:build": "npm --prefix docs/docusaurus run build",
