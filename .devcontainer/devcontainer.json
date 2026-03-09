@@ -22,7 +22,10 @@
         "bierner.markdown-preview-github-styles",
         "bierner.markdown-mermaid",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
       ]
     }
   },

@@ -60,7 +60,7 @@
     {
       "name": "installer",
       "source": "installer",
-      "description": "Interactive installer agent for deploying HVE Core artifacts across workspace configurations",
+      "description": "Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations",
       "version": "3.1.46"
     },
     {

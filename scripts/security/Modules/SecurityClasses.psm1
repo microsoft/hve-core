@@ -44,6 +44,7 @@ class DependencyViolation {
     [string]$Name
     [string]$Version
     [string]$CurrentRef
+    [ValidateSet('High', 'Medium', 'Low', 'Info')]
     [string]$Severity
     [ValidateSet('Unpinned', 'Stale', 'VersionMismatch', 'MissingVersionComment', 'MissingPermissions', '')]
     [string]$ViolationType

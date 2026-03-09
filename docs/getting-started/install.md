@@ -40,7 +40,6 @@ VS Code → Extensions → Search "HVE Core" → Install
 
 ### When to use alternatives
 
-* ❌ You need to customize components → Use custom installation methods below
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
 * ❌ Contributing to HVE-Core → Use [Peer Clone](methods/peer-clone.md)
 
@@ -52,9 +51,11 @@ If you need customization or version control of HVE-Core, choose from the method
 
 ## Quick Start
 
-> **Starter prompt:** "Help me choose how to install this library"
+> **Recommended:** Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for zero-config setup (~30 seconds).
+>
+> **For customization:** Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent "help me customize hve-core installation".
 
-Open Copilot Chat, select the `hve-core-installer` agent, and use this prompt. The agent will ask three questions about your environment and recommend the best method.
+For clone-based customization, answer the questions below to find the best method for your environment.
 
 ## Help Me Choose
 
@@ -87,12 +88,13 @@ Answer these questions to find your recommended installation method:
 | Codespaces only           | Team | Controlled | [Submodule](methods/submodule.md)             |
 | Both local + Codespaces   | Any  | Any        | [Multi-Root Workspace](methods/multi-root.md) |
 | Advanced (shared install) | Solo | Auto       | [Mounted Directory](methods/mounted.md)       |
+| Any (CLI preferred)       | Any  | Manual     | [CLI Plugins](methods/cli-plugins.md)         |
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
 ## Collection Packages
 
-HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. Clone-based methods let you select any collection during setup.
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. For customization, use the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) or clone-based methods to select specific collections during setup.
 
 | Collection        | Collection ID       | Maturity     | Description                                                      |
 |-------------------|---------------------|--------------|------------------------------------------------------------------|
@@ -103,7 +105,7 @@ HVE-Core organizes artifacts into role-based collections. The VS Code extension 
 | Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
 | Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
 | GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
-| Installer         | `installer`         | Stable       | Interactive installer agent for workspace configuration          |
+| Installer         | `installer`         | Stable       | Interactive installer skill for workspace configuration          |
 | Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
 | Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
 | Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
@@ -114,13 +116,13 @@ The VS Code Marketplace extension installs the **Full** collection containing al
 
 ### Clone Methods (Collection Filtering)
 
-Clone-based installation methods support collection-based agent filtering through the installer agent:
+Clone-based installation methods support collection-based agent filtering through the HVE Core installer skill:
 
-1. Clone the repository using your preferred method
-2. Run the `hve-core-installer` agent
-3. In Phase 7 (Agent Customization), select your role-based collection or install all agents
+1. Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) to get the installer skill
+2. Ask any agent: "help me customize hve-core installation"
+3. Select your role-based collection or install all agents
 
-The installer reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection. Agents marked for all collections are always included.
+The skill reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection.
 
 > [!NOTE]
 > Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
@@ -141,6 +143,9 @@ The installer reads collection assignments from the collection manifests (`colle
 │                                                                 │
 │  Working in a team?                                             │
 │  └─ Yes, need version control ───────► Submodule               │
+│                                                                 │
+│  Prefer terminal/CLI workflows?                                 │
+│  └─ Yes ──────────────────────────────► CLI Plugins            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -172,23 +177,7 @@ These methods are for HVE-Core contributors or advanced scenarios:
 | [Git-Ignored Folder](methods/git-ignored.md)  | Local devcontainer, solo      | Low        |
 | [Mounted Directory](methods/mounted.md)       | Advanced devcontainer sharing | High       |
 | [GitHub Codespaces](methods/codespaces.md)    | Codespaces-only projects      | Medium     |
-
-## Using the Installer Agent
-
-The `hve-core-installer` agent automates any installation method:
-
-1. Open GitHub Copilot Chat in VS Code (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Answer the environment detection questions
-4. The agent executes your chosen method
-
-The agent handles:
-
-* Environment detection (Local VS Code, Devcontainer, Codespaces)
-* Repository cloning or configuration
-* VS Code settings updates
-* Devcontainer configuration
-* Validation of the installation
+| [CLI Plugins](methods/cli-plugins.md)         | Terminal-based CLI workflows  | Low        |
 
 ## Validation
 
@@ -198,10 +187,6 @@ After installation, verify everything works:
 2. Click the agent picker dropdown
 3. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
 4. Select an agent and submit a test prompt
-
-Run the installer in validation mode:
-
-> "Validate my HVE-Core installation"
 
 ## Post-Installation: Update Your .gitignore
 
