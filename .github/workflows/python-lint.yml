@@ -15,9 +15,8 @@ on:
         default: true
       working-directory:
         description: 'Directory containing pyproject.toml with ruff config'
-        required: false
+        required: true
         type: string
-        default: '.github/skills/experimental/powerpoint'
 
 permissions:
   contents: read
@@ -38,6 +37,10 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Derive artifact name
+        id: meta
+        run: echo "artifact-name=python-lint-$(echo '${{ inputs.working-directory }}' | tr '/' '-' | sed 's/^\.//; s/^-//')" >> "$GITHUB_OUTPUT"
 
       - name: Install uv
         uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v5.4.1
@@ -96,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
         with:
-          name: python-lint-results
+          name: ${{ steps.meta.outputs.artifact-name }}
           path: logs/python-lint-results.json
           retention-days: 30
           if-no-files-found: ignore

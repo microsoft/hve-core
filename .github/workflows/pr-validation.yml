@@ -50,15 +50,48 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  discover-python-projects:
+    name: Discover Python Projects
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Find Python projects
+        id: find
+        run: |
+          dirs=$(find . -name pyproject.toml -not -path '*/node_modules/*' -exec dirname {} \; | sed 's|^\./||' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "directories=$dirs" >> "$GITHUB_OUTPUT"
+          if [[ "$dirs" == "[]" ]]; then
+            echo "has-projects=false" >> "$GITHUB_OUTPUT"
+            echo "No Python projects found"
+          else
+            echo "has-projects=true" >> "$GITHUB_OUTPUT"
+            echo "Found Python projects: $dirs"
+          fi
+
   python-lint:
-    name: Python Lint
+    name: "Python Lint (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
     uses: ./.github/workflows/python-lint.yml
     permissions:
       contents: read
     with:
       soft-fail: false
       changed-files-only: true
-      working-directory: '.github/skills/experimental/powerpoint'
+      working-directory: ${{ matrix.directory }}
 
   copyright-headers:
     name: Copyright Headers
