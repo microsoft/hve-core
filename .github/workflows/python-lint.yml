@@ -53,11 +53,28 @@ jobs:
         run: uv sync --locked
         working-directory: ${{ inputs.working-directory }}
 
+      - name: Detect changed Python files
+        if: inputs.changed-files-only
+        run: |
+          base_ref="$GITHUB_BASE_REF"
+          base_ref="${base_ref:-main}"
+          working_dir="${{ inputs.working-directory }}"
+          changed=$(git diff --name-only --diff-filter=ACMR "origin/${base_ref}...HEAD" -- "${working_dir}" | grep -E '\.pyi?$' || true)
+          if [[ -n "$changed" ]]; then
+            echo "HAS_CHANGES=true" >> "$GITHUB_ENV"
+            file_count=$(echo "$changed" | wc -l)
+            echo "Detected ${file_count} changed Python file(s)"
+          else
+            echo "No Python file changes detected under ${working_dir}"
+          fi
+
       - name: Run ruff check
         id: ruff-check
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
         run: |
           mkdir -p "$GITHUB_WORKSPACE/logs"
-          if ! uv run ruff check . --output-format json > "$GITHUB_WORKSPACE/logs/python-lint-results.json" 2>&1; then
+          # Stdout (JSON) → file only; stderr flows to CI log to preserve valid JSON output
+          if ! uv run ruff check . --output-format json > "$GITHUB_WORKSPACE/logs/python-lint-results.json"; then
             echo "RUFF_CHECK_FAILED=true" >> "$GITHUB_ENV"
           fi
           uv run ruff check .
@@ -66,8 +83,10 @@ jobs:
 
       - name: Run ruff format check
         id: ruff-format
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
         run: |
-          if ! uv run ruff format --check . 2>&1; then
+          # Stderr flows to CI log; no file redirect so output stays readable
+          if ! uv run ruff format --check .; then
             echo "RUFF_FORMAT_FAILED=true" >> "$GITHUB_ENV"
           fi
         working-directory: ${{ inputs.working-directory }}
@@ -75,7 +94,7 @@ jobs:
 
       - name: Upload lint results
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
-        if: always()
+        if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
         with:
           name: python-lint-results
           path: logs/python-lint-results.json
@@ -83,7 +102,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Check results
-        if: "!inputs.soft-fail"
+        if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
         run: |
           if [[ "$RUFF_CHECK_FAILED" == "true" || "$RUFF_FORMAT_FAILED" == "true" ]]; then
             echo "::error::Python linting failed"
