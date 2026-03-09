@@ -1,5 +1,5 @@
 ---
-description: "Locates and executes implementation plans using task-implementor - Brought to you by microsoft/hve-core"
+description: "Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core"
 agent: Task Implementor
 argument-hint: "[plan=...] [phaseStop={true|false}] [stepStop={true|false}]"
 ---

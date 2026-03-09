@@ -37,7 +37,7 @@ Automates issue discovery, triage, sprint planning, and execution across GitHub 
 
 ## ADO Backlog Management
 
-Automates work item triage, discovery, sprint planning, and execution across Azure DevOps projects. The ADO Backlog Manager agent orchestrates nine distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
+Automates work item discovery, triage, sprint planning, execution, PR creation, build monitoring, and task planning across Azure DevOps projects. The ADO Backlog Manager agent orchestrates nine distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
 
 ## Document Builders
 

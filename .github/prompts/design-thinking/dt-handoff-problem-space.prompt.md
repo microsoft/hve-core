@@ -1,13 +1,13 @@
 ---
-description: 'Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher'
-mode: 'agent'
+description: 'Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher'
+agent: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."
 ---
 
 # Problem Space Exit Handoff
 
-Compile Design Thinking Methods 1-3 outputs into an RPI-ready handoff artifact targeting task-researcher.
+Compile Design Thinking Methods 1-3 outputs into an RPI-ready handoff artifact targeting Task Researcher.
 Invoke when a team graduates from the Problem Space and chooses lateral handoff to the RPI pipeline.
 
 ## Inputs

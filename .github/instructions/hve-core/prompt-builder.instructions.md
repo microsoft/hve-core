@@ -690,8 +690,8 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 
 Tool invocation:
 
-* Run the named agent with `runSubagent` or `task` tools. If using the `runSubagent` tool then include instructions for the subagent to read and follow all instructions from the corresponding `.github/agents/` file.
-* When describing which agent to invoke in body text, use the filename without extension (for example, "Run a `prompt-tester` agent" or "Run a `codebase-researcher` agent"). Frontmatter fields (`agents:`, `agent:`) use the human-readable name instead.
+* Run the named agent with `runSubagent` or `task` tools. Provide the inputs needed for the task directly to the named agent; do not add extra instructions telling `runSubagent` to read the corresponding `.github/agents/` file.
+* When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter (for example, "Run `Prompt Tester`" or "Run `Researcher Subagent`"). Reserve filename-style identifiers for file paths, glob examples, and tool-level references.
 * Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Subagents do not run their own subagents (see the Subagents section).
 

@@ -67,8 +67,9 @@ Return the structured completion report using the Response Format.
 ## Required Protocol
 
 1. Follow all Required Steps in order.
-2. When a blocking issue is encountered mid-execution, apply the early-return rules from Step 2 rather than guessing or continuing silently.
-3. Report all steps attempted in the completion report, including partial progress on incomplete steps.
+2. Execute the assigned phase directly. Do not launch additional subagents or add discovery-style follow-on orchestration; those responsibilities stay with the parent orchestrator.
+3. When a blocking issue is encountered mid-execution, apply the early-return rules from Step 2 rather than guessing or continuing silently.
+4. Report all steps attempted in the completion report, including partial progress on incomplete steps.
 
 ## Response Format
 

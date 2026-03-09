@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: "20"
           cache: "npm"
@@ -71,6 +71,19 @@ jobs:
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
           Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
+      - name: Install uv package manager
+        env:
+          UV_VERSION: '0.10.8'
+          UV_SHA256: 'f0c566b55683395a62fefb9261a060fa09824914b5682c3b9629fa154762ae2f'
+        run: |
+          curl -sSfL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-gnu.tar.gz" -o /tmp/uv.tar.gz
+          echo "${UV_SHA256}  /tmp/uv.tar.gz" | sha256sum -c -
+          sudo tar -xzf /tmp/uv.tar.gz -C /usr/local/bin --strip-components=1 uv-x86_64-unknown-linux-gnu/uv uv-x86_64-unknown-linux-gnu/uvx
+          rm /tmp/uv.tar.gz
+          uv --version
+          uvx --version
+          find .github/skills -name pyproject.toml -execdir uv sync \;
+
       - name: Verify tool availability
         run: |
           echo "=== Tool Versions ==="
@@ -80,6 +93,8 @@ jobs:
           pwsh --version
           shellcheck --version
           actionlint --version
+          uv --version
+          uvx --version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list
