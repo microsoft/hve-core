@@ -344,6 +344,7 @@ paket-files/
 
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
+**/.pytest_cache/
 *.pyc
 venv/
 .venv/
