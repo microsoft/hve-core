@@ -66,16 +66,23 @@ jobs:
 
       - name: Find Python projects
         id: find
+        shell: pwsh
         run: |
-          dirs=$(find . -name pyproject.toml -not -path '*/node_modules/*' -exec dirname {} \; | sed 's|^\./||' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "directories=$dirs" >> "$GITHUB_OUTPUT"
-          if [[ "$dirs" == "[]" ]]; then
-            echo "has-projects=false" >> "$GITHUB_OUTPUT"
-            echo "No Python projects found"
-          else
-            echo "has-projects=true" >> "$GITHUB_OUTPUT"
-            echo "Found Python projects: $dirs"
-          fi
+          $projectList = @(Get-ChildItem -Recurse -Filter pyproject.toml |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { $_ -replace '^\.[\\/]', '' } |
+            Sort-Object)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python projects: $dirs"
+          }
 
   python-lint:
     name: "Python Lint (${{ matrix.directory }})"

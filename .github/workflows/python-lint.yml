@@ -29,7 +29,7 @@ jobs:
       contents: read
     defaults:
       run:
-        shell: bash
+        shell: pwsh
 
     steps:
       - name: Checkout repository
@@ -40,7 +40,9 @@ jobs:
 
       - name: Derive artifact name
         id: meta
-        run: echo "artifact-name=python-lint-$(echo '${{ inputs.working-directory }}' | tr '/' '-' | sed 's/^\.//; s/^-//')" >> "$GITHUB_OUTPUT"
+        run: |
+          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          "artifact-name=python-lint-$name" >> $env:GITHUB_OUTPUT
 
       - name: Install uv
         uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v5.4.1
@@ -59,28 +61,28 @@ jobs:
       - name: Detect changed Python files
         if: inputs.changed-files-only
         run: |
-          base_ref="$GITHUB_BASE_REF"
-          base_ref="${base_ref:-main}"
-          working_dir="${{ inputs.working-directory }}"
-          changed=$(git diff --name-only --diff-filter=ACMR "origin/${base_ref}...HEAD" -- "${working_dir}" | grep -E '\.pyi?$' || true)
-          if [[ -n "$changed" ]]; then
-            echo "HAS_CHANGES=true" >> "$GITHUB_ENV"
-            file_count=$(echo "$changed" | wc -l)
-            echo "Detected ${file_count} changed Python file(s)"
-          else
-            echo "No Python file changes detected under ${working_dir}"
-          fi
+          $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+          $workingDir = '${{ inputs.working-directory }}'
+          $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir | Where-Object { $_ -match '\.pyi?$' }
+          if ($changed) {
+            "HAS_CHANGES=true" >> $env:GITHUB_ENV
+            $fileCount = @($changed).Count
+            Write-Output "Detected $fileCount changed Python file(s)"
+          } else {
+            Write-Output "No Python file changes detected under $workingDir"
+          }
 
       - name: Run ruff check
         id: ruff-check
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/logs"
-          # Stdout (JSON) → file only; stderr flows to CI log to preserve valid JSON output
-          if ! uv run ruff check . --output-format json > "$GITHUB_WORKSPACE/logs/python-lint-results.json"; then
-            echo "RUFF_CHECK_FAILED=true" >> "$GITHUB_ENV"
-          fi
+          New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/logs" -Force | Out-Null
+          # JSON output -> file only; stderr flows to CI log to preserve valid JSON
+          uv run ruff check . --output-format json > "$env:GITHUB_WORKSPACE/logs/python-lint-results.json"
+          if ($LASTEXITCODE -ne 0) { "RUFF_CHECK_FAILED=true" >> $env:GITHUB_ENV }
           uv run ruff check .
+          if ($LASTEXITCODE -ne 0) { "RUFF_CHECK_FAILED=true" >> $env:GITHUB_ENV }
+          $global:LASTEXITCODE = 0
         working-directory: ${{ inputs.working-directory }}
         continue-on-error: ${{ inputs.soft-fail }}
 
@@ -89,9 +91,9 @@ jobs:
         if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
         run: |
           # Stderr flows to CI log; no file redirect so output stays readable
-          if ! uv run ruff format --check .; then
-            echo "RUFF_FORMAT_FAILED=true" >> "$GITHUB_ENV"
-          fi
+          uv run ruff format --check .
+          if ($LASTEXITCODE -ne 0) { "RUFF_FORMAT_FAILED=true" >> $env:GITHUB_ENV }
+          $global:LASTEXITCODE = 0
         working-directory: ${{ inputs.working-directory }}
         continue-on-error: ${{ inputs.soft-fail }}
 
@@ -107,10 +109,10 @@ jobs:
       - name: Check results
         if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
         run: |
-          if [[ "$RUFF_CHECK_FAILED" == "true" || "$RUFF_FORMAT_FAILED" == "true" ]]; then
-            echo "::error::Python linting failed"
-            [[ "$RUFF_CHECK_FAILED" == "true" ]] && echo "  - ruff check failed"
-            [[ "$RUFF_FORMAT_FAILED" == "true" ]] && echo "  - ruff format check failed"
+          if ($env:RUFF_CHECK_FAILED -eq 'true' -or $env:RUFF_FORMAT_FAILED -eq 'true') {
+            Write-Output '::error::Python linting failed'
+            if ($env:RUFF_CHECK_FAILED -eq 'true') { Write-Output '  - ruff check failed' }
+            if ($env:RUFF_FORMAT_FAILED -eq 'true') { Write-Output '  - ruff format check failed' }
             exit 1
-          fi
-          echo "All Python lint checks passed"
+          }
+          Write-Output 'All Python lint checks passed'
