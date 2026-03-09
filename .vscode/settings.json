@@ -26,6 +26,7 @@
     ".github/instructions/github": true,
     ".github/instructions/hve-core": true,
     ".github/instructions/shared": true,
+    ".github/instructions/experimental": true,
   },
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
@@ -36,6 +37,7 @@
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true,
     ".github/agents/security-planning": true,
+    ".github/agents/experimental": true,
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
@@ -43,6 +45,7 @@
     ".github/prompts/github": true,
     ".github/prompts/hve-core": true,
     ".github/prompts/security-planning": true,
+    ".github/prompts/experimental": true,
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
