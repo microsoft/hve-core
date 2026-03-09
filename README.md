@@ -45,6 +45,13 @@ Install the VS Code extension from the Marketplace:
 
 Need a different installation method? See the [Installation Guide](docs/getting-started/install.md) for CLI plugins, submodules, multi-root workspaces, and more.
 
+### Browse Extension Collections
+
+Explore all available extension bundles and choose the one that fits your workflow.
+
+See the full collections overview:  
+[Browse Extension Collections](https://microsoft.github.io/hve-core/docs/getting-started/collections)
+
 ### 2. Verify
 
 Open GitHub Copilot Chat (`Ctrl+Alt+I`) and check that HVE Core agents appear in the agent picker. Look for **task-researcher**, **task-planner**, and **rpi-agent**.

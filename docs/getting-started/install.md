@@ -16,6 +16,10 @@ estimated_reading_time: 5
 
 HVE-Core provides GitHub Copilot customizations (custom agents, instructions, and prompts) that enhance your development workflow. This guide helps you choose the right installation method for your environment.
 
+Before installing, you can browse all available collections here:
+
+[View Extension Collections](./collections.md)
+
 ## Recommended: VS Code Extension ⭐
 
 **For most users**, the simplest method is to install directly from the VS Code Marketplace:
