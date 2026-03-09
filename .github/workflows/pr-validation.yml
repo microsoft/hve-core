@@ -50,6 +50,16 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  python-lint:
+    name: Python Lint
+    uses: ./.github/workflows/python-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      working-directory: '.github/skills/experimental/powerpoint'
+
   copyright-headers:
     name: Copyright Headers
     uses: ./.github/workflows/copyright-headers.yml
