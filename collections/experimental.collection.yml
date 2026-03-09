@@ -6,12 +6,19 @@ tags:
   - experimental
   - preview
 items:
+  # Agents
+  - path: .github/agents/experimental/pptx.agent.md
+    kind: agent
+  - path: .github/agents/experimental/pptx-subagent.agent.md
+    kind: agent
   # Skills
   - path: .github/skills/experimental/powerpoint
     kind: skill
   - path: .github/skills/experimental/video-to-gif
     kind: skill
   # Instructions
+  - path: .github/instructions/experimental/pptx.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:
