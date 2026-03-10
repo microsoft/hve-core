@@ -48,7 +48,7 @@ If you need customization or version control of HVE-Core, choose from the method
 
 ## Quick Start
 
-> **Recommended:** Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the flagship RPI workflow and core artifacts with zero configuration (~30 seconds). For the complete artifact library across all collections, use the `hve-core-all` [Extension]([methods/cli-plugins.md](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)).
+> **Recommended:** Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the flagship RPI workflow and core artifacts with zero configuration (~30 seconds). For the complete artifact library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
 >
 > **Need guided setup?** Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension, which provides the installer skill. Ask any agent: "help me customize hve-core installation". The installer skill walks you through choosing an installation method (peer clone, submodule, git-ignored, and others), configures MCP servers, and supports agent bundle selection by collection.
 
