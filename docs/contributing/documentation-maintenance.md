@@ -22,7 +22,7 @@ Every documentation file in this repository is expected to carry an `ms.date` fi
 
 The system runs in two contexts:
 
-* **Pull request validation** — Checks only the files changed in the PR, with a soft-fail that annotates without blocking merge.
+* **Pull request validation** — Checks only the files changed in the PR and fails if any stale files are found.
 * **Weekly scheduled scan** — Scans all documentation files on Monday mornings and opens GitHub issues for any file exceeding the threshold.
 
 ## How It Works
@@ -53,9 +53,8 @@ The freshness check exposes these parameters:
 |----------------------------|---------|--------------------------------------------------------------------|
 | `staleness-threshold-days` | 90      | Days since `ms.date` before a file is considered stale            |
 | `changed-files-only`       | false   | When true, only checks files changed relative to the base branch  |
-| `soft-fail`                | false   | When true, annotates without failing the CI check                 |
 
-The PR validation workflow configures the check with `changed-files-only: true` and `soft-fail: true`. The weekly scan uses `changed-files-only: false` with default threshold to catch all stale files.
+The PR validation workflow configures the check with `changed-files-only: true`. The weekly scan uses `changed-files-only: false` with default threshold to catch all stale files.
 
 To adjust the threshold repository-wide, update the `staleness-threshold-days` value in both `.github/workflows/pr-validation.yml` and `.github/workflows/weekly-validation.yml`.
 
@@ -77,7 +76,7 @@ Issues are not automatically closed. After updating the documentation and mergin
 
 **Date format errors** — Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
 
-**PR check annotations not appearing** — The PR check runs with `soft-fail: true` and will not block merge. If annotations are missing, check the Actions run for the `ms.date Freshness Check` job and review the uploaded job summary artifact.
+**PR check annotations not appearing** — If annotations are missing, check the Actions run for the `ms.date Freshness Check` job and review the uploaded job summary artifact.
 
 **Weekly workflow not triggering** — The workflow runs on Mondays at 09:00 UTC via `cron: '0 9 * * 1'`. Use `workflow_dispatch` on the `weekly-validation.yml` workflow to trigger a manual run for testing.
 
