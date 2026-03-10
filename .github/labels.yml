@@ -1,3 +1,18 @@
+# Label management
+#
+# This file is the authoritative source for all repository labels.
+# The label-sync workflow (.github/workflows/label-sync.yml) applies changes
+# automatically on push to main or via workflow_dispatch.
+#
+# Adding a label:    Add a new entry with name, color (bare hex, no #), and description.
+# Updating a label:  Edit the existing entry's color or description.
+# Renaming a label:  Add an `aliases` array under the new canonical name listing the
+#                    old name. The sync workflow migrates existing assignments and
+#                    removes the alias label from the repository.
+# Removing a label:  Deleting an entry does NOT delete the label from GitHub.
+#                    The workflow runs with delete-other-labels: false (additive only).
+#                    To delete a label, remove it manually in the GitHub Labels UI.
+
 # Type labels
 - name: bug
   color: "d73a4a"
@@ -18,14 +33,14 @@
   color: "0075ca"
   description: "Improvements or additions to documentation"
 - name: refactor
-  color: "ededed"
-  description: "Code refactoring without functional changes"
+  color: "D4C5F9"
+  description: "Code refactoring, no version bump"
 - name: performance
   color: "0E8A16"
   description: "Performance improvement"
 - name: security
   color: "D93F0B"
-  description: "Security improvement or fix"
+  description: "Security-related changes or concerns"
 - name: accessibility
   color: "ededed"
   description: "Accessibility improvements and compliance"
@@ -172,8 +187,8 @@
   color: "006B75"
   description: "Important issue; exempt from inactivity closure"
 - name: stale
-  color: "9E6A03"
-  description: "Inactive for 90 days; will be closed if unaddressed"
+  color: "CFD3D7"
+  description: "Approaching closure due to inactivity"
 - name: "good first issue"
   color: "7057ff"
   description: "Good for newcomers"

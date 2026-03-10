@@ -148,6 +148,17 @@ scripts/
 └── tests/           # Pester test suites
 ```
 
+## Label Management
+
+Repository labels are declared in [`.github/labels.yml`](.github/labels.yml) and synced automatically by the [Label Sync](.github/workflows/label-sync.yml) workflow on push to `main` or via manual `workflow_dispatch`.
+
+| Task | How |
+|---|---|
+| **Add a label** | Add an entry with `name`, `color` (bare hex, no `#`), and `description` to `.github/labels.yml`, then push to `main` |
+| **Update a label** | Edit the existing entry's `color` or `description` |
+| **Rename a label** | Add an `aliases` array under the new canonical name listing the old name; the sync migrates existing assignments automatically |
+| **Delete a label** | Remove it manually in the [GitHub Labels UI](https://github.com/microsoft/hve-core/labels). Deleting an entry from the file does **not** delete it from GitHub (the workflow runs in additive mode) |
+
 ## Contributing
 
 We appreciate contributions! Whether you're fixing typos or adding new components:
