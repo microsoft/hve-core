@@ -17,16 +17,16 @@ HVE Core supports multiple setup methods. Choose the approach that fits your env
 
 ## Available Methods
 
-| Method | Best For | Complexity |
-| --- | --- | --- |
-| [VS Code Extension](extension.md) | Quick start, individual developers | Low |
-| [Multi-Root Workspace](multi-root.md) | Teams with shared configuration | Medium |
-| [Git Submodule](submodule.md) | Pinned versions, CI integration | Medium |
-| [Peer Clone](peer-clone.md) | Side-by-side development and contribution | Medium |
-| [Mounted Workspace](mounted.md) | Container and remote environments | Medium |
-| [Git-Ignored Clone](git-ignored.md) | Local-only customization | Low |
-| [Codespaces](codespaces.md) | Cloud-based development | Low |
-| [CLI Plugins](cli-plugins.md) | Terminal-first workflows | Medium |
+| Method                                | Best For                                  | Complexity |
+|---------------------------------------|-------------------------------------------|------------|
+| [VS Code Extension](extension.md)     | Quick start, individual developers        | Low        |
+| [Multi-Root Workspace](multi-root.md) | Teams with shared configuration           | Medium     |
+| [Git Submodule](submodule.md)         | Pinned versions, CI integration           | Medium     |
+| [Peer Clone](peer-clone.md)           | Side-by-side development and contribution | Medium     |
+| [Mounted Workspace](mounted.md)       | Container and remote environments         | Medium     |
+| [Git-Ignored Clone](git-ignored.md)   | Local-only customization                  | Low        |
+| [Codespaces](codespaces.md)           | Cloud-based development                   | Low        |
+| [CLI Plugins](cli-plugins.md)         | Terminal-first workflows                  | Medium     |
 
 ## Which Method Should You Choose?
 
