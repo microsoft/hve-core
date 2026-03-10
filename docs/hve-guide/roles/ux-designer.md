@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-03-10
 ms.topic: tutorial
 keywords:
   - ux designer

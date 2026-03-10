@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building threat models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - security

@@ -3,7 +3,7 @@ title: MCP Server Configuration
 description: Optional configuration for Model Context Protocol servers used by HVE-Core agents
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-01-21
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - mcp

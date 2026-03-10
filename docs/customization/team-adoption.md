@@ -2,7 +2,7 @@
 title: Team Adoption and Governance
 description: Establish governance practices, naming conventions, onboarding patterns, and change management for team-wide HVE Core adoption
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - governance

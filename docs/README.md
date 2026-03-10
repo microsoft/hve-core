@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation index for HVE Core Copilot customizations
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: overview
 keywords:
   - hve core

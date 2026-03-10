@@ -2,7 +2,7 @@
 title: Managing Collections
 description: Bundle agents, prompts, instructions, and skills into distributable collection packages with maturity filtering
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - collections

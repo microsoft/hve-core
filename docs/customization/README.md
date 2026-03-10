@@ -2,7 +2,7 @@
 title: Customizing HVE Core
 description: Overview of customization approaches from lightweight settings to full fork-and-extend, with role-based entry points
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-03-10
 ms.topic: overview
 keywords:
   - customization
