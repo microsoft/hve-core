@@ -99,6 +99,7 @@ const config = {
               { label: 'Contributing', to: '/docs/category/contributing' },
               { label: 'Security', to: '/docs/category/security' },
               { label: 'Templates', to: '/docs/category/templates' },
+              { label: 'Customization', to: '/docs/category/customization' },
             ],
           },
           {
@@ -127,6 +128,7 @@ const config = {
               { label: 'Contributing', to: '/docs/category/contributing' },
               { label: 'Security', to: '/docs/category/security' },
               { label: 'Templates', to: '/docs/category/templates' },
+              { label: 'Customization', to: '/docs/category/customization' },
             ],
           },
           {

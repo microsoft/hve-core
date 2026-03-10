@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE-Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -55,7 +55,7 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. Use the manual steps below for multi-root workspace customization.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 

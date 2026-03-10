@@ -2,7 +2,7 @@
 title: UX Designer
 description: Design Thinking coaching, user research, and prototyping workflows for UX Designers
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-03-10
 ms.topic: tutorial
 keywords:
   - ux designer
@@ -17,7 +17,7 @@ HVE Core provides addressable assets tailored to UX design workflows, with Desig
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
 > Your primary collections are `design-thinking` (full Design Thinking coaching, method guides, learning tutor, and space transition support) and `project-planning` (BRD creation, stakeholder alignment support, and delivery-planning artifacts that operationalize validated UX outcomes). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 

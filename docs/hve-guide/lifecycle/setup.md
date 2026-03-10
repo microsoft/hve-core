@@ -3,7 +3,7 @@ title: "Stage 1: Setup"
 description: Install and configure HVE Core tooling for your project with guided onboarding
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -48,7 +48,7 @@ For role-specific onboarding paths, see the [Role Guides](../roles/).
 
 Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core), or use a [clone-based method](../../getting-started/install.md):
 
-For customization, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-hve-core-installer) and ask any agent "help me customize hve-core installation".
+For customization, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent "help me customize hve-core installation".
 
 ```text
 Set up HVE Core for my Python microservices project. Install the rpi and
