@@ -22,15 +22,17 @@ Every documentation file in this repository is expected to carry an `ms.date` fi
 
 The system runs in two contexts:
 
-* **Pull request validation** — Checks only the files changed in the PR and fails if any stale files are found.
-* **Weekly scheduled scan** — Scans all documentation files on Monday mornings and opens GitHub issues for any file exceeding the threshold.
+| Context | Description |
+|---------|-------------|
+| Pull request validation | Checks only the files changed in the PR and fails if any stale files are found. |
+| Weekly scheduled scan | Scans all documentation files on Monday mornings and opens GitHub issues for any file exceeding the threshold. |
 
 ## How It Works
 
 The `Invoke-MsDateFreshnessCheck.ps1` script reads each file's frontmatter, extracts `ms.date`, and computes the age in days. Files older than the threshold are reported as stale. Results write to:
 
-* `logs/msdate-freshness-results.json` — machine-readable output consumed by the issue automation workflow
-* `logs/msdate-summary.md` — human-readable Markdown summary uploaded to the Actions job summary
+* `logs/msdate-freshness-results.json`: machine-readable output consumed by the issue automation workflow
+* `logs/msdate-summary.md`: human-readable Markdown summary uploaded to the Actions job summary
 
 The PR check uses `changed-files-only: true` so contributors only see annotations for the files they actually touched. The weekly scan runs without this filter to find all outdated content across the repository.
 
@@ -72,13 +74,21 @@ Issues are not automatically closed. After updating the documentation and mergin
 
 ## Troubleshooting
 
-**Frontmatter missing or malformed** — The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are logged but not counted as stale.
+### Frontmatter missing or malformed
 
-**Date format errors** — Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
+The script skips files with no frontmatter block. Stale detection requires a valid `---` delimited YAML block with a parseable `ms.date` field. Files without `ms.date` are logged but not counted as stale.
 
-**PR check annotations not appearing** — If annotations are missing, check the Actions run for the `ms.date Freshness Check` job and review the uploaded job summary artifact.
+### Date format errors
 
-**Weekly workflow not triggering** — The workflow runs on Mondays at 09:00 UTC via `cron: '0 9 * * 1'`. Use `workflow_dispatch` on the `weekly-validation.yml` workflow to trigger a manual run for testing.
+Dates must use `YYYY-MM-DD` format. Values like `January 15, 2025` or `2025/01/15` will not parse and the file will be skipped with a warning.
+
+### PR check annotations not appearing
+
+If annotations are missing, check the Actions run for the `ms.date Freshness Check` job and review the uploaded job summary artifact.
+
+### Weekly workflow not triggering
+
+The workflow runs on Mondays at 09:00 UTC via `cron: '0 9 * * 1'`. Use `workflow_dispatch` on the `weekly-validation.yml` workflow to trigger a manual run for testing.
 
 ## Requirements
 
