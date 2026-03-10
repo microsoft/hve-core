@@ -1,91 +1,170 @@
 #!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Dynamically discovers and tests Python skills
+    Dynamically discovers and tests Python skills using pytest
 
 .DESCRIPTION
     Finds all directories containing pyproject.toml files (excluding node_modules)
     and runs pytest on each one.
 
+.PARAMETER RepoRoot
+    Root directory of the repository (defaults to current location)
+
+.PARAMETER OutputPath
+    Path to write JSON results (optional)
+
+.PARAMETER Verbosity
+    pytest verbosity level (default: -v)
+
 .EXAMPLE
     ./scripts/linting/Invoke-PythonTests.ps1
+
+.EXAMPLE
+    ./scripts/linting/Invoke-PythonTests.ps1 -Verbosity "-vv"
 #>
 
-$ErrorActionPreference = "Stop"
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $false)]
+    [string]$RepoRoot = (Get-Location).Path,
 
-# Find all directories with pyproject.toml
-$pythonSkills = Get-ChildItem -Path . -Filter "pyproject.toml" -Recurse -File |
-    Where-Object { $_.FullName -notmatch "node_modules" } |
-    ForEach-Object { $_.Directory.FullName }
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath,
 
-if (-not $pythonSkills) {
-    Write-Host "No Python skills found (no pyproject.toml files detected)" -ForegroundColor Yellow
-    exit 0
-}
+    [Parameter(Mandatory = $false)]
+    [string]$Verbosity = "-v"
+)
 
-Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
-$pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
+$ErrorActionPreference = 'Stop'
 
-$hasFailures = $false
-$totalTests = 0
-$passedTests = 0
-$failedTests = 0
+#region Functions
 
-foreach ($skillPath in $pythonSkills) {
-    Write-Host "`nRunning pytest in $skillPath..." -ForegroundColor Cyan
-    
-    Push-Location $skillPath
+function Invoke-PythonTests {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Verbosity = "-v"
+    )
+
+    Push-Location $RepoRoot
     try {
-        # Check if tests directory exists
-        $testsDir = Join-Path $skillPath "tests"
-        if (-not (Test-Path $testsDir)) {
-            Write-Host "⚠ No tests directory found, skipping" -ForegroundColor Yellow
-            Pop-Location
-            continue
+        # Find all directories with pyproject.toml
+        $pythonSkills = Get-ChildItem -Path . -Filter "pyproject.toml" -Recurse -File |
+            Where-Object { $_.FullName -notmatch "node_modules" } |
+            ForEach-Object { $_.Directory.FullName }
+
+        if (-not $pythonSkills) {
+            Write-Host "No Python skills found (no pyproject.toml files detected)" -ForegroundColor Yellow
+            return @{ success = $true; skillsTested = 0; passed = 0; failed = 0; errors = @() }
         }
-        
+
+        Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
+        $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
+
         # Check if pytest is available
         $pytestAvailable = Get-Command pytest -ErrorAction SilentlyContinue
         if (-not $pytestAvailable) {
-            Write-Host "⚠ pytest not installed, attempting to install..." -ForegroundColor Yellow
-            pip install pytest pytest-cov -q
+            Write-Host '❌ pytest is not installed. Run "uv sync" in a skill directory or install with "uv pip install pytest pytest-cov".' -ForegroundColor Red
+            return @{ success = $false; skillsTested = 0; passed = 0; failed = 0; errors = @("pytest not installed") }
         }
-        
-        $result = pytest tests/ -v --tb=short 2>&1
-        $exitCode = $LASTEXITCODE
-        
-        Write-Host "$result"
-        
-        if ($exitCode -ne 0) {
-            $hasFailures = $true
-            $failedTests++
-        } else {
-            $passedTests++
+
+        $results = @{
+            success = $true
+            skillsTested = 0
+            passed = 0
+            failed = 0
+            errors = @()
+            details = @()
         }
-        $totalTests++
-        
-    } catch {
-        Write-Host "Error running pytest: $_" -ForegroundColor Red
-        $hasFailures = $true
-        $failedTests++
-        $totalTests++
+
+        foreach ($skillPath in $pythonSkills) {
+            Write-Host "`nRunning pytest in $skillPath..." -ForegroundColor Cyan
+            
+            Push-Location $skillPath
+            try {
+                # Check if tests directory exists
+                $testsDir = Join-Path $skillPath "tests"
+                if (-not (Test-Path $testsDir)) {
+                    Write-Host "⚠ No tests directory found, skipping" -ForegroundColor Yellow
+                    # Don't call Pop-Location here - finally block handles it
+                    continue
+                }
+                
+                $output = pytest tests/ $Verbosity --tb=short 2>&1
+                $exitCode = $LASTEXITCODE
+                
+                $result = @{
+                    path = $skillPath
+                    passed = ($exitCode -eq 0)
+                    output = $output | Out-String
+                }
+                
+                $results.details += $result
+                $results.skillsTested++
+                
+                Write-Host "$output"
+                
+                if ($exitCode -ne 0) {
+                    Write-Host "❌ Tests failed" -ForegroundColor Red
+                    $results.success = $false
+                    $results.failed++
+                    $results.errors += $skillPath
+                } else {
+                    Write-Host "✓ All tests passed" -ForegroundColor Green
+                    $results.passed++
+                }
+            } catch {
+                Write-Host "Error running pytest: $_" -ForegroundColor Red
+                $results.success = $false
+                $results.failed++
+                $results.errors += "$skillPath - error: $_"
+            } finally {
+                Pop-Location
+            }
+        }
+
+        # Write results to file if OutputPath specified
+        if ($OutputPath) {
+            $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        }
+
+        return $results
     } finally {
         Pop-Location
     }
 }
 
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "Test Summary:" -ForegroundColor Cyan
-Write-Host "  Total: $totalTests" -ForegroundColor White
-Write-Host "  Passed: $passedTests" -ForegroundColor Green
-Write-Host "  Failed: $failedTests" -ForegroundColor $(if ($failedTests -gt 0) { "Red" } else { "Green" })
-Write-Host "========================================" -ForegroundColor Cyan
+#endregion
 
-if ($hasFailures) {
-    Write-Host "❌ Testing completed with failures" -ForegroundColor Red
-    exit 1
-} else {
-    Write-Host "✅ All tests passed" -ForegroundColor Green
-    exit 0
+#region Main Execution
+
+# Don't run main logic if dot-sourced for testing
+if ($MyInvocation.InvocationName -ne '.') {
+    $result = Invoke-PythonTests -RepoRoot $RepoRoot -OutputPath $OutputPath -Verbosity $Verbosity
+    
+    Write-Host "`n========================================" -ForegroundColor Cyan
+    Write-Host "Test Summary:" -ForegroundColor Cyan
+    Write-Host "  Total: $($result.skillsTested)" -ForegroundColor White
+    Write-Host "  Passed: $($result.passed)" -ForegroundColor Green
+    Write-Host "  Failed: $($result.failed)" -ForegroundColor $(if ($result.failed -gt 0) { "Red" } else { "Green" })
+    Write-Host "========================================" -ForegroundColor Cyan
+    
+    if ($result.success) {
+        Write-Host "✅ All tests passed" -ForegroundColor Green
+        exit 0
+    } else {
+        Write-Host "❌ Testing completed with failures" -ForegroundColor Red
+        exit 1
+    }
 }
+
+#endregion

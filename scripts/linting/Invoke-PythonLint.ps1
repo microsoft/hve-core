@@ -1,4 +1,6 @@
 #!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 <#
 .SYNOPSIS
@@ -8,64 +10,134 @@
     Finds all directories containing pyproject.toml files (excluding node_modules)
     and runs ruff linting on each one.
 
+.PARAMETER RepoRoot
+    Root directory of the repository (defaults to current location)
+
+.PARAMETER OutputPath
+    Path to write JSON results (optional)
+
 .EXAMPLE
     ./scripts/linting/Invoke-PythonLint.ps1
+
+.EXAMPLE
+    ./scripts/linting/Invoke-PythonLint.ps1 -RepoRoot ./my-repo
 #>
 
-$ErrorActionPreference = "Stop"
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $false)]
+    [string]$RepoRoot = (Get-Location).Path,
 
-# Find all directories with pyproject.toml
-$pythonSkills = Get-ChildItem -Path . -Filter "pyproject.toml" -Recurse -File |
-    Where-Object { $_.FullName -notmatch "node_modules" } |
-    ForEach-Object { $_.Directory.FullName }
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath
+)
 
-if (-not $pythonSkills) {
-    Write-Host "No Python skills found (no pyproject.toml files detected)" -ForegroundColor Yellow
-    exit 0
-}
+$ErrorActionPreference = 'Stop'
 
-Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
-$pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
+#region Functions
 
-$hasErrors = $false
+function Invoke-PythonLint {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
 
-# Check if ruff is available
-$ruffAvailable = Get-Command ruff -ErrorAction SilentlyContinue
-if (-not $ruffAvailable) {
-    Write-Host "⚠ ruff not installed, attempting to install..." -ForegroundColor Yellow
-    pip install ruff -q
-}
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath
+    )
 
-foreach ($skillPath in $pythonSkills) {
-    Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
-    
-    Push-Location $skillPath
+    Push-Location $RepoRoot
     try {
-        $result = ruff check . 2>&1
-        $exitCode = $LASTEXITCODE
-        
-        if ($result) {
-            Write-Host "$result"
+        # Find all directories with pyproject.toml
+        $pythonSkills = Get-ChildItem -Path . -Filter "pyproject.toml" -Recurse -File |
+            Where-Object { $_.FullName -notmatch "node_modules" } |
+            ForEach-Object { $_.Directory.FullName }
+
+        if (-not $pythonSkills) {
+            Write-Host "No Python skills found (no pyproject.toml files detected)" -ForegroundColor Yellow
+            return @{ success = $true; skillsChecked = 0; errors = @() }
         }
-        
-        if ($exitCode -ne 0) {
-            Write-Host "❌ Linting issues found" -ForegroundColor Red
-            $hasErrors = $true
-        } else {
-            Write-Host "✓ No linting issues" -ForegroundColor Green
+
+        Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
+        $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
+
+        # Check if ruff is available
+        $ruffAvailable = Get-Command ruff -ErrorAction SilentlyContinue
+        if (-not $ruffAvailable) {
+            Write-Host '❌ ruff is not installed. Run "uv sync" in a skill directory or install with "uv pip install ruff".' -ForegroundColor Red
+            return @{ success = $false; skillsChecked = 0; errors = @("ruff not installed") }
         }
-    } catch {
-        Write-Host "Error running ruff: $_" -ForegroundColor Red
-        $hasErrors = $true
+
+        $results = @{
+            success = $true
+            skillsChecked = 0
+            errors = @()
+            details = @()
+        }
+
+        foreach ($skillPath in $pythonSkills) {
+            Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
+            
+            Push-Location $skillPath
+            try {
+                $output = ruff check . 2>&1
+                $exitCode = $LASTEXITCODE
+                
+                $result = @{
+                    path = $skillPath
+                    passed = ($exitCode -eq 0)
+                    output = $output | Out-String
+                }
+                
+                $results.details += $result
+                $results.skillsChecked++
+                
+                if ($exitCode -ne 0) {
+                    Write-Host "$output" -ForegroundColor Red
+                    Write-Host "❌ Linting issues found" -ForegroundColor Red
+                    $results.success = $false
+                    $results.errors += $skillPath
+                } else {
+                    if ($output) {
+                        Write-Host "$output"
+                    }
+                    Write-Host "✓ No linting issues" -ForegroundColor Green
+                }
+            } catch {
+                Write-Host "Error running ruff: $_" -ForegroundColor Red
+                $results.success = $false
+                $results.errors += "$skillPath - error: $_"
+            } finally {
+                Pop-Location
+            }
+        }
+
+        # Write results to file if OutputPath specified
+        if ($OutputPath) {
+            $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        }
+
+        return $results
     } finally {
         Pop-Location
     }
 }
 
-if ($hasErrors) {
-    Write-Host "`n❌ Linting completed with errors" -ForegroundColor Red
-    exit 1
-} else {
-    Write-Host "`n✅ All Python skills passed linting" -ForegroundColor Green
-    exit 0
+#endregion
+
+#region Main Execution
+
+# Don't run main logic if dot-sourced for testing
+if ($MyInvocation.InvocationName -ne '.') {
+    $result = Invoke-PythonLint -RepoRoot $RepoRoot -OutputPath $OutputPath
+    
+    if ($result.success) {
+        Write-Host "`n✅ All Python skills passed linting" -ForegroundColor Green
+        exit 0
+    } else {
+        Write-Host "`n❌ Linting completed with errors" -ForegroundColor Red
+        exit 1
+    }
 }
+
+#endregion
