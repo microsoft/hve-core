@@ -35,19 +35,19 @@ copilot plugin install hve-core-all@hve-core
 
 ## Available Plugins
 
-| Plugin            | Description                                 |
-|-------------------|---------------------------------------------|
-| hve-core          | Research, Plan, Implement, Review lifecycle |
-| github            | GitHub issue management                     |
-| ado               | Azure DevOps integration                    |
-| coding-standards  | Language-specific coding guidelines         |
-| project-planning  | PRDs, BRDs, ADRs, architecture diagrams     |
-| data-science      | Data specs, notebooks, dashboards           |
-| design-thinking   | Design thinking coaching and methodology    |
-| security-planning | Security and incident response              |
-| installer         | HVE Core installation automation            |
-| experimental      | Experimental and preview artifacts          |
-| hve-core-all      | Full HVE Core bundle                        |
+| Plugin            | Description                                                                                                                                                               |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| hve-core          | Research, Plan, Implement, Review lifecycle                                                                                                                               |
+| github            | GitHub issue management                                                                                                                                                   |
+| ado               | Azure DevOps integration                                                                                                                                                  |
+| coding-standards  | Language-specific coding guidelines                                                                                                                                       |
+| project-planning  | PRDs, BRDs, ADRs, architecture diagrams                                                                                                                                   |
+| data-science      | Data specs, notebooks, dashboards                                                                                                                                         |
+| design-thinking   | Design thinking coaching and methodology                                                                                                                                  |
+| security-planning | Security and incident response                                                                                                                                            |
+| installer         | Installer skill for guided workspace setup and MCP auto-configuration ([Extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer)) |
+| experimental      | Experimental and preview artifacts                                                                                                                                        |
+| hve-core-all      | Full HVE Core bundle                                                                                                                                                      |
 
 ## Plugin Contents
 

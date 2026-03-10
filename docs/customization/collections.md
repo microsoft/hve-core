@@ -25,6 +25,9 @@ the collection's purpose, lists key artifacts, and helps users decide whether to
 Together, these two files form a complete, self-contained collection package that the plugin
 generation pipeline processes into distributable output under `plugins/`.
 
+> [!IMPORTANT]
+> The HVE Core installer skill supports agent bundle selection by collection during clone-based setup. This copies agents only. Prompts, instructions, and skills are not filtered by collection. See the [installation guide](../getting-started/install.md) for setup options.
+
 ## YAML Manifest Format
 
 Every collection manifest follows the `collection-manifest.schema.json` schema. The top-level

@@ -18,11 +18,9 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration. For the complete library across all collections, use the `hve-core-all` CLI plugin or installer skill.
 >
 > Your primary collections are `hve-core` (research, planning, implementation, and review agents) and `coding-standards` (language-specific instructions that auto-apply based on file type). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
-
-## What HVE Core Does for You
 
 1. Researches codebase patterns, external APIs, and architecture before you write code
 2. Creates structured implementation plans with step-by-step task breakdowns

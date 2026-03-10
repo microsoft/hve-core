@@ -12,6 +12,25 @@ keywords:
 estimated_reading_time: 5
 ---
 
+## Before You Customize
+
+Your installation method determines which customization options are available.
+
+| Customization Level       | Extension Only | Installer Skill (Clone) | Direct Clone |
+|---------------------------|:--------------:|:-----------------------:|:------------:|
+| VS Code Settings          |       ✅        |            ✅            |      ✅       |
+| copilot-instructions.md   |       ✅        |            ✅            |      ✅       |
+| .instructions.md files    | ✅ (your repo)  |            ✅            |      ✅       |
+| Agent bundle selection    |       ❌        |            ✅            |      ✅       |
+| Modify agents             |       ❌        |            ❌            |      ✅       |
+| Modify prompts and skills |       ❌        |            ❌            |      ✅       |
+| Build system changes      |       ❌        |            ❌            |      ✅       |
+| Fork and extend           |       ❌        |            ❌            |      ✅       |
+
+The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) installs the flagship RPI workflow and core artifacts. For the complete library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
+For MCP auto-configuration, installation method guidance, or agent bundle selection, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent \"help me customize hve-core installation\".
+For full artifact modification, use a [clone-based installation method](../getting-started/install#custom-installation-methods).
+
 ## Customization Spectrum
 
 HVE Core supports a range of customization depths. Start with the lightest option that meets your needs, then move deeper when the situation demands it.

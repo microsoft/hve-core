@@ -13,6 +13,12 @@ keywords:
 estimated_reading_time: 7
 ---
 
+## Recommended Starting Point
+
+Start team adoption with the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the flagship RPI workflow across all team members.
+When the team is ready for clone-based methods, the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) skill is the best way to choose the right one. It evaluates your environment, recommends peer clone, submodule, git-ignored, or another method, then configures MCP servers and agent bundles. Install the extension and ask any agent "help me customize hve-core installation".
+Move to direct clone setup only when artifact modification is required beyond what the installer provides.
+
 ## Adoption Strategy
 
 Adopt HVE Core incrementally. A phased approach lets your team build confidence

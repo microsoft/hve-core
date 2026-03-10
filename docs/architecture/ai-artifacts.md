@@ -362,11 +362,11 @@ The maturity table above applies to individual artifacts. Collections also carry
 
 Multiple extension packages can be built from the same codebase:
 
-| Collection | Extension ID                  | Contents             |
-|------------|-------------------------------|----------------------|
-| Full       | `ise-hve-essentials.hve-core` | All stable artifacts |
+| Collection | Extension ID                  | Contents                        |
+|------------|-------------------------------|---------------------------------|
+| Flagship   | `ise-hve-essentials.hve-core` | RPI workflow and core artifacts |
 
-Users install the collection matching their role for a curated experience.
+The flagship extension ships the `hve-core` collection. For the complete artifact library across all collections, use the `hve-core-all` extension or CLI plugin. Users install the collection matching their role for a curated experience.
 
 ### Activation Context
 

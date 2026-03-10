@@ -43,6 +43,8 @@ Install the VS Code extension from the Marketplace:
 
 [![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
+> **Need guided setup or the complete artifact library?** Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension for the installer skill. It walks you through installation methods, MCP configuration, and agent bundle selection.
+
 Need a different installation method? See the [Installation Guide](docs/getting-started/install.md) for CLI plugins, submodules, multi-root workspaces, and more.
 
 ### 2. Verify
