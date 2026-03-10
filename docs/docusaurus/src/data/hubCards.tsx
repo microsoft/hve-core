@@ -63,7 +63,7 @@ export const iconCards: IconCardData[] = [
     icon: <TemplatesExamplesIcon />,
     supertitle: 'Templates',
     title: 'Reusable patterns',
-    href: '/docs/category/templates',
+    href: '/docs/templates/',
     description: 'Ready-to-use templates for ADRs, BRDs, agents, and instructions',
   },
 ];
@@ -76,7 +76,7 @@ export const boxCards: BoxCardData[] = [
     links: [
       { label: 'Installation guide', href: '/docs/category/getting-started' },
       { label: 'Your first workflow', href: '/docs/category/rpi' },
-      { label: 'Browse templates', href: '/docs/category/templates' },
+      { label: 'Browse templates', href: '/docs/templates/' },
     ],
   },
   {
@@ -85,7 +85,7 @@ export const boxCards: BoxCardData[] = [
     description: 'Leverage AI across the development lifecycle',
     links: [
       { label: 'Configure agents', href: '/docs/category/agents' },
-      { label: 'Write instructions', href: '/docs/category/customization' },
+      { label: 'Write instructions', href: '/docs/customization/' },
       { label: 'Architecture', href: '/docs/category/architecture' },
     ],
   },
@@ -105,8 +105,8 @@ export const boxCards: BoxCardData[] = [
     description: 'Tailor HVE Core to your team',
     links: [
       { label: 'Custom agents', href: '/docs/category/agents' },
-      { label: 'Skill packages', href: '/docs/category/customization' },
-      { label: 'Template library', href: '/docs/category/templates' },
+      { label: 'Skill packages', href: '/docs/customization/' },
+      { label: 'Template library', href: '/docs/templates/' },
     ],
   },
 ];

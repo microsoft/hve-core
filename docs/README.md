@@ -159,7 +159,7 @@ Pre-built templates for common engineering documents:
 * [BRD Template](templates/brd-template.md) - Business Requirements Documents
 * [Security Plan Template](templates/security-plan-template.md) - Security planning
 
-**[Browse Templates →](/docs/category/templates)**
+**[Browse Templates →](/docs/templates/)**
 
 ## Quick Links
 

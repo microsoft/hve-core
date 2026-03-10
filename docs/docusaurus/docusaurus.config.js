@@ -71,6 +71,12 @@ const config = {
       colorMode: {
         respectPrefersColorScheme: true,
       },
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: true,
+        },
+      },
       navbar: {
         title: 'HVE Core',
         logo: {
@@ -98,8 +104,7 @@ const config = {
               { label: 'Architecture', to: '/docs/category/architecture' },
               { label: 'Contributing', to: '/docs/category/contributing' },
               { label: 'Security', to: '/docs/category/security' },
-              { label: 'Templates', to: '/docs/category/templates' },
-              { label: 'Customization', to: '/docs/category/customization' },
+              { label: 'Templates', to: '/docs/templates/' },
             ],
           },
           {
@@ -127,8 +132,7 @@ const config = {
             items: [
               { label: 'Contributing', to: '/docs/category/contributing' },
               { label: 'Security', to: '/docs/category/security' },
-              { label: 'Templates', to: '/docs/category/templates' },
-              { label: 'Customization', to: '/docs/category/customization' },
+              { label: 'Templates', to: '/docs/templates/' },
             ],
           },
           {
