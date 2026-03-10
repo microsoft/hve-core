@@ -40,7 +40,6 @@ copilot plugin install hve-core-all@hve-core
 | task-planner                 | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | task-researcher              | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer                | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
-| hve-core-installer           | Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core                                             |
 | adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
 | agile-coach                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
@@ -182,10 +181,11 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill        | Description  |
-|--------------|--------------|
-| video-to-gif | video-to-gif |
-| pr-reference | pr-reference |
+| Skill              | Description        |
+|--------------------|--------------------|
+| video-to-gif       | video-to-gif       |
+| hve-core-installer | hve-core-installer |
+| pr-reference       | pr-reference       |
 
 ---
 

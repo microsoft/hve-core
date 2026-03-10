@@ -14,7 +14,7 @@
     Root path to scan for source files. Defaults to repository root.
 
 .PARAMETER FileExtensions
-    Array of file extensions to check. Defaults to @('*.ps1', '*.psm1', '*.psd1', '*.sh').
+    Array of file extensions to check. Defaults to @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py').
 
 .PARAMETER OutputPath
     Path where results should be saved. Defaults to 'logs/copyright-header-results.json'.
@@ -57,7 +57,7 @@ param(
     [string]$Path = (git rev-parse --show-toplevel 2>$null),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh'),
+    [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py'),
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/copyright-header-results.json",
@@ -169,7 +169,7 @@ function Invoke-CopyrightHeaderCheck {
         [string]$Path = $(if ($p = git rev-parse --show-toplevel 2>$null) { $p } else { '.' }),
 
         [Parameter(Mandatory = $false)]
-        [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh'),
+        [string[]]$FileExtensions = @('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py'),
 
         [Parameter(Mandatory = $false)]
         [string]$OutputPath = "logs/copyright-header-results.json",

@@ -31,6 +31,15 @@ All source files in this repository must include a copyright and license header.
 
 Applies to: `.ps1` files
 
+### Python Files
+
+```text
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+```
+
+Applies to: `.py` files
+
 ## Placement Rules
 
 The header placement depends on any required directives in the file:
@@ -60,6 +69,18 @@ param(
     [string]$Path
 )
 ```
+
+### Python Files
+
+Place the header **after** any shebang line and **before** PEP 723 inline metadata or the module docstring:
+
+```python
+#!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+```
+
+If no shebang exists, place the header at the first line.
 
 ## References
 

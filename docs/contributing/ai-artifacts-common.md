@@ -238,19 +238,19 @@ Collections represent role-targeted artifact packages for HVE-Core artifacts. Th
 
 ### Defined Collections
 
-| Collection            | Identifier          | Description                                                                                  |
-|-----------------------|---------------------|----------------------------------------------------------------------------------------------|
-| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills                 |
-| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation               |
-| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, PowerShell, Python, and Terraform |
-| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards                   |
-| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions         |
-| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                                       |
-| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution                       |
-| **Installer**         | `installer`         | HVE Core installation and environment setup                                                  |
-| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                        |
-| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                                |
-| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                               |
+| Collection            | Identifier          | Description                                                                          |
+|-----------------------|---------------------|--------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
+| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation       |
+| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
+| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
+| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions |
+| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                               |
+| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution               |
+| **Installer**         | `installer`         | HVE Core installation skill (installer) and environment setup                        |
+| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
+| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                        |
+| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                       |
 
 ### Collection Assignment Guidelines
 

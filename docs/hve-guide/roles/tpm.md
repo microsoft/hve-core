@@ -20,7 +20,7 @@ This guide is for you if you drive project planning, manage requirements, coordi
 > [!TIP]
 > Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
 >
-> Your primary collections are `project-planning` (BRD/PRD builders, agile coaching, and work item management), `ado` (Azure DevOps integration), and `github` (issue discovery and backlog automation). For clone-based setups, use the **hve-core-installer** agent with `install project-planning ado github`.
+> Your primary collections are `project-planning` (BRD/PRD builders, agile coaching, and work item management), `ado` (Azure DevOps integration), and `github` (issue discovery and backlog automation). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
