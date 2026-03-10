@@ -3,7 +3,7 @@ title: Data Scientist Guide
 description: HVE Core support for data scientists building notebooks, dashboards, data specifications, and analytics workflows
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - data science
@@ -18,7 +18,7 @@ This guide is for you if you analyze data, build Jupyter notebooks, create dashb
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
 > Your primary collections are `data-science` (notebook generation, dashboard creation, and data specification tools) and `hve-core` (research and planning workflows for larger analytics projects). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
