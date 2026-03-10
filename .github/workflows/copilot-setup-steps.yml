@@ -109,14 +109,14 @@ jobs:
           echo "Syncing Python environments for skills..."
           failed=0
           while IFS= read -r -d '' f; do
-            dir="$(dirname "$f")"
-            echo "Installing dependencies in $dir"
-            if ! (cd "$dir" && uv sync); then
-              echo "::error::uv sync failed in $dir"
+            dir="$(dirname "${f}")"
+            echo "Installing dependencies in ${dir}"
+            if ! (cd "${dir}" && uv sync); then
+              echo "::error::uv sync failed in ${dir}"
               failed=1
             fi
           done < <(find .github/skills -name pyproject.toml -type f -print0)
-          if [[ "$failed" -ne 0 ]]; then
+          if [[ "${failed}" -ne 0 ]]; then
             echo "::error::One or more skill dependency installations failed"
             exit 1
           fi
