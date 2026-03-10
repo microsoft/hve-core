@@ -1,5 +1,5 @@
 ---
-description: 'Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact targeting task-researcher'
+description: 'Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher'
 agent: 'agent'
 tools: ['read_file', 'create_file', 'replace_string_in_file']
 argument-hint: "project-slug=..."

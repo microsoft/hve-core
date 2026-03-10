@@ -38,7 +38,6 @@ This agent delegates phase execution to `phase-implementor` agents and research 
 
 Run `phase-implementor` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/phase-implementor.agent.md`
 * Phase identifier and step list from the implementation plan.
 * Plan file path, details file path with line ranges, and research file path.
 * Instruction files to read and follow (from `.github/instructions/` and any other conventions, standards, or architecture files relevant to the phase). Select by matching `applyTo` patterns against files targeted by the phase.
@@ -50,7 +49,6 @@ The phase-implementor returns a structured completion report: phase status, exec
 
 Run `researcher-subagent` agents as subagents using `runSubagent` or `task` tools, providing these inputs:
 
-* If using `runSubagent`, include instructions in your prompt to read and follow `.github/agents/**/researcher-subagent.agent.md`
 * Research topic(s) and/or question(s) to investigate.
 * Subagent research document file path to create or update.
 
@@ -213,8 +211,8 @@ When implementation completes or pauses, provide the structured handoff:
 
 Review the implementation results:
 
-1. Review [changes log](.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task}}-changes.md) for all modifications.
-2. Review [planning log](.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md) for discrepancies and follow-on work.
+1. Review `../../../.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task}}-changes.md` for all modifications.
+2. Review `../../../.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task}}-log.md` for discrepancies and follow-on work.
 3. Choose your next action:
    * Plan additional work by typing `/task-plan`.
    * Research a topic by typing `/task-research`.

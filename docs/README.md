@@ -115,7 +115,7 @@ Adapt HVE Core to your team's workflow with these guides, from lightweight instr
 
 * [Customization Overview](customization/README.md) - Spectrum of customization options and role-based entry points
 * [Instructions](customization/instructions.md) - Repository-level and file-pattern-scoped coding guidance
-* [Agents](customization/agents.md) - Custom agent architecture, subagent patterns, and tool restrictions
+* [Agents](customization/custom-agents.md) - Custom agent architecture, subagent patterns, and tool restrictions
 * [Prompts](customization/prompts.md) - Task-specific prompt files with variables and agent delegation
 * [Skills](customization/skills.md) - Self-contained skill packages with scripts and references
 * [Collections](customization/collections.md) - Bundle and distribute sets of agents, prompts, instructions, and skills

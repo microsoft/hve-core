@@ -10,6 +10,7 @@ keywords:
   - github copilot
   - backlog management
 estimated_reading_time: 8
+sidebar_position: 11
 ---
 
 Each backlog manager workflow handles one phase of work item management. Connecting them creates a pipeline that takes work items from discovery through execution, with structured handoffs ensuring nothing falls through the cracks.
@@ -182,13 +183,16 @@ The ADO Backlog Manager provides handoff buttons for quick workflow transitions:
 
 ## Artifact Summary
 
-| Workflow        | Input            | Output                                      | Key File          |
-|-----------------|------------------|---------------------------------------------|-------------------|
-| Discovery       | Project scope    | Work item inventory and recommendations     | `planning-log.md` |
-| Triage          | Discovery output | Field suggestions and duplicate flags       | `work-items.md`   |
-| PRD Planning    | Requirements doc | Work item hierarchy with parent-child links | `handoff.md`      |
-| Sprint Planning | Triage output    | Iteration assignments and capacity analysis | `handoff.md`      |
-| Execution       | Handoff files    | Applied changes and operation log           | `handoff-logs.md` |
+| Workflow         | Input            | Output                                      | Key File          |
+|------------------|------------------|---------------------------------------------|-------------------|
+| Discovery        | Project scope    | Work item inventory and recommendations     | `planning-log.md` |
+| Triage           | Discovery output | Field suggestions and duplicate flags       | `work-items.md`   |
+| PRD Planning     | Requirements doc | Work item hierarchy with parent-child links | `handoff.md`      |
+| Sprint Planning  | Triage output    | Iteration assignments and capacity analysis | `handoff.md`      |
+| Execution        | Handoff files    | Applied changes and operation log           | `handoff-logs.md` |
+| Task Planning    | Assigned items   | Prioritized task list with reasoning        | `task-list.md`    |
+| Build Monitoring | PR or branch     | Pipeline status, logs, and failure details  | `build-status.md` |
+| PR Creation      | Local changes    | Pull request with work item links           | `pr-details.md`   |
 
 ## Quick Reference
 
@@ -202,6 +206,8 @@ The ADO Backlog Manager provides handoff buttons for quick workflow transitions:
 | Convert a PRD to work items | PRD Planning       | "Convert this requirements doc to work items"        |
 | Create a single bug quickly | Quick Add          | "Add a bug: login page crashes on empty password"    |
 | Check pipeline status       | Build Info         | "Get build status for PR 1234"                       |
+| Prioritize your task list   | Task Planning      | "Plan my tasks for today"                            |
+| Create a pull request       | PR Creation        | "Create a PR for my current branch"                  |
 | Full backlog review         | All workflows      | Run each in sequence with `/clear` between them      |
 
 ---

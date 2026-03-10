@@ -10,6 +10,7 @@ keywords:
   - handoff
   - github copilot
 estimated_reading_time: 5
+sidebar_position: 7
 ---
 
 The Execution workflow consumes handoff files from triage, sprint planning, and PRD planning, applying approved changes to Azure DevOps work items. It tracks progress through checkbox-based handoff logs and produces operation reports for audit and recovery.
@@ -113,12 +114,34 @@ Reference the handoff file when starting an execution conversation:
 Execute the handoff at .copilot-tracking/workitems/triage/2026-02-26/work-items.md
 ```
 
-## Example Prompt
+## Example Prompts
+
+Execute a triage handoff by file reference:
+
+```text
+Execute the handoff at
+.copilot-tracking/workitems/triage/2026-02-26/work-items.md
+Apply all checked operations. Write an operation log so I can verify
+what changed.
+```
+
+Execute sprint planning assignments with safety filters:
 
 ```text
 Execute the sprint planning handoff. Apply all checked operations and
-skip any work items that have been modified in the last 24 hours.
+skip any work items that have been modified in the last 24 hours. Use
+partial autonomy so I can approve field changes before they are written.
 ```
+
+Selective execution of specific operation types:
+
+```text
+Execute only the Area Path assignments from the triage handoff. Skip
+priority changes and duplicate resolution for now. Log any items that
+were skipped because of field conflicts.
+```
+
+**Output artifacts:** Execution writes an operation log to `.copilot-tracking/workitems/` recording each applied change, skipped items, and conflicts. Review the log for any unexpected skips or field conflict warnings.
 
 ## Tips
 

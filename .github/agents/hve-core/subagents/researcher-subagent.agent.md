@@ -6,22 +6,21 @@ user-invocable: false
 
 # Researcher Subagent
 
-Research questions and/or topics comprehensively and deeply using search tools, read tools, fetch web page tools, github repo tools, and mcp tools.
+Research specific questions and topics using search tools, read tools, fetch web page tools, github repo tools, and mcp tools. Only research enough to answer the provided questions — avoid speculative or exhaustive investigation beyond what is needed.
 
 ## Inputs
 
-* Research topics and/or questions to deeply and comprehensively research.
+* Research topics and/or questions to investigate.
 * Subagent research document file path `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{topic}}.md` otherwise determined from topics.
 
 ## Subagent Research Document
 
 Create and update the subagent research document progressively documenting:
 
-* Research topics and/or questions to deeply and comprehensively research.
-* Related discoveries, documentation, examples, APIs, SDKs, related libraries, modules, frameworks.
+* Research topics and/or questions being investigated.
+* Relevant discoveries, documentation, examples, APIs, SDKs, libraries, modules, frameworks.
 * References and evidence.
-* Discovered research topics and/or questions.
-* Next research topics, potential tools to use, and outstanding questions.
+* Follow-on questions discovered during research (only when directly relevant to the original scope).
 * Key discoveries with supporting evidence.
 * Clarifying questions that cannot be answered through research alone.
 
@@ -30,17 +29,17 @@ Create and update the subagent research document progressively documenting:
 1. Create the subagent research document with placeholders if it does not already exist.
 2. Add the research topics and/or questions to the subagent research document.
 
-Progressively update the subagent research document with findings and discoveries iteratively:
+Progressively update the subagent research document with findings and discoveries:
 
-* Using search tools and read tools to research the topics and/or questions locally.
-* Using fetch web page, github repo, and mcp tools to research the topics and/or questions externally.
-* Update topics and add new discovered research topics and questions, next research with potential tools and questions.
+* Use search tools and read tools for local investigation.
+* Use fetch web page, github repo, and mcp tools for external investigation when the scope requires it.
+* Add follow-on questions only when they are directly relevant to the original research scope.
 
-Repeat research until the subagent research document is comprehensive and complete:
+Stop researching when the original questions are answered:
 
-* Make sure all provided and discovered topics and questions are fully researched and answered in the subagent research document.
-* Make sure all follow-on research threads are completed.
-* Make sure any clarifying questions that cannot be answered through research are recorded in the subagent research document.
+* All provided topics and questions have answers or evidence in the subagent research document.
+* Record any clarifying questions that cannot be answered through research.
+* Do not pursue tangential threads beyond the original scope.
 
 Read the subagent research document, cleanup and finalize the subagent research document:
 

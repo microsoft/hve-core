@@ -11,6 +11,7 @@ keywords:
   - capacity tracking
   - github copilot
 estimated_reading_time: 6
+sidebar_position: 5
 ---
 
 The Sprint Planning workflow organizes triaged work items into Azure DevOps iterations, analyzes coverage across area paths, tracks capacity utilization, and detects gaps in work item decomposition hierarchies.
@@ -105,13 +106,36 @@ Click the "Sprint" handoff button in the ADO Backlog Manager agent to launch spr
 
 Start a conversation with the ADO Backlog Manager agent and describe your sprint planning goal. The agent classifies your intent and begins iteration discovery automatically.
 
-## Example Prompt
+## Example Prompts
+
+Full sprint plan with capacity analysis:
 
 ```text
-Plan sprint assignments for the Sprint 24 iteration. Show area path
-coverage gaps, hierarchy decomposition completeness, and capacity
-utilization against our team capacity of 55 story points.
+Plan sprint assignments for the Sprint 24 iteration. Analyze:
+- Area path coverage gaps across all triaged items
+- Hierarchy decomposition completeness (Epics to Stories to Tasks)
+- Capacity utilization against our team capacity of 55 story points
+- Priority sequencing within the iteration
 ```
+
+Coverage gap analysis without assignments:
+
+```text
+Analyze the current backlog for Sprint 25 readiness. Show which area
+paths have no planned work, identify orphaned items missing parent
+links, and flag Stories without Task decomposition. Do not assign
+items to the iteration yet.
+```
+
+Reassignment of items from a closed iteration:
+
+```text
+Find all work items still assigned to Sprint 22 that are not in the
+Closed state. Recommend reassignment to Sprint 24 or Sprint 25 based
+on priority and remaining capacity.
+```
+
+**Output artifacts:** Sprint planning creates a handoff file with iteration assignments and a coverage matrix. Review capacity utilization warnings and coverage gaps before passing the handoff to execution.
 
 ## Tips
 
