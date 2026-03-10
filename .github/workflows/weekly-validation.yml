@@ -1,0 +1,37 @@
+name: Weekly Validation
+
+on:
+  schedule:
+    # Weekly scan: Mondays at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: stale-docs-issues
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  msdate-freshness:
+    name: ms.date Freshness Check
+    uses: ./.github/workflows/msdate-freshness-check.yml
+    with:
+      staleness-threshold-days: 90
+      changed-files-only: false
+    permissions:
+      contents: read
+
+  create-stale-docs-issues:
+    name: Create or Update Issues for Stale Documentation
+    needs: [msdate-freshness]
+    if: failure() && needs.msdate-freshness.result == 'failure'
+    uses: ./.github/workflows/create-stale-docs-issues.yml
+    with:
+      threshold-days: 90
+      artifact-name: msdate-freshness-results
+    permissions:
+      contents: read
+      issues: write

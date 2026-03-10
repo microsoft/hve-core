@@ -1,0 +1,69 @@
+name: ms.date Freshness Check
+
+on:
+  workflow_call:
+    inputs:
+      staleness-threshold-days:
+        description: 'Number of days before a document is considered stale'
+        required: false
+        type: number
+        default: 90
+      changed-files-only:
+        description: 'Only check files changed in the PR'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  msdate-freshness:
+    name: Check ms.date Freshness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Create logs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Run ms.date freshness check
+        shell: pwsh
+        run: |
+          $params = @{
+              ThresholdDays = ${{ inputs.staleness-threshold-days }}
+          }
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+              $params['ChangedFilesOnly'] = $true
+          }
+          & scripts/linting/Invoke-MsDateFreshnessCheck.ps1 @params
+
+      - name: Upload freshness results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: msdate-freshness-results
+          path: logs/msdate-freshness-results.json
+          retention-days: 30
+
+      - name: Upload job summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path logs/msdate-summary.md) {
+            Get-Content logs/msdate-summary.md | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+

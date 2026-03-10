@@ -1,0 +1,114 @@
+name: Create Stale Documentation Issues
+
+on:
+  workflow_call:
+    inputs:
+      threshold-days:
+        description: 'Number of days before ms.date is considered stale'
+        required: false
+        type: number
+        default: 90
+      artifact-name:
+        description: 'Name of the artifact containing freshness check results'
+        required: false
+        type: string
+        default: msdate-freshness-results
+      results-file:
+        description: 'Path to JSON results file after artifact download'
+        required: false
+        type: string
+        default: logs/msdate-freshness-results.json
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-stale-docs-issues:
+    name: Create or Update Issues for Stale Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Download freshness check results
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: logs
+
+      - name: Create or Update Issues (One Per File)
+        shell: pwsh
+        run: |
+          $results = Get-Content '${{ inputs.results-file }}' | ConvertFrom-Json
+          $staleFiles = $results | Where-Object { $_.IsStale -eq $true }
+
+          if (-not $staleFiles) {
+            Write-Host "No stale files found, skipping issue creation"
+            exit 0
+          }
+
+          foreach ($file in $staleFiles) {
+            $filePath = $file.File
+            $msDate = $file.MsDate
+            $ageDays = $file.AgeDays
+
+            $issueTitle = "docs: Update stale documentation - $filePath"
+            $automationMarker = "<!-- automation:stale-docs:$filePath -->"
+
+            $searchQuery = "repo:${{ github.repository }} is:issue is:open in:body `"automation:stale-docs:$filePath`""
+            $existingIssueJson = gh issue list `
+              --repo "${{ github.repository }}" `
+              --search $searchQuery `
+              --limit 1 `
+              --json number `
+              --jq '.[0].number // empty'
+
+            $existingIssue = if ($existingIssueJson) { $existingIssueJson.Trim() } else { $null }
+
+            $issueBody = @"
+          ## Stale Documentation Detected
+
+          **File:** ``$filePath``
+          **Current ms.date:** ``$msDate``
+          **Age:** $ageDays days (threshold: ${{ inputs.threshold-days }} days)
+
+          ---
+          **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          **Detection Date:** $(Get-Date -Format 'yyyy-MM-dd' -AsUTC)
+
+          ### Action Required
+          - [ ] Review and update this documentation file
+          - [ ] Update ``ms.date`` frontmatter to current date
+          - [ ] Verify technical accuracy of content
+          - [ ] Close this issue manually after fixes are merged
+
+          $automationMarker
+          "@
+
+            if ($existingIssue) {
+              Write-Host "Updating existing issue #$existingIssue for $filePath"
+              gh issue edit $existingIssue `
+                --repo "${{ github.repository }}" `
+                --body $issueBody
+
+              $updateDate = Get-Date -Format 'yyyy-MM-dd' -AsUTC
+              gh issue comment $existingIssue `
+                --repo "${{ github.repository }}" `
+                --body "🔄 **Weekly validation update:** Still stale ($ageDays days) as of $updateDate"
+            } else {
+              Write-Host "Creating new issue for $filePath"
+              gh issue create `
+                --repo "${{ github.repository }}" `
+                --title $issueTitle `
+                --body $issueBody `
+                --label "documentation,stale-docs,automated,needs-triage"
+            }
+          }
+        env:
+          GH_TOKEN: ${{ github.token }}
