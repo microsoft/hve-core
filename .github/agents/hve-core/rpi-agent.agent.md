@@ -462,8 +462,6 @@ Reply with option numbers to continue, or describe different work.
 
 The blockquote quick-reference line maps each numbered button to its suggestion title so users can identify options without scrolling back.
 
-The blockquote quick-reference line maps each numbered button to its suggestion title so users can identify options without scrolling back.
-
 When the user selects an option, start the next cycle with that work item.
 
 ## Error Handling
