@@ -39,7 +39,7 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 | Write code, implement features, or fix bugs                   | [Engineer](engineer.md)                                 |
 | Plan projects, manage requirements, or track work             | [TPM](tpm.md)                                           |
 | Design architecture, review code, or set standards            | [Tech Lead](tech-lead.md)                               |
-| Assess security, create threat models, or review compliance   | [Security Architect](security-architect.md)             |
+| Assess security, create risk surfaces, or review compliance   | [Security Architect](security-architect.md)             |
 | Analyze data, build notebooks, or create dashboards           | [Data Scientist](data-scientist.md)                     |
 | Run DT workshops, design user experiences, or test prototypes | [UX Designer](ux-designer.md)                           |
 | Manage infrastructure, handle incidents, or deploy            | [SRE / Operations](sre-operations.md)                   |
@@ -52,7 +52,7 @@ HVE Core provides role-specific tooling through collections of agents, prompts, 
 Roles frequently collaborate across workflows. These scenarios illustrate common multi-role interactions:
 
 * Engineers and tech leads collaborate on feature development with architecture review, coding standards enforcement, and implementation guidance. See the [Engineer](engineer.md) and [Tech Lead](tech-lead.md) guides.
-* TPMs and security architects coordinate secure product launches combining requirements gathering, threat modeling, and compliance verification. See the [TPM](tpm.md) and [Security Architect](security-architect.md) guides.
+* TPMs and security architects coordinate secure product launches combining requirements gathering, risk surface analysis, and compliance verification. See the [TPM](tpm.md) and [Security Architect](security-architect.md) guides.
 * Data scientists and engineers bridge analytics pipeline development with data specification, notebook prototyping, and production integration. See the [Data Scientist](data-scientist.md) and [Engineer](engineer.md) guides.
 * New contributors progress to engineers through onboarding from guided workflows to full autonomous engineering. See the [New Contributor](new-contributor.md) and [Engineer](engineer.md) guides.
 * UX designers and engineers connect validated Design Thinking concepts to RPI implementation workflows, bridging user research to engineering sprints. See the [UX Designer](ux-designer.md) and [Engineer](engineer.md) guides.
