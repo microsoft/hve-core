@@ -3,7 +3,7 @@ title: HVE Core Documentation
 description: Documentation index for HVE Core Copilot customizations
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: overview
 keywords:
   - hve core
@@ -13,6 +13,9 @@ estimated_reading_time: 3
 ---
 
 HVE Core is a prompt engineering framework for GitHub Copilot designed for team-scale adoption. It provides specialized agents, reusable prompts, instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
+
+> [!TIP]
+> For the fastest setup, install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration. For the complete library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
 
 ## Audience
 

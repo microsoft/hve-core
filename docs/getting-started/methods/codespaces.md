@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Install HVE-Core in GitHub Codespaces using postCreateCommand
 sidebar_position: 8
 author: Microsoft
-ms.date: 2025-12-03
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - codespaces
@@ -58,7 +58,7 @@ The `postCreateCommand` clones HVE-Core into `/workspaces/hve-core` where it per
 
 ## Quick Start
 
-Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. Use the manual steps below for clone-based customization in Codespaces.
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
