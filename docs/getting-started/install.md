@@ -3,7 +3,7 @@ title: Installing HVE-Core
 description: Choose the right installation method for your environment
 sidebar_position: 2
 author: Microsoft
-ms.date: 2025-12-02
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - installation
@@ -38,22 +38,26 @@ VS Code → Extensions → Search "HVE Core" → Install
 
 * ❌ Team needs version control → Use [Submodule](methods/submodule.md)
 * ❌ Contributing to HVE-Core → Use [Peer Clone](methods/peer-clone.md)
+* 🤔 Not sure which method fits? → The [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) skill guides you through the choice
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
 ## Custom Installation Methods
 
-If you need customization or version control of HVE-Core, choose from the methods below.
+If you need customization or version control of HVE-Core, choose from the methods below. The [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) skill is the recommended way to evaluate these options: it walks you through your environment, team size, and update preferences to recommend the best method, then configures it for you.
 
 ## Quick Start
 
-> **Recommended:** Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for zero-config setup (~30 seconds).
+> **Recommended:** Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the flagship RPI workflow and core artifacts with zero configuration (~30 seconds). For the complete artifact library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
 >
-> **For customization:** Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent "help me customize hve-core installation".
+> **Need guided setup?** Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension, which provides the installer skill. Ask any agent: "help me customize hve-core installation". The installer skill walks you through choosing an installation method (peer clone, submodule, git-ignored, and others), configures MCP servers, and supports agent bundle selection by collection.
 
 For clone-based customization, answer the questions below to find the best method for your environment.
 
 ## Help Me Choose
+
+> [!TIP]
+> The [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) skill asks these same questions interactively and configures the recommended method for you. Install the extension and ask any agent "help me customize hve-core installation".
 
 Answer these questions to find your recommended installation method:
 
@@ -90,7 +94,7 @@ Answer these questions to find your recommended installation method:
 
 ## Collection Packages
 
-HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **Full** collection. For customization, use the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) or clone-based methods to select specific collections during setup.
+HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **HVE Core Workflow** collection (flagship RPI workflow and core artifacts). For the complete set across all collections, use the `hve-core-all` CLI plugin or installer skill. Clone-based methods also support filtering which agents to copy by collection bundle.
 
 | Collection        | Collection ID       | Maturity     | Description                                                      |
 |-------------------|---------------------|--------------|------------------------------------------------------------------|
@@ -106,22 +110,22 @@ HVE-Core organizes artifacts into role-based collections. The VS Code extension 
 | Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
 | Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
 
-### Extension Installation (Full Collection)
+### Extension Installation (Flagship Collection)
 
-The VS Code Marketplace extension installs the **Full** collection containing all stable artifacts. This is the recommended approach for most users.
+The VS Code Marketplace extension installs the **HVE Core Workflow** collection: the flagship set of RPI agents, prompts, and instructions. This is the recommended starting point for most users. For every stable artifact across all collections, use the `hve-core-all` Extension or plugin.
 
-### Clone Methods (Collection Filtering)
+### Clone Methods (Agent Bundle Selection)
 
-Clone-based installation methods support collection-based agent filtering through the HVE Core installer skill:
+Clone-based installation methods support agent bundle selection through the HVE Core installer skill:
 
-1. Install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) to get the installer skill
+1. Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension to get the installer skill
 2. Ask any agent: "help me customize hve-core installation"
-3. Select your role-based collection or install all agents
+3. Choose an agent bundle by collection or copy all agents
 
-The skill reads collection assignments from the collection manifests (`collections/*.collection.yml`) and copies only the agents assigned to your selected collection.
+The installer skill reads collection assignments from `collections/*.collection.yml` and copies only the agents from your selected bundles to `.github/agents/`.
 
-> [!NOTE]
-> Collection filtering applies to agents only. Copying of related prompts, instructions, and skills based on collection is planned for a future release.
+> [!IMPORTANT]
+> Agent bundle selection copies agents only. Prompts, instructions, and skills are not filtered by collection. Copying of additional artifact types is planned for a future release.
 
 ### Quick Decision Tree
 

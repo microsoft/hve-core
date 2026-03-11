@@ -1,0 +1,8 @@
+{
+    "label": "Customization",
+    "position": 5,
+    "link": {
+        "type": "generated-index",
+        "description": "Customize HVE Core components from lightweight settings to full fork-and-extend"
+    }
+}
