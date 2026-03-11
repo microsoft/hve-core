@@ -11,8 +11,7 @@ main() {
   echo "Creating logs directory..."
   mkdir -p logs
 
-	fix_volume_ownerships
-  npm_install
+  fix_volume_ownerships
 }
 
 # Volume ownership is not set automatically due to a bug:
@@ -35,12 +34,6 @@ fix_volume_ownerships() {
   echo "Applying volume ownership workaround (see microsoft/vscode-remote-release#9931)..."
   fix_volume_ownership "/home/${USER}/.config"
   fix_volume_ownership "/workspace/node_modules"
-}
-
-npm_install() {
-  echo "Installing NPM dependencies..."
-  npm install
-  echo "NPM dependencies installed successfully"
 }
 
 main "$@"

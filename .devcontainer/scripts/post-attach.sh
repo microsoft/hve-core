@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#
+# post-attach.sh
+# Post-attach setup for HVE Core development container
+
 set -euo pipefail
 
 # devcontainers copy your local gitconfig but do not parse conditional includes.
@@ -9,8 +15,8 @@ copy_user_gitconfig() {
   for conf in .gitconfig.global .gitconfig.local; do
     if [[ -f "$conf" ]]; then
       echo "*** Parsing ${conf##.gitconfig.} Git configuration export"
+      local key value
       while IFS='=' read -r key value; do
-        local key value
         case "$key" in
         user.name | user.email | user.signingkey | commit.gpgsign)
           echo "Set Git config ${key}=${value}"
