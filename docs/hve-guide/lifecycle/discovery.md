@@ -41,11 +41,17 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 | risk-register          | Prompt | `/risk-register`                        | Identify and track project risks                                                     |
 | task-research          | Prompt | `/task-research`                        | Quick research queries without full agent context                                    |
 | dt-coach               | Agent  | Select **dt-coach** agent               | Guide teams through Design Thinking methods for user-centered requirements discovery |
+| experiment-designer    | Agent  | Select **experiment-designer** agent    | Design Minimum Viable Experiments to validate unknowns before committing to implementation |
 
 ## Design Thinking as Pre-Research Methodology
 
 > [!NOTE]
 > Teams can invoke **dt-coach** during Discovery to run scope conversations (Method 1) and design research (Method 2) before engaging the task-researcher agent. Design Thinking provides structured, empathy-driven research techniques that produce validated problem statements and stakeholder maps, strengthening the foundation for subsequent technical research.
+
+## Validating Unknowns with Minimum Viable Experiments
+
+> [!NOTE]
+> When Discovery surfaces unknowns across data, technology, or use cases, invoke **experiment-designer** to design a Minimum Viable Experiment (MVE) before committing to full implementation. The agent guides you through problem discovery, hypothesis formation, vetting criteria, and experiment planning. MVEs resolve uncertainty early — whether hypotheses are validated or invalidated, the results inform your go/no-go decisions and reduce downstream risk.
 
 ## Role-Specific Guidance
 
