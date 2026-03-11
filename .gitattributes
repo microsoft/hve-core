@@ -3,10 +3,11 @@
 
 # Declare files that must have specific line endings on checkout.
 ## Windows scripts - must be CRLF
-*.ps1 text eol=crlf
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
+## Cross-platform PowerShell scripts - use LF for shebang compatibility
+*.ps1 text eol=lf
 ## Linux scripts - must be LF
 *.sh text eol=lf
 *.Dockerfile text eol=lf
