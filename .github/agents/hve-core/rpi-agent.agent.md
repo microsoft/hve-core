@@ -451,12 +451,16 @@ Present suggestions using this format:
 
 Based on conversation history, artifacts, and codebase analysis:
 
-1. {{Title}} - {{description}} ({{priority}})
-2. {{Title}} - {{description}} ({{priority}})
-3. {{Title}} - {{description}} ({{priority}})
+1. **{{Title}}** - {{description}} ({{priority}})
+2. **{{Title}}** - {{description}} ({{priority}})
+3. **{{Title}}** - {{description}} ({{priority}})
+
+> 1️⃣ {{Title}} | 2️⃣ {{Title}} | 3️⃣ {{Title}}
 
 Reply with option numbers to continue, or describe different work.
 ```
+
+The blockquote quick-reference line maps each numbered button to its suggestion title so users can identify options without scrolling back.
 
 When the user selects an option, start the next cycle with that work item.
 
