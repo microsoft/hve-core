@@ -3,7 +3,7 @@ title: VS Code Extension Installation
 description: Install HVE-Core as a VS Code extension from the marketplace
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-01-07
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - extension
@@ -180,15 +180,15 @@ The extension updates automatically through VS Code's extension system:
 
 ### Scenario 4: Want to Customize Later
 
-**Goal:** Start with extension, later switch to customization
+**Goal:** Start with extension, add customization as needs grow
 
-**Solution:** Use extension initially, migrate to Peer Clone when needed
+**Solution:** Layer in the installer skill for MCP, installation method guidance, and agent bundle selection; migrate to clone only for full artifact control
 
 #### Steps
 
-1. Start with extension for quick setup
-2. When customization needed, uninstall extension
-3. Follow [Peer Clone](peer-clone.md) method for local modifications
+1. Start with the HVE Core extension for the flagship RPI workflow
+2. When you need MCP configuration, a different installation method, or the complete artifact library, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation"
+3. When you need to modify prompts, instructions, or skills directly, uninstall extensions and follow a [clone-based method](../install.md#custom-installation-methods)
 
 ## Troubleshooting
 
@@ -240,6 +240,25 @@ If you have both extension and manual installation (like Peer Clone):
 
 1. Extensions view → Find "HVE Core"
 2. Click "Update" button
+
+## Need MCP Configuration or Guided Setup?
+
+The extension provides the flagship RPI workflow and core artifacts but does not include MCP server configuration or artifacts from other collections. If you need auto-configured MCP servers, the complete artifact library, or guided setup for any installation method, the HVE Core Installer extension provides the installer skill:
+
+1. Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension
+2. Ask any agent: "help me customize hve-core installation"
+3. The installer skill guides you through setup method selection and MCP configuration
+
+| Capability                     | HVE Core Extension | Installer Skill               |
+|--------------------------------|-------------------:|-------------------------------|
+| Flagship collection (RPI)      |                  ✅ | ✅ (via clone)                 |
+| All collections (hve-core-all) |                  ❌ | ✅ (via clone)                 |
+| MCP auto-configuration         |                  ❌ | ✅ 4 curated servers           |
+| Agent bundle selection         |  ❌ (flagship only) | ✅ (clone methods only)        |
+| Installation method guidance   |                  ❌ | ✅ peer clone, submodule, etc. |
+
+> [!NOTE]
+> The installer is a skill that works within any agent conversation. There is no separate "installer agent" in the agent picker. The installer extension packages the skill for VS Code distribution.
 
 ## Migration Guide
 
