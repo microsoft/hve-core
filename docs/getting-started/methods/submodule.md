@@ -3,7 +3,7 @@ title: Git Submodule Installation
 description: Set up HVE-Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
-ms.date: 2025-12-02
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - git submodule
@@ -49,12 +49,7 @@ your-project/
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using git submodule"
-4. Follow the guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -86,7 +81,6 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/agents/data-science": true,
     "lib/hve-core/.github/agents/design-thinking": true,
     "lib/hve-core/.github/agents/github": true,
-    "lib/hve-core/.github/agents/installer": true,
     "lib/hve-core/.github/agents/project-planning": true,
     "lib/hve-core/.github/agents/hve-core": true,
     "lib/hve-core/.github/agents/hve-core/subagents": true,

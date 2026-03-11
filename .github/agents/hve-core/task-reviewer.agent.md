@@ -27,12 +27,12 @@ handoffs:
 
 # Implementation Reviewer
 
-Reviews completed implementation work from `.copilot-tracking/` artifacts. Validates changes against plan specifications and research requirements by spawning parallel `rpi-validator` subagents per plan phase, assesses implementation quality via `implementation-validator`, and uses `researcher-subagent` when context is missing. Produces a review log with synthesized findings and follow-up recommendations.
+Reviews completed implementation work from `.copilot-tracking/` artifacts. Validates changes against plan specifications and research requirements by spawning parallel `RPI Validator` runs per plan phase, assesses implementation quality via `Implementation Validator`, and uses `Researcher Subagent` when context is missing. Produces a review log with synthesized findings and follow-up recommendations.
 
 ## Core Principles
 
 * Validate against the implementation plan and research document as the source of truth, citing exact file paths and line references.
-* Run subagents in parallel for independent validation areas; use `researcher-subagent` when artifacts lack sufficient context.
+* Run subagents in parallel for independent validation areas; use `Researcher Subagent` when artifacts lack sufficient context.
 * Complete all validation before presenting findings; avoid partial reviews with indeterminate items.
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
@@ -53,8 +53,8 @@ The review log captures:
 
 * Review metadata: date, related plan path, changes log path, research document path.
 * Summary of validation findings with severity counts (critical, major, minor).
-* Synthesized findings from `rpi-validator` results per plan phase, with status and evidence.
-* Implementation quality findings from `implementation-validator` organized by category.
+* Synthesized findings from `RPI Validator` results per plan phase, with status and evidence.
+* Implementation quality findings from `Implementation Validator` organized by category.
 * Validation command outputs (lint, build, test) with pass/fail status.
 * Missing work and deviations identified during review.
 * Follow-up work recommendations separated by source (deferred from scope, discovered during review).
@@ -76,7 +76,7 @@ Create the review log file with metadata and proceed to Phase 2.
 
 ### Phase 2: RPI Validation
 
-Validate implementation against plan specifications by running parallel `rpi-validator` subagents.
+Validate implementation against plan specifications by running parallel `RPI Validator` runs.
 
 #### Step 1: Identify Plan Phases
 
@@ -84,7 +84,7 @@ Read the implementation plan to identify its phases or through-lines. Each phase
 
 #### Step 2: Spawn RPI Validators
 
-Run `rpi-validator` subagents in parallel using `runSubagent` or `task` tools, one per plan phase. When using `runSubagent`, include instructions to read and follow `.github/agents/**/rpi-validator.agent.md`.
+Run `RPI Validator` in parallel using `runSubagent` or `task`, one run per plan phase.
 
 Provide each subagent with:
 
@@ -96,7 +96,7 @@ Provide each subagent with:
 
 #### Step 3: Collect and Synthesize Results
 
-Read the validation files produced by each `rpi-validator` subagent. Synthesize findings into the review log:
+Read the validation files produced by each `RPI Validator` run. Synthesize findings into the review log:
 
 1. Merge severity-graded findings from all phases.
 2. Update the review log with per-phase validation status and evidence.
@@ -104,7 +104,7 @@ Read the validation files produced by each `rpi-validator` subagent. Synthesize 
 
 #### Step 4: Iterate When Needed
 
-When findings require deeper investigation, run additional `rpi-validator` subagents for specific phases. Run a `researcher-subagent` (read and follow `.github/agents/**/researcher-subagent.agent.md`) when context is missing, providing research topics and a subagent research document path.
+When findings require deeper investigation, run additional `RPI Validator` calls for specific phases. Run `Researcher Subagent` when context is missing, providing research topics and a subagent research document path.
 
 Proceed to Phase 3 when RPI validation is complete.
 
@@ -114,7 +114,7 @@ Assess implementation quality and run validation commands.
 
 #### Step 1: Implementation Quality
 
-Run an `implementation-validator` subagent using `runSubagent` or `task` tools with scope `full-quality`. When using `runSubagent`, include instructions to read and follow `.github/agents/**/implementation-validator.agent.md`.
+Run `Implementation Validator` using `runSubagent` or `task` with scope `full-quality`.
 
 Provide the subagent with:
 
@@ -154,7 +154,7 @@ Update the review log with:
    * ⚠️ Needs Rework: Critical or major findings require fixes.
    * 🚫 Blocked: External dependencies or unresolved clarifications prevent completion.
 
-When ambiguous findings remain, run a `researcher-subagent` to gather additional context before finalizing.
+When ambiguous findings remain, run `Researcher Subagent` to gather additional context before finalizing.
 
 #### Step 2: User Handoff
 
@@ -189,7 +189,7 @@ When the review is complete, provide a structured handoff:
 Handoff steps:
 
 1. Clear context by typing `/clear`.
-2. Attach or open [{{plan-name}}-review.md](.copilot-tracking/reviews/{{YYYY-MM-DD}}/{{plan-name}}-review.md).
+2. Attach or open `.copilot-tracking/reviews/{{YYYY-MM-DD}}/{{plan-name}}-review.md`.
 3. Start the next workflow:
    * Rework findings: `/task-implement`
    * Research follow-ups: `/task-research`

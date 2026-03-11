@@ -26,6 +26,10 @@ items:
 - path: .github/agents/design-thinking/dt-learning-tutor.agent.md
   kind: agent
   maturity: preview
+- path: .github/agents/experimental/pptx.agent.md
+  kind: agent
+- path: .github/agents/experimental/subagents/pptx-subagent.agent.md
+  kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/hve-core/doc-ops.agent.md
@@ -61,8 +65,6 @@ items:
 - path: .github/agents/hve-core/task-researcher.agent.md
   kind: agent
 - path: .github/agents/hve-core/task-reviewer.agent.md
-  kind: agent
-- path: .github/agents/installer/hve-core-installer.agent.md
   kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
@@ -349,6 +351,8 @@ items:
 - path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
   kind: instruction
   maturity: preview
+- path: .github/instructions/experimental/pptx.instructions.md
+  kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
   kind: instruction
 - path: .github/instructions/github/github-backlog-discovery.instructions.md
@@ -375,7 +379,13 @@ items:
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/skills/experimental/powerpoint
+  kind: skill
 - path: .github/skills/experimental/video-to-gif
+  kind: skill
+- path: .github/skills/experimental/vscode-playwright
+  kind: skill
+- path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill

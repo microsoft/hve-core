@@ -8,6 +8,7 @@
 !.github/skills/**
 !docs/templates/**
 !scripts/lib/Modules/CIHelpers.psm1
+!icon.png
 !package.json
 !README.md
 !LICENSE

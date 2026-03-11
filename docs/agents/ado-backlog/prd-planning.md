@@ -10,6 +10,7 @@ keywords:
   - work item hierarchy
   - github copilot
 estimated_reading_time: 4
+sidebar_position: 6
 ---
 
 The PRD Planning workflow converts product requirements documents into Azure DevOps work item hierarchies, decomposing requirements into the four-level structure (Epic > Feature > Story > Task) that Azure DevOps supports natively.
@@ -80,13 +81,38 @@ Create a work item hierarchy from these requirements:
 3. Results can be filtered by date range
 ```
 
-## Example Prompt
+## Example Prompts
+
+Full PRD conversion to work item hierarchy:
 
 ```text
 Parse the product requirements document at docs/prd-v2.md and create
-an Azure DevOps work item hierarchy. Use Epics for major features and
-decompose each into Stories with Tasks for implementation steps.
+an Azure DevOps work item hierarchy. Structure as:
+- Epics for major feature areas
+- Stories for user-facing capabilities within each Epic
+- Tasks for implementation steps within each Story
+
+Include acceptance criteria from the PRD as Story descriptions.
 ```
+
+Incremental update from a revised PRD section:
+
+```text
+Read Section 4 (Search and Filtering) from docs/prd-v3.md and add
+new work items to the existing hierarchy under Epic "Search Platform."
+Do not recreate items that already exist in the backlog. Flag any
+requirement changes that conflict with existing Stories.
+```
+
+Schema-guided decomposition with depth control:
+
+```text
+Convert the requirements in docs/api-spec.md into a two-level hierarchy
+only: Epics and Stories. Do not create Tasks. Group Stories by API
+endpoint and include the HTTP method and path in each Story title.
+```
+
+**Output artifacts:** PRD planning creates a hierarchy handoff file mapping requirements to proposed work items with parent-child relationships. Review the hierarchy structure and verify parent links before executing.
 
 ## Tips
 

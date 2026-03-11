@@ -109,7 +109,7 @@ Summary contents:
 
 When a request spans multiple workflows (such as Sprint Planning coordinating Discovery and Triage), each workflow's results appear as separate sections before a consolidated overview.
 
-Phase 3 completes the interaction. Offer the handoff buttons for follow-up workflows when relevant.
+Phase 3 completes the interaction. Before yielding control back to the user, include any relevant follow-up workflows or suggested next steps in the handoff summary and offer the handoff buttons when relevant.
 
 ## GitHub MCP Tool Reference
 

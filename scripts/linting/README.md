@@ -298,11 +298,11 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 
 Validates copyright and SPDX license headers in source files.
 
-Purpose: Ensure all PowerShell and shell scripts include the required Microsoft copyright notice and MIT SPDX license identifier in their first 15 lines.
+Purpose: Ensure all PowerShell, shell, and Python scripts include the required Microsoft copyright notice and MIT SPDX license identifier in their first 15 lines.
 
 ##### Features
 
-* Scans `.ps1`, `.psm1`, `.psd1`, and `.sh` files recursively
+* Scans `.ps1`, `.psm1`, `.psd1`, `.sh`, and `.py` files recursively
 * Checks for `Copyright (c) Microsoft Corporation` header
 * Checks for `SPDX-License-Identifier: MIT` identifier
 * Configurable file extensions and exclude paths
@@ -312,7 +312,7 @@ Purpose: Ensure all PowerShell and shell scripts include the required Microsoft 
 ##### Parameters
 
 * `-Path` (string) - Root path to scan (default: repository root via `git rev-parse --show-toplevel`)
-* `-FileExtensions` (string[]) - File extensions to check (default: `@('*.ps1', '*.psm1', '*.psd1', '*.sh')`)
+* `-FileExtensions` (string[]) - File extensions to check (default: `@('*.ps1', '*.psm1', '*.psd1', '*.sh', '*.py')`)
 * `-OutputPath` (string) - Path for JSON results (default: `logs/copyright-header-results.json`)
 * `-FailOnMissing` (switch) - Exit with code 1 if any files lack required headers
 * `-ExcludePaths` (string[]) - Directories to exclude (default: `@('node_modules', '.git', 'vendor', 'logs')`)

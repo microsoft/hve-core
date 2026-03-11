@@ -9,6 +9,7 @@ keywords:
   - work item discovery
   - github copilot
 estimated_reading_time: 5
+sidebar_position: 3
 ---
 
 The Discovery workflow finds and categorizes Azure DevOps work items from multiple sources, producing structured analysis files that feed into triage and planning.
@@ -31,6 +32,18 @@ The Discovery workflow finds and categorizes Azure DevOps work items from multip
 
 > [!NOTE]
 > Discovery is deliberately separated from triage. Finding work items and deciding what to do with them are different cognitive tasks. Running them in a single pass increases the chance of misclassification.
+
+```mermaid
+flowchart TD
+    Start[Start Discovery] --> Choice{Discovery Path}
+    Choice --> UC[User-Centric]
+    Choice --> AD[Artifact-Driven]
+    Choice --> SB[Search-Based]
+    UC --> |mcp_ado_wit_my_work_items| Output[Planning Files]
+    AD --> |git diff analysis| Output
+    SB --> |mcp_ado_search_workitem| Output
+    Output --> Hand[Handoff to Triage]
+```
 
 ## The Three Discovery Paths
 
@@ -86,13 +99,36 @@ Click the "Discover" handoff button in the ADO Backlog Manager agent to launch a
 
 Start a conversation with the ADO Backlog Manager agent and describe your discovery goal. The agent classifies your intent and dispatches the appropriate discovery path automatically.
 
-## Example Prompt
+## Example Prompts
+
+User-centric discovery scoped to unplanned items:
 
 ```text
 Discover work items assigned to me that don't have an iteration path
 assigned. Include any items in the New state without tags, regardless
-of assignee.
+of assignee. Write the analysis to the discovery tracking directory.
 ```
+
+Artifact-driven discovery from branch changes:
+
+```text
+Discover work items related to my current feature branch. Match against
+committed diffs and include items in Active, New, and Resolved states.
+Focus on:
+- Stories and Bugs under the Platform area path
+- Items without parent links
+- Anything mentioning the authentication module
+```
+
+Broad backlog search with filters:
+
+```text
+Search the project backlog for all unassigned Bugs in the Active state.
+Group results by area path and priority. Limit to items created in the
+last 30 days.
+```
+
+**Output artifacts:** Discovery creates a planning file in `.copilot-tracking/workitems/discovery/` containing the work item inventory, query summary, and analysis. Review this file for result completeness and query accuracy before proceeding to triage.
 
 ## Tips
 

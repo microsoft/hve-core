@@ -181,22 +181,35 @@ function Test-SkillDirectory {
         }
     }
 
-    # Check scripts/ subdirectory contents (optional dir, but must contain both .ps1 and .sh if present)
+    # Detect Python skill by pyproject.toml presence
+    $pyprojectPath = Join-Path -Path $Directory.FullName -ChildPath 'pyproject.toml'
+    $isPythonSkill = Test-Path $pyprojectPath -PathType Leaf
+
+    # Check scripts/ subdirectory contents
     $scriptsDirPath = Join-Path -Path $Directory.FullName -ChildPath 'scripts'
     if (Test-Path $scriptsDirPath -PathType Container) {
-        $scriptFiles = Get-ChildItem -Path $scriptsDirPath -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Extension -in @('.ps1', '.sh') }
-        $hasPowerShell = @($scriptFiles | Where-Object { $_.Extension -eq '.ps1' }).Count -gt 0
-        $hasBash = @($scriptFiles | Where-Object { $_.Extension -eq '.sh' }).Count -gt 0
+        $allScriptFiles = Get-ChildItem -Path $scriptsDirPath -File -ErrorAction SilentlyContinue
+        $hasPowerShell = @($allScriptFiles | Where-Object { $_.Extension -eq '.ps1' }).Count -gt 0
+        $hasBash = @($allScriptFiles | Where-Object { $_.Extension -eq '.sh' }).Count -gt 0
+        $hasPython = @($allScriptFiles | Where-Object { $_.Extension -eq '.py' }).Count -gt 0
 
-        if (-not $hasPowerShell -and -not $hasBash) {
-            $errors.Add("'scripts/' subdirectory exists but contains no .ps1 or .sh files in '$relativePath'")
+        if ($isPythonSkill) {
+            # Python skills: require at least one .py, OR the traditional .ps1+.sh pair
+            if (-not $hasPython -and -not ($hasPowerShell -and $hasBash)) {
+                $errors.Add("'scripts/' subdirectory exists but contains no .py files and no .ps1/.sh pair in '$relativePath'")
+            }
         }
-        elseif (-not $hasPowerShell) {
-            $errors.Add("'scripts/' subdirectory is missing a required .ps1 file in '$relativePath'")
-        }
-        elseif (-not $hasBash) {
-            $errors.Add("'scripts/' subdirectory is missing a required .sh file in '$relativePath'")
+        else {
+            # Non-Python skills: require both .ps1 and .sh
+            if (-not $hasPowerShell -and -not $hasBash) {
+                $errors.Add("'scripts/' subdirectory exists but contains no .ps1 or .sh files in '$relativePath'")
+            }
+            elseif (-not $hasPowerShell) {
+                $errors.Add("'scripts/' subdirectory is missing a required .ps1 file in '$relativePath'")
+            }
+            elseif (-not $hasBash) {
+                $errors.Add("'scripts/' subdirectory is missing a required .sh file in '$relativePath'")
+            }
         }
     }
 
@@ -204,6 +217,11 @@ function Test-SkillDirectory {
     $subdirs = Get-ChildItem -Path $Directory.FullName -Directory -ErrorAction SilentlyContinue
     foreach ($subdir in $subdirs) {
         if ($subdir.Name -notin $script:RecognizedSubdirectories) {
+            # Python package directories (containing __init__.py) are valid in Python skills
+            $initPyPath = Join-Path -Path $subdir.FullName -ChildPath '__init__.py'
+            if ($isPythonSkill -and (Test-Path $initPyPath -PathType Leaf)) {
+                continue
+            }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")
         }
     }

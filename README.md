@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with constraint-based AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -27,7 +27,7 @@ estimated_reading_time: 3
 Hypervelocity Engineering (HVE) Core is an enterprise-ready prompt engineering framework for GitHub Copilot. Constraint-based AI workflows, validated artifacts, and structured methodologies that scale from solo developers to large teams.
 
 > [!TIP]
-> Automated installation via the `hve-core-installer` agent in VS Code (~30 seconds)
+> Install via VS Code extension or Copilot CLI plugin (~30 seconds). See the [Installation Guide](docs/getting-started/install.md).
 
 ## Overview
 
@@ -42,6 +42,8 @@ The RPI (Research → Plan → Implement) methodology structures complex enginee
 Install the VS Code extension from the Marketplace:
 
 [![Install HVE Core](https://img.shields.io/badge/Install_HVE_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
+
+> **Need guided setup or the complete artifact library?** Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension for the installer skill. It walks you through installation methods, MCP configuration, and agent bundle selection.
 
 Need a different installation method? See the [Installation Guide](docs/getting-started/install.md) for CLI plugins, submodules, multi-root workspaces, and more.
 
@@ -75,10 +77,10 @@ Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 
 | Component    | Count | Description                                                          | Documentation                                  |
 |--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | 35    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
+| Agents       | 34    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
 | Instructions | 68    | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
 | Prompts      | 40    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Skills       | 2     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
+| Skills       | 3     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
 | Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Prompt Engineering Framework
