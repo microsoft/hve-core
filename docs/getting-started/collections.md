@@ -1,7 +1,7 @@
 ---
 title: Collections Overview
 description: Explore the HVE collection system, compare available collections, and choose the right extension for your workflow
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 ## How HVE Artifacts Are Organized
