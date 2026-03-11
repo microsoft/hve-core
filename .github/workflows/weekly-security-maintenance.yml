@@ -196,3 +196,74 @@ jobs:
           if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {
             Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
           }
+      - name: Create or Update Staleness Issue
+        if: ${{ !cancelled() && needs.check-staleness.result == 'success' }}
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            const staleCount = Number('${{ needs.check-staleness.outputs.stale-count }}');
+            const threshold = Number('${{ inputs.max-age-days || 30 }}');
+
+            const issueTitle = "Security: Stale dependency SHAs detected";
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "security,staleness",
+              per_page: 100
+            });
+
+            const existingIssue = issues.find(i => i.title === issueTitle);
+
+            if (staleCount > 0) {
+              const body = [
+                "## Stale GitHub Action SHAs Detected",
+                "",
+                `${staleCount} dependencies have SHA pins older than ${threshold} days.`,
+                "",
+                `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                "Please run:",
+                "",
+                "```powershell",
+                "npm run sha-staleness",
+                "```",
+                "",
+                "Then update outdated SHAs using:",
+                "",
+                "```powershell",
+                "scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale",
+                "```"
+              ].join("\n");
+
+              if (existingIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: body
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: body,
+                  labels: ["security","staleness"]
+                });
+              }
+            } else if (existingIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: "All action SHAs are now within the freshness threshold. Closing automatically."
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: "closed"
+              });
+            }
