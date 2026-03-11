@@ -55,7 +55,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **doc-ops**                      | Documentation operations and maintenance                           | Does not modify source code                           |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
-| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling                      |
+| **security-planner**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven risk surface analysis                |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment             | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
 
@@ -241,7 +241,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 
@@ -269,14 +269,14 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
 
-### security-plan-creator
+### security-planner
 
 **Creates:** Security plans and implementation artifacts:
 
-* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and threat analysis)
+* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and risk surface analysis)
 * `security-plan-outputs/security-plan-{blueprint-name}.md` (final security plan document)
 
-**Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
+**Workflow:** Blueprint Selection → Architecture Analysis → Risk Surface Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
 

@@ -58,7 +58,7 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 ## Security Documentation
 
-For comprehensive security documentation including threat models and security controls, see [Security Documentation](docs/security/README.md).
+For comprehensive security documentation including risk surfaces and security controls, see [Security Documentation](docs/security/README.md).
 
 ## Verifying Release Integrity
 

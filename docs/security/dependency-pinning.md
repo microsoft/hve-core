@@ -200,7 +200,7 @@ flowchart LR
 
 ## Related Resources
 
-* [Threat Model](threat-model.md): Supply chain threats S-1, S-2, SC-1, SC-4, and SC-6
+* [Risk Surface](risk-surface.md): Supply chain threats S-1, S-2, SC-1, SC-4, and SC-6
 * [Branch Protection](../contributing/branch-protection.md): Required status checks including dependency pinning
 
 ---

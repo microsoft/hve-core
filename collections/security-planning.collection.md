@@ -5,7 +5,7 @@ Create comprehensive security plans, incident response procedures, and risk asse
 
 This collection includes agents and prompts for:
 
-- **Security Plan Creation** — Generate threat models and security architecture documents
+- **Security Plan Creation** — Generate risk surfaces and security architecture documents
 - **Incident Response** — Build incident response runbooks and playbooks
 - **Risk Assessment** — Evaluate security risks with structured assessment frameworks
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
