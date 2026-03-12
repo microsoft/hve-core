@@ -1,7 +1,6 @@
 """Tests for build_deck module."""
 
-import argparse
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from build_deck import (
