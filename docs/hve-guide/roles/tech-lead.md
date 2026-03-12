@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - tech lead
@@ -18,9 +18,9 @@ This guide is for you if you make architecture decisions, set coding standards, 
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
-> Your primary collections are `hve-core` (research and review workflows), `coding-standards` (language-specific rules), and `project-planning` (architecture decision records and planning). For clone-based setups, use the **hve-core-installer** agent with `install hve-core coding-standards project-planning`.
+> Your primary collections are `hve-core` (research and review workflows), `coding-standards` (language-specific rules), and `project-planning` (architecture decision records and planning). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 

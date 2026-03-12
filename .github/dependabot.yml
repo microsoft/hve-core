@@ -37,3 +37,23 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+
+  # Enable version updates for uv Python dependencies
+  # Activates when pyproject.toml files appear under skills directories
+  - package-ecosystem: "uv"
+    directories:
+      - "/.github/skills/**"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      uv-dependencies:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

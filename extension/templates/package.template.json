@@ -18,6 +18,7 @@
   "categories": [
     "Chat"
   ],
+  "icon": "icon.png",
   "contributes": {},
   "author": "Microsoft",
   "license": "MIT"

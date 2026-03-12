@@ -23,12 +23,14 @@ copilot plugin install hve-core-all@hve-core
 | dt-coach                     | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core                                                          |
 | dt-learning-tutor            | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing - Brought to you by microsoft/hve-core                                                           |
 | meeting-analyst              | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core                                                                     |
+| pptx                         | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                            |
+| pptx-subagent                | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                     |
 | github-backlog-manager       | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core                                              |
 | doc-ops                      | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                          |
 | memory                       | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                              |
 | pr-review                    | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                              |
 | prompt-builder               | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                          |
-| rpi-agent                    | Autonomous RPI orchestrator running specialized subagents through Research → Plan → Implement → Review → Discover phases - Brought to you by microsoft/hve-core                                            |
+| rpi-agent                    | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core          |
 | implementation-validator     | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                            |
 | phase-implementor            | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                                    |
 | plan-validator               | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                          |
@@ -41,7 +43,6 @@ copilot plugin install hve-core-all@hve-core
 | task-planner                 | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | task-researcher              | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer                | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
-| hve-core-installer           | Decision-driven installer for HVE-Core with 6 installation methods for local, devcontainer, and Codespaces environments - Brought to you by microsoft/hve-core                                             |
 | adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
 | agile-coach                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
@@ -66,9 +67,9 @@ copilot plugin install hve-core-all@hve-core
 | ado-triage-work-items                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                                |
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                              |
 | functional-code-review                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core        |
-| dt-handoff-implementation-space             | Compiles DT Methods 7-9 outputs into RPI-ready handoff artifact targeting task-researcher                                                        |
-| dt-handoff-problem-space                    | Problem Space exit handoff — compiles DT Methods 1-3 outputs into RPI-ready artifact targeting task-researcher                                   |
-| dt-handoff-solution-space                   | Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-researcher                                  |
+| dt-handoff-implementation-space             | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                     |
+| dt-handoff-problem-space                    | Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                |
+| dt-handoff-solution-space                   | Solution Space exit handoff — compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                               |
 | dt-method-04-convergence                    | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                         |
 | dt-method-04-ideation                       | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core             |
 | dt-method-05-concepts                       | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                              |
@@ -95,7 +96,7 @@ copilot plugin install hve-core-all@hve-core
 | prompt-refactor                             | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core                        |
 | pull-request                                | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                                     |
 | rpi                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core                          |
-| task-implement                              | Locates and executes implementation plans using task-implementor - Brought to you by microsoft/hve-core                                          |
+| task-implement                              | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                                          |
 | task-plan                                   | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core                             |
 | task-research                               | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                                 |
 | task-review                                 | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core                     |
@@ -162,11 +163,12 @@ copilot plugin install hve-core-all@hve-core
 | dt-method-sequencing                 | Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching                                                                                                                              |
 | dt-quality-constraints               | Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods                                                                                                                                              |
 | dt-rpi-handoff-contract              | DT-to-RPI handoff contract defining exit points, artifact schemas, and per-agent input requirements for lateral transitions from Design Thinking to RPI workflow                                                                                            |
-| dt-rpi-implement-context             | DT-aware task-implementor context: fidelity constraints, stakeholder validation, and iteration support                                                                                                                                                      |
-| dt-rpi-planning-context              | DT-aware task-planner context: fidelity constraints, iteration support, and confidence-informed planning for DT artifacts                                                                                                                                   |
-| dt-rpi-research-context              | DT-aware task-researcher context — frames research around DT methods, stakeholder needs, and empathy-driven inquiry                                                                                                                                         |
-| dt-rpi-review-context                | DT-aware task-reviewer context: quality criteria for Design Thinking artifacts                                                                                                                                                                              |
+| dt-rpi-implement-context             | DT-aware Task Implementor context: fidelity constraints, stakeholder validation, and iteration support                                                                                                                                                      |
+| dt-rpi-planning-context              | DT-aware Task Planner context: fidelity constraints, iteration support, and confidence-informed planning for DT artifacts                                                                                                                                   |
+| dt-rpi-research-context              | DT-aware Task Researcher context: frames research around DT methods, stakeholder needs, and empathy-driven inquiry                                                                                                                                          |
+| dt-rpi-review-context                | DT-aware Task Reviewer context: quality criteria for Design Thinking artifacts                                                                                                                                                                              |
 | dt-subagent-handoff                  | DT subagent handoff workflow: readiness assessment, artifact compilation, and handoff validation via subagent dispatch                                                                                                                                      |
+| pptx                                 | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
 | community-interaction                | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
 | github-backlog-discovery             | Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery                                                                                                                                          |
 | github-backlog-planning              | Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence                                                                                                              |
@@ -183,10 +185,13 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill        | Description  |
-|--------------|--------------|
-| video-to-gif | video-to-gif |
-| pr-reference | pr-reference |
+| Skill              | Description        |
+|--------------------|--------------------|
+| powerpoint         | powerpoint         |
+| video-to-gif       | video-to-gif       |
+| vscode-playwright  | vscode-playwright  |
+| hve-core-installer | hve-core-installer |
+| pr-reference       | pr-reference       |
 
 ---
 

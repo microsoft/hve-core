@@ -1,11 +1,11 @@
 ---
-description: 'DT-aware task-implementor context: fidelity constraints, stakeholder validation, and iteration support'
+description: 'DT-aware Task Implementor context: fidelity constraints, stakeholder validation, and iteration support'
 applyTo: '**/.copilot-tracking/dt/**'
 ---
 
 # DT Implementation Context
 
-When task-implementor executes a plan that originated from a Design Thinking process, these adjustments augment standard implementation behavior. The Implementor does not receive direct DT handoffs; DT context arrives through the Researcher→Planner pipeline chain. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder validation, and iteration support shape implementation decisions.
+When Task Implementor executes a plan that originated from a Design Thinking process, these adjustments augment standard implementation behavior. The Implementor does not receive direct DT handoffs; DT context arrives through the Researcher→Planner pipeline chain. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder validation, and iteration support shape implementation decisions.
 
 ## Implementation Adjustments
 

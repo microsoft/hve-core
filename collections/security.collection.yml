@@ -1,0 +1,26 @@
+id: security
+name: Security
+description: Security review, planning, incident response, risk assessment, and vulnerability analysis
+maturity: experimental
+tags:
+  - security
+  - incident-response
+  - risk
+  - planning
+  - review
+  - vulnerability
+  - threat-modeling
+items:
+  # Agents
+  - path: .github/agents/security/security-plan-creator.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/security/incident-response.prompt.md
+    kind: prompt
+  - path: .github/prompts/security/risk-register.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

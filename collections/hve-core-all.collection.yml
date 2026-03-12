@@ -29,6 +29,10 @@ items:
 - path: .github/agents/experimental/meeting-analyst.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/experimental/pptx.agent.md
+  kind: agent
+- path: .github/agents/experimental/subagents/pptx-subagent.agent.md
+  kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/hve-core/doc-ops.agent.md
@@ -65,8 +69,6 @@ items:
   kind: agent
 - path: .github/agents/hve-core/task-reviewer.agent.md
   kind: agent
-- path: .github/agents/installer/hve-core-installer.agent.md
-  kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -83,7 +85,7 @@ items:
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
-- path: .github/agents/security-planning/security-plan-creator.agent.md
+- path: .github/agents/security/security-plan-creator.agent.md
   kind: agent
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
   kind: prompt
@@ -184,9 +186,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
-- path: .github/prompts/security-planning/incident-response.prompt.md
+- path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
-- path: .github/prompts/security-planning/risk-register.prompt.md
+- path: .github/prompts/security/risk-register.prompt.md
   kind: prompt
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
@@ -352,6 +354,8 @@ items:
 - path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
   kind: instruction
   maturity: preview
+- path: .github/instructions/experimental/pptx.instructions.md
+  kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
   kind: instruction
 - path: .github/instructions/github/github-backlog-discovery.instructions.md
@@ -378,7 +382,13 @@ items:
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/skills/experimental/powerpoint
+  kind: skill
 - path: .github/skills/experimental/video-to-gif
+  kind: skill
+- path: .github/skills/experimental/vscode-playwright
+  kind: skill
+- path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill

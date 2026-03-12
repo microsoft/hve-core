@@ -1,13 +1,13 @@
 ---
-description: 'Solution Space exit handoff — compiles DT Methods 4-6 outputs into RPI-ready artifact targeting task-researcher'
-mode: 'agent'
+description: 'Solution Space exit handoff — compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher'
+agent: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."
 ---
 
 # Solution Space Exit Handoff
 
-Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting task-researcher.
+Compile Design Thinking Methods 4-6 outputs into an RPI-ready handoff artifact targeting Task Researcher.
 Invoke when a team graduates from the Solution Space and chooses lateral handoff to the RPI pipeline.
 
 Methods 4-6 (Brainstorming, User Concepts, Lo-fi Prototypes) correspond to Tier 2 "Concept Validated" in the three-tier exit schema, routing to RPI Researcher for investigation with rich Solution Space context. The handoff transfers tested concepts, constraint discoveries, lo-fi prototype feedback, and narrowed directions.

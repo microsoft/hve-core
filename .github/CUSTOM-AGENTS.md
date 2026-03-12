@@ -88,7 +88,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 |--------------------------|------------------------------------------------------------|-------------------------------------------|
 | **github-backlog-manager** | Consolidated GitHub backlog management with community interaction | Uses MCP GitHub tools                     |
 | **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items |
-| **hve-core-installer**   | Decision-driven HVE-Core installation with 6 methods       | Environment detection and validation      |
 
 ### Testing Agents
 
@@ -363,18 +362,6 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Workflow:** Analyze PRD → Discover Codebase → Discover Related Work Items → Refine → Finalize Handoff
 
 **Critical:** Planning-only. Uses ADO MCP tools for work item discovery. Supports Epics, Features, and User Stories.
-
-### hve-core-installer
-
-**Creates:** Installation configuration and tracking:
-
-* `.hve-tracking.json` (for agent copy tracking)
-* Settings updates in `.vscode/settings.json` (VS Code configuration)
-* `.vscode/mcp.json` (MCP server configuration when applicable)
-
-**Workflow:** Environment Detection → Decision Matrix → Installation → Validation → Agent Customization
-
-**Critical:** Supports 6 installation methods plus extension quick install. Detects environment type automatically. Validates installation before reporting success.
 
 ### test-streamlit-dashboard
 

@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE-Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -55,17 +55,9 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using multi-root workspace from our fork"
-4. Follow the guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
-
-> [!TIP]
-> The `hve-core-installer` agent can automate the steps below, including forking, cloning, workspace file creation, and devcontainer configuration. See [Quick Start](#quick-start) to use the guided flow instead.
 
 ### Step 1: Fork and Clone
 
@@ -107,11 +99,10 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/agents/data-science": true,
       "HVE-Core Fork/.github/agents/design-thinking": true,
       "HVE-Core Fork/.github/agents/github": true,
-      "HVE-Core Fork/.github/agents/installer": true,
       "HVE-Core Fork/.github/agents/project-planning": true,
       "HVE-Core Fork/.github/agents/hve-core": true,
       "HVE-Core Fork/.github/agents/hve-core/subagents": true,
-      "HVE-Core Fork/.github/agents/security-planning": true,
+      "HVE-Core Fork/.github/agents/security": true,
       "My Project/.github/agents": true
     },
     "chat.promptFilesLocations": {
@@ -119,7 +110,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/prompts/design-thinking": true,
       "HVE-Core Fork/.github/prompts/github": true,
       "HVE-Core Fork/.github/prompts/hve-core": true,
-      "HVE-Core Fork/.github/prompts/security-planning": true,
+      "HVE-Core Fork/.github/prompts/security": true,
       "My Project/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {

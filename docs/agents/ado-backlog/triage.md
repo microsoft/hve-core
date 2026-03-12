@@ -11,6 +11,7 @@ keywords:
   - duplicate detection
   - github copilot
 estimated_reading_time: 5
+sidebar_position: 4
 ---
 
 The Triage workflow classifies work items discovered in the previous phase, assigning Area Path, Priority, Severity (bugs), Tags, and Iteration Path while detecting duplicates and producing handoff files for sprint planning or direct execution.
@@ -33,6 +34,20 @@ The Triage workflow classifies work items discovered in the previous phase, assi
 
 > [!NOTE]
 > Triage recommendations are proposals, not automatic changes. The execution workflow applies field assignments and resolves duplicates only after you review and approve the handoff file.
+
+```mermaid
+flowchart TD
+    Input[Work Items from Discovery] --> Classify{Classify Fields}
+    Classify --> Labels[Apply Labels]
+    Classify --> Iteration[Assign Iteration]
+    Classify --> Dup{Duplicate Check}
+    Dup --> |Match Found| Link[Link Duplicate]
+    Dup --> |No Match| Assign[Assign Priority]
+    Labels --> Ready[Ready for Sprint Planning]
+    Iteration --> Ready
+    Link --> Ready
+    Assign --> Ready
+```
 
 ## Five-Dimensional Classification
 
@@ -121,13 +136,36 @@ Click the "Triage" handoff button in the ADO Backlog Manager agent after complet
 
 Attach or reference the discovery output files when starting a triage conversation. The agent reads the analysis and begins classification automatically.
 
-## Example Prompt
+## Example Prompts
+
+Full triage from latest discovery:
 
 ```text
-Triage all work items from my latest discovery pass. Assign Area Paths,
-reclassify priorities from the default, and flag any potential duplicates
-with confidence scores.
+Triage all work items from my latest discovery pass. For each item:
+- Assign Area Paths based on title and description analysis
+- Reclassify priorities from the default Priority 2
+- Flag potential duplicates with confidence scores above 0.6
+- Recommend state transitions for stale items
 ```
+
+Duplicate-focused triage:
+
+```text
+Triage the discovery output and focus on duplicate detection. Use a
+similarity threshold of 0.8 and compare across all work item types.
+Skip Area Path and Priority reclassification for this pass.
+```
+
+Targeted field assignment:
+
+```text
+Triage discovery results but limit changes to Area Path assignments
+only. Do not modify priorities or flag duplicates. Apply the
+Infrastructure/Backend area path to any item mentioning API or
+service layer changes.
+```
+
+**Output artifacts:** Triage creates a handoff file in `.copilot-tracking/workitems/triage/` with checkbox-formatted recommendations. Review duplicate pairs and confidence scores before passing the handoff to execution.
 
 ## Tips
 

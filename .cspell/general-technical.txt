@@ -642,6 +642,7 @@ moneybal
 mongodb
 monolithic
 msdn
+msdate
 msi
 msgraph
 mulaw

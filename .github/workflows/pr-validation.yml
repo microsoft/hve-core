@@ -97,6 +97,16 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  msdate-freshness:
+    name: ms.date Freshness Check
+    uses: ./.github/workflows/msdate-freshness-check.yml
+    permissions:
+      contents: read
+    with:
+      staleness-threshold-days: 90
+      changed-files-only: true
+      soft-fail: false
+
   plugin-validation:
     name: Plugin Validation
     uses: ./.github/workflows/plugin-validation.yml
@@ -177,7 +187,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: "20"
           cache: "npm"

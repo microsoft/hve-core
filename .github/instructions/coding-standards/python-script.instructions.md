@@ -229,16 +229,19 @@ Include module docstrings with description, usage, and examples.
 Organize scripts in this order:
 
 1. Shebang: `#!/usr/bin/env python3`
-2. Future imports: `from __future__ import annotations`
-3. Imports: standard library, third-party, local (separated by blank lines)
-4. Constants and exit codes
-5. Module-level logger
-6. Helper functions
-7. Parser creation function
-8. Logging configuration function
-9. Run logic function
-10. Main entry point
-11. Module guard: `if __name__ == "__main__": sys.exit(main())`
+2. Copyright header: `# Copyright (c) Microsoft Corporation.`
+3. SPDX license identifier: `# SPDX-License-Identifier: MIT`
+4. PEP 723 inline script metadata (if applicable)
+5. Future imports: `from __future__ import annotations`
+6. Imports: standard library, third-party, local (separated by blank lines)
+7. Constants and exit codes
+8. Module-level logger
+9. Helper functions
+10. Parser creation function
+11. Logging configuration function
+12. Run logic function
+13. Main entry point
+14. Module guard: `if __name__ == "__main__": sys.exit(main())`
 
 ## Inline Script Metadata
 
@@ -246,6 +249,8 @@ PEP 723 inline metadata enables automatic dependency installation with *uv*.
 
 ```python
 #!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -255,4 +260,4 @@ PEP 723 inline metadata enables automatic dependency installation with *uv*.
 # ///
 ```
 
-Place after shebang, before module docstring. Run with `uv run script.py`.
+Place after copyright and SPDX headers, before module docstring. Run with `uv run script.py`.

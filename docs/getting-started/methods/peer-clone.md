@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Install HVE-Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
-ms.date: 2025-12-03
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - peer directory
@@ -50,12 +50,7 @@ projects/
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using peer directory clone"
-4. Follow the guided setup
+Install the flagship HVE-Core [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
@@ -90,18 +85,17 @@ Create or update `.vscode/settings.json` in your project:
     "../hve-core/.github/agents/data-science": true,
     "../hve-core/.github/agents/design-thinking": true,
     "../hve-core/.github/agents/github": true,
-    "../hve-core/.github/agents/installer": true,
     "../hve-core/.github/agents/project-planning": true,
     "../hve-core/.github/agents/hve-core": true,
     "../hve-core/.github/agents/hve-core/subagents": true,
-    "../hve-core/.github/agents/security-planning": true
+    "../hve-core/.github/agents/security": true
   },
   "chat.promptFilesLocations": {
     "../hve-core/.github/prompts/ado": true,
     "../hve-core/.github/prompts/design-thinking": true,
     "../hve-core/.github/prompts/github": true,
     "../hve-core/.github/prompts/hve-core": true,
-    "../hve-core/.github/prompts/security-planning": true
+    "../hve-core/.github/prompts/security": true
   },
   "chat.instructionsFilesLocations": {
     "../hve-core/.github/instructions/ado": true,

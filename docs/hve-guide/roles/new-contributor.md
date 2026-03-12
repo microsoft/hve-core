@@ -3,7 +3,7 @@ title: New Contributor Guide
 description: Guided onboarding path from first install through autonomous AI-assisted engineering with HVE Core
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: tutorial
 keywords:
   - onboarding
@@ -18,12 +18,12 @@ This guide helps you get started with HVE Core from your first install through i
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
-> For custom installations, select the **hve-core-installer** agent and install the starter collection:
+> For custom installations, install the [HVE Core Installer extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) and ask any agent:
 >
 > ```text
-> install hve-core
+> help me customize hve-core installation
 > ```
 >
 > The `hve-core` collection is the recommended starting point. It provides the core research, planning, implementation, and review agents that you will use throughout onboarding and beyond.
@@ -45,7 +45,7 @@ Progress through four milestones at your own pace. Each milestone builds on the 
 Install HVE Core and run your first agent interaction.
 
 1. Follow the [installation guide](../../getting-started/install.md) to set up your development environment.
-2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments. For custom installations, use the **hve-core-installer** agent instead.
+2. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace. This is the recommended method: zero configuration, automatic updates, and works in local, devcontainer, and Codespaces environments.
 3. Open a chat and select the **memory** agent to verify agent responsiveness.
 4. Run the **task-researcher** agent against a file or concept in the codebase to see research output.
 
@@ -72,7 +72,7 @@ Use agents selectively and combine workflows for larger tasks.
 
 1. Use `/rpi mode=auto` for end-to-end automation on a multi-file change.
 2. Explore additional agents from the [Engineer Guide](engineer.md) or your role guide.
-3. Install a second collection relevant to your work (see the [Role Overview](./#role-overview)).
+3. Explore agents from additional collections within the extension, or use the installer skill to select agent bundles in a clone setup (see the [Role Overview](./#role-overview)).
 4. Use the **memory** agent to save preferences and context that persist across sessions.
 
 Checkpoint: You choose which agents to use based on task needs and work with multiple collections.

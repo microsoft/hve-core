@@ -1,11 +1,11 @@
 ---
-description: 'DT-aware task-planner context: fidelity constraints, iteration support, and confidence-informed planning for DT artifacts'
+description: 'DT-aware Task Planner context: fidelity constraints, iteration support, and confidence-informed planning for DT artifacts'
 applyTo: '**/.copilot-tracking/dt/**'
 ---
 
 # DT Planning Context
 
-When task-planner operates on artifacts that originated from a Design Thinking process, these adjustments augment standard planning behavior. The Planner does not receive direct DT handoffs; DT context arrives through the Researcher's output. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
+When Task Planner operates on artifacts that originated from a Design Thinking process, these adjustments augment standard planning behavior. The Planner does not receive direct DT handoffs; DT context arrives through the Researcher's output. The plan originates from a Design Thinking process, so fidelity constraints, stakeholder coverage, and iteration support shape planning decisions.
 
 ## Planning Adjustments
 

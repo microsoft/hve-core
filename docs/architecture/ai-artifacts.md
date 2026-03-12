@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-02-10
+ms.date: 2026-03-10
 ms.topic: concept
 ---
 
@@ -265,19 +265,19 @@ items:
 
 Collections represent role-targeted artifact packages. Collection manifests select artifacts for those roles.
 
-| Collection            | Identifier          | Maturity     | Target Users                                 |
-|-----------------------|---------------------|--------------|----------------------------------------------|
-| **Full**              | `hve-core-all`      | Stable       | Universal inclusion                          |
-| **Core**              | `hve-core`          | Stable       | RPI workflow, code review, PR agents         |
-| **ADO**               | `ado`               | Stable       | Azure DevOps integration                     |
-| **GitHub**            | `github`            | Stable       | GitHub backlog and issue management          |
-| **Project Planning**  | `project-planning`  | Stable       | Architecture, requirements, agile coaching   |
-| **Coding Standards**  | `coding-standards`  | Stable       | Language-specific coding conventions         |
-| **Data Science**      | `data-science`      | Stable       | Notebooks, dashboards, data analysis         |
-| **Security Planning** | `security-planning` | Stable       | Cloud security plans and threat modeling     |
-| **Design Thinking**   | `design-thinking`   | Preview      | 9-method DT coaching and learning            |
-| **Installer**         | `installer`         | Stable       | HVE-Core installation and setup              |
-| **Experimental**      | `experimental`      | Experimental | Early-stage artifacts under active iteration |
+| Collection           | Identifier         | Maturity     | Target Users                                   |
+|----------------------|--------------------|--------------|------------------------------------------------|
+| **Full**             | `hve-core-all`     | Stable       | Universal inclusion                            |
+| **Core**             | `hve-core`         | Stable       | RPI workflow, code review, PR agents           |
+| **ADO**              | `ado`              | Stable       | Azure DevOps integration                       |
+| **GitHub**           | `github`           | Stable       | GitHub backlog and issue management            |
+| **Project Planning** | `project-planning` | Stable       | Architecture, requirements, agile coaching     |
+| **Coding Standards** | `coding-standards` | Stable       | Language-specific coding conventions           |
+| **Data Science**     | `data-science`     | Stable       | Notebooks, dashboards, data analysis           |
+| **Security**         | `security`         | Experimental | Security review, planning, and threat modeling |
+| **Design Thinking**  | `design-thinking`  | Preview      | 9-method DT coaching and learning              |
+| **Installer**        | `installer`        | Stable       | HVE-Core installation and setup                |
+| **Experimental**     | `experimental`     | Experimental | Early-stage artifacts under active iteration   |
 
 The **Full** collection aggregates artifacts from all other stable and preview collections. Role-specific collections allow targeted installation for teams that need only a subset.
 
@@ -360,13 +360,25 @@ The maturity table above applies to individual artifacts. Collections also carry
 
 ### Collection Packages
 
-Multiple extension packages can be built from the same codebase:
+Each collection produces two distributable outputs from the same codebase: a VS Code extension (`.vsix`) and a Copilot CLI plugin (under `plugins/`).
 
-| Collection | Extension ID                  | Contents             |
-|------------|-------------------------------|----------------------|
-| Full       | `ise-hve-essentials.hve-core` | All stable artifacts |
+| Collection       | Extension ID                              | Contents                                       |
+|------------------|-------------------------------------------|------------------------------------------------|
+| Core (flagship)  | `ise-hve-essentials.hve-core`             | RPI workflow and core artifacts                |
+| Full             | `ise-hve-essentials.hve-core-all`         | All stable and preview artifacts combined      |
+| ADO              | `ise-hve-essentials.hve-ado`              | Azure DevOps integration                       |
+| GitHub           | `ise-hve-essentials.hve-github`           | GitHub backlog and issue management            |
+| Project Planning | `ise-hve-essentials.hve-project-planning` | Architecture, requirements, agile coaching     |
+| Coding Standards | `ise-hve-essentials.hve-coding-standards` | Language-specific coding conventions           |
+| Data Science     | `ise-hve-essentials.hve-data-science`     | Notebooks, dashboards, data analysis           |
+| Security         | `ise-hve-essentials.hve-security`         | Security review, planning, and threat modeling |
+| Design Thinking  | `ise-hve-essentials.hve-design-thinking`  | 9-method DT coaching and learning              |
+| Installer        | `ise-hve-essentials.hve-installer`        | HVE-Core installation and setup                |
+| Experimental     | `ise-hve-essentials.hve-experimental`     | Early-stage artifacts under active iteration   |
 
-Users install the collection matching their role for a curated experience.
+The VS Code extension is built with `Prepare-Extension.ps1` and `Package-Extension.ps1`, parameterized by collection manifest. The Copilot CLI plugin is generated by `npm run plugin:generate`, which creates symlink-based plugin structures under `plugins/{collection-id}/`. Both outputs derive their artifact lists from the same `collections/*.collection.yml` source of truth.
+
+Users install the collection matching their role for a curated experience. The **Core** extension provides the RPI workflow essentials, while the **Full** extension aggregates artifacts from all stable and preview collections.
 
 ### Activation Context
 

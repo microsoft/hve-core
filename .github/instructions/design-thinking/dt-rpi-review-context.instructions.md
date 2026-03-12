@@ -1,11 +1,11 @@
 ---
-description: "DT-aware task-reviewer context: quality criteria for Design Thinking artifacts"
+description: "DT-aware Task Reviewer context: quality criteria for Design Thinking artifacts"
 applyTo: '**/.copilot-tracking/dt/**'
 ---
 
 # DT Review Context
 
-When task-reviewer (see `docs/rpi/task-reviewer.md`) operates on DT artifacts, these criteria augment standard review behavior. The review question shifts from "does the code work?" to "does the artifact serve the Design Thinking process?" Evaluate coaching quality, method fidelity, and stakeholder coverage alongside structural correctness.
+When Task Reviewer (see `docs/rpi/task-reviewer.md`) operates on DT artifacts, these criteria augment standard review behavior. The review question shifts from "does the code work?" to "does the artifact serve the Design Thinking process?" Evaluate coaching quality, method fidelity, and stakeholder coverage alongside structural correctness.
 
 ## Review Criteria Adjustments
 

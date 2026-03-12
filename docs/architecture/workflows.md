@@ -44,21 +44,22 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                 | Purpose                                         |
-|--------------------------------------|-------------------------|-------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual    | Pre-merge quality gate with parallel validation |
-| `release-stable.yml`                 | Push to main, manual    | Post-merge validation and release automation    |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual | Scheduled security posture review               |
-| `security-scan.yml`                  | Push to main/develop    | CodeQL security validation                      |
-| `release-marketplace-stable.yml`     | Manual                  | VS Code extension marketplace publishing        |
-| `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing        |
-| `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                  |
-| `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main    |
-| `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management             |
-| `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis             |
-| `codeql-analysis.yml`                | Schedule                | Weekly CodeQL security scan (also reusable)     |
-| `dependency-review.yml`              | Pull request            | Dependency vulnerability review (also reusable) |
-| `sha-staleness-check.yml`            | Manual                  | SHA reference freshness check (also reusable)   |
+| Workflow                             | Trigger                 | Purpose                                                           |
+|--------------------------------------|-------------------------|-------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual    | Pre-merge quality gate with parallel validation                   |
+| `release-stable.yml`                 | Push to main, manual    | Post-merge validation and release automation                      |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual | Scheduled security posture review                                 |
+| `security-scan.yml`                  | Push to main/develop    | CodeQL security validation                                        |
+| `release-marketplace-stable.yml`     | Manual                  | VS Code extension marketplace publishing                          |
+| `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing                          |
+| `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                                    |
+| `devcontainer-change-log.yml`        | Push to main/develop    | Logs devcontainer infrastructure file changes to the step summary |
+| `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main                      |
+| `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management                               |
+| `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis                               |
+| `codeql-analysis.yml`                | Schedule                | Weekly CodeQL security scan (also reusable)                       |
+| `dependency-review.yml`              | Pull request            | Dependency vulnerability review (also reusable)                   |
+| `sha-staleness-check.yml`            | Manual                  | SHA reference freshness check (also reusable)                     |
 
 ### Reusable Workflows
 
@@ -247,19 +248,19 @@ flowchart TD
 
 Collection manifests in `collections/*.collection.yml` define collection-scoped subsets of the full artifact set. The `extension-package.yml` reusable workflow discovers these manifests, filters by maturity and channel, and packages each as an independent VSIX.
 
-| Collection          | Maturity     | Included In        |
-|---------------------|--------------|--------------------|
-| `hve-core-all`      | Stable       | Stable, PreRelease |
-| `hve-core`          | Stable       | Stable, PreRelease |
-| `ado`               | Stable       | Stable, PreRelease |
-| `github`            | Stable       | Stable, PreRelease |
-| `project-planning`  | Stable       | Stable, PreRelease |
-| `coding-standards`  | Stable       | Stable, PreRelease |
-| `data-science`      | Stable       | Stable, PreRelease |
-| `security-planning` | Stable       | Stable, PreRelease |
-| `design-thinking`   | Preview      | Stable, PreRelease |
-| `installer`         | Stable       | Stable, PreRelease |
-| `experimental`      | Experimental | PreRelease only    |
+| Collection         | Maturity     | Included In        |
+|--------------------|--------------|--------------------|
+| `hve-core-all`     | Stable       | Stable, PreRelease |
+| `hve-core`         | Stable       | Stable, PreRelease |
+| `ado`              | Stable       | Stable, PreRelease |
+| `github`           | Stable       | Stable, PreRelease |
+| `project-planning` | Stable       | Stable, PreRelease |
+| `coding-standards` | Stable       | Stable, PreRelease |
+| `data-science`     | Stable       | Stable, PreRelease |
+| `security`         | Experimental | Stable, PreRelease |
+| `design-thinking`  | Preview      | Stable, PreRelease |
+| `installer`        | Stable       | Stable, PreRelease |
+| `experimental`     | Experimental | PreRelease only    |
 
 Maturity filtering rules:
 
