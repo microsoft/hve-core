@@ -60,7 +60,7 @@ jobs:
 
       - name: Set up Python
         if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
-        uses: actions/setup-python@e797f83b81141460d98d0d9e9c1d89a65a5c8230 # v6.0.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
