@@ -4,13 +4,13 @@ description: Detailed guide to the Security Planner's scoping and capture entry 
 sidebar_position: 4
 sidebar_label: Entry Modes
 keywords:
-  * security planner
-  * entry modes
-  * scoping
-  * capture
+  - security planner
+  - entry modes
+  - scoping
+  - capture
 tags:
-  * agents
-  * security
+  - agents
+  - security
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: how-to
@@ -42,12 +42,12 @@ Inputs:
 
 ### When to Choose Scoping Mode
 
-| Situation                                        | Fit  |
-|--------------------------------------------------|------|
+| Situation                                          | Fit |
+|----------------------------------------------------|-----|
 | PRD or BRD artifacts exist in `.copilot-tracking/` | ✅   |
-| Product requirements are well-documented          | ✅   |
-| Early-stage project without formal docs           | ❌   |
-| Quick exploration of the agent's workflow         | ❌   |
+| Product requirements are well-documented           | ✅   |
+| Early-stage project without formal docs            | ❌   |
+| Quick exploration of the agent's workflow          | ❌   |
 
 ## Capture Mode
 
@@ -73,24 +73,24 @@ If the user provides existing security notes or context in the initial message, 
 
 ### When to Choose Capture Mode
 
-| Situation                                        | Fit  |
-|--------------------------------------------------|------|
-| No PRD or BRD artifacts available                 | ✅   |
-| Team wants to explore the workflow interactively  | ✅   |
-| Existing informal notes to incorporate            | ✅   |
-| Well-documented project with formal artifacts     | ❌   |
+| Situation                                        | Fit |
+|--------------------------------------------------|-----|
+| No PRD or BRD artifacts available                | ✅   |
+| Team wants to explore the workflow interactively | ✅   |
+| Existing informal notes to incorporate           | ✅   |
+| Well-documented project with formal artifacts    | ❌   |
 
 ## Comparing the Two Modes
 
 Both modes converge at the same Phase 1 output. The difference is how much context the agent starts with.
 
-| Aspect               | Scoping                              | Capture                            |
-|----------------------|--------------------------------------|------------------------------------|
-| Initial context      | Extracted from PRD/BRD               | Gathered through interview         |
-| Number of questions   | Fewer (gaps only)                    | More (full scope interview)        |
-| Time to Phase 2      | Faster                               | Slower but more thorough           |
-| State initialization | `entryMode: "scoping"`              | `entryMode: "capture"`            |
-| Best for             | Projects with existing documentation | Projects in early stages           |
+| Aspect               | Scoping                              | Capture                     |
+|----------------------|--------------------------------------|-----------------------------|
+| Initial context      | Extracted from PRD/BRD               | Gathered through interview  |
+| Number of questions  | Fewer (gaps only)                    | More (full scope interview) |
+| Time to Phase 2      | Faster                               | Slower but more thorough    |
+| State initialization | `entryMode: "scoping"`               | `entryMode: "capture"`      |
+| Best for             | Projects with existing documentation | Projects in early stages    |
 
 ## Switching Between Modes
 

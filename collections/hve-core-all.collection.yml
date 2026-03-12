@@ -192,7 +192,13 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
-- path: .github/prompts/security/incident-response.prompt.md
+- path: .github/prompts/rai-planning/rai-capture.prompt.md
+  kind: prompt
+- path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+  kind: prompt
+- path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+  kind: prompt
+- path: .github/prompts/security-planning/incident-response.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security-planning/risk-register.prompt.md

@@ -4,15 +4,15 @@ description: Structured Responsible AI assessment through a 6-phase conversation
 sidebar_position: 1
 sidebar_label: Overview
 keywords:
-  * responsible AI
-  * RAI planner
-  * NIST AI RMF
-  * Microsoft RAI Standard
-  * AI risk assessment
-  * sensitive uses
+  - responsible AI
+  - RAI planner
+  - NIST AI RMF
+  - Microsoft RAI Standard
+  - AI risk assessment
+  - sensitive uses
 tags:
-  * agents
-  * rai-planning
+  - agents
+  - rai-planning
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: concept
@@ -89,24 +89,24 @@ Present the RAI scorecard summarizing all findings. Generate backlog items for i
 
 Three entry modes determine how Phase 1 begins. All converge at Phase 2 once AI system scoping completes.
 
-| Mode | Source | Best for |
-|---|---|---|
-| `capture` | Fresh interview | New AI projects without prior artifacts |
-| `from-prd` | PRD/BRD documents | Projects with product definition artifacts |
+| Mode                 | Source              | Best for                                                      |
+|----------------------|---------------------|---------------------------------------------------------------|
+| `capture`            | Fresh interview     | New AI projects without prior artifacts                       |
+| `from-prd`           | PRD/BRD documents   | Projects with product definition artifacts                    |
 | `from-security-plan` | Security plan state | Projects that completed security planning first (recommended) |
 
 See [entry modes](entry-modes) for detailed guidance on when to choose each mode and what each mode pre-populates.
 
 ## Related Pages
 
-| Page | Description |
-|---|---|
-| [Why RAI planning?](why-rai-planning) | The case for structured RAI assessment over ad-hoc reviews |
-| [Agent overview](agent-overview) | Architecture, state management, and interaction model |
-| [Entry modes](entry-modes) | Choosing between capture, from-prd, and from-security-plan |
-| [Phase reference](phase-reference) | Detailed inputs, outputs, and state transitions for all six phases |
-| [Handoff pipeline](handoff-pipeline) | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
-| [Security planning overview](../security-planning/) | The Security Planner agent that feeds into RAI assessment |
+| Page                                                | Description                                                            |
+|-----------------------------------------------------|------------------------------------------------------------------------|
+| [Why RAI planning?](why-rai-planning)               | The case for structured RAI assessment over ad-hoc reviews             |
+| [Agent overview](agent-overview)                    | Architecture, state management, and interaction model                  |
+| [Entry modes](entry-modes)                          | Choosing between capture, from-prd, and from-security-plan             |
+| [Phase reference](phase-reference)                  | Detailed inputs, outputs, and state transitions for all six phases     |
+| [Handoff pipeline](handoff-pipeline)                | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
+| [Security planning overview](../security-planning/) | The Security Planner agent that feeds into RAI assessment              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

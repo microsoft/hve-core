@@ -22,6 +22,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 | Project Planning                        | 5        | Medium-High | [Project Planning](project-planning/README.md)                       |
 | [Security Planning](#security-planning) | 1 active | Very High   | [Security Planner](security-planning/README.md)                      |
 | [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                |
+| Document Builders                       | 4        | Medium-High | Planned                                                              |
 | Data Pipeline                           | 4        | Medium      | Planned                                                              |
 | DevOps Quality                          | 2        | High        | Planned                                                              |
 | Meta/Engineering                        | 1        | High        | Planned                                                              |

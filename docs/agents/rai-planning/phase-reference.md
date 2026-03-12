@@ -4,15 +4,15 @@ description: Complete specification of the RAI Planner's six assessment phases i
 sidebar_position: 5
 sidebar_label: Phase Reference
 keywords:
-  * RAI phases
-  * NIST AI RMF
-  * sensitive uses
-  * RAI risk surface
-  * RAI scorecard
+  - RAI phases
+  - NIST AI RMF
+  - sensitive uses
+  - RAI risk surface
+  - RAI scorecard
 tags:
-  * rai-planning
-  * reference
-  * phases
+  - rai-planning
+  - reference
+  - phases
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: reference
@@ -21,14 +21,14 @@ estimated_reading_time: 8
 
 ## Phase Summary
 
-| Phase | Name | NIST AI RMF | Key output | State fields updated |
-|---|---|---|---|---|
-| 1 | AI System Scoping | Govern + Map | `system-definition-pack.md`, `stakeholder-impact-map.md` | `currentPhase`, `entryMode`, `securityPlanRef` |
-| 2 | Sensitive Uses Assessment | Map | `sensitive-uses-screening.md`, `use-misuse-inventory.md` | `sensitiveUsesComplete`, `sensitiveUsesCategories`, `restrictedUsesCleared`, `gateResults` |
-| 3 | RAI Standards Mapping | Govern + Measure | `rai-standards-mapping.md` | `standardsMapped` |
-| 4 | RAI Risk Surface Analysis | Measure | `rai-risk-surface-addendum.md` | `raiRiskSurfaceStarted`, `raiThreatCount` |
-| 5 | RAI Impact Assessment | Manage | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
-| 6 | Review and Handoff | Manage | `rai-scorecard.md`, backlog items | `handoffGenerated`, `scoredDimensions` |
+| Phase | Name                      | NIST AI RMF      | Key output                                                               | State fields updated                                                                       |
+|-------|---------------------------|------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| 1     | AI System Scoping         | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`                                             |
+| 2     | Sensitive Uses Assessment | Map              | `sensitive-uses-screening.md`, `use-misuse-inventory.md`                 | `sensitiveUsesComplete`, `sensitiveUsesCategories`, `restrictedUsesCleared`, `gateResults` |
+| 3     | RAI Standards Mapping     | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
+| 4     | RAI Risk Surface Analysis | Measure          | `rai-risk-surface-addendum.md`                                           | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
+| 5     | RAI Impact Assessment     | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
+| 6     | Review and Handoff        | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
 
 ## Phase 1: AI System Scoping
 
@@ -64,11 +64,11 @@ In `from-security-plan` mode, AI components from the security plan are pre-popul
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 1 | 2 |
-| `entryMode` | set during init | unchanged |
-| `securityPlanRef` | null | path (if from-security-plan) |
+| Field             | Before          | After                        |
+|-------------------|-----------------|------------------------------|
+| `currentPhase`    | 1               | 2                            |
+| `entryMode`       | set during init | unchanged                    |
+| `securityPlanRef` | null            | path (if from-security-plan) |
 
 ## Phase 2: Sensitive Uses Assessment
 
@@ -108,14 +108,14 @@ For each applicable category, the agent assesses:
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 2 | 3 |
-| `sensitiveUsesComplete` | false | true |
-| `sensitiveUsesCategories` | [] | [identified categories] |
-| `restrictedUsesCleared` | false | true or escalation pending |
-| `gateResults.sensitiveUses` | null | pass or findings |
-| `gateResults.restrictedUses` | null | pass or escalation |
+| Field                        | Before | After                      |
+|------------------------------|--------|----------------------------|
+| `currentPhase`               | 2      | 3                          |
+| `sensitiveUsesComplete`      | false  | true                       |
+| `sensitiveUsesCategories`    | []     | [identified categories]    |
+| `restrictedUsesCleared`      | false  | true or escalation pending |
+| `gateResults.sensitiveUses`  | null   | pass or findings           |
+| `gateResults.restrictedUses` | null   | pass or escalation         |
 
 > [!IMPORTANT]
 > If the system triggers restricted use criteria, the agent presents findings and recommends organizational escalation before proceeding. The user decides whether to continue, modify the system scope, or halt the assessment.
@@ -137,14 +137,14 @@ Map each AI component against applicable RAI principles and NIST AI RMF subcateg
 
 The agent maps components against six RAI principles:
 
-| Principle | Focus area |
-|---|---|
-| Fairness | Bias detection, equitable outcomes, allocation harms |
+| Principle              | Focus area                                               |
+|------------------------|----------------------------------------------------------|
+| Fairness               | Bias detection, equitable outcomes, allocation harms     |
 | Reliability and Safety | Consistent performance, failure modes, degradation paths |
-| Privacy and Security | Data protection, consent, inference prevention |
-| Inclusiveness | Accessibility, diverse populations, language equity |
-| Transparency | Explainability, disclosure, decision traceability |
-| Accountability | Oversight mechanisms, audit trails, remediation channels |
+| Privacy and Security   | Data protection, consent, inference prevention           |
+| Inclusiveness          | Accessibility, diverse populations, language equity      |
+| Transparency           | Explainability, disclosure, decision traceability        |
+| Accountability         | Oversight mechanisms, audit trails, remediation channels |
 
 For each principle-component pair, the agent identifies:
 
@@ -160,10 +160,10 @@ The Researcher Subagent is dispatched for runtime lookups of specific regulatory
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 3 | 4 |
-| `standardsMapped` | false | true |
+| Field             | Before | After |
+|-------------------|--------|-------|
+| `currentPhase`    | 3      | 4     |
+| `standardsMapped` | false  | true  |
 
 ## Phase 4: RAI Risk Surface Analysis
 
@@ -183,15 +183,15 @@ Identify AI-specific threats across all components using a structured threat tax
 
 The agent applies threat analysis across seven AI-specific categories:
 
-| Category | Threat focus |
-|---|---|
-| Data poisoning | Manipulation of training or fine-tuning data |
-| Model evasion | Adversarial inputs designed to cause misclassification |
-| Prompt injection | Manipulation of LLM prompts to override instructions |
-| Output manipulation | Altering model outputs in transit or post-processing |
-| Bias amplification | Model behavior that reinforces or amplifies existing biases |
-| Privacy leakage | Extraction of training data, PII, or sensitive information |
-| Misuse escalation | System capabilities repurposed for unintended harmful uses |
+| Category            | Threat focus                                                |
+|---------------------|-------------------------------------------------------------|
+| Data poisoning      | Manipulation of training or fine-tuning data                |
+| Model evasion       | Adversarial inputs designed to cause misclassification      |
+| Prompt injection    | Manipulation of LLM prompts to override instructions        |
+| Output manipulation | Altering model outputs in transit or post-processing        |
+| Bias amplification  | Model behavior that reinforces or amplifies existing biases |
+| Privacy leakage     | Extraction of training data, PII, or sensitive information  |
+| Misuse escalation   | System capabilities repurposed for unintended harmful uses  |
 
 Each threat receives an identifier in `RAI-T-{CATEGORY}-{NNN}` format. In `from-security-plan` mode, numbering continues from the security plan's threat count to maintain a unified threat registry.
 
@@ -199,13 +199,13 @@ Each threat receives an identifier in `RAI-T-{CATEGORY}-{NNN}` format. In `from-
 
 Risk is calculated using a likelihood-impact matrix:
 
-| Likelihood \ Impact | Low | Medium | High | Critical |
-|---|---|---|---|---|
-| Very likely | Medium | High | Critical | Critical |
-| Likely | Low | Medium | High | Critical |
-| Possible | Low | Medium | Medium | High |
-| Unlikely | Low | Low | Medium | Medium |
-| Rare | Low | Low | Low | Medium |
+| Likelihood \ Impact | Low    | Medium | High     | Critical |
+|---------------------|--------|--------|----------|----------|
+| Very likely         | Medium | High   | Critical | Critical |
+| Likely              | Low    | Medium | High     | Critical |
+| Possible            | Low    | Medium | Medium   | High     |
+| Unlikely            | Low    | Low    | Medium   | Medium   |
+| Rare                | Low    | Low    | Low      | Medium   |
 
 ### Outputs
 
@@ -213,11 +213,11 @@ Risk is calculated using a likelihood-impact matrix:
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 4 | 5 |
-| `raiRiskSurfaceStarted` | false | true |
-| `raiThreatCount` | 0 | count of identified threats |
+| Field                   | Before | After                       |
+|-------------------------|--------|-----------------------------|
+| `currentPhase`          | 4      | 5                           |
+| `raiRiskSurfaceStarted` | false  | true                        |
+| `raiThreatCount`        | 0      | count of identified threats |
 
 ## Phase 5: RAI Impact Assessment
 
@@ -244,10 +244,10 @@ For each threat identified in Phase 4, the agent evaluates:
 
 Common tradeoff examples:
 
-| Tradeoff | Example |
-|---|---|
-| Transparency vs. Privacy | Explaining model decisions may reveal sensitive training data |
-| Fairness vs. Performance | Debiasing techniques may reduce model accuracy for some populations |
+| Tradeoff                 | Example                                                                         |
+|--------------------------|---------------------------------------------------------------------------------|
+| Transparency vs. Privacy | Explaining model decisions may reveal sensitive training data                   |
+| Fairness vs. Performance | Debiasing techniques may reduce model accuracy for some populations             |
 | Safety vs. Inclusiveness | Conservative safety filters may disproportionately restrict certain user groups |
 
 ### Outputs
@@ -258,11 +258,11 @@ Common tradeoff examples:
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 5 | 6 |
-| `impactAssessmentGenerated` | false | true |
-| `evidenceRegisterComplete` | false | true |
+| Field                       | Before | After |
+|-----------------------------|--------|-------|
+| `currentPhase`              | 5      | 6     |
+| `impactAssessmentGenerated` | false  | true  |
+| `evidenceRegisterComplete`  | false  | true  |
 
 ## Phase 6: Review and Handoff
 
@@ -281,13 +281,13 @@ Produce the RAI scorecard summarizing assessment quality across five scored dime
 
 The agent scores the assessment across five dimensions on a 1-5 scale:
 
-| Dimension | What it measures |
-|---|---|
-| Scope Boundary Clarity | How well the AI system boundaries and components are defined |
-| Risk Identification Quality | Completeness and accuracy of threat identification |
-| Control Surface Adequacy | Coverage and effectiveness of controls for identified threats |
-| Evidence Sufficiency | Quality and availability of evidence supporting control effectiveness |
-| Future Work Governance | Clarity of plans for ongoing monitoring, audit, and remediation |
+| Dimension                   | What it measures                                                      |
+|-----------------------------|-----------------------------------------------------------------------|
+| Scope Boundary Clarity      | How well the AI system boundaries and components are defined          |
+| Risk Identification Quality | Completeness and accuracy of threat identification                    |
+| Control Surface Adequacy    | Coverage and effectiveness of controls for identified threats         |
+| Evidence Sufficiency        | Quality and availability of evidence supporting control effectiveness |
+| Future Work Governance      | Clarity of plans for ongoing monitoring, audit, and remediation       |
 
 #### Scoring
 
@@ -313,13 +313,13 @@ Gaps identified across Phases 2-5 are converted to work items using the same dua
 
 ### State Transitions
 
-| Field | Before | After |
-|---|---|---|
-| `currentPhase` | 6 | 6 (terminal) |
-| `handoffGenerated` | false | true |
-| `scoredDimensions.*` | null | scored values |
-| `scoredDimensions.total` | null | sum |
-| `scoredDimensions.outcome` | null | Approved, Conditional, or Remediation Required |
+| Field                      | Before | After                                          |
+|----------------------------|--------|------------------------------------------------|
+| `currentPhase`             | 6      | 6 (terminal)                                   |
+| `handoffGenerated`         | false  | true                                           |
+| `scoredDimensions.*`       | null   | scored values                                  |
+| `scoredDimensions.total`   | null   | sum                                            |
+| `scoredDimensions.outcome` | null   | Approved, Conditional, or Remediation Required |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

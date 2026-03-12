@@ -4,15 +4,15 @@ description: Automated security analysis agent that guides teams through threat 
 sidebar_position: 1
 sidebar_label: Overview
 keywords:
-  * security planning
-  * threat modeling
-  * STRIDE
-  * OWASP
-  * security backlog
-  * standards mapping
+  - security planning
+  - threat modeling
+  - STRIDE
+  - OWASP
+  - security backlog
+  - standards mapping
 tags:
-  * agents
-  * security
+  - agents
+  - security
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: concept
@@ -25,11 +25,11 @@ The Security Planner agent walks your team through a structured six-phase securi
 
 ## Why Use Security Planning?
 
-| Benefit | Description |
-|---|---|
-| 🛡️ Consistent coverage | Every project gets the same structured analysis across seven operational buckets, so nothing falls through the cracks |
-| 🔍 Standards-backed threat modeling | Threats are mapped to OWASP Top 10, NIST 800-53, and CIS Benchmarks rather than ad-hoc checklists |
-| ⚡ Actionable output | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
+| Benefit                             | Description                                                                                                                   |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| 🛡️ Consistent coverage             | Every project gets the same structured analysis across seven operational buckets, so nothing falls through the cracks         |
+| 🔍 Standards-backed threat modeling | Threats are mapped to OWASP Top 10, NIST 800-53, and CIS Benchmarks rather than ad-hoc checklists                             |
+| ⚡ Actionable output                 | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
 
 > [!TIP]
 > New to the agent? Read [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
@@ -87,29 +87,29 @@ Summarizes the full analysis, validates completeness across all buckets, and pre
 
 Work items generated in Phase 5 are assigned an autonomy tier that controls how much human oversight each item receives.
 
-| Tier    | Description                          | When used                                                   |
-|---------|--------------------------------------|-------------------------------------------------------------|
-| Full    | Agent executes without approval      | Low-risk items with clear implementation paths              |
-| Partial | Agent drafts, human approves         | Default tier for most security work items                   |
-| Manual  | Human plans and executes             | High-risk items requiring architectural decisions           |
+| Tier    | Description                     | When used                                         |
+|---------|---------------------------------|---------------------------------------------------|
+| Full    | Agent executes without approval | Low-risk items with clear implementation paths    |
+| Partial | Agent drafts, human approves    | Default tier for most security work items         |
+| Manual  | Human plans and executes        | High-risk items requiring architectural decisions |
 
 ## Entry Modes
 
 The Security Planner supports two entry modes, each matched to a prompt file.
 
-| Mode    | Prompt                       | Starting point                                               |
-|---------|------------------------------|--------------------------------------------------------------|
-| Scoping | `security-plan-from-prd`     | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
-| Capture | `security-capture`           | Starts a blank Phase 1 interview to gather scope directly    |
+| Mode    | Prompt                   | Starting point                                              |
+|---------|--------------------------|-------------------------------------------------------------|
+| Scoping | `security-plan-from-prd` | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
+| Capture | `security-capture`       | Starts a blank Phase 1 interview to gather scope directly   |
 
 ## When to Use
 
-| Scenario                                     | Recommended approach         |
-|----------------------------------------------|------------------------------|
-| New project with existing PRD/BRD            | Scoping mode                 |
-| Existing project without formal requirements | Capture mode                 |
+| Scenario                                     | Recommended approach            |
+|----------------------------------------------|---------------------------------|
+| New project with existing PRD/BRD            | Scoping mode                    |
+| Existing project without formal requirements | Capture mode                    |
 | Project with AI/ML components                | Either mode (RAI auto-detected) |
-| Quick security checklist only                | Manual review instead        |
+| Quick security checklist only                | Manual review instead           |
 
 ## Quick Start
 
