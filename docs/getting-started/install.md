@@ -27,7 +27,7 @@ Install the **HVE Core** extension for a zero-configuration experience that work
 
 **Or visit:** [HVE Core on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-The extension installs the `hve-core-all` (Full) collection containing all 163 artifacts. Updates arrive automatically through VS Code.
+The extension installs the `hve-core-all` (Flagship) collection containing all 163 artifacts. Updates arrive automatically through VS Code.
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
@@ -44,8 +44,8 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 
 The installer reads collection manifests and copies only the artifacts assigned to your selected collections. See the [Collections Overview](collections.md) for a full list of available bundles and what each one includes.
 
-> [!NOTE]
-> Collection filtering currently applies to agents only. Support for prompts, instructions, and skills is planned for a future release.
+> [!IMPORTANT]
+> Agent bundle selection currently applies to agents only. Support for prompts, instructions, and skills is planned for a future release.
 
 ## Developer Setup
 
