@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -38,7 +38,7 @@ flowchart TD
     I1["rai-identity"]
     I2["rai-standards"]
     I3["rai-sensitive-uses"]
-    I4["rai-risk-surface"]
+    I4["rai-security-model"]
     I5["rai-impact-assessment"]
     I6["rai-backlog-handoff"]
   end
@@ -60,7 +60,7 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 | `rai-identity.instructions.md`          | Agent identity, orchestration, state management, session recovery                      |
 | `rai-standards.instructions.md`         | Microsoft RAI Standard v2, NIST AI RMF subcategories, regulatory cross-references      |
 | `rai-sensitive-uses.instructions.md`    | Sensitive uses categories, restricted uses gate, vulnerable populations                |
-| `rai-risk-surface.instructions.md`      | AI-specific threat taxonomy, `RAI-T-{CATEGORY}-{NNN}` format, likelihood-impact matrix |
+| `rai-security-model.instructions.md`    | AI-specific threat taxonomy, `RAI-T-{CATEGORY}-{NNN}` format, likelihood-impact matrix |
 | `rai-impact-assessment.instructions.md` | Control surface evaluation, evidence register, principle tradeoff analysis             |
 | `rai-backlog-handoff.instructions.md`   | Dual-format backlog handoff, content sanitization, autonomy tiers                      |
 
@@ -136,7 +136,7 @@ When conversation context is compacted, a five-step recovery process reconstruct
 
 1. Read `state.json` for project slug and current phase
 2. Read the RAI plan markdown file referenced in `raiPlanFile`
-3. Reconstruct context from existing artifacts (system definition pack, sensitive uses screening, standards mapping, risk surface addendum, control surface catalog)
+3. Reconstruct context from existing artifacts (system definition pack, sensitive uses screening, standards mapping, security model addendum, control surface catalog)
 4. Identify the next incomplete task within the current phase
 5. Resume with a brief summary of recovered state and the next action
 

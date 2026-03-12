@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -27,7 +27,7 @@ Each of the Security Planner's six phases has defined inputs, outputs, state tra
 | 1     | Project Scoping    | Scope definition         | `entryMode`, `raiEnabled`, `aiComponents` |
 | 2     | Bucket Analysis    | Bucket classification    | `bucketsCompleted`                        |
 | 3     | Standards Mapping  | Controls per bucket      | `standardsMapped`                         |
-| 4     | Risk Surface       | Threat catalog           | `riskSurfaceStarted`                      |
+| 4     | Security Model     | Threat catalog           | `riskSurfaceStarted`                      |
 | 5     | Backlog Generation | Work items               | `handoffGenerated`                        |
 | 6     | Review & Handoff   | Summary and RAI dispatch | `raiPlannerDispatched`                    |
 
@@ -122,7 +122,7 @@ The agent dispatches the Researcher Subagent to perform WAF (Well-Architected Fr
 | `currentPhase`    | 3      | 4 (on user confirmation)      |
 | `standardsMapped` | `[]`   | Populated with mapped buckets |
 
-## Phase 4: Risk Surface Analysis
+## Phase 4: Security Model Analysis
 
 ### Purpose
 

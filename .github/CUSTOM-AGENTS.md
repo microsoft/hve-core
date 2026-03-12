@@ -55,7 +55,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **doc-ops**                      | Documentation operations and maintenance                           | Does not modify source code                           |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
-| **security-planner**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven risk surface analysis                |
+| **security-planner**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven security model analysis                |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment             | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
 
@@ -273,10 +273,10 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Security plans and implementation artifacts:
 
-* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and risk surface analysis)
+* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and security model analysis)
 * `security-plan-outputs/security-plan-{blueprint-name}.md` (final security plan document)
 
-**Workflow:** Blueprint Selection → Architecture Analysis → Risk Surface Assessment → Plan Generation → Validation
+**Workflow:** Blueprint Selection → Architecture Analysis → Security Model Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
 

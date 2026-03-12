@@ -35,7 +35,7 @@ items:
   - path: .github/instructions/security-planning/standards-mapping.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/security-planning/risk-surface.instructions.md
+  - path: .github/instructions/security-planning/security-model.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/security-planning/backlog-handoff.instructions.md

@@ -52,7 +52,7 @@ SDL Lite provides a lightweight secure development lifecycle suitable for agent-
 
 Key controls:
 
-* Risk surface analysis: structured identification of threats per component (covered in Phase 4)
+* Security model analysis: structured identification of threats per component (covered in Phase 4)
 * Security requirements definition: explicit security criteria derived from standards mapping
 * Attack surface analysis: enumeration of entry points, trust boundaries, and data flows
 * Static analysis tooling: automated code scanning integrated into CI/CD pipelines
@@ -67,12 +67,12 @@ Key controls:
 
 The NIST AI Risk Management Framework (AI RMF 1.0) organizes AI governance into four core functions. Security Planner phases map to these functions to ensure AI risk coverage.
 
-| Security Planner Phase          | AI RMF Function  | Key Subcategories                                                                                            |
-|---------------------------------|------------------|--------------------------------------------------------------------------------------------------------------|
-| Phase 1 (Scoping)               | Govern + Map     | GV-1 (policies), MP-1 through MP-5 (context, requirements, benefits/costs, risks, impact characterization)   |
-| Phase 3 (Standards Mapping)     | Govern + Measure | GV-3 (workforce diversity), MS-1 (risk metrics), MS-2 (AI system evaluation)                                 |
-| Phase 4 (Risk Surface Analysis) | Measure          | MS-2.5 through MS-2.11 (privacy, security, resilience, explanation, bias, homogeneity, environmental impact) |
-| Phase 5 (Backlog Generation)    | Manage           | MN-1 (risk prioritization), MN-2 (risk response), MN-3 (risk monitoring), MN-4 (escalation)                  |
+| Security Planner Phase            | AI RMF Function  | Key Subcategories                                                                                            |
+|-----------------------------------|------------------|--------------------------------------------------------------------------------------------------------------|
+| Phase 1 (Scoping)                 | Govern + Map     | GV-1 (policies), MP-1 through MP-5 (context, requirements, benefits/costs, risks, impact characterization)   |
+| Phase 3 (Standards Mapping)       | Govern + Measure | GV-3 (workforce diversity), MS-1 (risk metrics), MS-2 (AI system evaluation)                                 |
+| Phase 4 (Security Model Analysis) | Measure          | MS-2.5 through MS-2.11 (privacy, security, resilience, explanation, bias, homogeneity, environmental impact) |
+| Phase 5 (Backlog Generation)      | Manage           | MN-1 (risk prioritization), MN-2 (risk response), MN-3 (risk monitoring), MN-4 (escalation)                  |
 
 Use these mappings to verify that the security plan addresses AI governance requirements when AI/ML components are present.
 

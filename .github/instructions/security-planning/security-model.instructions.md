@@ -1,9 +1,9 @@
 ---
-description: "STRIDE-based risk surface analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core"
+description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
-# Risk Surface
+# Security Model
 
 Systematic STRIDE-based threat identification applied per operational bucket. This guidance drives Phase 4 of the security planning workflow, building on bucket analyses from Phase 2 and standards mappings from Phase 3. Each bucket receives a structured threat assessment producing threat tables with risk ratings and mitigation strategies linked to standards controls.
 
@@ -211,7 +211,7 @@ Use data flow information to identify threats at trust boundaries and integratio
 
 ## Summary Format
 
-After analyzing all buckets, produce a risk surface summary.
+After analyzing all buckets, produce a security model summary.
 
 ### Required Summary Contents
 

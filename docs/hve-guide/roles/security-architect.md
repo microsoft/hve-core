@@ -1,24 +1,24 @@
 ---
 title: Security Architect Guide
-description: HVE Core support for security architects building risk surfaces, security plans, and compliance verification
+description: HVE Core support for security architects building security models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
 ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - security
-  - risk surface analysis
+  - security model analysis
   - risk assessment
   - compliance
 estimated_reading_time: 10
 ---
 
-This guide is for you if you perform risk surface analysis, build security plans, assess risks, define compliance requirements, or review system security posture. Security architects have focused but deep tooling, with 9 addressable assets centered on security planning and risk management.
+This guide is for you if you perform security model analysis, build security plans, assess risks, define compliance requirements, or review system security posture. Security architects have focused but deep tooling, with 9 addressable assets centered on security planning and risk management.
 
 > [!CAUTION]
 > The security agents and prompts in HVE Core are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
-> All AI-generated security plans, risk surfaces, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
+> All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
@@ -31,7 +31,7 @@ This guide is for you if you perform risk surface analysis, build security plans
 
 ## What HVE Core Does for You
 
-1. Creates comprehensive security plans with risk surface analysis and mitigation strategies
+1. Creates comprehensive security plans with security model analysis and mitigation strategies
 2. Generates and manages risk registers for component-level risk assessment
 3. Provides incident response runbook templates and playbooks
 4. Supports security architecture research through deep codebase analysis
@@ -43,17 +43,17 @@ This guide is for you if you perform risk surface analysis, build security plans
 > Security architects primarily operate in these lifecycle stages:
 >
 > [Stage 2: Discovery](../lifecycle/discovery.md): Research security requirements, investigate threat landscape, gather evidence
-> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define risk surfaces, security specifications, and compliance requirements
+> [Stage 3: Product Definition](../lifecycle/product-definition.md): Define security models, security specifications, and compliance requirements
 > [Stage 7: Review](../lifecycle/review.md): Validate implementation against security requirements
-> [Stage 9: Operations](../lifecycle/operations.md): Monitor security posture, update risk surfaces, manage incident response
+> [Stage 9: Operations](../lifecycle/operations.md): Monitor security posture, update security models, manage incident response
 
 ## Stage Walkthrough
 
 1. Stage 2: Discovery. Use the **task-researcher** agent to investigate the threat landscape, existing security controls, and compliance requirements for your system.
-2. Stage 3: Product Definition. Run the **security-planner** agent to generate a security plan with risk surfaces, attack vectors, and mitigation strategies.
+2. Stage 3: Product Definition. Run the **security-planner** agent to generate a security plan with security models, attack vectors, and mitigation strategies.
 3. Stage 3: Product Definition. Use `/risk-register` to assess and document component-level risks with severity ratings, likelihood, and mitigation plans.
 4. Stage 7: Review. Validate implementation against security requirements using the **task-reviewer** agent for code-level security compliance checks.
-5. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update risk surfaces as the system evolves.
+5. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update security models as the system evolves.
 
 ## Starter Prompts
 
@@ -62,7 +62,7 @@ Select **security-planner** agent:
 ```text
 Generate a security plan for our customer-facing REST API gateway. Cover
 OAuth 2.0 authentication with Azure AD B2C, PII data classification in
-user profiles, PCI DSS compliance for payment flows, and risk surface
+user profiles, PCI DSS compliance for payment flows, and security model
 areas including injection attacks and broken access control.
 ```
 
@@ -92,7 +92,7 @@ arguments.
 
 | Agent                | Purpose                                       | Docs                                            |
 |----------------------|-----------------------------------------------|-------------------------------------------------|
-| **security-planner** | Security plan and risk surface generation     | Agent file                                      |
+| **security-planner** | Security plan and security model generation   | Agent file                                      |
 | **task-researcher**  | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher.md) |
 | **task-reviewer**    | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
 | **memory**           | Session context and preference persistence    | Agent file                                      |
@@ -106,25 +106,25 @@ Prompts complement the agents for targeted security workflows:
 
 ## Tips
 
-| Do                                                                 | Don't                                                         |
-|--------------------------------------------------------------------|---------------------------------------------------------------|
-| Start with the **security-planner** agent for comprehensive models | Create ad-hoc security notes without structured risk surfaces |
-| Use `/risk-register` for each significant component                | Track risks informally or skip risk documentation             |
-| Research the threat landscape before defining mitigations          | Assume risk surfaces from other projects directly apply       |
-| Update risk surfaces as the system architecture evolves            | Treat security plans as static, one-time documents            |
-| Map security requirements to specific lifecycle stages             | Isolate security from the broader product lifecycle           |
+| Do                                                                 | Don't                                                           |
+|--------------------------------------------------------------------|-----------------------------------------------------------------|
+| Start with the **security-planner** agent for comprehensive models | Create ad-hoc security notes without structured security models |
+| Use `/risk-register` for each significant component                | Track risks informally or skip risk documentation               |
+| Research the threat landscape before defining mitigations          | Assume security models from other projects directly apply       |
+| Update security models as the system architecture evolves          | Treat security plans as static, one-time documents              |
+| Map security requirements to specific lifecycle stages             | Isolate security from the broader product lifecycle             |
 
 ## Related Roles
 
-* Security Architect + TPM: Security requirements integrate into BRDs and PRDs. Risk surfaces inform product specifications and compliance gates. See the [TPM Guide](tpm.md).
-* Security Architect + Tech Lead: Security architecture decisions align with overall system design. Risk surfaces shape architectural choices. See the [Tech Lead Guide](tech-lead.md).
+* Security Architect + TPM: Security requirements integrate into BRDs and PRDs. Security models inform product specifications and compliance gates. See the [TPM Guide](tpm.md).
+* Security Architect + Tech Lead: Security architecture decisions align with overall system design. Security models shape architectural choices. See the [Tech Lead Guide](tech-lead.md).
 * Security Architect + SRE: Operational security, incident response, and monitoring bridge security planning with production operations. See the [SRE / Operations Guide](sre-operations.md).
 
 ## Next Steps
 
 > [!TIP]
 > Explore security planning tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
-> Review the risk surface documentation: [Risk Surface](../../security/risk-surface.md)
+> Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

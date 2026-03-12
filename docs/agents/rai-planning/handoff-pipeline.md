@@ -13,7 +13,7 @@ tags:
   - concepts
   - handoff
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -67,7 +67,7 @@ Phase 6 produces a scorecard that quantifies assessment quality across five dime
 ```mermaid
 flowchart TD
   P2["Phase 2\nSensitive Uses"] --> D1["Scope Boundary\nClarity"]
-  P4["Phase 4\nRisk Surface"] --> D2["Risk Identification\nQuality"]
+  P4["Phase 4\nSecurity Model"] --> D2["Risk Identification\nQuality"]
   P5["Phase 5\nImpact Assessment"] --> D3["Control Surface\nAdequacy"]
   P5 --> D4["Evidence\nSufficiency"]
   P5 --> D5["Future Work\nGovernance"]
@@ -123,18 +123,18 @@ All generated backlog content is sanitized before handoff:
 
 ## Pipeline Artifacts
 
-| Artifact                  | Path                                                              | Generated during |
-|---------------------------|-------------------------------------------------------------------|------------------|
-| System definition pack    | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`    | Phase 1          |
-| Stakeholder impact map    | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`    | Phase 1          |
-| Sensitive uses screening  | `.copilot-tracking/rai-plans/{slug}/sensitive-uses-screening.md`  | Phase 2          |
-| Use-misuse inventory      | `.copilot-tracking/rai-plans/{slug}/use-misuse-inventory.md`      | Phase 2          |
-| RAI standards mapping     | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`     | Phase 3          |
-| RAI risk surface addendum | `.copilot-tracking/rai-plans/{slug}/rai-risk-surface-addendum.md` | Phase 4          |
-| Control surface catalog   | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`   | Phase 5          |
-| Evidence register         | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`         | Phase 5          |
-| RAI tradeoffs             | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`             | Phase 5          |
-| RAI scorecard             | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`             | Phase 6          |
+| Artifact                    | Path                                                                | Generated during |
+|-----------------------------|---------------------------------------------------------------------|------------------|
+| System definition pack      | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`      | Phase 1          |
+| Stakeholder impact map      | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`      | Phase 1          |
+| Sensitive uses screening    | `.copilot-tracking/rai-plans/{slug}/sensitive-uses-screening.md`    | Phase 2          |
+| Use-misuse inventory        | `.copilot-tracking/rai-plans/{slug}/use-misuse-inventory.md`        | Phase 2          |
+| RAI standards mapping       | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`       | Phase 3          |
+| RAI security model addendum | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md` | Phase 4          |
+| Control surface catalog     | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`     | Phase 5          |
+| Evidence register           | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`           | Phase 5          |
+| RAI tradeoffs               | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`               | Phase 5          |
+| RAI scorecard               | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`               | Phase 6          |
 
 <details>
 <summary>End-to-end assessment flow</summary>

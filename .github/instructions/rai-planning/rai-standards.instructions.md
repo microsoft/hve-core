@@ -159,7 +159,7 @@ Risk prioritization, treatment, monitoring, and continuous improvement. 4 catego
 
 ## RAI-Security Overlap Mapping
 
-RAI and security concerns overlap at specific intersection points. Use this mapping to identify components requiring both RAI principle evaluation and security risk surface analysis.
+RAI and security concerns overlap at specific intersection points. Use this mapping to identify components requiring both RAI principle evaluation and security security model analysis.
 
 | RAI Principle          | STRIDE Category                   | Overlap Area                                                       |
 |------------------------|-----------------------------------|--------------------------------------------------------------------|
@@ -171,7 +171,7 @@ RAI and security concerns overlap at specific intersection points. Use this mapp
 
 ## Security-Adjacent Subcategories
 
-These Measure subcategories overlap directly with security risk surface analysis. Cross-reference them with the Security Planner's STRIDE analysis when both RAI and security assessments apply to the same component.
+These Measure subcategories overlap directly with security security model analysis. Cross-reference them with the Security Planner's STRIDE analysis when both RAI and security assessments apply to the same component.
 
 | Subcategory | Focus                        | Security Relevance                                                 |
 |-------------|------------------------------|--------------------------------------------------------------------|
