@@ -97,6 +97,16 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  msdate-freshness:
+    name: ms.date Freshness Check
+    uses: ./.github/workflows/msdate-freshness-check.yml
+    permissions:
+      contents: read
+    with:
+      staleness-threshold-days: 90
+      changed-files-only: true
+      soft-fail: false
+
   plugin-validation:
     name: Plugin Validation
     uses: ./.github/workflows/plugin-validation.yml
