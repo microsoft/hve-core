@@ -81,6 +81,14 @@ git remote add upstream https://github.com/microsoft/hve-core.git
 
 Create `.devcontainer/hve-core.code-workspace` in your project:
 
+> [!IMPORTANT]
+> Use the actual clone path (not the folder display name) as the prefix in `chat.*Locations` settings.
+> Folder display names do not resolve reliably as path prefixes.
+
+#### Codespaces / Devcontainer
+
+Use the absolute clone path:
+
 ```jsonc
 {
   "folders": [
@@ -95,36 +103,36 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
   ],
   "settings": {
     "chat.agentFilesLocations": {
-      "HVE-Core Fork/.github/agents/ado": true,
-      "HVE-Core Fork/.github/agents/data-science": true,
-      "HVE-Core Fork/.github/agents/design-thinking": true,
-      "HVE-Core Fork/.github/agents/github": true,
-      "HVE-Core Fork/.github/agents/project-planning": true,
-      "HVE-Core Fork/.github/agents/hve-core": true,
-      "HVE-Core Fork/.github/agents/hve-core/subagents": true,
-      "HVE-Core Fork/.github/agents/security": true,
+      "/workspaces/hve-core/.github/agents/ado": true,
+      "/workspaces/hve-core/.github/agents/data-science": true,
+      "/workspaces/hve-core/.github/agents/design-thinking": true,
+      "/workspaces/hve-core/.github/agents/github": true,
+      "/workspaces/hve-core/.github/agents/project-planning": true,
+      "/workspaces/hve-core/.github/agents/hve-core": true,
+      "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+      "/workspaces/hve-core/.github/agents/security": true,
       "My Project/.github/agents": true
     },
     "chat.promptFilesLocations": {
-      "HVE-Core Fork/.github/prompts/ado": true,
-      "HVE-Core Fork/.github/prompts/design-thinking": true,
-      "HVE-Core Fork/.github/prompts/github": true,
-      "HVE-Core Fork/.github/prompts/hve-core": true,
-      "HVE-Core Fork/.github/prompts/security": true,
+      "/workspaces/hve-core/.github/prompts/ado": true,
+      "/workspaces/hve-core/.github/prompts/design-thinking": true,
+      "/workspaces/hve-core/.github/prompts/github": true,
+      "/workspaces/hve-core/.github/prompts/hve-core": true,
+      "/workspaces/hve-core/.github/prompts/security": true,
       "My Project/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {
-      "HVE-Core Fork/.github/instructions/ado": true,
-      "HVE-Core Fork/.github/instructions/coding-standards": true,
-      "HVE-Core Fork/.github/instructions/design-thinking": true,
-      "HVE-Core Fork/.github/instructions/github": true,
-      "HVE-Core Fork/.github/instructions/hve-core": true,
-      "HVE-Core Fork/.github/instructions/shared": true,
+      "/workspaces/hve-core/.github/instructions/ado": true,
+      "/workspaces/hve-core/.github/instructions/coding-standards": true,
+      "/workspaces/hve-core/.github/instructions/design-thinking": true,
+      "/workspaces/hve-core/.github/instructions/github": true,
+      "/workspaces/hve-core/.github/instructions/hve-core": true,
+      "/workspaces/hve-core/.github/instructions/shared": true,
       "My Project/.github/instructions": true
     },
     "chat.agentSkillsLocations": {
-      "HVE-Core Fork/.github/skills": true,
-      "HVE-Core Fork/.github/skills/shared": true,
+      "/workspaces/hve-core/.github/skills": true,
+      "/workspaces/hve-core/.github/skills/shared": true,
       "My Project/.github/skills": true
     }
   },
@@ -137,14 +145,38 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
 }
 ```
 
-**For local development**, use a relative path instead:
+#### Local VS Code
+
+Use the relative clone path from the workspace file's directory:
 
 ```jsonc
 {
-  "name": "HVE-Core Fork",
-  "path": "../../hve-core"
+  "folders": [
+    {
+      "name": "My Project",
+      "path": ".."
+    },
+    {
+      "name": "HVE-Core Fork",
+      "path": "../../hve-core"
+    }
+  ],
+  "settings": {
+    "chat.agentFilesLocations": {
+      "../../hve-core/.github/agents/ado": true,
+      "../../hve-core/.github/agents/data-science": true,
+      "../../hve-core/.github/agents/hve-core": true,
+      "../../hve-core/.github/agents/hve-core/subagents": true
+    },
+    "chat.instructionsFilesLocations": {
+      "../../hve-core/.github/instructions/hve-core": true,
+      "../../hve-core/.github/instructions/shared": true
+    }
+  }
 }
 ```
+
+Adjust the relative path to match your clone location.
 
 ### Step 3: Configure Devcontainer (Codespaces)
 
@@ -180,14 +212,15 @@ The VS Code title bar should show your workspace name, not just the folder name.
 
 ## Path Resolution
 
-Multi-root workspaces use folder names for paths:
+Use the actual clone path as the prefix in `chat.*Locations` settings:
 
-| Path Style           | Example                                 | Recommended       |
-|----------------------|-----------------------------------------|-------------------|
-| Folder name relative | `"HVE-Core Fork/.github/agents"`        | ✅  Yes            |
-| Absolute path        | `"/workspaces/hve-core/.github/agents"` | ⚠️  Less portable |
+| Path Style    | Example                                 | Recommended  |
+|---------------|-----------------------------------------|--------------|
+| Absolute path | `"/workspaces/hve-core/.github/agents"` | ✅ Codespaces |
+| Relative path | `"../../hve-core/.github/agents"`       | ✅ Local      |
+| Folder name   | `"HVE-Core Fork/.github/agents"`        | ❌ Unreliable |
 
-The folder names in your `.code-workspace` file (`"name": "HVE-Core Fork"`) become path prefixes in settings.
+Folder display names (`"name"` field) label roots in the Explorer sidebar but do not resolve reliably as path prefixes in `chat.*Locations` settings. Always use the filesystem path from the folder's `"path"` field instead.
 
 ## Keeping Your Fork Updated
 
@@ -245,7 +278,7 @@ After setup, verify HVE-Core is working:
 ### Settings not applying
 
 * Folder settings override workspace settings, so check for conflicts at the folder level
-* Use folder names (`"HVE-Core Fork/..."`) instead of absolute paths
+* Use the actual clone path (absolute or relative) in `chat.*Locations` settings, not folder display names
 
 ## Next Steps
 

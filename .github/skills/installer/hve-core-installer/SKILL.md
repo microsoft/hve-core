@@ -343,7 +343,7 @@ Execute the installation workflow based on the method selected via the decision 
 | 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`           | `.hve-core`            | Devcontainer, isolation        |
 | 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone      |
 | 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces                     |
-| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Per workspace file     | Best IDE integration           |
+| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Actual clone path      | Best IDE integration           |
 | 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`         | `lib/hve-core`         | Team version control           |
 
 *Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
@@ -509,19 +509,38 @@ Optional: Add `updateContentCommand` for auto-updates on rebuild.
 
 #### Method 5: Multi-Root Workspace
 
-Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core:
+Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core.
 
-<!-- <method-5-workspace> -->
+Use the actual clone path (not the folder display name) as the settings prefix.
+Folder display names in `chat.*Locations` settings do not resolve reliably.
+
+Codespaces and Devcontainer: use the absolute clone path.
+
+<!-- <method-5-workspace-codespaces> -->
 ```json
 {
   "folders": [
-    { "name": "My Project", "path": "." },
-    { "name": "HVE-Core Library", "path": "../hve-core" }
+    { "name": "My Project", "path": ".." },
+    { "name": "HVE-Core Fork", "path": "/workspaces/hve-core" }
   ],
-  "settings": { /* Same as settings template with ../hve-core prefix */ }
+  "settings": { /* Same as settings template with /workspaces/hve-core prefix */ }
 }
 ```
-<!-- </method-5-workspace> -->
+<!-- </method-5-workspace-codespaces> -->
+
+Local VS Code: use a relative clone path from the workspace file's directory.
+
+<!-- <method-5-workspace-local> -->
+```json
+{
+  "folders": [
+    { "name": "My Project", "path": ".." },
+    { "name": "HVE-Core Fork", "path": "../../hve-core" }
+  ],
+  "settings": { /* Same as settings template with ../../hve-core prefix */ }
+}
+```
+<!-- </method-5-workspace-local> -->
 
 User opens the `.code-workspace` file instead of the folder.
 
