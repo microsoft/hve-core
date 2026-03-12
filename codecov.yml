@@ -4,6 +4,11 @@ coverage:
       default:
         target: auto
         threshold: 1%
+      pytest:
+        target: auto
+        threshold: 1%
+        flags:
+          - pytest
     patch:
       default:
         target: 80%
