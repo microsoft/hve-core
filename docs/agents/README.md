@@ -14,18 +14,20 @@ estimated_reading_time: 5
 
 hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
-| Group                               | Agents   | Complexity  | Documentation                                                        |
-|-------------------------------------|----------|-------------|----------------------------------------------------------------------|
-| RPI Orchestration                   | 5        | High        | [RPI Documentation](../rpi/README.md)                                |
-| GitHub Backlog Management           | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                          |
-| ADO Backlog Management              | 1 active | Very High   | [Backlog Manager](ado-backlog/README.md)                             |
-| Project Planning                    | 5        | Medium-High | [Project Planning](project-planning/README.md)                       |
-| Data Pipeline                       | 4        | Medium      | Planned                                                              |
-| DevOps Quality                      | 2        | High        | Planned                                                              |
-| Meta/Engineering                    | 1        | High        | Planned                                                              |
-| Infrastructure                      | 1        | Very High   | Planned                                                              |
-| Utility                             | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence) |
-| [Design Thinking](#design-thinking) | 2        | High        | Active                                                               |
+| Group                                   | Agents   | Complexity  | Documentation                                                        |
+|-----------------------------------------|----------|-------------|----------------------------------------------------------------------|
+| RPI Orchestration                       | 5        | High        | [RPI Documentation](../rpi/README.md)                                |
+| GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                          |
+| ADO Backlog Management                  | 1 active | Very High   | [Backlog Manager](ado-backlog/README.md)                             |
+| Project Planning                        | 5        | Medium-High | [Project Planning](project-planning/README.md)                       |
+| [Security Planning](#security-planning) | 1 active | Very High   | [Security Planner](security-planning/README.md)                      |
+| [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                |
+| Data Pipeline                           | 4        | Medium      | Planned                                                              |
+| DevOps Quality                          | 2        | High        | Planned                                                              |
+| Meta/Engineering                        | 1        | High        | Planned                                                              |
+| Infrastructure                          | 1        | Very High   | Planned                                                              |
+| Utility                                 | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence) |
+| [Design Thinking](#design-thinking)     | 2        | High        | Active                                                               |
 
 ## RPI Orchestration
 
@@ -62,6 +64,14 @@ Manages cloud infrastructure provisioning and configuration. Handles Bicep and T
 ## Utility
 
 General-purpose agents for cross-cutting concerns such as session persistence and context management across workflows.
+
+## Security Planning
+
+Guides teams through a six-phase security assessment covering system scoping, operational bucketing, standards mapping, risk surface analysis, impact assessment, and backlog handoff. The security planner agent conducts interactive sessions with structured state tracking and produces dual-platform work items for ADO and GitHub. See the [Security Planner Documentation](security-planning/) for phase details and entry modes.
+
+## RAI Planning
+
+Guides teams through a six-phase responsible AI assessment covering AI system scoping, sensitive uses screening, RAI standards mapping, risk surface analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
 
 ## Design Thinking
 
