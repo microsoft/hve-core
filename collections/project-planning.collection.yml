@@ -75,13 +75,16 @@ items:
   - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/rai-planning/rai-risk-surface.instructions.md
+  - path: .github/instructions/rai-planning/rai-security-model.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/security-planning/identity.instructions.md
@@ -93,7 +96,7 @@ items:
   - path: .github/instructions/security-planning/standards-mapping.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/security-planning/risk-surface.instructions.md
+  - path: .github/instructions/security-planning/security-model.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/security-planning/backlog-handoff.instructions.md

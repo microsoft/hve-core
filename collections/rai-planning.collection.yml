@@ -1,0 +1,50 @@
+id: rai-planning
+name: RAI Planning
+description: Responsible AI assessment, sensitive uses screening, and standards-aligned impact analysis
+maturity: experimental
+tags:
+  - rai
+  - responsible-ai
+  - planning
+  - assessment
+items:
+  # Agents
+  - path: .github/agents/rai-planning/rai-planner.agent.md
+    kind: agent
+    maturity: experimental
+  # Prompts
+  - path: .github/prompts/rai-planning/rai-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
+  # Instructions
+  - path: .github/instructions/rai-planning/rai-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-security-model.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

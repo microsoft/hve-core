@@ -14,7 +14,7 @@ tags:
   - responsible-ai
   - concepts
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -23,7 +23,7 @@ estimated_reading_time: 6
 
 Traditional security planning focuses on how adversaries exploit systems. Injection attacks, broken access control, cryptographic failures: these are threats where an attacker deliberately subverts intended behavior. Security assessments excel at finding and mitigating these risks.
 
-AI systems introduce a fundamentally different risk category. A model can produce biased outputs, make opaque decisions that affect people's lives, or amplify existing societal inequities, all while functioning exactly as designed. No attacker is required. The system itself is the risk surface.
+AI systems introduce a fundamentally different risk category. A model can produce biased outputs, make opaque decisions that affect people's lives, or amplify existing societal inequities, all while functioning exactly as designed. No attacker is required. The system itself is the security model.
 
 ## The Core Insight
 
@@ -31,7 +31,7 @@ Security planning asks: "How can this system be attacked?"
 
 RAI planning asks: "How can this system cause harm, even when working correctly?"
 
-Both questions matter. They require different analytical frameworks, different threat taxonomies, and different mitigation strategies. Running a security assessment alone leaves the AI-specific risk surface unexamined.
+Both questions matter. They require different analytical frameworks, different threat taxonomies, and different mitigation strategies. Running a security assessment alone leaves the AI-specific security model unexamined.
 
 ## How Each Phase Addresses AI Risk
 
@@ -47,7 +47,7 @@ Screens the system against Microsoft's sensitive uses categories, including appl
 
 Maps each AI component against the six Microsoft RAI principles and NIST AI RMF subcategories. Identifies which principles apply to which components and what regulatory obligations exist. This mapping becomes the evaluation framework for Phases 4 and 5.
 
-### Phase 4: RAI Risk Surface Analysis
+### Phase 4: RAI Security Model Analysis
 
 Applies AI-specific threat analysis across seven categories: data poisoning, model evasion, prompt injection, output manipulation, bias amplification, privacy leakage, and misuse escalation. These categories reflect how AI systems fail, not how traditional applications are exploited.
 

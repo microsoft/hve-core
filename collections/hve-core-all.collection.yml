@@ -194,10 +194,13 @@ items:
   kind: prompt
 - path: .github/prompts/rai-planning/rai-capture.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/security-planning/incident-response.prompt.md
   kind: prompt
   maturity: experimental
@@ -401,13 +404,16 @@ items:
 - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/rai-planning/rai-identity.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-risk-surface.instructions.md
+- path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
@@ -425,7 +431,7 @@ items:
 - path: .github/instructions/security-planning/operational-buckets.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/risk-surface.instructions.md
+- path: .github/instructions/security-planning/security-model.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security-planning/standards-mapping.instructions.md

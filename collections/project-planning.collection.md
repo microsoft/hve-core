@@ -1,4 +1,4 @@
-Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security risk surface analysis with automated backlog generation.
+Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security security model analysis with automated backlog generation.
 
 This collection includes agents for:
 
@@ -11,8 +11,8 @@ This collection includes agents for:
 - **System Architecture Reviewer** — System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment
 - **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, and Review phases
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
-- **RAI Planner** — Responsible AI assessment with sensitive uses screening, risk surface analysis, impact assessment, and dual-format backlog handoff
-- **Security Planner** — STRIDE-based security risk surface analysis with operational bucket classification, standards mapping, and automated backlog generation
+- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
+- **Security Planner** — STRIDE-based security security model analysis with operational bucket classification, standards mapping, and automated backlog generation
 
 Supporting subagents included:
 

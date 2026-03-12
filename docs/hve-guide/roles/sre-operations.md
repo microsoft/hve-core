@@ -18,7 +18,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > [!CAUTION]
 > The security agents and prompts referenced in this guide are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
-> All AI-generated security plans, risk surfaces, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
+> All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
@@ -131,7 +131,7 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 ## Related Roles
 
-* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Risk surfaces inform operational controls. See the [Security Architect Guide](security-architect.md).
+* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Security models inform operational controls. See the [Security Architect Guide](security-architect.md).
 * SRE + Engineer: Production reliability requires collaboration between infrastructure operations and feature development. Deployment pipelines serve both roles. See the [Engineer Guide](engineer.md).
 * SRE + Tech Lead: Infrastructure architecture decisions shape operational practices. IaC standards maintain consistency across environments. See the [Tech Lead Guide](tech-lead.md).
 

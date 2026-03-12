@@ -116,7 +116,7 @@ You can feed the SPDX JSON file into security and compliance tooling:
 ## Related Resources
 
 * [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Build provenance verification and vulnerability reporting
-* [Risk Surface](risk-surface.md): Security controls including SBOM attestation (SC-7)
+* [Security Model](security-model.md): Security controls including SBOM attestation (SC-7)
 
 ---
 

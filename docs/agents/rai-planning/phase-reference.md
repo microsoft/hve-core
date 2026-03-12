@@ -7,28 +7,28 @@ keywords:
   - RAI phases
   - NIST AI RMF
   - sensitive uses
-  - RAI risk surface
+  - RAI security model
   - RAI scorecard
 tags:
   - rai-planning
   - reference
   - phases
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 8
 ---
 
 ## Phase Summary
 
-| Phase | Name                      | NIST AI RMF      | Key output                                                               | State fields updated                                                                       |
-|-------|---------------------------|------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| 1     | AI System Scoping         | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`                                             |
-| 2     | Sensitive Uses Assessment | Map              | `sensitive-uses-screening.md`, `use-misuse-inventory.md`                 | `sensitiveUsesComplete`, `sensitiveUsesCategories`, `restrictedUsesCleared`, `gateResults` |
-| 3     | RAI Standards Mapping     | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
-| 4     | RAI Risk Surface Analysis | Measure          | `rai-risk-surface-addendum.md`                                           | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
-| 5     | RAI Impact Assessment     | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
-| 6     | Review and Handoff        | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
+| Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                                                       |
+|-------|-----------------------------|------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`                                             |
+| 2     | Sensitive Uses Assessment   | Map              | `sensitive-uses-screening.md`, `use-misuse-inventory.md`                 | `sensitiveUsesComplete`, `sensitiveUsesCategories`, `restrictedUsesCleared`, `gateResults` |
+| 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
+| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
+| 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
+| 6     | Review and Handoff          | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
 
 ## Phase 1: AI System Scoping
 
@@ -165,7 +165,7 @@ The Researcher Subagent is dispatched for runtime lookups of specific regulatory
 | `currentPhase`    | 3      | 4     |
 | `standardsMapped` | false  | true  |
 
-## Phase 4: RAI Risk Surface Analysis
+## Phase 4: RAI Security Model Analysis
 
 > NIST AI RMF alignment: Measure
 
@@ -209,7 +209,7 @@ Risk is calculated using a likelihood-impact matrix:
 
 ### Outputs
 
-* `rai-risk-surface-addendum.md`: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
+* `rai-security-model-addendum.md`: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
 
 ### State Transitions
 
@@ -229,7 +229,7 @@ Evaluate control surface completeness for each identified threat. Document evide
 
 ### Inputs
 
-* RAI risk surface addendum from Phase 4
+* RAI security model addendum from Phase 4
 * RAI standards mapping from Phase 3
 * Evidence provided by the user or discovered in the codebase
 

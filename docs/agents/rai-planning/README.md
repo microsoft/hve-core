@@ -14,7 +14,7 @@ tags:
   - agents
   - rai-planning
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -50,7 +50,7 @@ flowchart LR
 
     subgraph measure ["Govern + Measure"]
         P3["Phase 3\nRAI Standards\nMapping"]
-        P4["Phase 4\nRAI Risk Surface"]
+        P4["Phase 4\nRAI Security Model"]
     end
 
     subgraph manage ["Manage"]
@@ -73,7 +73,7 @@ Screen the AI system against Microsoft's sensitive uses categories. Identify res
 
 Map AI system components and behaviors to the six RAI principles: fairness, reliability and safety, privacy and security, inclusiveness, transparency, and accountability. Cross-reference with NIST AI RMF subcategories and applicable regulations.
 
-### Phase 4: RAI Risk Surface Analysis
+### Phase 4: RAI Security Model Analysis
 
 Apply AI-specific threat analysis per component using seven threat categories: data poisoning, model evasion, prompt injection, output manipulation, bias amplification, privacy leakage, and misuse escalation. Threats follow the `RAI-T-{CATEGORY}-{NNN}` format.
 

@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -45,7 +45,7 @@ flowchart LR
   subgraph Analysis
     B["Phase 2<br/>Bucket Analysis"]
     C["Phase 3<br/>Standards Mapping"]
-    D["Phase 4<br/>Risk Surface"]
+    D["Phase 4<br/>Security Model"]
   end
 
   subgraph Handoff
@@ -71,7 +71,7 @@ Classifies the application into seven operational buckets: infrastructure, DevOp
 
 Maps each operational bucket to the relevant controls from OWASP Top 10, NIST 800-53, and CIS Benchmarks. The agent dispatches a Researcher Subagent for WAF and CAF runtime lookups when cloud-hosted components are in scope.
 
-### Phase 4: Risk Surface Analysis
+### Phase 4: Security Model Analysis
 
 Performs STRIDE-based threat modeling per bucket, generating threats in `T-{BUCKET}-{NNN}` format. Each threat receives a likelihood-impact severity rating, and data flow diagrams connect threats to the components they affect.
 

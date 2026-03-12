@@ -1,13 +1,13 @@
 ---
-title: Security Assurance Case and Risk Surface
-description: Comprehensive risk surface and security assurance documentation demonstrating enterprise security practices
+title: Security Assurance Case and Security Model
+description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
 ms.date: 2026-03-01
 ms.topic: reference
 keywords:
   - security
-  - risk surface
+  - security model
   - STRIDE
   - defense-in-depth
   - assurance case
@@ -39,7 +39,7 @@ The repository contains no runtime services, databases, or user data storage. Pr
 
 * [System Description](#system-description)
 * [Trust Boundaries](#trust-boundaries)
-* [Risk Surface](#risk-surface)
+* [Security Model](#security-model)
   * [STRIDE Threats](#stride-threats)
   * [Dev Container Threats](#dev-container-threats)
   * [AI-Specific Threats](#ai-specific-threats)
@@ -165,7 +165,7 @@ HVE Core artifacts are consumed by GitHub Copilot, which provides foundational s
 | External Dependencies | npm packages, Actions, MCP servers     | Dependency review, staleness monitoring   |
 | Dev Container         | Development environment, tooling       | SHA256 verification, first-party features |
 
-## Risk Surface
+## Security Model
 
 This section documents threats using [STRIDE](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats) methodology (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege), supplemented with AI-specific and Responsible AI threat categories.
 
@@ -815,7 +815,7 @@ G0: HVE Core is acceptably secure for its intended use as an enterprise prompt e
 |------|------------------------------------------------------------------------------------------------------------------------------------|
 | G1   | Dependency pinning logs, staleness reports, dependency review results, SBOM attestation verification, dependency SBOM diff reports |
 | G2   | Branch protection configuration, CODEOWNERS file, PR review history                                                                |
-| G3   | This risk surface document, MCP trust analysis                                                                                     |
+| G3   | This security model document, MCP trust analysis                                                                                   |
 | G4   | Writing style guidelines, inclusive language checks, PR reviews                                                                    |
 
 ### Assumptions and Justifications

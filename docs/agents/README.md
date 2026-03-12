@@ -68,11 +68,11 @@ General-purpose agents for cross-cutting concerns such as session persistence an
 
 ## Security Planning
 
-Guides teams through a six-phase security assessment covering system scoping, operational bucketing, standards mapping, risk surface analysis, impact assessment, and backlog handoff. The security planner agent conducts interactive sessions with structured state tracking and produces dual-platform work items for ADO and GitHub. See the [Security Planner Documentation](security-planning/) for phase details and entry modes.
+Guides teams through a six-phase security assessment covering system scoping, operational bucketing, standards mapping, security model analysis, impact assessment, and backlog handoff. The security planner agent conducts interactive sessions with structured state tracking and produces dual-platform work items for ADO and GitHub. See the [Security Planner Documentation](security-planning/) for phase details and entry modes.
 
 ## RAI Planning
 
-Guides teams through a six-phase responsible AI assessment covering AI system scoping, sensitive uses screening, RAI standards mapping, risk surface analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
+Guides teams through a six-phase responsible AI assessment covering AI system scoping, sensitive uses screening, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
 
 ## Design Thinking
 

@@ -127,7 +127,7 @@ Auto-activated instructions apply coding standards based on file type: C# (`*.cs
 ## Related Roles
 
 * Tech Lead + Engineer: Architecture decisions feed implementation. Tech leads set standards and review while engineers build. See the [Engineer Guide](engineer.md).
-* Tech Lead + Security Architect: Security architecture integrates with overall system design. Risk surfaces inform architecture decisions. See the [Security Architect Guide](security-architect.md).
+* Tech Lead + Security Architect: Security architecture integrates with overall system design. Security models inform architecture decisions. See the [Security Architect Guide](security-architect.md).
 * Tech Lead + TPM: Architecture shapes product requirements and vice versa. Design decisions affect decomposition and sprint planning. See the [TPM Guide](tpm.md).
 
 ## Next Steps

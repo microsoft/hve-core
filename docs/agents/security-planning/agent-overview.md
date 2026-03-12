@@ -11,12 +11,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 7
 ---
 
-The Security Planner is a phase-based conversational agent that produces risk surfaces, standards mappings, and backlog handoff artifacts. It detects AI/ML components during scoping and coordinates with the RAI Planner for responsible AI assessments.
+The Security Planner is a phase-based conversational agent that produces security models, standards mappings, and backlog handoff artifacts. It detects AI/ML components during scoping and coordinates with the RAI Planner for responsible AI assessments.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ flowchart TD
     I1["identity"]
     I2["operational-buckets"]
     I3["standards-mapping"]
-    I4["risk-surface"]
+    I4["security-model"]
     I5["backlog-handoff"]
   end
 
@@ -46,7 +46,7 @@ flowchart TD
   SP -->|"follows"| I1 & I2 & I3 & I4 & I5
 ```
 
-The agent follows five instruction files, each scoped to a specific concern. The identity instructions govern overall behavior and state management. The remaining four files provide phase-specific guidance for bucket classification, standards mapping, risk surface analysis, and backlog generation.
+The agent follows five instruction files, each scoped to a specific concern. The identity instructions govern overall behavior and state management. The remaining four files provide phase-specific guidance for bucket classification, standards mapping, security model analysis, and backlog generation.
 
 ## State Management
 

@@ -1,11 +1,11 @@
 ---
-description: 'RAI risk surface analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and risk surface merge protocol'
+description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 
-# RAI Risk Surface Analysis
+# RAI Security Model Analysis
 
-AI-specific risk surface analysis extensions for Phase 4 of the RAI Planner. This guidance extends the STRIDE methodology with RAI principle overlaps, AI element types, trust boundaries, data flow patterns, and a dual threat ID convention. A merge protocol enables interoperation with Security Planner risk surfaces when operating in `from-security-plan` mode.
+AI-specific security model analysis extensions for Phase 4 of the RAI Planner. This guidance extends the STRIDE methodology with RAI principle overlaps, AI element types, trust boundaries, data flow patterns, and a dual threat ID convention. A merge protocol enables interoperation with Security Planner security models when operating in `from-security-plan` mode.
 
 ## AI STRIDE Extensions
 
@@ -99,7 +99,7 @@ Threat concentration points: feedback collection (manipulation, bias), aggregati
 
 ## Dual Threat ID Convention
 
-RAI risk surface analysis uses a dual ID system that enables independent tracking within the RAI plan and cross-referencing with Security Planner operational buckets.
+RAI security model analysis uses a dual ID system that enables independent tracking within the RAI plan and cross-referencing with Security Planner operational buckets.
 
 ### ID Formats
 
@@ -173,11 +173,11 @@ Each cell uses the format `Applicability / RAI Principle`:
 
 ## Merge Protocol
 
-When a Security Planner assessment already exists (`from-security-plan` entry mode), the merge protocol prevents duplication and ensures consistent cross-referencing between security and RAI risk surfaces.
+When a Security Planner assessment already exists (`from-security-plan` entry mode), the merge protocol prevents duplication and ensures consistent cross-referencing between security and RAI security models.
 
 ### Steps
 
-1. Read the existing security plan risk surface from the path in `state.json` `securityPlanRef`.
+1. Read the existing security plan security model from the path in `state.json` `securityPlanRef`.
 2. Extract the highest `T-{BUCKET}-AI-{NNN}` ID for each bucket to establish cross-reference continuity.
 3. Start new RAI threat IDs at `T-RAI-001` (independent sequence from the security plan).
 4. For overlapping threats (threats already identified in the security plan that also have RAI dimensions), cross-reference using dual IDs rather than duplicating the threat entry.
@@ -188,7 +188,7 @@ When a Security Planner assessment already exists (`from-security-plan` entry mo
 ### Addendum Header Template
 
 ```markdown
-## RAI Risk Surface Addendum
+## RAI Security Model Addendum
 
 - Source security plan: {path}
 - Security plan date: {date}
@@ -229,11 +229,11 @@ Template for `rai-threat-addendum.md` produced during Phase 4.
 
 ```markdown
 ---
-title: RAI Risk Surface Addendum
-description: RAI-specific threat analysis extending security plan risk surface
+title: RAI Security Model Addendum
+description: RAI-specific threat analysis extending security plan security model
 ---
 
-## RAI Risk Surface Addendum
+## RAI Security Model Addendum
 
 - Source security plan: {path or "standalone"}
 - Security plan date: {date or "N/A"}

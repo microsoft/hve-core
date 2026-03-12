@@ -1,1 +1,0 @@
-../../../.github/instructions/security-planning/risk-surface.instructions.md

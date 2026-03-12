@@ -226,7 +226,7 @@ starting points and progression for each of the nine roles.
 
 ### Security Architect
 
-1. Add security-focused instructions for risk surface analysis
+1. Add security-focused instructions for security model analysis
 2. Create a security review agent that checks for common
   vulnerabilities
 3. Build a skill that integrates with security scanning tools

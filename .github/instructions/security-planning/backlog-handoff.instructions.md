@@ -5,11 +5,11 @@ applyTo: '**/.copilot-tracking/security-plans/**'
 
 # Backlog Handoff
 
-Instructions for generating formatted work items from security planning risk surfaces. Applies to both Azure DevOps (ADO) and GitHub issue trackers.
+Instructions for generating formatted work items from security planning security models. Applies to both Azure DevOps (ADO) and GitHub issue trackers.
 
 ## Handoff Overview
 
-Generate formatted work items from risk surface mitigations and standards gaps identified during security planning.
+Generate formatted work items from security model mitigations and standards gaps identified during security planning.
 
 * Context: Phase 5 of the security planning workflow.
 * Input: Completed threat tables from Phase 4, including mitigations and standards references.

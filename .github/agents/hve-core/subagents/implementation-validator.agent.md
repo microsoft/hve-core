@@ -168,7 +168,7 @@ Examine whether user-controlled input flows through validation or sanitization b
 Determine whether changes weaken existing security controls, bypass established trust boundaries, remove or relax validation rules, or downgrade encryption or hashing algorithms by comparing the security posture before and after the change.
 Identify new endpoints, listeners, open ports, deserialization entry points, file upload handlers, or external integrations introduced by the changes, and assess whether each new surface area has appropriate access controls, rate limiting, and input validation.
 Check whether modifications to shared utilities, middleware, or configuration files unintentionally remove protections that other parts of the codebase depend on.
-When security instruction files or risk surfaces exist in the repository, compare the implementation against documented security requirements and mitigations. Do not run security scanners or penetration testing tools.
+When security instruction files or security models exist in the repository, compare the implementation against documented security requirements and mitigations. Do not run security scanners or penetration testing tools.
 
 #### Full Quality Review (`full-quality`)
 

@@ -41,7 +41,7 @@ The evidence register catalogs all mitigations, their coverage status, and suppo
 Each evidence entry requires these fields:
 
 * Evidence ID: format `EV-{PRINCIPLE_ABBR}-{NNN}` where abbreviations are FAIR, REL, PRIV, INCL, TRAN, ACCT
-* Threat ID: the `T-RAI-{NNN}` identifier from Phase 4 risk surface analysis
+* Threat ID: the `T-RAI-{NNN}` identifier from Phase 4 security model analysis
 * Cross-Reference Threat ID: the `T-{BUCKET}-AI-{NNN}` identifier when a Security Planner threat exists
 * Principle: one of the six MS RAI Standard v2 principles
 * Control Type: Prevent, Detect, or Respond

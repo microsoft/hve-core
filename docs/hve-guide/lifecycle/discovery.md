@@ -31,7 +31,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 |------------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------|
 | task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics                                         |
 | brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                               |
-| security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and risk surfaces                                            |
+| security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                          |
 | gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                             |
 | adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                      |
 | arch-diagram-builder   | Agent  | Select **arch-diagram-builder** agent   | Generate architecture diagrams                                                       |
@@ -49,7 +49,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 ## Role-Specific Guidance
 
-TPMs lead Discovery, producing BRDs and coordinating research across disciplines. Engineers contribute technical feasibility research. Tech Leads evaluate architecture options. Security Architects drive risk surface analysis. Data Scientists define data requirements.
+TPMs lead Discovery, producing BRDs and coordinating research across disciplines. Engineers contribute technical feasibility research. Tech Leads evaluate architecture options. Security Architects drive security model analysis. Data Scientists define data requirements.
 
 * [TPM Guide](../roles/tpm.md)
 * [Engineer Guide](../roles/engineer.md)
@@ -86,7 +86,7 @@ Select **security-planner** agent:
 Generate a security plan for the /api/payments endpoint in our
 customer-facing REST API. Scope the plan to authentication via
 OAuth 2.0 with Azure AD B2C, PCI DSS compliance for payment
-tokenization, and a risk surface covering injection and broken
+tokenization, and a security model covering injection and broken
 access control. Exclude infrastructure and network-level controls.
 ```
 

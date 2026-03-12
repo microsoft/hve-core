@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -38,7 +38,7 @@ Classifying components into operational buckets (infrastructure, DevOps, build, 
 
 Mapping each bucket to OWASP, NIST, and CIS controls anchors the analysis in established frameworks. This gives reviewers and auditors a shared vocabulary and reduces the risk of reinventing guidance that already exists.
 
-### Phase 4: Risk Surface Analysis
+### Phase 4: Security Model Analysis
 
 STRIDE-based threat modeling per bucket produces threats with consistent identifiers (`T-{BUCKET}-{NNN}`), severity ratings, and data flow context. This makes threats traceable from discovery through remediation.
 

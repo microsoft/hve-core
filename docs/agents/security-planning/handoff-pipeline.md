@@ -12,7 +12,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2025-07-14
+ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
 ---
