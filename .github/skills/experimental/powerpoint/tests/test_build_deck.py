@@ -1,5 +1,8 @@
 """Tests for build_deck module."""
 
+import argparse
+from unittest.mock import MagicMock, call, patch
+
 import pytest
 from build_deck import (
     _reset_effect_ref,
@@ -16,6 +19,7 @@ from build_deck import (
     clear_slide_shapes,
     discover_slides,
     get_slide_layout,
+    main,
     set_slide_bg,
     set_slide_bg_image,
 )
@@ -1268,3 +1272,244 @@ class TestBuildSlideExtended:
         # Check placeholder was populated
         if 0 in slide.placeholders:
             assert slide.placeholders[0].text == "Title Text"
+
+
+class TestMain:
+    """Tests for main() CLI entry point."""
+
+    def _setup_content_dir(self, tmp_path):
+        """Create a content directory with one slide for main() to discover."""
+        content_dir = tmp_path / "content"
+        slide_dir = content_dir / "slide-001"
+        slide_dir.mkdir(parents=True)
+        (slide_dir / "content.yaml").write_text("slide: 1\ntitle: Test\nelements: []\n")
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text("dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n")
+        return content_dir, style_file
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_full_build(self, mock_prs_cls, mock_build_slide, tmp_path):
+        content_dir, style_file = self._setup_content_dir(tmp_path)
+        output = tmp_path / "out" / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+            ],
+        ):
+            main()
+
+        mock_prs_cls.assert_called_once_with()
+        mock_build_slide.assert_called_once()
+        mock_prs.save.assert_called_once_with(str(output))
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_full_build_no_slides(self, mock_prs_cls, mock_build_slide, tmp_path):
+        """No slide directories found exits with code 1."""
+        empty_content = tmp_path / "content"
+        empty_content.mkdir()
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text("dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n")
+        output = tmp_path / "deck.pptx"
+
+        mock_prs_cls.return_value = MagicMock()
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(empty_content),
+                "--style", str(style_file),
+                "--output", str(output),
+            ],
+        ), pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 1
+        mock_build_slide.assert_not_called()
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_full_build_with_metadata(self, mock_prs_cls, mock_build_slide, tmp_path):
+        content_dir, _ = self._setup_content_dir(tmp_path)
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text(
+            "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
+            "metadata:\n  title: My Deck\n  author: Tester\n"
+        )
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_props = MagicMock(spec=["title", "author"])
+        mock_prs.core_properties = mock_props
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+            ],
+        ):
+            main()
+
+        assert mock_props.title == "My Deck"
+        assert mock_props.author == "Tester"
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_template_build(self, mock_prs_cls, mock_build_slide, tmp_path):
+        content_dir, style_file = self._setup_content_dir(tmp_path)
+        template = tmp_path / "template.pptx"
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        sld_entry = MagicMock()
+        sld_entry.rId = "rId1"
+        sld_id_lst = [sld_entry]
+        mock_prs.slides._sldIdLst = sld_id_lst
+        mock_prs.slides.__len__ = MagicMock(side_effect=lambda: len(sld_id_lst))
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--template", str(template),
+            ],
+        ):
+            main()
+
+        mock_prs_cls.assert_called_once_with(str(template))
+        mock_build_slide.assert_called_once()
+        mock_prs.save.assert_called_once()
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_template_build_no_slides(self, mock_prs_cls, mock_build_slide, tmp_path):
+        empty_content = tmp_path / "content"
+        empty_content.mkdir()
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text("{}\n")
+        template = tmp_path / "template.pptx"
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides._sldIdLst = []
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(empty_content),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--template", str(template),
+            ],
+        ), pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 1
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_partial_rebuild(self, mock_prs_cls, mock_build_slide, tmp_path):
+        content_dir, style_file = self._setup_content_dir(tmp_path)
+        source = tmp_path / "source.pptx"
+        output = tmp_path / "deck.pptx"
+
+        mock_slide = MagicMock()
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_prs.slides.__getitem__ = MagicMock(return_value=mock_slide)
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--source", str(source),
+                "--slides", "1",
+            ],
+        ):
+            main()
+
+        mock_prs_cls.assert_called_once_with(str(source))
+        mock_build_slide.assert_called_once()
+        mock_prs.save.assert_called_once()
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_partial_rebuild_missing_slide(self, mock_prs_cls, mock_build_slide, tmp_path):
+        """Slide number not found in content directory prints warning and skips."""
+        content_dir, style_file = self._setup_content_dir(tmp_path)
+        source = tmp_path / "source.pptx"
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--source", str(source),
+                "--slides", "99",
+            ],
+        ):
+            main()
+
+        mock_build_slide.assert_not_called()
+        mock_prs.save.assert_called_once()
+
+    @patch("build_deck.build_slide")
+    @patch("build_deck.Presentation")
+    def test_partial_rebuild_out_of_range(self, mock_prs_cls, mock_build_slide, tmp_path):
+        """Slide index beyond deck length prints warning and skips."""
+        content_dir, style_file = self._setup_content_dir(tmp_path)
+        source = tmp_path / "source.pptx"
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=0)
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--source", str(source),
+                "--slides", "1",
+            ],
+        ):
+            main()
+
+        mock_build_slide.assert_not_called()
+        mock_prs.save.assert_called_once()
