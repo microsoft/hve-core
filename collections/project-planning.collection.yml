@@ -29,6 +29,9 @@ items:
     kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
+  - path: .github/agents/project-planning/meeting-analyst.agent.md
+    kind: agent
+    maturity: experimental
   # Subagents
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent

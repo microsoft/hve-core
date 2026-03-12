@@ -26,9 +26,6 @@ items:
 - path: .github/agents/design-thinking/dt-learning-tutor.agent.md
   kind: agent
   maturity: preview
-- path: .github/agents/experimental/meeting-analyst.agent.md
-  kind: agent
-  maturity: experimental
 - path: .github/agents/experimental/pptx.agent.md
   kind: agent
 - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
@@ -77,6 +74,9 @@ items:
   kind: agent
 - path: .github/agents/project-planning/brd-builder.agent.md
   kind: agent
+- path: .github/agents/project-planning/meeting-analyst.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md

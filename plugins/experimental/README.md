@@ -13,11 +13,10 @@ copilot plugin install experimental@hve-core
 
 ## Agents
 
-| Agent           | Description                                                                                                                            |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| meeting-analyst | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core |
-| pptx            | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                        |
-| pptx-subagent   | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                 |
+| Agent         | Description                                                                                                            |
+|---------------|------------------------------------------------------------------------------------------------------------------------|
+| pptx          | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                        |
+| pptx-subagent | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation |
 
 ## Instructions
 

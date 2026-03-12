@@ -7,9 +7,6 @@ tags:
   - preview
 items:
   # Agents
-  - path: .github/agents/experimental/meeting-analyst.agent.md
-    kind: agent
-    maturity: experimental
   - path: .github/agents/experimental/pptx.agent.md
     kind: agent
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
