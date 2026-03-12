@@ -64,10 +64,10 @@ export const collectionCards: CollectionCardData[] = [
     href: '/docs/getting-started/collections',
   },
   {
-    name: 'security-planning',
-    description: 'Security plans and risk assessments',
+    name: 'security',
+    description: 'Security review, planning, incident response, and risk assessment',
     artifacts: 4,
-    maturity: 'Stable',
+    maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
 ];

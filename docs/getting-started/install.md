@@ -42,7 +42,7 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 2. Open Copilot Chat and ask any agent: *"help me customize hve-core installation"*.
 3. Choose the collections that match your team's workflow.
 
-3. Update preference?
+4. Update preference?
    * Auto: Always get latest HVE-Core
    * Controlled: Pin to specific version, update explicitly
 

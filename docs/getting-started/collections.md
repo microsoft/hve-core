@@ -31,19 +31,19 @@ The installer enables targeted deployment of specific collections into workspace
 
 ## Available Collections
 
-| Collection        | Description                                                                                                                                    | Artifacts | Maturity     |
-|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------|
-| ado               | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 21        | Stable       |
-| coding-standards  | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 14        | Stable       |
-| data-science      | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 7         | Stable       |
-| design-thinking   | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
-| experimental      | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 6         | Experimental |
-| github            | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 12        | Stable       |
-| hve-core          | RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                                                   | 40        | Stable       |
-| hve-core-all      | Complete collection of all artifacts across all domains                                                                                        | 163       | Stable       |
-| installer         | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |
-| project-planning  | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 16        | Stable       |
-| security-planning | Create comprehensive security plans, incident response procedures, and risk assessments                                                        | 4         | Stable       |
+| Collection       | Description                                                                                                                                    | Artifacts | Maturity     |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------|
+| ado              | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 21        | Stable       |
+| coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 14        | Stable       |
+| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 7         | Stable       |
+| design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
+| experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 6         | Experimental |
+| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 12        | Stable       |
+| hve-core         | RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                                                   | 40        | Stable       |
+| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 163       | Stable       |
+| installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |
+| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 16        | Stable       |
+| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 4         | Experimental |
 
 ## How Collections Fit Together
 
@@ -62,7 +62,7 @@ graph TD
     GH["github"]
     HC["hve-core"]
     PP["project-planning"]
-    SP["security-planning"]
+    SP["security"]
 
     HCA --> ADO
     HCA --> CS

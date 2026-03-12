@@ -57,6 +57,7 @@ Create and maintain agents, prompts, instructions, and skills for the framework.
 Explore advanced capabilities including Design Thinking coaching, security planning, and methodology reference.
 
 * [Design Thinking](design-thinking/README.md) guides teams through nine methods across three spaces
+* [Project Planning](agents/project-planning/) covers ADR creation, BRD/PRD building, architecture diagrams, and security plan generation
 * [Security documentation](security/README.md) covers threat modeling and security planning
 * [RPI methodology](rpi/) explains the Research, Plan, Implement agent coordination pattern
 
@@ -79,6 +80,7 @@ HVE Core supports a 9-stage lifecycle from initial setup through ongoing operati
 Specialized agents are organized into functional groups that combine agents, prompts, and instruction files into cohesive workflows.
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
+* [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
 * [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution
 * Additional systems are documented in the [Agent Catalog](agents/)
 
