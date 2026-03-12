@@ -24,7 +24,7 @@ HVE Core is a prompt engineering framework for GitHub Copilot designed for team-
 | Engineer                 | Write code, implement features, fix bugs                       | [Engineer Guide](hve-guide/roles/engineer.md)                     |
 | TPM                      | Plan projects, manage requirements, track work                 | [TPM Guide](hve-guide/roles/tpm.md)                               |
 | Tech Lead / Architect    | Design architecture, review code, set standards                | [Tech Lead Guide](hve-guide/roles/tech-lead.md)                   |
-| Security Architect       | Assess security, create threat models                          | [Security Architect Guide](hve-guide/roles/security-architect.md) |
+| Security Architect       | Assess security, create risk surfaces                          | [Security Architect Guide](hve-guide/roles/security-architect.md) |
 | Data Scientist           | Analyze data, build notebooks, create dashboards               | [Data Scientist Guide](hve-guide/roles/data-scientist.md)         |
 | SRE / Operations         | Manage infrastructure, handle incidents, deploy                | [SRE Guide](hve-guide/roles/sre-operations.md)                    |
 | Business Program Manager | Define business outcomes, manage stakeholders                  | [BPM Guide](hve-guide/roles/business-program-manager.md)          |

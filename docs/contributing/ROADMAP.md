@@ -56,7 +56,7 @@ HVE Core v1.1.0 provides:
 #### Will Do
 
 * Add instructions for emerging Azure services (Azure AI Foundry, Azure Container Apps)
-* Create security-focused instructions for threat modeling and secure coding patterns
+* Create security-focused instructions for risk surface analysis and secure coding patterns
 * Develop instructions for infrastructure-as-code testing (Terratest, Bicep testing)
 * Build instructions for observability implementation (Azure Monitor, Application Insights)
 * Enhance existing C# instructions with .NET 9+ patterns and minimal API guidance

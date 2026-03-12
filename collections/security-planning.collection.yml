@@ -1,6 +1,7 @@
 id: security-planning
 name: Security Planning
 description: Security plan creation, incident response, and risk assessment
+maturity: experimental
 tags:
   - security
   - incident-response
@@ -8,14 +9,38 @@ tags:
   - planning
 items:
   # Agents
-  - path: .github/agents/security-planning/security-plan-creator.agent.md
+  - path: .github/agents/security-planning/security-planner.agent.md
     kind: agent
+    maturity: experimental
   # Prompts
+  - path: .github/prompts/security-planning/security-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security-planning/security-capture.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/security-planning/incident-response.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security-planning/risk-register.prompt.md
     kind: prompt
+    maturity: experimental
   # Instructions
+  - path: .github/instructions/security-planning/identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/operational-buckets.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/standards-mapping.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/risk-surface.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/backlog-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:

@@ -1,0 +1,1 @@
+../../../.github/prompts/security-planning/security-plan-from-prd.prompt.md

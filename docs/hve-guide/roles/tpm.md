@@ -124,7 +124,7 @@ TPMs benefit from **dt-coach** when stakeholder alignment requires structured sc
 
 ## Related Roles
 
-* TPM + Security Architect: Secure product launches require requirements gathering paired with threat modeling and compliance verification. Security plans integrate into the BRD/PRD workflow. See the [Security Architect Guide](security-architect.md).
+* TPM + Security Architect: Secure product launches require requirements gathering paired with risk surface analysis and compliance verification. Security plans integrate into the BRD/PRD workflow. See the [Security Architect Guide](security-architect.md).
 * TPM + Engineer: TPMs define requirements and manage backlogs while engineers implement. Work item decomposition flows directly into RPI planning. See the [Engineer Guide](engineer.md).
 
 ## Next Steps
