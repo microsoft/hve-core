@@ -188,7 +188,7 @@ The extension updates automatically through VS Code's extension system:
 
 1. Start with the HVE Core extension for the flagship RPI workflow
 2. When you need MCP configuration, a different installation method, or the complete artifact library, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation"
-3. When you need to modify prompts, instructions, or skills directly, uninstall extensions and follow a [clone-based method](../install.md#custom-installation-methods)
+3. When you need to modify prompts, instructions, or skills directly, uninstall extensions and follow a [clone-based method](./)
 
 ## Troubleshooting
 

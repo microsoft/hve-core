@@ -4,6 +4,7 @@ description: Detailed guides for each HVE Core installation and workspace config
 sidebar_label: Overview
 sidebar_position: 0
 author: Microsoft
+ms.date: 2026-03-12
 ms.topic: overview
 keywords:
   - setup
@@ -33,3 +34,10 @@ HVE Core supports multiple setup methods. Choose the approach that fits your env
 Start with the **VS Code Extension** if you want the fastest path. Move to **Multi-Root Workspace** or **Git Submodule** when your team needs shared, version-controlled configuration.
 
 See the [Getting Started](../README.md) guide for the recommended onboarding sequence.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

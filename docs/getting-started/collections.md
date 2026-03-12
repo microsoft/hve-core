@@ -2,6 +2,9 @@
 title: Collections Overview
 description: Explore the HVE collection system, compare available collections, and choose the right extension for your workflow
 sidebar_position: 3
+author: Microsoft
+ms.date: 2026-03-12
+ms.topic: overview
 ---
 
 ## How HVE Artifacts Are Organized
@@ -82,3 +85,10 @@ If you prefer a leaner workspace or need to standardize which artifacts are avai
 
 > [!TIP]
 > You can always switch later. Start with `hve-core-all` to explore, then move to the installer approach when you know which collections your team needs.
+
+---
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
+then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->
