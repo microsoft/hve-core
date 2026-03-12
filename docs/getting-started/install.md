@@ -96,19 +96,19 @@ Answer these questions to find your recommended installation method:
 
 HVE-Core organizes artifacts into role-based collections. The VS Code extension installs the **HVE Core Workflow** collection (flagship RPI workflow and core artifacts). For the complete set across all collections, use the `hve-core-all` CLI plugin or installer skill. Clone-based methods also support filtering which agents to copy by collection bundle.
 
-| Collection        | Collection ID       | Maturity     | Description                                                      |
-|-------------------|---------------------|--------------|------------------------------------------------------------------|
-| **Full** ⭐        | `hve-core-all`      | Stable       | All stable artifacts (recommended for most)                      |
-| HVE Core Workflow | `hve-core`          | Stable       | RPI workflow with Git commit, merge, and pull request prompts    |
-| Azure DevOps      | `ado`               | Stable       | Work item management, build monitoring, and PR creation          |
-| Coding Standards  | `coding-standards`  | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc. |
-| Data Science      | `data-science`      | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards          |
-| Design Thinking   | `design-thinking`   | Preview      | AI-enhanced Design Thinking coaching across nine methods         |
-| GitHub Backlog    | `github`            | Stable       | Issue discovery, triage, sprint planning, and backlog execution  |
-| Installer         | `installer`         | Stable       | Interactive installer skill for workspace configuration          |
-| Project Planning  | `project-planning`  | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                      |
-| Security Planning | `security-planning` | Stable       | Security plans, incident response, and risk assessment           |
-| Experimental      | `experimental`      | Experimental | Artifacts not yet promoted to stable collections                 |
+| Collection        | Collection ID      | Maturity     | Description                                                       |
+|-------------------|--------------------|--------------|-------------------------------------------------------------------|
+| **Full** ⭐        | `hve-core-all`     | Stable       | All stable artifacts (recommended for most)                       |
+| HVE Core Workflow | `hve-core`         | Stable       | RPI workflow with Git commit, merge, and pull request prompts     |
+| Azure DevOps      | `ado`              | Stable       | Work item management, build monitoring, and PR creation           |
+| Coding Standards  | `coding-standards` | Stable       | Language-specific instructions for bash, Bicep, C#, Python, etc.  |
+| Data Science      | `data-science`     | Stable       | Data specs, Jupyter notebooks, and Streamlit dashboards           |
+| Design Thinking   | `design-thinking`  | Preview      | AI-enhanced Design Thinking coaching across nine methods          |
+| GitHub Backlog    | `github`           | Stable       | Issue discovery, triage, sprint planning, and backlog execution   |
+| Installer         | `installer`        | Stable       | Interactive installer skill for workspace configuration           |
+| Project Planning  | `project-planning` | Stable       | PRDs, BRDs, ADRs, and architecture diagrams                       |
+| Security          | `security`         | Experimental | Security review, planning, incident response, and risk assessment |
+| Experimental      | `experimental`     | Experimental | Artifacts not yet promoted to stable collections                  |
 
 ### Extension Installation (Flagship Collection)
 

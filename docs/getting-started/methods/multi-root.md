@@ -102,7 +102,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/agents/project-planning": true,
       "HVE-Core Fork/.github/agents/hve-core": true,
       "HVE-Core Fork/.github/agents/hve-core/subagents": true,
-      "HVE-Core Fork/.github/agents/security-planning": true,
+      "HVE-Core Fork/.github/agents/security": true,
       "My Project/.github/agents": true
     },
     "chat.promptFilesLocations": {
@@ -110,7 +110,7 @@ Create `.devcontainer/hve-core.code-workspace` in your project:
       "HVE-Core Fork/.github/prompts/design-thinking": true,
       "HVE-Core Fork/.github/prompts/github": true,
       "HVE-Core Fork/.github/prompts/hve-core": true,
-      "HVE-Core Fork/.github/prompts/security-planning": true,
+      "HVE-Core Fork/.github/prompts/security": true,
       "My Project/.github/prompts": true
     },
     "chat.instructionsFilesLocations": {

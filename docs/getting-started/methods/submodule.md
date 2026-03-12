@@ -84,7 +84,7 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/agents/project-planning": true,
     "lib/hve-core/.github/agents/hve-core": true,
     "lib/hve-core/.github/agents/hve-core/subagents": true,
-    "lib/hve-core/.github/agents/security-planning": true,
+    "lib/hve-core/.github/agents/security": true,
     ".github/agents": true
   },
   "chat.promptFilesLocations": {
@@ -92,7 +92,7 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/prompts/design-thinking": true,
     "lib/hve-core/.github/prompts/github": true,
     "lib/hve-core/.github/prompts/hve-core": true,
-    "lib/hve-core/.github/prompts/security-planning": true,
+    "lib/hve-core/.github/prompts/security": true,
     ".github/prompts": true
   },
   "chat.instructionsFilesLocations": {
