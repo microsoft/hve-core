@@ -223,9 +223,9 @@ Specific problems and pain points raised in meetings.
 Users and personas mentioned in transcripts.
 
 ## Requirements Extracted
-| Req ID | Requirement | Confidence | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
-|--------|-------------|------------|----------------|------|---------|------------------|----------|
-| TR-001 | Description | confirmed / inferred / needs-validation | Meeting name | Date | Person | Role | HH:MM:SS |
+| Req ID | Requirement | Confidence                              | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
+|--------|-------------|-----------------------------------------|----------------|------|---------|------------------|----------|
+| TR-001 | Description | confirmed / inferred / needs-validation | Meeting name   | Date | Person  | Role             | HH:MM:SS |
 
 ## Decisions Made
 | Decision      | Rationale | Source Meeting | Date |
@@ -233,8 +233,8 @@ Users and personas mentioned in transcripts.
 | Decision text | Why       | Meeting name   | Date |
 
 ## Action Items
-| Action      | Owner              | Due Date           | Source Meeting |
-|-------------|--------------------|--------------------|----------------|
+| Action      | Owner                   | Due Date              | Source Meeting |
+|-------------|-------------------------|-----------------------|----------------|
 | Action text | Person or *unconfirmed* | Date or *unconfirmed* | Meeting name   |
 
 ## Open Questions
