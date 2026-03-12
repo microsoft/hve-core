@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - SRE
@@ -25,9 +25,9 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
-> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security-planning` (incident response tooling), and `hve-core` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> Your primary collections are `coding-standards` (IaC-specific instructions for Terraform, Bicep, Bash, and GitHub Actions), `security` (incident response tooling), and `hve-core` (structured investigation and remediation workflows). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -139,7 +139,7 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 > [!TIP]
 > Explore IaC coding standards: [Coding Standards Collection](https://github.com/microsoft/hve-core/blob/main/collections/coding-standards.collection.md)
-> Set up incident response tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
+> Set up incident response tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
 > See how operations fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
 ---

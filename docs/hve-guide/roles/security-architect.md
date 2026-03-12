@@ -3,7 +3,7 @@ title: Security Architect Guide
 description: HVE Core support for security architects building threat models, security plans, and compliance verification
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - security
@@ -25,9 +25,9 @@ This guide is for you if you perform threat modeling, build security plans, asse
 ## Recommended Collections
 
 > [!TIP]
-> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace to get all stable artifacts with zero configuration.
+> Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration.
 >
-> Your primary collections are `security-planning` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
+> Your primary collections are `security` (security plan creation, risk registers, and incident response tools) and `project-planning` (broader project context). For clone-based setups, see the [Installation Guide](../../getting-started/install.md).
 
 ## What HVE Core Does for You
 
@@ -123,7 +123,7 @@ Prompts complement the agents for targeted security workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore security planning tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
+> Explore security tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
 > Review the threat model documentation: [Threat Model](../../security/threat-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
