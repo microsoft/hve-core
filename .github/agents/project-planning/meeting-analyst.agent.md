@@ -102,6 +102,8 @@ Maintain state in `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript.s
   "meetingsAnalyzed": [
     { "name": "Meeting name", "date": "2026-02-12", "queriesUsed": 2, "lastTimecodeProcessed": "00:00:00" }
   ],
+  "planningIntent": "create",
+  "existingReferences": [],
   "queryCount": 0,
   "requirementsExtracted": [],
   "decisionsExtracted": [],
@@ -134,6 +136,8 @@ Display the data sensitivity notice from the [Data Sensitivity](#data-sensitivit
 Ask the user to confirm the data classification of the meetings they intend to analyze. Accepted levels are *Public*, *Internal*, and *Confidential*. If the user states *Highly Confidential*, acknowledge the elevated risk, explain that analysis files will exist unencrypted on disk, and require explicit written acknowledgment before proceeding. Refuse to proceed without that acknowledgment.
 
 Call `mcp_workiq_accept_eula` with the URL `https://github.com/microsoft/work-iq-mcp` once classification is confirmed. This is idempotent, so calling it on a resumed session is safe.
+
+Ask the user whether the goal is to create new planning artifacts (PRD, epic, backlog items) or to update existing ones. If updating, ask for references to existing PRDs, epics, features, or work items so the analysis can be anchored to work already in progress. Record these references in the state file.
 
 Gather meeting context from the user to form effective queries. Ask about the topic or initiative, approximate date range, key participants, and project or product name.
 
@@ -169,9 +173,9 @@ Proceed to Phase 3 when extraction is complete for all selected meetings.
 
 Organize extracted content into structured categories:
 
-* Requirements receive IDs in the format TR-001, TR-002, and so on.
+* Requirements receive IDs in the format TR-001, TR-002, and so on. Assign each requirement a confidence level: *confirmed* (explicitly stated and agreed), *inferred* (derived from discussion context), or *needs-validation* (ambiguous or contested).
 * Decisions include the rationale and source meeting.
-* Action items include owner, due date, and source meeting.
+* Action items include owner, due date, and source meeting. When the owner or due date was not stated or is ambiguous, mark the field as *unconfirmed* rather than leaving it blank or guessing.
 * Open questions include context on why they matter.
 
 Identify patterns and themes that span multiple meetings. Flag contradictions or ambiguities and present them to the user for resolution.
@@ -197,7 +201,12 @@ description: "Meeting transcript analysis handoff for PRD creation"
 source-agent: meeting-analyst
 target-agent: prd-builder
 data-classification: "<confirmed classification level>"
+planning-intent: "<create | update>"
+existing-references: []
 ---
+
+## Executive Summary
+Brief overview (3–5 sentences) of the initiative, key findings, and recommended next steps for backlog refinement.
 
 ## Product/Initiative
 Name and description derived from transcript content.
@@ -214,9 +223,9 @@ Specific problems and pain points raised in meetings.
 Users and personas mentioned in transcripts.
 
 ## Requirements Extracted
-| Req ID | Requirement | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
-|--------|-------------|----------------|------|---------|------------------|----------|
-| TR-001 | Description | Meeting name   | Date | Person  | Role             | HH:MM:SS |
+| Req ID | Requirement | Confidence | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
+|--------|-------------|------------|----------------|------|---------|------------------|----------|
+| TR-001 | Description | confirmed / inferred / needs-validation | Meeting name | Date | Person | Role | HH:MM:SS |
 
 ## Decisions Made
 | Decision      | Rationale | Source Meeting | Date |
@@ -224,9 +233,9 @@ Users and personas mentioned in transcripts.
 | Decision text | Why       | Meeting name   | Date |
 
 ## Action Items
-| Action      | Owner  | Due Date | Source Meeting |
-|-------------|--------|----------|----------------|
-| Action text | Person | Date     | Meeting name   |
+| Action      | Owner              | Due Date           | Source Meeting |
+|-------------|--------------------|--------------------|----------------|
+| Action text | Person or *unconfirmed* | Date or *unconfirmed* | Meeting name   |
 
 ## Open Questions
 | Question      | Context        | Source Meeting |
@@ -237,6 +246,13 @@ Users and personas mentioned in transcripts.
 | Meeting | Date | Participants | Key Topics | Timecodes Covered   |
 |---------|------|--------------|------------|---------------------|
 | Name    | Date | People       | Topics     | HH:MM:SS – HH:MM:SS |
+
+## Backlog Implications
+Summary of how the extracted requirements, decisions, and action items translate into backlog work. Identify new epics, features, or stories implied by the analysis and flag updates to existing work items when references were provided.
+
+### Suggested Downstream Workflows
+* **Create ADO work items**: Use the *ado-prd-to-wit* agent with this analysis and the resulting PRD.
+* **Create or update GitHub issues**: Use the *github-backlog-manager* agent with this analysis.
 
 ## Analysis Notes
 Additional observations, patterns, or context from transcript review.

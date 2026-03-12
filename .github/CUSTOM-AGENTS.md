@@ -267,7 +267,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Discover → Extract → Synthesize → Handoff
 
-**Critical:** Experimental. Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
 
 **Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
 Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
