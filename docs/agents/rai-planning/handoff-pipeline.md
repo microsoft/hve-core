@@ -4,14 +4,14 @@ description: How the RAI Planner generates scorecard results, produces backlog i
 sidebar_position: 6
 sidebar_label: Handoff Pipeline
 keywords:
-  * RAI handoff
-  * RAI scorecard
-  * backlog generation
-  * security planner integration
+  - RAI handoff
+  - RAI scorecard
+  - backlog generation
+  - security planner integration
 tags:
-  * rai-planning
-  * concepts
-  * handoff
+  - rai-planning
+  - concepts
+  - handoff
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: concept
@@ -49,13 +49,13 @@ flowchart LR
 
 When entering via `from-security-plan` mode, the RAI Planner reads the security plan's `state.json` and inherits:
 
-| Data | Source field | How it is used |
-|---|---|---|
-| AI component inventory | `aiComponents` array | Pre-populates Phase 1 AI element catalog |
-| RAI assessment scope | `raiScope` | Sets initial assessment boundaries |
-| RAI depth tier | `raiTier` | Determines assessment depth (`standard` or `deep`) |
-| Threat count | threat catalog size | Starting sequence for `RAI-T-{CATEGORY}-{NNN}` IDs |
-| Security plan reference | state.json path | Stored in `securityPlanRef` for cross-referencing |
+| Data                    | Source field         | How it is used                                     |
+|-------------------------|----------------------|----------------------------------------------------|
+| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog           |
+| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                 |
+| RAI depth tier          | `raiTier`            | Determines assessment depth (`standard` or `deep`) |
+| Threat count            | threat catalog size  | Starting sequence for `RAI-T-{CATEGORY}-{NNN}` IDs |
+| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing  |
 
 > [!NOTE]
 > The RAI Planner reads security plan artifacts as read-only. It never modifies files under `.copilot-tracking/security-plans/`.
@@ -85,11 +85,11 @@ flowchart TD
 
 ### Outcome Definitions
 
-| Outcome | Score range | Meaning |
-|---|---|---|
-| Approved | 20-25 | Assessment is comprehensive; proceed with identified mitigations |
-| Conditional | 15-19 | Gaps exist; proceed with conditions and a remediation timeline |
-| Remediation Required | Below 15 | Significant gaps; address findings before proceeding |
+| Outcome              | Score range | Meaning                                                          |
+|----------------------|-------------|------------------------------------------------------------------|
+| Approved             | 20-25       | Assessment is comprehensive; proceed with identified mitigations |
+| Conditional          | 15-19       | Gaps exist; proceed with conditions and a remediation timeline   |
+| Remediation Required | Below 15    | Significant gaps; address findings before proceeding             |
 
 ## Backlog Generation
 
@@ -97,20 +97,20 @@ Gaps identified during Phases 2 through 5 are converted to work items using the 
 
 ### Dual-Platform Support
 
-| Platform | ID format | Formatting | Target system |
-|---|---|---|---|
-| ADO | `WI[NNN]` | HTML `<div>` wrapper | Azure DevOps work items |
-| GitHub | `{{TEMP-N}}` | Markdown with YAML frontmatter | GitHub issues |
+| Platform | ID format    | Formatting                     | Target system           |
+|----------|--------------|--------------------------------|-------------------------|
+| ADO      | `WI[NNN]`    | HTML `<div>` wrapper           | Azure DevOps work items |
+| GitHub   | `{{TEMP-N}}` | Markdown with YAML frontmatter | GitHub issues           |
 
 ### Autonomy Tiers
 
 Each generated work item receives an autonomy tier based on the severity and complexity of the finding.
 
-| Tier | Human involvement | When assigned |
-|---|---|---|
-| Full | Agent creates and submits without confirmation | Low-severity findings with clear remediation |
-| Partial | Agent creates items; user confirms before submission | Default tier for most findings |
-| Manual | Agent recommends; user creates items | High-severity findings, restricted use escalations, or cross-team coordination required |
+| Tier    | Human involvement                                    | When assigned                                                                           |
+|---------|------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| Full    | Agent creates and submits without confirmation       | Low-severity findings with clear remediation                                            |
+| Partial | Agent creates items; user confirms before submission | Default tier for most findings                                                          |
+| Manual  | Agent recommends; user creates items                 | High-severity findings, restricted use escalations, or cross-team coordination required |
 
 ### Content Sanitization
 
@@ -123,18 +123,18 @@ All generated backlog content is sanitized before handoff:
 
 ## Pipeline Artifacts
 
-| Artifact | Path | Generated during |
-|---|---|---|
-| System definition pack | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` | Phase 1 |
-| Stakeholder impact map | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md` | Phase 1 |
-| Sensitive uses screening | `.copilot-tracking/rai-plans/{slug}/sensitive-uses-screening.md` | Phase 2 |
-| Use-misuse inventory | `.copilot-tracking/rai-plans/{slug}/use-misuse-inventory.md` | Phase 2 |
-| RAI standards mapping | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md` | Phase 3 |
-| RAI risk surface addendum | `.copilot-tracking/rai-plans/{slug}/rai-risk-surface-addendum.md` | Phase 4 |
-| Control surface catalog | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md` | Phase 5 |
-| Evidence register | `.copilot-tracking/rai-plans/{slug}/evidence-register.md` | Phase 5 |
-| RAI tradeoffs | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md` | Phase 5 |
-| RAI scorecard | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md` | Phase 6 |
+| Artifact                  | Path                                                              | Generated during |
+|---------------------------|-------------------------------------------------------------------|------------------|
+| System definition pack    | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`    | Phase 1          |
+| Stakeholder impact map    | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`    | Phase 1          |
+| Sensitive uses screening  | `.copilot-tracking/rai-plans/{slug}/sensitive-uses-screening.md`  | Phase 2          |
+| Use-misuse inventory      | `.copilot-tracking/rai-plans/{slug}/use-misuse-inventory.md`      | Phase 2          |
+| RAI standards mapping     | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`     | Phase 3          |
+| RAI risk surface addendum | `.copilot-tracking/rai-plans/{slug}/rai-risk-surface-addendum.md` | Phase 4          |
+| Control surface catalog   | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`   | Phase 5          |
+| Evidence register         | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`         | Phase 5          |
+| RAI tradeoffs             | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`             | Phase 5          |
+| RAI scorecard             | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`             | Phase 6          |
 
 <details>
 <summary>End-to-end assessment flow</summary>

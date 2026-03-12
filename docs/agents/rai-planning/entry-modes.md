@@ -4,14 +4,14 @@ description: Three ways to start a RAI assessment with the RAI Planner agent inc
 sidebar_position: 4
 sidebar_label: Entry Modes
 keywords:
-  * RAI Planner
-  * entry modes
-  * capture mode
-  * from-prd
-  * from-security-plan
+  - RAI Planner
+  - entry modes
+  - capture mode
+  - from-prd
+  - from-security-plan
 tags:
-  * rai-planning
-  * how-to
+  - rai-planning
+  - how-to
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: how-to
@@ -34,12 +34,12 @@ Prompt file: `.github/prompts/rai-planning/rai-capture.prompt.md`
 
 ### When to Choose Capture Mode
 
-| Signal | Recommendation |
-|---|---|
-| No PRD, BRD, or security plan exists | Use capture mode |
-| Exploring whether an AI system needs RAI assessment | Use capture mode |
+| Signal                                                 | Recommendation   |
+|--------------------------------------------------------|------------------|
+| No PRD, BRD, or security plan exists                   | Use capture mode |
+| Exploring whether an AI system needs RAI assessment    | Use capture mode |
 | Standalone AI project without broader security context | Use capture mode |
-| Rapid prototyping with an evolving scope | Use capture mode |
+| Rapid prototyping with an evolving scope               | Use capture mode |
 
 ## From-PRD Mode
 
@@ -57,11 +57,11 @@ Prompt file: `.github/prompts/rai-planning/rai-plan-from-prd.prompt.md`
 
 ### When to Choose From-PRD Mode
 
-| Signal | Recommendation |
-|---|---|
-| PRD or BRD artifacts exist in `.copilot-tracking/` | Use from-prd mode |
-| Product requirements are well-documented but no security plan exists | Use from-prd mode |
-| Multiple stakeholders contributed to product definition | Use from-prd mode to leverage that work |
+| Signal                                                               | Recommendation                          |
+|----------------------------------------------------------------------|-----------------------------------------|
+| PRD or BRD artifacts exist in `.copilot-tracking/`                   | Use from-prd mode                       |
+| Product requirements are well-documented but no security plan exists | Use from-prd mode                       |
+| Multiple stakeholders contributed to product definition              | Use from-prd mode to leverage that work |
 
 ## From-Security-Plan Mode
 
@@ -78,10 +78,10 @@ Prompt file: `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
 
 ### When to Choose From-Security-Plan Mode
 
-| Signal | Recommendation |
-|---|---|
-| Security Planner has completed with `raiEnabled: true` | Use from-security-plan mode |
-| The security plan identified AI or ML components | Use from-security-plan mode |
+| Signal                                                            | Recommendation              |
+|-------------------------------------------------------------------|-----------------------------|
+| Security Planner has completed with `raiEnabled: true`            | Use from-security-plan mode |
+| The security plan identified AI or ML components                  | Use from-security-plan mode |
 | You want threat ID continuity across security and RAI assessments | Use from-security-plan mode |
 
 > [!NOTE]
@@ -89,13 +89,13 @@ Prompt file: `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
 
 ## Comparing Entry Modes
 
-| Aspect | Capture | From-PRD | From-Security-Plan |
-|---|---|---|---|
-| Initial context | None | Product requirements | Security plan with AI components |
-| AI component discovery | Manual via interview | Extracted from PRD artifacts | Pre-populated from security plan |
-| Threat ID continuity | Starts at `RAI-T-{CATEGORY}-001` | Starts at `RAI-T-{CATEGORY}-001` | Continues from security plan count |
-| Time to Phase 2 | Longest | Medium | Shortest |
-| Best for | Fresh assessments, exploratory | Projects with product docs | Recommended post-security-plan |
+| Aspect                 | Capture                          | From-PRD                         | From-Security-Plan                 |
+|------------------------|----------------------------------|----------------------------------|------------------------------------|
+| Initial context        | None                             | Product requirements             | Security plan with AI components   |
+| AI component discovery | Manual via interview             | Extracted from PRD artifacts     | Pre-populated from security plan   |
+| Threat ID continuity   | Starts at `RAI-T-{CATEGORY}-001` | Starts at `RAI-T-{CATEGORY}-001` | Continues from security plan count |
+| Time to Phase 2        | Longest                          | Medium                           | Shortest                           |
+| Best for               | Fresh assessments, exploratory   | Projects with product docs       | Recommended post-security-plan     |
 
 ## After Choosing a Mode
 

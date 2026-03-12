@@ -4,14 +4,14 @@ description: Detailed reference for each of the Security Planner's six phases, i
 sidebar_position: 5
 sidebar_label: Phase Reference
 keywords:
-  * security planner
-  * phases
-  * threat modeling
-  * STRIDE
-  * standards mapping
+  - security planner
+  - phases
+  - threat modeling
+  - STRIDE
+  - standards mapping
 tags:
-  * agents
-  * security
+  - agents
+  - security
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: reference
@@ -22,14 +22,14 @@ Each of the Security Planner's six phases has defined inputs, outputs, state tra
 
 ## Phase Summary
 
-| Phase | Name               | Key output                        | State fields updated                         |
-|-------|--------------------|-----------------------------------|----------------------------------------------|
-| 1     | Project Scoping    | Scope definition                  | `entryMode`, `raiEnabled`, `aiComponents`    |
-| 2     | Bucket Analysis    | Bucket classification             | `bucketsCompleted`                           |
-| 3     | Standards Mapping  | Controls per bucket               | `standardsMapped`                            |
-| 4     | Risk Surface       | Threat catalog                    | `riskSurfaceStarted`                         |
-| 5     | Backlog Generation | Work items                        | `handoffGenerated`                           |
-| 6     | Review & Handoff   | Summary and RAI dispatch          | `raiPlannerDispatched`                       |
+| Phase | Name               | Key output               | State fields updated                      |
+|-------|--------------------|--------------------------|-------------------------------------------|
+| 1     | Project Scoping    | Scope definition         | `entryMode`, `raiEnabled`, `aiComponents` |
+| 2     | Bucket Analysis    | Bucket classification    | `bucketsCompleted`                        |
+| 3     | Standards Mapping  | Controls per bucket      | `standardsMapped`                         |
+| 4     | Risk Surface       | Threat catalog           | `riskSurfaceStarted`                      |
+| 5     | Backlog Generation | Work items               | `handoffGenerated`                        |
+| 6     | Review & Handoff   | Summary and RAI dispatch | `raiPlannerDispatched`                    |
 
 ## Phase 1: Project Scoping
 
@@ -60,13 +60,13 @@ The agent asks 3-5 questions per turn covering:
 
 ### State Transitions
 
-| Field              | Before       | After                            |
-|--------------------|--------------|----------------------------------|
-| `currentPhase`     | 1            | 2 (on user confirmation)         |
-| `entryMode`        | unset        | `scoping` or `capture`           |
-| `raiEnabled`       | unset        | `true` or `false`                |
-| `raiScope`         | unset        | `none`, `lightweight`, or `full` |
-| `raiTier`          | unset        | `none` through `comprehensive`   |
+| Field          | Before | After                            |
+|----------------|--------|----------------------------------|
+| `currentPhase` | 1      | 2 (on user confirmation)         |
+| `entryMode`    | unset  | `scoping` or `capture`           |
+| `raiEnabled`   | unset  | `true` or `false`                |
+| `raiScope`     | unset  | `none`, `lightweight`, or `full` |
+| `raiTier`      | unset  | `none` through `comprehensive`   |
 
 ## Phase 2: Bucket Analysis
 
@@ -76,15 +76,15 @@ Classify all application components into seven operational buckets with a cross-
 
 ### The Seven Buckets
 
-| Bucket                  | Covers                                                   |
-|-------------------------|----------------------------------------------------------|
-| Infrastructure          | Networking, compute, storage, cloud resources            |
-| DevOps / Platform-ops   | CI/CD pipelines, deployment, monitoring                  |
-| Build                   | Build systems, dependency management, artifact signing   |
-| Messaging               | Queues, event buses, pub/sub, webhooks                   |
-| Data                    | Databases, caches, data lakes, ETL pipelines             |
-| Web / UI / Reporting    | Frontend apps, APIs, dashboards, reporting               |
-| Identity / Auth         | Authentication, authorization, secrets management        |
+| Bucket                | Covers                                                 |
+|-----------------------|--------------------------------------------------------|
+| Infrastructure        | Networking, compute, storage, cloud resources          |
+| DevOps / Platform-ops | CI/CD pipelines, deployment, monitoring                |
+| Build                 | Build systems, dependency management, artifact signing |
+| Messaging             | Queues, event buses, pub/sub, webhooks                 |
+| Data                  | Databases, caches, data lakes, ETL pipelines           |
+| Web / UI / Reporting  | Frontend apps, APIs, dashboards, reporting             |
+| Identity / Auth       | Authentication, authorization, secrets management      |
 
 The **GS (cross-cutting)** overlay captures concerns that span multiple buckets, such as logging, encryption at rest, and network segmentation.
 
@@ -94,10 +94,10 @@ The agent walks through each bucket, asking which components belong to it, and i
 
 ### State Transitions
 
-| Field              | Before  | After                             |
-|--------------------|---------|-----------------------------------|
-| `currentPhase`     | 2       | 3 (on user confirmation)          |
-| `bucketsCompleted` | `[]`    | Populated with completed buckets  |
+| Field              | Before | After                            |
+|--------------------|--------|----------------------------------|
+| `currentPhase`     | 2      | 3 (on user confirmation)         |
+| `bucketsCompleted` | `[]`   | Populated with completed buckets |
 
 ## Phase 3: Standards Mapping
 
@@ -107,20 +107,20 @@ Map each operational bucket to the relevant controls from OWASP Top 10, NIST 800
 
 ### Frameworks
 
-| Framework      | Scope                              | Usage                              |
-|----------------|------------------------------------|------------------------------------|
-| OWASP Top 10   | Web application risks              | Mapped to Web/UI and Data buckets  |
-| NIST 800-53    | Comprehensive security controls    | Mapped across all buckets          |
-| CIS Benchmarks | Configuration baselines            | Mapped to Infrastructure and Build |
+| Framework      | Scope                           | Usage                              |
+|----------------|---------------------------------|------------------------------------|
+| OWASP Top 10   | Web application risks           | Mapped to Web/UI and Data buckets  |
+| NIST 800-53    | Comprehensive security controls | Mapped across all buckets          |
+| CIS Benchmarks | Configuration baselines         | Mapped to Infrastructure and Build |
 
 The agent dispatches the Researcher Subagent to perform WAF (Well-Architected Framework) and CAF (Cloud Adoption Framework) runtime lookups when cloud-hosted components are in scope.
 
 ### State Transitions
 
-| Field              | Before  | After                            |
-|--------------------|---------|----------------------------------|
-| `currentPhase`     | 3       | 4 (on user confirmation)         |
-| `standardsMapped`  | `[]`    | Populated with mapped buckets    |
+| Field             | Before | After                         |
+|-------------------|--------|-------------------------------|
+| `currentPhase`    | 3      | 4 (on user confirmation)      |
+| `standardsMapped` | `[]`   | Populated with mapped buckets |
 
 ## Phase 4: Risk Surface Analysis
 
@@ -131,14 +131,14 @@ Perform STRIDE-based threat modeling per bucket, generating a structured threat 
 ### STRIDE Categories
 
 <!-- cspell:disable -->
-| Category               | Question the threat answers                  |
-|------------------------|----------------------------------------------|
-| **S**poofing           | Can an attacker impersonate a legitimate user or system? |
-| **T**ampering          | Can data or code be modified without detection?          |
-| **R**epudiation        | Can actions be denied or hidden?                         |
-| **I**nformation Disclosure | Can sensitive data be exposed?                      |
-| **D**enial of Service  | Can the system be made unavailable?                      |
-| **E**levation of Privilege | Can an attacker gain unauthorized access?            |
+| Category                   | Question the threat answers                              |
+|----------------------------|----------------------------------------------------------|
+| **S**poofing               | Can an attacker impersonate a legitimate user or system? |
+| **T**ampering              | Can data or code be modified without detection?          |
+| **R**epudiation            | Can actions be denied or hidden?                         |
+| **I**nformation Disclosure | Can sensitive data be exposed?                           |
+| **D**enial of Service      | Can the system be made unavailable?                      |
+| **E**levation of Privilege | Can an attacker gain unauthorized access?                |
 <!-- cspell:enable -->
 
 ### Threat Identification Format
@@ -159,10 +159,10 @@ Threats are rated using a likelihood-impact matrix:
 
 ### State Transitions
 
-| Field                 | Before  | After |
-|-----------------------|---------|-------|
-| `currentPhase`        | 4       | 5     |
-| `riskSurfaceStarted`  | `false` | `true`|
+| Field                | Before  | After  |
+|----------------------|---------|--------|
+| `currentPhase`       | 4       | 5      |
+| `riskSurfaceStarted` | `false` | `true` |
 
 ## Phase 5: Backlog Generation
 
@@ -172,25 +172,25 @@ Convert identified threats into actionable backlog items with acceptance criteri
 
 ### Work Item Formats
 
-| Platform | ID format     | Example      |
-|----------|---------------|--------------|
-| ADO      | `WI[NNN]`     | `WI[001]`    |
-| GitHub   | `{{TEMP-N}}`  | `{{TEMP-1}}` |
+| Platform | ID format    | Example      |
+|----------|--------------|--------------|
+| ADO      | `WI[NNN]`    | `WI[001]`    |
+| GitHub   | `{{TEMP-N}}` | `{{TEMP-1}}` |
 
 ### Autonomy Tiers
 
-| Tier    | Human involvement           | Typical use                                   |
-|---------|-----------------------------|-----------------------------------------------|
-| Full    | None required               | Low-risk configuration changes                |
-| Partial | Review and approve          | Default for most security remediations        |
-| Manual  | Human plans and implements  | Architectural changes, policy decisions        |
+| Tier    | Human involvement          | Typical use                             |
+|---------|----------------------------|-----------------------------------------|
+| Full    | None required              | Low-risk configuration changes          |
+| Partial | Review and approve         | Default for most security remediations  |
+| Manual  | Human plans and implements | Architectural changes, policy decisions |
 
 ### State Transitions
 
-| Field               | Before                         | After                     |
-|---------------------|--------------------------------|---------------------------|
-| `currentPhase`      | 5                              | 6                         |
-| `handoffGenerated`  | `{ado: false, github: false}`  | Updated per target        |
+| Field              | Before                        | After              |
+|--------------------|-------------------------------|--------------------|
+| `currentPhase`     | 5                             | 6                  |
+| `handoffGenerated` | `{ado: false, github: false}` | Updated per target |
 
 ## Phase 6: Review and Handoff
 
@@ -219,10 +219,10 @@ When `raiEnabled` is `true`, the agent:
 
 ### State Transitions
 
-| Field                   | Before  | After  |
-|-------------------------|---------|--------|
-| `currentPhase`          | 6       | 6      |
-| `raiPlannerDispatched`  | `false` | `true` |
+| Field                  | Before  | After  |
+|------------------------|---------|--------|
+| `currentPhase`         | 6       | 6      |
+| `raiPlannerDispatched` | `false` | `true` |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -100,6 +100,9 @@ copilot plugin install hve-core-all@hve-core
 | task-plan                                   | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core                             |
 | task-research                               | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                                 |
 | task-review                                 | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core                     |
+| rai-capture                                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                         |
+| rai-plan-from-prd                           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                         |
+| rai-plan-from-security-plan                 | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)         |
 | incident-response                           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                 |
 | risk-register                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
 | security-capture                            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                     |

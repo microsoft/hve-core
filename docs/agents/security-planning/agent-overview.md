@@ -4,12 +4,12 @@ description: Architecture, state management, and operational details for the Sec
 sidebar_position: 3
 sidebar_label: Agent Overview
 keywords:
-  * security planner
-  * agent architecture
-  * state management
+  - security planner
+  - agent architecture
+  - state management
 tags:
-  * agents
-  * security
+  - agents
+  - security
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: reference
@@ -52,46 +52,46 @@ The agent follows five instruction files, each scoped to a specific concern. The
 
 All state lives in `.copilot-tracking/security-plans/{project-slug}/state.json`. The agent follows a six-step protocol on every turn:
 
-| Step | Action |
-|---|---|
-| READ | Load the current state file |
-| VALIDATE | Confirm the state schema is intact and the current phase is consistent |
-| DETERMINE | Decide which phase and step to execute based on state and user input |
-| EXECUTE | Perform the phase work (questions, analysis, artifact generation) |
-| UPDATE | Modify the in-memory state to reflect completed work |
-| WRITE | Persist the updated state back to the file |
+| Step      | Action                                                                 |
+|-----------|------------------------------------------------------------------------|
+| READ      | Load the current state file                                            |
+| VALIDATE  | Confirm the state schema is intact and the current phase is consistent |
+| DETERMINE | Decide which phase and step to execute based on state and user input   |
+| EXECUTE   | Perform the phase work (questions, analysis, artifact generation)      |
+| UPDATE    | Modify the in-memory state to reflect completed work                   |
+| WRITE     | Persist the updated state back to the file                             |
 
 ### State Fields
 
 The state file tracks over 16 fields across scoping, analysis, and handoff concerns.
 
-| Field                  | Type       | Description                                          |
-|------------------------|------------|------------------------------------------------------|
-| `projectSlug`          | string     | Kebab-case project identifier                        |
-| `securityPlanFile`     | string     | Path to the main plan markdown file                  |
-| `currentPhase`         | number     | Current phase (1-6)                                  |
-| `entryMode`            | string     | `scoping` or `capture`                               |
-| `bucketsCompleted`     | string[]   | Operational buckets that have been classified         |
-| `standardsMapped`      | string[]   | Buckets with completed standards mapping              |
-| `riskSurfaceStarted`   | boolean    | Whether Phase 4 threat modeling has begun             |
-| `handoffGenerated`     | object     | `{ado: boolean, github: boolean}`                    |
-| `referencesProcessed`  | string[]   | Paths to PRD/BRD artifacts that were consumed         |
-| `nextActions`          | string[]   | Pending actions for the current or next phase         |
-| `userPreferences`      | object     | Autonomy preference: `full`, `partial`, or `manual`  |
-| `raiEnabled`           | boolean    | Whether AI/ML components were detected                |
-| `raiScope`             | string     | `none`, `lightweight`, or `full`                      |
-| `raiTier`              | string     | `none`, `basic`, `standard`, or `comprehensive`       |
-| `raiPlannerDispatched` | boolean    | Whether the RAI Planner handoff has been triggered    |
-| `aiComponents`         | string[]   | List of detected AI/ML components                     |
+| Field                  | Type     | Description                                         |
+|------------------------|----------|-----------------------------------------------------|
+| `projectSlug`          | string   | Kebab-case project identifier                       |
+| `securityPlanFile`     | string   | Path to the main plan markdown file                 |
+| `currentPhase`         | number   | Current phase (1-6)                                 |
+| `entryMode`            | string   | `scoping` or `capture`                              |
+| `bucketsCompleted`     | string[] | Operational buckets that have been classified       |
+| `standardsMapped`      | string[] | Buckets with completed standards mapping            |
+| `riskSurfaceStarted`   | boolean  | Whether Phase 4 threat modeling has begun           |
+| `handoffGenerated`     | object   | `{ado: boolean, github: boolean}`                   |
+| `referencesProcessed`  | string[] | Paths to PRD/BRD artifacts that were consumed       |
+| `nextActions`          | string[] | Pending actions for the current or next phase       |
+| `userPreferences`      | object   | Autonomy preference: `full`, `partial`, or `manual` |
+| `raiEnabled`           | boolean  | Whether AI/ML components were detected              |
+| `raiScope`             | string   | `none`, `lightweight`, or `full`                    |
+| `raiTier`              | string   | `none`, `basic`, `standard`, or `comprehensive`     |
+| `raiPlannerDispatched` | boolean  | Whether the RAI Planner handoff has been triggered  |
+| `aiComponents`         | string[] | List of detected AI/ML components                   |
 
 ## Interaction Model
 
 The agent follows strict question rules during each phase:
 
-| Guardrail | Description |
-|---|---|
-| 3-5 questions per turn | Enough to make progress without overwhelming the user |
-| Emoji checklists | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items |
+| Guardrail                             | Description                                                                                        |
+|---------------------------------------|----------------------------------------------------------------------------------------------------|
+| 3-5 questions per turn                | Enough to make progress without overwhelming the user                                              |
+| Emoji checklists                      | Questions use ❓ for pending, ✅ for answered, and ❌ for blocked items                               |
 | No phase advance without confirmation | The agent summarizes phase findings and asks for explicit approval before moving to the next phase |
 
 ## Session Resume
@@ -114,12 +114,12 @@ A five-step post-summarization recovery handles cases where conversation context
 
 ## Related Files
 
-| File type    | Location                                                                   |
-|--------------|----------------------------------------------------------------------------|
-| Agent        | `.github/agents/security-planning/security-planner.agent.md`              |
-| Prompts      | `.github/prompts/security-planning/`                                       |
-| Instructions | `.github/instructions/security-planning/`                                  |
-| State        | `.copilot-tracking/security-plans/{project-slug}/state.json`               |
+| File type    | Location                                                     |
+|--------------|--------------------------------------------------------------|
+| Agent        | `.github/agents/security-planning/security-planner.agent.md` |
+| Prompts      | `.github/prompts/security-planning/`                         |
+| Instructions | `.github/instructions/security-planning/`                    |
+| State        | `.copilot-tracking/security-plans/{project-slug}/state.json` |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

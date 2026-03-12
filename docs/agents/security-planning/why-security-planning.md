@@ -4,12 +4,12 @@ description: The reasoning behind structured, phase-based security analysis and 
 sidebar_position: 2
 sidebar_label: Why Security Planning?
 keywords:
-  * security planning
-  * threat modeling
-  * why
+  - security planning
+  - threat modeling
+  - why
 tags:
-  * agents
-  * security
+  - agents
+  - security
 author: Microsoft
 ms.date: 2025-07-14
 ms.topic: concept
@@ -52,14 +52,14 @@ The review phase validates completeness and catches gaps before the analysis lea
 
 ## Quality Comparison
 
-| Dimension               | Ad-hoc review                          | Security Planner                              |
-|--------------------------|----------------------------------------|-----------------------------------------------|
-| Coverage consistency     | Varies by reviewer                     | Same seven-bucket structure every time        |
-| Standards traceability   | Informal or missing                    | OWASP, NIST, CIS mapped per bucket           |
-| Threat identification    | Depends on individual expertise        | STRIDE-based with severity ratings            |
-| Backlog quality          | Generic "fix security" items           | Specific items with acceptance criteria       |
-| Knowledge transfer       | Lost when engineers leave              | Captured in plan artifacts and state files    |
-| AI/ML risk coverage      | Often skipped                          | Auto-detected with RAI Planner handoff        |
+| Dimension              | Ad-hoc review                   | Security Planner                           |
+|------------------------|---------------------------------|--------------------------------------------|
+| Coverage consistency   | Varies by reviewer              | Same seven-bucket structure every time     |
+| Standards traceability | Informal or missing             | OWASP, NIST, CIS mapped per bucket         |
+| Threat identification  | Depends on individual expertise | STRIDE-based with severity ratings         |
+| Backlog quality        | Generic "fix security" items    | Specific items with acceptance criteria    |
+| Knowledge transfer     | Lost when engineers leave       | Captured in plan artifacts and state files |
+| AI/ML risk coverage    | Often skipped                   | Auto-detected with RAI Planner handoff     |
 
 ## Learning Curve
 
@@ -74,12 +74,12 @@ Adoption does not need to be all-or-nothing. Teams can scale up incrementally:
 
 The right entry mode depends on what artifacts already exist and how much context the agent needs to gather.
 
-| Starting point                    | Recommended mode | Reason                                              |
-|-----------------------------------|------------------|-----------------------------------------------------|
-| PRD or BRD available              | Scoping          | Seeds Phase 1 from existing requirements            |
-| No formal requirements            | Capture          | Gathers scope through structured interview          |
-| Prior security plan exists        | Either           | New plan, but prior analysis informs scoping        |
-| AI/ML components known up front   | Either           | Both modes auto-detect AI/ML during Phase 1         |
+| Starting point                  | Recommended mode | Reason                                       |
+|---------------------------------|------------------|----------------------------------------------|
+| PRD or BRD available            | Scoping          | Seeds Phase 1 from existing requirements     |
+| No formal requirements          | Capture          | Gathers scope through structured interview   |
+| Prior security plan exists      | Either           | New plan, but prior analysis informs scoping |
+| AI/ML components known up front | Either           | Both modes auto-detect AI/ML during Phase 1  |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
