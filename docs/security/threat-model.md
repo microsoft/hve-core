@@ -587,6 +587,19 @@ These threats address ethical and responsible AI considerations aligned with Mic
 | **Residual Risk** | Low                                                           |
 | **Status**        | Mitigated with Documentation                                  |
 
+#### RAI-3a: Privacy - M365 Transcript Data Materialization
+
+| Field             | Value                                                                                                                                                                                                                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**      | Privacy & Security (Microsoft RAI Standard)                                                                                                                                                                                                                                                  |
+| **Asset**         | Meeting transcripts, customer confidential data, PII                                                                                                                                                                                                                                         |
+| **Threat**        | The meeting-analyst agent retrieves M365 transcripts containing sensitive data and writes them to local files in `.copilot-tracking/`. Data may be exposed through accidental commits (`git add -f`), gitignore misconfiguration, shared Codespaces, CI/CD logs, or unencrypted disk access. |
+| **Likelihood**    | Medium (users may not recognize transcript sensitivity; gitignore is the only barrier)                                                                                                                                                                                                       |
+| **Impact**        | High (customer confidential data, PII, trade secrets)                                                                                                                                                                                                                                        |
+| **Mitigations**   | Gitignore for `.copilot-tracking/`, agent-level data sensitivity notice and pre-flight classification prompt, anonymization guidance in agent instructions, data retention cleanup at handoff, documentation in threat model and agent catalog                                               |
+| **Residual Risk** | Medium (gitignore is not a security control; user awareness is behavioral)                                                                                                                                                                                                                   |
+| **Status**        | Partially Mitigated with Documentation                                                                                                                                                                                                                                                       |
+
 #### RAI-4: Inclusiveness - Exclusionary Language in Artifacts
 
 | Field             | Value                                                    |
