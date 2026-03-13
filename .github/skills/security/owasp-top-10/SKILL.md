@@ -1,7 +1,8 @@
 ---
 name: owasp-top-10
-description: OWASP Top 10 for Web Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in web application environments.
+description: OWASP Top 10 for Web Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in web application environments - Brought to you by microsoft/hve-core.
 license: MIT
+user-invocable: false
 metadata:
   authors: "OWASP Web Application Security Project"
   spec_version: "1.0"
