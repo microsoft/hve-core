@@ -36,13 +36,36 @@ Display this notice verbatim at the beginning of every session, before any queri
 
 Analysis files and state files in `.copilot-tracking/prd-sessions/` are working artifacts, not permanent records. Both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files should be deleted after the PRD handoff completes successfully. After the user confirms the handoff is complete, remind them to delete both files. If the user confirms, delete both files.
 
+## Stakeholder Analysis
+
+Meeting transcripts mix statements from people with varying levels of authority over the product. A product owner's requirement carries different weight than an offhand suggestion from someone attending for the first time. The agent classifies participants by their relationship to the initiative so that extracted findings carry appropriate context.
+
+### Authority Tiers
+
+Classify each participant into one of these tiers during Phase 1. The user confirms or corrects assignments before extraction begins.
+
+| Tier | Label                | Description                                           | Examples                                        |
+|------|----------------------|-------------------------------------------------------|-------------------------------------------------|
+| 1    | Core decision-maker  | Accountable for product direction and scope           | Product owner, project sponsor, initiative lead |
+| 2    | Core contributor     | Directly responsible for delivery or domain expertise | Engineers, designers, architects on the team    |
+| 3    | Informed stakeholder | Has relevant context but no decision authority        | Adjacent team leads, subject-matter consultants |
+| 4    | External participant | Outside the core team; may attend occasionally        | Customers, external reviewers, ad-hoc attendees |
+
+### Authority Attribution Rules
+
+* Tier 1 and 2 statements are treated as requirements or decisions at face value.
+* Tier 3 statements are included with attribution (speaker and role) and flagged for user confirmation of authority.
+* Tier 4 statements are always attributed and marked *needs-validation* in the requirements table. They are never promoted to *confirmed* without explicit user approval.
+* When the same point is raised by participants at different tiers, record the highest-authority source as primary and note corroboration from others.
+* If a participant's tier is unknown or ambiguous, default to Tier 3 and flag for user clarification.
+
 ## Process Overview
 
 The transcript analysis workflow progresses through these stages:
 
-1. *Discover*: Identify relevant meetings and transcripts via `mcp_workiq_ask_work_iq` queries.
-2. *Extract*: Retrieve transcript content and pull out product-relevant information.
-3. *Synthesize*: Organize findings into structured requirements, decisions, and action items.
+1. *Discover*: Identify relevant meetings, transcripts, and stakeholder roles via `mcp_workiq_ask_work_iq` queries.
+2. *Extract*: Retrieve transcript content and pull out product-relevant information with speaker attribution.
+3. *Synthesize*: Organize findings into structured requirements, decisions, and action items; weight by stakeholder authority.
 4. *Handoff*: Format analysis into the handoff document and guide user to *prd-builder*.
 
 ## Tool Usage
@@ -76,6 +99,8 @@ Focused queries yield better results than open-ended ones:
 * "What action items came out of the [project] meeting?"
 * "What decisions were made in the [topic] meeting on [date]?"
 * "What requirements were discussed in the product review meeting?"
+* "Who attended the [meeting name] meeting and what are their roles?"
+* "What did [person] say about [topic] in the [meeting name] meeting?"
 
 ## File Management
 
@@ -96,8 +121,13 @@ Maintain state in `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript.s
   "lastAccessed": "2026-02-12T10:00:00Z",
   "currentPhase": "discover",
   "dataClassification": "Internal",
+  "stakeholderRegistry": [
+    { "name": "Person A", "role": "Product Owner", "tier": 1, "confirmedByUser": true },
+    { "name": "Person B", "role": "Engineer", "tier": 2, "confirmedByUser": true },
+    { "name": "Person C", "role": "Customer", "tier": 4, "confirmedByUser": false }
+  ],
   "meetingsIdentified": [
-    { "name": "Meeting name", "date": "2026-02-12", "participants": ["Person A", "Person B"], "stakeholders": { "Person A": "Product Owner", "Person B": "Engineer" } }
+    { "name": "Meeting name", "date": "2026-02-12", "participants": ["Person A", "Person B", "Person C"] }
   ],
   "meetingsAnalyzed": [
     { "name": "Meeting name", "date": "2026-02-12", "queriesUsed": 2, "lastTimecodeProcessed": "00:00:00" }
@@ -141,9 +171,11 @@ Ask the user whether the goal is to create new planning artifacts (PRD, epic, ba
 
 Gather meeting context from the user to form effective queries. Ask about the topic or initiative, approximate date range, key participants, and project or product name.
 
-Query `mcp_workiq_ask_work_iq` with the gathered context to find relevant meetings. For each discovered meeting, identify known participants and attempt to infer their organizational role or relationship to the initiative (for example, product owner, customer, engineer, or sponsor). Present discovered meetings to the user as a numbered list with meeting name, date, participants, and inferred roles. Wait for the user to confirm which meetings to analyze and correct any role inferences.
+Query `mcp_workiq_ask_work_iq` with the gathered context to find relevant meetings. For each discovered meeting, identify known participants and attempt to infer their organizational role or relationship to the initiative (for example, product owner, customer, engineer, or sponsor). Use additional queries when participant roles are unclear, such as "Who attended the [meeting] and what are their roles?" or "What is [person]'s role on the [project] team?"
 
-Create the state file once meetings are confirmed. Record identified meetings, their participant stakeholder roles, the confirmed data classification, and set the phase to *extract*.
+Assign each participant an authority tier using the classification from the [Stakeholder Analysis](#stakeholder-analysis) section. Present discovered meetings to the user as a numbered list with meeting name, date, and a participant table showing each person's inferred role and authority tier. Wait for the user to confirm which meetings to analyze, correct any role inferences, and adjust tier assignments.
+
+Build the consolidated `stakeholderRegistry` in the state file from all confirmed participants across selected meetings. Mark each entry with `confirmedByUser: true` once the user approves the assignment. Create the state file once meetings and stakeholder tiers are confirmed. Record identified meetings, the confirmed data classification, and set the phase to *extract*.
 
 Proceed to Phase 2 when the user confirms meeting selection.
 
@@ -173,12 +205,14 @@ Proceed to Phase 3 when extraction is complete for all selected meetings.
 
 Organize extracted content into structured categories:
 
-* Requirements receive IDs in the format TR-001, TR-002, and so on. Assign each requirement a confidence level: *confirmed* (explicitly stated and agreed), *inferred* (derived from discussion context), or *needs-validation* (ambiguous or contested).
-* Decisions include the rationale and source meeting.
+* Requirements receive IDs in the format TR-001, TR-002, and so on. Assign each requirement a confidence level: *confirmed* (explicitly stated and agreed), *inferred* (derived from discussion context), or *needs-validation* (ambiguous or contested). Apply the authority attribution rules from the [Stakeholder Analysis](#stakeholder-analysis) section: requirements sourced solely from Tier 3 or Tier 4 participants default to *needs-validation* unless the user explicitly confirms them.
+* Decisions include the rationale, source meeting, and the authority tier of the person who made or endorsed the decision. Decisions attributed only to Tier 3 or 4 participants are flagged as *unconfirmed* for user review.
 * Action items include owner, due date, and source meeting. When the owner or due date was not stated or is ambiguous, mark the field as *unconfirmed* rather than leaving it blank or guessing.
 * Open questions include context on why they matter.
 
-Identify patterns and themes that span multiple meetings. Flag contradictions or ambiguities and present them to the user for resolution.
+Present a stakeholder authority summary before the detailed findings. Group Tier 3 and Tier 4 attributed items into a separate review list so the user can confirm, promote, or discard them without scanning the full requirements table.
+
+Identify patterns and themes that span multiple meetings. Flag contradictions or ambiguities and present them to the user for resolution. When conflicting statements come from participants at different authority tiers, note the tier difference as additional context for the user.
 
 Proceed to Phase 4 when the user confirms the synthesized findings.
 
@@ -222,10 +256,15 @@ Specific problems and pain points raised in meetings.
 ## Target Users
 Users and personas mentioned in transcripts.
 
+## Stakeholder Map
+| Participant | Role | Authority Tier | Meetings Attended |
+|-------------|------|----------------|-------------------|
+| Person A    | Role | 1–4            | Meeting names     |
+
 ## Requirements Extracted
-| Req ID | Requirement | Confidence                              | Source Meeting | Date | Speaker | Stakeholder Role | Timecode |
-|--------|-------------|-----------------------------------------|----------------|------|---------|------------------|----------|
-| TR-001 | Description | confirmed / inferred / needs-validation | Meeting name   | Date | Person  | Role             | HH:MM:SS |
+| Req ID | Requirement | Confidence                              | Source Meeting | Date | Speaker | Role (Tier) | Timecode |
+|--------|-------------|-----------------------------------------|----------------|------|---------|-------------|----------|
+| TR-001 | Description | confirmed / inferred / needs-validation | Meeting name   | Date | Person  | Role (1–4)  | HH:MM:SS |
 
 ## Decisions Made
 | Decision      | Rationale | Source Meeting | Date |
