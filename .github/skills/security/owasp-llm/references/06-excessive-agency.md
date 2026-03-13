@@ -62,3 +62,7 @@ forwarding it to the attacker's email address.
    undesirable actions.
 10. Implement rate-limiting to reduce the number of undesirable actions within a given time
     period.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -85,3 +85,7 @@ tenant's sensitive chunk into retrieval by high cosine similarity.
 8. Expire unverified memory to limit poison persistence.
 9. Weight retrieval by trust and tenancy. Require two factors to surface high-impact memory and
    decay low-trust entries over time.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

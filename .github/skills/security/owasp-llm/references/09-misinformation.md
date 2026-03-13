@@ -66,3 +66,7 @@ company is successfully sued for damages without any active attacker being invol
 ## References
 
 * [AML.T0048.002 - Societal Harm](https://atlas.mitre.org/techniques/AML.T0048) — MITRE ATLAS
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

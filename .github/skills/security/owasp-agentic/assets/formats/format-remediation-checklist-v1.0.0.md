@@ -12,3 +12,7 @@ WHERE:
 - <STATUS> is one of: NOT_STARTED, IN_PROGRESS, COMPLETED, DEFERRED.
 - <EVIDENCE> is String referencing the artifact or proof of implementation.
 </format>
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

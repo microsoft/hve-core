@@ -46,3 +46,7 @@ security risks in AI agent systems.
   * `formats/` — output contract examples.
     * `format-vulnerability-assessment-v1.0.0.md`
     * `format-remediation-checklist-v1.0.0.md`
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

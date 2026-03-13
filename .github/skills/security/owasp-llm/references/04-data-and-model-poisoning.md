@@ -87,3 +87,7 @@ real-world damage.
 
 * [AML.T0018 - Backdoor ML Model](https://atlas.mitre.org/techniques/AML.T0018) — MITRE ATLAS
 * [AML.T0020 - Poison Training Data](https://atlas.mitre.org/techniques/AML.T0020) — MITRE ATLAS
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

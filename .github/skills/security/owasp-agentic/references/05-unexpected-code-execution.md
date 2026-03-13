@@ -81,3 +81,7 @@ during fix-build tasks.
    control. Enforce role and action-based controls.
 7. Do static scans before execution. Enable runtime monitoring. Watch for prompt-injection
    patterns. Log and audit all generation and runs.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -85,3 +85,7 @@ offered as a legitimate pre-trained model.
 
 * [AML.T0018 - Backdoor ML Model](https://atlas.mitre.org/techniques/AML.T0018) — MITRE ATLAS
 * [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

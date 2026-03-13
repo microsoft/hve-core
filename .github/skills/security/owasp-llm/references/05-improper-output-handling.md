@@ -73,3 +73,7 @@ payload, leading to XSS when rendered on a victim's browser.
 6. Employ strict Content Security Policies (CSP) to mitigate XSS from LLM-generated content.
 7. Implement robust logging and monitoring systems to detect unusual patterns in LLM outputs
    indicating exploitation attempts.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

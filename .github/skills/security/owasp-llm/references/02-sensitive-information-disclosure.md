@@ -74,3 +74,7 @@ exploits this information to undercut the company's pricing.
 * [AML.T0024.000 - Infer Training Data Membership](https://atlas.mitre.org/techniques/AML.T0024.000) — MITRE ATLAS
 * [AML.T0024.002 - Infer Training Data](https://atlas.mitre.org/techniques/AML.T0024.002) — MITRE ATLAS
 * [AML.T0058 - Model Inversion](https://atlas.mitre.org/techniques/AML.T0058) — MITRE ATLAS
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -58,3 +58,7 @@ attack to bypass these instructions, facilitating a remote code execution attack
 4. Ensure security controls are enforced independently from the LLM. Critical controls such
    as privilege separation and authorization bounds checks must not be delegated to the LLM.
    Use multiple agents with least privileges when tasks require different access levels.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

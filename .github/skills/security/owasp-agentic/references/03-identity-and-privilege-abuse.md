@@ -88,3 +88,7 @@ The attacker-controlled agent then issues system-level commands under assumed in
    re-validated.
 8. Monitor when an agent gains new permissions indirectly through delegation chains and flag cases
    where a low-privilege agent inherits higher-privilege scopes during multi-agent workflows.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

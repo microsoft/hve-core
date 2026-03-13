@@ -18,3 +18,7 @@ WEB_VULN_CATEGORIES: JSON<<
 ["Access Control", "Architecture and Design", "Authentication", "Configuration Management", "Cryptography", "Data Integrity", "Error Handling", "Input Validation", "Logging and Monitoring", "Supply Chain"]
 >>
 </constants>
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -25,3 +25,7 @@ AGENTIC_SEVERITY_LEVELS: JSON<<
   "LOW": "Exploitation is difficult or impact is limited in scope."
 }
 >>
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

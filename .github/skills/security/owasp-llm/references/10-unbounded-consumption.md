@@ -92,3 +92,7 @@ side-channel attack and retrieve model information to a remote controlled resour
 * [AML.T0034 - Cost Harvesting](https://atlas.mitre.org/techniques/AML.T0034) — MITRE ATLAS
 * [AML.T0025 - Exfiltration via Cyber Means](https://atlas.mitre.org/techniques/AML.T0025) — MITRE ATLAS
 * [API4:2023 - Unrestricted Resource Consumption](https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/) — OWASP API Security
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

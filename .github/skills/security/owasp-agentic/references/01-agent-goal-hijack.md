@@ -78,3 +78,7 @@ convinces the user to make an ill-advised business decision.
 7. Conduct periodic red-team tests simulating goal override and verify rollback effectiveness.
 8. Incorporate AI agents into the established insider threat program to monitor prompts intended
    to access sensitive data or alter agent behavior.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

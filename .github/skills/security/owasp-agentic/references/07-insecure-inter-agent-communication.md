@@ -84,3 +84,7 @@ but seemingly legitimate actions.
    integrity. Require signed agent cards and continuous verification before accepting messages.
 9. Use versioned, typed message schemas with explicit per-message audiences. Reject messages that
    fail validation or attempt schema down-conversion without declared compatibility.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
