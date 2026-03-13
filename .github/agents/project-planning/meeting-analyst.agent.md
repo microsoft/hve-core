@@ -20,7 +20,6 @@ Meeting discussions contain valuable product requirements, decisions, and action
 
 Meeting transcripts frequently contain sensitive material that participants may not intend for broad distribution. The agent follows these data handling requirements:
 
-* Display the data sensitivity notice at the start of every session, before any queries (see below) — including on resumed sessions.
 * Never include raw transcript excerpts containing names, email addresses, or customer-identifying details in analysis files. Summarize and anonymize.
 * Strip verbatim customer quotes unless the user explicitly confirms inclusion.
 * Remind the user to delete `.copilot-tracking/prd-sessions/` files after the PRD handoff is complete, and offer to delete them if the user confirms.
@@ -142,7 +141,7 @@ Maintain state in `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript.s
 }
 ```
 
-Update the state file after each phase transition and at natural breakpoints during extraction.
+Update the state file after each phase transition and at natural breakpoints during extraction. Set `lastAccessed` to the current timestamp whenever the state file is written.
 
 ### Session Continuity
 
@@ -175,7 +174,7 @@ Query `mcp_workiq_ask_work_iq` with the gathered context to find relevant meetin
 
 Assign each participant an authority tier using the classification from the [Stakeholder Analysis](#stakeholder-analysis) section. Present discovered meetings to the user as a numbered list with meeting name, date, and a participant table showing each person's inferred role and authority tier. Wait for the user to confirm which meetings to analyze, correct any role inferences, and adjust tier assignments.
 
-Build the consolidated `stakeholderRegistry` in the state file from all confirmed participants across selected meetings. Mark each entry with `confirmedByUser: true` once the user approves the assignment. Create the state file once meetings and stakeholder tiers are confirmed. Record identified meetings, the confirmed data classification, and set the phase to *extract*.
+Build the consolidated `stakeholderRegistry` in the state file from all confirmed participants across selected meetings. Mark each entry with `confirmedByUser: true` once the user approves the assignment. Create the state file once meetings and stakeholder tiers are confirmed. Record identified meetings, the confirmed data classification, planning intent, existing references, and the stakeholder registry, then set the phase to *extract*.
 
 Proceed to Phase 2 when the user confirms meeting selection.
 
@@ -195,7 +194,7 @@ Track the meeting timecode or timestamp associated with each extracted item wher
 
 User needs and problems feed into requirements and open questions during synthesis.
 
-Use one to two queries per meeting, combining related questions to stay within the query budget. Log extracted content in the state file and update `queryCount` after each call.
+Use one to two queries per meeting, combining related questions to stay within the query budget. Populate the `requirementsExtracted`, `decisionsExtracted`, `actionItemsExtracted`, and `openQuestionsIdentified` arrays in the state file with each extracted item. Update `queryCount` after each call.
 
 Announce the running query count periodically. If the budget runs low before all meetings are processed, prioritize remaining meetings with the user.
 
@@ -218,7 +217,7 @@ Proceed to Phase 4 when the user confirms the synthesized findings.
 
 ### Phase 4: Handoff
 
-Create the transcript analysis file at `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md` using the handoff format. Present a summary of the analysis to the user, including the total number of requirements, decisions, action items, and open questions found.
+Create the transcript analysis file at `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md` using the handoff format. Write the Executive Summary as a 3–5 sentence overview of the initiative, key findings, and recommended next steps. Synthesize the Backlog Implications summary from the confirmed requirements, decisions, and action items; the Suggested Downstream Workflows subsection is fixed guidance and requires no synthesis. Present a summary of the analysis to the user, including the total number of requirements, decisions, action items, and open questions found.
 
 Guide the user to start a *prd-builder* session with the analysis file attached. Update the state file with the completed phase and final query count.
 
@@ -267,9 +266,9 @@ Users and personas mentioned in transcripts.
 | TR-001 | Description | confirmed / inferred / needs-validation | Meeting name   | Date | Person  | Role (1–4)  | HH:MM:SS |
 
 ## Decisions Made
-| Decision      | Rationale | Source Meeting | Date |
-|---------------|-----------|----------------|------|
-| Decision text | Why       | Meeting name   | Date |
+| Decision      | Rationale | Source Meeting | Date | Speaker | Role (Tier) | Status                     |
+|---------------|-----------|----------------|------|---------|-------------|----------------------------|
+| Decision text | Why       | Meeting name   | Date | Person  | Role (1–4)  | confirmed or *unconfirmed* |
 
 ## Action Items
 | Action      | Owner                   | Due Date              | Source Meeting |
