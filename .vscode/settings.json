@@ -27,6 +27,7 @@
     ".github/instructions/hve-core": true,
     ".github/instructions/shared": true,
     ".github/instructions/experimental": true,
+    ".github/instructions/security": true
   },
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
