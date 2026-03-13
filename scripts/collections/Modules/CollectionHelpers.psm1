@@ -338,8 +338,13 @@ function Get-ArtifactFiles {
             instructions = 'instruction'
         }
 
+        $skillsPrefix = (Join-Path -Path $gitHubDir -ChildPath 'skills') + [System.IO.Path]::DirectorySeparatorChar
         $artifactFiles = Get-ChildItem -Path $gitHubDir -Filter '*.*.md' -File -Recurse
         foreach ($file in $artifactFiles) {
+            # Skip files under .github/skills/; skills are discovered separately
+            if ($file.FullName.StartsWith($skillsPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                continue
+            }
             if ($file.Name -notmatch '\.(?<suffix>[^.]+)\.md$') {
                 continue
             }
