@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #
@@ -133,7 +133,7 @@ function Invoke-PythonTests {
 if ($MyInvocation.InvocationName -ne '.') {
     $result = Invoke-PythonTests -RepoRoot $RepoRoot -OutputPath $OutputPath -Verbosity $Verbosity
     
-    Write-Host '`n========================================' -ForegroundColor Cyan
+    Write-Host "`n========================================" -ForegroundColor Cyan
     Write-Host 'Test Summary:' -ForegroundColor Cyan
     Write-Host "  Total: $($result.skillsTested)" -ForegroundColor White
     Write-Host "  Passed: $($result.passed)" -ForegroundColor Green
@@ -149,4 +149,4 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 }
 
-#endregion
+#endregion Main Execution

@@ -146,12 +146,14 @@ Agents should use npm scripts for all validation:
 * `npm run lint:collections-metadata` - Collection metadata validation
 * `npm run lint:version-consistency` - Action version consistency
 * `npm run lint:marketplace` - Marketplace validation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, and `validate:skills`)
+* `npm run lint:py` - Python linting via ruff
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, and `validate:skills`)
 * `npm run validate:copyright` - Copyright header validation
 * `npm run validate:skills` - Skill structure validation
 * `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting
 * `npm run test:ps` - PowerShell tests
+* `npm run test:py` - Python tests via pytest
 
 ### PowerShell Testing
 

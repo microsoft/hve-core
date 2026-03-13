@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #
@@ -118,10 +118,10 @@ if ($MyInvocation.InvocationName -ne '.') {
     $result = Invoke-PythonLint -RepoRoot $RepoRoot -OutputPath $OutputPath
     
     if ($result.success) {
-        Write-Host '`n✅ All Python skills passed linting' -ForegroundColor Green
+        Write-Host "`n✅ All Python skills passed linting" -ForegroundColor Green
         exit 0
     } else {
-        Write-Host '`n❌ Linting completed with errors' -ForegroundColor Red
+        Write-Host "`n❌ Linting completed with errors" -ForegroundColor Red
         exit 1
     }
 }
