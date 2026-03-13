@@ -14,6 +14,23 @@ items:
   # Agents
   - path: .github/agents/security/security-plan-creator.agent.md
     kind: agent
+  - path: .github/agents/security/security-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/security/subagents/codebase-profiler.agent.md
+    kind: agent
+  - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+    kind: agent
+  - path: .github/agents/security/subagents/report-generator.agent.md
+    kind: agent
+  - path: .github/agents/security/subagents/skill-assessor.agent.md
+    kind: agent
+  # Skills
+  - path: .github/skills/security/owasp-top-10
+    kind: skill
+  - path: .github/skills/security/owasp-llm
+    kind: skill
+  - path: .github/skills/security/owasp-agentic
+    kind: skill
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
@@ -21,6 +38,8 @@ items:
     kind: prompt
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+  - path: .github/instructions/security/security-formats.instructions.md
     kind: instruction
 display:
   ordering: manual

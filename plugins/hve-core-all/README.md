@@ -52,6 +52,11 @@ copilot plugin install hve-core-all@hve-core
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
 | security-plan-creator        | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
+| security-reviewer            | OWASP assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core                                                                                    |
+| codebase-profiler            | Scans the repository to build a technology profile and identify which OWASP skills apply to the codebase - Brought to you by microsoft/hve-core                                                            |
+| finding-deep-verifier        | Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill - Brought to you by microsoft/hve-core                                                                                 |
+| report-generator             | Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core                         |
+| skill-assessor               | Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings - Brought to you by microsoft/hve-core                                              |
 
 ## Commands
 
@@ -181,6 +186,7 @@ copilot plugin install hve-core-all@hve-core
 | prompt-builder                       | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
 | pull-request                         | Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core                                                                           |
 | writing-style                        | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
+| security-formats                     | Shared format specifications and subagent response contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core                                                                                                |
 | hve-core-location                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality                        | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 
@@ -192,6 +198,9 @@ copilot plugin install hve-core-all@hve-core
 | video-to-gif       | video-to-gif       |
 | vscode-playwright  | vscode-playwright  |
 | hve-core-installer | hve-core-installer |
+| owasp-agentic      | owasp-agentic      |
+| owasp-llm          | owasp-llm          |
+| owasp-top-10       | owasp-top-10       |
 | pr-reference       | pr-reference       |
 
 ---

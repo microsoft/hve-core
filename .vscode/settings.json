@@ -27,6 +27,7 @@
     ".github/instructions/hve-core": true,
     ".github/instructions/shared": true,
     ".github/instructions/experimental": true,
+    ".github/instructions/security": true
   },
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
@@ -39,6 +40,8 @@
     ".github/agents/security": true,
     ".github/agents/experimental": true,
     ".github/agents/experimental/subagents": true,
+    ".github/agents/security": true,
+    ".github/agents/security/subagents": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
