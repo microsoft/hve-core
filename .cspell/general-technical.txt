@@ -642,6 +642,7 @@ moneybal
 mongodb
 monolithic
 msdn
+msdate
 msi
 msgraph
 mulaw
@@ -1152,6 +1153,7 @@ wireframe
 wireshark
 workgroup
 workstream
+workstreams
 wsus
 wwwroot
 xbox

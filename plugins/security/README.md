@@ -1,12 +1,14 @@
 <!-- markdownlint-disable-file -->
-# Security Planning
+# Security
 
-Security plan creation, incident response, and risk assessment
+Security review, planning, incident response, risk assessment, and vulnerability analysis
+
+> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
 
 ## Install
 
 ```bash
-copilot plugin install security-planning@hve-core
+copilot plugin install security@hve-core
 ```
 
 ## Agents

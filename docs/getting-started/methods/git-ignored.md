@@ -103,14 +103,14 @@ Create or update `.vscode/settings.json`:
     ".hve-core/.github/agents/project-planning": true,
     ".hve-core/.github/agents/hve-core": true,
     ".hve-core/.github/agents/hve-core/subagents": true,
-    ".hve-core/.github/agents/security-planning": true
+    ".hve-core/.github/agents/security": true
   },
   "chat.promptFilesLocations": {
     ".hve-core/.github/prompts/ado": true,
     ".hve-core/.github/prompts/design-thinking": true,
     ".hve-core/.github/prompts/github": true,
     ".hve-core/.github/prompts/hve-core": true,
-    ".hve-core/.github/prompts/security-planning": true
+    ".hve-core/.github/prompts/security": true
   },
   "chat.instructionsFilesLocations": {
     ".hve-core/.github/instructions/ado": true,
@@ -166,14 +166,14 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
           ".hve-core/.github/agents/project-planning": true,
           ".hve-core/.github/agents/hve-core": true,
           ".hve-core/.github/agents/hve-core/subagents": true,
-          ".hve-core/.github/agents/security-planning": true
+          ".hve-core/.github/agents/security": true
         },
         "chat.promptFilesLocations": {
           ".hve-core/.github/prompts/ado": true,
           ".hve-core/.github/prompts/design-thinking": true,
           ".hve-core/.github/prompts/github": true,
           ".hve-core/.github/prompts/hve-core": true,
-          ".hve-core/.github/prompts/security-planning": true
+          ".hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           ".hve-core/.github/instructions/ado": true,

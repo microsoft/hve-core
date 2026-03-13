@@ -391,14 +391,14 @@ Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts
     "<PREFIX>/.github/agents/project-planning": true,
     "<PREFIX>/.github/agents/hve-core": true,
     "<PREFIX>/.github/agents/hve-core/subagents": true,
-    "<PREFIX>/.github/agents/security-planning": true
+    "<PREFIX>/.github/agents/security": true
   },
   "chat.promptFilesLocations": {
     "<PREFIX>/.github/prompts/ado": true,
     "<PREFIX>/.github/prompts/design-thinking": true,
     "<PREFIX>/.github/prompts/github": true,
     "<PREFIX>/.github/prompts/hve-core": true,
-    "<PREFIX>/.github/prompts/security-planning": true
+    "<PREFIX>/.github/prompts/security": true
   },
   "chat.instructionsFilesLocations": {
     "<PREFIX>/.github/instructions/ado": true,
@@ -477,14 +477,14 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
-          "/workspaces/hve-core/.github/agents/security-planning": true
+          "/workspaces/hve-core/.github/agents/security": true
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
           "/workspaces/hve-core/.github/prompts/design-thinking": true,
           "/workspaces/hve-core/.github/prompts/github": true,
           "/workspaces/hve-core/.github/prompts/hve-core": true,
-          "/workspaces/hve-core/.github/prompts/security-planning": true
+          "/workspaces/hve-core/.github/prompts/security": true
         },
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
