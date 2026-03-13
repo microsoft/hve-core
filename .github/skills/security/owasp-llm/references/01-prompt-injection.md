@@ -1,3 +1,8 @@
+---
+title: 'LLM01: Prompt Injection'
+description: OWASP LLM Top 10 reference for prompt injection vulnerabilities including direct and indirect injection attack patterns and mitigations
+---
+
 # 01 Prompt Injection
 
 Identifier: LLM01:2025

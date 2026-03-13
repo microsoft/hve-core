@@ -1,3 +1,8 @@
+---
+title: 'A06: Insecure Design'
+description: OWASP Web Top 10 reference for insecure design vulnerabilities stemming from missing or ineffective architectural security controls
+---
+
 # 06 Insecure Design
 
 Identifier: A06:2025

@@ -1,3 +1,18 @@
+---
+title: 'LLM06: Excessive Agency'
+description: OWASP LLM Top 10 reference for excessive agency vulnerabilities where LLM systems perform unintended actions with excessive permissions
+author: Microsoft
+ms.date: 2026-03-13
+ms.topic: reference
+keywords:
+  - owasp
+  - llm
+  - excessive-agency
+  - access-control
+  - security
+estimated_reading_time: 5
+---
+
 # 06 Excessive Agency
 
 Identifier: LLM06:2025

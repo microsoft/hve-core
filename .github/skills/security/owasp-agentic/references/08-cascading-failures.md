@@ -1,3 +1,8 @@
+---
+title: 'ASI08: Cascading Failures'
+description: OWASP Agentic Top 10 reference for cascading failure vulnerabilities where single agent failures propagate through multi-agent systems
+---
+
 # 08 Cascading Failures
 
 Identifier: ASI08:2026

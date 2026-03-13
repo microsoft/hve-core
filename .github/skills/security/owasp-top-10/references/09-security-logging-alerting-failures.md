@@ -1,3 +1,8 @@
+---
+title: 'A09: Security Logging and Alerting Failures'
+description: OWASP Web Top 10 reference for security logging and alerting failures that impair breach detection and incident response
+---
+
 # 09 Security Logging and Alerting Failures
 
 Identifier: A09:2025

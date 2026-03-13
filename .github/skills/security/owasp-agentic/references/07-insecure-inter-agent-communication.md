@@ -1,3 +1,8 @@
+---
+title: 'ASI07: Insecure Inter-Agent Communication'
+description: OWASP Agentic Top 10 reference for insecure inter-agent communication vulnerabilities in multi-agent systems
+---
+
 # 07 Insecure Inter-Agent Communication
 
 Identifier: ASI07:2026

@@ -1,3 +1,8 @@
+---
+title: 'ASI10: Rogue Agents'
+description: OWASP Agentic Top 10 reference for rogue agent vulnerabilities where autonomous agents deviate from intended behavioral constraints
+---
+
 # 10 Rogue Agents
 
 Identifier: ASI10:2026

@@ -1,3 +1,8 @@
+---
+title: 'LLM07: System Prompt Leakage'
+description: OWASP LLM Top 10 reference for system prompt leakage risks exposing sensitive configuration and behavioral instructions
+---
+
 # 07 System Prompt Leakage
 
 Identifier: LLM07:2025

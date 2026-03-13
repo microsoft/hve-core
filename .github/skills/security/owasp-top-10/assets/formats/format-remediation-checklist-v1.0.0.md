@@ -1,3 +1,8 @@
+---
+title: Web Remediation Checklist Format
+description: Structured checklist format contract for tracking remediation of web application vulnerabilities
+---
+
 <format id="WEB_REMEDIATION_CHECKLIST_V1" name="Web Remediation Checklist" purpose="Actionable remediation plan for addressing identified web application vulnerabilities.">
 ## Remediation Plan — <VULN_ID>
 

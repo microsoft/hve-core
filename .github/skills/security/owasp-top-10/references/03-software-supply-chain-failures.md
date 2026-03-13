@@ -1,3 +1,8 @@
+---
+title: 'A03: Software Supply Chain Failures'
+description: OWASP Web Top 10 reference for software supply chain failures including dependency vulnerabilities and build pipeline attacks
+---
+
 # 03 Software Supply Chain Failures
 
 Identifier: A03:2025

@@ -1,3 +1,8 @@
+---
+title: 'ASI03: Identity and Privilege Abuse'
+description: OWASP Agentic Top 10 reference for identity and privilege abuse where agents escalate or misuse granted permissions
+---
+
 # 03 Identity and Privilege Abuse
 
 Identifier: ASI03:2026

@@ -1,3 +1,8 @@
+---
+title: Agentic Vulnerability Catalog Constants
+description: Vulnerability catalog and severity level constants for the OWASP Agentic Top 10 assessment framework
+---
+
 # Agentic Vulnerability Catalog Constants
 
 Example constants block for the agentic vulnerability catalog.

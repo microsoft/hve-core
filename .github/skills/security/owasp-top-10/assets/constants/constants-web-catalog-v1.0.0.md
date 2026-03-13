@@ -1,3 +1,8 @@
+---
+title: Web Vulnerability Catalog Constants
+description: Vulnerability catalog and severity level constants for the OWASP Web Top 10 assessment framework
+---
+
 <constants>
 WEB_VULN_CATALOG: JSON<<
 {

@@ -1,3 +1,8 @@
+---
+title: 'A10: Mishandling of Exceptional Conditions'
+description: OWASP Web Top 10 reference for mishandling exceptional conditions including improper error handling and uncontrolled resource consumption
+---
+
 # 10 Mishandling of Exceptional Conditions
 
 Identifier: A10:2025

@@ -1,3 +1,8 @@
+---
+title: 'ASI06: Memory and Context Poisoning'
+description: OWASP Agentic Top 10 reference for memory and context poisoning attacks targeting agent state and retrieval systems
+---
+
 # 06 Memory and Context Poisoning
 
 Identifier: ASI06:2026

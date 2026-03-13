@@ -1,3 +1,8 @@
+---
+title: 'A01: Broken Access Control'
+description: OWASP Web Top 10 reference for broken access control vulnerabilities including privilege escalation and unauthorized resource access
+---
+
 # 01 Broken Access Control
 
 Identifier: A01:2025

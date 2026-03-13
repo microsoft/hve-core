@@ -1,3 +1,8 @@
+---
+title: 'LLM10: Unbounded Consumption'
+description: OWASP LLM Top 10 reference for unbounded consumption vulnerabilities enabling denial-of-service and resource exhaustion attacks
+---
+
 # 10 Unbounded Consumption
 
 Identifier: LLM10:2025

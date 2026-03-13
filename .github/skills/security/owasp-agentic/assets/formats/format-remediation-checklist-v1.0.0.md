@@ -1,3 +1,8 @@
+---
+title: Agentic Remediation Checklist Format
+description: Structured checklist format contract for tracking remediation of agentic application vulnerabilities
+---
+
 # Remediation Checklist Format
 
 Example format contract for agentic vulnerability remediation checklists.

@@ -1,3 +1,8 @@
+---
+title: LLM Remediation Checklist Format
+description: Structured checklist format contract for tracking remediation of LLM vulnerabilities
+---
+
 # Remediation Checklist Format
 
 Example format contract for LLM vulnerability remediation checklists.

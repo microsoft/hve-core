@@ -1,3 +1,8 @@
+---
+title: 'A04: Cryptographic Failures'
+description: OWASP Web Top 10 reference for cryptographic failures including weak algorithms, improper key management, and data exposure
+---
+
 # 04 Cryptographic Failures
 
 Identifier: A04:2025

@@ -1,3 +1,8 @@
+---
+title: 'LLM04: Data and Model Poisoning'
+description: OWASP LLM Top 10 reference for data and model poisoning attacks targeting training data integrity and model behavior
+---
+
 # 04 Data and Model Poisoning
 
 Identifier: LLM04:2025

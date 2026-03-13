@@ -1,3 +1,8 @@
+---
+title: 'LLM02: Sensitive Information Disclosure'
+description: OWASP LLM Top 10 reference for sensitive information disclosure vulnerabilities including PII leakage and data exfiltration patterns
+---
+
 # 02 Sensitive Information Disclosure
 
 Identifier: LLM02:2025

@@ -1,3 +1,8 @@
+---
+title: LLM Vulnerability Catalog Constants
+description: Vulnerability catalog and severity level constants for the OWASP LLM Top 10 assessment framework
+---
+
 # LLM Vulnerability Catalog Constants
 
 Example constants block for the LLM vulnerability catalog.
