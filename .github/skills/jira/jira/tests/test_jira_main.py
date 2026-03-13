@@ -49,8 +49,12 @@ def test_main_dispatches_and_splits_fields(monkeypatch: pytest.MonkeyPatch) -> N
 
     fake_client = object()
 
-    monkeypatch.setattr(jira, "create_parser", lambda: FakeParser())
-    monkeypatch.setattr(jira.JiraClient, "from_environment", lambda: fake_client)
+    def fake_from_environment() -> object:
+        return fake_client
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    monkeypatch.setattr(jira.JiraClient, "from_environment",
+                        fake_from_environment)
     monkeypatch.setattr(jira, "_print_result", print_recorder)
 
     result = jira.main()
@@ -68,12 +72,12 @@ def test_main_returns_script_error_exit_code(
         def parse_args(self) -> argparse.Namespace:
             return argparse.Namespace(fields=None, handler=lambda *_args: None)
 
-    monkeypatch.setattr(jira, "create_parser", lambda: FakeParser())
+    def raise_script_error() -> object:
+        raise jira.ScriptError("boom", jira.EXIT_USAGE)
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
     monkeypatch.setattr(
-        jira.JiraClient,
-        "from_environment",
-        lambda: (_ for _ in ()).throw(jira.ScriptError("boom", jira.EXIT_USAGE)),
-    )
+        jira.JiraClient, "from_environment", raise_script_error)
 
     result = jira.main()
 
@@ -89,7 +93,7 @@ def test_main_handles_keyboard_interrupt(
         def parse_args(self) -> argparse.Namespace:
             raise KeyboardInterrupt
 
-    monkeypatch.setattr(jira, "create_parser", lambda: FakeParser())
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
 
     result = jira.main()
 
@@ -105,12 +109,15 @@ def test_main_handles_broken_pipe(monkeypatch: pytest.MonkeyPatch) -> None:
                 handler=lambda *_args: {"key": TEST_ISSUE_KEY},
             )
 
-    monkeypatch.setattr(jira, "create_parser", lambda: FakeParser())
-    monkeypatch.setattr(jira.JiraClient, "from_environment", lambda: object())
-    monkeypatch.setattr(
-        jira,
-        "_print_result",
-        lambda _result, _fields: (_ for _ in ()).throw(BrokenPipeError),
-    )
+    def fake_from_environment() -> object:
+        return object()
+
+    def raise_broken_pipe(_result: object, _fields: object) -> None:
+        raise BrokenPipeError
+
+    monkeypatch.setattr(jira, "create_parser", FakeParser)
+    monkeypatch.setattr(jira.JiraClient, "from_environment",
+                        fake_from_environment)
+    monkeypatch.setattr(jira, "_print_result", raise_broken_pipe)
 
     assert jira.main() == jira.EXIT_FAILURE

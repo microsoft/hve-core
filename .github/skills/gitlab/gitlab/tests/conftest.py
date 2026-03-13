@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from email.message import Message
 from types import ModuleType
-from typing import Literal, Protocol
+from typing import Literal
 
 import gitlab
 import pytest
@@ -63,17 +63,7 @@ class RequestRecorder:
 ConfiguredGitLab = ModuleType
 ResponseFactory = Callable[[str], FakeHttpResponse]
 StdinFactory = Callable[[str], None]
-
-
-class HttpErrorFactory(Protocol):
-    """Callable factory for HTTPError instances with optional code and URL."""
-
-    def __call__(
-        self,
-        body: str,
-        code: int = 400,
-        url: str = TEST_API_URL,
-    ) -> urllib.error.HTTPError: ...
+HttpErrorFactory = Callable[[str, int, str], urllib.error.HTTPError]
 
 
 @pytest.fixture(autouse=True)

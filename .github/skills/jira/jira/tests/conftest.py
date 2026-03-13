@@ -7,7 +7,7 @@ import urllib.error
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from email.message import Message
-from typing import Literal, Protocol, cast
+from typing import Literal, cast
 
 import jira
 import pytest
@@ -66,17 +66,7 @@ class ClientRecorder:
 
 ResponseFactory = Callable[[str], FakeHttpResponse]
 StdinFactory = Callable[[str], None]
-
-
-class HttpErrorFactory(Protocol):
-    """Callable factory for HTTPError instances with optional code and URL."""
-
-    def __call__(
-        self,
-        body: str,
-        code: int = 400,
-        url: str = "https://jira.example.com/rest/api/2/test",
-    ) -> urllib.error.HTTPError: ...
+HttpErrorFactory = Callable[[str, int, str], urllib.error.HTTPError]
 
 
 @pytest.fixture(autouse=True)
