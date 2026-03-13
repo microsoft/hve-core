@@ -84,6 +84,16 @@ items:
   kind: agent
 - path: .github/agents/security/security-plan-creator.agent.md
   kind: agent
+- path: .github/agents/security/security-reviewer.agent.md
+  kind: agent
+- path: .github/agents/security/subagents/codebase-profiler.agent.md
+  kind: agent
+- path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+  kind: agent
+- path: .github/agents/security/subagents/report-generator.agent.md
+  kind: agent
+- path: .github/agents/security/subagents/skill-assessor.agent.md
+  kind: agent
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
@@ -375,6 +385,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
+- path: .github/instructions/security/security-formats.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
@@ -386,6 +398,12 @@ items:
 - path: .github/skills/experimental/vscode-playwright
   kind: skill
 - path: .github/skills/installer/hve-core-installer
+  kind: skill
+- path: .github/skills/security/owasp-agentic
+  kind: skill
+- path: .github/skills/security/owasp-llm
+  kind: skill
+- path: .github/skills/security/owasp-top-10
   kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill
