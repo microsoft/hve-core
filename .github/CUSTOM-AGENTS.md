@@ -48,16 +48,17 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Documentation and Planning Agents
 
-| Agent                            | Purpose                                                            | Key Constraint                                        |
-|----------------------------------|--------------------------------------------------------------------|-------------------------------------------------------|
-| **adr-creation**                 | Interactive ADR coaching with guided discovery                     | Socratic coaching approach                            |
-| **brd-builder**                  | Creates Business Requirements Documents with reference integration | Solution-agnostic requirements focus                  |
-| **doc-ops**                      | Documentation operations and maintenance                           | Does not modify source code                           |
-| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A          | Iterative questioning; state-tracked sessions         |
-| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance  | Principles over format; delegates to prd/brd builders |
-| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints         | Blueprint-driven threat modeling                      |
-| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment             | Scoped review; delegates security concerns            |
-| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements | Research artifacts only; visual design in Figma       |
+| Agent                            | Purpose                                                                      | Key Constraint                                        |
+|----------------------------------|------------------------------------------------------------------------------|-------------------------------------------------------|
+| **adr-creation**                 | Interactive ADR coaching with guided discovery                               | Socratic coaching approach                            |
+| **brd-builder**                  | Creates Business Requirements Documents with reference integration           | Solution-agnostic requirements focus                  |
+| **doc-ops**                      | Documentation operations and maintenance                                     | Does not modify source code                           |
+| **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
+| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                    | Iterative questioning; state-tracked sessions         |
+| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
+| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints                   | Blueprint-driven threat modeling                      |
+| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
+| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
 
 ### Utility Agents
 
@@ -256,6 +257,20 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 * Apply structured documentation updates aligned with repository standards
 
 **Critical:** Operates strictly on documentation files and does not modify application or source code
+
+### meeting-analyst
+
+**Creates:** Transcript analysis documents and session state:
+
+* `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md` (structured requirements extracted from meeting transcripts)
+* `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript.state.json` (session state for resume capability)
+
+**Workflow:** Discover → Extract → Synthesize → Handoff
+
+**Critical:** Experimental. Requires the `workiq` MCP server in `.vscode/mcp.json` (not included in the installer skill or curated MCP documentation; see [official documentation](https://learn.microsoft.com/microsoft-365-copilot/extensibility/workiq-overview#install-in-vs-code) for setup). Requires `mcp_workiq_accept_eula` call before querying. Uses `mcp_workiq_ask_work_iq` for Microsoft 365 meeting data. Query budget of approximately 30 per session. Hands off to **prd-builder** for PRD creation.
+
+**Data Sensitivity Warning:** Meeting transcripts retrieved by this agent may contain PII, customer confidential information, and proprietary business data. Analysis files and state files are written to `.copilot-tracking/prd-sessions/` which is gitignored by default when following HVE Core setup guidance, but the files exist **unencrypted on disk**.
+Users are responsible for verifying their repository's `.gitignore` configuration, complying with their organization's data handling policies, and deleting both the `<name>-transcript-analysis.md` and `<name>-transcript.state.json` files after the PRD handoff is complete. The agent will prompt for deletion at handoff completion, but deletion is the user's responsibility.
 
 ### memory
 
