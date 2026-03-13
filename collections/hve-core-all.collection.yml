@@ -158,6 +158,8 @@ items:
   kind: prompt
 - path: .github/prompts/github/github-sprint-plan.prompt.md
   kind: prompt
+- path: .github/prompts/github/github-suggest.prompt.md
+  kind: prompt
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
