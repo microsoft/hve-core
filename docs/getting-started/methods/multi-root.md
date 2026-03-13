@@ -208,6 +208,9 @@ Update `.devcontainer/devcontainer.json` to clone your org's fork:
 * `File` → `Open Workspace from File...` → select `hve-core.code-workspace` (Local)
 * Run `code .devcontainer/hve-core.code-workspace` in terminal (Codespaces)
 
+> [!NOTE]
+> The dev container spec has no `workspaceFile` property, so Codespaces and devcontainers always open in single-folder mode. You must manually switch to the workspace file after the container starts. For Codespaces without a fork, the [Codespaces method](codespaces.md) avoids this extra step by configuring settings directly in `devcontainer.json`.
+
 The VS Code title bar should show your workspace name, not just the folder name.
 
 ## Path Resolution
