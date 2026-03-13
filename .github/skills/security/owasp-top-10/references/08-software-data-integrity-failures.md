@@ -1,16 +1,6 @@
 ---
 title: 'A08: Software or Data Integrity Failures'
 description: OWASP Web Top 10 reference for software and data integrity failures including insecure deserialization and CI/CD pipeline compromise
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - web
-  - data-integrity
-  - deserialization
-  - security
-estimated_reading_time: 5
 ---
 
 # 08 Software or Data Integrity Failures

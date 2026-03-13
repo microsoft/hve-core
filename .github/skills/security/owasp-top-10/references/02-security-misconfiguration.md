@@ -1,15 +1,6 @@
 ---
 title: 'A02: Security Misconfiguration'
 description: OWASP Web Top 10 reference for security misconfiguration vulnerabilities in application and infrastructure settings
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - web
-  - security-misconfiguration
-  - security
-estimated_reading_time: 5
 ---
 
 # 02 Security Misconfiguration

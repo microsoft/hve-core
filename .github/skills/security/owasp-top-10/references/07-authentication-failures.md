@@ -1,15 +1,6 @@
 ---
 title: 'A07: Authentication Failures'
 description: OWASP Web Top 10 reference for authentication failures including credential stuffing, weak passwords, and session management flaws
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - web
-  - authentication
-  - security
-estimated_reading_time: 5
 ---
 
 # 07 Authentication Failures

@@ -1,15 +1,6 @@
 ---
 title: 'ASI01: Agent Goal Hijack'
 description: OWASP Agentic Top 10 reference for agent goal hijack vulnerabilities where adversaries redirect autonomous agent objectives
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - agentic
-  - goal-hijack
-  - security
-estimated_reading_time: 5
 ---
 
 # 01 Agent Goal Hijack

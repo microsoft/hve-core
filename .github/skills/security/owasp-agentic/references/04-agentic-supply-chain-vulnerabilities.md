@@ -1,15 +1,6 @@
 ---
 title: 'ASI04: Agentic Supply Chain Vulnerabilities'
 description: OWASP Agentic Top 10 reference for supply chain vulnerabilities in agent frameworks, plugins, and tool dependencies
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - agentic
-  - supply-chain
-  - security
-estimated_reading_time: 5
 ---
 
 # 04 Agentic Supply Chain Vulnerabilities

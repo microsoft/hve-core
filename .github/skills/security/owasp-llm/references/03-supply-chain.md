@@ -1,15 +1,6 @@
 ---
 title: 'LLM03: Supply Chain'
 description: OWASP LLM Top 10 reference for supply chain vulnerabilities in LLM training data, models, and deployment platforms
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - llm
-  - supply-chain
-  - security
-estimated_reading_time: 5
 ---
 
 # 03 Supply Chain

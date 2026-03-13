@@ -1,15 +1,6 @@
 ---
 title: 'ASI05: Unexpected Code Execution'
 description: OWASP Agentic Top 10 reference for unexpected code execution where agents generate and run unintended or malicious code
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - agentic
-  - code-execution
-  - security
-estimated_reading_time: 5
 ---
 
 # 05 Unexpected Code Execution

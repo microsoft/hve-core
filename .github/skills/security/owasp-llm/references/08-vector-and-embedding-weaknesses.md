@@ -1,17 +1,6 @@
 ---
 title: 'LLM08: Vector and Embedding Weaknesses'
 description: OWASP LLM Top 10 reference for vector and embedding weaknesses in RAG systems and semantic search pipelines
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - llm
-  - vector
-  - embedding
-  - rag
-  - security
-estimated_reading_time: 5
 ---
 
 # 08 Vector and Embedding Weaknesses

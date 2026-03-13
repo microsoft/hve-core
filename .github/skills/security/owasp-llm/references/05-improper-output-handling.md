@@ -1,16 +1,6 @@
 ---
 title: 'LLM05: Improper Output Handling'
 description: OWASP LLM Top 10 reference for improper output handling vulnerabilities including injection via LLM-generated content
-author: Microsoft
-ms.date: 2026-03-13
-ms.topic: reference
-keywords:
-  - owasp
-  - llm
-  - output-handling
-  - injection
-  - security
-estimated_reading_time: 5
 ---
 
 # 05 Improper Output Handling
