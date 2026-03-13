@@ -13,46 +13,46 @@ Required fields the orchestrator extracts from each subagent response.
 
 ### Codebase Profiler
 
-| Field | Usage |
-|-------|-------|
-| `**Repository:**` | Extracted as `repo_name` for report metadata and completion message. |
-| `**Mode:**` | Scanning mode echo. |
-| `**Primary Languages:**` | Technology context passed to downstream subagents. |
-| `**Frameworks:**` | Technology context passed to downstream subagents. |
-| `### Applicable Skills` | YAML list intersected with Available Skills to determine assessment targets. |
-| Full profile text | Passed verbatim to Skill Assessor and Finding Deep Verifier as `codebase_profile`. |
+| Field                    | Usage                                                                              |
+|--------------------------|------------------------------------------------------------------------------------|
+| `**Repository:**`        | Extracted as `repo_name` for report metadata and completion message.               |
+| `**Mode:**`              | Scanning mode echo.                                                                |
+| `**Primary Languages:**` | Technology context passed to downstream subagents.                                 |
+| `**Frameworks:**`        | Technology context passed to downstream subagents.                                 |
+| `### Applicable Skills`  | YAML list intersected with Available Skills to determine assessment targets.       |
+| Full profile text        | Passed verbatim to Skill Assessor and Finding Deep Verifier as `codebase_profile`. |
 
 ### Skill Assessor
 
-| Field | Usage |
-|-------|-------|
-| Skill metadata (`**Skill:**`, `**Framework:**`, `**Version:**`, `**Reference:**`) | Carried through to Report Generator for per-skill context. |
-| Findings table (ID, Title, Status, Severity, Location, Finding, Recommendation) | Each row extracted and classified by Status. FAIL and PARTIAL rows serialized into Finding Serialization Format for verification. PASS and NOT_ASSESSED rows passed through with verdict UNCHANGED. |
-| Detailed Remediation subsections (offending code, example fix, remediation steps per FAIL/PARTIAL item) | Carried through to Report Generator for severity-grouped remediation guidance. |
+| Field                                                                                                   | Usage                                                                                                                                                                                               |
+|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Skill metadata (`**Skill:**`, `**Framework:**`, `**Version:**`, `**Reference:**`)                       | Carried through to Report Generator for per-skill context.                                                                                                                                          |
+| Findings table (ID, Title, Status, Severity, Location, Finding, Recommendation)                         | Each row extracted and classified by Status. FAIL and PARTIAL rows serialized into Finding Serialization Format for verification. PASS and NOT_ASSESSED rows passed through with verdict UNCHANGED. |
+| Detailed Remediation subsections (offending code, example fix, remediation steps per FAIL/PARTIAL item) | Carried through to Report Generator for severity-grouped remediation guidance.                                                                                                                      |
 
 ### Finding Deep Verifier
 
 One verdict block per finding. Required fields per block:
 
-| Field | Usage |
-|-------|-------|
-| `**Verdict:**` | CONFIRMED, DISPROVED, or DOWNGRADED. Drives verification summary counts. |
-| `**Verified Status:**` | Updated status after adversarial review. |
-| `**Verified Severity:**` | Updated severity after adversarial review. Drives severity breakdown counts. |
-| Full verdict block | Added verbatim to the Verified Findings Collection passed to Report Generator. |
+| Field                    | Usage                                                                          |
+|--------------------------|--------------------------------------------------------------------------------|
+| `**Verdict:**`           | CONFIRMED, DISPROVED, or DOWNGRADED. Drives verification summary counts.       |
+| `**Verified Status:**`   | Updated status after adversarial review.                                       |
+| `**Verified Severity:**` | Updated severity after adversarial review. Drives severity breakdown counts.   |
+| Full verdict block       | Added verbatim to the Verified Findings Collection passed to Report Generator. |
 
 ### Report Generator
 
-| Field | Usage |
-|-------|-------|
-| Report file path | Inserted into the Scan Completion Format as `REPORT_FILE_PATH`. |
-| Report format used | VULN_REPORT_V1 (audit or diff) or PLAN_REPORT_V1 (plan). Confirms which template was applied. |
-| Mode | Scanning mode that determined the report format. |
-| Severity breakdown (critical, high, medium, low counts) | Populates `CRITICAL_COUNT`, `HIGH_COUNT`, `MEDIUM_COUNT`, `LOW_COUNT` in the completion message. |
-| Summary counts (pass, fail, partial, not-assessed or risk, caution, covered, not-applicable) | Populates the status count fields in the completion message. |
-| Verification counts (confirmed, disproved, downgraded) | Populates verification fields in the audit/diff completion message. |
-| Generation status | Indicates whether report generation completed successfully. |
-| Clarifying questions | Questions surfaced when inputs are ambiguous or missing. Handled by orchestrator retry protocol. |
+| Field                                                                                        | Usage                                                                                            |
+|----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Report file path                                                                             | Inserted into the Scan Completion Format as `REPORT_FILE_PATH`.                                  |
+| Report format used                                                                           | VULN_REPORT_V1 (audit or diff) or PLAN_REPORT_V1 (plan). Confirms which template was applied.    |
+| Mode                                                                                         | Scanning mode that determined the report format.                                                 |
+| Severity breakdown (critical, high, medium, low counts)                                      | Populates `CRITICAL_COUNT`, `HIGH_COUNT`, `MEDIUM_COUNT`, `LOW_COUNT` in the completion message. |
+| Summary counts (pass, fail, partial, not-assessed or risk, caution, covered, not-applicable) | Populates the status count fields in the completion message.                                     |
+| Verification counts (confirmed, disproved, downgraded)                                       | Populates verification fields in the audit/diff completion message.                              |
+| Generation status                                                                            | Indicates whether report generation completed successfully.                                      |
+| Clarifying questions                                                                         | Questions surfaced when inputs are ambiguous or missing. Handled by orchestrator retry protocol. |
 
 ## Finding Serialization Format
 

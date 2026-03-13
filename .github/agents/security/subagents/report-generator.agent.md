@@ -72,31 +72,31 @@ The VULN_REPORT_V1 format defines the report structure for audit and diff modes.
 
 ### Summary Counts
 
-| Status | Count |
-|---|---|
-| PASS | <PASS_COUNT> |
-| FAIL | <FAIL_COUNT> |
-| PARTIAL | <PARTIAL_COUNT> |
+| Status       | Count                |
+|--------------|----------------------|
+| PASS         | <PASS_COUNT>         |
+| FAIL         | <FAIL_COUNT>         |
+| PARTIAL      | <PARTIAL_COUNT>      |
 | NOT_ASSESSED | <NOT_ASSESSED_COUNT> |
-| **Total** | **<TOTAL_COUNT>** |
+| **Total**    | **<TOTAL_COUNT>**    |
 
 ### Severity Breakdown (FAIL + PARTIAL only)
 
-| Severity | Count |
-|---|---|
+| Severity | Count            |
+|----------|------------------|
 | CRITICAL | <CRITICAL_COUNT> |
-| HIGH | <HIGH_COUNT> |
-| MEDIUM | <MEDIUM_COUNT> |
-| LOW | <LOW_COUNT> |
+| HIGH     | <HIGH_COUNT>     |
+| MEDIUM   | <MEDIUM_COUNT>   |
+| LOW      | <LOW_COUNT>      |
 
 ### Verification Summary
 
-| Verdict | Count |
-|---|---|
-| CONFIRMED | <CONFIRMED_COUNT> |
-| DISPROVED | <DISPROVED_COUNT> |
+| Verdict    | Count              |
+|------------|--------------------|
+| CONFIRMED  | <CONFIRMED_COUNT>  |
+| DISPROVED  | <DISPROVED_COUNT>  |
 | DOWNGRADED | <DOWNGRADED_COUNT> |
-| UNCHANGED | <UNCHANGED_COUNT> |
+| UNCHANGED  | <UNCHANGED_COUNT>  |
 
 ---
 
@@ -192,13 +192,13 @@ The PLAN_REPORT_V1 format defines the report structure for plan mode. Follow thi
 
 ### Risk Summary
 
-| Status          | Count           |
-|-----------------|-----------------|
-| RISK            | <RISK_COUNT>    |
-| CAUTION         | <CAUTION_COUNT> |
-| COVERED         | <COVERED_COUNT> |
-| NOT_APPLICABLE  | <NA_COUNT>      |
-| **Total**       | **<TOTAL_COUNT>** |
+| Status         | Count             |
+|----------------|-------------------|
+| RISK           | <RISK_COUNT>      |
+| CAUTION        | <CAUTION_COUNT>   |
+| COVERED        | <COVERED_COUNT>   |
+| NOT_APPLICABLE | <NA_COUNT>        |
+| **Total**      | **<TOTAL_COUNT>** |
 
 ### Severity Breakdown (RISK + CAUTION only)
 
