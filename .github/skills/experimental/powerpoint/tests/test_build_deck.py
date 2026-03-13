@@ -1283,7 +1283,8 @@ class TestMain:
         slide_dir.mkdir(parents=True)
         (slide_dir / "content.yaml").write_text("slide: 1\ntitle: Test\nelements: []\n")
         style_file = tmp_path / "style.yaml"
-        style_file.write_text("dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n")
+        style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
+        style_file.write_text(style_yaml)
         return content_dir, style_file
 
     @patch("build_deck.build_slide")
@@ -1318,7 +1319,8 @@ class TestMain:
         empty_content = tmp_path / "content"
         empty_content.mkdir()
         style_file = tmp_path / "style.yaml"
-        style_file.write_text("dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n")
+        style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
+        style_file.write_text(style_yaml)
         output = tmp_path / "deck.pptx"
 
         mock_prs_cls.return_value = MagicMock()
@@ -1459,7 +1461,9 @@ class TestMain:
 
     @patch("build_deck.build_slide")
     @patch("build_deck.Presentation")
-    def test_partial_rebuild_missing_slide(self, mock_prs_cls, mock_build_slide, tmp_path):
+    def test_partial_rebuild_missing_slide(
+        self, mock_prs_cls, mock_build_slide, tmp_path
+    ):
         """Slide number not found in content directory prints warning and skips."""
         content_dir, style_file = self._setup_content_dir(tmp_path)
         source = tmp_path / "source.pptx"
@@ -1487,7 +1491,9 @@ class TestMain:
 
     @patch("build_deck.build_slide")
     @patch("build_deck.Presentation")
-    def test_partial_rebuild_out_of_range(self, mock_prs_cls, mock_build_slide, tmp_path):
+    def test_partial_rebuild_out_of_range(
+        self, mock_prs_cls, mock_build_slide, tmp_path
+    ):
         """Slide index beyond deck length prints warning and skips."""
         content_dir, style_file = self._setup_content_dir(tmp_path)
         source = tmp_path / "source.pptx"
