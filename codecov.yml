@@ -1,9 +1,18 @@
+codecov:
+  notify:
+    wait_for_ci: true
+
 coverage:
   status:
     project:
       default:
         target: auto
         threshold: 1%
+      pytest:
+        target: auto
+        threshold: 1%
+        flags:
+          - pytest
     patch:
       default:
         target: 80%
@@ -22,4 +31,8 @@ flags:
   pester:
     paths:
       - "scripts/**"
+    carryforward: true
+  pytest:
+    paths:
+      - ".github/skills/**/scripts/**"
     carryforward: true

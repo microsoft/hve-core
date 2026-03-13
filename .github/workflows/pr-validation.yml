@@ -78,6 +78,72 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
+  # Discover Python skills with pyproject.toml
+  discover-python-skills:
+    name: Discover Python Skills
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      has-skills: ${{ steps.discover.outputs.has-skills }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Discover Python skill directories
+        id: discover
+        shell: bash
+        run: |
+          # Find all pyproject.toml files under .github/skills/
+          SKILLS=$(find .github/skills -name "pyproject.toml" -exec dirname {} \; 2>/dev/null | sort -u)
+          
+          if [ -z "$SKILLS" ]; then
+            echo "No Python skills found"
+            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
+            echo "has-skills=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Build JSON matrix
+          MATRIX='{"include":['
+          FIRST=true
+          while IFS= read -r skill_dir; do
+            # Get skill name from directory path
+            SKILL_NAME=$(basename "$skill_dir")
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              MATRIX+=','
+            fi
+            MATRIX+="{\"name\":\"$SKILL_NAME\",\"working-directory\":\"$skill_dir\"}"
+          done <<< "$SKILLS"
+          MATRIX+=']}'
+          
+          echo "matrix=$(echo "$MATRIX" | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "has-skills=true" >> "$GITHUB_OUTPUT"
+          echo "Discovered Python skills:"
+          echo "$MATRIX" | jq .
+
+  pytest:
+    name: Python Tests (${{ matrix.name }})
+    needs: discover-python-skills
+    if: needs.discover-python-skills.outputs.has-skills == 'true'
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: ${{ matrix.working-directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover-python-skills.outputs.matrix) }}
+
   docusaurus-tests:
     name: Docusaurus Tests
     uses: ./.github/workflows/docusaurus-tests.yml
@@ -96,6 +162,16 @@ jobs:
       changed-files-only: true
       skip-footer-validation: false
       warnings-as-errors: true
+
+  msdate-freshness:
+    name: ms.date Freshness Check
+    uses: ./.github/workflows/msdate-freshness-check.yml
+    permissions:
+      contents: read
+    with:
+      staleness-threshold-days: 90
+      changed-files-only: true
+      soft-fail: false
 
   plugin-validation:
     name: Plugin Validation
