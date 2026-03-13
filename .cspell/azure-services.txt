@@ -61,3 +61,4 @@ azurelinux
 servicebus
 eastu
 AADSSH
+MSAL
