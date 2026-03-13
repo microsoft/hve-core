@@ -517,10 +517,16 @@ def add_connector_element(slide, elem: dict, colors: dict):
     return connector
 
 
+MAX_GROUP_DEPTH = 20
+
+
 def add_group_element(
-    slide, elem: dict, colors: dict, typography: dict, content_dir: Path
+    slide, elem: dict, colors: dict, typography: dict, content_dir: Path,
+    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Add a group element containing nested child elements.
+
+    Raises ValueError when nesting exceeds *max_depth*.
 
     YAML schema:
     - type: group
@@ -543,6 +549,10 @@ def add_group_element(
           height: 0.5
           text: "Group Title"
     """
+    if _depth >= max_depth:
+        raise ValueError(
+            f"Group nesting depth {_depth} exceeds limit of {max_depth}"
+        )
     group = slide.shapes.add_group_shape()
 
     group.left = Inches(elem["left"])
@@ -551,7 +561,10 @@ def add_group_element(
     group.height = Inches(elem["height"])
 
     for child_elem in elem.get("elements", []):
-        build_element_in_group(group, child_elem, colors, typography, content_dir)
+        build_element_in_group(
+            group, child_elem, colors, typography, content_dir,
+            _depth=_depth + 1, max_depth=max_depth,
+        )
 
     if "name" in elem:
         group.name = elem["name"]
@@ -560,7 +573,8 @@ def add_group_element(
 
 
 def build_element_in_group(
-    group, elem: dict, colors: dict, typography: dict, content_dir: Path
+    group, elem: dict, colors: dict, typography: dict, content_dir: Path,
+    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Dispatch a child element build within a group shape.
 
@@ -577,6 +591,11 @@ def build_element_in_group(
         add_connector_element(group, elem, colors)
     elif elem_type == "image":
         add_image_element(group, elem, content_dir)
+    elif elem_type == "group":
+        add_group_element(
+            group, elem, colors, typography, content_dir,
+            _depth=_depth, max_depth=max_depth,
+        )
 
 
 def _add_shape_to_collection(shapes, elem: dict, colors: dict):
@@ -645,7 +664,7 @@ def _build_image_element(slide, elem, colors, typography, content_dir):
 
 def _build_group_element(slide, elem, colors, typography, content_dir):
     """Delegate group element building to add_group_element."""
-    add_group_element(slide, elem, colors, typography, content_dir)
+    add_group_element(slide, elem, colors, typography, content_dir, _depth=0)
 
 
 def _build_connector_element(slide, elem, colors, typography, content_dir):

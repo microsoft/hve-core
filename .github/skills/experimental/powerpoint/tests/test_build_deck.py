@@ -14,6 +14,7 @@ from build_deck import (
     add_rich_text_element,
     add_shape_element,
     add_textbox,
+    build_element_in_group,
     build_slide,
     clear_slide_shapes,
     discover_slides,
@@ -903,6 +904,52 @@ class TestAddGroupElement:
         }
         group = add_group_element(blank_slide, elem, {}, {}, tmp_path)
         assert len(group.shapes) >= 1
+
+    def test_depth_limit_raises(self, blank_slide, tmp_path):
+        """Exceeding max_depth raises ValueError."""
+        elem = {
+            "left": 1.0,
+            "top": 1.0,
+            "width": 5.0,
+            "height": 3.0,
+            "elements": [],
+        }
+        with pytest.raises(ValueError, match="exceeds limit"):
+            add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=5, max_depth=5)
+
+    def test_nested_group_within_depth_limit(self, blank_slide, tmp_path):
+        """Nested groups within the limit build successfully."""
+        elem = {
+            "left": 1.0,
+            "top": 1.0,
+            "width": 5.0,
+            "height": 3.0,
+            "elements": [
+                {
+                    "type": "group",
+                    "left": 0.0,
+                    "top": 0.0,
+                    "width": 2.0,
+                    "height": 1.0,
+                    "elements": [],
+                },
+            ],
+        }
+        group = add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=0, max_depth=20)
+        assert group is not None
+
+    def test_build_element_in_group_dispatches_group(self, blank_slide, tmp_path):
+        """build_element_in_group handles nested group type."""
+        parent_group = blank_slide.shapes.add_group_shape()
+        child_elem = {
+            "type": "group",
+            "left": 0.0,
+            "top": 0.0,
+            "width": 2.0,
+            "height": 1.0,
+            "elements": [],
+        }
+        build_element_in_group(parent_group, child_elem, {}, {}, tmp_path, _depth=0, max_depth=20)
 
 
 class TestAddImageElementExtended:

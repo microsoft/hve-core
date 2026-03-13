@@ -166,8 +166,21 @@ def extract_freeform(shape) -> dict:
     return elem
 
 
-def extract_group(shape, slide_num: int, output_dir, img_count: int) -> dict:
-    """Extract a group shape and its nested child elements."""
+MAX_GROUP_DEPTH = 20
+
+
+def extract_group(
+    shape, slide_num: int, output_dir, img_count: int, *, _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
+) -> dict:
+    """Extract a group shape and its nested child elements.
+
+    Raises ValueError when nesting exceeds *max_depth*.
+    """
+    if _depth >= max_depth:
+        raise ValueError(
+            f"Group nesting depth {_depth} exceeds limit of {max_depth}"
+        )
     elem = {
         "type": "group",
         "left": emu_to_inches(shape.left),
@@ -178,14 +191,18 @@ def extract_group(shape, slide_num: int, output_dir, img_count: int) -> dict:
         "elements": [],
     }
     for child in shape.shapes:
-        child_elem = extract_child_shape(child, slide_num, output_dir, img_count)
+        child_elem = extract_child_shape(
+            child, slide_num, output_dir, img_count,
+            _depth=_depth + 1, max_depth=max_depth,
+        )
         if child_elem:
             elem["elements"].append(child_elem)
     return elem
 
 
 def _extract_shape_by_type(
-    shape, slide_num: int, output_dir, img_count: int
+    shape, slide_num: int, output_dir, img_count: int,
+    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
 ) -> dict | None:
     """Dispatch extraction based on shape_type, table/chart, or freeform."""
     shape_type = shape.shape_type
@@ -203,7 +220,10 @@ def _extract_shape_by_type(
     if shape_type == 13:  # PICTURE
         return extract_image(shape, output_dir, slide_num, img_count)
     if shape_type == 6:  # GROUP
-        return extract_group(shape, slide_num, output_dir, img_count)
+        return extract_group(
+            shape, slide_num, output_dir, img_count,
+            _depth=_depth, max_depth=max_depth,
+        )
 
     # Table and chart detection via attribute check
     if hasattr(shape, "has_table") and shape.has_table:
@@ -217,10 +237,14 @@ def _extract_shape_by_type(
 
 
 def extract_child_shape(
-    shape, slide_num: int, output_dir, img_count: int
+    shape, slide_num: int, output_dir, img_count: int,
+    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
 ) -> dict | None:
     """Extract a single child shape within a group."""
-    result = _extract_shape_by_type(shape, slide_num, output_dir, img_count)
+    result = _extract_shape_by_type(
+        shape, slide_num, output_dir, img_count,
+        _depth=_depth, max_depth=max_depth,
+    )
     if result is not None:
         return result
 
@@ -992,17 +1016,29 @@ def _resolve_theme_colors(prs) -> dict:
     return color_map
 
 
-def _resolve_theme_refs_in_content(content: dict, theme_colors: dict) -> dict:
-    """Replace @theme_name references with resolved hex values in content."""
+MAX_THEME_REF_DEPTH = 50
 
-    def resolve_value(val):
+
+def _resolve_theme_refs_in_content(
+    content: dict, theme_colors: dict, *, max_depth: int = MAX_THEME_REF_DEPTH,
+) -> dict:
+    """Replace @theme_name references with resolved hex values in content.
+
+    Raises ValueError when nesting exceeds *max_depth*.
+    """
+
+    def resolve_value(val, _depth: int = 0):
+        if _depth >= max_depth:
+            raise ValueError(
+                f"Theme reference nesting depth {_depth} exceeds limit of {max_depth}"
+            )
         if isinstance(val, str) and val.startswith("@"):
             theme_name = val[1:]
             return theme_colors.get(theme_name, val)
         if isinstance(val, dict):
-            return {k: resolve_value(v) for k, v in val.items()}
+            return {k: resolve_value(v, _depth + 1) for k, v in val.items()}
         if isinstance(val, list):
-            return [resolve_value(item) for item in val]
+            return [resolve_value(item, _depth + 1) for item in val]
         return val
 
     return resolve_value(content)
