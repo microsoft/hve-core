@@ -24,14 +24,14 @@ MVEs differ from MVPs in several important ways:
 * Succeed whether hypotheses are validated or invalidated; both outcomes are valuable.
 * Can be run by a full or partial crew with help from subject matter experts.
 
-| Dimension | MVE | MVP |
-|---|---|---|
-| Goal | Answer a question or validate an assumption | Deliver a minimum usable product |
-| Scope | Narrowly focused on one unknown | Broad enough to provide user value |
-| Duration | Days to weeks | Weeks to months |
-| Team & Process | Partial crew, lightweight ceremonies | Full crew, standard ceremonies |
-| Deliverables | Data, findings, recommendation | Working product increment |
-| Follow-up | Go/no-go decision informed by evidence | Iteration toward production |
+| Dimension      | MVE                                         | MVP                                |
+|----------------|---------------------------------------------|------------------------------------|
+| Goal           | Answer a question or validate an assumption | Deliver a minimum usable product   |
+| Scope          | Narrowly focused on one unknown             | Broad enough to provide user value |
+| Duration       | Days to weeks                               | Weeks to months                    |
+| Team & Process | Partial crew, lightweight ceremonies        | Full crew, standard ceremonies     |
+| Deliverables   | Data, findings, recommendation              | Working product increment          |
+| Follow-up      | Go/no-go decision informed by evidence      | Iteration toward production        |
 
 ## MVE Types
 
