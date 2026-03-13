@@ -1,6 +1,6 @@
 ---
 name: Report Generator
-description: "Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to docs/reports/ - Brought to you by microsoft/hve-core"
+description: "Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core"
 tools:
   - edit/createDirectory
   - edit/createFile
