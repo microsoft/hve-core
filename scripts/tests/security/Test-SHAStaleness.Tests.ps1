@@ -261,31 +261,113 @@ Describe 'Main Script Execution' {
         # Save current directory
         $script:OriginalLocation = Get-Location
         
-        # Mock GitHub API at Describe scope to affect all child script invocations
+        # Script-scope safety-net mock — no direct Invoke-RestMethod calls remain in Test-SHAStaleness.ps1
+        # after consolidation; all REST calls route through SecurityHelpers via Invoke-GitHubAPIWithRetry.
         Mock Invoke-RestMethod {
-            if ($Uri -like '*graphql*') {
-                # GraphQL API for checking GitHub Actions
+            if ($Uri -like '*/releases/latest') {
+                $repoName = ($Uri -split '/')[-3]
                 return @{
-                    data = @{
-                        rateLimit  = @{ remaining = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
-                        repository = @{
-                            refs = @{
-                                nodes = @(
-                                    @{
-                                        name   = 'v5'
-                                        target = @{
-                                            oid           = '9999999999999999999999999999999999999999'
-                                            committedDate = (Get-Date).AddMonths(-2).ToString('o')
-                                        }
-                                    }
-                                )
-                            }
+                    tag_name = switch ($repoName) {
+                        'actionlint' { 'v1.7.10' }
+                        'gitleaks'   { 'v8.30.0' }
+                        default      { 'v1.0.0' }
+                    }
+                    published_at = (Get-Date).AddMonths(-1).ToString('o')
+                }
+            }
+            elseif ($Uri -like '*/repos/*/branches/*') {
+                return @{ commit = @{ sha = '9999999999999999999999999999999999999999' } }
+            }
+            elseif ($Uri -like '*/repos/*/commits/*') {
+                return @{ commit = @{ author = @{ date = (Get-Date).AddDays(-60).ToString('o') } } }
+            }
+            elseif ($Uri -like '*/repos/*') {
+                return @{ default_branch = 'main' }
+            }
+            return @{}
+        }
+
+        # Module-scope mock intercepts Invoke-RestMethod calls made inside SecurityHelpers
+        # (Test-GitHubToken and Invoke-GitHubAPIWithRetry both call Invoke-RestMethod internally).
+        # Uses aliased GraphQL response structure matching the script's batch queries.
+        Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+            if ($Uri -like '*graphql*') {
+                if ($Body -match 'viewer') {
+                    # Test-GitHubToken validation query
+                    return @{
+                        data = @{
+                            viewer    = @{ login = 'testuser' }
+                            rateLimit = @{ remaining = 5000; limit = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                        }
+                    }
+                }
+                elseif ($Body -match 'defaultBranchRef') {
+                    # Repo batch query — aliased structure (repo0, repo1, ...)
+                    return @{
+                        data = @{
+                            rateLimit = @{ remaining = 5000; limit = 5000; used = 1; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                            repo0     = @{ name = 'checkout'; defaultBranchRef = @{ target = @{ oid = '9999999999999999999999999999999999999999'; committedDate = (Get-Date).ToString('o') } } }
+                            repo1     = @{ name = 'setup-node'; defaultBranchRef = @{ target = @{ oid = '8888888888888888888888888888888888888888'; committedDate = (Get-Date).ToString('o') } } }
+                        }
+                    }
+                }
+                else {
+                    # Commit batch query — PSCustomObject required for PSObject.Properties iteration
+                    return [PSCustomObject]@{
+                        data = [PSCustomObject]@{
+                            rateLimit = [PSCustomObject]@{ remaining = 5000; cost = 1 }
+                            commit0   = [PSCustomObject]@{ object = [PSCustomObject]@{ oid = '8e5e7e5ab8b370d6c329ec480221332ada57f0ab'; committedDate = (Get-Date).AddDays(-60).ToString('o') } }
+                            commit1   = [PSCustomObject]@{ object = [PSCustomObject]@{ oid = '64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c'; committedDate = (Get-Date).AddDays(-45).ToString('o') } }
                         }
                     }
                 }
             }
             elseif ($Uri -like '*/releases/latest') {
-                # REST API for checking tool releases
+                $repoName = ($Uri -split '/')[-3]
+                return @{
+                    tag_name = switch ($repoName) {
+                        'actionlint' { 'v1.7.10' }
+                        'gitleaks'   { 'v8.30.0' }
+                        default      { 'v1.0.0' }
+                    }
+                    published_at = (Get-Date).AddMonths(-1).ToString('o')
+                }
+            }
+            return @{}
+        }
+
+        # Script-scope mock for Invoke-GitHubAPIWithRetry — prevents real HTTP calls
+        # when Import-Module -Force in the production script resets module-scope mocks.
+        Mock Invoke-GitHubAPIWithRetry {
+            if ($Uri -like '*graphql*') {
+                if ($Body -match 'viewer') {
+                    return @{
+                        data = @{
+                            viewer    = @{ login = 'testuser' }
+                            rateLimit = @{ remaining = 5000; limit = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                        }
+                    }
+                }
+                elseif ($Body -match 'defaultBranchRef') {
+                    return @{
+                        data = @{
+                            rateLimit = @{ remaining = 5000; limit = 5000; used = 1; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                            repo0     = @{ name = 'checkout'; defaultBranchRef = @{ target = @{ oid = '9999999999999999999999999999999999999999'; committedDate = (Get-Date).ToString('o') } } }
+                            repo1     = @{ name = 'setup-node'; defaultBranchRef = @{ target = @{ oid = '8888888888888888888888888888888888888888'; committedDate = (Get-Date).ToString('o') } } }
+                        }
+                    }
+                }
+                else {
+                    return [PSCustomObject]@{
+                        data = [PSCustomObject]@{
+                            rateLimit = [PSCustomObject]@{ remaining = 5000; cost = 1 }
+                            commit0   = [PSCustomObject]@{ object = [PSCustomObject]@{ oid = '8e5e7e5ab8b370d6c329ec480221332ada57f0ab'; committedDate = (Get-Date).AddDays(-60).ToString('o') } }
+                            commit1   = [PSCustomObject]@{ object = [PSCustomObject]@{ oid = '64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c'; committedDate = (Get-Date).AddDays(-45).ToString('o') } }
+                        }
+                    }
+                }
+            }
+            elseif ($Uri -like '*/releases/latest') {
                 $repoName = ($Uri -split '/')[-3]
                 return @{
                     tag_name = switch ($repoName) {
@@ -347,6 +429,10 @@ jobs:
             $result.PSObject.Properties.Name | Should -Contain 'Dependencies'
             # Dependencies should be array (even if empty)
             , $result.Dependencies | Should -BeOfType [System.Object[]]
+
+            # Verify mock API calls: 2 GraphQL batches (repos + commits) + 2 tool release checks
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
         }
 
         It 'Processes stale dependencies with array count operations' {
@@ -378,7 +464,7 @@ jobs:
             
             # Should have processed multiple action repos (array coercion on line 532)
             $result.TotalStaleItems | Should -BeOfType [long]
-            $result.TotalStaleItems | Should -BeGreaterOrEqual 0
+            $result.TotalStaleItems | Should -Be 2
             
             # Log file should contain evidence of array counting
             $logPath = Join-Path $script:TestRepo 'logs' 'sha-staleness-monitoring.log'
@@ -408,6 +494,10 @@ jobs:
             $logPath = Join-Path $script:TestRepo 'logs' 'sha-staleness-monitoring.log'
             $logContent = Get-Content $logPath -Raw
             $logContent | Should -Match 'Checking tool staleness'
+
+            # Verify API calls: 2 GraphQL batches + 2 tool release checks
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
         }
 
         It 'Executes result formatting with array operations' {
@@ -429,7 +519,7 @@ jobs:
             
             # TotalStaleItems should be numeric from @($Dependencies).Count
             $jsonResult.TotalStaleItems | Should -BeOfType [long]
-            $jsonResult.TotalStaleItems | Should -BeGreaterOrEqual 0
+            $jsonResult.TotalStaleItems | Should -Be 2
             
             # Test Summary format exercises array coercion (@($Dependencies).Count)  
             # The key is that it executes the @($Dependencies).Count operations
@@ -554,6 +644,10 @@ jobs:
             $logPath = Join-Path $script:TestRepo 'logs' 'sha-staleness-monitoring.log'
             $logContent = Get-Content $logPath -Raw
             $logContent | Should -Match 'No SHA-pinned.*found|No stale dependencies'
+
+            # No actions found so no GraphQL calls, but tool staleness still runs
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 0 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 2 -Exactly
         }
 
         It 'Processes single stale dependency with array coercion' {
@@ -569,30 +663,53 @@ jobs:
 '@
             Set-Content -Path (Join-Path $script:WorkflowDir 'single.yml') -Value $singleWorkflow
             
-            # Mock to return stale dependency (old SHA)
+            # Script-scope safety-net mock — REST fallback calls now route through SecurityHelpers.
             Mock Invoke-RestMethod {
+                if ($Uri -like '*/repos/*/branches/*') {
+                    return @{ commit = @{ sha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' } }
+                }
+                elseif ($Uri -like '*/repos/*/commits/*') {
+                    return @{ commit = @{ author = @{ date = (Get-Date).AddMonths(-6).ToString('o') } } }
+                }
+                elseif ($Uri -like '*/repos/*') {
+                    return @{ default_branch = 'main' }
+                }
+                return @{}
+            }
+
+            # Module-scope mock for Invoke-RestMethod calls inside SecurityHelpers.
+            # Uses aliased GraphQL response structure matching the script's batch queries.
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 if ($Uri -like '*graphql*') {
-                    return @{
-                        data = @{
-                            rateLimit  = @{ remaining = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
-                            repository = @{
-                                refs = @{
-                                    nodes = @(
-                                        @{
-                                            name   = 'v5'
-                                            target = @{
-                                                oid           = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                                                committedDate = (Get-Date).AddMonths(-6).ToString('o')
-                                            }
-                                        }
-                                    )
-                                }
+                    if ($Body -match 'viewer') {
+                        return @{
+                            data = @{
+                                viewer    = @{ login = 'testuser' }
+                                rateLimit = @{ remaining = 5000; limit = 5000; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                            }
+                        }
+                    }
+                    elseif ($Body -match 'defaultBranchRef') {
+                        # Single repo — latest SHA differs from pinned SHA to trigger stale detection
+                        return @{
+                            data = @{
+                                rateLimit = @{ remaining = 5000; limit = 5000; used = 1; resetAt = (Get-Date).AddHours(1).ToString('o') }
+                                repo0     = @{ name = 'checkout'; defaultBranchRef = @{ target = @{ oid = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; committedDate = (Get-Date).ToString('o') } } }
+                            }
+                        }
+                    }
+                    else {
+                        # Commit batch — PSCustomObject required for PSObject.Properties iteration
+                        return [PSCustomObject]@{
+                            data = [PSCustomObject]@{
+                                rateLimit = [PSCustomObject]@{ remaining = 5000; cost = 1 }
+                                commit0   = [PSCustomObject]@{ object = [PSCustomObject]@{ oid = '8e5e7e5ab8b370d6c329ec480221332ada57f0ab'; committedDate = (Get-Date).AddMonths(-6).ToString('o') } }
                             }
                         }
                     }
                 }
                 return @{}
-            } -ModuleName $null
+            }
             
             # Single item return should be coerced to array, also tests stale detection
             $jsonPath = Join-Path $script:TestRepo 'logs' 'single-test.json'
@@ -604,15 +721,11 @@ jobs:
             
             # Single dependency should still produce numeric count (not $null)
             $result.TotalStaleItems | Should -BeOfType [long]
-            $result.TotalStaleItems | Should -BeGreaterOrEqual 0
+            $result.TotalStaleItems | Should -Be 1
             # Dependencies array should exist
             $result.PSObject.Properties.Name | Should -Contain 'Dependencies'
-            # If we have dependencies, validate structure
-            if ($result.TotalStaleItems -gt 0) {
-                $result.Dependencies | Should -Not -BeNullOrEmpty
-                # First item should have required properties
-                $result.Dependencies[0].PSObject.Properties.Name | Should -Contain 'Type'
-            }
+            $result.Dependencies | Should -Not -BeNullOrEmpty
+            $result.Dependencies[0].PSObject.Properties.Name | Should -Contain 'Type'
         }
     }
 }
@@ -739,6 +852,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
 
             $result | Should -Not -BeNullOrEmpty
             @($result).Count | Should -BeGreaterOrEqual 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 2
         }
     }
 
@@ -768,6 +882,7 @@ Describe 'Get-BulkGitHubActionsStaleness' -Tag 'Unit' {
             }
 
             @($result).Count | Should -Be 0
+            Should -Invoke Test-GitHubToken -Times 1
         }
     }
 }

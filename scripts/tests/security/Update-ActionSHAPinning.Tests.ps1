@@ -132,12 +132,10 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
         $script:TestWorkflow = Join-Path $TestDrive 'test-workflow.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        Mock Invoke-RestMethod {
-            return @{
-                object = @{
-                    sha = 'newsha123456789012345678901234567890abcd'
-                }
-            }
+        # Mock at function level; Update-WorkflowFile → Get-SHAForAction → Get-LatestCommitSHA
+        # calls module functions that bare Invoke-RestMethod mocks cannot intercept
+        Mock Get-LatestCommitSHA {
+            return 'newsha123456789012345678901234567890abcd'
         }
     }
 
@@ -197,12 +195,10 @@ Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
         $script:TestWorkflow = Join-Path $TestDrive 'whatif-test.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        Mock Invoke-RestMethod {
-            return @{
-                object = @{
-                    sha = 'newsha123456789012345678901234567890abcd'
-                }
-            }
+        # Mock at function level; Update-WorkflowFile → Get-SHAForAction → Get-LatestCommitSHA
+        # calls module functions that bare Invoke-RestMethod mocks cannot intercept
+        Mock Get-LatestCommitSHA {
+            return 'newsha123456789012345678901234567890abcd'
         }
     }
 
@@ -313,6 +309,7 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
             }
 
             $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Method 'GET' -Headers @{ Authorization = 'token test' }
+
             $result | Should -BeNullOrEmpty
             $script:AttemptCount | Should -Be 1
             Should -Not -Invoke Start-Sleep -ModuleName SecurityHelpers
@@ -347,17 +344,21 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
 
     Context 'Successful SHA retrieval' {
         It 'Returns SHA for valid repository and branch' {
-            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 return @{ sha = 'abc123def456789012345678901234567890abcdef' }
             }
 
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
 
             $result | Should -Be 'abc123def456789012345678901234567890abcdef'
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
 
         It 'Handles branch parameter with refs/heads prefix' {
-            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 param($Uri)
                 if ($Uri -match 'refs/heads/main') {
                     return @{ sha = 'sha123' }
@@ -368,34 +369,39 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'refs/heads/main'
 
             $result | Should -Be 'sha123'
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
     }
 
     Context 'Error handling' {
         It 'Returns null for non-existent repository' {
-            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
-                throw [System.Net.WebException]::new('Not Found')
-            }
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry { return $null }
 
             $result = Get-LatestCommitSHA -Owner 'nonexistent' -Repo 'repo' -Branch 'main'
 
             $result | Should -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
 
         It 'Returns null on API error without throwing' {
-            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
-                throw [System.Exception]::new('Network error')
-            }
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry { return $null }
 
             # Function should handle error gracefully and return null
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
             $result | Should -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
     }
 
     Context 'Default branch detection' {
         It 'Uses default branch when Branch not specified' {
-            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 param($Uri)
                 if ($Uri -match '/repos/[^/]+/[^/]+$') {
                     return @{ default_branch = 'main' }
@@ -406,6 +412,8 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout'
 
             $result | Should -Not -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 2
         }
     }
 }

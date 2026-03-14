@@ -403,95 +403,73 @@ function Test-GitHubActionsForStaleness {
     catch {
         Write-SecurityLog "Bulk GraphQL check failed, falling back to individual checks: $($_.Exception.Message)" -Level Warning
 
-        # Fallback to individual REST API calls if GraphQL fails
+        # Fallback to individual REST API calls via Invoke-GitHubAPIWithRetry
         $defaultBranchCache = @{}
-        $rateLimitExceeded = $false
         foreach ($key in $shaToActionMap.Keys) {
             $action = $shaToActionMap[$key]
 
             Write-SecurityLog "Checking GitHub Action (fallback): $($action.Repo)@$($action.SHA)" -Level Info
 
-            # Individual REST API call as fallback
-            try {
-                $headers = @{}
-                if ($env:GITHUB_TOKEN) {
-                    $headers['Authorization'] = "token $env:GITHUB_TOKEN"
-                }
-
-                $apiBase = Get-GitHubApiBase
-                $repoSegments = $action.Repo.Split('/')
-                if ($repoSegments.Count -lt 2) {
-                    Write-SecurityLog "Invalid GitHub Action repository format: $($action.Repo)" -Level Warning
-                    continue
-                }
-
-                $owner = $repoSegments[0]
-                $repoName = $repoSegments[1]
-                $repoLookup = "$owner/$repoName"
-
-                if (-not $defaultBranchCache.ContainsKey($repoLookup)) {
-                    try {
-                        $repoInfo = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup" -Headers $headers -ErrorAction Stop
-                        $defaultBranch = if ($repoInfo.default_branch) { $repoInfo.default_branch } else { "main" }
-                        $defaultBranchCache[$repoLookup] = $defaultBranch
-                    }
-                    catch {
-                        Write-SecurityLog "Failed to discover default branch for $repoLookup, defaulting to 'main': $($_.Exception.Message)" -Level Warning
-                        $defaultBranchCache[$repoLookup] = "main"
-                    }
-                }
-
-                $branchName = $defaultBranchCache[$repoLookup]
-
-                $BranchInfo = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup/branches/$branchName" -Headers $headers -ErrorAction Stop
-                $LatestSHA = $BranchInfo.commit.sha
-
-                if ($action.SHA -ne $LatestSHA) {
-                    $CurrentCommit = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup/commits/$($action.SHA)" -Headers $headers -ErrorAction Stop
-                    $CurrentDate = [DateTime]::Parse($CurrentCommit.commit.author.date)
-                    $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
-
-                    if ($DaysOld -gt $MaxAge) {
-                        $script:StaleDependencies.Add([PSCustomObject]@{
-                            Type           = "GitHubAction"
-                            File           = $action.File
-                            Name           = $action.Repo
-                            CurrentVersion = $action.SHA
-                            LatestVersion  = $LatestSHA
-                            DaysOld        = $DaysOld
-                            Severity       = if ($DaysOld -gt 90) { "High" } elseif ($DaysOld -gt 60) { "Medium" } else { "Low" }
-                            Message        = "GitHub Action is $DaysOld days old (current: $($action.SHA.Substring(0,8)), latest: $($LatestSHA.Substring(0,8)))"
-                        })
-
-                        Write-SecurityLog "Found stale GitHub Action (fallback): $($action.Repo) ($DaysOld days old)" -Level Warning
-                    }
-                }
+            $headers = @{}
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "token $env:GITHUB_TOKEN"
             }
-            catch {
-                $statusCode = $null
-                if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-                    $statusCode = [int]$_.Exception.Response.StatusCode
-                }
-                elseif ($_.Exception.StatusCode) {
-                    $statusCode = [int]$_.Exception.StatusCode
-                }
 
-                if ($statusCode -eq 403 -or $statusCode -eq 429) {
-                    Write-SecurityLog "GitHub API rate limit exceeded for $($action.Repo) - skipping remaining GitHub Action checks" -Level Warning
-                    $rateLimitExceeded = $true
+            $apiBase = Get-GitHubApiBase
+            $repoSegments = $action.Repo.Split('/')
+            if ($repoSegments.Count -lt 2) {
+                Write-SecurityLog "Invalid GitHub Action repository format: $($action.Repo)" -Level Warning
+                continue
+            }
+
+            $owner = $repoSegments[0]
+            $repoName = $repoSegments[1]
+            $repoLookup = "$owner/$repoName"
+
+            if (-not $defaultBranchCache.ContainsKey($repoLookup)) {
+                $repoInfo = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup" -Method GET -Headers $headers
+                if ($repoInfo) {
+                    $defaultBranchCache[$repoLookup] = if ($repoInfo.default_branch) { $repoInfo.default_branch } else { "main" }
                 }
                 else {
-                    Write-SecurityLog "Failed to check GitHub Action $($action.Repo): $($_.Exception.Message)" -Level Warning
+                    Write-SecurityLog "Failed to discover default branch for $repoLookup, defaulting to 'main'" -Level Warning
+                    $defaultBranchCache[$repoLookup] = "main"
                 }
             }
 
-            if ($rateLimitExceeded) {
-                break
-            }
-        }
+            $branchName = $defaultBranchCache[$repoLookup]
 
-        if ($rateLimitExceeded) {
-            Write-SecurityLog "GitHub Action staleness results are incomplete due to API rate limiting. Provide a token via GITHUB_TOKEN to enable full coverage." -Level Warning
+            $BranchInfo = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup/branches/$branchName" -Method GET -Headers $headers
+            if (-not $BranchInfo) {
+                Write-SecurityLog "Failed to check GitHub Action $($action.Repo): could not fetch branch info" -Level Warning
+                continue
+            }
+            $LatestSHA = $BranchInfo.commit.sha
+
+            if ($action.SHA -ne $LatestSHA) {
+                $CurrentCommit = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup/commits/$($action.SHA)" -Method GET -Headers $headers
+                if (-not $CurrentCommit) {
+                    Write-SecurityLog "Failed to check GitHub Action $($action.Repo): could not fetch commit info" -Level Warning
+                    continue
+                }
+                $CurrentDate = [DateTime]::Parse($CurrentCommit.commit.author.date)
+                $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
+
+                if ($DaysOld -gt $MaxAge) {
+                    $script:StaleDependencies.Add([PSCustomObject]@{
+                        Type           = "GitHubAction"
+                        File           = $action.File
+                        Name           = $action.Repo
+                        CurrentVersion = $action.SHA
+                        LatestVersion  = $LatestSHA
+                        DaysOld        = $DaysOld
+                        Severity       = if ($DaysOld -gt 90) { "High" } elseif ($DaysOld -gt 60) { "Medium" } else { "Low" }
+                        Message        = "GitHub Action is $DaysOld days old (current: $($action.SHA.Substring(0,8)), latest: $($LatestSHA.Substring(0,8)))"
+                    })
+
+                    Write-SecurityLog "Found stale GitHub Action (fallback): $($action.Repo) ($DaysOld days old)" -Level Warning
+                }
+            }
         }
     }
 }
@@ -705,9 +683,10 @@ function Get-ToolStaleness {
     $apiBase = Get-GitHubApiBase
 
     foreach ($tool in $manifest.tools) {
-        try {
-            $uri = "$apiBase/repos/$($tool.repo)/releases/latest"
-            $latestRelease = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+        $uri = "$apiBase/repos/$($tool.repo)/releases/latest"
+        $latestRelease = Invoke-GitHubAPIWithRetry -Uri $uri -Method GET -Headers $headers
+
+        if ($latestRelease) {
             $latestVersion = $latestRelease.tag_name -replace '^v', ''
 
             $isStale = Compare-ToolVersion -Current $tool.version -Latest $latestVersion
@@ -723,8 +702,8 @@ function Get-ToolStaleness {
                 Error          = $null
             }
         }
-        catch {
-            $errorMsg = "Failed to check $($tool.name): $_"
+        else {
+            $errorMsg = "Failed to check $($tool.name): API returned no response"
             Write-Warning $errorMsg
 
             $results += [PSCustomObject]@{
@@ -732,7 +711,7 @@ function Get-ToolStaleness {
                 Repository     = $tool.repo
                 CurrentVersion = $tool.version
                 LatestVersion  = $null
-                IsStale        = $null  # Unknown due to error
+                IsStale        = $null
                 CurrentSHA256  = $tool.sha256
                 Notes          = $tool.notes
                 Error          = $errorMsg
