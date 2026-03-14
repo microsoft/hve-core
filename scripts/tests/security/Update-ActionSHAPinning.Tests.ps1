@@ -132,7 +132,7 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
         $script:TestWorkflow = Join-Path $TestDrive 'test-workflow.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        # Mock at function level; Update-WorkflowFile → Get-SHAForAction → Get-LatestCommitSHA
+        # Mock at function level; Update-WorkflowFile -> Get-SHAForAction -> Get-LatestCommitSHA
         # calls module functions that bare Invoke-RestMethod mocks cannot intercept
         Mock Get-LatestCommitSHA {
             return 'newsha123456789012345678901234567890abcd'
@@ -195,7 +195,7 @@ Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
         $script:TestWorkflow = Join-Path $TestDrive 'whatif-test.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        # Mock at function level; Update-WorkflowFile → Get-SHAForAction → Get-LatestCommitSHA
+        # Mock at function level; Update-WorkflowFile -> Get-SHAForAction -> Get-LatestCommitSHA
         # calls module functions that bare Invoke-RestMethod mocks cannot intercept
         Mock Get-LatestCommitSHA {
             return 'newsha123456789012345678901234567890abcd'

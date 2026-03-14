@@ -261,7 +261,7 @@ Describe 'Main Script Execution' {
         # Save current directory
         $script:OriginalLocation = Get-Location
         
-        # Script-scope safety-net mock — no direct Invoke-RestMethod calls remain in Test-SHAStaleness.ps1
+        # Script-scope safety-net mock -- no direct Invoke-RestMethod calls remain in Test-SHAStaleness.ps1
         # after consolidation; all REST calls route through SecurityHelpers via Invoke-GitHubAPIWithRetry.
         Mock Invoke-RestMethod {
             if ($Uri -like '*/releases/latest') {
@@ -302,7 +302,7 @@ Describe 'Main Script Execution' {
                     }
                 }
                 elseif ($Body -match 'defaultBranchRef') {
-                    # Repo batch query — aliased structure (repo0, repo1, ...)
+                    # Repo batch query -- aliased structure (repo0, repo1, ...)
                     return @{
                         data = @{
                             rateLimit = @{ remaining = 5000; limit = 5000; used = 1; resetAt = (Get-Date).AddHours(1).ToString('o') }
@@ -312,7 +312,7 @@ Describe 'Main Script Execution' {
                     }
                 }
                 else {
-                    # Commit batch query — PSCustomObject required for PSObject.Properties iteration
+                    # Commit batch query -- PSCustomObject required for PSObject.Properties iteration
                     return [PSCustomObject]@{
                         data = [PSCustomObject]@{
                             rateLimit = [PSCustomObject]@{ remaining = 5000; cost = 1 }
@@ -336,7 +336,7 @@ Describe 'Main Script Execution' {
             return @{}
         }
 
-        # Script-scope mock for Invoke-GitHubAPIWithRetry — prevents real HTTP calls
+        # Script-scope mock for Invoke-GitHubAPIWithRetry -- prevents real HTTP calls
         # when Import-Module -Force in the production script resets module-scope mocks.
         Mock Invoke-GitHubAPIWithRetry {
             if ($Uri -like '*graphql*') {
@@ -663,7 +663,7 @@ jobs:
 '@
             Set-Content -Path (Join-Path $script:WorkflowDir 'single.yml') -Value $singleWorkflow
             
-            # Script-scope safety-net mock — REST fallback calls now route through SecurityHelpers.
+            # Script-scope safety-net mock -- REST fallback calls now route through SecurityHelpers.
             Mock Invoke-RestMethod {
                 if ($Uri -like '*/repos/*/branches/*') {
                     return @{ commit = @{ sha = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' } }
@@ -690,7 +690,7 @@ jobs:
                         }
                     }
                     elseif ($Body -match 'defaultBranchRef') {
-                        # Single repo — latest SHA differs from pinned SHA to trigger stale detection
+                        # Single repo -- latest SHA differs from pinned SHA to trigger stale detection
                         return @{
                             data = @{
                                 rateLimit = @{ remaining = 5000; limit = 5000; used = 1; resetAt = (Get-Date).AddHours(1).ToString('o') }
@@ -699,7 +699,7 @@ jobs:
                         }
                     }
                     else {
-                        # Commit batch — PSCustomObject required for PSObject.Properties iteration
+                        # Commit batch -- PSCustomObject required for PSObject.Properties iteration
                         return [PSCustomObject]@{
                             data = [PSCustomObject]@{
                                 rateLimit = [PSCustomObject]@{ remaining = 5000; cost = 1 }
