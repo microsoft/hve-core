@@ -57,231 +57,6 @@ Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 # Explicit parameter usage to satisfy static analyzer
 Write-Debug "Parameters: WorkflowPath=$WorkflowPath, OutputReport=$OutputReport, OutputFormat=$OutputFormat, UpdateStale=$UpdateStale"
 
-function Test-GitHubToken {
-    <#
-    .SYNOPSIS
-        Validates GitHub token and checks API rate limits.
-    
-    .DESCRIPTION
-        Tests if the provided GitHub token is valid and checks remaining rate limit.
-        Returns detailed status including authentication, rate limit info, and actionable messages.
-    
-    .PARAMETER Token
-        GitHub personal access token or GITHUB_TOKEN to validate
-    
-    .OUTPUTS
-        Hashtable with keys: Valid, Authenticated, RateLimit, Remaining, ResetAt, User, Message
-    #>
-    param(
-        [Parameter()]
-        [string]$Token
-    )
-
-    $result = @{
-        Valid         = $false
-        Authenticated = $false
-        RateLimit     = 0
-        Remaining     = 0
-        ResetAt       = $null
-        User          = $null
-        Message       = ""
-    }
-
-    try {
-        $headers = @{
-            "User-Agent" = "GitHub-Actions-Security-Scanner"
-        }
-
-        if ($Token) {
-            $headers["Authorization"] = "Bearer $Token"
-        }
-
-        # Use GraphQL to check authentication and rate limits
-        $query = @{
-            query = "query { viewer { login } rateLimit { limit remaining resetAt } }"
-        } | ConvertTo-Json
-
-        $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
-
-        $data = $null
-        if ($response -is [hashtable]) {
-            $data = $response['data']
-        }
-        elseif ($response.PSObject.Properties.Name -contains 'data') {
-            $data = $response.data
-        }
-
-        $viewer = $null
-        $rateLimit = $null
-        if ($data) {
-            if ($data -is [hashtable]) {
-                $viewer = $data['viewer']
-                $rateLimit = $data['rateLimit']
-            }
-            else {
-                if ($data.PSObject.Properties.Name -contains 'viewer') {
-                    $viewer = $data.viewer
-                }
-                if ($data.PSObject.Properties.Name -contains 'rateLimit') {
-                    $rateLimit = $data.rateLimit
-                }
-            }
-        }
-
-        if ($viewer) {
-            $result.Valid = $true
-            $result.Authenticated = $true
-            if ($viewer -is [hashtable]) {
-                $result.User = $viewer['login']
-            }
-            elseif ($viewer.PSObject.Properties.Name -contains 'login') {
-                $result.User = $viewer.login
-            }
-            $result.Message = "Authenticated as $($result.User)"
-        }
-        elseif ($rateLimit) {
-            $result.Valid = $true
-            $result.Authenticated = $false
-            $result.Message = "Unauthenticated access - limited rate limits"
-        }
-
-        if ($rateLimit) {
-            if ($rateLimit -is [hashtable]) {
-                $result.RateLimit = $rateLimit['limit']
-                $result.Remaining = $rateLimit['remaining']
-                $result.ResetAt = $rateLimit['resetAt']
-            }
-            else {
-                if ($rateLimit.PSObject.Properties.Name -contains 'limit') {
-                    $result.RateLimit = $rateLimit.limit
-                }
-                if ($rateLimit.PSObject.Properties.Name -contains 'remaining') {
-                    $result.Remaining = $rateLimit.remaining
-                }
-                if ($rateLimit.PSObject.Properties.Name -contains 'resetAt') {
-                    $result.ResetAt = $rateLimit.resetAt
-                }
-            }
-        }
-
-        if ($result.Remaining -lt 100) {
-            $result.Message += " | WARNING: Only $($result.Remaining) API calls remaining (resets at $($result.ResetAt))"
-        }
-
-        if (-not $result.Authenticated) {
-            Write-Warning "SOLUTION: Set GITHUB_TOKEN environment variable for higher rate limits (5,000 vs 60 points/hour)"
-            Write-Warning "CAUSE: Unauthenticated GitHub GraphQL API requests are heavily rate limited"
-        }
-    }
-    catch {
-        $result.Message = "Token validation failed: $($_.Exception.Message)"
-        Write-Warning $result.Message
-    }
-
-    return $result
-}
-
-function Invoke-GitHubAPIWithRetry {
-    <#
-    .SYNOPSIS
-        Invokes GitHub API with exponential backoff retry for rate limits.
-    
-    .DESCRIPTION
-        Wraps Invoke-RestMethod with intelligent retry logic for rate-limited API calls.
-        Implements exponential backoff when encountering 403/429 responses.
-    
-    .PARAMETER Uri
-        GitHub API URI to call
-    
-    .PARAMETER Method
-        HTTP method (GET, POST, etc.)
-    
-    .PARAMETER Headers
-        HTTP headers hashtable
-    
-    .PARAMETER Body
-        Request body (optional)
-    
-    .PARAMETER MaxRetries
-        Maximum number of retry attempts (default: 3)
-    
-    .PARAMETER InitialDelaySeconds
-        Initial delay in seconds before first retry (default: 5)
-    
-    .OUTPUTS
-        API response object
-    #>
-    param(
-        [Parameter(Mandatory)]
-        [string]$Uri,
-
-        [Parameter(Mandatory)]
-        [string]$Method,
-
-        [Parameter(Mandatory)]
-        [hashtable]$Headers,
-
-        [Parameter()]
-        [string]$Body,
-
-        [Parameter()]
-        [int]$MaxRetries = 3,
-
-        [Parameter()]
-        [int]$InitialDelaySeconds = 5
-    )
-
-    $attempt = 0
-    $delay = $InitialDelaySeconds
-
-    while ($attempt -lt $MaxRetries) {
-        try {
-            $params = @{
-                Uri     = $Uri
-                Method  = $Method
-                Headers = $Headers
-            }
-
-            if ($Body) {
-                $params['Body'] = $Body
-                $params['ContentType'] = "application/json"
-            }
-
-            $response = Invoke-RestMethod @params -ErrorAction Stop
-            return $response
-        }
-        catch {
-            $statusCode = $null
-            if ($_.Exception.PSObject.Properties.Name -contains 'Response') {
-                $response = $_.Exception.Response
-                if ($response -and $response.PSObject.Properties.Name -contains 'StatusCode') {
-                    $statusCode = [int]$response.StatusCode
-                }
-            }
-
-            # Check if rate limited (403 or 429)
-            if ($statusCode -in 403, 429) {
-                $attempt++
-                if ($attempt -ge $MaxRetries) {
-                    Write-Warning "CAUSE: Too many API requests in a short time period"
-                    Write-Warning "SOLUTION: Wait for rate limit to reset or provide a GitHub token with higher limits"
-                    throw
-                }
-
-                Write-Warning "Rate limited (HTTP $statusCode). Retrying in $delay seconds... (Attempt $attempt/$MaxRetries)"
-                Start-Sleep -Seconds $delay
-                $delay = $delay * 2  # Exponential backoff
-            }
-            else {
-                # Non-rate-limit error, don't retry
-                throw
-            }
-        }
-    }
-
-    throw "Max retries exceeded for API call to $Uri"
-}
-
 # GitHub Actions SHA references matching current workflow usage
 $ActionSHAMap = @{
     # Core setup and checkout
@@ -467,16 +242,20 @@ function Get-LatestCommitSHA {
             }
         }
 
+        $apiBase = Get-GitHubApiBase
+
         # If no branch specified, detect the repository's default branch
         if (-not $Branch) {
-            $repoApiUrl = "https://api.github.com/repos/$Owner/$Repo"
+            $repoApiUrl = "$apiBase/repos/$Owner/$Repo"
             $repoInfo = Invoke-GitHubAPIWithRetry -Uri $repoApiUrl -Method GET -Headers $headers
+            if ($null -eq $repoInfo) { throw "GitHub API returned no response for $repoApiUrl" }
             $Branch = $repoInfo.default_branch
             Write-SecurityLog "Detected default branch for $Owner/$Repo : $Branch" -Level 'Info'
         }
 
-        $apiUrl = "https://api.github.com/repos/$Owner/$Repo/commits/$Branch"
+        $apiUrl = "$apiBase/repos/$Owner/$Repo/commits/$Branch"
         $response = Invoke-GitHubAPIWithRetry -Uri $apiUrl -Method GET -Headers $headers
+        if ($null -eq $response) { throw "GitHub API returned no response for $apiUrl" }
         return $response.sha
     }
     catch {

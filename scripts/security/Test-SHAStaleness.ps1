@@ -86,140 +86,6 @@ $PSDefaultParameterValues['Write-SecurityLog:LogPath'] = $LogPath
 # Script-scope collection of stale dependencies (used by multiple functions)
 $script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-function Test-GitHubToken {
-    param(
-        [Parameter(Mandatory = $false)]
-        [string]$Token
-    )
-
-    if (-not $Token) {
-        Write-SecurityLog "No GitHub token found" -Level Warning
-        Write-SecurityLog "SOLUTION: Set GITHUB_TOKEN environment variable for higher rate limits (5,000 vs 60 points/hour)" -Level Warning
-        Write-SecurityLog "CAUSE: Unauthenticated GitHub GraphQL API requests are heavily rate limited" -Level Info
-        return @{
-            Valid         = $false
-            Authenticated = $false
-            RateLimit     = 60
-            Message       = "No token provided - using unauthenticated API with 60 points/hour rate limit"
-        }
-    }
-
-    try {
-        $headers = @{
-            "Authorization" = "Bearer $Token"
-            "Content-Type"  = "application/json"
-        }
-
-        $query = @{
-            query = "query { viewer { login } rateLimit { limit remaining resetAt } }"
-        } | ConvertTo-Json
-
-        $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
-
-        if ($response.data.viewer) {
-            $rateLimit = $response.data.rateLimit
-            Write-SecurityLog "GitHub token validated - User: $($response.data.viewer.login), Rate limit: $($rateLimit.remaining)/$($rateLimit.limit)" -Level Success
-            
-            if ($rateLimit.remaining -lt 100) {
-                Write-SecurityLog "WARNING: GitHub API rate limit running low ($($rateLimit.remaining) remaining)" -Level Warning
-                Write-SecurityLog "Rate limit resets at: $($rateLimit.resetAt)" -Level Info
-            }
-
-            return @{
-                Valid         = $true
-                Authenticated = $true
-                RateLimit     = $rateLimit.limit
-                Remaining     = $rateLimit.remaining
-                ResetAt       = $rateLimit.resetAt
-                User          = $response.data.viewer.login
-                Message       = "Token valid - authenticated as $($response.data.viewer.login)"
-            }
-        }
-    }
-    catch {
-        Write-SecurityLog "GitHub token validation failed: $($_.Exception.Message)" -Level Error
-        Write-SecurityLog "CAUSE: Token may be expired, revoked, or have insufficient permissions" -Level Warning
-        Write-SecurityLog "SOLUTION: Generate a new GitHub token with 'repo' scope at https://github.com/settings/tokens" -Level Warning
-        return @{
-            Valid         = $false
-            Authenticated = $false
-            Message       = "Token validation failed: $($_.Exception.Message)"
-        }
-    }
-
-    return @{
-        Valid         = $false
-        Authenticated = $false
-        Message       = "Token validation returned unexpected response"
-    }
-}
-
-function Invoke-GitHubAPIWithRetry {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Uri,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Method,
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$Headers,
-
-        [Parameter(Mandatory = $false)]
-        [string]$Body,
-
-        [Parameter(Mandatory = $false)]
-        [int]$MaxRetries = 3,
-
-        [Parameter(Mandatory = $false)]
-        [int]$InitialDelaySeconds = 5
-    )
-
-    $attempt = 0
-    $delay = $InitialDelaySeconds
-
-    while ($attempt -lt $MaxRetries) {
-        try {
-            if ($Body) {
-                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body -ContentType "application/json" -ErrorAction Stop
-            }
-            else {
-                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -ErrorAction Stop
-            }
-            return $response
-        }
-        catch {
-            $statusCode = $null
-            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-                $statusCode = [int]$_.Exception.Response.StatusCode
-            }
-
-            # Check if it's a rate limit error (403 or 429)
-            if ($statusCode -in 403, 429) {
-                $attempt++
-                if ($attempt -lt $MaxRetries) {
-                    Write-SecurityLog "GitHub API rate limit hit (HTTP $statusCode). Retrying in $delay seconds (attempt $attempt/$MaxRetries)..." -Level Warning
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-                else {
-                    Write-SecurityLog "GitHub API rate limit exceeded after $MaxRetries attempts" -Level Error
-                    Write-SecurityLog "CAUSE: Too many API requests in a short time period" -Level Warning
-                    Write-SecurityLog "SOLUTION: Wait for rate limit to reset or provide a GitHub token with higher limits" -Level Warning
-                    throw
-                }
-            }
-            else {
-                # Non-rate-limit error, throw immediately
-                Write-SecurityLog "GitHub API request failed: $($_.Exception.Message)" -Level Error
-                throw
-            }
-        }
-    }
-
-    throw "Failed to complete GitHub API request after $MaxRetries retries"
-}
-
 function Get-BulkGitHubActionsStaleness {
     param(
         [Parameter(Mandatory = $true)]
@@ -256,6 +122,8 @@ function Get-BulkGitHubActionsStaleness {
     elseif ($githubToken) {
         Write-SecurityLog "Token validation failed, proceeding without authentication" -Level Warning
     }
+
+    $apiBase = Get-GitHubApiBase
 
     # Build GraphQL query for multiple repositories (batch 1: get default branches)
     $repoQueries = @()
@@ -303,7 +171,8 @@ function Get-BulkGitHubActionsStaleness {
     } | ConvertTo-Json -Depth 10
 
     try {
-        $repoResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $graphqlQuery
+        $repoResponse = Invoke-GitHubAPIWithRetry -Uri "$apiBase/graphql" -Method POST -Headers $headers -Body $graphqlQuery
+        if ($null -eq $repoResponse) { throw "GitHub GraphQL API returned no response" }
 
         Write-SecurityLog "GraphQL Rate Limit: $($repoResponse.data.rateLimit.remaining)/$($repoResponse.data.rateLimit.limit) remaining" -Level Info
 
@@ -382,7 +251,11 @@ function Get-BulkGitHubActionsStaleness {
         } | ConvertTo-Json -Depth 10
 
         try {
-            $commitResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery
+            $commitResponse = Invoke-GitHubAPIWithRetry -Uri "$apiBase/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery
+            if ($null -eq $commitResponse) {
+                Write-SecurityLog "GitHub GraphQL API returned no response for commit batch query" -Level Warning
+                continue
+            }
 
             # Merge results
             foreach ($property in $commitResponse.data.PSObject.Properties) {
@@ -545,6 +418,7 @@ function Test-GitHubActionsForStaleness {
                     $headers['Authorization'] = "token $env:GITHUB_TOKEN"
                 }
 
+                $apiBase = Get-GitHubApiBase
                 $repoSegments = $action.Repo.Split('/')
                 if ($repoSegments.Count -lt 2) {
                     Write-SecurityLog "Invalid GitHub Action repository format: $($action.Repo)" -Level Warning
@@ -557,7 +431,7 @@ function Test-GitHubActionsForStaleness {
 
                 if (-not $defaultBranchCache.ContainsKey($repoLookup)) {
                     try {
-                        $repoInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup" -Headers $headers -ErrorAction Stop
+                        $repoInfo = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup" -Headers $headers -ErrorAction Stop
                         $defaultBranch = if ($repoInfo.default_branch) { $repoInfo.default_branch } else { "main" }
                         $defaultBranchCache[$repoLookup] = $defaultBranch
                     }
@@ -569,11 +443,11 @@ function Test-GitHubActionsForStaleness {
 
                 $branchName = $defaultBranchCache[$repoLookup]
 
-                $BranchInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup/branches/$branchName" -Headers $headers -ErrorAction Stop
+                $BranchInfo = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup/branches/$branchName" -Headers $headers -ErrorAction Stop
                 $LatestSHA = $BranchInfo.commit.sha
 
                 if ($action.SHA -ne $LatestSHA) {
-                    $CurrentCommit = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup/commits/$($action.SHA)" -Headers $headers -ErrorAction Stop
+                    $CurrentCommit = Invoke-RestMethod -Uri "$apiBase/repos/$repoLookup/commits/$($action.SHA)" -Headers $headers -ErrorAction Stop
                     $CurrentDate = [DateTime]::Parse($CurrentCommit.commit.author.date)
                     $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
 
@@ -828,9 +702,11 @@ function Get-ToolStaleness {
         $headers['Authorization'] = "Bearer $GitHubToken"
     }
 
+    $apiBase = Get-GitHubApiBase
+
     foreach ($tool in $manifest.tools) {
         try {
-            $uri = "https://api.github.com/repos/$($tool.repo)/releases/latest"
+            $uri = "$apiBase/repos/$($tool.repo)/releases/latest"
             $latestRelease = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
             $latestVersion = $latestRelease.tag_name -replace '^v', ''
 

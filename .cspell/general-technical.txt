@@ -792,6 +792,7 @@ prosys
 protobuf
 psec
 pseries
+psgallery
 pseudonymization
 pseudonymize
 psql
