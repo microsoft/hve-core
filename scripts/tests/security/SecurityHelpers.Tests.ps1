@@ -442,6 +442,54 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
             $result = Test-GitHubToken -Token 'valid-token'
             $result.ResetAt | Should -Be '2025-12-31T00:00:00Z'
         }
+
+        It 'Returns unauthenticated when viewer is null but rateLimit exists' {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                @{
+                    data = @{
+                        viewer    = $null
+                        rateLimit = @{
+                            limit     = 60
+                            remaining = 100
+                            resetAt   = '2025-12-31T00:00:00Z'
+                        }
+                    }
+                }
+            }
+            $result = Test-GitHubToken -Token 'unauthenticated-token'
+            $result.Valid | Should -BeTrue
+            $result.Authenticated | Should -BeFalse
+            $result.User | Should -BeNullOrEmpty
+            $result.RateLimit | Should -Be 60
+            $result.Remaining | Should -Be 100
+            $result.Message | Should -Be 'Unauthenticated access - limited rate limits'
+        }
+
+        It 'Appends low rate-limit warning when remaining is below threshold' {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
+                @{
+                    data = @{
+                        viewer    = @{ login = 'test-user' }
+                        rateLimit = @{
+                            limit     = 5000
+                            remaining = 50
+                            resetAt   = '2025-12-31T00:00:00Z'
+                        }
+                    }
+                }
+            }
+            $result = Test-GitHubToken -Token 'low-rate-token'
+            $result.Valid | Should -BeTrue
+            $result.Message | Should -BeLike '*WARNING: Only 50 API calls remaining*'
+        }
+
+        It 'Returns invalid for malformed GraphQL response without data' {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers { @{} }
+            $result = Test-GitHubToken -Token 'malformed-token'
+            $result.Valid | Should -BeFalse
+            $result.Authenticated | Should -BeFalse
+            $result.Message | Should -BeNullOrEmpty
+        }
     }
 }
 
