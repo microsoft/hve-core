@@ -362,22 +362,24 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
         It 'Returns hashtable with expected keys' {
             Mock Invoke-RestMethod -ModuleName SecurityHelpers { throw 'Simulated error' }
             $result = Test-GitHubToken -Token 'test-token'
-            $result.Keys | Should -Contain 'IsValid'
+            $result.Keys | Should -Contain 'Valid'
+            $result.Keys | Should -Contain 'Authenticated'
             $result.Keys | Should -Contain 'RateLimit'
             $result.Keys | Should -Contain 'Remaining'
-            $result.Keys | Should -Contain 'ResetTime'
+            $result.Keys | Should -Contain 'ResetAt'
+            $result.Keys | Should -Contain 'User'
             $result.Keys | Should -Contain 'Message'
         }
 
         It 'Returns invalid for empty token' {
             $result = Test-GitHubToken -Token ''
-            $result.IsValid | Should -BeFalse
+            $result.Valid | Should -BeFalse
             $result.Message | Should -Be 'Token is empty or null'
         }
 
         It 'Returns invalid for null-like token' {
             $result = Test-GitHubToken -Token ([string]::Empty)
-            $result.IsValid | Should -BeFalse
+            $result.Valid | Should -BeFalse
         }
 
         It 'Sets appropriate message for 401 response' {
@@ -387,7 +389,7 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
                 throw $exception
             }
             $result = Test-GitHubToken -Token 'invalid-token'
-            $result.IsValid | Should -BeFalse
+            $result.Valid | Should -BeFalse
             $result.Message | Should -Be 'Token is invalid or expired'
         }
 
@@ -398,40 +400,47 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
                 throw $exception
             }
             $result = Test-GitHubToken -Token 'forbidden-token'
-            $result.IsValid | Should -BeFalse
+            $result.Valid | Should -BeFalse
             $result.Message | Should -Be 'Token lacks required permissions or rate limit exceeded'
         }
 
         It 'Handles successful token validation' {
             Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 @{
-                    rate = @{
-                        limit     = 5000
-                        remaining = 4999
-                        reset     = [DateTimeOffset]::UtcNow.AddHours(1).ToUnixTimeSeconds()
+                    data = @{
+                        viewer    = @{ login = 'test-user' }
+                        rateLimit = @{
+                            limit     = 5000
+                            remaining = 4999
+                            resetAt   = '2025-12-31T00:00:00Z'
+                        }
                     }
                 }
             }
             $result = Test-GitHubToken -Token 'valid-token'
-            $result.IsValid | Should -BeTrue
+            $result.Valid | Should -BeTrue
+            $result.Authenticated | Should -BeTrue
+            $result.User | Should -Be 'test-user'
             $result.RateLimit | Should -Be 5000
             $result.Remaining | Should -Be 4999
-            $result.Message | Should -Be 'Token validated successfully'
+            $result.Message | Should -Be 'Authenticated as test-user'
         }
 
-        It 'Sets ResetTime from Unix timestamp' {
-            $resetTime = [DateTimeOffset]::UtcNow.AddHours(1)
+        It 'Sets ResetAt from GraphQL response' {
             Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 @{
-                    rate = @{
-                        limit     = 5000
-                        remaining = 4999
-                        reset     = $resetTime.ToUnixTimeSeconds()
+                    data = @{
+                        viewer    = @{ login = 'test-user' }
+                        rateLimit = @{
+                            limit     = 5000
+                            remaining = 4999
+                            resetAt   = '2025-12-31T00:00:00Z'
+                        }
                     }
                 }
             }
             $result = Test-GitHubToken -Token 'valid-token'
-            $result.ResetTime | Should -BeOfType [datetime]
+            $result.ResetAt | Should -Be '2025-12-31T00:00:00Z'
         }
     }
 }
