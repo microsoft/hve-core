@@ -6,6 +6,7 @@ import {
   WorkflowsIcon,
   DesignThinkingIcon,
   TemplatesExamplesIcon,
+  VsCodeExtensionIcon
 } from '../components/Icons';
 
 export interface IconCardData {
@@ -31,6 +32,16 @@ export const iconCards: IconCardData[] = [
     href: '/docs/category/getting-started',
     description: 'Install, configure, and run your first AI-assisted workflow',
   },
+
+  { 
+    icon:<VsCodeExtensionIcon/>,
+    supertitle : 'Install',
+    title :'VS Code Extension',
+    href : 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core',
+    description: 'Install the HVE Core extension from the VS Code Marketplace',
+
+  },
+
   {
     icon: <DesignThinkingIcon />,
     supertitle: 'HVE Guide',
