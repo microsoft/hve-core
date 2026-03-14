@@ -45,10 +45,10 @@ Two VS Code extensions serve different needs:
 
 | Extension                                                                                             | What it includes                                                | Best for                                                                |
 |-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------|
-| [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)           | Every collection: all agents, prompts, instructions, and skills | Individual developers and teams that want the full library              |
+| [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)   | Every collection: all agents, prompts, instructions, and skills | Individual developers and teams that want the full library              |
 | [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) | Selective installation of specific collections                  | Teams that want to pick only the collections relevant to their workflow |
 
-Not sure which to choose? Start with HVE Core. You can switch to HVE Installer later if you need finer control over which collections are active. See the [Collections Overview](docs/getting-started/collections.md) for a comparison of all available bundles.
+Not sure which to choose? Start with HVE Core All. You can switch to HVE Installer later if you need finer control over which collections are active. See the [Collections Overview](docs/getting-started/collections.md) for a comparison of all available bundles.
 
 ## What's Included
 

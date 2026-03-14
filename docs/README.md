@@ -18,11 +18,11 @@ HVE Core gives your team production-ready agents, reusable prompts, coding instr
 
 ## Choose Your Extension
 
-|              | HVE Core                                                                                            | HVE Installer                                                                                                 |
-|--------------|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| What you get | Every agent, prompt, instruction, and skill in the framework                                        | Pick only the collections you need                                                                            |
-| Best for     | Teams that want the full toolkit out of the box                                                     | Teams that prefer a curated, lightweight setup                                                                |
-| Install      | [Install HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) | [Install HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) |
+|              | HVE Core All                                                                                                | HVE Installer                                                                                                 |
+|--------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| What you get | Every agent, prompt, instruction, and skill in the framework                                                | Pick only the collections you need                                                                            |
+| Best for     | Teams that want the full toolkit out of the box                                                             | Teams that prefer a curated, lightweight setup                                                                |
+| Install      | [Install HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) | [Install HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) |
 
 > Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
 

@@ -35,14 +35,14 @@ Some agents or prompts are missing from the `@` mention list or `/` command list
 3. If you used the HVE Installer, confirm that the selected collections were deployed. Run the installer agent again to verify the installed artifact list.
 4. Ensure your `.gitignore` does not exclude `.github/agents/` or `.github/prompts/` directories.
 
-### Collection Conflicts Between HVE-Core and HVE Installer
+### Collection Conflicts Between HVE Core All and HVE Installer
 
 Duplicate agents appear in Copilot Chat, or agents behave unexpectedly after installing both extensions.
 
 #### Solutions
 
-1. The HVE-Core extension installs the full `hve-core-all` collection. The HVE Installer deploys individual collections selectively. Using both can produce duplicate artifacts. Choose one extension.
-2. If you want all artifacts, keep HVE-Core and uninstall HVE Installer. If you want selective collections, keep HVE Installer and uninstall HVE-Core.
+1. The HVE Core All extension installs the full `hve-core-all` collection containing every artifact. The HVE Installer deploys individual collections selectively. Using both can produce duplicate artifacts. Choose one extension.
+2. If you want all artifacts, keep HVE Core All and uninstall HVE Installer. If you want selective collections, keep HVE Installer and uninstall HVE Core All.
 3. After uninstalling, delete any leftover `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/skills/` directories that were deployed by the removed extension. Then reinstall with your preferred method.
 
 ### Version Compatibility Issues
@@ -61,21 +61,21 @@ Errors appear after updating VS Code or one of the HVE extensions, or agents ref
 
 | Scenario                                                    | Recommended Extension                                                                                             |
 |-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| You want everything HVE-Core offers                         | [HVE-Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) (Full)                |
+| You want everything HVE Core offers                         | [HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) (Full)        |
 | You want only specific domains (ADO, Design Thinking, etc.) | [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) (Selective) |
 | You plan to contribute to HVE-Core                          | Clone the repository directly, see [Developer Setup](install.md#developer-setup)                                  |
 
-### How Do I Switch from HVE-Core to HVE Installer?
+### How Do I Switch from HVE Core All to HVE Installer?
 
-1. Uninstall the HVE-Core extension from the VS Code Extensions sidebar.
-2. Delete the `.github/` HVE-Core artifacts that the extension deployed to your workspace.
+1. Uninstall the HVE Core All extension from the VS Code Extensions sidebar.
+2. Delete the `.github/` HVE Core artifacts that the extension deployed to your workspace.
 3. Install the [HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension.
 4. Open Copilot Chat and ask any agent: *"help me customize hve-core installation"*.
 5. Select the collections you need.
 
 ### Can I Use Both Extensions Simultaneously?
 
-Using both extensions in the same workspace is not recommended. Both deploy artifacts to `.github/` directories, which can result in duplicate agents and prompts. Choose one extension based on whether you need the full collection or selective deployment. See [Collection Conflicts](#collection-conflicts-between-hve-core-and-hve-installer) above for details.
+Using both extensions in the same workspace is not recommended. Both deploy artifacts to `.github/` directories, which can result in duplicate agents and prompts. Choose one extension based on whether you need the full collection or selective deployment. See [Collection Conflicts](#collection-conflicts-between-hve-core-all-and-hve-installer) above for details.
 
 ### How Do I Update to the Latest Collection Version?
 

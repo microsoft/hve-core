@@ -13,7 +13,7 @@ HVE distributes agents, prompts, instructions, and skills through collections, w
 
 Two VS Code Marketplace extensions deliver these collections:
 
-### HVE Core (`ise-hve-essentials.hve-core-all`)
+### HVE Core All (`ise-hve-essentials.hve-core-all`)
 
 The complete bundle containing 163 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
 
@@ -39,7 +39,7 @@ The installer enables targeted deployment of specific collections into workspace
 | design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
 | experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 6         | Experimental |
 | github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 12        | Stable       |
-| hve-core         | RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                                                   | 40        | Stable       |
+| hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 40        | Stable       |
 | hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 163       | Stable       |
 | installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |
 | project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 16        | Stable       |

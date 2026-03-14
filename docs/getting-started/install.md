@@ -27,7 +27,7 @@ Install the **HVE Core** extension for a zero-configuration experience that work
 
 **Or visit:** [HVE Core on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-The extension installs the `hve-core-all` (Flagship) collection containing all 163 artifacts. Updates arrive automatically through VS Code.
+The extension installs the `hve-core` (Flagship) collection containing 40 artifacts for the RPI workflow. Updates arrive automatically through VS Code.
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
