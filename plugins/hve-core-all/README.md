@@ -42,6 +42,8 @@ copilot plugin install hve-core-all@hve-core
 | task-planner                 | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                                 |
 | task-researcher              | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                         |
 | task-reviewer                | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                         |
+| jira-backlog-manager         | Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions - Brought to you by microsoft/hve-core                                           |
+| jira-prd-to-wit              | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira                                                                                                        |
 | adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai |
 | agile-coach                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
@@ -101,6 +103,10 @@ copilot plugin install hve-core-all@hve-core
 | task-plan                                   | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core                             |
 | task-research                               | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                                 |
 | task-review                                 | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core                     |
+| jira-discover-issues                        | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review      |
+| jira-execute-backlog                        | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                                   |
+| jira-prd-to-wit                             | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                      |
+| jira-triage-issues                          | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                     |
 | incident-response                           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                 |
 | risk-register                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
 
@@ -181,6 +187,11 @@ copilot plugin install hve-core-all@hve-core
 | prompt-builder                       | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
 | pull-request                         | Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core                                                                           |
 | writing-style                        | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
+| jira-backlog-discovery               | Discovery protocol for Jira backlog management with user-centric, artifact-driven, and JQL-based issue discovery                                                                                                                                            |
+| jira-backlog-planning                | Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence                                                                                                               |
+| jira-backlog-triage                  | Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution                                                                                                                                       |
+| jira-backlog-update                  | Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations                                                                                                                                       |
+| jira-wit-planning                    | Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts                                                                                                                                   |
 | hve-core-location                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality                        | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 
@@ -191,7 +202,9 @@ copilot plugin install hve-core-all@hve-core
 | powerpoint         | powerpoint         |
 | video-to-gif       | video-to-gif       |
 | vscode-playwright  | vscode-playwright  |
+| gitlab             | gitlab             |
 | hve-core-installer | hve-core-installer |
+| jira               | jira               |
 | pr-reference       | pr-reference       |
 
 ---

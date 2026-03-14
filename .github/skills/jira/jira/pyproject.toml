@@ -1,0 +1,31 @@
+[project]
+name = "jira-skill"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "ruff>=0.15",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pyright]
+include = ["tests", "scripts"]
+extraPaths = ["scripts"]
+pythonVersion = "3.11"
+venvPath = "."
+venv = ".venv"
+

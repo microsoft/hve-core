@@ -689,11 +689,22 @@ User input handling:
 
 Report: "✅ Added `.copilot-tracking/` to .gitignore"
 
-After the gitignore checkpoint, proceed to Checkpoint 5 (MCP Configuration).
+After the gitignore checkpoint, share local Jira and GitLab skill setup guidance, then proceed to Checkpoint 5 (MCP Configuration).
+
+### Local Jira and GitLab Skill Setup
+
+Jira and GitLab integrations in HVE-Core are local skills. They are configured separately from MCP servers.
+
+* Use `.github/skills/jira/jira/SKILL.md` when you need Jira issue search, updates, transitions, comments, or issue-field discovery.
+* Use `.github/skills/gitlab/gitlab/SKILL.md` when you need GitLab merge request, pipeline, job, or log operations.
+* Jira requires `JIRA_BASE_URL` plus either `JIRA_PAT` or the `JIRA_USER_EMAIL` and `JIRA_API_TOKEN` pair.
+* GitLab requires `GITLAB_URL` and `GITLAB_TOKEN`, with optional `GITLAB_PROJECT` when auto-detection is not sufficient.
+
+Do not treat Jira or GitLab local skill setup as MCP configuration. Review their skill files for environment variable setup before configuring MCP servers below.
 
 ### Checkpoint 5: MCP Configuration Guidance
 
-After the gitignore checkpoint (for **any** installation method), present MCP configuration guidance. This helps users who want to use agents that integrate with Azure DevOps, GitHub, or documentation services.
+After the local Jira and GitLab skill setup guidance (for **any** installation method), present MCP configuration guidance. This helps users who want to use agents that integrate with Azure DevOps, GitHub, or documentation services.
 
 <!-- <mcp-guidance-prompt> -->
 ```text

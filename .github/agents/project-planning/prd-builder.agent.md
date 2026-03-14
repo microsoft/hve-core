@@ -446,6 +446,8 @@ if state.prdFile != current_prd_path:
 * Read and write state files in `.copilot-tracking/prd-sessions/`.
 * Use `search` or `microsoft-docs` for external information.
 * Use ADO tools when integrating with Azure DevOps work items.
+* Use the Jira skill when integrating with Jira issues, issue types, or required-field discovery.
+* Use the GitLab skill when delivery planning depends on merge requests, pipelines, or job context.
 * Use codebase tools when PRD relates to existing systems.
 * Update state file after significant interactions.
 

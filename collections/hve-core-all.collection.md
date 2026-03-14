@@ -1,4 +1,4 @@
-HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, data science, design thinking, security, and more.
+HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, GitHub and Jira backlog workflows, data science, design thinking, security, and more.
 
 Use this edition when you want access to everything without choosing a focused collection.
 
@@ -18,5 +18,6 @@ Supporting subagents included:
 Skills included:
 
 - **HVE Core Installer** — Decision-driven installer skill for deploying HVE Core across workspace configurations
+- **Jira Integration** — Jira backlog discovery, triage, execution, and PRD planning workflows backed by Jira issue operations and field discovery
 - **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
 - **Video to GIF** — Converts video files to optimized GIF animations using FFmpeg two-pass palette optimization

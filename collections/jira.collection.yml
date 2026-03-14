@@ -1,0 +1,42 @@
+id: jira
+name: Jira Integration
+description: Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill
+tags:
+  - jira
+  - issue-tracking
+  - workflow
+  - rest-api
+items:
+  # Agents
+  - path: .github/agents/jira/jira-backlog-manager.agent.md
+    kind: agent
+  - path: .github/agents/jira/jira-prd-to-wit.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/jira/jira-discover-issues.prompt.md
+    kind: prompt
+  - path: .github/prompts/jira/jira-execute-backlog.prompt.md
+    kind: prompt
+  - path: .github/prompts/jira/jira-prd-to-wit.prompt.md
+    kind: prompt
+  - path: .github/prompts/jira/jira-triage-issues.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/jira/jira-backlog-discovery.instructions.md
+    kind: instruction
+  - path: .github/instructions/jira/jira-backlog-planning.instructions.md
+    kind: instruction
+  - path: .github/instructions/jira/jira-backlog-triage.instructions.md
+    kind: instruction
+  - path: .github/instructions/jira/jira-backlog-update.instructions.md
+    kind: instruction
+  - path: .github/instructions/jira/jira-wit-planning.instructions.md
+    kind: instruction
+  # Skills
+  - path: .github/skills/jira/jira
+    kind: skill
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: alpha

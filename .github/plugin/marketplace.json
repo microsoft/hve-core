@@ -46,6 +46,12 @@
       "version": "3.1.46"
     },
     {
+      "name": "gitlab",
+      "source": "gitlab",
+      "description": "GitLab merge request and pipeline workflows through a Python skill",
+      "version": "3.1.46"
+    },
+    {
       "name": "hve-core",
       "source": "hve-core",
       "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
@@ -61,6 +67,12 @@
       "name": "installer",
       "source": "installer",
       "description": "Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations",
+      "version": "3.1.46"
+    },
+    {
+      "name": "jira",
+      "source": "jira",
+      "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
       "version": "3.1.46"
     },
     {
