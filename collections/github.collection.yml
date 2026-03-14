@@ -22,6 +22,8 @@ items:
     kind: prompt
   - path: .github/prompts/github/github-sprint-plan.prompt.md
     kind: prompt
+  - path: .github/prompts/github/github-suggest.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/github/github-backlog-discovery.instructions.md
     kind: instruction

@@ -62,6 +62,16 @@ BeforeAll {
 name = "test-python-skill"
 version = "0.0.0"
 requires-python = ">=3.11"
+
+[dependency-groups]
+dev = ["ruff", "pytest"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
 "@
         }
 
@@ -1407,6 +1417,134 @@ description: 'Non-Python skill should not accept .py-only scripts'
             $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
             $result.IsValid | Should -BeFalse
             $result.Errors | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'pyproject.toml content validation' {
+        It 'Errors when pyproject.toml is empty' {
+            $dir = New-TestSkillDirectory -SkillName 'py-empty-toml' -FrontmatterContent @"
+---
+name: py-empty-toml
+description: 'Python skill with empty pyproject.toml'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value ''
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "pyproject.toml is empty in 'py-empty-toml'"
+        }
+
+        It 'Errors when pyproject.toml missing [tool.ruff] section' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-ruff' -FrontmatterContent @"
+---
+name: py-no-ruff
+description: 'Python skill without ruff config'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-ruff"
+version = "0.0.0"
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "pyproject.toml missing [tool.ruff] section in 'py-no-ruff' (required for lint:py)"
+        }
+
+        It 'Warns when pyproject.toml missing [tool.ruff.lint] section' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-ruff-lint' -FrontmatterContent @"
+---
+name: py-no-ruff-lint
+description: 'Python skill without ruff.lint config'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-ruff-lint"
+version = "0.0.0"
+
+[dependency-groups]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 88
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -Contain "pyproject.toml missing [tool.ruff.lint] section in 'py-no-ruff-lint'"
+        }
+
+        It 'Errors when tests/ exists but pyproject.toml missing [tool.pytest] section' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-pytest' -FrontmatterContent @"
+---
+name: py-no-pytest
+description: 'Python skill with tests dir but no pytest config'
+---
+# Test
+"@
+            $testsDir = Join-Path $dir.FullName 'tests'
+            New-Item -ItemType Directory -Path $testsDir -Force | Out-Null
+            Set-Content -Path (Join-Path $testsDir 'test_example.py') -Value '# test'
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-pytest"
+version = "0.0.0"
+
+[dependency-groups]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F"]
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "pyproject.toml missing [tool.pytest.ini_options] section in 'py-no-pytest' (tests/ directory exists)"
+        }
+
+        It 'Passes when pyproject.toml has all required sections' {
+            $dir = New-TestSkillDirectory -SkillName 'py-complete' -WithPyprojectToml -FrontmatterContent @"
+---
+name: py-complete
+description: 'Python skill with complete pyproject.toml'
+---
+# Test
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Errors | Should -HaveCount 0
+        }
+
+        It 'Warns when ruff not in dev dependencies' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-ruff-dep' -FrontmatterContent @"
+---
+name: py-no-ruff-dep
+description: 'Python skill without ruff in dev deps'
+---
+# Test
+"@
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-ruff-dep"
+version = "0.0.0"
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F"]
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -Contain "pyproject.toml does not list ruff in dev dependencies in 'py-no-ruff-dep'"
         }
     }
 }

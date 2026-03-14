@@ -101,6 +101,76 @@ function Get-SkillFrontmatter {
     return $result
 }
 
+function Test-PythonSkillConfig {
+    <#
+    .SYNOPSIS
+    Validates pyproject.toml contents for a Python skill.
+
+    .DESCRIPTION
+    Checks that pyproject.toml contains required TOML sections for ruff lint
+    configuration and, when a tests/ directory exists, pytest configuration.
+
+    .PARAMETER PyprojectPath
+    Absolute path to the pyproject.toml file.
+
+    .PARAMETER HasTestsDir
+    Whether the skill directory contains a tests/ subdirectory.
+
+    .PARAMETER RelativePath
+    Relative skill path for error messages.
+
+    .OUTPUTS
+    [hashtable] With 'Errors' and 'Warnings' lists.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PyprojectPath,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$HasTestsDir,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RelativePath
+    )
+
+    $errors = [System.Collections.Generic.List[string]]::new()
+    $warnings = [System.Collections.Generic.List[string]]::new()
+
+    $content = Get-Content -Path $PyprojectPath -Raw -ErrorAction SilentlyContinue
+    if ([string]::IsNullOrWhiteSpace($content)) {
+        $errors.Add("pyproject.toml is empty in '$RelativePath'")
+        return @{ Errors = $errors; Warnings = $warnings }
+    }
+
+    # Require [tool.ruff] section for lint:py compatibility
+    if ($content -notmatch '\[tool\.ruff\]') {
+        $errors.Add("pyproject.toml missing [tool.ruff] section in '$RelativePath' (required for lint:py)")
+    }
+
+    # Require [tool.ruff.lint] section for rule selection
+    if ($content -notmatch '\[tool\.ruff\.lint\]') {
+        $warnings.Add("pyproject.toml missing [tool.ruff.lint] section in '$RelativePath'")
+    }
+
+    # When tests/ exists, require pytest configuration
+    if ($HasTestsDir) {
+        if ($content -notmatch '\[tool\.pytest') {
+            $errors.Add("pyproject.toml missing [tool.pytest.ini_options] section in '$RelativePath' (tests/ directory exists)")
+        }
+    }
+
+    # Require ruff in dev dependencies (inline or multi-line TOML arrays)
+    if ($content -notmatch '"ruff') {
+        $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
+    }
+
+    return @{ Errors = $errors; Warnings = $warnings }
+}
+
 function Test-SkillDirectory {
     <#
     .SYNOPSIS
@@ -211,6 +281,15 @@ function Test-SkillDirectory {
                 $errors.Add("'scripts/' subdirectory is missing a required .sh file in '$relativePath'")
             }
         }
+    }
+
+    # Validate pyproject.toml contents for Python skills
+    if ($isPythonSkill) {
+        $testsDirPath = Join-Path -Path $Directory.FullName -ChildPath 'tests'
+        $hasTestsDir = Test-Path $testsDirPath -PathType Container
+        $pyResult = Test-PythonSkillConfig -PyprojectPath $pyprojectPath -HasTestsDir $hasTestsDir -RelativePath $relativePath
+        foreach ($err in $pyResult.Errors) { $errors.Add($err) }
+        foreach ($warn in $pyResult.Warnings) { $warnings.Add($warn) }
     }
 
     # Check for unrecognized subdirectories
