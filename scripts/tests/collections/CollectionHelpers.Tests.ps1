@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -560,5 +560,65 @@ display:
 
         $output = Get-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml') -Raw
         $output | Should -Match 'items: \[\]' -Because 'DryRun should not modify the file'
+    }
+}
+
+Describe 'Set-ContentIfChanged' {
+    BeforeAll {
+        $script:testDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $script:testDir -Force | Out-Null
+    }
+
+    It 'Creates file when it does not exist' {
+        $path = Join-Path $script:testDir 'new-file.txt'
+        $result = Set-ContentIfChanged -Path $path -Value 'hello'
+        $result | Should -BeTrue
+        Get-Content -Path $path -Raw -Encoding utf8 | Should -Be 'hello'
+    }
+
+    It 'Skips write when content is identical' {
+        $path = Join-Path $script:testDir 'same-content.txt'
+        Set-Content -Path $path -Value 'unchanged' -Encoding utf8 -NoNewline
+        $before = (Get-Item -LiteralPath $path).LastWriteTimeUtc
+        Start-Sleep -Milliseconds 50
+        $result = Set-ContentIfChanged -Path $path -Value 'unchanged'
+        $result | Should -BeFalse
+        (Get-Item -LiteralPath $path).LastWriteTimeUtc | Should -Be $before
+    }
+
+    It 'Overwrites when content differs' {
+        $path = Join-Path $script:testDir 'diff-content.txt'
+        Set-Content -Path $path -Value 'old' -Encoding utf8 -NoNewline
+        $result = Set-ContentIfChanged -Path $path -Value 'new'
+        $result | Should -BeTrue
+        Get-Content -Path $path -Raw -Encoding utf8 | Should -Be 'new'
+    }
+
+    It 'Case-sensitive comparison triggers write' {
+        $path = Join-Path $script:testDir 'case-sensitive.txt'
+        Set-Content -Path $path -Value 'Hello' -Encoding utf8 -NoNewline
+        $result = Set-ContentIfChanged -Path $path -Value 'hello'
+        $result | Should -BeTrue
+        Get-Content -Path $path -Raw -Encoding utf8 | Should -Be 'hello'
+    }
+
+    It 'Handles empty string content' {
+        $path = Join-Path $script:testDir 'empty-content.txt'
+        $result = Set-ContentIfChanged -Path $path -Value ''
+        $result | Should -BeTrue
+        [System.IO.File]::ReadAllText($path) | Should -Be ''
+    }
+
+    It 'Writes UTF-8 without BOM and no trailing newline' {
+        $path = Join-Path $script:testDir 'encoding-check.txt'
+        Set-ContentIfChanged -Path $path -Value 'test content' | Out-Null
+        $bytes = [System.IO.File]::ReadAllBytes($path)
+        # UTF-8 BOM is 0xEF 0xBB 0xBF — first bytes must not match
+        if ($bytes.Length -ge 3) {
+            ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) | Should -BeFalse
+        }
+        # No trailing newline
+        $text = [System.IO.File]::ReadAllText($path)
+        $text | Should -Be 'test content'
     }
 }

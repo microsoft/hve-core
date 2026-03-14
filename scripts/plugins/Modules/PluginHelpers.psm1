@@ -375,7 +375,8 @@ function Write-MarketplaceManifest {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding utf8 -NoNewline
+    $manifestJson = $manifest | ConvertTo-Json -Depth 10
+    Set-ContentIfChanged -Path $outputPath -Value $manifestJson | Out-Null
     Write-Host "  Marketplace manifest: $outputPath" -ForegroundColor Green
 }
 
@@ -501,7 +502,7 @@ function New-PluginLink {
         New-Item -ItemType SymbolicLink -Path $DestinationPath -Value $relativePath -Force | Out-Null
     }
     else {
-        [System.IO.File]::WriteAllText($DestinationPath, $relativePath)
+        Set-ContentIfChanged -Path $DestinationPath -Value $relativePath | Out-Null
     }
 }
 
@@ -580,6 +581,9 @@ function Write-PluginDirectory {
     }
 
     $readmeItems = @()
+    $generatedFiles = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
 
     foreach ($item in $Collection.items) {
         $kind = $item.kind
@@ -624,6 +628,8 @@ function Write-PluginDirectory {
             'skill'       { $counts.SkillCount++ }
         }
 
+        [void]$generatedFiles.Add($destPath)
+
         if ($DryRun) {
             Write-Verbose "DryRun: Would create link $destPath -> $sourcePath"
             continue
@@ -647,6 +653,8 @@ function Write-PluginDirectory {
             continue
         }
 
+        [void]$generatedFiles.Add($destPath)
+
         if ($DryRun) {
             Write-Verbose "DryRun: Would create shared directory link $destPath -> $sourcePath"
             continue
@@ -659,6 +667,7 @@ function Write-PluginDirectory {
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
     $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description -Version $Version
+    [void]$generatedFiles.Add($manifestPath)
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write plugin.json at $manifestPath"
@@ -667,18 +676,20 @@ function Write-PluginDirectory {
         if (-not (Test-Path -Path $manifestDir)) {
             New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
         }
-        $manifest | ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath -Encoding utf8 -NoNewline
+        $jsonContent = $manifest | ConvertTo-Json -Depth 10
+        Set-ContentIfChanged -Path $manifestPath -Value $jsonContent | Out-Null
     }
 
     # Generate README.md
     $readmePath = Join-Path -Path $pluginRoot -ChildPath 'README.md'
     $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity
+    [void]$generatedFiles.Add($readmePath)
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write README.md at $readmePath"
     }
     else {
-        Set-Content -Path $readmePath -Value $readmeContent -Encoding utf8 -NoNewline
+        Set-ContentIfChanged -Path $readmePath -Value $readmeContent | Out-Null
     }
 
     return @{
@@ -687,6 +698,7 @@ function Write-PluginDirectory {
         CommandCount     = $counts.CommandCount
         InstructionCount = $counts.InstructionCount
         SkillCount       = $counts.SkillCount
+        GeneratedFiles   = $generatedFiles
     }
 }
 
@@ -739,15 +751,23 @@ function Repair-PluginSymlinkIndex {
     $trackedPaths = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
+    $alreadySymlink = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
     $pluginsRel = [System.IO.Path]::GetRelativePath($RepoRoot, $PluginsDir) -replace '\\', '/'
-    $lsOutput = git ls-files -- $pluginsRel 2>$null
+    $lsOutput = git ls-files --stage -- $pluginsRel 2>$null
     if ($lsOutput) {
-        foreach ($p in @($lsOutput)) { [void]$trackedPaths.Add($p) }
+        foreach ($line in @($lsOutput)) {
+            if ($line -match '^(\d+)\s+[0-9a-f]+\s+\d+\t(.+)$') {
+                [void]$trackedPaths.Add($Matches[2])
+                if ($Matches[1] -eq '120000') {
+                    [void]$alreadySymlink.Add($Matches[2])
+                }
+            }
+        }
     }
 
     $fixedCount = 0
-    $newEntries = [System.Collections.Generic.List[PSCustomObject]]::new()
-    $batchEntries = [System.Collections.Generic.List[string]]::new()
     $files = Get-ChildItem -Path $PluginsDir -File -Recurse
 
     foreach ($file in $files) {
@@ -768,6 +788,10 @@ function Repair-PluginSymlinkIndex {
 
         $repoRelPath = [System.IO.Path]::GetRelativePath($RepoRoot, $file.FullName) -replace '\\', '/'
 
+        if ($alreadySymlink.Contains($repoRelPath)) {
+            continue
+        }
+
         if ($DryRun) {
             Write-Verbose "DryRun: Would fix index mode for $repoRelPath"
             $fixedCount++
@@ -787,33 +811,18 @@ function Repair-PluginSymlinkIndex {
             continue
         }
 
-        if ($trackedPaths.Contains($repoRelPath)) {
-            $batchEntries.Add("120000 $sha`t$repoRelPath")
-        } else {
-            $newEntries.Add([PSCustomObject]@{ Sha = $sha; Path = $repoRelPath })
-        }
-        $fixedCount++
-        Write-Verbose "Queued index fix: $repoRelPath -> 120000"
-    }
-
-    # Add new/untracked files individually (typically few per run)
-    foreach ($entry in $newEntries) {
-        $cacheResult = git update-index --add --cacheinfo "120000,$($entry.Sha),$($entry.Path)" 2>&1
+        # Use --add for untracked files; harmless for already-tracked entries.
+        # Avoids --index-info piping which breaks on Windows due to CRLF stdin.
+        $addFlag = if (-not $trackedPaths.Contains($repoRelPath)) { '--add' } else { $null }
+        $cacheArgs = @('update-index') + @($addFlag | Where-Object { $_ }) + @('--cacheinfo', "120000,$sha,$repoRelPath")
+        $cacheResult = & git @cacheArgs 2>&1
         if ($LASTEXITCODE -ne 0) {
             $errorMsg = @($cacheResult | ForEach-Object { $_.ToString() }) -join '; '
-            Write-Warning "Failed to add index entry for $($entry.Path): $errorMsg"
-            $fixedCount--
+            Write-Warning "Failed to update index entry for ${repoRelPath}: $errorMsg"
+            continue
         }
-    }
-
-    # Batch update existing entries in a single call to avoid index.lock contention
-    if ($batchEntries.Count -gt 0) {
-        $indexResult = $batchEntries | git update-index --index-info 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            $errorMsg = @($indexResult | ForEach-Object { $_.ToString() }) -join '; '
-            Write-Warning "Failed to update git index: $errorMsg"
-            return 0
-        }
+        $fixedCount++
+        Write-Verbose "Fixed index mode: $repoRelPath -> 120000"
     }
 
     return $fixedCount
