@@ -11,6 +11,7 @@ Usage::
 """
 
 import argparse
+import logging
 from collections import Counter
 from pathlib import Path
 
@@ -36,6 +37,33 @@ from pptx_text import (
     extract_text_frame_properties,
 )
 from pptx_utils import emu_to_inches
+
+MAX_IMAGE_BLOB_BYTES = 100 * 1024 * 1024  # 100 MB
+
+_CONTENT_TYPE_TO_EXT: dict[str, str] = {
+    "image/bmp": "bmp",
+    "image/gif": "gif",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/tiff": "tiff",
+    # WMF retained for legitimate PPTX files; validated by magic-byte check.
+    # See CVE-2005-4560 for historical WMF risk context.
+    "image/x-wmf": "wmf",
+}
+
+# WMF file signatures used for magic-byte validation.
+_WMF_ALDUS_MAGIC = b"\xd7\xcd\xc6\x9a"
+_WMF_STANDARD_PREFIXES = (b"\x01\x00\x09\x00", b"\x02\x00\x09\x00")
+
+
+def _validate_wmf_magic_bytes(blob: bytes) -> None:
+    """Reject WMF blobs that lack a recognized file signature."""
+    if len(blob) < 4:
+        raise ValueError("WMF blob too short for magic-byte validation")
+    head = blob[:4]
+    if head == _WMF_ALDUS_MAGIC or head in _WMF_STANDARD_PREFIXES:
+        return
+    raise ValueError("WMF blob does not start with a recognized file signature")
 
 
 def extract_connector(shape) -> dict:
@@ -71,22 +99,38 @@ def _is_background_image(shape, slide_w: float, slide_h: float) -> bool:
 
 
 def _save_image_blob(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
-    """Save an image shape's blob to disk and return a path dict."""
+    """Save an embedded image blob to disk with security validation.
+
+    Validates content type against an allowlist, enforces a size limit,
+    and checks that the resolved output path stays within *output_dir*.
+    """
     try:
         img = shape.image
     except ValueError:
         return {"path": "LINKED_IMAGE_NOT_EMBEDDED"}
 
-    ext = img.content_type.split("/")[-1]
-    if ext == "jpeg":
-        ext = "jpg"
+    ext = _CONTENT_TYPE_TO_EXT.get(img.content_type)
+    if ext is None:
+        raise ValueError(f"Unsupported image content type: {img.content_type}")
+
+    blob = img.blob
+    if len(blob) > MAX_IMAGE_BLOB_BYTES:
+        raise ValueError(
+            f"Image blob size {len(blob)} exceeds limit of {MAX_IMAGE_BLOB_BYTES} bytes"
+        )
+
+    if ext == "wmf":
+        _validate_wmf_magic_bytes(blob)
+
     img_name = f"image-{img_count:02d}.{ext}"
     img_path = output_dir / "images" / img_name
+
+    if not img_path.resolve().is_relative_to(output_dir.resolve()):
+        raise ValueError(f"Image path {img_path} escapes output directory {output_dir}")
+
     img_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(img_path, "wb") as f:
-        f.write(img.blob)
-
+        f.write(blob)
     return {"path": f"images/{img_name}"}
 
 
@@ -516,10 +560,9 @@ def extract_textbox(shape) -> dict:
 
 def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
     """Extract an image element and save the image file."""
-    try:
-        img = shape.image
-    except ValueError:
-        # Linked images have no embedded blob
+    blob_result = _save_image_blob(shape, output_dir, slide_num, img_count)
+
+    if blob_result["path"] == "LINKED_IMAGE_NOT_EMBEDDED":
         elem = {
             "type": "image",
             "path": "LINKED_IMAGE_NOT_EMBEDDED",
@@ -535,20 +578,9 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
             elem["rotation"] = rot
         return elem
 
-    ext = img.content_type.split("/")[-1]
-    if ext == "jpeg":
-        ext = "jpg"
-
-    img_name = f"image-{img_count:02d}.{ext}"
-    img_path = output_dir / "images" / img_name
-    img_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(img_path, "wb") as f:
-        f.write(img.blob)
-
     elem = {
         "type": "image",
-        "path": f"images/{img_name}",
+        "path": blob_result["path"],
         "left": emu_to_inches(shape.left),
         "top": emu_to_inches(shape.top),
         "width": emu_to_inches(shape.width),
@@ -1010,7 +1042,8 @@ def _resolve_theme_colors(prs) -> dict:
         # so parse its blob directly with lxml.
         for rel in master.part.rels.values():
             if "theme" in rel.reltype:
-                theme_el = etree.fromstring(rel.target_part.blob)
+                parser = etree.XMLParser(resolve_entities=False, no_network=True)
+                theme_el = etree.fromstring(rel.target_part.blob, parser=parser)
                 break
 
         if theme_el is not None:
@@ -1038,6 +1071,10 @@ def _resolve_theme_colors(prs) -> dict:
                             color_map[alias] = color_map[theme_name]
     except (AttributeError, TypeError, IndexError):
         pass
+    except etree.XMLSyntaxError:
+        logging.warning(
+            "Malformed theme XML in slide master; skipping theme color resolution"
+        )
     return color_map
 
 

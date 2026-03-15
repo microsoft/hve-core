@@ -25,6 +25,7 @@ from extract_content import (
     extract_slide,
     extract_textbox,
 )
+from lxml import etree
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches, Pt
@@ -342,6 +343,26 @@ class TestExtractImage:
         result = extract_image(pic, output_dir, 1, 1)
         img_file = output_dir / result["path"]
         assert img_file.exists()
+
+    def test_extract_image_delegates_to_save_image_blob(
+        self, blank_slide, sample_image_path, tmp_path
+    ):
+        pic = blank_slide.shapes.add_picture(
+            str(sample_image_path),
+            Inches(1),
+            Inches(1),
+            Inches(3),
+            Inches(2),
+        )
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        with patch(
+            "extract_content._save_image_blob",
+            return_value={"path": "images/image-01.png"},
+        ) as mock_save:
+            result = extract_image(pic, output_dir, 2, 5)
+        mock_save.assert_called_once_with(pic, output_dir, 2, 5)
+        assert result["path"] == "images/image-01.png"
 
 
 class TestExtractSlide:
@@ -688,6 +709,151 @@ class TestSaveImageBlob:
         result = _save_image_blob(pic, tmp_path, 1, 1)
         assert result["path"].endswith(".png")
 
+    @pytest.mark.parametrize(
+        "content_type,expected_ext",
+        [
+            ("image/bmp", "bmp"),
+            ("image/gif", "gif"),
+            ("image/jpeg", "jpg"),
+            ("image/png", "png"),
+            ("image/tiff", "tiff"),
+        ],
+    )
+    def test_allowed_content_type_produces_correct_extension(
+        self, content_type, expected_ext, tmp_path
+    ):
+        """Each allowed content type maps to its correct file extension."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = content_type
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(f".{expected_ext}")
+
+    @pytest.mark.parametrize(
+        "content_type",
+        [
+            "image/x-emf",
+            "image/vnd.ms-photo",
+            "image/svg+xml",
+            "application/octet-stream",
+            "text/html",
+        ],
+    )
+    def test_unsupported_content_type_rejected(self, content_type, tmp_path):
+        """Unsupported content types raise ValueError."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = content_type
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="Unsupported image content type"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_oversized_blob_rejected(self, tmp_path, monkeypatch):
+        """Blobs exceeding MAX_IMAGE_BLOB_BYTES are rejected."""
+        monkeypatch.setattr("extract_content.MAX_IMAGE_BLOB_BYTES", 1024)
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 1025
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="exceeds"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_blob_at_size_limit_accepted(self, tmp_path, monkeypatch):
+        """Blobs at exactly MAX_IMAGE_BLOB_BYTES are accepted."""
+        monkeypatch.setattr("extract_content.MAX_IMAGE_BLOB_BYTES", 1024)
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 1024
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert "images/" in result["path"]
+
+    def test_path_within_output_directory(self, tmp_path):
+        """Saved image resolves to within the output directory."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        img_path = tmp_path / result["path"]
+        assert img_path.resolve().is_relative_to(tmp_path.resolve())
+
+    def test_path_traversal_blocked(self, tmp_path, monkeypatch):
+        """Blob write rejects paths that escape the output directory."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        original_resolve = Path.resolve
+
+        def patched_resolve(self, strict=False):
+            resolved = original_resolve(self, strict=strict)
+            if "images" in str(self):
+                return Path("/outside") / self.name
+            return resolved
+
+        monkeypatch.setattr(Path, "resolve", patched_resolve)
+
+        with pytest.raises(ValueError, match="escapes output directory"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_wmf_aldus_magic_accepted(self, tmp_path):
+        """WMF blob with Aldus Placeable signature is accepted."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\xd7\xcd\xc6\x9a" + b"\x00" * 96
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".wmf")
+
+    def test_wmf_standard_magic_accepted(self, tmp_path):
+        """WMF blob with standard header signature is accepted."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\x01\x00\x09\x00" + b"\x00" * 96
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".wmf")
+
+    def test_wmf_invalid_magic_rejected(self, tmp_path):
+        """WMF blob without a recognized signature is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="recognized file signature"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_wmf_blob_too_short_rejected(self, tmp_path):
+        """WMF blob shorter than 4 bytes is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\xd7\xcd"
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="too short"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
 
 class TestExtractChildShape:
     """Tests for extract_child_shape dispatch."""
@@ -906,6 +1072,57 @@ class TestResolveThemeColors:
         # (dk1/lt1 etc. are always present in the default theme)
         if colors:
             assert any(k.startswith("dark") or k.startswith("light") for k in colors)
+
+    def test_xxe_entity_not_resolved(self):
+        """SYSTEM entity in theme XML is blocked by the hardened parser."""
+        xxe_xml = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///dev/null">]>'
+            b'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            b"<a:themeElements><a:clrScheme name='Test'>"
+            b'<a:dk1><a:srgbClr val="&xxe;"/></a:dk1>'
+            b"</a:clrScheme></a:themeElements></a:theme>"
+        )
+        rel = MagicMock()
+        rel.reltype = (
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+        )
+        rel.target_part.blob = xxe_xml
+        prs = MagicMock()
+        prs.slide_masters = [MagicMock()]
+        prs.slide_masters[0].part.rels.values.return_value = [rel]
+        colors = _resolve_theme_colors(prs)
+        assert isinstance(colors, dict)
+        assert "dark_1" not in colors
+
+    def test_predefined_entities_preserved(self):
+        """Predefined XML entities still resolve with the hardened parser."""
+        parser = etree.XMLParser(resolve_entities=False, no_network=True)
+        root = etree.fromstring(b'<root attr="&lt;value&gt;"/>', parser=parser)
+        assert root.get("attr") == "<value>"
+
+    def test_resolve_theme_colors_xxe_payload_blocked(self):
+        """SYSTEM entity payload is blocked by the hardened parser."""
+        xxe_xml = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+            b'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            b"<a:themeElements><a:clrScheme name='Test'>"
+            b'<a:dk1><a:srgbClr val="&xxe;"/></a:dk1>'
+            b"</a:clrScheme></a:themeElements></a:theme>"
+        )
+        rel = MagicMock()
+        rel.reltype = (
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+        )
+        rel.target_part.blob = xxe_xml
+        prs = MagicMock()
+        prs.slide_masters = [MagicMock()]
+        prs.slide_masters[0].part.rels.values.return_value = [rel]
+        colors = _resolve_theme_colors(prs)
+        assert isinstance(colors, dict)
+        for val in colors.values():
+            assert "/etc/passwd" not in val
 
 
 class TestExtractShapeFormatting:
