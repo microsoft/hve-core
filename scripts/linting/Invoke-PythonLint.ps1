@@ -35,7 +35,7 @@ function Invoke-PythonLint {
     Push-Location $RepoRoot
     try {
         # Find all directories with pyproject.toml
-        $pythonSkills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -File |
+        $pythonSkills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { $_.Directory.FullName }
 

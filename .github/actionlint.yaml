@@ -6,5 +6,11 @@ self-hosted-runner:
 
 # Configuration variables defined in the repository/organization.
 # Set to null to disable strict checking.
+# Only variables referenced via ${{ vars.* }} in workflow YAML belong here.
+# HVE_DEVCONTAINER_IMAGE and HVE_GITHUB_API_URL are environment variables
+# consumed at runtime, not GitHub configuration variables.
 config-variables:
+  - HVE_GITHUB_RELEASES_URL
+  - HVE_PSGALLERY_REPOSITORY
+  - HVE_PSGALLERY_SOURCE_URL
   - RELEASE_APP_ID

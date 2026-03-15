@@ -917,7 +917,9 @@ class TestAddGroupElement:
             "elements": [],
         }
         with pytest.raises(ValueError, match="exceeds limit"):
-            add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=5, max_depth=5)
+            add_group_element(
+                blank_slide, elem, {}, {}, tmp_path, _depth=5, max_depth=5
+            )
 
     def test_nested_group_within_depth_limit(self, blank_slide, tmp_path):
         """Nested groups within the limit build successfully."""
@@ -937,7 +939,9 @@ class TestAddGroupElement:
                 },
             ],
         }
-        group = add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=0, max_depth=20)
+        group = add_group_element(
+            blank_slide, elem, {}, {}, tmp_path, _depth=0, max_depth=20
+        )
         assert group is not None
 
     def test_build_element_in_group_dispatches_group(self, blank_slide, tmp_path):
@@ -951,7 +955,9 @@ class TestAddGroupElement:
             "height": 1.0,
             "elements": [],
         }
-        build_element_in_group(parent_group, child_elem, {}, {}, tmp_path, _depth=0, max_depth=20)
+        build_element_in_group(
+            parent_group, child_elem, {}, {}, tmp_path, _depth=0, max_depth=20
+        )
 
 
 class TestAddImageElementExtended:
@@ -1330,9 +1336,7 @@ class TestMain:
         content_dir = tmp_path / "content"
         slide_dir = content_dir / "slide-001"
         slide_dir.mkdir(parents=True)
-        (slide_dir / "content.yaml").write_text(
-            "slide: 1\ntitle: Test\nelements: []\n"
-        )
+        (slide_dir / "content.yaml").write_text("slide: 1\ntitle: Test\nelements: []\n")
         style_file = tmp_path / "style.yaml"
         style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
         style_file.write_text(style_yaml)
@@ -1352,9 +1356,12 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
             ],
         ):
             main()
@@ -1376,15 +1383,21 @@ class TestMain:
 
         mock_prs_cls.return_value = MagicMock()
 
-        with patch(
-            "sys.argv",
-            [
-                "build_deck.py",
-                "--content-dir", str(empty_content),
-                "--style", str(style_file),
-                "--output", str(output),
-            ],
-        ), pytest.raises(SystemExit) as exc_info:
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "build_deck.py",
+                    "--content-dir",
+                    str(empty_content),
+                    "--style",
+                    str(style_file),
+                    "--output",
+                    str(output),
+                ],
+            ),
+            pytest.raises(SystemExit) as exc_info,
+        ):
             main()
 
         assert exc_info.value.code == 1
@@ -1411,9 +1424,12 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
             ],
         ):
             main()
@@ -1440,10 +1456,14 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
-                "--template", str(template),
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
+                "--template",
+                str(template),
             ],
         ):
             main()
@@ -1466,16 +1486,23 @@ class TestMain:
         mock_prs.slides._sldIdLst = []
         mock_prs_cls.return_value = mock_prs
 
-        with patch(
-            "sys.argv",
-            [
-                "build_deck.py",
-                "--content-dir", str(empty_content),
-                "--style", str(style_file),
-                "--output", str(output),
-                "--template", str(template),
-            ],
-        ), pytest.raises(SystemExit) as exc_info:
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "build_deck.py",
+                    "--content-dir",
+                    str(empty_content),
+                    "--style",
+                    str(style_file),
+                    "--output",
+                    str(output),
+                    "--template",
+                    str(template),
+                ],
+            ),
+            pytest.raises(SystemExit) as exc_info,
+        ):
             main()
 
         assert exc_info.value.code == 1
@@ -1497,11 +1524,16 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
-                "--source", str(source),
-                "--slides", "1",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
+                "--source",
+                str(source),
+                "--slides",
+                "1",
             ],
         ):
             main()
@@ -1528,11 +1560,16 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
-                "--source", str(source),
-                "--slides", "99",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
+                "--source",
+                str(source),
+                "--slides",
+                "99",
             ],
         ):
             main()
@@ -1558,11 +1595,16 @@ class TestMain:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
-                "--source", str(source),
-                "--slides", "1",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
+                "--source",
+                str(source),
+                "--slides",
+                "1",
             ],
         ):
             main()
@@ -1681,9 +1723,7 @@ class TestContentExtraValidation:
         with pytest.raises(ContentExtraError, match="Syntax error"):
             _validate_content_extra(script)
 
-    def test_build_slide_runs_valid_content_extra(
-        self, blank_presentation, tmp_path
-    ):
+    def test_build_slide_runs_valid_content_extra(self, blank_presentation, tmp_path):
         """build_slide executes a valid content-extra.py render function."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1698,14 +1738,10 @@ class TestContentExtraValidation:
         )
 
         slide_content = {"layout": "Blank", "elements": []}
-        build_slide(
-            blank_presentation, slide_content, {}, content_dir
-        )
+        build_slide(blank_presentation, slide_content, {}, content_dir)
         assert marker_file.read_text() == "yes"
 
-    def test_build_slide_rejects_bad_content_extra(
-        self, blank_presentation, tmp_path
-    ):
+    def test_build_slide_rejects_bad_content_extra(self, blank_presentation, tmp_path):
         """build_slide refuses to execute a content-extra.py with blocked imports."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1716,22 +1752,26 @@ class TestContentExtraValidation:
 
         slide_content = {"layout": "Blank", "elements": []}
         with pytest.raises(ContentExtraError, match="Blocked import 'subprocess'"):
-            build_slide(
-                blank_presentation, slide_content, {}, content_dir
-            )
+            build_slide(blank_presentation, slide_content, {}, content_dir)
 
     def test_dangerous_breakpoint(self, tmp_path):
         """Script calling breakpoint() is rejected."""
         script = tmp_path / "content-extra.py"
         script.write_text("breakpoint()\n")
-        with pytest.raises(
-            ContentExtraError, match="Dangerous builtin 'breakpoint'"
-        ):
+        with pytest.raises(ContentExtraError, match="Dangerous builtin 'breakpoint'"):
             _validate_content_extra(script)
 
-    @pytest.mark.parametrize("builtin_name", [
-        "delattr", "getattr", "globals", "locals", "setattr", "vars",
-    ])
+    @pytest.mark.parametrize(
+        "builtin_name",
+        [
+            "delattr",
+            "getattr",
+            "globals",
+            "locals",
+            "setattr",
+            "vars",
+        ],
+    )
     def test_indirect_bypass_builtins(self, builtin_name, tmp_path):
         """Indirect bypass builtins are rejected."""
         script = tmp_path / "content-extra.py"
@@ -1742,9 +1782,7 @@ class TestContentExtraValidation:
         ):
             _validate_content_extra(script)
 
-    def test_allow_scripts_skips_validation(
-        self, blank_presentation, tmp_path
-    ):
+    def test_allow_scripts_skips_validation(self, blank_presentation, tmp_path):
         """build_slide skips validation when allow_scripts is True."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1769,9 +1807,7 @@ class TestContentExtraValidation:
         )
         assert marker_file.read_text() == "bypassed"
 
-    def test_allow_scripts_false_still_validates(
-        self, blank_presentation, tmp_path
-    ):
+    def test_allow_scripts_false_still_validates(self, blank_presentation, tmp_path):
         """build_slide validates when allow_scripts is explicitly False."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1790,9 +1826,7 @@ class TestContentExtraValidation:
                 allow_scripts=False,
             )
 
-    def test_restricted_namespace_blocks_eval(
-        self, blank_presentation, tmp_path
-    ):
+    def test_restricted_namespace_blocks_eval(self, blank_presentation, tmp_path):
         """Runtime namespace strips dangerous builtins even after AST pass."""
         content_dir = tmp_path / "slide-001"
         content_dir.mkdir()
@@ -1852,21 +1886,16 @@ class TestAllowScriptsCLI:
         content_dir = tmp_path / "content"
         slide_dir = content_dir / "slide-001"
         slide_dir.mkdir(parents=True)
-        (slide_dir / "content.yaml").write_text(
-            "slide: 1\ntitle: Test\nelements: []\n"
-        )
+        (slide_dir / "content.yaml").write_text("slide: 1\ntitle: Test\nelements: []\n")
         (slide_dir / "content-extra.py").write_text(extra_code)
         style_file = tmp_path / "style.yaml"
         style_file.write_text(
-            "dimensions:\n  width_inches: 13.333\n"
-            "  height_inches: 7.5\n"
+            "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
         )
         return content_dir, style_file
 
     @patch("build_deck.Presentation")
-    def test_allow_scripts_flag_propagates(
-        self, mock_prs_cls, tmp_path
-    ):
+    def test_allow_scripts_flag_propagates(self, mock_prs_cls, tmp_path):
         """--allow-scripts lets a blocked-import script run via main()."""
         marker = tmp_path / "executed"
         extra = (
@@ -1875,21 +1904,15 @@ class TestAllowScriptsCLI:
             f"def render(slide, style, d): "
             f"Path(r'{marker}').write_text('ok')\n"
         )
-        content_dir, style_file = self._setup_with_extra(
-            tmp_path, extra
-        )
+        content_dir, style_file = self._setup_with_extra(tmp_path, extra)
         output = tmp_path / "deck.pptx"
 
         mock_prs = MagicMock()
         mock_prs.slides.__len__ = MagicMock(return_value=1)
         mock_prs.slide_layouts = MagicMock()
         layout = MagicMock()
-        mock_prs.slide_layouts.__getitem__ = MagicMock(
-            return_value=layout
-        )
-        mock_prs.slide_layouts.__iter__ = MagicMock(
-            return_value=iter([layout])
-        )
+        mock_prs.slide_layouts.__getitem__ = MagicMock(return_value=layout)
+        mock_prs.slide_layouts.__iter__ = MagicMock(return_value=iter([layout]))
         layout.name = "Blank"
         slide = MagicMock()
         mock_prs.slides.add_slide.return_value = slide
@@ -1899,9 +1922,12 @@ class TestAllowScriptsCLI:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
                 "--allow-scripts",
             ],
         ):
@@ -1910,26 +1936,18 @@ class TestAllowScriptsCLI:
         assert marker.read_text() == "ok"
 
     @patch("build_deck.Presentation")
-    def test_no_allow_scripts_rejects_blocked_import(
-        self, mock_prs_cls, tmp_path
-    ):
+    def test_no_allow_scripts_rejects_blocked_import(self, mock_prs_cls, tmp_path):
         """Without --allow-scripts, a blocked-import script fails."""
         extra = "import os\ndef render(s, st, d): pass\n"
-        content_dir, style_file = self._setup_with_extra(
-            tmp_path, extra
-        )
+        content_dir, style_file = self._setup_with_extra(tmp_path, extra)
         output = tmp_path / "deck.pptx"
 
         mock_prs = MagicMock()
         mock_prs.slides.__len__ = MagicMock(return_value=1)
         mock_prs.slide_layouts = MagicMock()
         layout = MagicMock()
-        mock_prs.slide_layouts.__getitem__ = MagicMock(
-            return_value=layout
-        )
-        mock_prs.slide_layouts.__iter__ = MagicMock(
-            return_value=iter([layout])
-        )
+        mock_prs.slide_layouts.__getitem__ = MagicMock(return_value=layout)
+        mock_prs.slide_layouts.__iter__ = MagicMock(return_value=iter([layout]))
         layout.name = "Blank"
         slide = MagicMock()
         mock_prs.slides.add_slide.return_value = slide
@@ -1939,9 +1957,12 @@ class TestAllowScriptsCLI:
             "sys.argv",
             [
                 "build_deck.py",
-                "--content-dir", str(content_dir),
-                "--style", str(style_file),
-                "--output", str(output),
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(output),
             ],
         ):
             with pytest.raises(ContentExtraError):

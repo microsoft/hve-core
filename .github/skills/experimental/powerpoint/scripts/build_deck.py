@@ -51,61 +51,67 @@ ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 
 # Stdlib modules blocked in content-extra.py scripts due to security risk.
 # content-extra.py may only import from pptx and safe standard-library modules.
-_BLOCKED_STDLIB_MODULES = frozenset({
-    "code",
-    "codeop",
-    "compileall",
-    "ctypes",
-    "dbm",
-    "ensurepip",
-    "ftplib",
-    "http",
-    "imaplib",
-    "importlib",
-    "marshal",
-    "multiprocessing",
-    "os",
-    "pickle",
-    "pkgutil",
-    "poplib",
-    "py_compile",
-    "runpy",
-    "shelve",
-    "shutil",
-    "signal",
-    "smtplib",
-    "socket",
-    "sqlite3",
-    "subprocess",
-    "sys",
-    "telnetlib",
-    "tempfile",
-    "threading",
-    "urllib",
-    "venv",
-    "webbrowser",
-    "xmlrpc",
-    "zipimport",
-})
+_BLOCKED_STDLIB_MODULES = frozenset(
+    {
+        "code",
+        "codeop",
+        "compileall",
+        "ctypes",
+        "dbm",
+        "ensurepip",
+        "ftplib",
+        "http",
+        "imaplib",
+        "importlib",
+        "marshal",
+        "multiprocessing",
+        "os",
+        "pickle",
+        "pkgutil",
+        "poplib",
+        "py_compile",
+        "runpy",
+        "shelve",
+        "shutil",
+        "signal",
+        "smtplib",
+        "socket",
+        "sqlite3",
+        "subprocess",
+        "sys",
+        "telnetlib",
+        "tempfile",
+        "threading",
+        "urllib",
+        "venv",
+        "webbrowser",
+        "xmlrpc",
+        "zipimport",
+    }
+)
 
-_DANGEROUS_BUILTINS = frozenset({
-    "__import__",
-    "breakpoint",
-    "compile",
-    "eval",
-    "exec",
-})
+_DANGEROUS_BUILTINS = frozenset(
+    {
+        "__import__",
+        "breakpoint",
+        "compile",
+        "eval",
+        "exec",
+    }
+)
 
 # Builtins that can bypass the import allowlist or execute arbitrary strings
 # when called indirectly through attribute access or introspection.
-_INDIRECT_BYPASS_BUILTINS = frozenset({
-    "delattr",
-    "getattr",
-    "globals",
-    "locals",
-    "setattr",
-    "vars",
-})
+_INDIRECT_BYPASS_BUILTINS = frozenset(
+    {
+        "delattr",
+        "getattr",
+        "globals",
+        "locals",
+        "setattr",
+        "vars",
+    }
+)
 
 
 class ContentExtraError(Exception):
@@ -122,9 +128,7 @@ def _check_module_allowed(
         return
 
     if top_level in _BLOCKED_STDLIB_MODULES:
-        raise ContentExtraError(
-            f"Blocked import '{module_name}' in {script_path}"
-        )
+        raise ContentExtraError(f"Blocked import '{module_name}' in {script_path}")
 
     if top_level in stdlib_names:
         return
@@ -146,9 +150,7 @@ def _validate_content_extra(script_path: Path) -> None:
     try:
         tree = ast.parse(source, filename=str(script_path))
     except SyntaxError as exc:
-        raise ContentExtraError(
-            f"Syntax error in {script_path}: {exc}"
-        ) from exc
+        raise ContentExtraError(f"Syntax error in {script_path}: {exc}") from exc
 
     stdlib_names = sys.stdlib_module_names
 
@@ -645,8 +647,14 @@ MAX_GROUP_DEPTH = 20
 
 
 def add_group_element(
-    slide, elem: dict, colors: dict, typography: dict, content_dir: Path,
-    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
+    slide,
+    elem: dict,
+    colors: dict,
+    typography: dict,
+    content_dir: Path,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Add a group element containing nested child elements.
 
@@ -674,9 +682,7 @@ def add_group_element(
           text: "Group Title"
     """
     if _depth >= max_depth:
-        raise ValueError(
-            f"Group nesting depth {_depth} exceeds limit of {max_depth}"
-        )
+        raise ValueError(f"Group nesting depth {_depth} exceeds limit of {max_depth}")
     group = slide.shapes.add_group_shape()
 
     group.left = Inches(elem["left"])
@@ -686,8 +692,13 @@ def add_group_element(
 
     for child_elem in elem.get("elements", []):
         build_element_in_group(
-            group, child_elem, colors, typography, content_dir,
-            _depth=_depth + 1, max_depth=max_depth,
+            group,
+            child_elem,
+            colors,
+            typography,
+            content_dir,
+            _depth=_depth + 1,
+            max_depth=max_depth,
         )
 
     if "name" in elem:
@@ -697,8 +708,14 @@ def add_group_element(
 
 
 def build_element_in_group(
-    group, elem: dict, colors: dict, typography: dict, content_dir: Path,
-    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
+    group,
+    elem: dict,
+    colors: dict,
+    typography: dict,
+    content_dir: Path,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Dispatch a child element build within a group shape.
 
@@ -717,8 +734,13 @@ def build_element_in_group(
         add_image_element(group, elem, content_dir)
     elif elem_type == "group":
         add_group_element(
-            group, elem, colors, typography, content_dir,
-            _depth=_depth, max_depth=max_depth,
+            group,
+            elem,
+            colors,
+            typography,
+            content_dir,
+            _depth=_depth,
+            max_depth=max_depth,
         )
 
 
@@ -1010,13 +1032,11 @@ def build_slide(
         if not allow_scripts:
             # __import__ is kept because the import machinery needs it;
             # the AST checker already blocks direct __import__() calls.
-            stripped = (
-                _DANGEROUS_BUILTINS | _INDIRECT_BYPASS_BUILTINS
-            ) - {"__import__"}
+            stripped = (_DANGEROUS_BUILTINS | _INDIRECT_BYPASS_BUILTINS) - {
+                "__import__"
+            }
             safe_builtins = {
-                k: v
-                for k, v in builtins.__dict__.items()
-                if k not in stripped
+                k: v for k, v in builtins.__dict__.items() if k not in stripped
             }
             mod.__builtins__ = safe_builtins
         spec.loader.exec_module(mod)
@@ -1111,7 +1131,10 @@ def main():
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
             build_slide(
-                prs, slide_content, style, slide_dir,
+                prs,
+                slide_content,
+                style,
+                slide_dir,
                 allow_scripts=args.allow_scripts,
             )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
@@ -1135,7 +1158,10 @@ def main():
             if idx < len(prs.slides):
                 existing_slide = prs.slides[idx]
                 build_slide(
-                    prs, slide_content, style, slide_dir,
+                    prs,
+                    slide_content,
+                    style,
+                    slide_dir,
                     existing_slide=existing_slide,
                     allow_scripts=args.allow_scripts,
                 )
@@ -1169,7 +1195,10 @@ def main():
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
             build_slide(
-                prs, slide_content, style, slide_dir,
+                prs,
+                slide_content,
+                style,
+                slide_dir,
                 allow_scripts=args.allow_scripts,
             )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")

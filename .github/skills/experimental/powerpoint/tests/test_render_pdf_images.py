@@ -298,15 +298,18 @@ class TestMainRenderPdf:
 
     @patch("render_pdf_images.run", side_effect=BrokenPipeError)
     def test_main_broken_pipe(self, mock_run, tmp_path):
-        with patch(
-            "sys.argv",
-            [
-                "render_pdf_images.py",
-                "--input",
-                str(tmp_path / "test.pdf"),
-                "--output-dir",
-                str(tmp_path / "out"),
-            ],
-        ), patch.object(sys, "stderr", MagicMock()):
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "render_pdf_images.py",
+                    "--input",
+                    str(tmp_path / "test.pdf"),
+                    "--output-dir",
+                    str(tmp_path / "out"),
+                ],
+            ),
+            patch.object(sys, "stderr", MagicMock()),
+        ):
             result = main()
         assert result == EXIT_FAILURE

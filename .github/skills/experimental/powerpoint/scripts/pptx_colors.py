@@ -31,8 +31,11 @@ MAX_COLOR_DEPTH = 10
 
 
 def resolve_color(
-    value: str | dict, colors: dict | None = None,
-    *, _depth: int = 0, max_depth: int = MAX_COLOR_DEPTH,
+    value: str | dict,
+    colors: dict | None = None,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_COLOR_DEPTH,
 ) -> dict:
     """Resolve a color value to an RGB or theme color specification.
 
@@ -63,7 +66,8 @@ def resolve_color(
             return result
         return resolve_color(
             value.get("color", "#000000"),
-            _depth=_depth + 1, max_depth=max_depth,
+            _depth=_depth + 1,
+            max_depth=max_depth,
         )
 
     if not isinstance(value, str):

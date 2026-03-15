@@ -170,7 +170,12 @@ MAX_GROUP_DEPTH = 20
 
 
 def extract_group(
-    shape, slide_num: int, output_dir, img_count: int, *, _depth: int = 0,
+    shape,
+    slide_num: int,
+    output_dir,
+    img_count: int,
+    *,
+    _depth: int = 0,
     max_depth: int = MAX_GROUP_DEPTH,
 ) -> dict:
     """Extract a group shape and its nested child elements.
@@ -178,9 +183,7 @@ def extract_group(
     Raises ValueError when nesting exceeds *max_depth*.
     """
     if _depth >= max_depth:
-        raise ValueError(
-            f"Group nesting depth {_depth} exceeds limit of {max_depth}"
-        )
+        raise ValueError(f"Group nesting depth {_depth} exceeds limit of {max_depth}")
     elem = {
         "type": "group",
         "left": emu_to_inches(shape.left),
@@ -192,8 +195,12 @@ def extract_group(
     }
     for child in shape.shapes:
         child_elem = extract_child_shape(
-            child, slide_num, output_dir, img_count,
-            _depth=_depth + 1, max_depth=max_depth,
+            child,
+            slide_num,
+            output_dir,
+            img_count,
+            _depth=_depth + 1,
+            max_depth=max_depth,
         )
         if child_elem:
             elem["elements"].append(child_elem)
@@ -201,8 +208,13 @@ def extract_group(
 
 
 def _extract_shape_by_type(
-    shape, slide_num: int, output_dir, img_count: int,
-    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
+    shape,
+    slide_num: int,
+    output_dir,
+    img_count: int,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ) -> dict | None:
     """Dispatch extraction based on shape_type, table/chart, or freeform."""
     shape_type = shape.shape_type
@@ -221,8 +233,12 @@ def _extract_shape_by_type(
         return extract_image(shape, output_dir, slide_num, img_count)
     if shape_type == 6:  # GROUP
         return extract_group(
-            shape, slide_num, output_dir, img_count,
-            _depth=_depth, max_depth=max_depth,
+            shape,
+            slide_num,
+            output_dir,
+            img_count,
+            _depth=_depth,
+            max_depth=max_depth,
         )
 
     # Table and chart detection via attribute check
@@ -237,13 +253,22 @@ def _extract_shape_by_type(
 
 
 def extract_child_shape(
-    shape, slide_num: int, output_dir, img_count: int,
-    *, _depth: int = 0, max_depth: int = MAX_GROUP_DEPTH,
+    shape,
+    slide_num: int,
+    output_dir,
+    img_count: int,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ) -> dict | None:
     """Extract a single child shape within a group."""
     result = _extract_shape_by_type(
-        shape, slide_num, output_dir, img_count,
-        _depth=_depth, max_depth=max_depth,
+        shape,
+        slide_num,
+        output_dir,
+        img_count,
+        _depth=_depth,
+        max_depth=max_depth,
     )
     if result is not None:
         return result
@@ -1020,7 +1045,10 @@ MAX_THEME_REF_DEPTH = 50
 
 
 def _resolve_theme_refs_in_content(
-    content: dict, theme_colors: dict, *, max_depth: int = MAX_THEME_REF_DEPTH,
+    content: dict,
+    theme_colors: dict,
+    *,
+    max_depth: int = MAX_THEME_REF_DEPTH,
 ) -> dict:
     """Replace @theme_name references with resolved hex values in content.
 
