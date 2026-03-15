@@ -1287,10 +1287,8 @@ class TestMain:
             "slide: 1\ntitle: Test\nelements: []\n"
         )
         style_file = tmp_path / "style.yaml"
-        style_file.write_text(
-            "dimensions:\n  width_inches: 13.333\n"
-            "  height_inches: 7.5\n"
-        )
+        style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
+        style_file.write_text(style_yaml)
         return content_dir, style_file
 
     @patch("build_deck.build_slide")
@@ -1325,10 +1323,8 @@ class TestMain:
         empty_content = tmp_path / "content"
         empty_content.mkdir()
         style_file = tmp_path / "style.yaml"
-        style_file.write_text(
-            "dimensions:\n  width_inches: 13.333\n"
-            "  height_inches: 7.5\n"
-        )
+        style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
+        style_file.write_text(style_yaml)
         output = tmp_path / "deck.pptx"
 
         mock_prs_cls.return_value = MagicMock()
