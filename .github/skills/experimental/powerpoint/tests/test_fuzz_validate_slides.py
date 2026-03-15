@@ -55,7 +55,7 @@ class TestFuzzDiscoverImages:
                     try:
                         path.write_bytes(b"noise")
                     except OSError:
-                        pass  # Invalid generated names are expected; skip gracefully
+                        continue  # Invalid generated names expected
             result = discover_images(tmp_path)
             for _, p in result:
                 assert IMAGE_PATTERN.match(p.name)
