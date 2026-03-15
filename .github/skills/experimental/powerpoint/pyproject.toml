@@ -28,6 +28,13 @@ markers = [
     "hypothesis: property-based tests using Hypothesis",
 ]
 
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
