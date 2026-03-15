@@ -43,41 +43,41 @@ Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
 **Phase 1: Understand**
 
-* Read the full vulnerability reference file end-to-end.
-* Extract all checklist items and vulnerable patterns described.
-* Identify the specific attack vectors and preconditions.
+1. Read the full vulnerability reference file end-to-end.
+2. Extract all checklist items and vulnerable patterns described.
+3. Identify the specific attack vectors and preconditions.
 
 **Phase 2: Confirm**
 
-* Read source files cited in the original finding.
-* Search for each vulnerable pattern from the reference checklist.
-* Trace the code path from entry point to vulnerable code.
-* Check if user-controlled input reaches the vulnerable sink.
+1. Read source files cited in the original finding.
+2. Search for each vulnerable pattern from the reference checklist.
+3. Trace the code path from entry point to vulnerable code.
+4. Check if user-controlled input reaches the vulnerable sink.
 
 **Phase 3: Contradict**
 
-* Search for input validation or sanitization upstream of the finding.
-* Search for middleware, decorators, or interceptors that apply security controls.
-* Check framework configuration for security defaults.
-* Search for security headers and CSP policies.
-* Check for authentication and authorization guards on affected routes.
-* Verify if the code is in dead, test-only, or unreachable paths.
-* Search for compensating controls (WAF, rate limiting, network isolation).
-* Check if dependencies provide built-in protections.
+1. Search for input validation or sanitization upstream of the finding.
+2. Search for middleware, decorators, or interceptors that apply security controls.
+3. Check framework configuration for security defaults.
+4. Search for security headers and CSP policies.
+5. Check for authentication and authorization guards on affected routes.
+6. Verify if the code is in dead, test-only, or unreachable paths.
+7. Search for compensating controls (WAF, rate limiting, network isolation).
+8. Check if dependencies provide built-in protections.
 
 **Phase 4: Judge**
 
-* Weigh confirming versus contradicting evidence.
-* Disprove if mitigations fully neutralize the vulnerability.
-* Downgrade if mitigations reduce but do not eliminate exploitability.
-* Confirm if the vulnerability remains exploitable as described.
+1. Weigh confirming versus contradicting evidence.
+2. Disprove if mitigations fully neutralize the vulnerability.
+3. Downgrade if mitigations reduce but do not eliminate exploitability.
+4. Confirm if the vulnerability remains exploitable as described.
 
 ## Deep Verification Verdict Format
 
 Each finding produces one verdict block in the following format:
 
 ```text
-## Finding: <FINDING_ID> — <FINDING_TITLE>
+## Finding: <FINDING_ID>: <FINDING_TITLE>
 
 ### Original Assessment
 - **Status:** <ORIGINAL_STATUS>
@@ -131,15 +131,15 @@ Where:
 * PRECONDITIONS describes the conditions required for exploitability.
 * VULN_FILE_LINK is a workspace-relative markdown link to the vulnerable file (for example, `[path/to/file.ext#L42](path/to/file.ext#L42)`), or "—" if disproved.
 * VULN_LINE_RANGE is the line range description (for example, "L38-L45"), or "—" if disproved.
-* OFFENDING_CODE is a fenced code block (with language hint) showing 3–10 lines of the vulnerable code centered on the issue, or "Finding disproved — no offending code." if disproved.
+* OFFENDING_CODE is a fenced code block (with language hint) showing 3–10 lines of the vulnerable code centered on the issue, or "Finding disproved: no offending code." if disproved.
 * CONFIRMING_EVIDENCE is a bullet list of evidence supporting the finding with file paths and lines.
 * CONTRADICTING_EVIDENCE is a bullet list of evidence against the finding with file paths and lines, or "None found." if no contradicting evidence exists.
 * VERDICT is CONFIRMED, DISPROVED, or DOWNGRADED.
 * VERIFIED_STATUS is the status after verification (FAIL, PARTIAL, or PASS if disproved).
 * VERIFIED_SEVERITY is the severity after verification, or "—" if disproved.
 * JUSTIFICATION is 2–4 sentences explaining the verdict with specific file and line citations.
-* UPDATED_REMEDIATION is revised remediation guidance accounting for existing mitigations, or "Finding disproved — no remediation required." if disproved.
-* EXAMPLE_FIX_CODE is a fenced code block (with language hint) showing the corrected version of the offending code, or "Finding disproved — no fix required." if disproved.
+* UPDATED_REMEDIATION is revised remediation guidance accounting for existing mitigations, or "Finding disproved: no remediation required." if disproved.
+* EXAMPLE_FIX_CODE is a fenced code block (with language hint) showing the corrected version of the offending code, or "Finding disproved: no fix required." if disproved.
 
 ## Required Steps
 
