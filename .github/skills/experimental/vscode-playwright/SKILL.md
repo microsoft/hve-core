@@ -168,20 +168,20 @@ Never use separate `mcp_microsoft_pla_browser_press_key` -> `mcp_microsoft_pla_b
 
 ## Troubleshooting
 
-| Issue | Cause | Solution |
-|---|---|---|
-| `Ignoring option 'server-data-dir': Value must not be empty` | Shell variable resolved empty in background terminal | Inline the full command with the literal temp directory path or run `mktemp` and `serve-web` in the same session |
-| Color Theme navigates to Marketplace themes | Fresh `server-data-dir` has no built-in theme set | Pre-seed `"workbench.colorTheme": "Default Dark Modern"` in ephemeral `settings.json` |
-| Panel toggle opens hidden panel | `View: Toggle Panel Visibility` is a toggle | Use `View: Close Panel` only after confirming the panel is visible via snapshot |
-| `?file=` parameter does not auto-open files | VS Code web only supports `?folder=` | Open files through Command Palette `Go to File` command after navigating |
-| Text too small in screenshots | Default ~14px font becomes ~7pt when shrunk | Zoom in with `page.evaluate(() => { document.body.style.zoom = '1.5'; })` or higher |
-| Screenshot aspect ratio distortion | Viewport ratio does not match placeholder ratio | Calculate viewport from placeholder: `width_px = 1200`, `height_px = int(1200 / (target_w / target_h))` |
-| UI clutter at slide-embedded sizes | Explorer, minimap, tabs, toasts visible | Close all unnecessary UI elements before each capture |
-| `workbench.action.zoomIn` does not work | Electron-only command | Use `editor.action.fontZoomIn` or CSS zoom via `page.evaluate()` |
-| Browser state restoration | IndexedDB/localStorage restore previous files | Pre-seed settings to disable restore; use incognito mode when available |
-| `Meta+P` triggers browser action | Keyboard shortcuts intercepted by browser | Use `page.keyboard.press('F1')` to open Command Palette |
-| Screenshot saved to wrong directory | `take_screenshot` saves relative to Playwright working directory | Copy screenshots to the target directory after capture |
-| Copilot Chat responses non-deterministic | Streaming token-by-token output | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay |
+| Issue                                                        | Cause                                                            | Solution                                                                                                         |
+|--------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `Ignoring option 'server-data-dir': Value must not be empty` | Shell variable resolved empty in background terminal             | Inline the full command with the literal temp directory path or run `mktemp` and `serve-web` in the same session |
+| Color Theme navigates to Marketplace themes                  | Fresh `server-data-dir` has no built-in theme set                | Pre-seed `"workbench.colorTheme": "Default Dark Modern"` in ephemeral `settings.json`                            |
+| Panel toggle opens hidden panel                              | `View: Toggle Panel Visibility` is a toggle                      | Use `View: Close Panel` only after confirming the panel is visible via snapshot                                  |
+| `?file=` parameter does not auto-open files                  | VS Code web only supports `?folder=`                             | Open files through Command Palette `Go to File` command after navigating                                         |
+| Text too small in screenshots                                | Default ~14px font becomes ~7pt when shrunk                      | Zoom in with `page.evaluate(() => { document.body.style.zoom = '1.5'; })` or higher                              |
+| Screenshot aspect ratio distortion                           | Viewport ratio does not match placeholder ratio                  | Calculate viewport from placeholder: `width_px = 1200`, `height_px = int(1200 / (target_w / target_h))`          |
+| UI clutter at slide-embedded sizes                           | Explorer, minimap, tabs, toasts visible                          | Close all unnecessary UI elements before each capture                                                            |
+| `workbench.action.zoomIn` does not work                      | Electron-only command                                            | Use `editor.action.fontZoomIn` or CSS zoom via `page.evaluate()`                                                 |
+| Browser state restoration                                    | IndexedDB/localStorage restore previous files                    | Pre-seed settings to disable restore; use incognito mode when available                                          |
+| `Meta+P` triggers browser action                             | Keyboard shortcuts intercepted by browser                        | Use `page.keyboard.press('F1')` to open Command Palette                                                          |
+| Screenshot saved to wrong directory                          | `take_screenshot` saves relative to Playwright working directory | Copy screenshots to the target directory after capture                                                           |
+| Copilot Chat responses non-deterministic                     | Streaming token-by-token output                                  | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay                                        |
 
 > Brought to you by microsoft/hve-core
 

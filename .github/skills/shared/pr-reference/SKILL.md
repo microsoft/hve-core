@@ -25,7 +25,7 @@ After successful generation, include a file link to the absolute path of the XML
 The repository must have at least one commit diverging from the base branch.
 
 | Platform       | Runtime              |
-| -------------- | -------------------- |
+|----------------|----------------------|
 | macOS / Linux  | Bash (pre-installed) |
 | Windows        | PowerShell 7+ (pwsh) |
 | Cross-platform | PowerShell 7+ (pwsh) |
@@ -47,7 +47,7 @@ Output saves to `.copilot-tracking/pr/pr-reference.xml` by default.
 ## Parameters Reference
 
 | Parameter        | Flag (bash)     | Flag (PowerShell)      | Default                                    | Description                                 |
-| ---------------- | --------------- | ---------------------- | ------------------------------------------ | ------------------------------------------- |
+|------------------|-----------------|------------------------|--------------------------------------------|---------------------------------------------|
 | Base branch      | `--base-branch` | `-BaseBranch`          | `origin/main` (bash) / `main` (PowerShell) | Target branch for comparison                |
 | Exclude markdown | `--no-md-diff`  | `-ExcludeMarkdownDiff` | false                                      | Exclude markdown files (*.md) from the diff |
 | Output path      | `--output`      | `-OutputPath`          | `.copilot-tracking/pr/pr-reference.xml`    | Custom output file path                     |
@@ -97,10 +97,10 @@ The generated XML wraps commit metadata and unified diff output in a `<commit_hi
 
 ## Troubleshooting
 
-| Symptom                          | Cause                                | Resolution                                                               |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
-| "No commits found" or empty XML  | No diverging commits from base branch | Verify the branch has commits ahead of the base with `git log base..HEAD` |
-| "Branch not found" error         | Base branch ref missing locally      | Run `git fetch origin` to update remote tracking refs                    |
-| "git: command not found"         | git is not on PATH                   | Install git or verify PATH includes the git binary directory             |
+| Symptom                         | Cause                                 | Resolution                                                                |
+|---------------------------------|---------------------------------------|---------------------------------------------------------------------------|
+| "No commits found" or empty XML | No diverging commits from base branch | Verify the branch has commits ahead of the base with `git log base..HEAD` |
+| "Branch not found" error        | Base branch ref missing locally       | Run `git fetch origin` to update remote tracking refs                     |
+| "git: command not found"        | git is not on PATH                    | Install git or verify PATH includes the git binary directory              |
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
