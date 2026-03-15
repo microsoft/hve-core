@@ -38,10 +38,9 @@
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true,
     ".github/agents/security": true,
+    ".github/agents/security/subagents": true,
     ".github/agents/experimental": true,
-    ".github/agents/experimental/subagents": true,
-    ".github/agents/security": true,
-    ".github/agents/security/subagents": true
+    ".github/agents/experimental/subagents": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
