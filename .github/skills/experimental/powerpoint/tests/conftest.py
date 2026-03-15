@@ -2,12 +2,31 @@
 # SPDX-License-Identifier: MIT
 """Shared fixtures for PowerPoint skill tests."""
 
+import os
 import struct
 import zlib
 
 import pytest
+from hypothesis import HealthCheck, settings
 from pptx import Presentation
 from pptx.util import Inches, Pt
+
+# Hypothesis profiles
+settings.register_profile(
+    "ci",
+    max_examples=200,
+    derandomize=True,
+    deadline=None,
+    database=None,
+    print_blob=True,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+settings.register_profile(
+    "dev",
+    max_examples=50,
+    deadline=None,
+)
+settings.load_profile("ci" if os.environ.get("CI") else "dev")
 
 
 @pytest.fixture()
@@ -83,3 +102,18 @@ def sample_image_path(tmp_path):
     img = tmp_path / "test.png"
     img.write_bytes(_minimal_png_bytes())
     return img
+
+
+def make_blank_presentation():
+    """Create a fresh Presentation with standard widescreen dimensions."""
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    return prs
+
+
+def make_blank_slide():
+    """Create a blank slide on a fresh presentation."""
+    prs = make_blank_presentation()
+    layout = prs.slide_layouts[6]
+    return prs.slides.add_slide(layout)
