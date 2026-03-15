@@ -16,6 +16,7 @@ dev = [
     "pytest>=9.0",
     "pytest-cov>=7.0",
     "ruff>=0.15",
+    "hypothesis>=6.100",
 ]
 
 [tool.pytest.ini_options]
@@ -24,6 +25,7 @@ pythonpath = ["scripts"]
 markers = [
     "integration: roundtrip integration tests",
     "slow: tests that create full presentations",
+    "hypothesis: property-based tests using Hypothesis",
 ]
 
 [tool.ruff]
