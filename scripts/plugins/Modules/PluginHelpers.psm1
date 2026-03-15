@@ -143,6 +143,7 @@ function New-PluginReadmeContent {
 
     .PARAMETER Collection
     Hashtable with id, name, and description keys from the collection manifest.
+    An optional 'notice' key injects a custom blockquote after the description.
 
     .PARAMETER Items
     Array of processed item objects. Each object must have Name, Description,
@@ -152,6 +153,10 @@ function New-PluginReadmeContent {
         Optional collection-level maturity string. When 'experimental', an
         experimental notice is injected after the description. When 'preview',
         a preview notice is injected.
+
+    .PARAMETER CollectionContent
+        Optional markdown content from the collection .md file. Injected as
+        an Overview section between the description and the Install section.
 
     .OUTPUTS
     [string] Complete README markdown content.
@@ -169,7 +174,12 @@ function New-PluginReadmeContent {
         [Parameter(Mandatory = $false)]
         [AllowNull()]
         [AllowEmptyString()]
-        [string]$Maturity
+        [string]$Maturity,
+
+        [Parameter(Mandatory = $false)]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$CollectionContent
     )
 
     $sb = [System.Text.StringBuilder]::new()
@@ -187,6 +197,20 @@ function New-PluginReadmeContent {
     elseif ($effectiveMaturity -eq 'preview') {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine("> **`u{1F50D} Preview** `u{2014} This collection is in preview. Core features are complete and functional but refinements may follow.")
+    }
+
+    # Inject collection-level notice when present
+    if ($Collection.ContainsKey('notice') -and -not [string]::IsNullOrWhiteSpace($Collection.notice)) {
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine($Collection.notice.TrimEnd())
+    }
+
+    # Inject collection description content as an Overview section
+    if (-not [string]::IsNullOrWhiteSpace($CollectionContent)) {
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine('## Overview')
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine($CollectionContent.TrimEnd())
     }
 
     [void]$sb.AppendLine()
@@ -591,7 +615,16 @@ function Write-PluginDirectory {
             $fileName = Split-Path -Leaf $item.path
             $itemName = Get-PluginItemName -FileName $fileName -Kind $kind
             $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
-            $description = $fileName
+
+            # Read frontmatter from SKILL.md for description; fall back to directory name
+            $skillMdPath = Join-Path -Path $sourcePath -ChildPath 'SKILL.md'
+            if (Test-Path -Path $skillMdPath) {
+                $frontmatter = Get-ArtifactFrontmatter -FilePath $skillMdPath -FallbackDescription $fileName
+                $description = $frontmatter.description
+            }
+            else {
+                $description = $fileName
+            }
         }
         else {
             $fileName = Split-Path -Leaf $item.path
@@ -672,7 +705,11 @@ function Write-PluginDirectory {
 
     # Generate README.md
     $readmePath = Join-Path -Path $pluginRoot -ChildPath 'README.md'
-    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity
+    $collectionMdPath = Join-Path -Path $RepoRoot -ChildPath "collections/$collectionId.collection.md"
+    $collectionContent = if (Test-Path -Path $collectionMdPath) {
+        Get-Content -Path $collectionMdPath -Raw
+    } else { $null }
+    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity -CollectionContent $collectionContent
 
     if ($DryRun) {
         Write-Verbose "DryRun: Would write README.md at $readmePath"

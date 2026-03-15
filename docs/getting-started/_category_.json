@@ -4,6 +4,7 @@
   "collapsible": true,
   "collapsed": false,
   "link": {
-    "type": "generated-index"
+    "type": "doc",
+    "id": "getting-started/README"
   }
 }

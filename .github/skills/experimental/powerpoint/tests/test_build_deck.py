@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from build_deck import (
+    ContentExtraError,
     _reset_effect_ref,
+    _validate_content_extra,
     add_arrow_flow_element,
     add_card_element,
     add_connector_element,
@@ -14,6 +16,7 @@ from build_deck import (
     add_rich_text_element,
     add_shape_element,
     add_textbox,
+    build_element_in_group,
     build_slide,
     clear_slide_shapes,
     discover_slides,
@@ -904,6 +907,52 @@ class TestAddGroupElement:
         group = add_group_element(blank_slide, elem, {}, {}, tmp_path)
         assert len(group.shapes) >= 1
 
+    def test_depth_limit_raises(self, blank_slide, tmp_path):
+        """Exceeding max_depth raises ValueError."""
+        elem = {
+            "left": 1.0,
+            "top": 1.0,
+            "width": 5.0,
+            "height": 3.0,
+            "elements": [],
+        }
+        with pytest.raises(ValueError, match="exceeds limit"):
+            add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=5, max_depth=5)
+
+    def test_nested_group_within_depth_limit(self, blank_slide, tmp_path):
+        """Nested groups within the limit build successfully."""
+        elem = {
+            "left": 1.0,
+            "top": 1.0,
+            "width": 5.0,
+            "height": 3.0,
+            "elements": [
+                {
+                    "type": "group",
+                    "left": 0.0,
+                    "top": 0.0,
+                    "width": 2.0,
+                    "height": 1.0,
+                    "elements": [],
+                },
+            ],
+        }
+        group = add_group_element(blank_slide, elem, {}, {}, tmp_path, _depth=0, max_depth=20)
+        assert group is not None
+
+    def test_build_element_in_group_dispatches_group(self, blank_slide, tmp_path):
+        """build_element_in_group handles nested group type."""
+        parent_group = blank_slide.shapes.add_group_shape()
+        child_elem = {
+            "type": "group",
+            "left": 0.0,
+            "top": 0.0,
+            "width": 2.0,
+            "height": 1.0,
+            "elements": [],
+        }
+        build_element_in_group(parent_group, child_elem, {}, {}, tmp_path, _depth=0, max_depth=20)
+
 
 class TestAddImageElementExtended:
     """Extended tests for add_image_element covering crop and opacity."""
@@ -1281,7 +1330,9 @@ class TestMain:
         content_dir = tmp_path / "content"
         slide_dir = content_dir / "slide-001"
         slide_dir.mkdir(parents=True)
-        (slide_dir / "content.yaml").write_text("slide: 1\ntitle: Test\nelements: []\n")
+        (slide_dir / "content.yaml").write_text(
+            "slide: 1\ntitle: Test\nelements: []\n"
+        )
         style_file = tmp_path / "style.yaml"
         style_yaml = "dimensions:\n  width_inches: 13.333\n  height_inches: 7.5\n"
         style_file.write_text(style_yaml)
@@ -1518,3 +1569,380 @@ class TestMain:
 
         mock_build_slide.assert_not_called()
         mock_prs.save.assert_called_once()
+
+
+class TestContentExtraValidation:
+    """Tests for _validate_content_extra AST security checks."""
+
+    def test_valid_pptx_imports(self, tmp_path):
+        """Script using only pptx imports passes validation."""
+        script = tmp_path / "content-extra.py"
+        script.write_text(
+            "from pptx.util import Inches, Pt\n"
+            "from pptx.dml.color import RGBColor\n"
+            "def render(slide, style, content_dir):\n"
+            "    pass\n"
+        )
+        _validate_content_extra(script)
+
+    def test_valid_safe_stdlib_imports(self, tmp_path):
+        """Script using safe stdlib modules passes validation."""
+        script = tmp_path / "content-extra.py"
+        script.write_text(
+            "import math\n"
+            "import json\n"
+            "from pathlib import Path\n"
+            "def render(slide, style, content_dir):\n"
+            "    pass\n"
+        )
+        _validate_content_extra(script)
+
+    def test_blocked_subprocess(self, tmp_path):
+        """Script importing subprocess is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import subprocess\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'subprocess'"):
+            _validate_content_extra(script)
+
+    def test_blocked_os(self, tmp_path):
+        """Script importing os is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import os\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+            _validate_content_extra(script)
+
+    def test_blocked_from_os_import(self, tmp_path):
+        """from-import of a blocked module is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("from os.path import join\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'os.path'"):
+            _validate_content_extra(script)
+
+    def test_blocked_shutil(self, tmp_path):
+        """Script importing shutil is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import shutil\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'shutil'"):
+            _validate_content_extra(script)
+
+    def test_blocked_socket(self, tmp_path):
+        """Script importing socket is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import socket\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'socket'"):
+            _validate_content_extra(script)
+
+    def test_blocked_ctypes(self, tmp_path):
+        """Script importing ctypes is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import ctypes\n")
+        with pytest.raises(ContentExtraError, match="Blocked import 'ctypes'"):
+            _validate_content_extra(script)
+
+    def test_third_party_import_rejected(self, tmp_path):
+        """Script importing a non-stdlib, non-pptx package is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("import requests\n")
+        with pytest.raises(ContentExtraError, match="Disallowed import 'requests'"):
+            _validate_content_extra(script)
+
+    def test_dangerous_eval(self, tmp_path):
+        """Script calling eval() is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("x = eval('1+1')\n")
+        with pytest.raises(ContentExtraError, match="Dangerous builtin 'eval'"):
+            _validate_content_extra(script)
+
+    def test_dangerous_exec(self, tmp_path):
+        """Script calling exec() is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("exec('import os')\n")
+        with pytest.raises(ContentExtraError, match="Dangerous builtin 'exec'"):
+            _validate_content_extra(script)
+
+    def test_dangerous_dunder_import(self, tmp_path):
+        """Script calling __import__() is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("m = __import__('os')\n")
+        with pytest.raises(ContentExtraError, match="Dangerous builtin '__import__'"):
+            _validate_content_extra(script)
+
+    def test_dangerous_compile(self, tmp_path):
+        """Script calling compile() is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("c = compile('pass', '<str>', 'exec')\n")
+        with pytest.raises(ContentExtraError, match="Dangerous builtin 'compile'"):
+            _validate_content_extra(script)
+
+    def test_syntax_error_rejected(self, tmp_path):
+        """Script with a syntax error is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("def render(:\n")
+        with pytest.raises(ContentExtraError, match="Syntax error"):
+            _validate_content_extra(script)
+
+    def test_build_slide_runs_valid_content_extra(
+        self, blank_presentation, tmp_path
+    ):
+        """build_slide executes a valid content-extra.py render function."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        marker_file = tmp_path / "render_called"
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            "from pathlib import Path\n"
+            "def render(slide, style, content_dir):\n"
+            f"    Path(r'{marker_file}').write_text('yes')\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        build_slide(
+            blank_presentation, slide_content, {}, content_dir
+        )
+        assert marker_file.read_text() == "yes"
+
+    def test_build_slide_rejects_bad_content_extra(
+        self, blank_presentation, tmp_path
+    ):
+        """build_slide refuses to execute a content-extra.py with blocked imports."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        script = content_dir / "content-extra.py"
+        script.write_text("import subprocess\ndef render(s,st,d): pass\n")
+
+        slide_content = {"layout": "Blank", "elements": []}
+        with pytest.raises(ContentExtraError, match="Blocked import 'subprocess'"):
+            build_slide(
+                blank_presentation, slide_content, {}, content_dir
+            )
+
+    def test_dangerous_breakpoint(self, tmp_path):
+        """Script calling breakpoint() is rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text("breakpoint()\n")
+        with pytest.raises(
+            ContentExtraError, match="Dangerous builtin 'breakpoint'"
+        ):
+            _validate_content_extra(script)
+
+    @pytest.mark.parametrize("builtin_name", [
+        "delattr", "getattr", "globals", "locals", "setattr", "vars",
+    ])
+    def test_indirect_bypass_builtins(self, builtin_name, tmp_path):
+        """Indirect bypass builtins are rejected."""
+        script = tmp_path / "content-extra.py"
+        script.write_text(f"x = {builtin_name}(object)\n")
+        with pytest.raises(
+            ContentExtraError,
+            match=f"Indirect bypass builtin '{builtin_name}'",
+        ):
+            _validate_content_extra(script)
+
+    def test_allow_scripts_skips_validation(
+        self, blank_presentation, tmp_path
+    ):
+        """build_slide skips validation when allow_scripts is True."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        marker_file = tmp_path / "bypass_called"
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            "from pathlib import Path\n"
+            "import os\n"
+            "def render(slide, style, content_dir):\n"
+            f"    Path(r'{marker_file}').write_text('bypassed')\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        build_slide(
+            blank_presentation,
+            slide_content,
+            {},
+            content_dir,
+            allow_scripts=True,
+        )
+        assert marker_file.read_text() == "bypassed"
+
+    def test_allow_scripts_false_still_validates(
+        self, blank_presentation, tmp_path
+    ):
+        """build_slide validates when allow_scripts is explicitly False."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        script = content_dir / "content-extra.py"
+        script.write_text("import os\ndef render(s,st,d): pass\n")
+
+        slide_content = {"layout": "Blank", "elements": []}
+        with pytest.raises(ContentExtraError, match="Blocked import 'os'"):
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=False,
+            )
+
+    def test_restricted_namespace_blocks_eval(
+        self, blank_presentation, tmp_path
+    ):
+        """Runtime namespace strips dangerous builtins even after AST pass."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        # Script uses no blocked AST patterns but tries eval at runtime
+        # via a string indirection the AST checker cannot catch.
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            "def render(slide, style, content_dir):\n"
+            "    fn = __builtins__['eval']\n"
+            "    fn('1+1')\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        with pytest.raises(KeyError, match="eval"):
+            build_slide(
+                blank_presentation,
+                slide_content,
+                {},
+                content_dir,
+                allow_scripts=False,
+            )
+
+    def test_restricted_namespace_allows_safe_builtins(
+        self, blank_presentation, tmp_path
+    ):
+        """Safe builtins like len and range remain available."""
+        content_dir = tmp_path / "slide-001"
+        content_dir.mkdir()
+        (content_dir / "content.yaml").write_text("")
+
+        marker = tmp_path / "safe_result"
+        script = content_dir / "content-extra.py"
+        script.write_text(
+            "from pathlib import Path\n"
+            "def render(slide, style, content_dir):\n"
+            f"    Path(r'{marker}').write_text(str(len(range(5))))\n"
+        )
+
+        slide_content = {"layout": "Blank", "elements": []}
+        build_slide(
+            blank_presentation,
+            slide_content,
+            {},
+            content_dir,
+            allow_scripts=False,
+        )
+        assert marker.read_text() == "5"
+
+
+class TestAllowScriptsCLI:
+    """Integration tests that exercise --allow-scripts through main()."""
+
+    def _setup_with_extra(self, tmp_path, extra_code):
+        """Create content dir with a content-extra.py script."""
+        content_dir = tmp_path / "content"
+        slide_dir = content_dir / "slide-001"
+        slide_dir.mkdir(parents=True)
+        (slide_dir / "content.yaml").write_text(
+            "slide: 1\ntitle: Test\nelements: []\n"
+        )
+        (slide_dir / "content-extra.py").write_text(extra_code)
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text(
+            "dimensions:\n  width_inches: 13.333\n"
+            "  height_inches: 7.5\n"
+        )
+        return content_dir, style_file
+
+    @patch("build_deck.Presentation")
+    def test_allow_scripts_flag_propagates(
+        self, mock_prs_cls, tmp_path
+    ):
+        """--allow-scripts lets a blocked-import script run via main()."""
+        marker = tmp_path / "executed"
+        extra = (
+            "import os\n"
+            "from pathlib import Path\n"
+            f"def render(slide, style, d): "
+            f"Path(r'{marker}').write_text('ok')\n"
+        )
+        content_dir, style_file = self._setup_with_extra(
+            tmp_path, extra
+        )
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_prs.slide_layouts = MagicMock()
+        layout = MagicMock()
+        mock_prs.slide_layouts.__getitem__ = MagicMock(
+            return_value=layout
+        )
+        mock_prs.slide_layouts.__iter__ = MagicMock(
+            return_value=iter([layout])
+        )
+        layout.name = "Blank"
+        slide = MagicMock()
+        mock_prs.slides.add_slide.return_value = slide
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+                "--allow-scripts",
+            ],
+        ):
+            main()
+
+        assert marker.read_text() == "ok"
+
+    @patch("build_deck.Presentation")
+    def test_no_allow_scripts_rejects_blocked_import(
+        self, mock_prs_cls, tmp_path
+    ):
+        """Without --allow-scripts, a blocked-import script fails."""
+        extra = "import os\ndef render(s, st, d): pass\n"
+        content_dir, style_file = self._setup_with_extra(
+            tmp_path, extra
+        )
+        output = tmp_path / "deck.pptx"
+
+        mock_prs = MagicMock()
+        mock_prs.slides.__len__ = MagicMock(return_value=1)
+        mock_prs.slide_layouts = MagicMock()
+        layout = MagicMock()
+        mock_prs.slide_layouts.__getitem__ = MagicMock(
+            return_value=layout
+        )
+        mock_prs.slide_layouts.__iter__ = MagicMock(
+            return_value=iter([layout])
+        )
+        layout.name = "Blank"
+        slide = MagicMock()
+        mock_prs.slides.add_slide.return_value = slide
+        mock_prs_cls.return_value = mock_prs
+
+        with patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir", str(content_dir),
+                "--style", str(style_file),
+                "--output", str(output),
+            ],
+        ):
+            with pytest.raises(ContentExtraError):
+                main()

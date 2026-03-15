@@ -149,8 +149,8 @@ commit.
 
 ## Next Steps
 
-1. Return to [PR Creation](pr-creation) to update your pull request based on build findings
-2. See [Using Workflows Together](using-together) for the full pipeline walkthrough
+1. Return to [PR Creation](pr-creation.md) to update your pull request based on build findings
+2. See [Using Workflows Together](using-together.md) for the full pipeline walkthrough
 
 > [!TIP]
 > When a build fails on a PR, run build monitoring first to diagnose the issue. Fix the code, push the change, then re-run build monitoring to confirm the fix before requesting another review.
