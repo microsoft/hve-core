@@ -8,6 +8,11 @@
 set -euo pipefail
 
 main() {
+  # Enterprise artifact hub overrides (public defaults when unset)
+  GITHUB_RELEASES_URL="${HVE_GITHUB_RELEASES_URL:-https://github.com}"
+  PSGALLERY_REPO="${HVE_PSGALLERY_REPOSITORY:-PSGallery}"
+  PSGALLERY_SOURCE="${HVE_PSGALLERY_SOURCE_URL:-}"
+
   echo "Installing system dependencies..."
   
   sudo apt update
@@ -27,7 +32,7 @@ main() {
     echo "ERROR: Unsupported architecture: ${ARCH}" >&2
     exit 1
   fi
-  curl -sSfL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
+  curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
 
   echo "Checking actionlint tarball integrity..."
   if ! echo "${ACTIONLINT_SHA256} /tmp/actionlint.tar.gz" | sha256sum -c --quiet -; then
@@ -39,9 +44,13 @@ main() {
   rm /tmp/actionlint.tar.gz
 
   echo "Installing PowerShell modules..."
-  pwsh -NoProfile -Command "Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser -Repository PSGallery"
-  pwsh -NoProfile -Command "Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery"
-  pwsh -NoProfile -Command "Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository PSGallery"
+  if [[ -n "${PSGALLERY_SOURCE}" ]]; then
+    PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
+      pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
+  fi
+  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
+  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
+  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
@@ -56,7 +65,7 @@ main() {
     echo "ERROR: Unsupported architecture for gitleaks: ${ARCH}" >&2
     exit 1
   fi
-  curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tar.gz
+  curl -sSfL "${GITHUB_RELEASES_URL}/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tar.gz
   
   echo "Checking gitleaks tarball integrity..."
   if ! echo "${GITLEAKS_SHA256} /tmp/gitleaks.tar.gz" | sha256sum -c --quiet -; then
@@ -80,7 +89,7 @@ main() {
     echo "ERROR: Unsupported architecture for uv: ${ARCH}" >&2
     exit 1
   fi
-  curl -sSfL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz" -o /tmp/uv.tar.gz
+  curl -sSfL "${GITHUB_RELEASES_URL}/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz" -o /tmp/uv.tar.gz
 
   echo "Checking uv tarball integrity..."
   if ! echo "${UV_SHA256} /tmp/uv.tar.gz" | sha256sum -c --quiet -; then

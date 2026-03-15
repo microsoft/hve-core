@@ -1,6 +1,6 @@
 ---
 title: Multi-Root Workspace Installation
-description: Set up your enterprise fork of HVE-Core using VS Code multi-root workspaces
+description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
 ms.date: 2026-03-10
@@ -15,13 +15,13 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Forking HVE-Core lets your enterprise customize agents, prompts, instructions, and skills for your organization while staying connected to upstream improvements. Multi-root workspaces bring that fork into any project workspace, giving teams a portable configuration that works across Local VS Code, Devcontainers, and Codespaces.
+Forking HVE Core lets your enterprise customize agents, prompts, instructions, and skills for your organization while staying connected to upstream improvements. Multi-root workspaces bring that fork into any project workspace, giving teams a portable configuration that works across Local VS Code, Devcontainers, and Codespaces.
 
 ## When to Use This Method
 
 ✅ **Use this when:**
 
-* Your enterprise maintains a fork of HVE-Core with org-specific customizations
+* Your enterprise maintains a fork of HVE Core with org-specific customizations
 * You need a single configuration that works across Local VS Code, Devcontainers, and Codespaces
 * Teams share a common set of customized agents, prompts, and instructions
 * You want to pull upstream improvements on your own schedule
@@ -29,7 +29,7 @@ Forking HVE-Core lets your enterprise customize agents, prompts, instructions, a
 ❌ **Consider alternatives when:**
 
 * Your team needs version-pinned dependencies without a fork → [Submodule](submodule.md)
-* You're contributing back to HVE-Core itself → [Peer Clone](peer-clone.md)
+* You're contributing back to HVE Core itself → [Peer Clone](peer-clone.md)
 
 ## How It Works
 
@@ -41,7 +41,7 @@ Your enterprise forks the `microsoft/hve-core` repository, adds org-specific age
 ├──────────────────────────────────────────────────┤
 │  📁 My Project (primary)                         │
 │     └── Your application code                    │
-│  📁 HVE-Core Fork (secondary)                    │
+│  📁 HVE Core Fork (secondary)                    │
 │     └── .github/agents, prompts, instructions    │
 │     └── Org-specific customizations              │
 └──────────────────────────────────────────────────┘
@@ -61,7 +61,7 @@ Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemN
 
 ### Step 1: Fork and Clone
 
-If your organization has not already forked HVE-Core, create a fork of `microsoft/hve-core` under your org's GitHub account. Then clone your fork.
+If your organization has not already forked HVE Core, create a fork of `microsoft/hve-core` under your org's GitHub account. Then clone your fork.
 
 #### Local VS Code
 
@@ -97,7 +97,7 @@ Use the absolute clone path:
       "path": ".."
     },
     {
-      "name": "HVE-Core Fork",
+      "name": "HVE Core Fork",
       "path": "/workspaces/hve-core"
     }
   ],
@@ -157,7 +157,7 @@ Use the relative clone path from the workspace file's directory:
       "path": ".."
     },
     {
-      "name": "HVE-Core Fork",
+      "name": "HVE Core Fork",
       "path": "../../hve-core"
     }
   ],
@@ -184,7 +184,7 @@ Update `.devcontainer/devcontainer.json` to clone your org's fork:
 
 ```jsonc
 {
-  "name": "My Project + HVE-Core",
+  "name": "My Project + HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "onCreateCommand": "git clone --depth 1 https://github.com/your-org/hve-core.git /workspaces/hve-core 2>/dev/null || git -C /workspaces/hve-core pull --ff-only || true",
@@ -221,7 +221,7 @@ Use the actual clone path as the prefix in `chat.*Locations` settings:
 |---------------|-----------------------------------------|--------------|
 | Absolute path | `"/workspaces/hve-core/.github/agents"` | ✅ Codespaces |
 | Relative path | `"../../hve-core/.github/agents"`       | ✅ Local      |
-| Folder name   | `"HVE-Core Fork/.github/agents"`        | ❌ Unreliable |
+| Folder name   | `"HVE Core Fork/.github/agents"`        | ❌ Unreliable |
 
 Folder display names (`"name"` field) label roots in the Explorer sidebar but do not resolve reliably as path prefixes in `chat.*Locations` settings. Always use the filesystem path from the folder's `"path"` field instead.
 
@@ -258,12 +258,12 @@ git push origin main
 
 ## Verification
 
-After setup, verify HVE-Core is working:
+After setup, verify HVE Core is working:
 
 1. Check the Explorer sidebar shows both folders
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE-Core agents appear (task-planner, task-researcher, etc.)
+4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
 
 ## Troubleshooting
 
@@ -275,7 +275,7 @@ After setup, verify HVE-Core is working:
 
 ### "Folder not found" error
 
-* For local setups, verify HVE-Core is cloned at the relative path specified
+* For local setups, verify HVE Core is cloned at the relative path specified
 * For Codespaces, check that `onCreateCommand` ran successfully in creation logs
 
 ### Settings not applying
@@ -285,7 +285,7 @@ After setup, verify HVE-Core is working:
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 

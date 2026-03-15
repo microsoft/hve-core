@@ -4,8 +4,7 @@
   "collapsible": true,
   "collapsed": true,
   "link": {
-    "type": "generated-index",
-    "title": "Setup Methods",
-    "description": "Detailed setup guides for each installation method."
+    "type": "doc",
+    "id": "getting-started/methods/README"
   }
 }

@@ -1,0 +1,30 @@
+.section {
+  max-width: calc(100% - 48px);
+  margin: 0 24px;
+  padding: 48px 0;
+}
+
+.sectionCompact {
+  max-width: calc(100% - 48px);
+  margin: 0 24px;
+  padding: 24px 0;
+}
+
+.sectionTitle {
+  font-size: 34px;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.sectionSubtitle {
+  color: var(--ms-learn-text-subtle);
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.diagramContainer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
