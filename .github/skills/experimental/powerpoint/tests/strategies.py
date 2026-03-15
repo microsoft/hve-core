@@ -4,14 +4,27 @@ from hypothesis import strategies as st
 
 # Theme names matching THEME_COLOR_MAP keys in pptx_colors.py
 THEME_NAMES = [
-    "accent_1", "accent_2", "accent_3", "accent_4", "accent_5", "accent_6",
-    "dark_1", "dark_2", "light_1", "light_2", "text_1", "text_2",
-    "background_1", "background_2", "hyperlink", "followed_hyperlink",
+    "accent_1",
+    "accent_2",
+    "accent_3",
+    "accent_4",
+    "accent_5",
+    "accent_6",
+    "dark_1",
+    "dark_2",
+    "light_1",
+    "light_2",
+    "text_1",
+    "text_2",
+    "background_1",
+    "background_2",
+    "hyperlink",
+    "followed_hyperlink",
 ]
 
-hex_color = st.text(
-    alphabet="0123456789abcdefABCDEF", min_size=6, max_size=6
-).map(lambda s: f"#{s}")
+hex_color = st.text(alphabet="0123456789abcdefABCDEF", min_size=6, max_size=6).map(
+    lambda s: f"#{s}"
+)
 
 theme_ref = st.sampled_from(THEME_NAMES)
 
@@ -42,35 +55,43 @@ def table_element(draw):
         cells = [{"text": draw(safe_text)} for _ in range(cols)]
         rows.append({"cells": cells})
     columns = [
-        {"width": draw(st.floats(min_value=0.5, max_value=5.0))}
-        for _ in range(cols)
+        {"width": draw(st.floats(min_value=0.5, max_value=5.0))} for _ in range(cols)
     ]
     return {"type": "table", "columns": columns, "rows": rows}
 
 
-position = st.fixed_dictionaries({
-    "left": st.floats(min_value=0.0, max_value=12.0),
-    "top": st.floats(min_value=0.0, max_value=7.0),
-    "width": st.floats(min_value=0.5, max_value=12.0),
-    "height": st.floats(min_value=0.5, max_value=7.0),
-})
+position = st.fixed_dictionaries(
+    {
+        "left": st.floats(min_value=0.0, max_value=12.0),
+        "top": st.floats(min_value=0.0, max_value=7.0),
+        "width": st.floats(min_value=0.5, max_value=12.0),
+        "height": st.floats(min_value=0.5, max_value=7.0),
+    }
+)
 
 
-issue = st.fixed_dictionaries({
-    "check_type": st.text(min_size=1, max_size=20),
-    "severity": st.sampled_from(["info", "warning", "error"]),
-    "description": st.text(max_size=100),
-    "location": st.text(max_size=50),
-})
+issue = st.fixed_dictionaries(
+    {
+        "check_type": st.text(min_size=1, max_size=20),
+        "severity": st.sampled_from(["info", "warning", "error"]),
+        "description": st.text(max_size=100),
+        "location": st.text(max_size=50),
+    }
+)
 
-severity_results = st.fixed_dictionaries({
-    "slides": st.lists(
-        st.fixed_dictionaries({
-            "slide_number": st.integers(min_value=1, max_value=50),
-            "issues": st.lists(issue, max_size=5),
-        }),
-        max_size=10,
-    ),
-}, optional={
-    "deck_issues": st.lists(issue, max_size=5),
-})
+severity_results = st.fixed_dictionaries(
+    {
+        "slides": st.lists(
+            st.fixed_dictionaries(
+                {
+                    "slide_number": st.integers(min_value=1, max_value=50),
+                    "issues": st.lists(issue, max_size=5),
+                }
+            ),
+            max_size=10,
+        ),
+    },
+    optional={
+        "deck_issues": st.lists(issue, max_size=5),
+    },
+)
