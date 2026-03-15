@@ -9,7 +9,7 @@ This collection includes agents for:
 - **Architecture Diagrams** — Generate ASCII-art architecture diagrams from descriptions
 - **Business Requirements Documents** — Build BRDs through guided Q&A sessions
 - **System Architecture Reviewer** — System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment
-- **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, Review, and Discover phases
+- **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, and Review phases
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
 
 Supporting subagents included:

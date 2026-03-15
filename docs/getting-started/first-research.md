@@ -1,7 +1,7 @@
 ---
 title: Your First Research
 description: Use the task-researcher agent to investigate your own codebase
-sidebar_position: 4
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial

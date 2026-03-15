@@ -68,7 +68,7 @@ jobs:
         id: find
         shell: pwsh
         run: |
-          $projectList = @(Get-ChildItem -Recurse -Filter pyproject.toml |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
             Where-Object { $_.FullName -notmatch 'node_modules' } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
