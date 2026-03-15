@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-03-14
 ms.topic: how-to
 ---
 
@@ -332,7 +332,7 @@ When agents reference MCP tools in their `tools:` frontmatter or body content, d
 tools: ['github/*', 'ado/*', 'context7/*', 'microsoft-docs/*']
 ```
 
-#### Curated MCP Servers Referenced by HVE-Core Agents
+#### Curated MCP Servers Referenced by HVE Core Agents
 
 | Server         | Tool Pattern       | Purpose                                   |
 |----------------|--------------------|-------------------------------------------|

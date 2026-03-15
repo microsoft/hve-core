@@ -153,8 +153,8 @@ task breakdown.
 
 ## Next Steps
 
-1. Feed your planning output into the [Discovery workflow](discovery) for work item analysis
-2. See [Using Workflows Together](using-together) for the full pipeline walkthrough
+1. Feed your planning output into the [Discovery workflow](discovery.md) for work item analysis
+2. See [Using Workflows Together](using-together.md) for the full pipeline walkthrough
 
 > [!TIP]
 > Combine task planning with the `forceTopId` input when you already know which work item to tackle first. The agent adjusts its recommendation and structures the remaining items accordingly.

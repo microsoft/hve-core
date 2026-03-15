@@ -234,7 +234,7 @@ If your instructions apply only to this repository and are not intended for dist
 
 ## Collection Taxonomy
 
-Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
+Collections represent role-targeted artifact packages for HVE Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
 
 ### Defined Collections
 

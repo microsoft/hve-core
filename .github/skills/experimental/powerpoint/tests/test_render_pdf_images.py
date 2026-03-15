@@ -8,15 +8,14 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from render_pdf_images import (
+    EXIT_FAILURE,
     configure_logging,
     create_parser,
     main,
     parse_slide_numbers,
     render_pages,
     run,
-    EXIT_FAILURE,
 )
 
 
@@ -148,7 +147,8 @@ class TestRenderPages:
         count = rp(pdf_path, output_dir, 150, slide_numbers=[5, 10])
         assert count == 2
         # Verify the save used the slide numbers in filenames
-        pix_save_args = [c.args[0] for c in pages[0].get_pixmap.return_value.save.call_args_list]
+        save_calls = pages[0].get_pixmap.return_value.save
+        pix_save_args = [c.args[0] for c in save_calls.call_args_list]
         assert "slide-005.jpg" in pix_save_args[0]
 
     @patch.dict("sys.modules", {"fitz": MagicMock()})
