@@ -30,7 +30,8 @@
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
     "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1",
     "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1",
-    "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run lint:md:fix && npm run format:tables",
+    "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
+    "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:validate": "npm run lint:collections-metadata",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:serve": "npm --prefix docs/docusaurus run serve"
