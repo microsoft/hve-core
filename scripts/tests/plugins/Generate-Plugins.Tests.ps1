@@ -368,7 +368,7 @@ items:
         $result.Success | Should -BeTrue
     }
 
-    It 'Removes existing plugin directory on Refresh' {
+    It 'Removes orphan files on Refresh' {
         # Create a stale file in plugin dir
         $staleDir = Join-Path $script:tempDir 'plugins/hve-core-all/stale'
         New-Item -ItemType Directory -Path $staleDir -Force | Out-Null
@@ -376,19 +376,27 @@ items:
 
         $result = Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease'
         $result.Success | Should -BeTrue
+        # Orphan file and its now-empty parent directory are removed
+        Test-Path (Join-Path $staleDir 'file.txt') | Should -BeFalse
         Test-Path $staleDir | Should -BeFalse
+        # Plugin directory itself still exists with generated files
+        $pluginDir = Join-Path $script:tempDir 'plugins/hve-core-all'
+        Test-Path $pluginDir | Should -BeTrue
+        Test-Path (Join-Path $pluginDir 'README.md') | Should -BeTrue
     }
 
     It 'Logs DryRun message when refreshing existing plugin' {
-        # Ensure plugin directory exists
+        # Create orphan file so DryRun has something to report
         $pluginDir = Join-Path $script:tempDir 'plugins/hve-core-all'
-        New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+        $orphanDir = Join-Path $pluginDir 'stale-dry'
+        New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+        'stale' | Set-Content -Path (Join-Path $orphanDir 'file.txt')
 
         $output = Invoke-PluginGeneration -RepoRoot $script:tempDir `
             -CollectionIds @('hve-core-all') `
             -Refresh -DryRun -Channel 'PreRelease' 6>&1
 
-        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove' })
+        $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
         $dryRunMessages.Count | Should -BeGreaterOrEqual 1
     }
 
@@ -417,6 +425,55 @@ items:
 
         $capMsg = @($output | Where-Object { "$_" -match 'Symlink capability' })
         $capMsg.Count | Should -BeGreaterOrEqual 1
+    }
+
+    Context 'Orphan Cleanup' {
+        It 'Removes orphan files after overwrite-in-place' {
+            $staleDir = Join-Path $script:tempDir 'plugins/hve-core-all/orphan-test'
+            New-Item -ItemType Directory -Path $staleDir -Force | Out-Null
+            'stale' | Set-Content -Path (Join-Path $staleDir 'leftover.txt')
+
+            $result = Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease'
+            $result.Success | Should -BeTrue
+            Test-Path (Join-Path $staleDir 'leftover.txt') | Should -BeFalse
+            Test-Path (Join-Path $script:tempDir 'plugins/hve-core-all/README.md') | Should -BeTrue
+        }
+
+        It 'Preserves generated files during cleanup' {
+            # Run a fresh Refresh to get clean state
+            Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease' | Out-Null
+
+            $pluginDir = Join-Path $script:tempDir 'plugins/hve-core-all'
+            Test-Path (Join-Path $pluginDir 'README.md') | Should -BeTrue
+            Test-Path (Join-Path $pluginDir '.github/plugin/plugin.json') | Should -BeTrue
+            Test-Path (Join-Path $pluginDir 'docs/templates') | Should -BeTrue
+            Test-Path (Join-Path $pluginDir 'scripts/lib') | Should -BeTrue
+        }
+
+        It 'Removes empty directories after orphan cleanup' {
+            $nestedOrphan = Join-Path $script:tempDir 'plugins/hve-core-all/stale-dir/nested'
+            New-Item -ItemType Directory -Path $nestedOrphan -Force | Out-Null
+            'leftover' | Set-Content -Path (Join-Path $nestedOrphan 'leftover.txt')
+
+            $result = Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease'
+            $result.Success | Should -BeTrue
+            Test-Path (Join-Path $script:tempDir 'plugins/hve-core-all/stale-dir') | Should -BeFalse
+        }
+
+        It 'DryRun logs orphan files without removing them' {
+            $orphanDir = Join-Path $script:tempDir 'plugins/hve-core-all/dry-orphan'
+            New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+            'keep-me' | Set-Content -Path (Join-Path $orphanDir 'persist.txt')
+
+            $output = Invoke-PluginGeneration -RepoRoot $script:tempDir `
+                -CollectionIds @('hve-core-all') `
+                -Refresh -DryRun -Channel 'PreRelease' 6>&1
+
+            $dryRunMessages = @($output | Where-Object { "$_" -match 'DRY RUN.*Would remove orphan' })
+            $dryRunMessages.Count | Should -BeGreaterOrEqual 1
+            # File still exists after DryRun
+            Test-Path (Join-Path $orphanDir 'persist.txt') | Should -BeTrue
+        }
     }
 }
 
