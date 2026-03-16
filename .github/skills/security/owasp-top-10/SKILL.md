@@ -12,9 +12,9 @@ metadata:
   content_based_on: "https://owasp.org/Top10/2025/"
 ---
 
-# Web Vulnerabilities — Skill Entry
+# OWASP Top 10 — Skill Entry
 
-This `SKILL.md` is the **entrypoint** for the Web Vulnerabilities skill.
+This `SKILL.md` is the **entrypoint** for the OWASP Top 10 skill.
 
 The skill encodes the **OWASP Top 10 for Web Applications (2025)** as structured, machine-readable
 references that an agent can query to identify, assess, and remediate web application security

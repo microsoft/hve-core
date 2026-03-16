@@ -12,9 +12,9 @@ metadata:
   content_based_on: "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"
 ---
 
-# LLM Vulnerabilities — Skill Entry
+# OWASP LLM Top 10 — Skill Entry
 
-This `SKILL.md` is the **entrypoint** for the LLM Vulnerabilities skill.
+This `SKILL.md` is the **entrypoint** for the OWASP LLM Top 10 skill.
 
 The skill encodes the **OWASP Top 10 for LLM Applications (2025)** as structured,
 machine-readable references that an agent can query to identify, assess, and remediate

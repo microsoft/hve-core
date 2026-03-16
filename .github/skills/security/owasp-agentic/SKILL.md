@@ -12,9 +12,9 @@ metadata:
   content_based_on: "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/"
 ---
 
-# Agentic Vulnerabilities — Skill Entry
+# OWASP Agentic Top 10 — Skill Entry
 
-This `SKILL.md` is the **entrypoint** for the Agentic Vulnerabilities skill.
+This `SKILL.md` is the **entrypoint** for the OWASP Agentic Top 10 skill.
 
 The skill encodes the **OWASP Top 10 for Agentic Applications (2026)** as structured,
 machine-readable references that an agent can query to identify, assess, and remediate
