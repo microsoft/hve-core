@@ -31,6 +31,8 @@ items:
     kind: skill
   - path: .github/skills/security/owasp-agentic
     kind: skill
+  - path: .github/skills/security/security-reviewer-formats
+    kind: skill
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
@@ -38,8 +40,6 @@ items:
     kind: prompt
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
-    kind: instruction
-  - path: .github/instructions/security/security-formats.instructions.md
     kind: instruction
 display:
   ordering: manual

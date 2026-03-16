@@ -34,15 +34,15 @@ copilot plugin install security@hve-core
 | Instruction       | Description                                                                                                                                                                                                                                                 |
 |-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
-| security-formats  | Shared format specifications and subagent response contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core                                                                                                |
 
 ## Skills
 
-| Skill         | Description   |
-|---------------|---------------|
-| owasp-top-10  | owasp-top-10  |
-| owasp-llm     | owasp-llm     |
-| owasp-agentic | owasp-agentic |
+| Skill                     | Description               |
+|---------------------------|---------------------------|
+| owasp-top-10              | owasp-top-10              |
+| owasp-llm                 | owasp-llm                 |
+| owasp-agentic             | owasp-agentic             |
+| security-reviewer-formats | security-reviewer-formats |
 
 ---
 

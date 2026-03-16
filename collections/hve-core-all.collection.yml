@@ -388,8 +388,6 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
-- path: .github/instructions/security/security-formats.instructions.md
-  kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
@@ -407,6 +405,8 @@ items:
 - path: .github/skills/security/owasp-llm
   kind: skill
 - path: .github/skills/security/owasp-top-10
+  kind: skill
+- path: .github/skills/security/security-reviewer-formats
   kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill
