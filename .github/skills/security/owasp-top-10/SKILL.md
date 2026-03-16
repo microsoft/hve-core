@@ -40,12 +40,6 @@ risks.
 * `references/` — the Web Top 10 normative documents.
   * `00-vulnerability-index.md` — master index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP Web Application Security numbering.
-* `assets/` — reusable format and constants blocks.
-  * `constants/` — vulnerability catalog and category definitions.
-    * `constants-web-catalog-v1.0.0.md`
-  * `formats/` — output contract examples.
-    * `format-vulnerability-assessment-v1.0.0.md`
-    * `format-remediation-checklist-v1.0.0.md`
 
 ---
 
