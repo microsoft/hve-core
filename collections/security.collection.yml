@@ -14,32 +14,45 @@ items:
   # Agents
   - path: .github/agents/security/security-plan-creator.agent.md
     kind: agent
+    maturity: experimental
   - path: .github/agents/security/security-reviewer.agent.md
     kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/codebase-profiler.agent.md
     kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
     kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/report-generator.agent.md
     kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/skill-assessor.agent.md
     kind: agent
+    maturity: experimental
   # Skills
   - path: .github/skills/security/owasp-top-10
     kind: skill
+    maturity: experimental
   - path: .github/skills/security/owasp-llm
     kind: skill
+    maturity: experimental
   - path: .github/skills/security/owasp-agentic
     kind: skill
+    maturity: experimental
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
+    maturity: experimental
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
+    maturity: experimental
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+    maturity: experimental
 display:
   ordering: manual
