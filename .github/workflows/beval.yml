@@ -32,7 +32,7 @@ jobs:
 
       - name: Start agent (TCP)
         run: |
-          copilot --agent dt-coach --allow-all --model claude-opus-4.6-fast
+          copilot --agent dt-coach --allow-all --model claude-opus-4.6-fast -p "How are you doing?"
           sleep 5
 
       - name: Start judge (TCP)
