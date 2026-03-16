@@ -12,11 +12,15 @@
       "oneOf": [
         {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         {
           "type": "string",
-          "enum": ["*"]
+          "enum": [
+            "*"
+          ]
         }
       ],
       "default": "*",
@@ -44,10 +48,14 @@
     },
     "model": {
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       ],
       "description": "The AI model(s) to use when running the agent. If not specified, the currently selected model in model picker is used."
@@ -77,11 +85,21 @@
       "default": false,
       "description": "When true, prevents this agent from invoking subagents (including other custom agents). It does not affect which model this agent uses or how the model picker works."
     },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Explicit list of instruction file paths to attach to this agent, independent of applyTo glob matching"
+    },
     "handoffs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "agent"],
+        "required": [
+          "label",
+          "agent"
+        ],
         "properties": {
           "label": {
             "type": "string",
