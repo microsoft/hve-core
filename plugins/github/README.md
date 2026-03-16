@@ -25,6 +25,7 @@ copilot plugin install github@hve-core
 | Agent                  | Description                                                                                                                                                   |
 |------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | github-backlog-manager | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core |
+| issue-triage           | Automated single-issue triage agent for classifying, labeling, and quality-checking GitHub issues - Brought to you by microsoft/hve-core                      |
 
 ## Commands
 

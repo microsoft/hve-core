@@ -33,6 +33,10 @@ items:
     kind: agent
   - path: .github/agents/hve-core/pr-review.agent.md
     kind: agent
+  - path: .github/agents/hve-core/dependency-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/doc-update-checker.agent.md
+    kind: agent
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
     kind: agent
