@@ -1,6 +1,6 @@
 ---
 title: Git-Ignored Folder Installation
-description: Install HVE-Core in a git-ignored folder for devcontainer environments
+description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
 ms.date: 2026-03-10
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-Git-Ignored Folder installation places HVE-Core inside your project in a `.hve-core/` folder that's excluded from version control. This is ideal for solo developers using devcontainers who want a self-contained setup.
+Git-Ignored Folder installation places HVE Core inside your project in a `.hve-core/` folder that's excluded from version control. This is ideal for solo developers using devcontainers who want a self-contained setup.
 
 ## When to Use This Method
 
@@ -21,25 +21,25 @@ Git-Ignored Folder installation places HVE-Core inside your project in a `.hve-c
 
 * You use local devcontainers (Docker Desktop)
 * You're working solo
-* You want HVE-Core auto-updated with container rebuilds
+* You want HVE Core auto-updated with container rebuilds
 * You want a self-contained project (no external dependencies)
 
 ❌ **Consider alternatives when:**
 
 * Your team needs version control → [Submodule](submodule.md)
 * You use Codespaces → [GitHub Codespaces](codespaces.md)
-* You want to share HVE-Core across projects → [Mounted Directory](mounted.md)
+* You want to share HVE Core across projects → [Mounted Directory](mounted.md)
 * You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 
 ## How It Works
 
-HVE-Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository.
+HVE Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository.
 
 ```text
 my-project/
 ├── .devcontainer/
-│   └── devcontainer.json    # postCreateCommand clones HVE-Core
-├── .hve-core/               # Git-ignored, contains HVE-Core
+│   └── devcontainer.json    # postCreateCommand clones HVE Core
+├── .hve-core/               # Git-ignored, contains HVE Core
 │   └── .github/
 │       ├── agents/
 │       ├── prompts/
@@ -58,14 +58,14 @@ Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemN
 
 ### Step 1: Update .gitignore
 
-Add the HVE-Core folder to your `.gitignore`:
+Add the HVE Core folder to your `.gitignore`:
 
 ```text
-# HVE-Core installation (local only)
+# HVE Core installation (local only)
 .hve-core/
 ```
 
-### Step 2: Clone HVE-Core
+### Step 2: Clone HVE Core
 
 #### PowerShell
 
@@ -74,7 +74,7 @@ Add the HVE-Core folder to your `.gitignore`:
 $hveCoreFolder = ".hve-core"
 if (-not (Test-Path $hveCoreFolder)) {
     git clone https://github.com/microsoft/hve-core.git $hveCoreFolder
-    Write-Host "✅ Cloned HVE-Core to $hveCoreFolder"
+    Write-Host "✅ Cloned HVE Core to $hveCoreFolder"
 }
 ```
 
@@ -85,7 +85,7 @@ HVE_CORE_FOLDER=".hve-core"
 
 if [ ! -d "$HVE_CORE_FOLDER" ]; then
     git clone https://github.com/microsoft/hve-core.git "$HVE_CORE_FOLDER"
-    echo "✅ Cloned HVE-Core to $HVE_CORE_FOLDER"
+    echo "✅ Cloned HVE Core to $HVE_CORE_FOLDER"
 fi
 ```
 
@@ -129,7 +129,7 @@ Create or update `.vscode/settings.json`:
 
 ### Step 4: Automate with Devcontainer
 
-Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container creation:
+Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container creation:
 
 ```jsonc
 {
@@ -144,13 +144,13 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
 1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
 
 ## Complete Devcontainer Example
 
 ```jsonc
 {
-  "name": "My Project with HVE-Core",
+  "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core",
@@ -193,7 +193,7 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
 }
 ```
 
-## Updating HVE-Core
+## Updating HVE Core
 
 ### Manual update
 
@@ -264,7 +264,7 @@ The clone only happens if the folder doesn't exist. To force update:
 }
 ```
 
-**Warning:** This deletes any local changes to HVE-Core on every rebuild.
+**Warning:** This deletes any local changes to HVE Core on every rebuild.
 
 ## Limitations
 
@@ -280,7 +280,7 @@ The clone only happens if the folder doesn't exist. To force update:
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [Multi-Root Workspace](multi-root.md) - Share across local + Codespaces
 * [Submodule](submodule.md) - Add version control for teams
 

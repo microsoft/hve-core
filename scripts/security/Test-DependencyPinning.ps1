@@ -122,6 +122,8 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 
+$script:GitHubApiBase = Get-GitHubApiBase
+
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
     'github-actions' = @{
@@ -134,7 +136,7 @@ $DependencyPatterns = @{
             }
         )
         SHAPattern      = '^[a-fA-F0-9]{40}$'
-        RemediationUrl  = 'https://api.github.com/repos/{0}/commits/{1}'
+        RemediationUrl  = "$script:GitHubApiBase/repos/{0}/commits/{1}"
     }
 
     'npm'            = @{
@@ -739,7 +741,7 @@ function Get-RemediationSuggestion {
         switch ($type) {
             'github-actions' {
                 # For GitHub Actions, resolve tag to commit SHA
-                $apiUrl = "https://api.github.com/repos/$name/commits/$version"
+                $apiUrl = "$script:GitHubApiBase/repos/$name/commits/$version"
                 $headers = @{}
 
                 if ($env:GITHUB_TOKEN) {

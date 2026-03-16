@@ -13,6 +13,8 @@ Usage::
 """
 
 import argparse
+import ast
+import builtins
 import importlib.util
 import re
 import sys
@@ -46,6 +48,130 @@ CONNECTOR_TYPE_MAP = {
 
 PNS = "http://schemas.openxmlformats.org/presentationml/2006/main"
 ANS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+# Stdlib modules blocked in content-extra.py scripts due to security risk.
+# content-extra.py may only import from pptx and safe standard-library modules.
+_BLOCKED_STDLIB_MODULES = frozenset(
+    {
+        "code",
+        "codeop",
+        "compileall",
+        "ctypes",
+        "dbm",
+        "ensurepip",
+        "ftplib",
+        "http",
+        "imaplib",
+        "importlib",
+        "marshal",
+        "multiprocessing",
+        "os",
+        "pickle",
+        "pkgutil",
+        "poplib",
+        "py_compile",
+        "runpy",
+        "shelve",
+        "shutil",
+        "signal",
+        "smtplib",
+        "socket",
+        "sqlite3",
+        "subprocess",
+        "sys",
+        "telnetlib",
+        "tempfile",
+        "threading",
+        "urllib",
+        "venv",
+        "webbrowser",
+        "xmlrpc",
+        "zipimport",
+    }
+)
+
+_DANGEROUS_BUILTINS = frozenset(
+    {
+        "__import__",
+        "breakpoint",
+        "compile",
+        "eval",
+        "exec",
+    }
+)
+
+# Builtins that can bypass the import allowlist or execute arbitrary strings
+# when called indirectly through attribute access or introspection.
+_INDIRECT_BYPASS_BUILTINS = frozenset(
+    {
+        "delattr",
+        "getattr",
+        "globals",
+        "locals",
+        "setattr",
+        "vars",
+    }
+)
+
+
+class ContentExtraError(Exception):
+    """A content-extra.py script failed security validation."""
+
+
+def _check_module_allowed(
+    module_name: str, script_path: Path, stdlib_names: frozenset[str]
+) -> None:
+    """Raise ContentExtraError if *module_name* is not on the allowlist."""
+    top_level = module_name.split(".")[0]
+
+    if top_level == "pptx":
+        return
+
+    if top_level in _BLOCKED_STDLIB_MODULES:
+        raise ContentExtraError(f"Blocked import '{module_name}' in {script_path}")
+
+    if top_level in stdlib_names:
+        return
+
+    raise ContentExtraError(
+        f"Disallowed import '{module_name}' in {script_path}: "
+        "only pptx and safe standard library modules are permitted"
+    )
+
+
+def _validate_content_extra(script_path: Path) -> None:
+    """Validate a content-extra.py script's AST before execution.
+
+    Parses the script and rejects imports outside of pptx and safe stdlib
+    modules, as well as calls to dangerous builtins (exec, eval, __import__,
+    compile, breakpoint).  Raises ContentExtraError on any violation.
+    """
+    source = script_path.read_text(encoding="utf-8")
+    try:
+        tree = ast.parse(source, filename=str(script_path))
+    except SyntaxError as exc:
+        raise ContentExtraError(f"Syntax error in {script_path}: {exc}") from exc
+
+    stdlib_names = sys.stdlib_module_names
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                _check_module_allowed(alias.name, script_path, stdlib_names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                _check_module_allowed(node.module, script_path, stdlib_names)
+        elif isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name):
+                if func.id in _DANGEROUS_BUILTINS:
+                    raise ContentExtraError(
+                        f"Dangerous builtin '{func.id}' in {script_path}"
+                    )
+                if func.id in _INDIRECT_BYPASS_BUILTINS:
+                    raise ContentExtraError(
+                        f"Indirect bypass builtin '{func.id}' in {script_path}"
+                    )
 
 
 def _reset_effect_ref(shape):
@@ -517,10 +643,22 @@ def add_connector_element(slide, elem: dict, colors: dict):
     return connector
 
 
+MAX_GROUP_DEPTH = 20
+
+
 def add_group_element(
-    slide, elem: dict, colors: dict, typography: dict, content_dir: Path
+    slide,
+    elem: dict,
+    colors: dict,
+    typography: dict,
+    content_dir: Path,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Add a group element containing nested child elements.
+
+    Raises ValueError when nesting exceeds *max_depth*.
 
     YAML schema:
     - type: group
@@ -543,6 +681,8 @@ def add_group_element(
           height: 0.5
           text: "Group Title"
     """
+    if _depth >= max_depth:
+        raise ValueError(f"Group nesting depth {_depth} exceeds limit of {max_depth}")
     group = slide.shapes.add_group_shape()
 
     group.left = Inches(elem["left"])
@@ -551,7 +691,15 @@ def add_group_element(
     group.height = Inches(elem["height"])
 
     for child_elem in elem.get("elements", []):
-        build_element_in_group(group, child_elem, colors, typography, content_dir)
+        build_element_in_group(
+            group,
+            child_elem,
+            colors,
+            typography,
+            content_dir,
+            _depth=_depth + 1,
+            max_depth=max_depth,
+        )
 
     if "name" in elem:
         group.name = elem["name"]
@@ -560,7 +708,14 @@ def add_group_element(
 
 
 def build_element_in_group(
-    group, elem: dict, colors: dict, typography: dict, content_dir: Path
+    group,
+    elem: dict,
+    colors: dict,
+    typography: dict,
+    content_dir: Path,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_GROUP_DEPTH,
 ):
     """Dispatch a child element build within a group shape.
 
@@ -577,6 +732,16 @@ def build_element_in_group(
         add_connector_element(group, elem, colors)
     elif elem_type == "image":
         add_image_element(group, elem, content_dir)
+    elif elem_type == "group":
+        add_group_element(
+            group,
+            elem,
+            colors,
+            typography,
+            content_dir,
+            _depth=_depth,
+            max_depth=max_depth,
+        )
 
 
 def _add_shape_to_collection(shapes, elem: dict, colors: dict):
@@ -645,7 +810,7 @@ def _build_image_element(slide, elem, colors, typography, content_dir):
 
 def _build_group_element(slide, elem, colors, typography, content_dir):
     """Delegate group element building to add_group_element."""
-    add_group_element(slide, elem, colors, typography, content_dir)
+    add_group_element(slide, elem, colors, typography, content_dir, _depth=0)
 
 
 def _build_connector_element(slide, elem, colors, typography, content_dir):
@@ -775,12 +940,19 @@ def get_slide_layout(prs, slide_content: dict, style: dict):
 
 
 def build_slide(
-    prs, slide_content: dict, style: dict, content_dir: Path, existing_slide=None
+    prs,
+    slide_content: dict,
+    style: dict,
+    content_dir: Path,
+    existing_slide=None,
+    *,
+    allow_scripts: bool = False,
 ):
     """Build a single slide from content.yaml data and style context.
 
     When existing_slide is provided, clears its shapes and rebuilds in place
-    instead of appending a new slide.
+    instead of appending a new slide.  Set *allow_scripts* to skip AST
+    validation of content-extra.py (use only with trusted content).
     """
     colors = {}
     typography = {}
@@ -848,13 +1020,25 @@ def build_slide(
     for elem in elements:
         _build_element(slide, elem, colors, typography, content_dir)
 
-    # Execute content-extra.py if present
+    # Execute content-extra.py if present (validated before loading)
     extra_script = content_dir / "content-extra.py"
     if extra_script.exists():
+        if not allow_scripts:
+            _validate_content_extra(extra_script)
         spec = importlib.util.spec_from_file_location(
             "content_extra", str(extra_script)
         )
         mod = importlib.util.module_from_spec(spec)
+        if not allow_scripts:
+            # __import__ is kept because the import machinery needs it;
+            # the AST checker already blocks direct __import__() calls.
+            stripped = (_DANGEROUS_BUILTINS | _INDIRECT_BYPASS_BUILTINS) - {
+                "__import__"
+            }
+            safe_builtins = {
+                k: v for k, v in builtins.__dict__.items() if k not in stripped
+            }
+            mod.__builtins__ = safe_builtins
         spec.loader.exec_module(mod)
         if hasattr(mod, "render"):
             mod.render(slide, style, content_dir)
@@ -901,6 +1085,11 @@ def main():
     parser.add_argument(
         "--slides", help="Comma-separated slide numbers to rebuild (requires --source)"
     )
+    parser.add_argument(
+        "--allow-scripts",
+        action="store_true",
+        help="Skip AST validation of content-extra.py (trusted content only)",
+    )
     args = parser.parse_args()
 
     content_dir = Path(args.content_dir)
@@ -941,7 +1130,13 @@ def main():
 
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
-            build_slide(prs, slide_content, style, slide_dir)
+            build_slide(
+                prs,
+                slide_content,
+                style,
+                slide_dir,
+                allow_scripts=args.allow_scripts,
+            )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
     elif args.source and args.slides:
         # Partial rebuild: open existing deck and replace specific slides
@@ -963,7 +1158,12 @@ def main():
             if idx < len(prs.slides):
                 existing_slide = prs.slides[idx]
                 build_slide(
-                    prs, slide_content, style, slide_dir, existing_slide=existing_slide
+                    prs,
+                    slide_content,
+                    style,
+                    slide_dir,
+                    existing_slide=existing_slide,
+                    allow_scripts=args.allow_scripts,
                 )
                 print(f"Rebuilt slide {num} in-place")
             else:
@@ -994,7 +1194,13 @@ def main():
 
         for num, slide_dir in slides_data:
             slide_content = load_yaml(slide_dir / "content.yaml")
-            build_slide(prs, slide_content, style, slide_dir)
+            build_slide(
+                prs,
+                slide_content,
+                style,
+                slide_dir,
+                allow_scripts=args.allow_scripts,
+            )
             print(f"Built slide {num}: {slide_content.get('title', 'Untitled')}")
 
     prs.save(str(output_path))

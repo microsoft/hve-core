@@ -1,0 +1,87 @@
+.collectionCard {
+  display: block;
+  position: relative;
+  background: var(--ifm-card-background-color);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 1.25rem;
+  box-shadow: rgba(0, 0, 0, 0.13) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+}
+
+.collectionCard:hover .collectionName {
+  text-decoration: underline;
+}
+
+.collectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.collectionName {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  margin: 0;
+}
+
+.collectionName::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.collectionName:hover {
+  text-decoration: underline;
+}
+
+.collectionName:visited {
+  color: var(--ms-learn-visited-link);
+}
+
+.maturityBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+
+.maturityStable {
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-dark);
+}
+
+.maturityPreview {
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-dark);
+}
+
+.maturityExperimental {
+  background: var(--ifm-color-info-contrast-background);
+  color: var(--ifm-color-info-dark);
+}
+
+.collectionDescription {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--ms-learn-text-subtle);
+}
+
+.artifactCount {
+  font-size: 0.8rem;
+  color: var(--ms-learn-text-subtle);
+  margin: 0;
+}
+
+.artifactCount strong {
+  color: var(--ifm-font-color-base);
+}
