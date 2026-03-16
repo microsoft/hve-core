@@ -26,8 +26,6 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * Delegate each skill assessment to a separate `Skill Assessor` invocation.
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
-* Do not read vulnerability reference files directly in the main agent context.
-* Do not include secrets, credentials, or sensitive environment values in any output.
 
 ## Inputs
 
@@ -41,48 +39,18 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 
 ## Constants
 
-Report directory: `.copilot-tracking/security`
-
-Report path pattern (audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
-
-Report path pattern (diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
-
-Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
-
-Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
-
-Skill base path: `.github/skills/security`
-
-### Subagents
-
-| Name                  | Agent File                                         | Purpose                                                                            |
-|-----------------------|----------------------------------------------------|------------------------------------------------------------------------------------|
-| Codebase Profiler     | `.github/agents/**/codebase-profiler.agent.md`     | Scans the repository to build a technology profile and identify applicable skills. |
-| Finding Deep Verifier | `.github/agents/**/finding-deep-verifier.agent.md` | Deep adversarial verification of findings using full vulnerability references.     |
-| Report Generator      | `.github/agents/**/report-generator.agent.md`      | Collates all verified findings and generates the final vulnerability report.       |
-| Skill Assessor        | `.github/agents/**/skill-assessor.agent.md`        | Assesses a single skill against the codebase, returning structured findings.       |
-
-### Available Skills
-
-* owasp-agentic
-* owasp-llm
-* owasp-top-10
-
-Format specifications for finding serialization, verified findings collection, scan status, scan completion, and minimal profile stub are defined in `.github/instructions/security/security-formats.instructions.md`.
+Orchestrator constants (report paths, sequence numbering, skill base path, subagent table, available skills), subagent prompt templates, and format specifications are defined in `.github/instructions/security/security-formats.instructions.md`.
 
 ## Required Steps
 
-Detect the scanning mode, profile the codebase or plan document, assess applicable skills, verify findings (audit and diff modes), generate the report, and display the completion summary.
+Detect the scanning mode, profile the codebase or plan document, assess applicable skills, verify findings (audit and diff modes only), generate the report, and display the completion summary. All steps execute for every mode except Step 3, which is skipped in plan mode.
 
 ### Pre-requisite: Setup
 
 1. Set the report date to today's date.
 2. Determine the scanning mode. When mode is explicitly provided (e.g., `mode=diff`), use the explicit value. If the explicit value is not `audit`, `diff`, or `plan`, display a scan status update: phase "Setup", message "Invalid mode '{mode}'. Supported modes are audit, diff, and plan." Stop the scan. When mode is not explicitly provided, infer from the user's request: keywords like "changes", "branch", "diff", "PR", "pull request", or "compare" suggest `diff` mode; keywords like "plan", "design", "proposal", "architecture", or "RFC" suggest `plan` mode. Default to `audit` when no signal is present.
 3. Display a scan status update: phase "Setup", message "Starting OWASP vulnerability assessment in {mode} mode".
-
-### Step 0: Mode Detection and Setup
-
-Resolve mode-specific inputs before proceeding to the assessment pipeline.
+4. Resolve mode-specific inputs before proceeding to the assessment pipeline.
 
 * When mode is `audit`: no additional setup is required. Proceed to Step 1.
 * When mode is `diff`:
@@ -93,7 +61,7 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
   5. Filter the changed files list to exclude non-assessable files: files under `.github/skills/`, markdown files (`*.md`), YAML files (`*.yml`, `*.yaml`), JSON files (`*.json`), and image files (`*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, `*.ico`). If the filtered list is empty, display a scan status update: phase "Complete", message "No assessable code files detected in the diff. Changed files are limited to documentation and configuration." Stop the scan.
   6. Hold the filtered changed files list in context as newline-delimited file paths for interpolation into subagent prompts. Retain the original unfiltered list separately for the Report Generator's changed files appendix.
 * When mode is `plan`:
-  1. Resolve the plan document: use the explicit plan input path when provided, otherwise infer from attached files or conversation context. As a final fallback, search `.copilot-tracking/plans/` for the most recent plan file by date directory.
+  1. Resolve the plan document: use the explicit plan input path when provided, otherwise infer from attached files or conversation context. As a final fallback, search `.copilot-tracking/plans/` for the plan file in the lexicographically last date-named directory (directories follow `YYYY-MM-DD` naming).
   2. Read the resolved plan document content.
   3. If no plan document can be resolved, ask the user to provide a plan document path and wait for a response before proceeding.
 
@@ -110,16 +78,8 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
   6. Display a scan status update: phase "Profiling", message "Profiling skipped. Using target skill: {targetSkill}".
   7. Proceed directly to Step 2.
 * When `targetSkill` is NOT provided, execute the following profiling logic.
-* Run `Codebase Profiler` with a mode-specific prompt:
-
-| Mode    | Prompt                                                                                                                                                                                                                                                          |
-|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `audit` | "Profile this codebase for OWASP vulnerability assessment. Identify the technology stack and list all applicable OWASP skills."                                                                                                                                 |
-| `diff`  | "Profile this codebase for OWASP vulnerability assessment. Scope technology detection to the following changed files.\n\nChanged Files:\n{changed_files_list}\n\nIdentify the technology stack and list applicable OWASP skills relevant to the changed files." |
-| `plan`  | "Profile the following implementation plan for OWASP vulnerability assessment. Extract technology signals from the plan text and list applicable OWASP skills.\n\nPlan Document:\n{plan_document_content}"                                                      |
-
-* When a subdirectory focus is provided (audit and diff only), append to the prompt: "Focus profiling on the following subdirectory: {subdirectory_focus}"
-* If the Codebase Profiler fails or returns an incomplete profile, display a scan status update: phase "Profiling", message "Codebase profiling failed: {error}. Cannot proceed without a technology profile." Stop the scan.
+* Run `Codebase Profiler` as a subagent with `runSubagent`, using the mode-specific Codebase Profiler prompt template from `.github/instructions/security/security-formats.instructions.md`.
+* If the Codebase Profiler returns a response missing required fields from the Codebase Profiler response contract, apply the retry-once protocol from Required Protocol rule 5. If the retry also fails, display a scan status update: phase "Profiling", message "Codebase profiling failed: {error}. Cannot proceed without a technology profile." Stop the scan.
 * Capture the codebase profile from the profiler response.
 * Extract the repository name from the profile output (the Codebase Profile format includes a `**Repository:**` field).
 * Intersect the profiler's recommended skills with the available skills list defined in Constants. Only skills present in both lists are applicable.
@@ -131,15 +91,7 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
 ### Step 2: Assess Applicable Skills
 
 * Display a scan status update: phase "Assessing", message "Beginning skill assessments for {count} applicable skills."
-* For each skill in the applicable skills list, run `Skill Assessor` with a mode-specific prompt:
-
-| Mode    | Prompt                                                                                                                                                                                                                                                                                                        |
-|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `audit` | "Assess the following OWASP skill against the codebase.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}"                                                                                                                                                                                      |
-| `diff`  | "Assess the following OWASP skill against the codebase. Scope analysis to the changed files listed below.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}"                                                                                            |
-| `plan`  | "Assess the following OWASP skill against the implementation plan. Evaluate plan content against vulnerability references and assign plan-mode statuses (RISK, CAUTION, COVERED, NOT_APPLICABLE).\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nPlan Document:\n{plan_document_content}" |
-
-* When a subdirectory focus is provided (audit only), append to the prompt: "Subdirectory Focus: {subdirectory_focus}"
+* For each skill in the applicable skills list, run `Skill Assessor` as a subagent with `runSubagent`, using the mode-specific Skill Assessor prompt template from `.github/instructions/security/security-formats.instructions.md`.
 * Skill assessments can run in parallel when the runtime supports it.
 * Collect structured findings from each `Skill Assessor` response. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
 * If a `Skill Assessor` still fails after the retry, log the failure, exclude that skill from subsequent steps (verification and reporting), and add it to an excluded skills list with the failure reason. Display a scan status update: phase "Assessing", message "Skill assessment failed for {skill_name} after retry. Excluding from results."
@@ -157,14 +109,9 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
   2. Separate findings into two groups: unverified (FAIL and PARTIAL status) and pass-through (PASS and NOT_ASSESSED status).
   3. Pass through PASS and NOT_ASSESSED findings unchanged with verdict UNCHANGED into the verified findings collection.
   4. Serialize each unverified finding into the Finding Serialization Format defined in Constants before passing to the verifier.
-  5. If unverified findings exist, run `Finding Deep Verifier` with all FAIL and PARTIAL findings for that skill in a single call using a mode-specific prompt:
-
-| Mode    | Prompt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `audit` | "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."                                                                                                                                                              |
-| `diff`  | "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation. These findings originate from a diff-scoped scan. Search the full repository for evidence, including unchanged code.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding." |
-     * Where `{findings}` uses the Finding Serialization Format defined in Constants.
+  5. If unverified findings exist, run `Finding Deep Verifier` as a subagent with `runSubagent` for all FAIL and PARTIAL findings for that skill in a single call, using the mode-specific Finding Deep Verifier prompt template from `.github/instructions/security/security-formats.instructions.md`.
   6. Capture the deep verdicts and add them to the verified findings collection. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
+  7. When the verifier fails after the retry for a skill, exclude only the unverified findings (FAIL and PARTIAL status). Retain pass-through findings (PASS and NOT_ASSESSED with verdict UNCHANGED) in the verified findings collection. Add the skill to the excluded skills list with the failure reason, noting only unverified findings were excluded. Display a scan status update: phase "Verifying", message "Finding verification failed for {skill_name} after retry. Excluding unverified findings for this skill."
 * Skill verifications can run in parallel when the runtime supports it. Each skill's verifier call is independent.
 * When mode is `diff`, verification runs against the full repository, not just changed files. This prevents false positives from missing existing mitigations in unchanged code.
 * Do not invoke a separate `Finding Deep Verifier` for each individual finding.
@@ -173,17 +120,10 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
 ### Step 4: Generate Report
 
 * Display a scan status update: phase "Reporting", message "Generating vulnerability report."
-* Pass findings to `Report Generator` with a mode-specific prompt:
-
-| Mode    | Prompt                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `audit` | "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format.\n\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}"                                                                                                                                                                                  |
-| `diff`  | "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format. This is a diff-scoped scan of changed files only.\n\nMode: diff\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\n\nChanged Files:\n{changed_files_list}\n\nUse the diff report filename pattern. Include a changed files appendix." |
-| `plan`  | "Generate the OWASP pre-implementation security risk assessment following your PLAN_REPORT_V1 format.\n\nMode: plan\nPlan Findings:\n{plan_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\nPlan Source: {plan_document_path}\n\nUse the plan report filename pattern. Include risk ratings and implementation guidance."                                                                                    |
-
-* When a prior scan report path is provided, append to any `Report Generator` prompt: "Prior Report:\n{prior_scan_report_path}"
+* Run `Report Generator` as a subagent with `runSubagent`, using the mode-specific Report Generator prompt template from `.github/instructions/security/security-formats.instructions.md`.
 * `Report Generator` writes the report file to disk and returns the resolved file path, summary counts, and severity breakdown. The orchestrator does not write the report file.
-* Capture the report result and extract the fields defined in the Report Generator response contract.
+* Capture the report result and extract the fields defined in the Report Generator response contract. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
+* If the Report Generator fails after the retry, display a scan status update: phase "Reporting", message "Report generation failed after retry: {error}. No report file was produced." Stop the scan.
 * Display a scan status update: phase "Reporting", message "Report generation complete."
 
 ### Step 5: Compute Summary and Report
@@ -200,4 +140,5 @@ Resolve mode-specific inputs before proceeding to the assessment pipeline.
 2. Mode determines which steps execute and how subagents are invoked. When mode is not specified, default to `audit` for behavior identical to the original workflow.
 3. Do not read vulnerability reference files directly; delegate all reference reading to subagents.
 4. Display scan status updates at phase transitions to keep the user informed.
-5. After each subagent invocation, check the response for clarifying questions. If present, ask the user when judgment is required, or use tools to discover the answer when it is deterministic. Re-invoke the subagent with the resolved answers before proceeding to the next step. If a subagent response is incomplete or does not match the expected format, retry the invocation once. If the retry also fails, log the failure, exclude that skill's findings from the report, and note the exclusion in the report. Treat responses missing required fields from Subagent Response Contracts as incomplete and apply the retry-once protocol.
+5. After each subagent invocation, check the response for clarifying questions. If present, ask the user when judgment is required, or use tools to discover the answer when it is deterministic. Re-invoke the subagent with the resolved answers before proceeding to the next step. Clarifying-questions re-invocation is a resolution step, not a retry. If a subagent response is incomplete or does not match the expected format, retry the invocation once. If the retry also fails, log the failure, exclude that skill's findings from the report, and note the exclusion in the report. Treat responses missing required fields from Subagent Response Contracts as incomplete and apply the retry-once protocol.
+6. Do not include secrets, credentials, or sensitive environment values in any output.

@@ -430,6 +430,70 @@ Used when `targetSkill` bypasses the Codebase Profiler.
 - <TARGET_SKILL>
 ```
 
+## Orchestrator Constants
+
+Report directory: `.copilot-tracking/security`
+
+Report path pattern (audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
+
+Report path pattern (diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
+
+Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
+
+Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
+
+Skill base path: `.github/skills/security`
+
+### Subagents
+
+| Name                  | Agent File                                         | Purpose                                                                            |
+|-----------------------|----------------------------------------------------|------------------------------------------------------------------------------------|
+| Codebase Profiler     | `.github/agents/**/codebase-profiler.agent.md`     | Scans the repository to build a technology profile and identify applicable skills. |
+| Finding Deep Verifier | `.github/agents/**/finding-deep-verifier.agent.md` | Deep adversarial verification of findings using full vulnerability references.     |
+| Report Generator      | `.github/agents/**/report-generator.agent.md`      | Collates all verified findings and generates the final vulnerability report.       |
+| Skill Assessor        | `.github/agents/**/skill-assessor.agent.md`        | Assesses a single skill against the codebase, returning structured findings.       |
+
+### Available Skills
+
+* owasp-agentic
+* owasp-llm
+* owasp-top-10
+
+## Subagent Prompt Templates
+
+Mode-specific prompt templates used by the orchestrator when invoking subagents. Substitute placeholders (`{variable}`) with runtime values.
+
+### Codebase Profiler Prompts
+
+* `audit`: "Profile this codebase for OWASP vulnerability assessment. Identify the technology stack and list all applicable OWASP skills."
+* `diff`: "Profile this codebase for OWASP vulnerability assessment. Scope technology detection to the following changed files.\n\nChanged Files:\n{changed_files_list}\n\nIdentify the technology stack and list applicable OWASP skills relevant to the changed files."
+* `plan`: "Profile the following implementation plan for OWASP vulnerability assessment. Extract technology signals from the plan text and list applicable OWASP skills.\n\nPlan Document:\n{plan_document_content}"
+
+When a subdirectory focus is provided (audit and diff only), append: "Focus profiling on the following subdirectory: {subdirectory_focus}"
+
+### Skill Assessor Prompts
+
+* `audit`: "Assess the following OWASP skill against the codebase.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}"
+* `diff`: "Assess the following OWASP skill against the codebase. Scope analysis to the changed files listed below.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}"
+* `plan`: "Assess the following OWASP skill against the implementation plan. Evaluate plan content against vulnerability references and assign plan-mode statuses (RISK, CAUTION, COVERED, NOT_APPLICABLE).\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nPlan Document:\n{plan_document_content}"
+
+When a subdirectory focus is provided (audit only), append: "Subdirectory Focus: {subdirectory_focus}"
+
+### Finding Deep Verifier Prompts
+
+* `audit`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
+* `diff`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation. These findings originate from a diff-scoped scan. Search the full repository for evidence, including unchanged code.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
+
+`{findings}` uses the Finding Serialization Format.
+
+### Report Generator Prompts
+
+* `audit`: "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format.\n\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}"
+* `diff`: "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format. This is a diff-scoped scan of changed files only.\n\nMode: diff\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\n\nChanged Files:\n{changed_files_list}\n\nUse the diff report filename pattern. Include a changed files appendix."
+* `plan`: "Generate the OWASP pre-implementation security risk assessment following your PLAN_REPORT_V1 format.\n\nMode: plan\nPlan Findings:\n{plan_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\nPlan Source: {plan_document_path}\n\nUse the plan report filename pattern. Include risk ratings and implementation guidance."
+
+When a prior scan report path is provided, append to any prompt: "Prior Report:\n{prior_scan_report_path}"
+
 ## Severity Level Definitions
 
 Standard severity ratings used by all OWASP skill assessments.
