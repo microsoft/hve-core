@@ -14,7 +14,12 @@ Supports filtering by change type and multiple output formats.
 Path to the PR reference XML file. Defaults to .copilot-tracking/pr/pr-reference.xml.
 
 .PARAMETER Type
-Filter by change type: Added, Deleted, Modified, Renamed, or All. Defaults to All.
+Filter by change type. Accepts a single value or comma-separated values:
+Added, Deleted, Modified, Renamed, or All. Defaults to All.
+
+.PARAMETER ExcludeType
+Exclude specific change types. Accepts a single value or comma-separated values:
+Added, Deleted, Modified, or Renamed. Mutually exclusive with -Type when -Type is not All.
 
 .PARAMETER Format
 Output format: Plain, Json, or Markdown. Defaults to Plain.
@@ -26,6 +31,14 @@ Lists all changed files in plain text format.
 .EXAMPLE
 ./list-changed-files.ps1 -Type Added -Format Markdown
 Lists only added files in markdown table format.
+
+.EXAMPLE
+./list-changed-files.ps1 -Type Added,Modified,Renamed
+Lists added, modified, and renamed files.
+
+.EXAMPLE
+./list-changed-files.ps1 -ExcludeType Deleted
+Lists all files except deleted ones.
 #>
 
 [CmdletBinding()]
@@ -36,8 +49,10 @@ param(
 
     [Parameter()]
     [Alias('t')]
-    [ValidateSet('All', 'Added', 'Deleted', 'Modified', 'Renamed')]
-    [string]$Type = "All",
+    [string[]]$Type = @('All'),
+
+    [Parameter()]
+    [string[]]$ExcludeType = @(),
 
     [Parameter()]
     [Alias('f')]
@@ -56,8 +71,33 @@ function Get-FileChanges {
         [string]$XmlPath,
 
         [Parameter()]
-        [string]$FilterType = "All"
+        [string[]]$FilterType = @('All'),
+
+        [Parameter()]
+        [string[]]$ExcludeFilterType = @()
     )
+
+    # Normalize comma-separated strings into arrays
+    $normalizedFilter = @()
+    foreach ($ft in $FilterType) {
+        $normalizedFilter += $ft -split ','
+    }
+    $normalizedExclude = @()
+    foreach ($et in $ExcludeFilterType) {
+        $normalizedExclude += $et -split ','
+    }
+
+    $validTypes = @('All', 'Added', 'Deleted', 'Modified', 'Renamed')
+    foreach ($t in $normalizedFilter) {
+        if ($t -and $t -notin $validTypes) {
+            throw "Invalid type filter: '$t'. Valid values: $($validTypes -join ', ')"
+        }
+    }
+    foreach ($t in $normalizedExclude) {
+        if ($t -and $t -notin @('Added', 'Deleted', 'Modified', 'Renamed')) {
+            throw "Invalid exclude type: '$t'. Valid values: Added, Deleted, Modified, Renamed"
+        }
+    }
 
     $content = Get-Content -LiteralPath $XmlPath -Raw
     $changes = @()
@@ -82,17 +122,25 @@ function Get-FileChanges {
             $changeType = 'Renamed'
         }
 
-        if ($FilterType -eq 'All' -or $FilterType -eq $changeType) {
-            $displayPath = if ($changeType -eq 'Renamed') {
-                "$oldPath -> $newPath"
-            } else {
-                $newPath
-            }
+        # Apply exclusion filter
+        if ($normalizedExclude.Count -gt 0 -and $changeType -in $normalizedExclude) {
+            continue
+        }
 
-            $changes += [PSCustomObject]@{
-                Path = $displayPath
-                Type = $changeType
-            }
+        # Apply inclusion filter
+        if ('All' -notin $normalizedFilter -and $changeType -notin $normalizedFilter) {
+            continue
+        }
+
+        $displayPath = if ($changeType -eq 'Renamed') {
+            "$oldPath -> $newPath"
+        } else {
+            $newPath
+        }
+
+        $changes += [PSCustomObject]@{
+            Path = $displayPath
+            Type = $changeType
         }
     }
 
@@ -137,13 +185,21 @@ function Invoke-ListChangedFiles {
         [string]$InputPath = "",
 
         [Parameter()]
-        [ValidateSet('All', 'Added', 'Deleted', 'Modified', 'Renamed')]
-        [string]$Type = "All",
+        [string[]]$Type = @('All'),
+
+        [Parameter()]
+        [string[]]$ExcludeType = @(),
 
         [Parameter()]
         [ValidateSet('Plain', 'Json', 'Markdown')]
         [string]$Format = "Plain"
     )
+
+    # Validate mutual exclusion
+    $hasNonAllType = ($Type | Where-Object { $_ -ne 'All' }).Count -gt 0
+    if ($hasNonAllType -and $ExcludeType.Count -gt 0) {
+        throw "-Type and -ExcludeType are mutually exclusive when -Type is not 'All'."
+    }
 
     $repoRoot = Get-RepositoryRoot
     $xmlPath = if ($InputPath) {
@@ -156,7 +212,7 @@ function Invoke-ListChangedFiles {
         throw "PR reference file not found: $xmlPath`nRun generate.ps1 first to create the PR reference."
     }
 
-    $changes = Get-FileChanges -XmlPath $xmlPath -FilterType $Type
+    $changes = Get-FileChanges -XmlPath $xmlPath -FilterType $Type -ExcludeFilterType $ExcludeType
     $output = Format-Output -Changes $changes -OutputFormat $Format
 
     Write-Output $output
@@ -165,7 +221,7 @@ function Invoke-ListChangedFiles {
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-ListChangedFiles -InputPath $InputPath -Type $Type -Format $Format
+        Invoke-ListChangedFiles -InputPath $InputPath -Type $Type -ExcludeType $ExcludeType -Format $Format
         exit 0
     }
     catch {
