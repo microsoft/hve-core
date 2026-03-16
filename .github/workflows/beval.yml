@@ -32,7 +32,7 @@ jobs:
 
       - name: Start agent (TCP)
         run: |
-          copilot --acp --port 3000 --agent dt-coach --allow-all &
+          copilot --acp --port 3000 --agent dt-coach --allow-all --model claude-opus-4.6-fast &
           sleep 5
 
       - name: Start judge (TCP)
