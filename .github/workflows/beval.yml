@@ -31,7 +31,10 @@ jobs:
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@eedorenko/acp-a2a#subdirectory=python"
 
       - name: Start agent (TCP)
+        working-directory: ${{ github.workspace }}
         run: |
+          pwd
+          ls -la
           copilot --agent dt-coach --allow-all --model claude-opus-4.6-fast -p "How are you doing?"
           sleep 5
 
