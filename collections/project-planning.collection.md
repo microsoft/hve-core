@@ -8,6 +8,7 @@ This collection includes agents for:
 - **Architecture Decision Records** — Create structured ADRs with solution comparison matrices
 - **Architecture Diagrams** — Generate ASCII-art architecture diagrams from descriptions
 - **Business Requirements Documents** — Build BRDs through guided Q&A sessions
+- **Edge Network ISA-95 Planner** — Plan secure ISA-95-aligned edge Kubernetes to Azure network segmentation, conduits, and remediation tracks
 - **System Architecture Reviewer** — System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment
 - **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, and Review phases
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
