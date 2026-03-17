@@ -53,12 +53,12 @@ copilot plugin install security@hve-core
 
 ## Skills
 
-| Skill                     | Description               |
-|---------------------------|---------------------------|
-| owasp-top-10              | owasp-top-10              |
-| owasp-llm                 | owasp-llm                 |
-| owasp-agentic             | owasp-agentic             |
-| security-reviewer-formats | security-reviewer-formats |
+| Skill                     | Description                                                                                                                                                                                              |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| owasp-top-10              | OWASP Top 10 for Web Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in web application environments - Brought to you by microsoft/hve-core. |
+| owasp-llm                 | OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in large language model systems - Brought to you by microsoft/hve-core. |
+| owasp-agentic             | OWASP Agentic Security Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in AI agent systems - Brought to you by microsoft/hve-core.                        |
+| security-reviewer-formats | Format specifications and data contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core.                                                                |
 
 ---
 

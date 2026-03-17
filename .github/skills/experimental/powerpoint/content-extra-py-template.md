@@ -51,11 +51,11 @@ def render(slide, style, content_dir):
 
 ## Function Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
-| `slide` | `pptx.slide.Slide` | The slide object with base elements already placed from `content.yaml` |
-| `style` | `dict` | Style dictionary with `defaults` and `metadata` keys |
-| `content_dir` | `pathlib.Path` | Path to the slide's content directory for referencing local assets |
+| Parameter     | Type               | Description                                                            |
+|---------------|--------------------|------------------------------------------------------------------------|
+| `slide`       | `pptx.slide.Slide` | The slide object with base elements already placed from `content.yaml` |
+| `style`       | `dict`             | Style dictionary with `defaults` and `metadata` keys                   |
+| `content_dir` | `pathlib.Path`     | Path to the slide's content directory for referencing local assets     |
 
 ## Guidelines
 
