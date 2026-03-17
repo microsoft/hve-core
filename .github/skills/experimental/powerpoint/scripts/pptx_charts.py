@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Chart build and extract utilities for PowerPoint skill scripts.
 
 Provides add_chart_element() for building charts from YAML definitions
