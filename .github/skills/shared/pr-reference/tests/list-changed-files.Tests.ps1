@@ -187,6 +187,68 @@ index a1b2c3d..d4e5f6a 100644
             $changes.Count | Should -Be 4
         }
     }
+
+    Context 'Comma-separated Type values' {
+        It 'Filters by multiple types as array' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -FilterType @('Added', 'Modified')
+            $changes.Count | Should -Be 2
+            ($changes | Where-Object Type -eq 'Added').Count | Should -Be 1
+            ($changes | Where-Object Type -eq 'Modified').Count | Should -Be 1
+        }
+
+        It 'Filters by comma-separated string' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -FilterType @('Added,Renamed')
+            $changes.Count | Should -Be 2
+            ($changes | Where-Object Type -eq 'Added').Count | Should -Be 1
+            ($changes | Where-Object Type -eq 'Renamed').Count | Should -Be 1
+        }
+
+        It 'Returns single type from multi-type filter' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -FilterType @('Deleted')
+            $changes.Count | Should -Be 1
+            $changes[0].Type | Should -Be 'Deleted'
+        }
+    }
+
+    Context 'ExcludeFilterType parameter' {
+        It 'Excludes deleted files' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Deleted')
+            $changes.Count | Should -Be 3
+            ($changes | Where-Object Type -eq 'Deleted').Count | Should -Be 0
+        }
+
+        It 'Excludes multiple types' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Deleted', 'Renamed')
+            $changes.Count | Should -Be 2
+            ($changes | Where-Object Type -eq 'Deleted').Count | Should -Be 0
+            ($changes | Where-Object Type -eq 'Renamed').Count | Should -Be 0
+        }
+
+        It 'Returns all files when exclude list is empty' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @()
+            $changes.Count | Should -Be 4
+        }
+
+        It 'Returns empty result when all types are excluded' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Added', 'Modified', 'Deleted', 'Renamed')
+            $changes | Should -BeNullOrEmpty
+        }
+
+        It 'Accepts comma-separated exclude string' {
+            $changes = Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Deleted,Renamed')
+            $changes.Count | Should -Be 2
+        }
+    }
+
+    Context 'Invalid type values' {
+        It 'Throws for invalid filter type' {
+            { Get-FileChanges -XmlPath $script:FixturePath -FilterType @('Invalid') } | Should -Throw '*Invalid type filter*'
+        }
+
+        It 'Throws for invalid exclude type' {
+            { Get-FileChanges -XmlPath $script:FixturePath -ExcludeFilterType @('Invalid') } | Should -Throw '*Invalid exclude type*'
+        }
+    }
 }
 
 Describe 'Format-Output' {
@@ -296,6 +358,49 @@ Describe 'Invoke-ListChangedFiles' {
         Mock Get-RepositoryRoot { return $script:TempDir }
         { Invoke-ListChangedFiles } | Should -Throw '*PR reference file not found*'
     }
+
+    Context 'Multi-type filtering' {
+        It 'Filters by multiple types' {
+            $result = Invoke-ListChangedFiles -InputPath $script:FixturePath -Type 'Added', 'Modified'
+            $joined = $result -join "`n"
+            $joined | Should -Match 'new-file'
+            $joined | Should -Match 'existing'
+            $joined | Should -Not -Match 'removed'
+        }
+
+        It 'Filters by comma-separated type string' {
+            $result = Invoke-ListChangedFiles -InputPath $script:FixturePath -Type 'Added,Renamed'
+            $joined = $result -join "`n"
+            $joined | Should -Match 'new-file'
+            $joined | Should -Match 'new-name'
+        }
+    }
+
+    Context 'ExcludeType parameter' {
+        It 'Excludes deleted files' {
+            $result = Invoke-ListChangedFiles -InputPath $script:FixturePath -ExcludeType 'Deleted'
+            $joined = $result -join "`n"
+            $joined | Should -Not -Match 'removed'
+            $joined | Should -Match 'new-file'
+        }
+
+        It 'Excludes multiple types' {
+            $result = Invoke-ListChangedFiles -InputPath $script:FixturePath -ExcludeType 'Deleted', 'Renamed'
+            $joined = $result -join "`n"
+            $joined | Should -Not -Match 'removed'
+            $joined | Should -Not -Match 'new-name'
+        }
+    }
+
+    Context 'Mutual exclusion' {
+        It 'Throws when both Type and ExcludeType are specified' {
+            { Invoke-ListChangedFiles -InputPath $script:FixturePath -Type 'Added' -ExcludeType 'Deleted' } | Should -Throw '*mutually exclusive*'
+        }
+
+        It 'Allows ExcludeType when Type is All' {
+            { Invoke-ListChangedFiles -InputPath $script:FixturePath -Type 'All' -ExcludeType 'Deleted' } | Should -Not -Throw
+        }
+    }
 }
 
 Describe 'Entry-point execution' -Tag 'Integration' {
@@ -342,5 +447,25 @@ Describe 'Entry-point execution' -Tag 'Integration' {
         $LASTEXITCODE | Should -Be 0
         $joined = $output -join "`n"
         $joined | Should -Match '\| File \| Change Type \|'
+    }
+
+    It 'Filters by multiple types via comma-separated parameter' {
+        $output = & pwsh -File $script:ScriptPath -InputPath $script:FixturePath -Type 'Added,Modified' 2>&1
+        $LASTEXITCODE | Should -Be 0
+        $joined = $output -join "`n"
+        $joined | Should -Match 'new-file'
+        $joined | Should -Match 'existing'
+    }
+
+    It 'Excludes types via ExcludeType parameter' {
+        $output = & pwsh -File $script:ScriptPath -InputPath $script:FixturePath -ExcludeType Deleted 2>&1
+        $LASTEXITCODE | Should -Be 0
+        $joined = $output -join "`n"
+        $joined | Should -Not -Match 'removed'
+    }
+
+    It 'Exits 1 when Type and ExcludeType conflict' {
+        $null = & pwsh -File $script:ScriptPath -InputPath $script:FixturePath -Type Added -ExcludeType Deleted 2>&1
+        $LASTEXITCODE | Should -Be 1
     }
 }
