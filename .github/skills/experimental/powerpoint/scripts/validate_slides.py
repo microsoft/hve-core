@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-#!/usr/bin/env python3
 """Validate slide images using Copilot SDK vision models.
 
 Sends each rendered slide image to a vision-capable model via the
