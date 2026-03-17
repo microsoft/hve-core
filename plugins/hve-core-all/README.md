@@ -3,6 +3,31 @@
 
 Full bundle of all stable HVE Core agents, prompts, instructions, and skills
 
+## Overview
+
+HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, data science, design thinking, security, and more.
+
+Use this edition when you want access to everything without choosing a focused collection.
+
+Code review agents included (via coding-standards collection):
+
+- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+
+Supporting subagents included:
+
+- **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
+- **External Researcher** — Retrieves external documentation, SDK references, and code samples
+- **Phase Implementor** — Executes single implementation phases with change tracking
+- **Artifact Validator** — Validates implementation work against plans and conventions
+- **Prompt Tester** — Tests prompt files by following them literally in a sandbox
+- **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+
+Skills included:
+
+- **HVE Core Installer** — Decision-driven installer skill for deploying HVE Core across workspace configurations
+- **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
+- **Video to GIF** — Converts video files to optimized GIF animations using FFmpeg two-pass palette optimization
+
 ## Install
 
 ```bash
@@ -89,6 +114,7 @@ copilot plugin install hve-core-all@hve-core
 | github-discover-issues                      | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
 | github-execute-backlog                      | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
 | github-sprint-plan                          | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| github-suggest                              | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
 | github-triage-issues                        | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 | checkpoint                                  | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
 | doc-ops-update                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
@@ -190,17 +216,13 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill                     | Description               |
-|---------------------------|---------------------------|
-| powerpoint                | powerpoint                |
-| video-to-gif              | video-to-gif              |
-| vscode-playwright         | vscode-playwright         |
-| hve-core-installer        | hve-core-installer        |
-| owasp-agentic             | owasp-agentic             |
-| owasp-llm                 | owasp-llm                 |
-| owasp-top-10              | owasp-top-10              |
-| security-reviewer-formats | security-reviewer-formats |
-| pr-reference              | pr-reference              |
+| Skill              | Description                                                                                                                                                                                                                                                                                                                                                                                                         |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| powerpoint         | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                       |
+| video-to-gif       | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                                                              |
+| vscode-playwright  | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                             |
+| hve-core-installer | Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core                                                                                                                                                                                                            |
+| pr-reference       | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core |
 
 ---
 

@@ -120,6 +120,43 @@ When a slide requires complex drawings that cannot be expressed through `content
 
 See the [content-extra.py template](content-extra-py-template.md) for the full template, function parameters, and usage guidelines.
 
+### Security Validation
+
+Before executing a `content-extra.py` file, the build script performs AST-based static analysis to reject dangerous code. Validation runs automatically unless the `--allow-scripts` flag is passed.
+
+**Allowed imports:**
+
+* `pptx` and all `pptx.*` submodules
+* Safe standard-library modules (e.g., `math`, `copy`, `json`, `re`, `pathlib`, `collections`, `itertools`, `functools`, `typing`, `enum`, `dataclasses`, `decimal`, `fractions`, `string`, `textwrap`)
+
+**Blocked imports:**
+
+* `subprocess`, `os`, `shutil`, `socket`, `ctypes`, `signal`, `multiprocessing`, `threading`, `http`, `urllib`, `ftplib`, `smtplib`, `imaplib`, `poplib`, `xmlrpc`, `webbrowser`, `code`, `codeop`, `compileall`, `py_compile`, `zipimport`, `pkgutil`, `runpy`, `ensurepip`, `venv`, `sqlite3`, `tempfile`, `shelve`, `dbm`, `pickle`, `marshal`, `importlib`, `sys`, `telnetlib`
+* Any third-party package not on the allowlist
+
+**Blocked builtins:**
+
+* Dangerous: `eval`, `exec`, `__import__`, `compile`, `breakpoint`
+* Indirect bypass: `getattr`, `setattr`, `delattr`, `globals`, `locals`, `vars`
+
+**Runtime namespace restriction:**
+
+Even after AST validation passes, the executed module runs in a restricted namespace where `__builtins__` is limited to safe builtins only. The dangerous and indirect-bypass builtins listed above are removed from the module namespace before execution (`__import__` is kept because the import machinery requires it; the AST checker blocks direct `__import__()` calls).
+
+**`--allow-scripts` flag:**
+
+Pass `--allow-scripts` to skip AST validation and namespace restriction for trusted content. This flag is required when a `content-extra.py` script legitimately needs blocked imports or builtins.
+
+```bash
+python scripts/build_deck.py \
+  --content-dir content/ \
+  --style content/global/style.yaml \
+  --output slide-deck/presentation.pptx \
+  --allow-scripts
+```
+
+When validation fails, the build raises `ContentExtraError` with a message identifying the violation and file path.
+
 ## Script Reference
 
 All operations are available through the PowerShell orchestrator (`Invoke-PptxPipeline.ps1`) or directly via the Python scripts. The PowerShell script manages the Python virtual environment and dependency installation automatically via `uv sync`.

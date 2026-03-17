@@ -146,12 +146,14 @@ Agents should use npm scripts for all validation:
 * `npm run lint:collections-metadata` - Collection metadata validation
 * `npm run lint:version-consistency` - Action version consistency
 * `npm run lint:marketplace` - Marketplace validation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, and `validate:skills`)
+* `npm run lint:py` - Python linting via ruff
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, and `validate:skills`)
 * `npm run validate:copyright` - Copyright header validation
 * `npm run validate:skills` - Skill structure validation
 * `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting
 * `npm run test:ps` - PowerShell tests
+* `npm run test:py` - Python tests via pytest
 
 ### PowerShell Testing
 
@@ -179,6 +181,15 @@ npm run test:ps -- -TestPath "scripts/tests/linting/" 2>&1 | tail -20
 ```
 
 After the command completes, read `logs/pester-summary.json` to confirm overall status. If failures exist, read `logs/pester-failures.json` to identify which tests failed and why. If `logs/pester-summary.json` does not exist, review the terminal output for startup errors. Use tools that include ignored files when searching the `logs/` directory since it is gitignored.
+
+### Python Skill Configuration
+
+Python skills include a `pyproject.toml` validated by `validate:skills` via `Test-PythonSkillConfig`. Required and recommended sections:
+
+* `[tool.ruff]` - Required. Enables `lint:py` compatibility across all Python skills.
+* `[tool.ruff.lint]` - Recommended. Configures rule selection (e.g., `select = ["E", "F", "I", "W"]`).
+* `[tool.pytest.ini_options]` - Required when the skill contains a `tests/` directory.
+* `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
 
 ### Environment Synchronization
 

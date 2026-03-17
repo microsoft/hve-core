@@ -104,7 +104,7 @@ Evaluate threats against the analyzed architecture:
 Generate the security plan iteratively, section by section:
 
 * Use `createFile` to save the plan to `security-plan-outputs/security-plan-{blueprint-name}.md`.
-* Follow the template structure defined in [docs/templates/security-plan-template.md](../../docs/templates/security-plan-template.md).
+* Follow the template structure defined in [docs/templates/security-plan-template.md](../../../docs/templates/security-plan-template.md).
 
 Section generation workflow:
 

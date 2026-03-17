@@ -177,9 +177,7 @@ class TestCreateParser:
 
     def test_required_image_dir_and_prompt(self):
         parser = create_parser()
-        args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check slides"]
-        )
+        args = parser.parse_args(["--image-dir", "images/", "--prompt", "Check slides"])
         assert str(args.image_dir) == "images"
         assert args.prompt == "Check slides"
 
@@ -195,15 +193,12 @@ class TestCreateParser:
         parser = create_parser()
         with pytest.raises(SystemExit):
             parser.parse_args(
-                ["--image-dir", "images/",
-                 "--prompt", "A", "--prompt-file", "B"]
+                ["--image-dir", "images/", "--prompt", "A", "--prompt-file", "B"]
             )
 
     def test_defaults(self):
         parser = create_parser()
-        args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check"]
-        )
+        args = parser.parse_args(["--image-dir", "images/", "--prompt", "Check"])
         assert args.model == "claude-haiku-4.5"
         assert args.output is None
         assert args.slides is None
@@ -212,39 +207,32 @@ class TestCreateParser:
     def test_model_override(self):
         parser = create_parser()
         args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check",
-             "--model", "gpt-4o"]
+            ["--image-dir", "images/", "--prompt", "Check", "--model", "gpt-4o"]
         )
         assert args.model == "gpt-4o"
 
     def test_output_arg(self):
         parser = create_parser()
         args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check",
-             "--output", "results.json"]
+            ["--image-dir", "images/", "--prompt", "Check", "--output", "results.json"]
         )
         assert str(args.output) == "results.json"
 
     def test_slides_arg(self):
         parser = create_parser()
         args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check",
-             "--slides", "1,3,5"]
+            ["--image-dir", "images/", "--prompt", "Check", "--slides", "1,3,5"]
         )
         assert args.slides == "1,3,5"
 
     def test_verbose_flag(self):
         parser = create_parser()
-        args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check", "-v"]
-        )
+        args = parser.parse_args(["--image-dir", "images/", "--prompt", "Check", "-v"])
         assert args.verbose is True
 
     def test_no_concurrency_arg(self):
         parser = create_parser()
-        args = parser.parse_args(
-            ["--image-dir", "images/", "--prompt", "Check"]
-        )
+        args = parser.parse_args(["--image-dir", "images/", "--prompt", "Check"])
         assert not hasattr(args, "concurrency")
 
 
@@ -267,9 +255,7 @@ class TestLoadPrompt:
         assert load_prompt(args) == "File prompt content"
 
     def test_exits_on_missing_file(self, tmp_path):
-        args = argparse.Namespace(
-            prompt=None, prompt_file=tmp_path / "missing.txt"
-        )
+        args = argparse.Namespace(prompt=None, prompt_file=tmp_path / "missing.txt")
         with pytest.raises(SystemExit):
             load_prompt(args)
 
@@ -288,9 +274,7 @@ class TestValidateSlide:
         image = tmp_path / "slide-001.jpg"
         image.write_bytes(b"img")
 
-        result = asyncio.run(
-            validate_slide(session, 1, image, "Check")
-        )
+        result = asyncio.run(validate_slide(session, 1, image, "Check"))
         assert result["slide_number"] == 1
         assert result["response"] == "No issues"
         assert "error" not in result
@@ -305,9 +289,7 @@ class TestValidateSlide:
         image = tmp_path / "slide-002.jpg"
         image.write_bytes(b"img")
 
-        result = asyncio.run(
-            validate_slide(session, 2, image, "Check", max_retries=2)
-        )
+        result = asyncio.run(validate_slide(session, 2, image, "Check", max_retries=2))
         assert result["response"] == "OK"
         assert session.send_and_wait.call_count == 2
 
@@ -317,9 +299,7 @@ class TestValidateSlide:
         image = tmp_path / "slide-003.jpg"
         image.write_bytes(b"img")
 
-        result = asyncio.run(
-            validate_slide(session, 3, image, "Check", max_retries=2)
-        )
+        result = asyncio.run(validate_slide(session, 3, image, "Check", max_retries=2))
         assert "error" in result
         assert "2 attempts" in result["error"]
         assert result["slide_number"] == 3
@@ -349,9 +329,7 @@ class TestRun:
         args = _make_args(image_dir=tmp_path)
 
         mock_session = AsyncMock()
-        mock_session.send_and_wait.return_value = _make_session_response(
-            "No issues"
-        )
+        mock_session.send_and_wait.return_value = _make_session_response("No issues")
         mock_client = AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
@@ -371,9 +349,7 @@ class TestRun:
         args = _make_args(image_dir=tmp_path, output=out_file)
 
         mock_session = AsyncMock()
-        mock_session.send_and_wait.return_value = _make_session_response(
-            "All good"
-        )
+        mock_session.send_and_wait.return_value = _make_session_response("All good")
         mock_client = AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
@@ -390,9 +366,7 @@ class TestRun:
         args = _make_args(image_dir=tmp_path)
 
         mock_session = AsyncMock()
-        mock_session.send_and_wait.return_value = _make_session_response(
-            "Finding text"
-        )
+        mock_session.send_and_wait.return_value = _make_session_response("Finding text")
         mock_client = AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client

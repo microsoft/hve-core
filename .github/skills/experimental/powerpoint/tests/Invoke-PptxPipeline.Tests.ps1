@@ -16,12 +16,17 @@ BeforeAll {
 
     $binDir = if ($IsWindows) { Join-Path $script:StubRoot 'Scripts' } else { Join-Path $script:StubRoot 'bin' }
     New-Item -ItemType Directory -Path $binDir -Force | Out-Null
-    $pythonName = if ($IsWindows) { 'python.exe' } else { 'python' }
-    $script:PythonStub = Join-Path $binDir $pythonName
 
-    # Shell stub that exits with configurable code via STUB_EXIT_CODE env var
-    Set-Content -Path $script:PythonStub -Value "#!/bin/sh`nexit `${STUB_EXIT_CODE:-0}" -NoNewline
-    if (-not $IsWindows) { & chmod +x $script:PythonStub }
+    # Platform-appropriate stub that exits with configurable code via STUB_EXIT_CODE env var.
+    # Windows needs a batch file; a shell script written as python.exe is not a valid PE executable.
+    if ($IsWindows) {
+        $script:PythonStub = Join-Path $binDir 'python.cmd'
+        Set-Content -Path $script:PythonStub -Value '@if defined STUB_EXIT_CODE (exit /b %STUB_EXIT_CODE%) else (exit /b 0)' -NoNewline
+    } else {
+        $script:PythonStub = Join-Path $binDir 'python'
+        Set-Content -Path $script:PythonStub -Value "#!/bin/sh`nexit `${STUB_EXIT_CODE:-0}" -NoNewline
+        & chmod +x $script:PythonStub
+    }
 }
 
 AfterAll {

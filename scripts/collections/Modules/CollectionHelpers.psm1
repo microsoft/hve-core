@@ -10,6 +10,50 @@
 #Requires -Modules PowerShell-Yaml
 
 # ---------------------------------------------------------------------------
+# Internal Utilities
+# ---------------------------------------------------------------------------
+
+function Set-ContentIfChanged {
+    <#
+    .SYNOPSIS
+        Writes content to a file only when the content has changed.
+    .DESCRIPTION
+        Compares the provided value against the existing file content using
+        case-sensitive ordinal comparison. Writes only when the file does not
+        exist or content differs, preserving the git stat cache for unchanged files.
+    .PARAMETER Path
+        The file path to write.
+    .PARAMETER Value
+        The content to write.
+    .OUTPUTS
+        [bool] True if the file was written, false if skipped.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    if (Test-Path -LiteralPath $Path) {
+        $existing = Get-Content -LiteralPath $Path -Raw -Encoding utf8
+        if ([string]::Equals($existing, $Value, [System.StringComparison]::Ordinal)) {
+            return $false
+        }
+    }
+    $parentDir = Split-Path -Path $Path -Parent
+    if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
+    Set-Content -LiteralPath $Path -Value $Value -Encoding utf8 -NoNewline
+    return $true
+}
+
+# ---------------------------------------------------------------------------
 # Pure Functions (no file system side effects)
 # ---------------------------------------------------------------------------
 
@@ -543,7 +587,7 @@ function Update-HveCoreAllCollection {
         }
 
         $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path $collectionPath -Value $yaml -Encoding utf8 -NoNewline
+        Set-ContentIfChanged -Path $collectionPath -Value $yaml | Out-Null
         Write-Verbose "Updated $collectionPath"
     }
 
@@ -562,6 +606,7 @@ Export-ModuleMember -Function @(
     'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
     'Resolve-CollectionItemMaturity',
+    'Set-ContentIfChanged',
     'Test-ArtifactDeprecated',
     'Test-DeprecatedPath',
     'Test-HveCoreRepoRelativePath',

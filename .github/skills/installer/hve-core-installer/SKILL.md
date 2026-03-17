@@ -343,7 +343,7 @@ Execute the installation workflow based on the method selected via the decision 
 | 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`           | `.hve-core`            | Devcontainer, isolation        |
 | 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone      |
 | 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces                     |
-| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Per workspace file     | Best IDE integration           |
+| 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Actual clone path      | Local VS Code, best IDE integration |
 | 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`         | `lib/hve-core`         | Team version control           |
 
 *Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
@@ -378,23 +378,27 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/` and `.github/skills/` from the cloned HVE-Core directory. Include all nested subdirectories such as `hve-core/subagents`. Create one entry per subdirectory.
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each collection folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the collection-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Exclude the `installer` collection from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
+
+Any folder named `experimental` under any artifact type (agents, prompts, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
 
 <!-- <settings-template> -->
 ```json
 {
   "chat.agentFilesLocations": {
     "<PREFIX>/.github/agents/ado": true,
+    "<PREFIX>/.github/agents/code-review": true,
     "<PREFIX>/.github/agents/data-science": true,
     "<PREFIX>/.github/agents/design-thinking": true,
     "<PREFIX>/.github/agents/github": true,
-    "<PREFIX>/.github/agents/project-planning": true,
     "<PREFIX>/.github/agents/hve-core": true,
     "<PREFIX>/.github/agents/hve-core/subagents": true,
+    "<PREFIX>/.github/agents/project-planning": true,
     "<PREFIX>/.github/agents/security": true
   },
   "chat.promptFilesLocations": {
     "<PREFIX>/.github/prompts/ado": true,
+    "<PREFIX>/.github/prompts/code-review": true,
     "<PREFIX>/.github/prompts/design-thinking": true,
     "<PREFIX>/.github/prompts/github": true,
     "<PREFIX>/.github/prompts/hve-core": true,
@@ -471,16 +475,18 @@ Add to devcontainer.json:
       "settings": {
         "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/code-review": true,
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
-          "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/hve-core": true,
           "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
           "/workspaces/hve-core/.github/agents/security": true
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/code-review": true,
           "/workspaces/hve-core/.github/prompts/design-thinking": true,
           "/workspaces/hve-core/.github/prompts/github": true,
           "/workspaces/hve-core/.github/prompts/hve-core": true,
@@ -509,19 +515,27 @@ Optional: Add `updateContentCommand` for auto-updates on rebuild.
 
 #### Method 5: Multi-Root Workspace
 
-Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core:
+Create `hve-core.code-workspace` file with folders array pointing to both project and HVE-Core.
 
-<!-- <method-5-workspace> -->
+Use the actual clone path (not the folder display name) as the settings prefix.
+Folder display names in `chat.*Locations` settings do not resolve reliably.
+
+> [!IMPORTANT]
+> The dev container spec has no `workspaceFile` property. Codespaces and devcontainers always open in single-folder mode. The user must manually open the `.code-workspace` file after the container starts (`File > Open Workspace from File...` or `code <path>.code-workspace`). For Codespaces, Method 4 is usually more convenient because it configures settings automatically without requiring a workspace switch.
+
+Local VS Code: use a relative clone path from the workspace file's directory.
+
+<!-- <method-5-workspace-local> -->
 ```json
 {
   "folders": [
     { "name": "My Project", "path": "." },
-    { "name": "HVE-Core Library", "path": "../hve-core" }
+    { "path": "../hve-core" }
   ],
   "settings": { /* Same as settings template with ../hve-core prefix */ }
 }
 ```
-<!-- </method-5-workspace> -->
+<!-- </method-5-workspace-local> -->
 
 User opens the `.code-workspace` file instead of the folder.
 

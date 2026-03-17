@@ -1,7 +1,7 @@
 ---
 title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
-sidebar_position: 3
+sidebar_position: 4
 author: Microsoft
 ms.date: 2026-02-19
 ms.topic: tutorial

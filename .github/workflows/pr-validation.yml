@@ -50,6 +50,56 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  discover-python-projects:
+    name: Discover Python Projects
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Find Python projects
+        id: find
+        shell: pwsh
+        run: |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { $_ -replace '^\.[\\/]', '' } |
+            Sort-Object)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python projects: $dirs"
+          }
+
+  python-lint:
+    name: "Python Lint (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+    uses: ./.github/workflows/python-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      working-directory: ${{ matrix.directory }}
+
   copyright-headers:
     name: Copyright Headers
     uses: ./.github/workflows/copyright-headers.yml
@@ -78,71 +128,22 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
-  # Discover Python skills with pyproject.toml
-  discover-python-skills:
-    name: Discover Python Skills
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      matrix: ${{ steps.discover.outputs.matrix }}
-      has-skills: ${{ steps.discover.outputs.has-skills }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Discover Python skill directories
-        id: discover
-        shell: bash
-        run: |
-          # Find all pyproject.toml files under .github/skills/
-          SKILLS=$(find .github/skills -name "pyproject.toml" -exec dirname {} \; 2>/dev/null | sort -u)
-          
-          if [ -z "$SKILLS" ]; then
-            echo "No Python skills found"
-            echo "matrix={\"include\":[]}" >> "$GITHUB_OUTPUT"
-            echo "has-skills=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          
-          # Build JSON matrix
-          MATRIX='{"include":['
-          FIRST=true
-          while IFS= read -r skill_dir; do
-            # Get skill name from directory path
-            SKILL_NAME=$(basename "$skill_dir")
-            if [ "$FIRST" = true ]; then
-              FIRST=false
-            else
-              MATRIX+=','
-            fi
-            MATRIX+="{\"name\":\"$SKILL_NAME\",\"working-directory\":\"$skill_dir\"}"
-          done <<< "$SKILLS"
-          MATRIX+=']}'
-          
-          echo "matrix=$(echo "$MATRIX" | jq -c .)" >> "$GITHUB_OUTPUT"
-          echo "has-skills=true" >> "$GITHUB_OUTPUT"
-          echo "Discovered Python skills:"
-          echo "$MATRIX" | jq .
-
   pytest:
-    name: Python Tests (${{ matrix.name }})
-    needs: discover-python-skills
-    if: needs.discover-python-skills.outputs.has-skills == 'true'
+    name: "Python Tests (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
     uses: ./.github/workflows/pytest-tests.yml
     permissions:
       contents: read
       id-token: write
     with:
-      working-directory: ${{ matrix.working-directory }}
+      working-directory: ${{ matrix.directory }}
       soft-fail: false
       changed-files-only: true
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.discover-python-skills.outputs.matrix) }}
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
   docusaurus-tests:
     name: Docusaurus Tests

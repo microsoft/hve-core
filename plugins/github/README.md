@@ -3,6 +3,17 @@
 
 GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
 
+## Overview
+
+Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
+
+This collection includes agents and prompts for:
+
+- **Issue Discovery** — Find and analyze issues across repositories with duplicate detection
+- **Triage** — Automated label suggestion, milestone assignment, and priority assessment
+- **Sprint Planning** — Organize issues into sprints with effort estimation
+- **Backlog Execution** — Execute planned operations against issue backlogs
+
 ## Install
 
 ```bash
@@ -24,6 +35,7 @@ copilot plugin install github@hve-core
 | github-triage-issues   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 | github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
 | github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| github-suggest         | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
 
 ## Instructions
 

@@ -1,6 +1,6 @@
 ---
 title: Peer Directory Clone Installation
-description: Install HVE-Core as a sibling directory for local VS Code development
+description: Install HVE Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
 ms.date: 2026-03-10
@@ -13,7 +13,7 @@ keywords:
 estimated_reading_time: 5
 ---
 
-Peer Directory Clone places HVE-Core as a sibling folder next to your project. This is the simplest method for developers working with local VS Code without devcontainers.
+Peer Directory Clone places HVE Core as a sibling folder next to your project. This is the simplest method for developers working with local VS Code without devcontainers.
 
 ## When to Use This Method
 
@@ -22,7 +22,7 @@ Peer Directory Clone places HVE-Core as a sibling folder next to your project. T
 * You're using local VS Code (no devcontainer)
 * You're working solo on a project
 * You want the simplest possible setup
-* You're developing or testing HVE-Core itself
+* You're developing or testing HVE Core itself
 
 ❌ **Consider alternatives when:**
 
@@ -33,7 +33,7 @@ Peer Directory Clone places HVE-Core as a sibling folder next to your project. T
 
 ## How It Works
 
-HVE-Core is cloned into a sibling directory. Your project's VS Code settings reference it using relative paths.
+HVE Core is cloned into a sibling directory. Your project's VS Code settings reference it using relative paths.
 
 ```text
 projects/
@@ -50,11 +50,11 @@ projects/
 
 ## Quick Start
 
-Install the flagship HVE-Core [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
+Install the flagship HVE Core [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
-### Step 1: Clone HVE-Core
+### Step 1: Clone HVE Core
 
 Open a terminal in your project's parent directory:
 
@@ -62,7 +62,7 @@ Open a terminal in your project's parent directory:
 # Navigate to parent of your project
 cd /path/to/projects
 
-# Clone HVE-Core as a sibling
+# Clone HVE Core as a sibling
 git clone https://github.com/microsoft/hve-core.git
 ```
 
@@ -114,7 +114,7 @@ Create or update `.vscode/settings.json` in your project:
 
 ### Step 3: Validate Installation
 
-Verify HVE-Core directories are accessible:
+Verify HVE Core directories are accessible:
 
 ```bash
 ls ../hve-core/.github/agents
@@ -125,9 +125,9 @@ You should see `.agent.md` files. Then validate in VS Code:
 1. Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
 
-## Updating HVE-Core
+## Updating HVE Core
 
 To get the latest version:
 
@@ -151,7 +151,7 @@ ls ../hve-core/.github/agents
 
 If the path doesn't resolve, verify:
 
-1. HVE-Core is cloned at the correct location
+1. HVE Core is cloned at the correct location
 2. Your terminal is in your project directory
 3. The relative path in settings.json is correct
 
@@ -165,7 +165,7 @@ If the path doesn't resolve, verify:
 
 Relative paths break if your project moves. Options:
 
-1. Re-clone HVE-Core next to the new location
+1. Re-clone HVE Core next to the new location
 2. Update settings.json with the new relative path
 3. Switch to [Multi-Root Workspace](multi-root.md) for portable paths
 
@@ -176,7 +176,7 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 #### Solutions
 
 * Use [Git-Ignored Folder](git-ignored.md) for self-contained installation
-* Use [Mounted Directory](mounted.md) to share HVE-Core across projects
+* Use [Mounted Directory](mounted.md) to share HVE Core across projects
 * Use [Multi-Root Workspace](multi-root.md) for the most portable solution
 
 ## Limitations
@@ -193,7 +193,7 @@ Peer directory clone doesn't work in devcontainers because the container can't a
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [Multi-Root Workspace](multi-root.md) - Upgrade to portable paths
 * [Submodule](submodule.md) - Add version control for teams
 

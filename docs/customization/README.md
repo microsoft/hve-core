@@ -29,7 +29,7 @@ Your installation method determines which customization options are available.
 
 The [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) installs the flagship RPI workflow and core artifacts. For the complete library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
 For MCP auto-configuration, installation method guidance, or agent bundle selection, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent \"help me customize hve-core installation\".
-For full artifact modification, use a [clone-based installation method](../getting-started/install#custom-installation-methods).
+For full artifact modification, use a [clone-based installation method](../getting-started/methods/).
 
 ## Customization Spectrum
 
