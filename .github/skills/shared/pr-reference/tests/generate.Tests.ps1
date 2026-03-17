@@ -62,6 +62,38 @@ Describe 'Resolve-ComparisonReference' {
         Mock git { $global:LASTEXITCODE = 1; return $null }
         { Resolve-ComparisonReference -BaseBranch 'nonexistent-branch-xyz' } | Should -Throw '*does not exist*'
     }
+
+    Context 'UseMergeBase switch' {
+        It 'Resolves merge-base commit when UseMergeBase is set' {
+            $result = Resolve-ComparisonReference -BaseBranch 'HEAD~3' -UseMergeBase
+            $result.Ref | Should -Not -BeNullOrEmpty
+            # merge-base of HEAD and HEAD~3 should be HEAD~3 itself (or its SHA)
+            $result.Ref | Should -Match '^[a-f0-9]+'
+        }
+
+        It 'Falls back to direct ref when merge-base fails' {
+            $script:callCount = 0
+            Mock git {
+                $script:callCount++
+                if ($script:callCount -le 2) {
+                    # First calls: rev-parse --verify succeeds
+                    $global:LASTEXITCODE = 0
+                    return 'abc1234'
+                }
+                # merge-base call fails
+                $global:LASTEXITCODE = 1
+                return $null
+            }
+            $result = Resolve-ComparisonReference -BaseBranch 'some-branch' -UseMergeBase
+            $result.Ref | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Returns direct ref when UseMergeBase is not set' {
+            $result = Resolve-ComparisonReference -BaseBranch 'main'
+            # Without merge-base, ref should be the branch name or origin/branch
+            $result.Ref | Should -Match '(origin/)?main'
+        }
+    }
 }
 
 Describe 'Get-ShortCommitHash' {
@@ -140,6 +172,36 @@ Describe 'Get-DiffOutput' {
         Mock git { $global:LASTEXITCODE = 128; return $null }
         { Get-DiffOutput -ComparisonRef 'main' } | Should -Throw '*Failed to retrieve diff output*'
     }
+
+    Context 'ExcludeExt parameter' {
+        It 'Accepts extension exclusions without error' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeExt @('yml', 'json') } | Should -Not -Throw
+        }
+
+        It 'Strips leading dots from extensions' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeExt @('.yml', '.json') } | Should -Not -Throw
+        }
+
+        It 'Accepts empty extension array' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeExt @() } | Should -Not -Throw
+        }
+    }
+
+    Context 'ExcludePath parameter' {
+        It 'Accepts path exclusions without error' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludePath @('docs/', '.github/') } | Should -Not -Throw
+        }
+
+        It 'Accepts empty path array' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludePath @() } | Should -Not -Throw
+        }
+    }
+
+    Context 'Combined exclusion flags' {
+        It 'Accepts markdown, extension, and path exclusions together' {
+            { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeMarkdownDiff -ExcludeExt @('yml') -ExcludePath @('docs/') } | Should -Not -Throw
+        }
+    }
 }
 
 Describe 'Get-DiffSummary' {
@@ -157,6 +219,18 @@ Describe 'Get-DiffSummary' {
         Mock git { $global:LASTEXITCODE = 0; return '' }
         $result = Get-DiffSummary -ComparisonRef 'main'
         $result | Should -Be '0 files changed'
+    }
+
+    Context 'ExcludeExt parameter' {
+        It 'Accepts extension exclusions without error' {
+            { Get-DiffSummary -ComparisonRef 'HEAD~1' -ExcludeExt @('yml', 'json') } | Should -Not -Throw
+        }
+    }
+
+    Context 'ExcludePath parameter' {
+        It 'Accepts path exclusions without error' {
+            { Get-DiffSummary -ComparisonRef 'HEAD~1' -ExcludePath @('docs/') } | Should -Not -Throw
+        }
     }
 }
 
@@ -332,12 +406,76 @@ Describe 'Invoke-PrReferenceGeneration' {
         # Verify the markdown exclusion note was output
         Should -Invoke Write-Host -ParameterFilter { $Object -eq 'Note: Markdown files were excluded from diff output' }
     }
+
+    Context 'MergeBase parameter' {
+        It 'Generates XML when MergeBase is specified' {
+            $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+            $customPath = Join-Path $tempDir 'merge-base-test.xml'
+            try {
+                Mock Write-Host {}
+                $result = Invoke-PrReferenceGeneration -BaseBranch 'HEAD~1' -MergeBase -OutputPath $customPath
+                $result | Should -BeOfType [System.IO.FileInfo]
+                Should -Invoke Write-Host -ParameterFilter { $Object -eq 'Comparison mode: merge-base' }
+            }
+            finally {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    Context 'ExcludeExt parameter' {
+        It 'Outputs extension exclusion note' {
+            $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+            $customPath = Join-Path $tempDir 'ext-test.xml'
+            try {
+                Mock Write-Host {}
+                $null = Invoke-PrReferenceGeneration -BaseBranch 'HEAD~1' -ExcludeExt @('yml', 'json') -OutputPath $customPath
+                Should -Invoke Write-Host -ParameterFilter { $Object -like '*Extensions excluded*' }
+            }
+            finally {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    Context 'ExcludePath parameter' {
+        It 'Outputs path exclusion note' {
+            $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+            $customPath = Join-Path $tempDir 'path-test.xml'
+            try {
+                Mock Write-Host {}
+                $null = Invoke-PrReferenceGeneration -BaseBranch 'HEAD~1' -ExcludePath @('docs/') -OutputPath $customPath
+                Should -Invoke Write-Host -ParameterFilter { $Object -like '*Paths excluded*' }
+            }
+            finally {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    Context 'BaseBranch auto' {
+        It 'Resolves auto to the remote default branch' {
+            Mock Write-Host {}
+            Mock Resolve-DefaultBranch { return 'origin/main' }
+            $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+            $customPath = Join-Path $tempDir 'auto-test.xml'
+            try {
+                $result = Invoke-PrReferenceGeneration -BaseBranch 'auto' -OutputPath $customPath
+                $result | Should -BeOfType [System.IO.FileInfo]
+                Should -Invoke Resolve-DefaultBranch -Times 1
+            }
+            finally {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }
 
 Describe 'Large diff warning' {
     It 'Should output large diff message when line impact exceeds 1000' {
         Mock Test-GitAvailability {}
         Mock Get-RepositoryRoot { return (& git rev-parse --show-toplevel).Trim() }
+        Mock Resolve-DefaultBranch { return 'origin/main' }
         Mock Get-CurrentBranchOrRef { return 'feature/test' }
         Mock Resolve-ComparisonReference { return [PSCustomObject]@{ Ref = 'HEAD~1'; Label = 'main' } }
         Mock Get-ShortCommitHash { return 'abc1234' }
