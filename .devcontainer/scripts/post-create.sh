@@ -12,6 +12,7 @@ main() {
   mkdir -p logs
 
   fix_volume_ownerships
+  npm_clean_install
 }
 
 # Volume ownership is not set automatically due to a bug:
@@ -34,6 +35,11 @@ fix_volume_ownerships() {
   echo "Applying volume ownership workaround (see microsoft/vscode-remote-release#9931)..."
   fix_volume_ownership "/home/${USER}/.config"
   fix_volume_ownership "/workspace/node_modules"
+}
+
+npm_clean_install() {
+  echo "Running npm ci..."
+  npm ci
 }
 
 main "$@"

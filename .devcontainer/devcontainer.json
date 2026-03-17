@@ -60,7 +60,6 @@
   },
   "postAttachCommand": "/bin/bash .devcontainer/scripts/post-attach.sh",
   "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
-  "updateContentCommand": "npm ci",
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
   "remoteEnv": {
     "HVE_GITHUB_RELEASES_URL": "${localEnv:HVE_GITHUB_RELEASES_URL}",
