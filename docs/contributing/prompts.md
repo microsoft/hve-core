@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-03-17
 ms.topic: how-to
 ---
 
@@ -69,33 +69,45 @@ Prompt files MUST:
 | Style    | Sentence case with proper punctuation                                                                              |
 | Example  | `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'` |
 
-**`mode`** (string enum, MANDATORY for prompts)
-
-| Property | Value                                  |
-|----------|----------------------------------------|
-| Purpose  | Defines when/how the prompt is invoked |
-| Example  | `workflow`                             |
-
-Valid values:
-
-* `agent` - Used by specialized AI agents
-* `assistant` - General-purpose assistance context
-* `copilot` - GitHub Copilot-specific workflows
-* `workflow` - Automated workflow/pipeline context
-
 ### Optional Fields
 
-**`category`** (string enum)
+**`agent`** (string)
 
-Organizes prompts by domain.
+Delegates execution to a named custom agent. Use the human-readable name from the agent's `name:` frontmatter field. Quote the value when the agent name contains spaces.
 
-Valid values:
+```yaml
+agent: 'ADO Backlog Manager'
+```
 
-* `ado` - Azure DevOps workflows
-* `git` - Git operations
-* `documentation` - Documentation generation/maintenance
-* `workflow` - General workflow automation
-* `development` - Development tasks
+**`argument-hint`** (string)
+
+Displays expected inputs in the VS Code prompt picker, helping users understand what arguments to supply. Keep hints brief with required arguments first, then optional. Use `[]` for positional arguments, `key=value` for named parameters, and `{option1|option2}` for enumerated choices.
+
+```yaml
+argument-hint: "project=... [type={Epic|Feature|UserStory|Bug|Task}] [title=...]"
+```
+
+**`model`** (string)
+
+Specifies a preferred AI model for prompt invocation. When set, the VS Code prompt picker uses this model rather than the workspace default.
+
+```yaml
+model: gpt-4o
+```
+
+**`disable-model-invocation`** (boolean)
+
+When `true`, prevents the prompt from automatically invoking an AI model. Use for prompts that gather context or run setup steps before handing off to the user.
+
+```yaml
+disable-model-invocation: true
+```
+
+**`mode`** (string enum, optional)
+
+Specifies the invocation context. No prompt files in this repository currently set this field.
+
+Valid values: `agent`, `assistant`, `copilot`, `workflow`
 
 **`version`** (string)
 
@@ -114,13 +126,45 @@ Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
 ```yaml
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
-mode: 'workflow'
-category: 'ado'
+agent: 'ADO Backlog Manager'
+argument-hint: "project-slug=... [type={PR|Draft}]"
 version: '1.0.0'
 author: 'microsoft/hve-core'
-lastUpdated: '2025-11-19'
+lastUpdated: '2026-03-17'
 ---
 ```
+
+### Input Variables
+
+Prompts can declare input variables that VS Code resolves at invocation time. The syntax is:
+
+```text
+${input:varName}
+${input:varName:defaultValue}
+```
+
+Declare variables in an Inputs section and reference them in prompt content:
+
+```markdown
+## Inputs
+
+* ${input:topic}: (Required) Primary topic or focus area.
+* ${input:scope:all}: (Optional, defaults to all) Scope of the operation.
+```
+
+Required inputs (no default) are inferred from the user's conversation or attached files when not explicitly supplied.
+
+### Activation Lines
+
+Prompts that need to clarify the workflow entry point can include an activation line: a `---` separator followed by an instruction that tells the agent where to begin. Activation lines apply only to prompt files and are omitted when the delegated agent's phases already define the workflow start.
+
+```markdown
+---
+
+Begin by reading the current branch state and identifying open work items.
+```
+
+Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
 ## Collection Entry Requirements
 
@@ -352,7 +396,6 @@ When specific files/paths trigger behavior:
 ```yaml
 ---
 description: 'Required protocol for creating Azure DevOps pull requests'
-mode: 'workflow'
 applyTo: '**/.copilot-tracking/pr/new/**'  # Workflow-specific context
 ---
 ```
