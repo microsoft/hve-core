@@ -1,26 +1,9 @@
 """Shared Hypothesis strategies for PowerPoint skill property tests."""
 
 from hypothesis import strategies as st
+from pptx_colors import THEME_COLOR_MAP
 
-# Theme names matching THEME_COLOR_MAP keys in pptx_colors.py
-THEME_NAMES = [
-    "accent_1",
-    "accent_2",
-    "accent_3",
-    "accent_4",
-    "accent_5",
-    "accent_6",
-    "dark_1",
-    "dark_2",
-    "light_1",
-    "light_2",
-    "text_1",
-    "text_2",
-    "background_1",
-    "background_2",
-    "hyperlink",
-    "followed_hyperlink",
-]
+THEME_NAMES = list(THEME_COLOR_MAP.keys())
 
 hex_color = st.text(alphabet="0123456789abcdefABCDEF", min_size=6, max_size=6).map(
     lambda s: f"#{s}"

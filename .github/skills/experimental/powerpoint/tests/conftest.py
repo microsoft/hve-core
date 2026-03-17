@@ -29,13 +29,52 @@ settings.register_profile(
 settings.load_profile("ci" if os.environ.get("CI") else "dev")
 
 
-@pytest.fixture()
-def blank_presentation():
-    """Fresh Presentation with standard widescreen dimensions."""
+# Plain functions callable from @given-decorated Hypothesis tests,
+# which cannot use pytest fixtures.
+
+
+def make_blank_presentation():
+    """Create a fresh Presentation with standard widescreen dimensions."""
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
     return prs
+
+
+def make_blank_slide():
+    """Create a blank slide on a fresh presentation."""
+    prs = make_blank_presentation()
+    layout = prs.slide_layouts[6]
+    return prs.slides.add_slide(layout)
+
+
+def _minimal_png_bytes() -> bytes:
+    """Create a minimal valid 1x1 red PNG in memory."""
+
+    def _chunk(chunk_type, data):
+        c = chunk_type + data
+        crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return struct.pack(">I", len(data)) + c + crc
+
+    signature = b"\x89PNG\r\n\x1a\n"
+    ihdr_data = struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)
+    raw_row = b"\x00\xff\x00\x00"  # filter byte + RGB
+    idat_data = zlib.compress(raw_row)
+    return (
+        signature
+        + _chunk(b"IHDR", ihdr_data)
+        + _chunk(b"IDAT", idat_data)
+        + _chunk(b"IEND", b"")
+    )
+
+
+# Fixtures
+
+
+@pytest.fixture()
+def blank_presentation():
+    """Fresh Presentation with standard widescreen dimensions."""
+    return make_blank_presentation()
 
 
 @pytest.fixture()
@@ -76,44 +115,9 @@ def sample_shape(blank_slide):
     return shape
 
 
-def _minimal_png_bytes() -> bytes:
-    """Create a minimal valid 1x1 red PNG in memory."""
-
-    def _chunk(chunk_type, data):
-        c = chunk_type + data
-        crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
-        return struct.pack(">I", len(data)) + c + crc
-
-    signature = b"\x89PNG\r\n\x1a\n"
-    ihdr_data = struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)
-    raw_row = b"\x00\xff\x00\x00"  # filter byte + RGB
-    idat_data = zlib.compress(raw_row)
-    return (
-        signature
-        + _chunk(b"IHDR", ihdr_data)
-        + _chunk(b"IDAT", idat_data)
-        + _chunk(b"IEND", b"")
-    )
-
-
 @pytest.fixture()
 def sample_image_path(tmp_path):
     """Minimal valid PNG file at a temporary path."""
     img = tmp_path / "test.png"
     img.write_bytes(_minimal_png_bytes())
     return img
-
-
-def make_blank_presentation():
-    """Create a fresh Presentation with standard widescreen dimensions."""
-    prs = Presentation()
-    prs.slide_width = Inches(13.333)
-    prs.slide_height = Inches(7.5)
-    return prs
-
-
-def make_blank_slide():
-    """Create a blank slide on a fresh presentation."""
-    prs = make_blank_presentation()
-    layout = prs.slide_layouts[6]
-    return prs.slides.add_slide(layout)

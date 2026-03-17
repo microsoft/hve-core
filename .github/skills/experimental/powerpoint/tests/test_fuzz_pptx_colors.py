@@ -7,6 +7,8 @@ from conftest import make_blank_slide
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Inches
 from pptx_colors import (
     apply_color_spec,
     extract_color,
@@ -77,9 +79,6 @@ class TestFuzzColorRoundTrip:
     )
     def test_apply_extract_preserves_color_type(self, r, g, b):
         slide = make_blank_slide()
-        from pptx.enum.shapes import MSO_SHAPE
-        from pptx.util import Inches
-
         shape = slide.shapes.add_shape(
             MSO_SHAPE.RECTANGLE, Inches(1), Inches(1), Inches(2), Inches(2)
         )
@@ -87,5 +86,5 @@ class TestFuzzColorRoundTrip:
         color_spec = {"rgb": RGBColor(r, g, b)}
         apply_color_spec(shape.fill.fore_color, color_spec)
         extracted = extract_color(shape.fill.fore_color)
-        assert isinstance(extracted, str)
-        assert extracted.startswith("#")
+        expected = f"#{r:02X}{g:02X}{b:02X}"
+        assert extracted == expected
