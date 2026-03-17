@@ -17,7 +17,6 @@ items:
   # Agents
   - path: .github/agents/security/security-plan-creator.agent.md
     kind: agent
-    maturity: experimental
   - path: .github/agents/security/security-reviewer.agent.md
     kind: agent
     maturity: experimental
@@ -49,10 +48,8 @@ items:
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
-    maturity: experimental
   - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
-    maturity: experimental
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

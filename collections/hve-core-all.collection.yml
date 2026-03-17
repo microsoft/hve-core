@@ -87,7 +87,6 @@ items:
   kind: agent
 - path: .github/agents/security/security-plan-creator.agent.md
   kind: agent
-  maturity: experimental
 - path: .github/agents/security/security-reviewer.agent.md
   kind: agent
   maturity: experimental
@@ -206,10 +205,8 @@ items:
   kind: prompt
 - path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/prompts/security/risk-register.prompt.md
   kind: prompt
-  maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md
