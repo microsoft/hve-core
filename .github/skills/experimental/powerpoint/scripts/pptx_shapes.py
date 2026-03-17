@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Shape constants, maps, and rotation utilities for PowerPoint skill scripts.
 
 Provides the expanded SHAPE_MAP (30+ entries), an inverse AUTO_SHAPE_NAME_MAP

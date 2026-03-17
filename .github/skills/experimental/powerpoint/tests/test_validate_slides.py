@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for validate_slides module.
 
 The validate_slides module depends on the Copilot SDK for vision model
