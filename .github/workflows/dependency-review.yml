@@ -23,6 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: Submit uv.lock dependencies  # Skipped on fork PRs (read-only token)
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: advanced-security/component-detection-dependency-submission-action@9c110eb34dee187cd9eca76a652b9f6a0ed22927 # v0.1.1
         with:
           detectorArgs: 'UvLock=EnableIfDefaultOff'
