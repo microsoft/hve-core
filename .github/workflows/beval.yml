@@ -28,20 +28,27 @@ jobs:
         run: npm install -g @github/copilot@1
 
       - name: Install beval
-        run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@eedorenko/acp-a2a#subdirectory=python"
+        run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@eedorenko/skill-agent#subdirectory=python"
 
       - name: Start agent (TCP)
-        working-directory: ${{ github.workspace }}
         run: |
-          pwd
-          ls -la
-          copilot --agent dt-coach --allow-all --model claude-opus-4.6-fast -p "How are you doing?"
-          sleep 5
+          copilot --acp --port 3000 --allow-all &
+          for i in $(seq 1 30); do
+            nc -z 127.0.0.1 3000 && break
+            echo "Waiting for agent to start ($i)..."
+            sleep 2
+          done
+          nc -z 127.0.0.1 3000 || { echo "Agent failed to start"; exit 1; }
 
       - name: Start judge (TCP)
         run: |
           copilot --acp --port 3001 --allow-all &
-          sleep 5
+          for i in $(seq 1 30); do
+            nc -z 127.0.0.1 3001 && break
+            echo "Waiting for judge to start ($i)..."
+            sleep 2
+          done
+          nc -z 127.0.0.1 3001 || { echo "Judge failed to start"; exit 1; }
 
       - name: Run evaluations
         run: |
