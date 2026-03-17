@@ -1,0 +1,19 @@
+name: Test Copilot Token
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+    steps:
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot@1
+
+      - name: Test token
+        run: |
+          echo "Token length: ${#COPILOT_GITHUB_TOKEN}"
+          echo "Token set: $([ -n "$COPILOT_GITHUB_TOKEN" ] && echo YES || echo NO)"
+          copilot -p "Say hello" 2>&1 || echo "EXIT CODE: $?"
