@@ -56,6 +56,5 @@ items:
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
-    maturity: experimental
 display:
   ordering: manual
