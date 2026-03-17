@@ -13,3 +13,7 @@ Standard severity ratings used by all OWASP skill assessments.
 | HIGH     | Exploitation requires minimal prerequisites and results in significant impact.          |
 | MEDIUM   | Exploitation requires specific conditions but leads to meaningful security degradation. |
 | LOW      | Exploitation is difficult or impact is limited in scope.                                |
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

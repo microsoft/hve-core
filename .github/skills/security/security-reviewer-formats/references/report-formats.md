@@ -209,3 +209,7 @@ Where:
 * MITIGATION_GUIDANCE is markdown; grouped by severity (CRITICAL, HIGH, MEDIUM, LOW). Each RISK or CAUTION finding includes: risk description, attack scenario, numbered mitigation steps, and an implementation checklist.
 * CHECKLIST_ROWS is pipe-delimited rows for each RISK or CAUTION item with NOT_STARTED status.
 * SKILLS_TABLE_ROWS is pipe-delimited rows for each skill with metadata.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
