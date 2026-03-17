@@ -41,6 +41,17 @@ Collect the minimum required context before scoring alignment or proposing final
 
 When one or more fields are unknown, proceed with explicit assumptions and mark confidence as Medium or Low.
 
+## Output Artifact
+
+Always create or update a markdown assessment file so the result is referenceable outside chat.
+
+* Use the user-provided output path when one is provided
+* Otherwise write to `.copilot-tracking/reviews/{{YYYY-MM-DD}}-edge-network-isa95-assessment.md`
+* Include both required outputs in the file:
+  * Output A: Plain-Language Assessment
+  * Output B: YAML Companion Artifact
+* End the chat response with the exact artifact path and a short summary of key risks
+
 ## Required Steps
 
 ### Step 1: Build the Current-State Map
@@ -170,10 +181,34 @@ Return both human-readable and machine-readable outputs.
 Use this section order:
 
 1. Current architecture summary (zones, conduits, assumptions)
-2. ISA-95 alignment classification and top gaps
-3. Security-first remediation plan with effort and confidence
-4. Brownfield and greenfield implementation tracks
-5. Beginner glossary
+2. Visual walkthrough
+3. ISA-95 alignment classification and top gaps
+4. Security-first remediation plan with effort and confidence
+5. Brownfield and greenfield implementation tracks
+6. Beginner glossary
+
+Visual walkthrough requirements:
+
+* Include a Mermaid diagram that is easy for non-experts to follow
+* Use a left-to-right layout with three grouped zones: Device, Site Operations, and Enterprise or Cloud
+* Show only approved flows as solid arrows with plain labels:
+  * F-05 Data
+  * F-01 Images
+  * F-03 Secrets
+  * F-02 Logs and Metrics
+  * F-06 Replay After Outage
+  * F-04 Admin JIT and MFA
+* Show default-block behavior as dashed control arrows from firewall or policy to target systems
+* Add a short reader guide immediately before the diagram:
+  * Left is factory devices
+  * Middle is on-site edge systems
+  * Right is Azure
+  * Solid arrows are approved flows
+  * Dashed arrows represent deny-by-default controls
+* Add a flow legend table immediately after the diagram with columns:
+  * Flow
+  * Plain meaning
+  * Security control
 
 ### Output B: YAML Companion Artifact
 
