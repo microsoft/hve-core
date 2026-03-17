@@ -150,7 +150,7 @@ When a prior scan report path is provided, append to any prompt: "Prior Report:\
 
 ## Format Specifications
 
-Format templates used by subagents are defined in the `security-reviewer-formats` skill:
+Format templates used by subagents are defined in the `security-reviewer-formats` skill. Direct path references are intentional; subagents require exact format compliance, and semantic invocation risks the model inferring format structures instead of reading the authoritative templates.
 
 * [Report Formats](.github/skills/security/security-reviewer-formats/references/report-formats.md) — VULN_REPORT_V1 template, diff mode qualifiers, and PLAN_REPORT_V1 template.
 * [Finding Formats](.github/skills/security/security-reviewer-formats/references/finding-formats.md) — Finding Serialization Format and Verified Findings Collection Format.

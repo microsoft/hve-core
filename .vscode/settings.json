@@ -54,6 +54,7 @@
     ".github/skills": true,
     ".github/skills/shared": true,
     ".github/skills/experimental": true,
+    ".github/skills/security": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
