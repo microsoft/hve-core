@@ -27,6 +27,12 @@ jobs:
       - name: Install GitHub Copilot CLI
         run: npm install -g @github/copilot@1
 
+      - name: Verify Copilot token
+        run: |
+          echo "Token set: $([ -n "$COPILOT_GITHUB_TOKEN" ] && echo YES || echo NO)"
+          echo "Token length: ${#COPILOT_GITHUB_TOKEN}"
+          copilot -p "Say hello" 2>&1 | head -20 || echo "Copilot exit code: $?"
+
       - name: Install beval
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@eedorenko/skill-agent#subdirectory=python"
 
