@@ -103,11 +103,13 @@ When `true`, prevents the prompt from automatically invoking an AI model. Use fo
 disable-model-invocation: true
 ```
 
-**`mode`** (string enum, optional)
+**`mode`** (string)
 
-Specifies the invocation context. No prompt files in this repository currently set this field.
+Specifies the invocation context. Valid values: `agent`, `assistant`, `copilot`, `workflow`
 
-Valid values: `agent`, `assistant`, `copilot`, `workflow`
+**`category`** (string)
+
+Groups the prompt by topic or domain for organizational purposes (e.g., `code-review`, `ado`, `git`).
 
 **`version`** (string)
 
