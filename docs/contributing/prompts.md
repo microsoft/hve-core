@@ -73,55 +73,84 @@ Prompt files MUST:
 
 **`agent`** (string)
 
-Delegates execution to a named custom agent. Use the human-readable name from the agent's `name:` frontmatter field. Quote the value when the agent name contains spaces.
-
-```yaml
-agent: 'ADO Backlog Manager'
-```
+| Property | Value                                                                    |
+|----------|--------------------------------------------------------------------------|
+| Purpose  | Delegates execution to a named custom agent                              |
+| Format   | Human-readable agent name matching the agent's `name:` frontmatter field |
+| Style    | Quote the value when the agent name contains spaces                      |
+| Example  | `'ADO Backlog Manager'`                                                  |
 
 **`argument-hint`** (string)
 
-Displays expected inputs in the VS Code prompt picker, helping users understand what arguments to supply. Keep hints brief with required arguments first, then optional. Use `[]` for positional arguments, `key=value` for named parameters, and `{option1|option2}` for enumerated choices.
-
-```yaml
-argument-hint: "project=... [type={Epic|Feature|UserStory|Bug|Task}] [title=...]"
-```
+| Property | Value                                                                                                                                          |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Purpose  | Displays expected inputs in the VS Code prompt picker                                                                                          |
+| Format   | Brief string; required arguments first, then optional; `[]` for positional, `key=value` for named, `{option1\|option2}` for enumerated choices |
+| Style    | Keep hints concise; lead with required arguments                                                                                               |
+| Example  | `"project=... [type={Epic\|Feature\|UserStory\|Bug\|Task}] [title=...]"`                                                                       |
 
 **`model`** (string)
 
-Specifies a preferred AI model for prompt invocation. When set, the VS Code prompt picker uses this model rather than the workspace default.
-
-```yaml
-model: gpt-4o
-```
+| Property | Value                                                                              |
+|----------|------------------------------------------------------------------------------------|
+| Purpose  | Specifies a preferred AI model for prompt invocation                               |
+| Format   | Model identifier string                                                            |
+| Style    | Use the model's canonical identifier; omit if the workspace default is acceptable  |
+| Example  | `gpt-4o`                                                                           |
 
 **`disable-model-invocation`** (boolean)
 
-When `true`, prevents the prompt from automatically invoking an AI model. Use for prompts that gather context or run setup steps before handing off to the user.
-
-```yaml
-disable-model-invocation: true
-```
+| Property | Value                                                                                 |
+|----------|---------------------------------------------------------------------------------------|
+| Purpose  | Prevents the prompt from automatically invoking an AI model at start                  |
+| Format   | Boolean (`true` or `false`)                                                           |
+| Style    | Use for prompts that gather context or run setup steps before handing off to the user |
+| Example  | `true`                                                                                |
 
 **`mode`** (string)
 
-Specifies the invocation context. Valid values: `agent`, `assistant`, `copilot`, `workflow`
+| Property | Value                                                                        |
+|----------|------------------------------------------------------------------------------|
+| Purpose  | Specifies the invocation context                                             |
+| Format   | Enumerated string; valid values: `agent`, `assistant`, `copilot`, `workflow` |
+| Style    | Lowercase                                                                    |
+| Example  | `agent`                                                                      |
 
 **`category`** (string)
 
-Groups the prompt by topic or domain for organizational purposes (e.g., `code-review`, `ado`, `git`).
+| Property | Value                                                            |
+|----------|------------------------------------------------------------------|
+| Purpose  | Groups the prompt by topic or domain for organizational purposes |
+| Format   | String identifying the domain or topic area                      |
+| Style    | Lowercase kebab-case (e.g., `code-review`, `ado`, `git`)         |
+| Example  | `code-review`                                                    |
 
 **`version`** (string)
 
-Tracks prompt revisions using semantic versioning (e.g., `1.0.0`).
+| Property | Value                                          |
+|----------|------------------------------------------------|
+| Purpose  | Tracks prompt revisions                        |
+| Format   | Semantic versioning string (MAJOR.MINOR.PATCH) |
+| Style    | Quoted string                                  |
+| Example  | `'1.0.0'`                                      |
 
 **`author`** (string)
 
-Attribution for the prompt creator (e.g., `microsoft/hve-core`, `your-team-name`).
+| Property | Value                                  |
+|----------|----------------------------------------|
+| Purpose  | Attribution for the prompt creator     |
+| Format   | Team or repository identifier string   |
+| Style    | Use `org/repo` format or a team name   |
+| Example  | `'microsoft/hve-core'`                 |
 
 **`lastUpdated`** (string)
 
-Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
+| Property | Value                             |
+|----------|-----------------------------------|
+| Purpose  | Timestamp of last modification    |
+| Format   | ISO 8601 date string (YYYY-MM-DD) |
+| Style    | Quoted string                     |
+| Example  | `'2026-03-17'`                    |
 
 ### Frontmatter Example
 
