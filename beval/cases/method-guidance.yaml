@@ -1,0 +1,237 @@
+background:
+  category: method-guidance
+  given:
+    domain: design-thinking
+
+cases:
+  # ── Method 1: Scope Conversations ──────────────────────────────
+
+  - id: method_1_frozen_vs_fluid
+    name: "Method 1: Assess whether request is frozen or fluid"
+    tags: [method-1, problem-space, core]
+    given:
+      query: >
+        Our VP wants us to build an AI chatbot for the help desk.  She's
+        pretty set on it.  We're starting Method 1 scope conversations.
+        How should we approach this?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              helps the user assess whether the VP's request is frozen
+              (solution already decided) or fluid (open to exploring the
+              underlying problem), and suggests how to have scope
+              conversations that uncover the real need behind the chatbot
+              request
+
+  - id: method_1_identify_stakeholders
+    name: "Method 1: Guide stakeholder identification"
+    tags: [method-1, problem-space, core]
+    given:
+      query: >
+        We want to do scope conversations for our supply chain visibility
+        project but we're not sure who to talk to.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - response should contain: "stakeholder"
+          - the answer should be: >
+              guides the user to identify relevant stakeholders by asking
+              about who is affected by supply chain visibility issues, who
+              makes decisions, and who has been requesting changes; does
+              not produce a list for them but helps them think through it
+
+  # ── Method 2: Design Research ───────────────────────────────────
+
+  - id: method_2_research_planning
+    name: "Method 2: Help plan systematic research"
+    tags: [method-2, problem-space]
+    given:
+      query: >
+        We've completed our scope conversations and confirmed the problem
+        is real.  Now we need to do design research.  We have access to
+        3 plant managers and about 20 floor operators.  How do we structure
+        our research?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 5000]
+          - the answer should be: >
+              addresses research planning — who to interview, what to
+              observe, or how to capture data — and includes at least one
+              clarifying question or prompt that invites the user to shape
+              the plan rather than passively receiving it
+
+  # ── Method 3: Input Synthesis ───────────────────────────────────
+
+  - id: method_3_pattern_recognition
+    name: "Method 3: Guide pattern recognition from research"
+    tags: [method-3, problem-space, core]
+    given:
+      query: >
+        We finished 12 interviews across 3 plants.  Common things we heard:
+        operators say they waste time looking for tools, supervisors want
+        real-time status boards, maintenance crew says preventive schedules
+        are ignored, and everyone complains about the ERP being too slow.
+        Help us synthesize this.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 5000]
+          - the answer should be: >
+              helps the user identify patterns and themes across the
+              research findings; may offer some initial observations but
+              also asks questions that prompt the user to explore
+              connections between the findings and develop themes
+
+  # ── Method 4: Brainstorming ─────────────────────────────────────
+
+  - id: method_4_divergent_ideation
+    name: "Method 4: Facilitate divergent ideation"
+    tags: [method-4, solution-space, core]
+    given:
+      query: >
+        Our synthesis produced three themes: tool accessibility on the floor,
+        real-time communication gaps, and misaligned maintenance schedules.
+        We want to brainstorm solutions.  There are 6 of us in the room.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              helps set up a brainstorming session with divergent thinking
+              principles (quantity over quality, build on ideas, defer
+              judgment); may suggest focusing on one theme at a time; does
+              NOT generate solutions but helps the team generate their own
+
+  # ── Method 5: User Concepts ─────────────────────────────────────
+
+  - id: method_5_concept_validation
+    name: "Method 5: Guide concept creation for validation"
+    tags: [method-5, solution-space]
+    given:
+      query: >
+        From brainstorming we picked our top 3 ideas: a tool-tracking tag
+        system, a floor status dashboard, and a predictive maintenance
+        alert.  How do we turn these into user concepts?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 5000]
+          - the answer should be: >
+              addresses how to create user-facing concept descriptions
+              that can be validated with stakeholders; may provide a
+              framework or starting structure but also asks about
+              target audience, validation goals, or what feedback the
+              user wants to get
+
+  # ── Method 6: Low-Fidelity Prototypes ───────────────────────────
+
+  - id: method_6_scrappy_prototypes
+    name: "Method 6: Encourage scrappy constraint discovery"
+    tags: [method-6, solution-space]
+    given:
+      query: >
+        Users loved the floor status dashboard concept.  We want to
+        prototype it.  Should we start building it in React?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              steers away from jumping to code and encourages a low-fidelity
+              approach (paper sketches, wireframes, clickable mockups) to
+              discover constraints cheaply before investing in development;
+              asks what assumptions they want to test with the prototype
+
+  # ── Method 7: High-Fidelity Prototypes ──────────────────────────
+
+  - id: method_7_feasibility_testing
+    name: "Method 7: Guide technical feasibility testing"
+    tags: [method-7, implementation-space]
+    given:
+      query: >
+        Our paper prototypes validated the dashboard layout.  Now we need
+        to test whether we can actually pull real-time data from the PLCs
+        on the floor.  We're moving to high-fidelity prototyping.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              helps the user think through technical feasibility questions
+              and what they need to prove with the high-fidelity prototype;
+              asks about technical constraints, integration points, and
+              what "good enough" looks like at this stage
+
+  # ── Method 8: User Testing ─────────────────────────────────────
+
+  - id: method_8_systematic_validation
+    name: "Method 8: Structure user testing for validation"
+    tags: [method-8, implementation-space]
+    given:
+      query: >
+        We have a working prototype of the floor status dashboard pulling
+        live PLC data.  We want to test it with operators at Plant B.
+        How should we set up the user testing?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 5000]
+          - the answer should be: >
+              helps the user plan systematic user testing by addressing
+              success criteria, test scenarios, observation methods, or
+              feedback capture; includes questions or prompts that
+              encourage the user to think about what they need to learn
+
+  # ── Method 9: Iteration at Scale ────────────────────────────────
+
+  - id: method_9_continuous_optimization
+    name: "Method 9: Guide continuous optimization approach"
+    tags: [method-9, implementation-space]
+    given:
+      query: >
+        User testing went well at Plant B.  Leadership wants to roll out
+        the dashboard across all 5 plants.  How do we approach iteration
+        at scale?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 5000]
+          - the answer should be: >
+              addresses scaling considerations — acknowledges that what
+              worked at one plant may not transfer directly; covers
+              differences between sites, feedback loops, or metrics for
+              ongoing optimization
