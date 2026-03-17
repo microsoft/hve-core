@@ -68,7 +68,8 @@ Skill files are typically organized in a collection subdirectory by convention:
 ├── examples/
 │   └── README.md               # Usage examples (recommended)
 └── tests/
-    └── <action>.Tests.ps1      # Pester unit tests (required for PowerShell)
+    ├── <action>.Tests.ps1      # Pester unit tests (required for PowerShell)
+    └── fuzz_harness.py         # Atheris fuzz harness (required for Python)
 ```
 
 > [!NOTE]
@@ -377,6 +378,16 @@ Python skill scripts require pytest:
 * Place tests in the `tests/` subdirectory alongside PowerShell tests
 * Configure pytest and ruff in a `pyproject.toml` at the skill root
 
+### Fuzz Harness (Python Skills)
+
+Python skills with a `tests/` directory **MUST** include a fuzz harness for OSSF Scorecard Fuzzing compliance:
+
+* Create `tests/fuzz_harness.py` as a polyglot file that runs as both a pytest test and an Atheris fuzz target
+* Add a `fuzz` dependency group with `atheris>=3.0` in `pyproject.toml`
+* Add `python_files = ["test_*.py", "fuzz_harness.py"]` to `[tool.pytest.ini_options]` for pytest discovery
+* The harness uses `try: import atheris` to detect availability and degrade gracefully when not installed
+* Validation enforces this convention: builds fail when a Python skill has tests but no fuzz harness
+
 ### Packaging Note
 
 Co-located `tests/` directories are automatically excluded from the VSIX extension package. No additional contributor action is needed.
@@ -494,6 +505,8 @@ Before submitting your skill, verify:
 * [ ] Unit tests present in `tests/` subdirectory
 * [ ] PowerShell tests use `.Tests.ps1` naming convention
 * [ ] Tests pass locally via `npm run test:ps`
+* [ ] Python skills include `tests/fuzz_harness.py` (required for Scorecard compliance)
+* [ ] Fuzz harness passes in pytest mode: `uv run pytest tests/fuzz_harness.py -v`
 
 ### Documentation
 

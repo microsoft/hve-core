@@ -17,10 +17,14 @@ dev = [
     "pytest-cov>=7.0",
     "ruff>=0.15",
 ]
+fuzz = [
+    "atheris>=3.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["scripts"]
+python_files = ["test_*.py", "fuzz_harness.py"]
 markers = [
     "integration: roundtrip integration tests",
     "slow: tests that create full presentations",

@@ -80,6 +80,8 @@ def resolve_color(
         return {"rgb": RGBColor(0, 0, 0)}
 
     hex_str = value.lstrip("#")
+    if len(hex_str) < 6:
+        return {"rgb": RGBColor(0, 0, 0)}
     return {
         "rgb": RGBColor(
             int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16)
@@ -149,5 +151,7 @@ def rgb_to_hex(rgb_color) -> str | None:
 def hex_brightness(hex_color: str) -> int:
     """Calculate perceived brightness (0-255) from a hex color string."""
     h = hex_color.lstrip("#")
+    if len(h) < 6:
+        return 0
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return int(0.299 * r + 0.587 * g + 0.114 * b)

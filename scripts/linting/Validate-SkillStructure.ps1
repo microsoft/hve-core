@@ -168,6 +168,14 @@ function Test-PythonSkillConfig {
         $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
     }
 
+    # Fuzz harness convention check
+    if ($HasTestsDir) {
+        $fuzzHarnessPath = Join-Path (Split-Path $PyprojectPath -Parent) 'tests' 'fuzz_harness.py'
+        if (-not (Test-Path $fuzzHarnessPath -PathType Leaf)) {
+            $errors.Add("$RelativePath - missing tests/fuzz_harness.py (fuzz harness convention for Scorecard compliance)")
+        }
+    }
+
     return @{ Errors = $errors; Warnings = $warnings }
 }
 
