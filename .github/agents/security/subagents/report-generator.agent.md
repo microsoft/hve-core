@@ -51,11 +51,11 @@ Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, 
 
 ## Report Formats
 
-Read the full format specifications from the `security-reviewer-formats` skill reference files before generating any report:
+Read the full format specifications from the `security-reviewer-formats` skill before generating any report. Locate the skill entry file by searching for `security-reviewer-formats/SKILL.md`, then follow its normative reference links to load:
 
-* [Report Formats](.github/skills/security/security-reviewer-formats/references/report-formats.md) — VULN_REPORT_V1 template (audit and diff modes), diff mode qualifiers, and PLAN_REPORT_V1 template (plan mode).
-* [Finding Formats](.github/skills/security/security-reviewer-formats/references/finding-formats.md) — Verified Findings Collection Format describing the input structure.
-* [Completion Formats](.github/skills/security/security-reviewer-formats/references/completion-formats.md) — Scan Completion Format used by the orchestrator after report delivery.
+* Report Formats (`references/report-formats.md`) — VULN_REPORT_V1 template (audit and diff modes), diff mode qualifiers, and PLAN_REPORT_V1 template (plan mode).
+* Finding Formats (`references/finding-formats.md`) — Verified Findings Collection Format describing the input structure.
+* Completion Formats (`references/completion-formats.md`) — Scan Completion Format used by the orchestrator after report delivery.
 
 ## Required Steps
 

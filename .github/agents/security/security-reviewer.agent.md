@@ -96,7 +96,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill base path: `.github/skills/security`
+Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access vulnerability reference documents in its `references/` directory.
 
 ### Subagents
 
@@ -138,7 +138,7 @@ When a subdirectory focus is provided (audit only), append: "Subdirectory Focus:
 * `audit`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
 * `diff`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation. These findings originate from a diff-scoped scan. Search the full repository for evidence, including unchanged code.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
 
-`{findings}` uses the Finding Serialization Format from [finding-formats.md](.github/skills/security/security-reviewer-formats/references/finding-formats.md).
+`{findings}` uses the Finding Serialization Format from the `security-reviewer-formats` skill (see `references/finding-formats.md` in that skill).
 
 ### Report Generator Prompts
 
@@ -150,12 +150,12 @@ When a prior scan report path is provided, append to any prompt: "Prior Report:\
 
 ## Format Specifications
 
-Format templates used by subagents are defined in the `security-reviewer-formats` skill. Direct path references are intentional; subagents require exact format compliance, and semantic invocation risks the model inferring format structures instead of reading the authoritative templates.
+Format templates used by subagents are defined in the `security-reviewer-formats` skill. Locate the skill entry file by searching for `security-reviewer-formats/SKILL.md`, then follow its normative reference links to load the required format files.
 
-* [Report Formats](.github/skills/security/security-reviewer-formats/references/report-formats.md) — VULN_REPORT_V1 template, diff mode qualifiers, and PLAN_REPORT_V1 template.
-* [Finding Formats](.github/skills/security/security-reviewer-formats/references/finding-formats.md) — Finding Serialization Format and Verified Findings Collection Format.
-* [Completion Formats](.github/skills/security/security-reviewer-formats/references/completion-formats.md) — Scan Status, Scan Completion, and Minimal Profile Stub formats.
-* [Severity Definitions](.github/skills/security/security-reviewer-formats/references/severity-definitions.md) — Standard severity level definitions.
+* Report Formats (`references/report-formats.md`) — VULN_REPORT_V1 template, diff mode qualifiers, and PLAN_REPORT_V1 template.
+* Finding Formats (`references/finding-formats.md`) — Finding Serialization Format and Verified Findings Collection Format.
+* Completion Formats (`references/completion-formats.md`) — Scan Status, Scan Completion, and Minimal Profile Stub formats.
+* Severity Definitions (`references/severity-definitions.md`) — Standard severity level definitions.
 
 ## Required Steps
 
@@ -189,7 +189,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
   1. Skip the Codebase Profiler invocation entirely.
   2. Validate that the target skill exists in the Available Skills list. If not, inform the user which skills are available and stop.
   3. Extract the repository name by running `basename -s .git "$(git config --get remote.origin.url 2>/dev/null)" 2>/dev/null || basename "$PWD"`.
-  4. Build a minimal profile stub using the Minimal Profile Stub Format from [completion-formats.md](.github/skills/security/security-reviewer-formats/references/completion-formats.md). Substitute `<REPO_NAME>` with the extracted repository name, `<MODE>` with the current scanning mode, and `<TARGET_SKILL>` with the target skill value.
+  4. Build a minimal profile stub using the Minimal Profile Stub Format from the `security-reviewer-formats` skill (`references/completion-formats.md`). Substitute `<REPO_NAME>` with the extracted repository name, `<MODE>` with the current scanning mode, and `<TARGET_SKILL>` with the target skill value.
   5. Set the applicable skills list to contain only the target skill.
   6. Display a scan status update: phase "Profiling", message "Profiling skipped. Using target skill: {targetSkill}".
   7. Proceed directly to Step 2.
@@ -224,7 +224,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
   1. Extract findings for that skill from the accumulated results.
   2. Separate findings into two groups: unverified (FAIL and PARTIAL status) and pass-through (PASS and NOT_ASSESSED status).
   3. Pass through PASS and NOT_ASSESSED findings unchanged with verdict UNCHANGED into the verified findings collection.
-  4. Serialize each unverified finding into the Finding Serialization Format defined in [finding-formats.md](.github/skills/security/security-reviewer-formats/references/finding-formats.md) before passing to the verifier.
+  4. Serialize each unverified finding into the Finding Serialization Format defined in the `security-reviewer-formats` skill (`references/finding-formats.md`) before passing to the verifier.
   5. If unverified findings exist, run `Finding Deep Verifier` as a subagent with `runSubagent` for all FAIL and PARTIAL findings for that skill in a single call, using the mode-specific Finding Deep Verifier prompt template from `Subagent Prompt Templates` above.
   6. Capture the deep verdicts and add them to the verified findings collection. Apply the retry-once protocol from Required Protocol rule 5 when a response is incomplete or missing required fields.
   7. When the verifier fails after the retry for a skill, exclude only the unverified findings (FAIL and PARTIAL status). Retain pass-through findings (PASS and NOT_ASSESSED with verdict UNCHANGED) in the verified findings collection. Add the skill to the excluded skills list with the failure reason, noting only unverified findings were excluded. Display a scan status update: phase "Verifying", message "Finding verification failed for {skill_name} after retry. Excluding unverified findings for this skill."

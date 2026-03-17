@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill base path: `.github/skills/security`
+Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`.
 
 ### Technology Signals
 

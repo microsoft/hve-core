@@ -30,13 +30,7 @@ Assess exactly one OWASP skill per invocation. Read all vulnerability references
 
 ## Constants
 
-Skill base path: `.github/skills/security`
-
-Skill entry pattern: `.github/skills/security/{skill-name}/SKILL.md`
-
-Vulnerability index pattern: `.github/skills/security/{skill-name}/references/00-vulnerability-index.md`
-
-Vulnerability reference directory: `.github/skills/security/{skill-name}/references/`
+Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access the vulnerability index (`references/00-vulnerability-index.md`) and individual vulnerability references in the `references/` directory.
 
 ### Status Values
 
@@ -142,13 +136,13 @@ Make all guidance specific to the plan content rather than generic boilerplate.
 ### Pre-requisite: Setup
 
 1. Accept the skill name and codebase profile from the parent agent.
-2. Resolve path patterns by substituting the skill name into the constants above.
+2. Locate the skill entry file by searching for `{skill-name}/SKILL.md`.
 
 ### Step 1: Gather All Vulnerability References
 
-1. Read the skill entry file at `.github/skills/security/{skill-name}/SKILL.md` and capture framework metadata (name, version, reference URL).
-2. Read the vulnerability index at `.github/skills/security/{skill-name}/references/00-vulnerability-index.md` and extract the full list of vulnerability IDs.
-3. For each vulnerability ID in the index, read the corresponding reference file from `.github/skills/security/{skill-name}/references/` and store its full content.
+1. Read the located skill entry file and capture framework metadata (name, version, reference URL).
+2. Follow the entry file's normative reference links to read the vulnerability index (`references/00-vulnerability-index.md`) and extract the full list of vulnerability IDs.
+3. For each vulnerability ID in the index, read the corresponding reference file from the skill's `references/` directory and store its full content.
 4. Do not proceed to Step 2 until every reference file has been read and stored.
 
 ### Step 2: Analyze Against References

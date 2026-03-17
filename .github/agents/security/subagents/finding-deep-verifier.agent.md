@@ -31,11 +31,7 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Constants
 
-Skill base path: `.github/skills/security`
-
-Skill entry pattern: `.github/skills/security/{skill-name}/SKILL.md`
-
-Vulnerability reference pattern: `.github/skills/security/{skill-name}/references/`
+Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access vulnerability references in the `references/` directory.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
@@ -145,14 +141,14 @@ Where:
 
 ### Pre-requisite: Setup
 
-1. Read the skill SKILL.md at `.github/skills/security/{skill-name}/SKILL.md` to obtain framework metadata and context.
+1. Locate the skill entry file by searching for `{skill-name}/SKILL.md`. Read it to obtain framework metadata and context.
 2. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
 
 ### Step 1: Read Vulnerability References
 
 For each finding in the findings list:
 
-1. Determine the vulnerability reference file path using the vulnerability reference pattern and the finding's ID.
+1. Follow the skill entry file's normative reference links to locate the vulnerability reference file matching the finding's ID.
 2. Read the full vulnerability reference file end-to-end.
 3. Extract all checklist items, vulnerable patterns, attack vectors, and preconditions from the reference.
 
