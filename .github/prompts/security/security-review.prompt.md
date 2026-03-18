@@ -2,7 +2,7 @@
 name: security-review
 agent: Security Reviewer
 description: "Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core"
-argument-hint: "[mode={audit|diff|plan}] [targetSkill={owasp-agentic|owasp-llm|owasp-top-10}] [scope=...]"
+argument-hint: "[focus-area] [mode={audit|diff|plan}]"
 ---
 
 # Vulnerability Scan
