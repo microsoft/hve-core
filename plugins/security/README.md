@@ -40,10 +40,15 @@ copilot plugin install security@hve-core
 
 ## Commands
 
-| Command           | Description                                                                                                     |
-|-------------------|-----------------------------------------------------------------------------------------------------------------|
-| incident-response | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                |
-| risk-register     | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix. |
+| Command              | Description                                                                                                                        |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| incident-response    | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                   |
+| risk-register        | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                    |
+| security-review      | Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core                         |
+| security-review-diff | Runs an OWASP vulnerability assessment against changed files relative to the default branch - Brought to you by microsoft/hve-core |
+| security-review-llm  | Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context - Brought to you by microsoft/hve-core    |
+| security-review-plan | Analyzes implementation plan documents for pre-implementation security risks - Brought to you by microsoft/hve-core                |
+| security-review-web  | Runs an OWASP Top 10 web vulnerability assessment without codebase profiling - Brought to you by microsoft/hve-core                |
 
 ## Instructions
 

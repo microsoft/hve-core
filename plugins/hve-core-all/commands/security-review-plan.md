@@ -1,0 +1,1 @@
+../../../.github/prompts/security/security-review-plan.prompt.md
