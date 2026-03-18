@@ -64,6 +64,7 @@ jobs:
             run \
             --cases beval/cases/ \
             --agent beval/agent.yaml \
+            --case agent_identity \
             -m validation \
             -o beval/results/results.json
 
