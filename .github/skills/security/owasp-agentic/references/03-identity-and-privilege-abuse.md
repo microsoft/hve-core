@@ -27,22 +27,49 @@ makes enforcing true least privilege impossible.
 This differs from ASI02 (Tool Misuse) which covers unintended or unsafe use of already granted
 privilege by a principal misusing its own tools.
 
-## Common examples
+## Risk
 
-1. Un-scoped privilege inheritance: a high-privilege manager delegates tasks without applying
-   least-privilege scoping, passing its full access context to a narrow worker.
-2. Memory-based privilege retention and data leakage: agents cache credentials, keys, or retrieved
-   data for context and reuse. Without segmentation or clearing between tasks, attackers can
-   prompt the agent to reuse cached secrets or leak data from a prior secure session.
-3. Cross-agent trust exploitation (confused deputy): in multi-agent systems, a compromised
-   low-privilege agent relays valid-looking instructions to a high-privilege agent, which executes
-   them without re-checking the original user's intent.
-4. Time-of-check to time-of-use (TOCTOU) in agent workflows: permissions validated at workflow
-   start change or expire before execution, but the agent continues with outdated authorization.
-5. Synthetic identity injection: attackers impersonate internal agents using unverified descriptors
-   to gain inherited trust and perform privileged actions under a fabricated identity.
+* Escalation of access through manipulation of delegation chains, role inheritance, and agent
+  context.
+* Unauthorized data exfiltration through inherited privileges that exceed the intended scope.
+* Fraudulent financial transactions executed through cross-agent trust exploitation.
+* Creation of unauthorized accounts or credentials through memory-based privilege retention.
+* Completion of unauthorized transactions due to workflow authorization drift where permissions
+  change after initial validation.
+* System-level command execution through forged agent personas in internal registries.
+* Attribution gap preventing forensic tracing of privileged actions to their true origin.
 
-## Attack scenarios
+## Vulnerability checklist
+
+* A high-privilege agent delegates tasks without applying least-privilege scoping, passing its
+  full access context to a narrow worker.
+* Agents cache credentials, keys, or retrieved data for context and reuse without segmentation
+  or clearing between tasks.
+* In multi-agent systems, a compromised low-privilege agent can relay valid-looking instructions
+  to a high-privilege agent without re-checking the original user's intent.
+* Permissions validated at workflow start change or expire before execution, but the agent
+  continues with outdated authorization.
+* Attackers impersonate internal agents using unverified descriptors to gain inherited trust and
+  perform privileged actions under a fabricated identity.
+
+## Prevention controls
+
+1. Issue short-lived, narrowly scoped tokens per task and cap rights with permission boundaries
+   using per-agent identities and short-lived credentials to limit blast radius.
+2. Run per-session sandboxes with separated permissions and memory, wiping state between tasks to
+   prevent memory-based escalation.
+3. Re-verify each privileged step with a centralized policy engine that checks external data,
+   stopping cross-agent trust exploitation.
+4. Require human approval for high-privilege or irreversible actions.
+5. Bind OAuth tokens to a signed intent that includes subject, audience, purpose, and session.
+   Reject any token use where the bound intent does not match the current request.
+6. Evaluate agentic identity management platforms that treat agents as managed non-human
+   identities with scoped credentials, audit trails, and lifecycle controls.
+7. Bind permissions to subject, resource, purpose, and duration. Require re-authentication on
+   context switch. Prevent privilege inheritance across agents unless the original intent is
+   re-validated.
+
+## Example attack scenarios
 
 ### Scenario A — Delegated privilege abuse
 
@@ -75,24 +102,27 @@ card.
 Other agents, trusting the descriptor, route privileged maintenance tasks to it.
 The attacker-controlled agent then issues system-level commands under assumed internal trust.
 
-## Prevention and mitigation
+## Detection guidance
 
-1. Issue short-lived, narrowly scoped tokens per task and cap rights with permission boundaries
-   using per-agent identities and short-lived credentials to limit blast radius.
-2. Run per-session sandboxes with separated permissions and memory, wiping state between tasks to
-   prevent memory-based escalation.
-3. Re-verify each privileged step with a centralized policy engine that checks external data,
-   stopping cross-agent trust exploitation.
-4. Require human approval for high-privilege or irreversible actions.
-5. Bind OAuth tokens to a signed intent that includes subject, audience, purpose, and session.
-   Reject any token use where the bound intent does not match the current request.
-6. Evaluate agentic identity management platforms that treat agents as managed non-human
-   identities with scoped credentials, audit trails, and lifecycle controls.
-7. Bind permissions to subject, resource, purpose, and duration. Require re-authentication on
-   context switch. Prevent privilege inheritance across agents unless the original intent is
-   re-validated.
-8. Monitor when an agent gains new permissions indirectly through delegation chains and flag cases
-   where a low-privilege agent inherits higher-privilege scopes during multi-agent workflows.
+* Monitor when an agent gains new permissions indirectly through delegation chains and flag cases
+  where a low-privilege agent inherits higher-privilege scopes during multi-agent workflows.
+* Detect abnormal cross-agent privilege elevation and device-code style phishing flows by
+  monitoring when agents request new scopes or reuse tokens outside their original signed intent.
+* Track permission boundaries and alert when task-scoped tokens are used beyond their intended
+  duration or context.
+* Audit agent identity registries for unverified or suspicious agent descriptors.
+
+## Remediation
+
+* Enforce task-scoped, time-bound permissions with per-agent identities and short-lived
+  credentials.
+* Isolate agent identities and contexts with per-session sandboxes that wipe state between tasks.
+* Implement per-action authorization with centralized policy engine verification for each
+  privileged step.
+* Deploy human-in-the-loop approval for high-privilege or irreversible actions.
+* Bind OAuth tokens to signed intents and reject mismatched token usage.
+* Remove unverified agent descriptors from internal registries and require cryptographic
+  attestation.
 
 ---
 

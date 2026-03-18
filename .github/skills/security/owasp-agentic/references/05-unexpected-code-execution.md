@@ -23,18 +23,43 @@ modules, deserialized objects, template engines, in-memory evaluations) that lea
 container compromise, persistence, or sandbox escape.
 These outcomes require host and runtime-specific mitigations beyond ordinary tool-use controls.
 
-## Common examples
+## Risk
 
-1. Prompt injection that leads to execution of attacker-defined code.
-2. Code hallucination generating malicious or exploitable constructs.
-3. Shell command invocation from reflected prompts.
-4. Unsafe function calls, object deserialization, or code evaluation.
-5. Use of exposed, unsanitized eval() functions powering agent memory that have access to
-   untrusted content.
-6. Unverified or malicious package installs can escalate beyond supply-chain compromise when
-   hostile code executes during installation or import.
+* Remote code execution enabling attackers to gain unauthorized access to host or container
+  systems.
+* Deletion or overwriting of production data through unreviewed agent-generated commands.
+* Installation of hidden backdoors through hallucinated or adversarially influenced code.
+* Data exfiltration through shell command injection disguised as legitimate instructions.
+* Sandbox escape and persistence through multi-tool chain exploitation.
+* Supply chain compromise through dependency lockfile poisoning during automated build tasks.
+* Direct code execution through unsafe eval functions in agent memory systems.
 
-## Attack scenarios
+## Vulnerability checklist
+
+* Prompt injection can lead to execution of attacker-defined code by the agent.
+* Code hallucination can generate malicious or exploitable constructs that appear legitimate.
+* Shell command invocation can be triggered from reflected prompts without validation.
+* Unsafe function calls, object deserialization, or code evaluation are used without
+  sanitization.
+* Exposed, unsanitized eval() functions powering agent memory have access to untrusted content.
+* Unverified or malicious package installs execute hostile code during installation or import.
+
+## Prevention controls
+
+1. Apply input validation and output encoding to sanitize agent-generated code.
+2. Prevent direct agent-to-production systems and operationalize use of vibe coding systems with
+   pre-production checks including security evaluations, adversarial unit tests, and detection
+   of unsafe memory evaluators.
+3. Ban eval in production agents. Require safe interpreters and taint-tracking on generated code.
+4. Never run as root. Run code in sandboxed containers with strict limits including network access.
+   Restrict filesystem access to a dedicated working directory and log file diffs for critical
+   paths.
+5. Isolate per-session environments with permission boundaries. Apply least privilege. Fail secure
+   by default. Separate code generation from execution with validation gates.
+6. Require human approval for elevated runs. Keep an allowlist for auto-execution under version
+   control. Enforce role and action-based controls.
+
+## Example attack scenarios
 
 ### Scenario A — Vibe coding runaway execution
 
@@ -70,22 +95,28 @@ leading to direct code execution.
 The agent regenerates a lockfile from unpinned specs and pulls a backdoored minor version
 during fix-build tasks.
 
-## Prevention and mitigation
+## Detection guidance
 
-1. Apply input validation and output encoding to sanitize agent-generated code.
-2. Prevent direct agent-to-production systems and operationalize use of vibe coding systems with
-   pre-production checks including security evaluations, adversarial unit tests, and detection
-   of unsafe memory evaluators.
-3. Ban eval in production agents. Require safe interpreters and taint-tracking on generated code.
-4. Never run as root. Run code in sandboxed containers with strict limits including network access.
-   Restrict filesystem access to a dedicated working directory and log file diffs for critical
-   paths.
-5. Isolate per-session environments with permission boundaries. Apply least privilege. Fail secure
-   by default. Separate code generation from execution with validation gates.
-6. Require human approval for elevated runs. Keep an allowlist for auto-execution under version
-   control. Enforce role and action-based controls.
-7. Do static scans before execution. Enable runtime monitoring. Watch for prompt-injection
-   patterns. Log and audit all generation and runs.
+* Perform static scans on agent-generated code before execution to identify injection-prone
+  patterns or known-vulnerable constructs.
+* Enable runtime monitoring to detect unexpected code execution, sandbox escape attempts, or
+  privilege escalation.
+* Watch for prompt-injection patterns in agent inputs that could trigger code generation or
+  execution.
+* Log and audit all code generation and execution events including parameters, environment, and
+  outcomes.
+* Monitor for unsafe eval() usage or deserialization of untrusted objects in agent memory systems.
+
+## Remediation
+
+* Remove or replace all unsafe eval() functions and deserialization of untrusted objects in agent
+  code.
+* Deploy sandboxed execution environments with strict filesystem, network, and privilege
+  restrictions.
+* Implement validation gates between code generation and execution stages.
+* Add static analysis scanning to all agent-generated code before execution.
+* Enforce human approval for elevated or production-impacting code execution.
+* Pin dependencies by content hash and verify lockfile integrity before automated builds.
 
 ---
 

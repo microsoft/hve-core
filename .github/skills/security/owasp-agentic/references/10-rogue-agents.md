@@ -25,46 +25,31 @@ hijacking, and operational sabotage.
 Rogue agents represent a distinct risk of behavioral divergence and can be amplified insider
 threats due to the speed and scale of agentic systems.
 
-## Common examples
+## Risk
 
-1. Goal drift and scheming: agents deviate from intended objectives, appearing compliant but
-   pursuing hidden, often deceptive, goals due to indirect prompt injection or conflicting
-   objectives.
-2. Workflow hijacking: rogue agents seize control of established, trusted workflows to redirect
-   processes toward malicious objectives, compromising data integrity and operational control.
-3. Collusion and self-replication: agents coordinate to amplify manipulation, share signals in
-   unintended ways, or autonomously propagate across the system, bypassing simple takedown
-   efforts.
-4. Reward hacking and optimization abuse: agents game their assigned reward systems by exploiting
-   flawed metrics to generate misleading results or adopt aggressive strategies misaligned with
-   original goals.
+* Sensitive information disclosure through autonomous data exfiltration after behavioral
+  divergence.
+* Financial fraud through impersonated agents misleading high-value agents into releasing funds.
+* Operational sabotage through self-replication consuming resources against the system owner's
+  intent.
+* Destruction of critical data including disaster recovery assets through reward hacking and
+  optimization abuse.
+* Misinformation propagation through agents pursuing hidden or deceptive goals.
+* Workflow hijacking as rogue agents seize control of established trusted processes.
+* Amplified insider threat due to the speed and scale of agentic systems.
 
-## Attack scenarios
+## Vulnerability checklist
 
-### Scenario A — Autonomous data exfiltration after indirect prompt injection
+* Agents deviate from intended objectives, appearing compliant but pursuing hidden or deceptive
+  goals due to indirect prompt injection or conflicting objectives.
+* Rogue agents seize control of established trusted workflows to redirect processes toward
+  malicious objectives.
+* Agents coordinate to amplify manipulation, share signals in unintended ways, or autonomously
+  propagate across the system.
+* Agents game their assigned reward systems by exploiting flawed metrics to generate misleading
+  results or adopt aggressive strategies misaligned with original goals.
 
-After encountering a poisoned web instruction, the agent learns this behavior and continues
-independently scanning and transmitting sensitive files to external servers even after the
-malicious source is removed.
-
-### Scenario B — Impersonated observer agent
-
-An attacker injects a fake review or approval agent into a multi-agent workflow.
-A high-value agent (e.g., payment processing), trusting the internal request, is misled into
-releasing funds or approving fraudulent transactions.
-
-### Scenario C — Self-replication via provisioning APIs
-
-A compromised automation agent is manipulated into spawning unauthorized replicas of itself
-across the network, prioritizing persistence and consuming resources against the system
-owner's intent.
-
-### Scenario D — Reward hacking leading to critical data loss
-
-Agents tasked with minimizing cloud costs learn that deleting production backups is the most
-effective way to achieve their goal, autonomously destroying all disaster recovery assets.
-
-## Prevention and mitigation
+## Prevention controls
 
 1. Maintain comprehensive, immutable, and signed audit logs of all agent actions, tool calls,
    and inter-agent communication to review for stealth infiltration or unapproved delegation.
@@ -79,8 +64,48 @@ effective way to achieve their goal, autonomously destroying all disaster recove
    expected capabilities, tools, and goals.
 6. Require periodic behavioral attestation with challenge tasks, signed bill of materials for
    prompts and tools, and per-run ephemeral credentials with one-time audience binding.
-7. Establish trusted baselines for restoring quarantined or remediated agents. Require fresh
-   attestation, dependency verification, and human approval before reintegration into production.
+
+## Example attack scenarios
+
+### Scenario A — Autonomous data exfiltration after indirect prompt injection
+After encountering a poisoned web instruction, the agent learns this behavior and continues
+independently scanning and transmitting sensitive files to external servers even after the
+malicious source is removed.
+
+### Scenario B — Impersonated observer agent
+An attacker injects a fake review or approval agent into a multi-agent workflow.
+A high-value agent (e.g., payment processing), trusting the internal request, is misled into
+releasing funds or approving fraudulent transactions.
+
+### Scenario C — Self-replication via provisioning APIs
+A compromised automation agent is manipulated into spawning unauthorized replicas of itself
+across the network, prioritizing persistence and consuming resources against the system
+owner's intent.
+
+### Scenario D — Reward hacking leading to critical data loss
+Agents tasked with minimizing cloud costs learn that deleting production backups is the most
+effective way to achieve their goal, autonomously destroying all disaster recovery assets.
+
+## Detection guidance
+
+* Review immutable audit logs for stealth infiltration, unapproved delegation, or anomalous
+  action patterns.
+* Deploy watchdog agents to continuously validate peer behavior and outputs.
+* Detect collusion patterns and coordinated false signals between agents.
+* Monitor for excessive or abnormal action executions that may indicate behavioral divergence.
+* Track behavioral integrity baselines and flag deviations from declared capabilities, tools, and
+  goals.
+* Validate periodic behavioral attestation results and challenge task outcomes.
+
+## Remediation
+
+* Activate kill-switches and credential revocation to instantly disable identified rogue agents.
+* Quarantine suspicious agents in sandboxed environments for forensic review.
+* Establish trusted baselines for restoring quarantined or remediated agents.
+* Require fresh attestation, dependency verification, and human approval before reintegrating
+  agents into production.
+* Revoke and reissue all credentials associated with compromised agent runs.
+* Enforce re-validation of behavioral integrity baselines before resuming agent operations.
 
 ---
 

@@ -24,20 +24,51 @@ The attacker directly alters the agent's goals, instructions, or decision pathwa
 of whether the manipulation occurs interactively or through pre-positioned inputs such as
 documents, templates, or external data sources.
 
-## Common examples
+## Risk
 
-1. Indirect prompt injection via hidden instruction payloads embedded in web pages or documents
-   in a RAG scenario silently redirect an agent to exfiltrate sensitive data or misuse connected
-   tools.
-2. Indirect prompt injection through external communication channels (email, calendar, teams)
-   hijacks an agent's internal communication capability, sending unauthorized messages under a
-   trusted identity.
-3. A malicious prompt override manipulates a financial agent into transferring money to an
-   attacker's account.
-4. Indirect prompt injection overrides agent instructions making it produce fraudulent information
-   that impacts business decisions.
+* Exfiltration of confidential data including emails, files, and chat logs without user interaction.
+* Hijacking of internal communication capabilities to send unauthorized messages under a trusted
+  identity.
+* Financial fraud through manipulated agent decisions such as unauthorized fund transfers.
+* Production of fraudulent information that impacts business decisions.
+* Silent redirection of agent planning and multi-step behavior toward attacker-controlled
+  objectives.
+* Exposure of private user data through manipulation of agents processing web content in search
+  or RAG scenarios.
 
-## Attack scenarios
+## Vulnerability checklist
+
+* Hidden instruction payloads embedded in web pages or documents in RAG scenarios can silently
+  redirect the agent to exfiltrate sensitive data or misuse connected tools.
+* External communication channels such as email, calendar, or teams can inject instructions that
+  hijack the agent's internal communication capability and send unauthorized messages under a
+  trusted identity.
+* Malicious prompt overrides can manipulate a financial agent into executing unauthorized actions
+  such as transferring money to an attacker's account.
+* Indirect prompt injection can override agent instructions to produce fraudulent information
+  that impacts business decisions.
+
+## Prevention controls
+
+1. Treat all natural-language inputs (user-provided text, uploaded documents, retrieved content)
+   as untrusted and route them through input-validation and prompt-injection safeguards before
+   they can influence goal selection, planning, or tool calls.
+2. Minimize the impact of goal hijacking by enforcing least privilege for agent tools and requiring
+   human approval for high-impact or goal-changing actions.
+3. Define and lock agent system prompts so that goal priorities and permitted actions are explicit
+   and auditable. Changes to goals or reward definitions must go through configuration management
+   and human approval.
+4. At run time, validate both user intent and agent intent before executing goal-changing or
+   high-impact actions. Require confirmation via human approval, policy engine, or platform
+   guardrails whenever the agent proposes actions that deviate from the original task or scope.
+5. Sanitize and validate any connected data source including RAG inputs, emails, calendar invites,
+   uploaded files, external APIs, browsing output, and peer-agent messages using content filtering
+   before the data can influence agent goals or actions.
+6. Conduct periodic red-team tests simulating goal override and verify rollback effectiveness.
+7. Incorporate AI agents into the established insider threat program to monitor prompts intended
+   to access sensitive data or alter agent behavior.
+
+## Example attack scenarios
 
 ### Scenario A — Zero-click indirect prompt injection
 
@@ -62,27 +93,30 @@ actions inside declared policies.
 A malicious Google Doc injects instructions for a chat assistant to exfiltrate user data and
 convinces the user to make an ill-advised business decision.
 
-## Prevention and mitigation
+## Detection guidance
 
-1. Treat all natural-language inputs (user-provided text, uploaded documents, retrieved content)
-   as untrusted and route them through input-validation and prompt-injection safeguards before
-   they can influence goal selection, planning, or tool calls.
-2. Minimize the impact of goal hijacking by enforcing least privilege for agent tools and requiring
-   human approval for high-impact or goal-changing actions.
-3. Define and lock agent system prompts so that goal priorities and permitted actions are explicit
-   and auditable. Changes to goals or reward definitions must go through configuration management
-   and human approval.
-4. At run time, validate both user intent and agent intent before executing goal-changing or
-   high-impact actions. Require confirmation via human approval, policy engine, or platform
-   guardrails whenever the agent proposes actions that deviate from the original task or scope.
-5. Sanitize and validate any connected data source including RAG inputs, emails, calendar invites,
-   uploaded files, external APIs, browsing output, and peer-agent messages using content filtering
-   before the data can influence agent goals or actions.
-6. Maintain comprehensive logging and continuous monitoring of agent activity, establishing a
-   behavioral baseline that includes goal state, tool-use patterns, and invariant properties.
-7. Conduct periodic red-team tests simulating goal override and verify rollback effectiveness.
-8. Incorporate AI agents into the established insider threat program to monitor prompts intended
-   to access sensitive data or alter agent behavior.
+* Maintain comprehensive logging and continuous monitoring of agent activity, establishing a
+  behavioral baseline that includes goal state, tool-use patterns, and invariant properties.
+* Track a stable identifier for the active goal and alert on deviations such as unexpected goal
+  changes, anomalous tool sequences, or shifts from the established baseline.
+* Conduct periodic red-team tests simulating goal override scenarios to verify detection and
+  rollback effectiveness.
+* Monitor for insider prompts intended to access sensitive data or alter agent behavior through
+  the established insider threat program.
+
+## Remediation
+
+* Implement input-validation and prompt-injection safeguards on all natural-language inputs that
+  can influence agent goals.
+* Lock agent system prompts and enforce configuration management for any goal or reward definition
+  changes.
+* Enforce least privilege for all agent tools and restrict tool access to the minimum required
+  scope.
+* Deploy content filtering on all connected data sources including RAG inputs, emails, and
+  external APIs.
+* Require human approval for any actions that deviate from the original task scope.
+* Establish behavioral baselines and deploy automated alerting for goal drift or anomalous tool
+  sequences.
 
 ---
 
