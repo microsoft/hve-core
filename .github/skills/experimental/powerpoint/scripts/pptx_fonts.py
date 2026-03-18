@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Font normalization, matching, and extraction utilities.
 
 Centralizes font-related constants and functions used by

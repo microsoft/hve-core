@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Shared utilities for PowerPoint skill scripts.
 
 Provides YAML loading, EMU conversion, and validation helpers used by

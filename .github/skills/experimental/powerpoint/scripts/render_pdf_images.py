@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Render PDF pages to JPG images using PyMuPDF.
 
 Converts each page of a PDF file to a JPG image at the specified DPI.
