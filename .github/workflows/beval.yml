@@ -14,6 +14,7 @@ jobs:
 
     env:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+      AGENT_REPO_ROOT: ${{ github.workspace }}
 
     steps:
       - name: Checkout repository
