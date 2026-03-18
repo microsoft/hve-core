@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Table build and extract utilities for PowerPoint skill scripts.
 
 Provides add_table_element() for building tables from YAML definitions

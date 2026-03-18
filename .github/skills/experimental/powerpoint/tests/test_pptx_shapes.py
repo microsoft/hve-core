@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for pptx_shapes module."""
 
 from pptx.enum.shapes import MSO_SHAPE

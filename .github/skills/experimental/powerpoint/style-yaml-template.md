@@ -79,23 +79,23 @@ themes:
 
 ## Field Reference
 
-| Section | Field | Description |
-|---|---|---|
-| `dimensions` | `width_inches`, `height_inches` | Slide canvas size in inches |
-| `dimensions` | `format` | Aspect ratio label (informational) |
-| `template` | `path` | Path to a template PPTX file for themed builds |
-| `template` | `preserve_dimensions` | Keep the template's slide dimensions when `true` |
-| `layouts` | `<name>: <layout>` | Maps content.yaml layout names to PowerPoint layout names or indices |
-| `metadata` | `title` | Presentation title set in file properties |
-| `metadata` | `author` | Presentation author |
-| `metadata` | `subject` | Presentation subject |
-| `metadata` | `keywords` | Presentation keywords |
-| `metadata` | `category` | Presentation category |
-| `defaults` | `title_bar`, `accent_bar` | Default bar dimensions and colors (`#RRGGBB` hex) |
-| `defaults` | `card` | Default card fill, corner radius, and border |
-| `defaults` | `speaker_notes_required` | Whether speaker notes are enforced during validation |
-| `themes[]` | `name` | Theme identifier (`light` or `dark`) |
-| `themes[]` | `slides` | Sorted list of slide numbers belonging to this theme |
-| `themes[]` | `colors` | Role-to-hex color map (`text_primary`, `text_secondary`, `bg_card`, `bg_dark`) |
+| Section      | Field                           | Description                                                                    |
+|--------------|---------------------------------|--------------------------------------------------------------------------------|
+| `dimensions` | `width_inches`, `height_inches` | Slide canvas size in inches                                                    |
+| `dimensions` | `format`                        | Aspect ratio label (informational)                                             |
+| `template`   | `path`                          | Path to a template PPTX file for themed builds                                 |
+| `template`   | `preserve_dimensions`           | Keep the template's slide dimensions when `true`                               |
+| `layouts`    | `<name>: <layout>`              | Maps content.yaml layout names to PowerPoint layout names or indices           |
+| `metadata`   | `title`                         | Presentation title set in file properties                                      |
+| `metadata`   | `author`                        | Presentation author                                                            |
+| `metadata`   | `subject`                       | Presentation subject                                                           |
+| `metadata`   | `keywords`                      | Presentation keywords                                                          |
+| `metadata`   | `category`                      | Presentation category                                                          |
+| `defaults`   | `title_bar`, `accent_bar`       | Default bar dimensions and colors (`#RRGGBB` hex)                              |
+| `defaults`   | `card`                          | Default card fill, corner radius, and border                                   |
+| `defaults`   | `speaker_notes_required`        | Whether speaker notes are enforced during validation                           |
+| `themes[]`   | `name`                          | Theme identifier (`light` or `dark`)                                           |
+| `themes[]`   | `slides`                        | Sorted list of slide numbers belonging to this theme                           |
+| `themes[]`   | `colors`                        | Role-to-hex color map (`text_primary`, `text_secondary`, `bg_card`, `bg_dark`) |
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Shared fixtures for PowerPoint skill tests."""
 
 import struct

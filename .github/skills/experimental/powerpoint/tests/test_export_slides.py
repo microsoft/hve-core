@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for export_slides module.
 
 Tests mock subprocess and shutil for LibreOffice interaction and fitz for
