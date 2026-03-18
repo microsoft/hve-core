@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for render_pdf_images module.
 
 Tests mock PyMuPDF (fitz) since it may not be installed in all environments.

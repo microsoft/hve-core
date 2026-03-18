@@ -617,3 +617,200 @@ Write-Host "Test"
 }
 
 #endregion
+
+#region Exclusion Logic Tests
+
+Describe 'Get-FilesToCheck Exclusion Logic' -Tag 'Unit' {
+    BeforeAll {
+        $guid = [System.Guid]::NewGuid().ToString('N').Substring(0, 8)
+        $script:ExcludeTestRoot = Join-Path ([System.IO.Path]::GetTempPath()) "copyright-exclude-$guid"
+        New-Item -ItemType Directory -Path $script:ExcludeTestRoot -Force | Out-Null
+
+        # Create directory structure
+        $dirs = @(
+            '.git',
+            '.github/skills',
+            '.venv/lib',
+            '.copilot-tracking/plans',
+            'node_modules/pkg',
+            'vendor/lib',
+            'src',
+            '.gitter',
+            '.gitbook',
+            'deep/nested/.venv/lib'
+        )
+        foreach ($d in $dirs) {
+            New-Item -ItemType Directory -Path (Join-Path $script:ExcludeTestRoot $d) -Force | Out-Null
+        }
+
+        # Create test files in each directory
+        $testContent = "# Copyright (c) Microsoft Corporation.`n# SPDX-License-Identifier: MIT`nWrite-Host 'test'"
+        $fileLocations = @(
+            '.git/hook.ps1',
+            '.github/skills/check.ps1',
+            '.venv/lib/activate.ps1',
+            '.copilot-tracking/plans/helper.ps1',
+            'node_modules/pkg/index.ps1',
+            'vendor/lib/dep.ps1',
+            'src/main.ps1',
+            '.gitter/chat.ps1',
+            '.gitbook/config.ps1',
+            'deep/nested/.venv/lib/inner.ps1',
+            'root-file.ps1'
+        )
+        foreach ($f in $fileLocations) {
+            Set-Content -Path (Join-Path $script:ExcludeTestRoot $f) -Value $testContent
+        }
+    }
+
+    AfterAll {
+        if ($script:ExcludeTestRoot -and (Test-Path $script:ExcludeTestRoot)) {
+            Remove-Item -Path $script:ExcludeTestRoot -Recurse -Force
+        }
+    }
+
+    It 'Excludes files inside .git/ directory' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.git')
+        $exactGitFiles = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]\.git[/\\]'
+        }
+        $exactGitFiles | Should -BeNullOrEmpty
+    }
+
+    It 'Does NOT exclude .github/ when .git is in ExcludePaths' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.git')
+        $githubFiles = $files | Where-Object { $_.FullName -like '*\.github\*' -or $_.FullName -like '*/.github/*' }
+        $githubFiles.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Excludes files inside .venv/ directory' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.venv')
+        $venvFiles = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]\.venv[/\\]'
+        }
+        $venvFiles | Should -BeNullOrEmpty
+    }
+
+    It 'Excludes files inside .copilot-tracking/ directory' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.copilot-tracking')
+        $ctFiles = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]\.copilot-tracking[/\\]'
+        }
+        $ctFiles | Should -BeNullOrEmpty
+    }
+
+    It 'Excludes files inside node_modules/ directory' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('node_modules')
+        $nmFiles = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]node_modules[/\\]'
+        }
+        $nmFiles | Should -BeNullOrEmpty
+    }
+
+    It 'Does NOT exclude .gitter/ when .git is in ExcludePaths' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.git')
+        $gitterFiles = $files | Where-Object { $_.FullName -like '*\.gitter\*' -or $_.FullName -like '*/.gitter/*' }
+        $gitterFiles.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Does NOT exclude .gitbook/ when .git is in ExcludePaths' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.git')
+        $gitbookFiles = $files | Where-Object { $_.FullName -like '*\.gitbook\*' -or $_.FullName -like '*/.gitbook/*' }
+        $gitbookFiles.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Returns files from dot-directories when not excluded' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('node_modules')
+        $dotDirFiles = $files | Where-Object { $_.FullName -like '*\.github\*' -or $_.FullName -like '*/.github/*' }
+        $dotDirFiles.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Returns all files when ExcludePaths is empty' {
+        $allFiles = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @()
+        $allFiles.Count | Should -Be 11
+    }
+
+    It 'Applies multiple exclusions simultaneously' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.git', 'node_modules', 'vendor', '.venv', '.copilot-tracking')
+        # Remaining: .github/skills/check.ps1, src/main.ps1, .gitter/chat.ps1, .gitbook/config.ps1, root-file.ps1
+        $files.Count | Should -Be 5
+    }
+
+    It 'Excludes deeply nested .venv directory' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('.venv')
+        $deepVenv = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]\.venv[/\\]'
+        }
+        $deepVenv | Should -BeNullOrEmpty
+    }
+
+    It 'Excludes only the specified custom path' {
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1') -Exclude @('src')
+        $srcFiles = $files | Where-Object {
+            $rel = $_.FullName.Substring($script:ExcludeTestRoot.Length)
+            $rel -match '[/\\]src[/\\]'
+        }
+        $srcFiles | Should -BeNullOrEmpty
+        $files.Count | Should -BeGreaterThan 5
+    }
+
+    It 'Returns unique files when scanning overlapping extensions' {
+        # Create a .psm1 file alongside .ps1
+        $psm1Path = Join-Path $script:ExcludeTestRoot 'src/helper.psm1'
+        Set-Content -Path $psm1Path -Value "# Copyright (c) Microsoft Corporation.`n# SPDX-License-Identifier: MIT`nfunction Get-Help {}"
+
+        $files = Get-FilesToCheck -RootPath $script:ExcludeTestRoot -Extensions @('*.ps1', '*.psm1') -Exclude @()
+        $srcFiles = $files | Where-Object { $_.DirectoryName -like '*src*' }
+        # Should have main.ps1 and helper.psm1, no duplicates
+        $uniqueNames = $srcFiles | Select-Object -ExpandProperty Name -Unique
+        $uniqueNames.Count | Should -Be $srcFiles.Count
+    }
+}
+
+#endregion
+
+#region Default Exclusion Tests
+
+Describe 'Invoke-CopyrightHeaderCheck Default Exclusions' -Tag 'Unit' {
+    BeforeAll {
+        $scriptPath = Join-Path $PSScriptRoot '../../linting/Test-CopyrightHeaders.ps1'
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$null)
+
+        # Extract $DefaultExcludePaths array value from the script-level assignment
+        $assignAst = $ast.FindAll({
+            $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+            $args[0].Left.VariablePath.UserPath -eq 'DefaultExcludePaths'
+        }, $false) | Select-Object -First 1
+        $script:DefaultExcludeValues = @($assignAst.FindAll({
+            $args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst]
+        }, $true) | ForEach-Object { $_.Value })
+
+        # Extract function parameter default expression text
+        $funcAst = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -eq 'Invoke-CopyrightHeaderCheck' }, $true) | Select-Object -First 1
+        $paramAst = $funcAst.Body.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'ExcludePaths' }
+        $script:FuncDefaultText = $paramAst.DefaultValue.ToString()
+    }
+
+    It 'Has default ExcludePaths including .git, node_modules, vendor, and logs' {
+        $script:DefaultExcludeValues | Should -Contain 'node_modules'
+        $script:DefaultExcludeValues | Should -Contain '.git'
+        $script:DefaultExcludeValues | Should -Contain 'vendor'
+        $script:DefaultExcludeValues | Should -Contain 'logs'
+    }
+
+    It 'Has default ExcludePaths including .venv and .copilot-tracking' {
+        $script:DefaultExcludeValues | Should -Contain '.venv'
+        $script:DefaultExcludeValues | Should -Contain '.copilot-tracking'
+    }
+
+    It 'Invoke-CopyrightHeaderCheck function default references the shared variable' {
+        $script:FuncDefaultText | Should -Be '$script:DefaultExcludePaths'
+    }
+}
+
+#endregion

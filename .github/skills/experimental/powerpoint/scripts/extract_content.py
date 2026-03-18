@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Extract content from an existing PPTX into YAML content and style definitions.
 
 Usage::
