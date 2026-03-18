@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Property tests for validate_slides and validate_deck modules."""
 
 import tempfile
@@ -65,8 +67,12 @@ class TestFuzzDiscoverImages:
 class TestFuzzMaxSeverity:
     """Property tests for max_severity."""
 
-    @given(data=severity_results)
-    def test_ordering_monotonic(self, data):
+    @given(
+        data=severity_results,
+        injected=st.sampled_from(["info", "warning", "error"]),
+    )
+    def test_ordering_monotonic(self, data, injected):
+        severity_rank = {"none": 0, "info": 1, "warning": 2, "error": 3}
         baseline = max_severity(data)
         augmented = {
             "slides": data["slides"]
@@ -76,7 +82,7 @@ class TestFuzzMaxSeverity:
                     "issues": [
                         {
                             "check_type": "injected",
-                            "severity": "error",
+                            "severity": injected,
                             "description": "",
                             "location": "",
                         }
@@ -85,12 +91,13 @@ class TestFuzzMaxSeverity:
             ],
             "deck_issues": data.get("deck_issues", []),
         }
-        assert max_severity(augmented) == "error"
-        # Adding error never decreases severity
-        severity_rank = {"none": 0, "info": 1, "warning": 2, "error": 3}
-        assert severity_rank[max_severity(augmented)] >= severity_rank[baseline]
+        result = max_severity(augmented)
+        # Adding an issue never decreases severity
+        assert severity_rank[result] >= severity_rank[baseline]
+        # Result is at least as severe as the injected severity
+        assert severity_rank[result] >= severity_rank[injected]
 
-    def test_empty_returns_none(self):
+    def test_empty_returns_none_string(self):
         assert max_severity({"slides": []}) == "none"
 
     @given(data=severity_results)

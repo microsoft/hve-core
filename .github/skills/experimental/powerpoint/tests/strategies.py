@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Shared Hypothesis strategies for PowerPoint skill property tests."""
 
 from hypothesis import strategies as st

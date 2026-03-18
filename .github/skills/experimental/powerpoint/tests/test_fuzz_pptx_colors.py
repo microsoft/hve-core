@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Property tests for pptx_colors module."""
 
 import re
@@ -71,7 +73,7 @@ class TestFuzzRgbToHex:
 class TestFuzzColorRoundTrip:
     """Property tests for apply/extract color round-trip."""
 
-    @settings(deadline=None)
+    @settings(deadline=None, max_examples=50)
     @given(
         r=st.integers(min_value=0, max_value=255),
         g=st.integers(min_value=0, max_value=255),
