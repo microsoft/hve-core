@@ -16,4 +16,5 @@ eval:
       transport: tcp
       host: ${JUDGE_HOST:-127.0.0.1}
       port: ${JUDGE_PORT:-3001}
+      model: ${JUDGE_MODEL:-claude-opus-4.6-1m}
     timeout: 60

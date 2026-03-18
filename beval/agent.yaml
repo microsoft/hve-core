@@ -9,6 +9,7 @@ connection:
   host: ${AGENT_HOST:-127.0.0.1}
   port: ${AGENT_PORT:-3000}
   cwd: ${AGENT_REPO_ROOT:-.}
+  model: ${AGENT_MODEL:-claude-opus-4.6-1m}
 init_prompt: "Launch .github/agents/design-thinking/dt-coach.agent.md"
 timeout: 120
 retry:
