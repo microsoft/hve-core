@@ -15,7 +15,7 @@ tags:
   - threat-modeling
 items:
   # Agents
-  - path: .github/agents/security/security-plan-creator.agent.md
+  - path: .github/agents/security/security-planner.agent.md
     kind: agent
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md

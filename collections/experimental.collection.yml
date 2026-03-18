@@ -18,6 +18,12 @@ items:
     kind: agent
     maturity: experimental
   # Prompts
+  - path: .github/prompts/security/incident-response.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/risk-register.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
     maturity: experimental

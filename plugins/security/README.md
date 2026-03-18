@@ -29,9 +29,9 @@ copilot plugin install security@hve-core
 
 ## Agents
 
-| Agent                 | Description                                                                                                      |
-|-----------------------|------------------------------------------------------------------------------------------------------------------|
-| security-plan-creator | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core |
+| Agent            | Description                                                                                                                                                              |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| security-planner | Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration |
 
 ## Commands
 

@@ -265,19 +265,19 @@ items:
 
 Collections represent role-targeted artifact packages. Collection manifests select artifacts for those roles.
 
-| Collection           | Identifier         | Maturity     | Target Users                                   |
-|----------------------|--------------------|--------------|------------------------------------------------|
-| **Full**             | `hve-core-all`     | Stable       | Universal inclusion                            |
-| **Core**             | `hve-core`         | Stable       | RPI workflow, code review, PR agents           |
-| **ADO**              | `ado`              | Stable       | Azure DevOps integration                       |
-| **GitHub**           | `github`           | Stable       | GitHub backlog and issue management            |
-| **Project Planning** | `project-planning` | Stable       | Architecture, requirements, agile coaching     |
-| **Coding Standards** | `coding-standards` | Stable       | Language-specific coding conventions           |
-| **Data Science**     | `data-science`     | Stable       | Notebooks, dashboards, data analysis           |
-| **Security**         | `security`         | Experimental | Security review, planning, and threat modeling |
-| **Design Thinking**  | `design-thinking`  | Preview      | 9-method DT coaching and learning              |
-| **Installer**        | `installer`        | Stable       | HVE Core installation and setup                |
-| **Experimental**     | `experimental`     | Experimental | Early-stage artifacts under active iteration   |
+| Collection            | Identifier          | Maturity     | Target Users                                     |
+|-----------------------|---------------------|--------------|--------------------------------------------------|
+| **Full**              | `hve-core-all`      | Stable       | Universal inclusion                              |
+| **Core**              | `hve-core`          | Stable       | RPI workflow, code review, PR agents             |
+| **ADO**               | `ado`               | Stable       | Azure DevOps integration                         |
+| **GitHub**            | `github`            | Stable       | GitHub backlog and issue management              |
+| **Project Planning**  | `project-planning`  | Stable       | Architecture, requirements, agile coaching       |
+| **Coding Standards**  | `coding-standards`  | Stable       | Language-specific coding conventions             |
+| **Data Science**      | `data-science`      | Stable       | Notebooks, dashboards, data analysis             |
+| **Security Planning** | `security-planning` | Stable       | Cloud security plans and security model analysis |
+| **Design Thinking**   | `design-thinking`   | Preview      | 9-method DT coaching and learning                |
+| **Installer**         | `installer`         | Stable       | HVE-Core installation and setup                  |
+| **Experimental**      | `experimental`      | Experimental | Early-stage artifacts under active iteration     |
 
 The **Full** collection aggregates artifacts from all other stable and preview collections. Role-specific collections allow targeted installation for teams that need only a subset.
 
