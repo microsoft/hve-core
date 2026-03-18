@@ -793,6 +793,7 @@ prosys
 protobuf
 psec
 pseries
+psgallery
 pseudonymization
 pseudonymize
 psql
@@ -1155,6 +1156,7 @@ wireframe
 wireshark
 workgroup
 workstream
+workstreams
 wsus
 wwwroot
 xbox

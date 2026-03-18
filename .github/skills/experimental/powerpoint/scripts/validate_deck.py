@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Validate PPTX properties that cannot be detected from rendered images.
 
 Checks speaker notes and slide count. Visual checks (overlay, overflow,

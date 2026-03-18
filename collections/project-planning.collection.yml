@@ -32,10 +32,12 @@ items:
     kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
+  - path: .github/agents/project-planning/meeting-analyst.agent.md
+    kind: agent
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/security-planning/security-planner.agent.md
+  - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
   # Subagents
@@ -50,16 +52,16 @@ items:
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
     kind: agent
   # Prompts
-  - path: .github/prompts/security-planning/security-plan-from-prd.prompt.md
+  - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/security-capture.prompt.md
+  - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/incident-response.prompt.md
+  - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/risk-register.prompt.md
+  - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
     maturity: experimental
   # Instructions

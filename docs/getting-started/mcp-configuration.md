@@ -1,7 +1,7 @@
 ---
 title: MCP Server Configuration
-description: Optional configuration for Model Context Protocol servers used by HVE-Core agents
-sidebar_position: 6
+description: Optional configuration for Model Context Protocol servers used by HVE Core agents
+sidebar_position: 7
 author: Microsoft
 ms.date: 2026-03-10
 ms.topic: how-to
@@ -14,14 +14,14 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Some HVE-Core agents use Model Context Protocol (MCP) servers to integrate with external services. MCP configuration is optional; agents that depend on MCP tools indicate when the required server is unavailable.
+Some HVE Core agents use Model Context Protocol (MCP) servers to integrate with external services. MCP configuration is optional; agents that depend on MCP tools indicate when the required server is unavailable.
 
 > [!TIP]
 > The HVE Core installer skill auto-generates MCP configuration with curated servers and guides you through choosing the right installation method (peer clone, submodule, git-ignored, and others). Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation" for guided setup. The sections below cover manual MCP configuration.
 
 ## Overview
 
-MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE-Core references four curated MCP servers. Configure only the servers relevant to your workflow.
+MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE Core references four curated MCP servers. Configure only the servers relevant to your workflow.
 
 ## Choosing GitHub vs Azure DevOps
 
@@ -49,7 +49,7 @@ Agents without MCP dependencies work without any MCP configuration.
 
 ## Curated MCP Servers
 
-HVE-Core documents these four MCP servers:
+HVE Core documents these four MCP servers:
 
 ### context7
 

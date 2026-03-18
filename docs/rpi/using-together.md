@@ -354,6 +354,29 @@ Use `/clear` and manual `/task-*` commands instead of handoffs when:
 > [!TIP]
 > Use `/compact` when you want to reduce conversation length without losing all context. Unlike `/clear`, `/compact` summarizes the conversation history rather than removing it. This is useful mid-phase when context grows long but you want to continue the current task.
 
+## Session Persistence
+
+The RPI Agent includes a **💾 Save** button that captures conversation context to a memory file, enabling you to resume work after a context reset or across sessions.
+
+### Save a Session
+
+Click **💾 Save** in the RPI Agent chat interface at any point during a research, planning, or implementation phase. The memory agent creates a file at `.copilot-tracking/memory/YYYY-MM-DD/<description>-memory.md` containing:
+
+* Task overview and current phase
+* Completed work summary
+* Next steps and open decisions
+* Key file paths and references
+
+### Resume a Session
+
+1. Start a new chat and type `/clear` to ensure a clean context.
+2. Type `/checkpoint continue <description>` to restore the saved session.
+3. The memory agent displays restored context, completed work, and next steps.
+4. Click **🚀 Continue with RPI** or switch to the appropriate RPI agent to continue.
+
+> [!TIP]
+> Use **💾 Save** before any `/clear` between phases to preserve progress notes. The checkpoint file supplements but does not replace the planning artifacts in `.copilot-tracking/`.
+
 ## RPI Agent: When Simplicity Fits
 
 For tasks that don't require strict phase separation, **rpi-agent** provides autonomous execution with subagent delegation. Use it when the scope is clear and you don't need the deep iterative research that comes from constraint-based separation.

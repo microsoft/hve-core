@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-03-12
 ms.topic: reference
 ---
 
@@ -137,19 +137,19 @@ items:
 
 Each collection manifest declares a top-level `tags` array for categorization and discoverability. Tags exist **only at the collection level**, not on individual items.
 
-| Collection          | Tags                                                                                                                                       |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `hve-core-all`      | `hve`, `complete`, `bundle`                                                                                                                |
-| `ado`               | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                                                                             |
-| `coding-standards`  | `coding-standards`, `code-review`, `pull-request`, `quality`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `rust`, `terraform`, `uv` |
-| `data-science`      | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`                                                              |
-| `design-thinking`   | `design-thinking`, `coaching`, `methodology`, `ux`                                                                                         |
-| `experimental`      | `experimental`, `media`, `utilities`                                                                                                       |
-| `github`            | `github`, `issues`, `backlog`, `triage`, `sprint`                                                                                          |
-| `installer`         | `installer`, `setup`, `onboarding`                                                                                                         |
-| `project-planning`  | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`                                                               |
-| `hve-core`          | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`                                                                      |
-| `security-planning` | `security`, `incident-response`, `risk`, `planning`                                                                                        |
+| Collection         | Tags                                                                                                                                       |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `hve-core-all`     | `hve`, `complete`, `bundle`                                                                                                                |
+| `ado`              | `azure-devops`, `ado`, `work-items`, `builds`, `pull-requests`                                                                             |
+| `coding-standards` | `coding-standards`, `code-review`, `pull-request`, `quality`, `bash`, `bicep`, `csharp`, `powershell`, `python`, `rust`, `terraform`, `uv` |
+| `data-science`     | `data`, `jupyter`, `streamlit`, `dashboards`, `visualization`, `data-science`                                                              |
+| `design-thinking`  | `design-thinking`, `coaching`, `methodology`, `ux`                                                                                         |
+| `experimental`     | `experimental`, `media`, `utilities`                                                                                                       |
+| `github`           | `github`, `issues`, `backlog`, `triage`, `sprint`                                                                                          |
+| `installer`        | `installer`, `setup`, `onboarding`                                                                                                         |
+| `project-planning` | `documentation`, `architecture`, `adr`, `brd`, `prd`, `diagrams`, `planning`                                                               |
+| `hve-core`         | `workflow`, `rpi`, `planning`, `research`, `implementation`, `review`                                                                      |
+| `security`         | `security`, `incident-response`, `risk`, `planning`, `review`, `vulnerability`, `threat-modeling`                                          |
 
 When creating a new collection, choose tags that describe the domain, technologies, and workflows covered. Use lowercase kebab-case and prefer existing tags before introducing new ones.
 
@@ -234,23 +234,23 @@ If your instructions apply only to this repository and are not intended for dist
 
 ## Collection Taxonomy
 
-Collections represent role-targeted artifact packages for HVE-Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
+Collections represent role-targeted artifact packages for HVE Core artifacts. The collection system enables role-specific artifact distribution without fragmenting the codebase.
 
 ### Defined Collections
 
-| Collection            | Identifier          | Description                                                                          |
-|-----------------------|---------------------|--------------------------------------------------------------------------------------|
-| **All**               | `hve-core-all`      | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
-| **Azure DevOps**      | `ado`               | Azure DevOps work item management, build monitoring, and pull request creation       |
-| **Coding Standards**  | `coding-standards`  | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
-| **Data Science**      | `data-science`      | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
-| **Design Thinking**   | `design-thinking`   | Design Thinking coaching identity, quality constraints, and methodology instructions |
-| **Experimental**      | `experimental`      | Experimental skills and utilities in early development                               |
-| **GitHub Backlog**    | `github`            | GitHub issue discovery, triage, sprint planning, and backlog execution               |
-| **Installer**         | `installer`         | HVE Core installation skill (installer) and environment setup                        |
-| **Project Planning**  | `project-planning`  | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
-| **HVE Core Workflow** | `hve-core`          | Research, Plan, Implement, Review workflow agents and prompts                        |
-| **Security Planning** | `security-planning` | Security plan creation, incident response, and risk assessment                       |
+| Collection            | Identifier         | Description                                                                          |
+|-----------------------|--------------------|--------------------------------------------------------------------------------------|
+| **All**               | `hve-core-all`     | Full bundle of all stable HVE Core agents, prompts, instructions, and skills         |
+| **Azure DevOps**      | `ado`              | Azure DevOps work item management, build monitoring, and pull request creation       |
+| **Coding Standards**  | `coding-standards` | Language-specific coding instructions for bash, Bicep, C#, Python, and Terraform     |
+| **Data Science**      | `data-science`     | Data specification generation, Jupyter notebooks, and Streamlit dashboards           |
+| **Design Thinking**   | `design-thinking`  | Design Thinking coaching identity, quality constraints, and methodology instructions |
+| **Experimental**      | `experimental`     | Experimental skills and utilities in early development                               |
+| **GitHub Backlog**    | `github`           | GitHub issue discovery, triage, sprint planning, and backlog execution               |
+| **Installer**         | `installer`        | HVE Core installation skill (installer) and environment setup                        |
+| **Project Planning**  | `project-planning` | PRDs, BRDs, ADRs, architecture diagrams, and documentation operations                |
+| **HVE Core Workflow** | `hve-core`         | Research, Plan, Implement, Review workflow agents and prompts                        |
+| **Security**          | `security`         | Security review, planning, incident response, and risk assessment                    |
 
 ### Collection Assignment Guidelines
 

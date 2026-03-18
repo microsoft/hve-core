@@ -76,9 +76,9 @@
       "version": "3.1.46"
     },
     {
-      "name": "security-planning",
-      "source": "security-planning",
-      "description": "Security plan creation, incident response, and risk assessment",
+      "name": "security",
+      "source": "security",
+      "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
       "version": "3.1.46"
     }
   ]

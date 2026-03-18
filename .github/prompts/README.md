@@ -62,12 +62,12 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 ### Azure Operations
 
-* **[Incident Response](./security-planning/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
+* **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 
 ### Documentation & Process
 
 * **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
-* **[Risk Register](./security-planning/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
+* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Custom Agents
 
@@ -88,7 +88,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 9. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
 10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
 11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
-12. **Responding to Azure incidents?** Use [Incident Response](./security-planning/incident-response.prompt.md)
+12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
 
 ## Related Resources
 

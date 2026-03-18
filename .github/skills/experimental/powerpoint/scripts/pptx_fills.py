@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Fill and line application/extraction utilities for PowerPoint skill scripts.
 
 Handles solid, gradient, and pattern fills plus line/border properties.

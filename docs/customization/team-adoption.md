@@ -75,7 +75,7 @@ the collection serves:
 
 * `ado` for Azure DevOps integration
 * `coding-standards` for language-specific conventions
-* `security-planning` for security architecture workflows
+* `security` for security architecture workflows
 
 ### Directory Organization
 

@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for extract_content module."""
 
 from collections import Counter
@@ -445,6 +447,20 @@ class TestResolveThemeRefsInContent:
         result = _resolve_theme_refs_in_content(content, theme)
         assert result == ["#0078D4", "#FF0000"]
 
+    def test_depth_limit_raises(self):
+        """Deeply nested dicts exceed the depth limit."""
+        nested = "leaf"
+        for _ in range(10):
+            nested = {"wrap": nested}
+        with pytest.raises(ValueError, match="exceeds limit"):
+            _resolve_theme_refs_in_content(nested, {}, max_depth=5)
+
+    def test_depth_limit_allows_normal_nesting(self):
+        content = {"a": {"b": {"c": "@x"}}}
+        theme = {"x": "#AABBCC"}
+        result = _resolve_theme_refs_in_content(content, theme, max_depth=50)
+        assert result["a"]["b"]["c"] == "#AABBCC"
+
 
 class TestDetectGlobalStyle:
     """Tests for detect_global_style."""
@@ -476,6 +492,25 @@ class TestExtractGroup:
         assert result["type"] == "group"
         assert "elements" in result
         assert len(result["elements"]) >= 1
+
+    def test_depth_limit_raises(self, blank_slide, tmp_path):
+        """Exceeding max_depth raises ValueError."""
+        group = blank_slide.shapes.add_group_shape()
+        with pytest.raises(ValueError, match="exceeds limit"):
+            extract_group(group, 1, tmp_path, 0, _depth=5, max_depth=5)
+
+    def test_depth_limit_allows_normal_nesting(self, blank_slide, tmp_path):
+        """Groups within the depth limit extract successfully."""
+        group = blank_slide.shapes.add_group_shape()
+        group.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(0),
+            Inches(0),
+            Inches(2),
+            Inches(1),
+        )
+        result = extract_group(group, 1, tmp_path, 0, _depth=0, max_depth=20)
+        assert result["type"] == "group"
 
 
 class TestExtractFreeform:

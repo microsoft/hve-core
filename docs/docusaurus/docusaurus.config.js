@@ -1,5 +1,5 @@
 // @ts-check
-import {themes as prismThemes} from 'prism-react-renderer';
+import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
 
 /** @type {import('@docusaurus/types').Config} */
@@ -62,7 +62,19 @@ const config = {
     ],
   ],
 
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      '@easyops-cn/docusaurus-search-local',
+      /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+      ({
+        hashed: true,
+        language: ['en'],
+        highlightSearchTermsOnTargetPage: true,
+        explicitSearchResultPath: true,
+      }),
+    ],
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -70,6 +82,12 @@ const config = {
       image: 'img/microsoft-logo.svg',
       colorMode: {
         respectPrefersColorScheme: true,
+      },
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: true,
+        },
       },
       navbar: {
         title: 'HVE Core',
@@ -91,15 +109,10 @@ const config = {
             label: 'Topics',
             position: 'left',
             items: [
-              { label: 'Getting Started', to: '/docs/category/getting-started' },
-              { label: 'HVE Guide', to: '/docs/category/hve-guide' },
-              { label: 'RPI Workflow', to: '/docs/category/rpi' },
-              { label: 'Agents', to: '/docs/category/agents' },
-              { label: 'Architecture', to: '/docs/category/architecture' },
-              { label: 'Contributing', to: '/docs/category/contributing' },
-              { label: 'Security', to: '/docs/category/security' },
-              { label: 'Templates', to: '/docs/category/templates' },
-              { label: 'Customization', to: '/docs/category/customization' },
+              { label: 'Get Started', to: '/docs/getting-started/' },
+              { label: 'Workflows', to: '/docs/rpi/' },
+              { label: 'Customize', to: '/docs/customization/' },
+              { label: 'Reference', to: '/docs/architecture/' },
             ],
           },
           {
@@ -115,20 +128,19 @@ const config = {
           {
             title: 'Documentation',
             items: [
-              { label: 'Getting Started', to: '/docs/category/getting-started' },
-              { label: 'HVE Guide', to: '/docs/category/hve-guide' },
-              { label: 'RPI Workflow', to: '/docs/category/rpi' },
-              { label: 'Agents', to: '/docs/category/agents' },
-              { label: 'Architecture', to: '/docs/category/architecture' },
+              { label: 'Getting Started', to: '/docs/getting-started/' },
+              { label: 'HVE Guide', to: '/docs/hve-guide/' },
+              { label: 'RPI Workflow', to: '/docs/rpi/' },
+              { label: 'Agents', to: '/docs/agents/' },
+              { label: 'Architecture', to: '/docs/architecture/' },
             ],
           },
           {
             title: 'Resources',
             items: [
-              { label: 'Contributing', to: '/docs/category/contributing' },
-              { label: 'Security', to: '/docs/category/security' },
-              { label: 'Templates', to: '/docs/category/templates' },
-              { label: 'Customization', to: '/docs/category/customization' },
+              { label: 'Contributing', to: '/docs/contributing/' },
+              { label: 'Security', to: '/docs/security/' },
+              { label: 'Templates', to: '/docs/templates/' },
             ],
           },
           {

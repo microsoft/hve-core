@@ -5,6 +5,15 @@ Experimental and preview artifacts not yet promoted to stable collections
 
 > **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
 
+## Overview
+
+Experimental and preview artifacts not yet promoted to stable collections. Items in this collection may change or be removed without notice.
+
+This collection includes agents, skills, and instructions for:
+
+- **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
+- **Video to GIF** — Convert video files to animated GIF format
+
 ## Install
 
 ```bash
@@ -50,10 +59,10 @@ copilot plugin install experimental@hve-core
 
 ## Skills
 
-| Skill        | Description  |
-|--------------|--------------|
-| powerpoint   | powerpoint   |
-| video-to-gif | video-to-gif |
+| Skill        | Description                                                                                                                                   |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| powerpoint   | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core |
+| video-to-gif | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                        |
 
 ---
 

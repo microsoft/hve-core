@@ -36,7 +36,7 @@
     ".github/agents/project-planning": true,
     ".github/agents/hve-core": true,
     ".github/agents/hve-core/subagents": true,
-    ".github/agents/security-planning": true,
+    ".github/agents/security": true,
     ".github/agents/experimental": true,
     ".github/agents/experimental/subagents": true,
   },
@@ -45,7 +45,7 @@
     ".github/prompts/design-thinking": true,
     ".github/prompts/github": true,
     ".github/prompts/hve-core": true,
-    ".github/prompts/security-planning": true,
+    ".github/prompts/security": true,
     ".github/prompts/experimental": true,
   },
   "chat.agentSkillsLocations": {

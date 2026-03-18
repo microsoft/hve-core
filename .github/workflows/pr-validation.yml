@@ -50,6 +50,56 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  discover-python-projects:
+    name: Discover Python Projects
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Find Python projects
+        id: find
+        shell: pwsh
+        run: |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { $_ -replace '^\.[\\/]', '' } |
+            Sort-Object)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python projects: $dirs"
+          }
+
+  python-lint:
+    name: "Python Lint (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+    uses: ./.github/workflows/python-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      working-directory: ${{ matrix.directory }}
+
   copyright-headers:
     name: Copyright Headers
     uses: ./.github/workflows/copyright-headers.yml
@@ -77,6 +127,39 @@ jobs:
       soft-fail: false
       changed-files-only: false
       code-coverage: true
+
+  pytest:
+    name: "Python Tests (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+
+  pip-audit:
+    name: "pip-audit (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+    uses: ./.github/workflows/pip-audit.yml
+    permissions:
+      contents: read
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
 
   docusaurus-tests:
     name: Docusaurus Tests

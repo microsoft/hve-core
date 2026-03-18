@@ -3,6 +3,15 @@
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "workiq": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/workiq",
+        "mcp"
+      ]
     }
   }
 }

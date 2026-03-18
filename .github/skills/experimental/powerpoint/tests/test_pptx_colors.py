@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for pptx_colors module."""
 
 import pytest
@@ -73,6 +75,18 @@ class TestResolveColor:
     def test_black(self):
         result = resolve_color("#000000")
         assert result["rgb"] == RGBColor(0, 0, 0)
+
+    def test_depth_limit_raises_on_nested_dicts(self):
+        """Deeply nested dict color values exceed the depth limit."""
+        nested = {"color": {"color": {"color": "#FF0000"}}}
+        with pytest.raises(ValueError, match="exceeds limit"):
+            resolve_color(nested, _depth=0, max_depth=2)
+
+    def test_depth_limit_allows_single_dict_unwrap(self):
+        """A single dict unwrap stays within the default depth limit."""
+        result = resolve_color({"color": "#0078D4"})
+        assert "rgb" in result
+        assert result["rgb"] == RGBColor(0x00, 0x78, 0xD4)
 
 
 class TestApplyColorSpec:

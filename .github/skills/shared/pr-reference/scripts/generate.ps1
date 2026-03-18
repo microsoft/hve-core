@@ -14,9 +14,22 @@ for comparisons.
 
 .PARAMETER BaseBranch
 Git branch used as the comparison base. Defaults to "main".
+Use "auto" to detect the remote default branch.
+
+.PARAMETER MergeBase
+When supplied, uses git merge-base for three-way comparison instead of
+direct diff against the base branch.
 
 .PARAMETER ExcludeMarkdownDiff
 When supplied, excludes markdown (*.md) files from the diff output.
+
+.PARAMETER ExcludeExt
+Comma-separated or array of file extensions to exclude from the diff
+(e.g., 'yml,yaml,json'). Leading dots are stripped automatically.
+
+.PARAMETER ExcludePath
+Comma-separated or array of path prefixes to exclude from the diff
+(e.g., 'docs/,.github/skills/').
 
 .PARAMETER OutputPath
 Custom output file path. When empty, defaults to
@@ -29,7 +42,16 @@ param(
     [string]$BaseBranch = "main",
 
     [Parameter()]
+    [switch]$MergeBase,
+
+    [Parameter()]
     [switch]$ExcludeMarkdownDiff,
+
+    [Parameter()]
+    [string[]]$ExcludeExt = @(),
+
+    [Parameter()]
+    [string[]]$ExcludePath = @(),
 
     [Parameter()]
     [string]$OutputPath = ""
@@ -88,15 +110,21 @@ function Resolve-ComparisonReference {
 Resolves the git reference used for comparisons.
 .DESCRIPTION
 Prefers origin/<BaseBranch> when available and falls back to the provided branch.
+When UseMergeBase is set, resolves the merge-base between HEAD and the branch.
 .PARAMETER BaseBranch
 Branch name supplied by the caller.
+.PARAMETER UseMergeBase
+When set, resolves the merge-base commit instead of using the branch directly.
 .OUTPUTS
 PSCustomObject
 #>
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$BaseBranch
+        [string]$BaseBranch,
+
+        [Parameter()]
+        [switch]$UseMergeBase
     )
 
     $candidates = @()
@@ -105,23 +133,40 @@ PSCustomObject
     }
     $candidates += $BaseBranch
 
+    $resolvedRef = $null
+    $resolvedCandidate = $null
     foreach ($candidate in $candidates) {
         & git rev-parse --verify $candidate *> $null
         if ($LASTEXITCODE -eq 0) {
-            $label = if ($candidate -eq $BaseBranch) {
-                $BaseBranch
-            } else {
-                "$BaseBranch (via $candidate)"
-            }
-
-            return [PSCustomObject]@{
-                Ref   = $candidate
-                Label = $label
-            }
+            $resolvedRef = $candidate
+            $resolvedCandidate = $candidate
+            break
         }
     }
 
-    throw "Branch '$BaseBranch' does not exist or is not accessible."
+    if (-not $resolvedRef) {
+        throw "Branch '$BaseBranch' does not exist or is not accessible."
+    }
+
+    if ($UseMergeBase) {
+        $mb = (& git merge-base HEAD $resolvedRef 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $mb) {
+            $resolvedRef = $mb.Trim()
+        } else {
+            Write-Warning "merge-base resolution failed, using direct comparison"
+        }
+    }
+
+    $label = if ($resolvedCandidate -eq $BaseBranch) {
+        $BaseBranch
+    } else {
+        "$BaseBranch (via $resolvedCandidate)"
+    }
+
+    return [PSCustomObject]@{
+        Ref   = $resolvedRef
+        Label = $label
+    }
 }
 
 function Get-ShortCommitHash {
@@ -244,11 +289,15 @@ function Get-DiffOutput {
 .SYNOPSIS
 Builds the git diff output for the comparison ref.
 .DESCRIPTION
-Runs git diff against the comparison ref with optional markdown exclusion.
+Runs git diff against the comparison ref with optional file exclusions.
 .PARAMETER ComparisonRef
 Git reference that acts as the diff base.
 .PARAMETER ExcludeMarkdownDiff
 Switch to omit markdown files from the diff.
+.PARAMETER ExcludeExt
+File extensions to exclude from the diff.
+.PARAMETER ExcludePath
+Path prefixes to exclude from the diff.
 .OUTPUTS
 System.String[]
 #>
@@ -258,12 +307,25 @@ System.String[]
         [string]$ComparisonRef,
 
         [Parameter()]
-        [switch]$ExcludeMarkdownDiff
+        [switch]$ExcludeMarkdownDiff,
+
+        [Parameter()]
+        [string[]]$ExcludeExt = @(),
+
+        [Parameter()]
+        [string[]]$ExcludePath = @()
     )
 
     $diffArgs = @('--no-pager', 'diff', $ComparisonRef)
+
+    $pathspecs = @()
     if ($ExcludeMarkdownDiff) {
-        $diffArgs += @('--', ':!*.md')
+        $pathspecs += ':!*.md'
+    }
+    $pathspecs += Build-PathspecExclusions -Extensions $ExcludeExt -Paths $ExcludePath
+    if ($pathspecs.Count -gt 0) {
+        $diffArgs += '--'
+        $diffArgs += $pathspecs
     }
 
     $diffOutput = & git @diffArgs
@@ -284,6 +346,10 @@ Uses git diff --shortstat against the comparison ref.
 Git reference that acts as the diff base.
 .PARAMETER ExcludeMarkdownDiff
 Switch to omit markdown files from the summary.
+.PARAMETER ExcludeExt
+File extensions to exclude from the summary.
+.PARAMETER ExcludePath
+Path prefixes to exclude from the summary.
 .OUTPUTS
 System.String
 #>
@@ -293,12 +359,25 @@ System.String
         [string]$ComparisonRef,
 
         [Parameter()]
-        [switch]$ExcludeMarkdownDiff
+        [switch]$ExcludeMarkdownDiff,
+
+        [Parameter()]
+        [string[]]$ExcludeExt = @(),
+
+        [Parameter()]
+        [string[]]$ExcludePath = @()
     )
 
     $diffStatArgs = @('--no-pager', 'diff', '--shortstat', $ComparisonRef)
+
+    $pathspecs = @()
     if ($ExcludeMarkdownDiff) {
-        $diffStatArgs += @('--', ':!*.md')
+        $pathspecs += ':!*.md'
+    }
+    $pathspecs += Build-PathspecExclusions -Extensions $ExcludeExt -Paths $ExcludePath
+    if ($pathspecs.Count -gt 0) {
+        $diffStatArgs += '--'
+        $diffStatArgs += $pathspecs
     }
 
     $summary = & git @diffStatArgs
@@ -413,9 +492,15 @@ Generates the pr-reference.xml file.
 .DESCRIPTION
 Coordinates git queries, XML creation, and console reporting for Copilot usage.
 .PARAMETER BaseBranch
-Branch used as the comparison base.
+Branch used as the comparison base. Use 'auto' to detect the remote default.
+.PARAMETER MergeBase
+When supplied, uses git merge-base for three-way comparison.
 .PARAMETER ExcludeMarkdownDiff
 Switch to omit markdown files from the diff and summary.
+.PARAMETER ExcludeExt
+File extensions to exclude from the diff.
+.PARAMETER ExcludePath
+Path prefixes to exclude from the diff.
 .PARAMETER OutputPath
 Custom output file path. When empty, defaults to
 .copilot-tracking/pr/pr-reference.xml relative to the repository root.
@@ -428,7 +513,16 @@ System.IO.FileInfo
         [string]$BaseBranch,
 
         [Parameter()]
+        [switch]$MergeBase,
+
+        [Parameter()]
         [switch]$ExcludeMarkdownDiff,
+
+        [Parameter()]
+        [string[]]$ExcludeExt = @(),
+
+        [Parameter()]
+        [string[]]$ExcludePath = @(),
 
         [Parameter()]
         [string]$OutputPath = ""
@@ -437,6 +531,11 @@ System.IO.FileInfo
     Test-GitAvailability
 
     $repoRoot = Get-RepositoryRoot -Strict
+
+    # Resolve auto base branch
+    if ($BaseBranch -eq 'auto') {
+        $BaseBranch = Resolve-DefaultBranch
+    }
 
     if ($OutputPath) {
         $prReferencePath = $OutputPath
@@ -454,12 +553,12 @@ System.IO.FileInfo
     Push-Location $repoRoot
     try {
         $currentBranch = Get-CurrentBranchOrRef
-        $comparisonInfo = Resolve-ComparisonReference -BaseBranch $BaseBranch
+        $comparisonInfo = Resolve-ComparisonReference -BaseBranch $BaseBranch -UseMergeBase:$MergeBase
         $baseCommit = Get-ShortCommitHash -Ref $comparisonInfo.Ref
         $commitEntries = Get-CommitEntry -ComparisonRef $comparisonInfo.Ref
         $commitCount = Get-CommitCount -ComparisonRef $comparisonInfo.Ref
-        $diffOutput = Get-DiffOutput -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff
-        $diffSummary = Get-DiffSummary -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff
+        $diffOutput = Get-DiffOutput -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff -ExcludeExt $ExcludeExt -ExcludePath $ExcludePath
+        $diffSummary = Get-DiffSummary -ComparisonRef $comparisonInfo.Ref -ExcludeMarkdownDiff:$ExcludeMarkdownDiff -ExcludeExt $ExcludeExt -ExcludePath $ExcludePath
 
         $xmlContent = Get-PrXmlContent -CurrentBranch $currentBranch -BaseBranch $BaseBranch -CommitEntries $commitEntries -DiffOutput $diffOutput
         $xmlContent | Set-Content -LiteralPath $prReferencePath
@@ -474,6 +573,15 @@ System.IO.FileInfo
     Write-Host "Created $prReferencePath"
     if ($ExcludeMarkdownDiff) {
         Write-Host 'Note: Markdown files were excluded from diff output'
+    }
+    if ($ExcludeExt.Count -gt 0) {
+        Write-Host "Note: Extensions excluded from diff: $($ExcludeExt -join ', ')"
+    }
+    if ($ExcludePath.Count -gt 0) {
+        Write-Host "Note: Paths excluded from diff: $($ExcludePath -join ', ')"
+    }
+    if ($MergeBase) {
+        Write-Host 'Comparison mode: merge-base'
     }
     Write-Host "Lines: $lineCount"
     Write-Host "Base branch: $($comparisonInfo.Label) (@ $baseCommit)"
@@ -490,7 +598,7 @@ System.IO.FileInfo
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -ExcludeMarkdownDiff:$ExcludeMarkdownDiff -OutputPath $OutputPath | Out-Null
+        Invoke-PrReferenceGeneration -BaseBranch $BaseBranch -MergeBase:$MergeBase -ExcludeMarkdownDiff:$ExcludeMarkdownDiff -ExcludeExt $ExcludeExt -ExcludePath $ExcludePath -OutputPath $OutputPath | Out-Null
         exit 0
     }
     catch {

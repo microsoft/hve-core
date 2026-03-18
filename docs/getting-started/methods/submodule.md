@@ -1,6 +1,6 @@
 ---
 title: Git Submodule Installation
-description: Set up HVE-Core as a git submodule for version-controlled team consumption
+description: Set up HVE Core as a git submodule for version-controlled team consumption
 sidebar_position: 7
 author: Microsoft
 ms.date: 2026-03-10
@@ -14,16 +14,16 @@ keywords:
 estimated_reading_time: 7
 ---
 
-Git submodules provide version-controlled, reproducible HVE-Core consumption. Every team member gets the exact same version, and updates are explicit commits.
+Git submodules provide version-controlled, reproducible HVE Core consumption. Every team member gets the exact same version, and updates are explicit commits.
 
 ## When to Use This Method
 
 ✅ **Use this when:**
 
 * Your team needs reproducible setups (same version for everyone)
-* You want to pin HVE-Core to a specific version
+* You want to pin HVE Core to a specific version
 * Updates should be deliberate, reviewed commits
-* HVE-Core dependency should be tracked in version control
+* HVE Core dependency should be tracked in version control
 
 ❌ **Consider alternatives when:**
 
@@ -32,7 +32,7 @@ Git submodules provide version-controlled, reproducible HVE-Core consumption. Ev
 
 ## How It Works
 
-A git submodule embeds HVE-Core as a nested repository within your project. The `.gitmodules` file tracks the repository URL, and your project's git history tracks the exact commit.
+A git submodule embeds HVE Core as a nested repository within your project. The `.gitmodules` file tracks the repository URL, and your project's git history tracks the exact commit.
 
 ```text
 your-project/
@@ -58,7 +58,7 @@ Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemN
 ```bash
 # From your project root
 git submodule add https://github.com/microsoft/hve-core.git lib/hve-core
-git commit -m "Add HVE-Core as submodule"
+git commit -m "Add HVE Core as submodule"
 ```
 
 This creates a `.gitmodules` file:
@@ -84,7 +84,7 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/agents/project-planning": true,
     "lib/hve-core/.github/agents/hve-core": true,
     "lib/hve-core/.github/agents/hve-core/subagents": true,
-    "lib/hve-core/.github/agents/security-planning": true,
+    "lib/hve-core/.github/agents/security": true,
     ".github/agents": true
   },
   "chat.promptFilesLocations": {
@@ -92,7 +92,7 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/prompts/design-thinking": true,
     "lib/hve-core/.github/prompts/github": true,
     "lib/hve-core/.github/prompts/hve-core": true,
-    "lib/hve-core/.github/prompts/security-planning": true,
+    "lib/hve-core/.github/prompts/security": true,
     ".github/prompts": true
   },
   "chat.instructionsFilesLocations": {
@@ -118,7 +118,7 @@ Update `.devcontainer/devcontainer.json` to initialize submodules automatically:
 
 ```jsonc
 {
-  "name": "My Project with HVE-Core",
+  "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
   "onCreateCommand": "git submodule update --init --recursive",
@@ -159,7 +159,7 @@ git config --global submodule.recurse true
 # Now all git operations auto-update submodules
 ```
 
-## Updating HVE-Core
+## Updating HVE Core
 
 | Task                   | Command                                                               |
 |------------------------|-----------------------------------------------------------------------|
@@ -172,12 +172,12 @@ git config --global submodule.recurse true
 
 ```bash
 git add lib/hve-core
-git commit -m "Update HVE-Core submodule to latest"
+git commit -m "Update HVE Core submodule to latest"
 ```
 
 ### Auto-Update on Container Rebuild
 
-To update HVE-Core when rebuilding your devcontainer:
+To update HVE Core when rebuilding your devcontainer:
 
 ```jsonc
 {
@@ -203,17 +203,17 @@ cd lib/hve-core
 git checkout v1.2.0  # or a specific commit SHA
 cd ..
 git add lib/hve-core
-git commit -m "Pin HVE-Core to v1.2.0"
+git commit -m "Pin HVE Core to v1.2.0"
 ```
 
 ## Verification
 
-After setup, verify HVE-Core is working:
+After setup, verify HVE Core is working:
 
-1. Check `lib/hve-core/` contains the HVE-Core repository
+1. Check `lib/hve-core/` contains the HVE Core repository
 2. Open Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE-Core agents appear (task-planner, task-researcher, etc.)
+4. Verify HVE Core agents appear (task-planner, task-researcher, etc.)
 
 ## Troubleshooting
 
@@ -264,7 +264,7 @@ git commit
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [RPI Workflow](../../rpi/) - Research, Plan, Implement methodology
 * [Back to Installation Guide](../install.md) - Compare other methods
 

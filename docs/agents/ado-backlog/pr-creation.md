@@ -161,8 +161,8 @@ reviewer policies.
 
 ## Next Steps
 
-1. Monitor your PR build status with the [Build Monitoring workflow](build-monitoring)
-2. See [Using Workflows Together](using-together) for the full pipeline walkthrough
+1. Monitor your PR build status with the [Build Monitoring workflow](build-monitoring.md)
+2. See [Using Workflows Together](using-together.md) for the full pipeline walkthrough
 
 > [!TIP]
 > Run `/clear` before starting PR creation if you were working in another workflow. The agent reads its own planning files, and residual context from other sessions can affect work item discovery results.
