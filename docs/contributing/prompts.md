@@ -91,12 +91,12 @@ Prompt files MUST:
 
 **`model`** (string)
 
-| Property | Value                                                                              |
-|----------|------------------------------------------------------------------------------------|
-| Purpose  | Specifies a preferred AI model for prompt invocation                               |
-| Format   | Model identifier string                                                            |
-| Style    | Use the model's canonical identifier; omit if the workspace default is acceptable  |
-| Example  | `gpt-4o`                                                                           |
+| Property | Value                                                                             |
+|----------|-----------------------------------------------------------------------------------|
+| Purpose  | Specifies a preferred AI model for prompt invocation                              |
+| Format   | Model identifier string                                                           |
+| Style    | Use the model's canonical identifier; omit if the workspace default is acceptable |
+| Example  | `gpt-4o`                                                                          |
 
 **`disable-model-invocation`** (boolean)
 
@@ -136,12 +136,12 @@ Prompt files MUST:
 
 **`author`** (string)
 
-| Property | Value                                  |
-|----------|----------------------------------------|
-| Purpose  | Attribution for the prompt creator     |
-| Format   | Team or repository identifier string   |
-| Style    | Use `org/repo` format or a team name   |
-| Example  | `'microsoft/hve-core'`                 |
+| Property | Value                                |
+|----------|--------------------------------------|
+| Purpose  | Attribution for the prompt creator   |
+| Format   | Team or repository identifier string |
+| Style    | Use `org/repo` format or a team name |
+| Example  | `'microsoft/hve-core'`               |
 
 **`lastUpdated`** (string)
 
