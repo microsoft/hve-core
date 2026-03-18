@@ -30,7 +30,7 @@ Assess exactly one OWASP skill per invocation. Read all vulnerability references
 
 ## Constants
 
-Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access the vulnerability index (`references/00-vulnerability-index.md`) and individual vulnerability references in the `references/` directory.
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`). Follow the skill's normative reference links to access the vulnerability index and individual vulnerability references.
 
 ### Status Values
 
@@ -136,7 +136,7 @@ Make all guidance specific to the plan content rather than generic boilerplate.
 ### Pre-requisite: Setup
 
 1. Accept the skill name and codebase profile from the parent agent.
-2. Locate the skill entry file by searching for `{skill-name}/SKILL.md`.
+2. Read the applicable OWASP skill by name.
 
 ### Step 1: Gather All Vulnerability References
 

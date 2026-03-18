@@ -31,7 +31,7 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Constants
 
-Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access vulnerability references in the `references/` directory.
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`). Follow the skill's normative reference links to access vulnerability references.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
@@ -141,7 +141,7 @@ Where:
 
 ### Pre-requisite: Setup
 
-1. Locate the skill entry file by searching for `{skill-name}/SKILL.md`. Read it to obtain framework metadata and context.
+1. Read the applicable OWASP skill by name to obtain framework metadata and context.
 2. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
 
 ### Step 1: Read Vulnerability References

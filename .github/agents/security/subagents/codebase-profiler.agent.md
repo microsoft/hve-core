@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`.
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`).
 
 ### Technology Signals
 

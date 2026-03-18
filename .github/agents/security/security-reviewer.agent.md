@@ -96,7 +96,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Locate a skill's entry file by searching for `{skill-name}/SKILL.md`. Follow the entry file's normative reference links to access vulnerability reference documents in its `references/` directory.
+Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -150,7 +150,7 @@ When a prior scan report path is provided, append to any prompt: "Prior Report:\
 
 ## Format Specifications
 
-Format templates used by subagents are defined in the `security-reviewer-formats` skill. Locate the skill entry file by searching for `security-reviewer-formats/SKILL.md`, then follow its normative reference links to load the required format files.
+Read the `security-reviewer-formats` skill for format templates used by subagents. Follow its normative reference links to load the required format files.
 
 * Report Formats (`references/report-formats.md`) — VULN_REPORT_V1 template, diff mode qualifiers, and PLAN_REPORT_V1 template.
 * Finding Formats (`references/finding-formats.md`) — Finding Serialization Format and Verified Findings Collection Format.
