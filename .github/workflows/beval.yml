@@ -38,7 +38,7 @@ jobs:
 
       - name: Start agent (TCP)
         run: |
-          copilot --acp --port 3000 --allow-all --model claude-opus-4.6-fast &
+          copilot --acp --port 3000 --allow-all --model claude-opus-4.6-1m --log-level debug --log-dir ./logs/agent &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3000 && break
             echo "Waiting for agent to start ($i)..."
@@ -48,7 +48,7 @@ jobs:
 
       - name: Start judge (TCP)
         run: |
-          copilot --acp --port 3001 --allow-all --model claude-opus-4.6-fast &
+          copilot --acp --port 3001 --allow-all --model claude-opus-4.6-1m --log-level debug --log-dir ./logs/judge &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3001 && break
             echo "Waiting for judge to start ($i)..."
@@ -65,6 +65,18 @@ jobs:
             --agent beval/agent.yaml \
             -m validation \
             -o beval/results/results.json
+
+      - name: Print agent logs
+        if: always()
+        run: |
+          echo "=== Agent Logs ==="
+          find ./logs/agent -type f -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || echo "No agent logs found"
+
+      - name: Print judge logs
+        if: always()
+        run: |
+          echo "=== Judge Logs ==="
+          find ./logs/judge -type f -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || echo "No judge logs found"
 
       - name: Upload results
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
