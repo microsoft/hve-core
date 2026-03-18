@@ -12,6 +12,15 @@ tools:
   - search
   - web
   - agent
+handoffs:
+  - label: "Compact"
+    agent: Security Planner
+    send: true
+    prompt: "/compact  make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include the current security planning phase and project slug"
+  - label: "RAI Planner"
+    agent: RAI Planner
+    prompt: /rai-plan-from-security-plan
+    send: true
 ---
 
 # Security Planner
@@ -85,7 +94,7 @@ State JSON schema for `state.json`:
   "handoffGenerated": { "ado": "boolean", "github": "boolean" },
   "referencesProcessed": ["string (file paths)"],
   "nextActions": ["string"],
-  "userPreferences": { "autonomyTier": "string (full|partial|manual), default: full" },
+  "userPreferences": { "autonomyTier": "string (full|partial|manual), default: partial" },
   "raiEnabled": "boolean, default: false",
   "raiScope": "string (none|lightweight|full), default: none",
   "raiTier": "string (none|basic|standard|comprehensive), default: none",

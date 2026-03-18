@@ -23,7 +23,7 @@ estimated_reading_time: 6
 
 Traditional security planning focuses on how adversaries exploit systems. Injection attacks, broken access control, cryptographic failures: these are threats where an attacker deliberately subverts intended behavior. Security assessments excel at finding and mitigating these risks.
 
-AI systems introduce a fundamentally different risk category. A model can produce biased outputs, make opaque decisions that affect people's lives, or amplify existing societal inequities, all while functioning exactly as designed. No attacker is required. The system itself is the security model.
+AI systems introduce a fundamentally different risk category. A model can produce biased outputs, make opaque decisions that affect people's lives, or amplify existing societal inequities, all while functioning exactly as designed. No attacker is required. The system's own behavior is the risk.
 
 ## The Core Insight
 

@@ -14,20 +14,23 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/security-planning/security-planner.agent.md
+  - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
   # Prompts
-  - path: .github/prompts/security-planning/incident-response.prompt.md
+  - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/risk-register.prompt.md
+  - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/security-capture.prompt.md
+  - path: .github/prompts/rai-planning/rai-capture.prompt.md
     kind: prompt
     maturity: experimental
-  - path: .github/prompts/security-planning/security-plan-from-prd.prompt.md
+  - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
     kind: prompt
     maturity: experimental
   # Skills

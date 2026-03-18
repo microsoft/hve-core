@@ -1,1 +1,1 @@
-../../../.github/prompts/security-planning/security-capture.prompt.md
+../../../.github/prompts/security/security-capture.prompt.md

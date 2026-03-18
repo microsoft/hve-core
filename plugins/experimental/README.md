@@ -12,6 +12,8 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 This collection includes agents, skills, and instructions for:
 
 - **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
+- **RAI Planner** — Responsible AI planning with sensitive-uses screening, standards mapping, security-model analysis, impact assessment, and backlog handoff
+- **Security Planner** — Security planning with STRIDE security-model analysis, operational bucket classification, standards mapping, and backlog handoff
 - **Video to GIF** — Convert video files to animated GIF format
 
 ## Install
@@ -31,12 +33,13 @@ copilot plugin install experimental@hve-core
 
 ## Commands
 
-| Command                | Description                                                                                                     |
-|------------------------|-----------------------------------------------------------------------------------------------------------------|
-| incident-response      | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                |
-| risk-register          | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix. |
-| security-capture       | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode    |
-| security-plan-from-prd | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode              |
+| Command                     | Description                                                                                                                              |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| security-capture            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                             |
+| security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode                                       |
+| rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
+| rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 
 ## Instructions
 

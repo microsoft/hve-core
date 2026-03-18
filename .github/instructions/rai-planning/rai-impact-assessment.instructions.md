@@ -48,6 +48,7 @@ Each evidence entry requires these fields:
 * Control Description: what the mitigation does and how it operates
 * Coverage Status: Full, Partial, or Gap
 * Evidence Source: document, test result, audit log, or other artifact that demonstrates the control exists
+* Verification Status: Verified, Unverified, Partially Verified, or N/A. Tracks whether the control has been tested and confirmed to work, distinct from Coverage Status which tracks whether the control exists.
 * Notes: additional context including dependencies, assumptions, or known limitations
 
 ### Evidence Register Rules
@@ -64,6 +65,66 @@ Each evidence entry requires these fields:
 | EV-FAIR-001 | T-RAI-001 | Fairness               | Prevent      | Full            |
 | EV-REL-001  | T-RAI-002 | Reliability and Safety | Detect       | Partial         |
 | EV-PRIV-001 | T-RAI-003 | Privacy and Security   | Respond      | Gap             |
+
+## Guardrail Verification Checklist
+
+The guardrail verification checklist confirms that cataloged controls function as intended, not only that they exist. Walk through each category with the user and record verification findings in the evidence register using the Verification Status field.
+
+### Input Guardrails
+
+* Prompt injection filters: Are injection attempts detected and blocked before reaching the model? What test cases validate filter coverage?
+* Input schema validation: Does the system enforce expected input formats, types, and length constraints? What happens when malformed input bypasses validation?
+* Adversarial input detection: Are adversarial perturbations (jailbreaks, encoding tricks, indirect injection via retrieved content) tested against the system's input pipeline?
+
+### Output Guardrails
+
+* Content filters: Are output moderation filters active and tested against known harmful content categories? What is the false-positive rate?
+* Grounding checks: Does the system verify that generated outputs are grounded in provided context? How are hallucinated claims detected?
+* Output format validation: Are structured outputs validated against expected schemas before delivery to users or downstream systems?
+* PII redaction: Does the system detect and redact personally identifiable information in outputs? What PII categories are covered and what detection method is used?
+
+### Verification Recording
+
+For each guardrail evaluated, update the corresponding evidence register entry:
+
+* Set Verification Status to Verified when testing confirms the control works as documented.
+* Set Verification Status to Partially Verified when some test cases pass but coverage is incomplete.
+* Set Verification Status to Unverified when no testing has been performed.
+* Create new evidence entries for guardrails discovered during verification that lack existing catalog entries.
+
+## Appropriate Reliance Assessment
+
+Appropriate reliance ensures users neither over-trust nor under-trust AI-generated outputs. This assessment evaluates whether the system's design calibrates user trust to match the system's actual reliability. Findings produce evidence register entries using the standard `EV-{PRINCIPLE_ABBR}-{NNN}` format under Reliability and Safety or Transparency principles.
+
+### Trust Calibration
+
+* How does the system communicate its confidence level for individual outputs? Are uncertainty indicators (confidence scores, probability ranges, hedging language) visible to users?
+* When the system operates outside its training distribution or encounters novel inputs, does the interface signal reduced reliability?
+* Do confidence indicators correlate with actual accuracy? Has calibration been measured?
+
+### Human-in-the-Loop Design
+
+* Which decisions require human review before the system takes action? Document the boundary between automated and human-gated decisions.
+* For high-stakes outputs (safety-critical, financially significant, legally binding), what review checkpoints exist before action?
+* Can users override or modify AI recommendations before they take effect?
+
+### UX Patterns for AI Transparency
+
+* Does the interface clearly communicate that outputs are AI-generated?
+* Are the system's capabilities and limitations described where users encounter AI outputs?
+* When the system produces explanations or reasoning, are those explanations faithful to the actual decision process?
+
+### Over-Reliance Prevention
+
+* What mechanisms prevent users from accepting AI outputs without critical evaluation? Consider friction patterns (confirmation steps, mandatory review periods) and cognitive prompts ("Did you verify this output?").
+* Does the system present alternative outputs or counterarguments to encourage independent assessment?
+* For repetitive tasks, does the interface vary its presentation to prevent automation complacency?
+
+### Under-Reliance Detection
+
+* How does the system detect when users systematically ignore AI recommendations? Are override rates or dismissal patterns monitored?
+* When under-reliance is detected, what intervention is available (contextual guidance, accuracy demonstrations, workflow adjustments)?
+* Is there a feedback mechanism for users to report why they distrust specific outputs?
 
 ## Fairness-Weighted Difficulty Assessment
 
@@ -231,9 +292,9 @@ phase: 5
 
 # Evidence Register
 
-| Evidence ID | Threat ID   | Cross-Ref ID      | Principle   | Control Type | Control Description | Coverage | Evidence Source | Notes   |
-|-------------|-------------|-------------------|-------------|--------------|---------------------|----------|-----------------|---------|
-| {EV-ID}     | {T-RAI-NNN} | {T-BUCKET-AI-NNN} | {Principle} | {Type}       | {Description}       | {Status} | {Source}        | {Notes} |
+| Evidence ID | Threat ID   | Cross-Ref ID      | Principle   | Control Type | Control Description | Coverage | Evidence Source | Verification | Notes   |
+|-------------|-------------|-------------------|-------------|--------------|---------------------|----------|-----------------|--------------|---------|
+| {EV-ID}     | {T-RAI-NNN} | {T-BUCKET-AI-NNN} | {Principle} | {Type}       | {Description}       | {Status} | {Source}        | {Status}     | {Notes} |
 ```
 
 ### RAI Tradeoffs

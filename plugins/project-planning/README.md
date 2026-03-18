@@ -3,6 +3,32 @@
 
 PRDs, BRDs, ADRs, and architecture diagrams
 
+## Overview
+
+Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+
+This collection includes agents for:
+
+- **Agile Coach** — Create or refine goal-oriented user stories with clear acceptance criteria
+- **Product Manager Advisor** — Product management advisor for requirements discovery, validation, and issue creation
+- **UX/UI Designer** — UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements
+- **Architecture Decision Records** — Create structured ADRs with solution comparison matrices
+- **Architecture Diagrams** — Generate ASCII-art architecture diagrams from descriptions
+- **Business Requirements Documents** — Build BRDs through guided Q&A sessions
+- **System Architecture Reviewer** — System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment
+- **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, and Review phases
+- **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
+- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
+- **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
+
+Supporting subagents included:
+
+- **Researcher Subagent** — Research subagent using search tools, read tools, fetch web page, github repo, and MCP tools
+- **Plan Validator** — Validates implementation plans against research documents with severity-graded findings
+- **Phase Implementor** — Executes a single implementation phase from a plan with full codebase access and change tracking
+- **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
+- **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
+
 ## Install
 
 ```bash
@@ -22,6 +48,7 @@ copilot plugin install project-planning@hve-core
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                                                                                                                                      |
 | rpi-agent                    | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core                                                                                                                            |
 | prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                                                              |
+| meeting-analyst              | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core                                                                                                                                                                                       |
 | rai-planner                  | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
 | security-planner             | Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration                                                                                                                                                     |
 | researcher-subagent          | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                                                                                 |
@@ -32,12 +59,15 @@ copilot plugin install project-planning@hve-core
 
 ## Commands
 
-| Command                | Description                                                                                                     |
-|------------------------|-----------------------------------------------------------------------------------------------------------------|
-| security-plan-from-prd | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode              |
-| security-capture       | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode    |
-| incident-response      | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                |
-| risk-register          | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix. |
+| Command                     | Description                                                                                                                              |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode                                       |
+| security-capture            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                             |
+| incident-response           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                         |
+| risk-register               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                          |
+| rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
+| rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 
 ## Instructions
 

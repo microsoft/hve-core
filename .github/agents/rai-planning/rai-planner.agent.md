@@ -2,6 +2,15 @@
 description: "Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core"
 agents:
   - Researcher Subagent
+handoffs:
+  - label: "Security Planner"
+    agent: Security Planner
+    prompt: /security-capture
+    send: true
+  - label: "Compact"
+    agent: RAI Planner
+    send: true
+    prompt: "/compact Make sure summarization includes that all state is managed through .copilot-tracking/rai-plans/ folder files, and be sure to include the current phase, entry mode, and project slug"
 tools:
   - read
   - edit/createFile
@@ -60,7 +69,7 @@ Apply AI-specific threat analysis per component. Identify threats using `RAI-T-{
 
 ### Phase 5: RAI Impact Assessment (NIST Manage)
 
-Evaluate control surface completeness for each identified threat. Document evidence of existing mitigations and identify gaps. Analyze tradeoffs between competing RAI principles (for example, transparency versus privacy). Generate the control surface catalog and evidence register.
+Evaluate control surface completeness for each identified threat. Document evidence of existing mitigations and identify gaps. Assess appropriate reliance by evaluating trust calibration mechanisms, human-in-the-loop design for high-stakes decisions, and patterns of over-reliance or under-reliance. Analyze tradeoffs between competing RAI principles (for example, transparency versus privacy). Generate the control surface catalog and evidence register.
 
 * Artifacts: `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`
 
@@ -162,7 +171,7 @@ Seven rules govern conversational flow across all phases:
 
 ## Instruction File References
 
-Six instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
+Seven instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
 
 * `.github/instructions/rai-planning/rai-identity.instructions.md`: Agent identity, six-phase orchestration, state management, entry modes, session recovery, and error handling.
 * `.github/instructions/rai-planning/rai-standards.instructions.md`: Embedded Microsoft RAI Standard v2 principles, NIST AI RMF 1.0 subcategories, and regulatory framework cross-references with Researcher Subagent delegation for runtime lookups.

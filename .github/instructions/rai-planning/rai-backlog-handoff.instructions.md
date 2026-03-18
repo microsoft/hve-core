@@ -129,6 +129,7 @@ Required fields per work item:
 * Tags: From the RAI Tags table.
 * Parent: Reference to epic or feature when applicable.
 * Security Cross-Reference: `T-{BUCKET}-{NNN}` when overlapping with Security Planner.
+* RAI Owner: (Optional) Role accountable for this item (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement." Supports traceability required by ISO 42001 and NIST AI RMF Govern 1.1.
 
 HTML template for description fields:
 
@@ -170,6 +171,7 @@ Required fields per issue:
 * Milestone: Linked to assessment phase.
 * Body: Markdown-formatted with sections for Context, RAI Principle, Related Threat, Control Surface, Acceptance Criteria.
 * Security Cross-Reference: Link to Security Planner issue when overlapping.
+* RAI Owner: (Optional) Role accountable for this issue (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement."
 
 Include a YAML metadata block at the top of the issue body:
 
@@ -317,3 +319,63 @@ After generating all work items, produce a handoff summary covering totals, cros
 ```
 
 Log all generation decisions (create, update, skip, link) in the handoff summary. Items that could not be generated include the reason for each failure.
+
+## Optional Artifacts
+
+During Phase 6, offer each optional artifact independently. Generate only those the user opts into. Each accepted artifact produces a corresponding "Documentation" category work item for completion.
+
+### Transparency Note Outline
+
+Ask: "Would you like a transparency note outline included in the handoff?"
+
+When accepted, generate a skeleton transparency note appended to the handoff summary:
+
+```markdown
+## Transparency Note Outline (Draft)
+
+### System Purpose
+
+{What the system does, target users, and intended deployment context}
+
+### Capabilities
+
+{What the system can do within its designed scope}
+
+### Limitations
+
+{Known boundaries, failure modes, and conditions where accuracy degrades}
+
+### Data Usage
+
+{Training data sources, inference inputs, data retention, and privacy considerations}
+
+### Decision Process
+
+{How the system produces outputs, confidence indicators, and key algorithmic choices}
+
+### Human Oversight
+
+{Human-in-the-loop checkpoints, escalation paths, and override mechanisms}
+
+### Contact and Feedback
+
+{How users report issues, request explanations, or provide input on system behavior}
+```
+
+Generate a "Documentation" category work item: `[RAI] Complete transparency note from Phase 6 outline`. Assign priority Medium-Low and tag `rai:transparency`.
+
+### Monitoring Summary
+
+Ask: "Would you like a consolidated monitoring summary included in the handoff?"
+
+When accepted, auto-populate from "Monitoring Setup" category work items generated during the assessment. This unified view prevents individual monitoring work items from becoming disconnected.
+
+```markdown
+## Monitoring Summary
+
+| Work Item   | Metric            | Threshold/Criteria | Alert Mechanism    | Review Cadence |
+|-------------|-------------------|--------------------|--------------------|----------------|
+| WI-RAI-{NNN} | {metric_name}     | {threshold}        | {alert_mechanism}  | {cadence}      |
+```
+
+Generate a "Documentation" category work item: `[RAI] Validate and operationalize monitoring summary`. Assign priority Medium and tag `rai:accountability`.

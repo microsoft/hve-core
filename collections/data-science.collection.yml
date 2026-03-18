@@ -51,5 +51,15 @@ items:
     maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # Prompts
+  - path: .github/prompts/rai-planning/rai-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
 display:
   ordering: manual

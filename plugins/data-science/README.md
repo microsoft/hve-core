@@ -5,7 +5,7 @@ Data specification generation, Jupyter notebooks, and Streamlit dashboards
 
 ## Overview
 
-Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. This collection includes specialized agents for data science workflows in Python.
+Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
 
 This collection includes agents for:
 
@@ -13,6 +13,7 @@ This collection includes agents for:
 - **Jupyter Notebook Generation** — Build data analysis notebooks with visualizations and documentation
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
+- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
 
 ## Install
 
@@ -29,6 +30,14 @@ copilot plugin install data-science@hve-core
 | gen-streamlit-dashboard  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                                                                                     |
 | test-streamlit-dashboard | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                                                                                                                                                |
 | rai-planner              | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
+
+## Commands
+
+| Command                     | Description                                                                                                                              |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
+| rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 
 ## Instructions
 

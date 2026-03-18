@@ -9,7 +9,7 @@ Phase 2 of the RAI Planner orchestration screens the target system against Micro
 
 ## Sensitive Uses Categories
 
-Every system undergoes evaluation against the eight categories below. Each category maps to documented patterns of AI harm. A system may trigger multiple categories.
+Every system undergoes evaluation against the nine categories below. Each category maps to documented patterns of AI harm. A system may trigger multiple categories.
 
 | Category                            | Description                                                                                     | Risk Indicators                                                    |
 |-------------------------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
@@ -19,6 +19,7 @@ Every system undergoes evaluation against the eight categories below. Each categ
 | Potential for psychological harm    | Risk of emotional distress, manipulation, or coercion                                           | Persuasive interfaces, mental health context, vulnerable users     |
 | Surveillance and tracking           | Monitoring, identification, or tracking of individuals                                          | Biometric processing, location tracking, behavioral profiling      |
 | Deception risk                      | Potential for users to be misled about system nature or outputs                                 | Synthetic content generation, impersonation, hidden AI involvement |
+| Transparency and disclosure         | Communication of AI system nature, capabilities, limitations, and decision processes to users   | Hidden AI involvement, undisclosed limitations, opaque outputs     |
 | Impacts on human autonomy           | Reduction in meaningful human choice or oversight                                               | Automated decision-making without appeal, nudging patterns         |
 | Dual-use potential                  | System capabilities applicable to harmful secondary purposes                                    | General-purpose models, data enrichment, pattern recognition       |
 
@@ -72,8 +73,15 @@ Evaluate whether the system processes data in ways that enable monitoring or ide
 Evaluate whether the system could mislead users or third parties about its nature or outputs:
 
 * Does the system generate synthetic content (text, images, audio, video) that could be mistaken for human-created content?
-* Are users clearly informed they are interacting with an AI system?
 * Can system outputs be used to impersonate individuals or fabricate evidence?
+
+### Transparency and Disclosure
+
+Evaluate whether users and affected parties receive clear information about the system's AI nature, capabilities, and decision processes (MS RAI Standard Transparency principle, EU AI Act Article 52):
+
+* Are users clearly informed they are interacting with an AI system?
+* Are the system's capabilities and limitations clearly communicated?
+* Is there a mechanism for users to understand how AI-generated outputs were produced?
 
 ### Impacts on Human Autonomy
 
@@ -129,7 +137,7 @@ The depth tier determines the rigor, scope, and evidence requirements for Phases
 
 The Basic tier applies when the system triggers no sensitive uses categories and clears the restricted uses gate.
 
-* Trigger conditions: All 8 category scores at 0, restricted uses gate cleared.
+* Trigger conditions: All 9 category scores at 0, restricted uses gate cleared.
 * Required phases: Phase 3 (standards mapping) and Phase 6 (summary). Phases 4 and 5 are abbreviated.
 * Evidence requirements: Per-category screening rationale, gate clearance confirmation.
 * Review rigor: Self-assessment with documented rationale.
@@ -177,7 +185,7 @@ The sensitive uses screening artifact follows this structure:
 * Evidence: [summary of findings]
 * Screening questions reviewed: [list of questions evaluated]
 
-[Repeat for all 8 categories]
+[Repeat for all 9 categories]
 
 ## Restricted Uses Gate
 

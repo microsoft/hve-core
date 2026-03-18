@@ -1,1 +1,1 @@
-../../../.github/prompts/security-planning/risk-register.prompt.md
+../../../.github/prompts/security/risk-register.prompt.md

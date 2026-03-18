@@ -18,7 +18,7 @@ Six sequential phases structure the RAI assessment. Each phase has entry criteri
 ### Phase 1: AI System Scoping (NIST Govern + Map)
 
 * **Entry criteria**: New session started or `from-prd`/`from-security-plan` entry mode activated.
-* **Activities**: Discover AI system purpose, technology stack, model types, deployment model, stakeholder roles, data inputs and outputs, and intended use context. Classify AI components (model type, training approach, inference pipeline). Establish assessment boundaries and exclusions.
+* **Activities**: Discover AI system purpose, technology stack, model types, deployment model, stakeholder roles, data inputs, outputs, representativeness, and demographic coverage, intended use contexts, out-of-scope and prohibited use contexts, and autonomous decision boundaries. Classify AI components (model type, training approach, inference pipeline). Establish assessment boundaries and exclusions.
 * **Exit criteria**: User confirms system scope definition, AI element inventory, and stakeholder map are complete and accurate.
 * **Artifacts**: `system-definition-pack.md`, `stakeholder-impact-map.md`
 * **Transition**: Advance to Phase 2 after user confirmation.
@@ -166,7 +166,7 @@ Seven rules govern question flow across all phases:
 
 ### Phase-Specific Templates
 
-* **Phase 1**: AI system purpose, technology stack and model types, stakeholder roles, data inputs and outputs, deployment model, intended and unintended use contexts.
+* **Phase 1**: AI system purpose, technology stack and model types, stakeholder roles, data inputs, outputs, representativeness, and demographic coverage, deployment model, intended use contexts, out-of-scope and prohibited use contexts, autonomous decision boundaries and human-only decision requirements.
 * **Phase 2**: Sensitive uses categories applicable, restricted uses screening, vulnerable populations affected, downstream effects on individuals and groups, harm severity estimates.
 * **Phase 3**: Applicable RAI principles by component, regulatory jurisdiction and obligations, framework priorities, existing compliance posture.
 * **Phase 4**: AI-specific threat categories per component, acceptable risk levels, existing AI-specific mitigations, adversarial scenario likelihood.

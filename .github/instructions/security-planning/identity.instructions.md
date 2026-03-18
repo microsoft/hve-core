@@ -110,7 +110,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/security-pla
   "handoffGenerated": { "ado": "boolean", "github": "boolean" },
   "referencesProcessed": ["string (file paths)"],
   "nextActions": ["string"],
-  "userPreferences": { "autonomyTier": "string (full|partial|manual), default: full" },
+  "userPreferences": { "autonomyTier": "string (full|partial|manual), default: partial" },
   "raiEnabled": "boolean, default: false",
   "raiScope": "string (none|lightweight|full), default: none",
   "raiTier": "string (none|basic|standard|comprehensive), default: none",
