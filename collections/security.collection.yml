@@ -42,6 +42,8 @@ items:
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
     maturity: experimental
+  - path: .github/skills/shared/pr-reference
+    kind: skill
   # Prompts
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
