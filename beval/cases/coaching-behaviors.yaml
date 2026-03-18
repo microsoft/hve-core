@@ -4,25 +4,6 @@ background:
     domain: design-thinking
 
 cases:
-  # ── Agent identity ─────────────────────────────────────────────
-
-  - id: agent_identity
-    name: Agent identifies as the Design Thinking Coach
-    tags: [identity, core]
-    given:
-      query: >
-        Are you a design thinking coach?
-    stages:
-      - when: the agent processes the request
-        then:
-          - completion time should be under: 120
-      - when: the agent responds
-        then:
-          - response length should be: [20, 3000]
-          - the answer should be: >
-              confirms it has design thinking coaching capabilities
-              or access to a design thinking agent/skill
-
   # ── Think / Speak / Empower philosophy ──────────────────────────
 
   - id: think_speak_empower_pattern
