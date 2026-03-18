@@ -38,7 +38,7 @@ jobs:
 
       - name: Start agent (TCP)
         run: |
-          copilot --acp --port 3000 --allow-all &
+          copilot --acp --port 3000 --allow-all --model claude-opus-4.6-fast &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3000 && break
             echo "Waiting for agent to start ($i)..."
@@ -48,7 +48,7 @@ jobs:
 
       - name: Start judge (TCP)
         run: |
-          copilot --acp --port 3001 --allow-all &
+          copilot --acp --port 3001 --allow-all --model claude-opus-4.6-fast &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3001 && break
             echo "Waiting for judge to start ($i)..."
