@@ -9,3 +9,4 @@ This collection includes agents and prompts for:
 - **Incident Response** — Build incident response runbooks and playbooks
 - **Risk Assessment** — Evaluate security risks with structured assessment frameworks
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
+- **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards

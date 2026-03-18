@@ -12,6 +12,8 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 This collection includes agents, skills, and instructions for:
 
 - **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
+- **RAI Planner** — Responsible AI planning with sensitive-uses screening, standards mapping, security-model analysis, impact assessment, and backlog handoff
+- **Security Planner** — Security planning with STRIDE security-model analysis, operational bucket classification, standards mapping, and backlog handoff
 - **Video to GIF** — Convert video files to animated GIF format
 
 ## Install

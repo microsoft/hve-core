@@ -1,1 +1,1 @@
-../../../.github/agents/security-planning/security-planner.agent.md
+../../../.github/agents/security/security-planner.agent.md

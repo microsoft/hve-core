@@ -21,8 +21,6 @@ This collection includes agents and prompts for:
 - **Vulnerability Analysis** — Identify and prioritize security vulnerabilities
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
 
-> **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
-
 ## Install
 
 ```bash
@@ -37,23 +35,16 @@ copilot plugin install security@hve-core
 
 ## Commands
 
-| Command                | Description                                                                                                     |
-|------------------------|-----------------------------------------------------------------------------------------------------------------|
-| security-plan-from-prd | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode              |
-| security-capture       | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode    |
-| incident-response      | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                |
-| risk-register          | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix. |
+| Command           | Description                                                                                                     |
+|-------------------|-----------------------------------------------------------------------------------------------------------------|
+| incident-response | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                |
+| risk-register     | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix. |
 
 ## Instructions
 
-| Instruction         | Description                                                                                                                                                                                                                                                 |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| identity            | Security Planner identity, six-phase orchestration, state management, and session recovery protocols - Brought to you by microsoft/hve-core                                                                                                                 |
-| operational-buckets | Operational bucket definitions with component classification guidance and cross-cutting security concerns - Brought to you by microsoft/hve-core                                                                                                            |
-| standards-mapping   | Embedded OWASP, NIST, and CIS security standards with researcher subagent delegation for WAF/CAF runtime lookups - Brought to you by microsoft/hve-core                                                                                                     |
-| security-model      | STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core                                                                                                          |
-| backlog-handoff     | Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates - Brought to you by microsoft/hve-core                                                                                                    |
-| hve-core-location   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Instruction       | Description                                                                                                                                                                                                                                                 |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ---
 

@@ -14,6 +14,7 @@ Supporting subagents included:
 - **Artifact Validator** — Validates implementation work against plans and conventions
 - **Prompt Tester** — Tests prompt files by following them literally in a sandbox
 - **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+- **SSSC Planner** — Supply chain security assessment against OpenSSF Scorecard, SLSA, and SBOM standards
 
 Skills included:
 

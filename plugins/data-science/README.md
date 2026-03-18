@@ -5,7 +5,7 @@ Data specification generation, Jupyter notebooks, and Streamlit dashboards
 
 ## Overview
 
-Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. This collection includes specialized agents for data science workflows in Python.
+Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
 
 This collection includes agents for:
 
@@ -13,6 +13,7 @@ This collection includes agents for:
 - **Jupyter Notebook Generation** — Build data analysis notebooks with visualizations and documentation
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
+- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
 
 ## Install
 

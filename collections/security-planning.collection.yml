@@ -9,22 +9,17 @@ tags:
   - planning
 items:
   # Agents
-  - path: .github/agents/security-planning/security-planner.agent.md
+  - path: .github/agents/security/security-planner.agent.md
     kind: agent
-    maturity: experimental
   # Prompts
-  - path: .github/prompts/security-planning/security-plan-from-prd.prompt.md
+  - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
-    maturity: experimental
-  - path: .github/prompts/security-planning/security-capture.prompt.md
+  - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
-    maturity: experimental
-  - path: .github/prompts/security-planning/incident-response.prompt.md
+  - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
-    maturity: experimental
-  - path: .github/prompts/security-planning/risk-register.prompt.md
+  - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
-    maturity: experimental
   # Instructions
   - path: .github/instructions/security-planning/identity.instructions.md
     kind: instruction
@@ -43,5 +38,41 @@ items:
     maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # SSSC Planning
+  - path: .github/agents/security-planning/sssc-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/prompts/security-planning/sssc-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security-planning/sssc-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security-planning/sssc-from-brd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security-planning/sssc-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-gap-analysis.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-backlog.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sssc-planning/sssc-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
 display:
   ordering: manual

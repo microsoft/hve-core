@@ -290,17 +290,17 @@ How would you like to receive updates? (auto/controlled)
 Use this matrix to determine the recommended method:
 
 <!-- <decision-matrix> -->
-| Environment                 | Team | Updates    | **Recommended Method**                                  |
-|-----------------------------|------|------------|---------------------------------------------------------|
-| Any (simplest)              | Any  | -          | **Extension Quick Install** (works in all environments) |
-| Local (no container)        | Solo | -          | **Method 1: Peer Clone**                                |
-| Local (no container)        | Team | Controlled | **Method 6: Submodule**                                 |
-| Local devcontainer          | Solo | Auto       | **Method 2: Git-Ignored**                               |
-| Local devcontainer          | Team | Controlled | **Method 6: Submodule**                                 |
-| Codespaces only             | Solo | Auto       | **Method 4: Codespaces**                                |
-| Codespaces only             | Team | Controlled | **Method 6: Submodule**                                 |
-| Both local + Codespaces     | Any  | Any        | **Method 5: Multi-Root Workspace**                      |
-| HVE-Core repo (Codespaces)  | -    | -          | **Method 4: Codespaces** (already configured)           |
+| Environment                | Team | Updates    | **Recommended Method**                                  |
+|----------------------------|------|------------|---------------------------------------------------------|
+| Any (simplest)             | Any  | -          | **Extension Quick Install** (works in all environments) |
+| Local (no container)       | Solo | -          | **Method 1: Peer Clone**                                |
+| Local (no container)       | Team | Controlled | **Method 6: Submodule**                                 |
+| Local devcontainer         | Solo | Auto       | **Method 2: Git-Ignored**                               |
+| Local devcontainer         | Team | Controlled | **Method 6: Submodule**                                 |
+| Codespaces only            | Solo | Auto       | **Method 4: Codespaces**                                |
+| Codespaces only            | Team | Controlled | **Method 6: Submodule**                                 |
+| Both local + Codespaces    | Any  | Any        | **Method 5: Multi-Root Workspace**                      |
+| HVE-Core repo (Codespaces) | -    | -          | **Method 4: Codespaces** (already configured)           |
 <!-- </decision-matrix> -->
 
 ### Method Selection Logic
@@ -337,14 +337,14 @@ Execute the installation workflow based on the method selected via the decision 
 
 ### Method Configuration
 
-| Method         | Documentation                                                                                                 | Target Location        | Settings Path Prefix   | Best For                       |
-|----------------|---------------------------------------------------------------------------------------------------------------|------------------------|------------------------|--------------------------------|
-| 1. Peer Clone  | [peer-clone.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/peer-clone.md)   | `../hve-core`          | `../hve-core`          | Local VS Code, solo developers |
-| 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`           | `.hve-core`            | Devcontainer, isolation        |
-| 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone      |
-| 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces                     |
+| Method         | Documentation                                                                                                 | Target Location        | Settings Path Prefix   | Best For                            |
+|----------------|---------------------------------------------------------------------------------------------------------------|------------------------|------------------------|-------------------------------------|
+| 1. Peer Clone  | [peer-clone.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/peer-clone.md)   | `../hve-core`          | `../hve-core`          | Local VS Code, solo developers      |
+| 2. Git-Ignored | [git-ignored.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/git-ignored.md) | `.hve-core/`           | `.hve-core`            | Devcontainer, isolation             |
+| 3. Mounted*    | [mounted.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/mounted.md)         | `/workspaces/hve-core` | `/workspaces/hve-core` | Devcontainer + host clone           |
+| 4. Codespaces  | [codespaces.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/codespaces.md)   | `/workspaces/hve-core` | `/workspaces/hve-core` | Codespaces                          |
 | 5. Multi-Root  | [multi-root.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/multi-root.md)   | Per workspace file     | Actual clone path      | Local VS Code, best IDE integration |
-| 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`         | `lib/hve-core`         | Team version control           |
+| 6. Submodule   | [submodule.md](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/methods/submodule.md)     | `lib/hve-core`         | `lib/hve-core`         | Team version control                |
 
 *Method 3 (Mounted) is for advanced scenarios where host already has hve-core cloned. Most devcontainer users should use Method 2.
 
@@ -1004,10 +1004,10 @@ User input handling:
 
 ### Agent Bundle Definitions
 
-| Bundle            | Agents                                                                   |
-|-------------------|--------------------------------------------------------------------------|
+| Bundle            | Agents                                                                    |
+|-------------------|---------------------------------------------------------------------------|
 | `hve-core`        | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent |
-| `collection:<id>` | Stable agents matching the collection                                    |
+| `collection:<id>` | Stable agents matching the collection                                     |
 
 ### Collision Detection
 
@@ -1221,14 +1221,14 @@ Provide targeted guidance when steps fail:
 
 To remove a failed or unwanted installation:
 
-| Method                    | Cleanup                                                    |
-|---------------------------|------------------------------------------------------------|
-| Extension                 | VS Code → Extensions → HVE Core → Uninstall               |
-| 1 (Peer Clone)            | `rm -rf ../hve-core`                                      |
-| 2 (Git-Ignored)           | `rm -rf .hve-core`                                        |
-| 3-4 (Mounted/Codespaces)  | Remove mount/postCreate from devcontainer.json             |
-| 5 (Multi-Root)            | Delete `.code-workspace` file                              |
-| 6 (Submodule)             | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
+| Method                   | Cleanup                                                    |
+|--------------------------|------------------------------------------------------------|
+| Extension                | VS Code → Extensions → HVE Core → Uninstall                |
+| 1 (Peer Clone)           | `rm -rf ../hve-core`                                       |
+| 2 (Git-Ignored)          | `rm -rf .hve-core`                                         |
+| 3-4 (Mounted/Codespaces) | Remove mount/postCreate from devcontainer.json             |
+| 5 (Multi-Root)           | Delete `.code-workspace` file                              |
+| 6 (Submodule)            | `git submodule deinit lib/hve-core && git rm lib/hve-core` |
 
 Then remove HVE-Core paths from `.vscode/settings.json`.
 
