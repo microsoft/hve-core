@@ -89,6 +89,21 @@ items:
   kind: agent
 - path: .github/agents/security/security-plan-creator.agent.md
   kind: agent
+- path: .github/agents/security/security-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/codebase-profiler.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/report-generator.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
@@ -396,6 +411,18 @@ items:
   kind: skill
 - path: .github/skills/installer/hve-core-installer
   kind: skill
+- path: .github/skills/security/owasp-agentic
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/owasp-llm
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/owasp-top-10
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/security-reviewer-formats
+  kind: skill
+  maturity: experimental
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:

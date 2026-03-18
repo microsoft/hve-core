@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, and supply chain security
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - powershell
@@ -180,6 +180,77 @@ Actions dependencies.
 ./scripts/security/Update-ActionSHAPinning.ps1 -UpdateStale -OutputReport logs/sha-update-report.json
 ```
 
+### `Invoke-PipAudit.ps1`
+
+Audits Python project dependencies for known vulnerabilities using pip-audit.
+
+Purpose: Detect vulnerable Python packages across all Python skills before they
+reach production.
+
+#### Features
+
+* Discovers Python projects via `pyproject.toml` file search
+* Exports locked dependencies via `uv export` before auditing
+* Runs pip-audit against each project's dependency set
+* Writes JSON results to the `logs/` directory
+* Configurable path exclusions
+
+#### Parameters
+
+* `-Path` - Root path to scan for Python projects (default: repository root)
+* `-OutputPath` - Directory for JSON results (default: `logs/` under repository root)
+* `-FailOnVulnerability` (switch) - Exit with error code if vulnerabilities are found
+* `-ExcludePaths` - Path patterns to exclude from scanning
+
+#### Usage
+
+```powershell
+# Scan all Python projects
+./scripts/security/Invoke-PipAudit.ps1
+
+# Fail if vulnerabilities found
+./scripts/security/Invoke-PipAudit.ps1 -FailOnVulnerability
+
+# Scan a specific skill directory
+./scripts/security/Invoke-PipAudit.ps1 -Path ".github/skills/experimental/powerpoint"
+```
+
+### `Test-WorkflowPermissions.ps1`
+
+Validates that GitHub Actions workflow files include a top-level `permissions` block.
+
+Purpose: Ensure workflows explicitly declare token permissions to prevent
+OpenSSF Scorecard Token-Permissions failures.
+
+#### Features
+
+* Scans `.github/workflows/*.yml` and `.yaml` files
+* Uses regex-based detection (`^permissions:`) with zero false positives
+* Outputs results in JSON, SARIF, or console format
+* Configurable workflow exclusions
+* Integrates with `npm run lint:permissions`
+
+#### Parameters
+
+* `-Path` - Directory containing workflow YAML files (default: `.github/workflows`)
+* `-Format` - Output format: `json`, `sarif`, or `console` (default: `json`)
+* `-OutputPath` - Path for result output file (default: `logs/workflow-permissions-results.json`)
+* `-FailOnViolation` (switch) - Exit with non-zero code if any workflow is missing permissions
+* `-ExcludePaths` - Workflow filenames to exclude (default: `copilot-setup-steps.yml`)
+
+#### Usage
+
+```powershell
+# Check all workflows
+./scripts/security/Test-WorkflowPermissions.ps1
+
+# Fail on missing permissions
+./scripts/security/Test-WorkflowPermissions.ps1 -FailOnViolation
+
+# Export SARIF results
+./scripts/security/Test-WorkflowPermissions.ps1 -Format sarif -FailOnViolation
+```
+
 ## Modules
 
 ### `Modules/SecurityClasses.psm1`
@@ -203,11 +274,13 @@ Shared utility functions used across security scripts:
 
 Security scripts integrate with these workflows:
 
-| Workflow                      | Script(s)                    | Trigger      |
-|-------------------------------|------------------------------|--------------|
-| `dependency-pinning-scan.yml` | `Test-DependencyPinning.ps1` | PR, schedule |
-| `sha-staleness-check.yml`     | `Test-SHAStaleness.ps1`      | Schedule     |
-| `pr-validation.yml`           | `Test-DependencyPinning.ps1` | Pull request |
+| Workflow                        | Script(s)                      | Trigger      |
+|---------------------------------|--------------------------------|--------------|
+| `dependency-pinning-scan.yml`   | `Test-DependencyPinning.ps1`   | PR, schedule |
+| `sha-staleness-check.yml`       | `Test-SHAStaleness.ps1`        | Schedule     |
+| `pr-validation.yml`             | `Test-DependencyPinning.ps1`   | Pull request |
+| `pip-audit.yml`                 | `Invoke-PipAudit.ps1`          | PR, schedule |
+| `workflow-permissions-scan.yml` | `Test-WorkflowPermissions.ps1` | PR, schedule |
 
 ## Related Documentation
 

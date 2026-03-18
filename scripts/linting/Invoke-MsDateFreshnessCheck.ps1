@@ -204,6 +204,7 @@ function New-MsDateReport {
 | File | ms.date | Age (days) |
 |------|---------|------------|
 "@
+        $markdown += "`n"
 
         $sortedStaleFiles = $staleFiles | Sort-Object -Property AgeDays -Descending
 
