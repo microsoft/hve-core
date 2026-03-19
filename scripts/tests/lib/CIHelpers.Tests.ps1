@@ -15,6 +15,27 @@ BeforeAll {
     Import-Module $mockPath -Force
 }
 
+Describe 'Get-StandardTimestamp' -Tag 'Unit' {
+    It 'Returns a string' {
+        Get-StandardTimestamp | Should -BeOfType [string]
+    }
+
+    It 'Returns a non-empty value' {
+        Get-StandardTimestamp | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Matches ISO 8601 UTC format ending in Z' {
+        Get-StandardTimestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+    }
+
+    It 'Returns monotonically increasing timestamps on consecutive calls' {
+        $first = [datetime]::Parse((Get-StandardTimestamp))
+        Start-Sleep -Milliseconds 10
+        $second = [datetime]::Parse((Get-StandardTimestamp))
+        $second | Should -BeGreaterThan $first
+    }
+}
+
 Describe 'Get-CIPlatform' -Tag 'Unit' {
     BeforeAll {
         Save-CIEnvironment
