@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Color resolution and conversion utilities for PowerPoint skill scripts.
 
 Supports #RRGGBB hex values and @theme_name references for theme colors.

@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Build a PowerPoint slide deck from YAML content and style definitions.
 
 Usage::

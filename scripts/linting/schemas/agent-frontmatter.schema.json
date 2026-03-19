@@ -12,11 +12,15 @@
       "oneOf": [
         {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         {
           "type": "string",
-          "enum": ["*"]
+          "enum": [
+            "*"
+          ]
         }
       ],
       "default": "*",
@@ -44,10 +48,14 @@
     },
     "model": {
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       ],
       "description": "The AI model(s) to use when running the agent. If not specified, the currently selected model in model picker is used."
@@ -81,7 +89,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["label", "agent"],
+        "required": [
+          "label",
+          "agent"
+        ],
         "properties": {
           "label": {
             "type": "string",
