@@ -11,15 +11,20 @@ items:
   # Agents
   - path: .github/agents/security/security-planner.agent.md
     kind: agent
+    maturity: experimental
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
+    maturity: experimental
   # Instructions
   - path: .github/instructions/security-planning/identity.instructions.md
     kind: instruction

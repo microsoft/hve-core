@@ -60,8 +60,10 @@ items:
     maturity: experimental
   - path: .github/prompts/security/incident-response.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
+    maturity: experimental
   - path: .github/prompts/rai-planning/rai-capture.prompt.md
     kind: prompt
     maturity: experimental

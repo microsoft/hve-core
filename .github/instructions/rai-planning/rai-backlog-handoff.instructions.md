@@ -228,13 +228,13 @@ Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` out
 
 Three tiers control how RAI work items reach the target backlog system.
 
-| Tier       | Description                                              | Applies When                                                         |
-|------------|----------------------------------------------------------|----------------------------------------------------------------------|
-| Autonomous | Agent creates work items without human approval          | Enhancement items (Low priority), documentation updates              |
-| Supervised | Agent drafts work items for human review before creation | Control implementation (Medium-High), monitoring setup               |
-| Manual     | Agent provides recommendations; human creates items      | Remediation (Critical-High), sensitive use items, tradeoff decisions |
+| Tier    | Description                                              | Applies When                                                         |
+|---------|----------------------------------------------------------|----------------------------------------------------------------------|
+| Full    | Agent creates work items without human approval          | Enhancement items (Low priority), documentation updates              |
+| Partial | Agent drafts work items for human review before creation | Control implementation (Medium-High), monitoring setup               |
+| Manual  | Agent provides recommendations; human creates items      | Remediation (Critical-High), sensitive use items, tradeoff decisions |
 
-Ask the user in Phase 6 which tier they prefer. Default to Supervised on first use. Store the selected preference in the session state JSON under `userPreferences.raiAutonomyTier`.
+Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Store the selected preference in the session state JSON under `userPreferences.autonomyTier`.
 
 ## Priority Mapping
 
@@ -245,13 +245,13 @@ Derive work item priority and autonomy tier from assessment findings.
 | Principle score 1                        | Critical           | Manual        |
 | Principle score 2                        | High               | Manual        |
 | High-likelihood high-impact evidence gap | Critical           | Manual        |
-| Sensitive use without controls           | High               | Supervised    |
-| Tradeoff requiring implementation        | Medium             | Supervised    |
-| Control surface gap (Prevent)            | High               | Supervised    |
-| Control surface gap (Detect)             | Medium             | Supervised    |
-| Control surface gap (Respond)            | Medium             | Supervised    |
-| Documentation gap                        | Low                | Autonomous    |
-| Enhancement recommendation               | Low                | Autonomous    |
+| Sensitive use without controls           | High               | Partial       |
+| Tradeoff requiring implementation        | Medium             | Partial       |
+| Control surface gap (Prevent)            | High               | Partial       |
+| Control surface gap (Detect)             | Medium             | Partial       |
+| Control surface gap (Respond)            | Medium             | Partial       |
+| Documentation gap                        | Low                | Full          |
+| Enhancement recommendation               | Low                | Full          |
 
 Within the same priority level, order remediation items before control implementation items. Favor fairness and reliability findings over other principles at equal priority due to direct harm potential.
 

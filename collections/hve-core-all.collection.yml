@@ -203,8 +203,6 @@ items:
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
-<<<<<<< HEAD
-=======
 - path: .github/prompts/security-planning/sssc-capture.prompt.md
   kind: prompt
   maturity: experimental
@@ -217,22 +215,18 @@ items:
 - path: .github/prompts/security-planning/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
->>>>>>> origin/feature/security-planner-redesign
 - path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/risk-register.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/security-capture.prompt.md
   kind: prompt
-<<<<<<< HEAD
   maturity: experimental
 - path: .github/prompts/security/security-plan-from-prd.prompt.md
   kind: prompt
   maturity: experimental
-=======
-- path: .github/prompts/security/security-plan-from-prd.prompt.md
-  kind: prompt
->>>>>>> origin/feature/security-planner-redesign
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md

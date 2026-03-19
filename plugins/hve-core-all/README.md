@@ -21,6 +21,7 @@ Supporting subagents included:
 - **Artifact Validator** — Validates implementation work against plans and conventions
 - **Prompt Tester** — Tests prompt files by following them literally in a sandbox
 - **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+- **SSSC Planner** — Supply chain security assessment against OpenSSF Scorecard, SLSA, and SBOM standards
 
 Skills included:
 
@@ -77,7 +78,7 @@ copilot plugin install hve-core-all@hve-core
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                                                                                                                                      |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                                                                                                                                    |
 | rai-planner                  | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
-| security-plan-creator        | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                                                                                                                                             |
+| sssc-planner                 | Guides users through a six-phase assessment of their repository's supply chain security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog referencing reusable workflows from hve-core and microsoft/physical-ai-toolchain.                                             |
 | security-planner             | Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration                                                                                                                                                     |
 
 ## Commands
@@ -131,6 +132,10 @@ copilot plugin install hve-core-all@hve-core
 | rai-capture                                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                         |
 | rai-plan-from-prd                           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                         |
 | rai-plan-from-security-plan                 | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)         |
+| sssc-capture                                | Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode                                                 |
+| sssc-from-brd                               | Start an SSSC assessment from existing BRD artifacts using the SSSC Planner agent                                                                |
+| sssc-from-prd                               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                                |
+| sssc-from-security-plan                     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                                     |
 | incident-response                           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                 |
 | risk-register                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
 | security-capture                            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                     |
@@ -227,6 +232,12 @@ copilot plugin install hve-core-all@hve-core
 | standards-mapping                    | Embedded OWASP, NIST, and CIS security standards with researcher subagent delegation for WAF/CAF runtime lookups - Brought to you by microsoft/hve-core                                                                                                     |
 | hve-core-location                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality                        | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+| sssc-assessment                      | Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory for SSSC Planner.                                                                                                                                                      |
+| sssc-backlog                         | Phase 5 dual-format work item generation with templates and priority derivation for SSSC Planner.                                                                                                                                                           |
+| sssc-gap-analysis                    | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner.                                                                                                                                                                        |
+| sssc-handoff                         | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
+| sssc-identity                        | Identity and orchestration instructions for the SSSC Planner agent. Contains six-phase workflow, state.json schema, session recovery, and question cadence.                                                                                                 |
+| sssc-standards                       | Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner.                                                                                                                                               |
 
 ## Skills
 

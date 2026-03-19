@@ -35,6 +35,8 @@ copilot plugin install experimental@hve-core
 
 | Command                     | Description                                                                                                                              |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| incident-response           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                         |
+| risk-register               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                          |
 | security-capture            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                             |
 | security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode                                       |
 | rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
