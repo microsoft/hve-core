@@ -1,12 +1,12 @@
 ---
 title: Entry Modes
-description: Detailed guide to the Security Planner's scoping and capture entry modes, including prompt usage and workflow differences
+description: Detailed guide to the Security Planner's From-PRD and capture entry modes, including prompt usage and workflow differences
 sidebar_position: 4
 sidebar_label: Entry Modes
 keywords:
   - security planner
   - entry modes
-  - scoping
+  - from-prd
   - capture
 tags:
   - agents
@@ -19,28 +19,28 @@ estimated_reading_time: 5
 
 The Security Planner supports two entry modes that control how Phase 1 scoping begins. Each mode is activated through a dedicated prompt file that sets the initial state and determines how much context the agent gathers before starting the analysis.
 
-## Scoping Mode
+## From-PRD Mode
 
-Scoping mode seeds Phase 1 from PRD or BRD artifacts already present in the workspace. Use this mode when formal requirements documents exist under `.copilot-tracking/`.
+From-PRD mode seeds Phase 1 from PRD or BRD artifacts already present in the workspace. Use this mode when formal requirements documents exist under `.copilot-tracking/`.
 
 ### How It Works
 
 1. The agent scans `.copilot-tracking/` for PRD and BRD files.
 2. Discovered artifacts are presented with ✅/❌ markers showing which were found.
 3. The agent extracts six categories of scope information: project purpose, technology stack, deployment model, data classification, compliance requirements, and AI/ML components.
-4. State is initialized with `entryMode: "scoping"` and the extracted references stored in `referencesProcessed`.
+4. State is initialized with `entryMode: "from-prd"` and the extracted references stored in `referencesProcessed`.
 5. Phase 1 begins with a checklist of pre-filled items and 3-5 clarifying questions for gaps.
 
 ### Prompt File
 
-Activate scoping mode with the **Security Plan from PRD** prompt (`security-plan-from-prd.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
+Activate From-PRD mode with the **Security Plan from PRD** prompt (`security-plan-from-prd.prompt.md`). This prompt accepts an optional `project-slug` input parameter.
 
 ```text
 Inputs:
   project-slug (optional) — Kebab-case project identifier
 ```
 
-### When to Choose Scoping Mode
+### When to Choose From-PRD Mode
 
 | Situation                                          | Fit |
 |----------------------------------------------------|-----|
@@ -84,12 +84,12 @@ If the user provides existing security notes or context in the initial message, 
 
 Both modes converge at the same Phase 1 output. The difference is how much context the agent starts with.
 
-| Aspect               | Scoping                              | Capture                     |
+| Aspect               | From-PRD                             | Capture                     |
 |----------------------|--------------------------------------|-----------------------------|
 | Initial context      | Extracted from PRD/BRD               | Gathered through interview  |
 | Number of questions  | Fewer (gaps only)                    | More (full scope interview) |
 | Time to Phase 2      | Faster                               | Slower but more thorough    |
-| State initialization | `entryMode: "scoping"`               | `entryMode: "capture"`      |
+| State initialization | `entryMode: "from-prd"`              | `entryMode: "capture"`      |
 | Best for             | Projects with existing documentation | Projects in early stages    |
 
 ## Switching Between Modes

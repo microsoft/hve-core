@@ -302,8 +302,8 @@ The agent scores the assessment across five dimensions on a 1-5 scale:
 
 Gaps identified across Phases 2-5 are converted to work items using the same dual-platform format as the Security Planner:
 
-* ADO work items use `WI[NNN]` temporary IDs
-* GitHub issues use `{{TEMP-N}}` temporary IDs
+* ADO work items use `WI-RAI-{NNN}` temporary IDs
+* GitHub issues use `{{RAI-TEMP-N}}` temporary IDs
 * Default autonomy tier is Partial: items are created but require user confirmation before submission
 
 ### Outputs

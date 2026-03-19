@@ -53,9 +53,10 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 
 1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
 2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-planner** agent for infrastructure security planning.
-3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
-4. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
-5. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
+3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security of CI/CD pipelines and deployment infrastructure.
+4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
+5. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
+6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
 
 ## Starter Prompts
 
@@ -84,6 +85,12 @@ rules for namespace isolation, WAF configuration for OWASP Top 10
 protection, and audit logging for ingress configuration changes.
 ```
 
+Select **sssc-planner** agent:
+
+```text
+Assess the supply chain security posture for our CI/CD pipeline and container infrastructure
+```
+
 ```text
 /pull-request Create a PR for infrastructure changes
 ```
@@ -99,14 +106,15 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                        | Docs                                              |
-|----------------------|------------------------------------------------|---------------------------------------------------|
-| **task-researcher**  | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-implementor** | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**    | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **security-planner** | Infrastructure security planning               | Agent file                                        |
-| **pr-review**        | Pull request review for infrastructure changes | Agent file                                        |
-| **memory**           | Session context and preference persistence     | Agent file                                        |
+| Agent                | Purpose                                             | Docs                                              |
+|----------------------|-----------------------------------------------------|---------------------------------------------------|
+| **task-researcher**  | Structured production issue investigation           | [Task Researcher](../../rpi/task-researcher.md)   |
+| **task-implementor** | Infrastructure code implementation                  | [Task Implementor](../../rpi/task-implementor.md) |
+| **task-reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
+| **security-planner** | Infrastructure security planning                    | Agent file                                        |
+| **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
+| **pr-review**        | Pull request review for infrastructure changes      | Agent file                                        |
+| **memory**           | Session context and preference persistence          | Agent file                                        |
 
 Prompts complement the agents for operational workflows:
 

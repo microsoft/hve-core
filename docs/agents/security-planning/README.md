@@ -77,7 +77,7 @@ Performs STRIDE-based threat modeling per bucket, generating threats in `T-{BUCK
 
 ### Phase 5: Backlog Generation
 
-Produces work items for Azure DevOps (`WI[NNN]`) or GitHub Issues (`{{TEMP-N}}`), each linked to the threats and standards that motivated it. Items are assigned one of three autonomy tiers that control how much human review is required.
+Produces work items for Azure DevOps (`WI-SEC-{NNN}`) or GitHub Issues (`{{SEC-TEMP-N}}`), each linked to the threats and standards that motivated it. Items are assigned one of three autonomy tiers that control how much human review is required.
 
 ### Phase 6: Review and Handoff
 
@@ -97,16 +97,16 @@ Work items generated in Phase 5 are assigned an autonomy tier that controls how 
 
 The Security Planner supports two entry modes, each matched to a prompt file.
 
-| Mode    | Prompt                   | Starting point                                              |
-|---------|--------------------------|-------------------------------------------------------------|
-| Scoping | `security-plan-from-prd` | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
-| Capture | `security-capture`       | Starts a blank Phase 1 interview to gather scope directly   |
+| Mode     | Prompt                   | Starting point                                              |
+|----------|--------------------------|-------------------------------------------------------------|
+| From-PRD | `security-plan-from-prd` | Seeds Phase 1 from PRD/BRD artifacts found in the workspace |
+| Capture  | `security-capture`       | Starts a blank Phase 1 interview to gather scope directly   |
 
 ## When to Use
 
 | Scenario                                     | Recommended approach            |
 |----------------------------------------------|---------------------------------|
-| New project with existing PRD/BRD            | Scoping mode                    |
+| New project with existing PRD/BRD            | From-PRD mode                   |
 | Existing project without formal requirements | Capture mode                    |
 | Project with AI/ML components                | Either mode (RAI auto-detected) |
 | Quick security checklist only                | Manual review instead           |
@@ -126,13 +126,13 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 * The Security Planner agent installed and enabled in your VS Code workspace.
 * The `Researcher Subagent` available for standards lookups in Phase 3.
-* For scoping mode: PRD or BRD artifacts present under `.copilot-tracking/`.
+* For From-PRD mode: PRD or BRD artifacts present under `.copilot-tracking/`.
 
 ## Next Steps
 
 * [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
 * [Agent Overview](agent-overview) for the architecture and state management details.
-* [Entry Modes](entry-modes) for a deep dive into scoping vs. capture workflows.
+* [Entry Modes](entry-modes) for a deep dive into From-PRD vs. capture workflows.
 * [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
 * [Handoff Pipeline](handoff-pipeline) for backlog generation and RAI dispatch.
 

@@ -97,10 +97,10 @@ Gaps identified during Phases 2 through 5 are converted to work items using the 
 
 ### Dual-Platform Support
 
-| Platform | ID format    | Formatting                     | Target system           |
-|----------|--------------|--------------------------------|-------------------------|
-| ADO      | `WI[NNN]`    | HTML `<div>` wrapper           | Azure DevOps work items |
-| GitHub   | `{{TEMP-N}}` | Markdown with YAML frontmatter | GitHub issues           |
+| Platform | ID format        | Formatting                     | Target system           |
+|----------|------------------|--------------------------------|-------------------------|
+| ADO      | `WI-RAI-{NNN}`   | HTML `<div>` wrapper           | Azure DevOps work items |
+| GitHub   | `{{RAI-TEMP-N}}` | Markdown with YAML frontmatter | GitHub issues           |
 
 ### Autonomy Tiers
 

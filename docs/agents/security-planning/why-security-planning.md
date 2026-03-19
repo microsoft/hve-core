@@ -66,7 +66,7 @@ The review phase validates completeness and catches gaps before the analysis lea
 Adoption does not need to be all-or-nothing. Teams can scale up incrementally:
 
 1. **Start with Capture mode** on a single project to see the full six-phase flow.
-2. **Switch to Scoping mode** once PRD/BRD artifacts are routinely available.
+2. **Switch to From-PRD mode** once PRD/BRD artifacts are routinely available.
 3. **Adjust autonomy tiers** to match your team's comfort level with agent-generated work items.
 4. **Enable RAI handoff** for projects that include AI/ML components.
 
@@ -76,7 +76,7 @@ The right entry mode depends on what artifacts already exist and how much contex
 
 | Starting point                  | Recommended mode | Reason                                       |
 |---------------------------------|------------------|----------------------------------------------|
-| PRD or BRD available            | Scoping          | Seeds Phase 1 from existing requirements     |
+| PRD or BRD available            | From-PRD         | Seeds Phase 1 from existing requirements     |
 | No formal requirements          | Capture          | Gathers scope through structured interview   |
 | Prior security plan exists      | Either           | New plan, but prior analysis informs scoping |
 | AI/ML components known up front | Either           | Both modes auto-detect AI/ML during Phase 1  |

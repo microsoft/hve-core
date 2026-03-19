@@ -70,7 +70,7 @@ The state file tracks over 16 fields across scoping, analysis, and handoff conce
 | `projectSlug`          | string   | Kebab-case project identifier                       |
 | `securityPlanFile`     | string   | Path to the main plan markdown file                 |
 | `currentPhase`         | number   | Current phase (1-6)                                 |
-| `entryMode`            | string   | `scoping` or `capture`                              |
+| `entryMode`            | string   | `from-prd` or `capture`                             |
 | `bucketsCompleted`     | string[] | Operational buckets that have been classified       |
 | `standardsMapped`      | string[] | Buckets with completed standards mapping            |
 | `riskSurfaceStarted`   | boolean  | Whether Phase 4 threat modeling has begun           |

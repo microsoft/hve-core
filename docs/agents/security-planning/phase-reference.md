@@ -40,7 +40,7 @@ Capture the project's purpose, technology stack, deployment model, data classifi
 ### Inputs
 
 * User responses to scoping questions (capture mode).
-* PRD/BRD artifacts from `.copilot-tracking/` (scoping mode).
+* PRD/BRD artifacts from `.copilot-tracking/` (From-PRD mode).
 
 ### Process
 
@@ -63,7 +63,7 @@ The agent asks 3-5 questions per turn covering:
 | Field          | Before | After                            |
 |----------------|--------|----------------------------------|
 | `currentPhase` | 1      | 2 (on user confirmation)         |
-| `entryMode`    | unset  | `scoping` or `capture`           |
+| `entryMode`    | unset  | `from-prd` or `capture`          |
 | `raiEnabled`   | unset  | `true` or `false`                |
 | `raiScope`     | unset  | `none`, `lightweight`, or `full` |
 | `raiTier`      | unset  | `none` through `comprehensive`   |
@@ -172,10 +172,10 @@ Convert identified threats into actionable backlog items with acceptance criteri
 
 ### Work Item Formats
 
-| Platform | ID format    | Example      |
-|----------|--------------|--------------|
-| ADO      | `WI[NNN]`    | `WI[001]`    |
-| GitHub   | `{{TEMP-N}}` | `{{TEMP-1}}` |
+| Platform | ID format        | Example          |
+|----------|------------------|------------------|
+| ADO      | `WI-SEC-{NNN}`   | `WI-SEC-001`     |
+| GitHub   | `{{SEC-TEMP-N}}` | `{{SEC-TEMP-1}}` |
 
 ### Autonomy Tiers
 

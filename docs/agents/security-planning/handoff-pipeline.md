@@ -26,8 +26,8 @@ flowchart TD
   T["Threat Catalog<br/>(Phase 4)"] --> WI["Work Item<br/>Generation"]
   S["Standards Map<br/>(Phase 3)"] --> WI
   WI --> AT["Autonomy Tier<br/>Assignment"]
-  AT --> ADO["ADO Work Items<br/>WI[NNN]"]
-  AT --> GH["GitHub Issues<br/>{{TEMP-N}}"]
+  AT --> ADO["ADO Work Items<br/>WI-SEC-{NNN}"]
+  AT --> GH["GitHub Issues<br/>{{SEC-TEMP-N}}"]
 ```
 
 ### From Threats to Work Items
@@ -42,10 +42,10 @@ Each threat from Phase 4 maps to one or more backlog items. The mapping follows 
 
 The agent generates work items for the platform the user selects (or both when requested):
 
-| Platform | Format       | Structure                                                        |
-|----------|--------------|------------------------------------------------------------------|
-| ADO      | `WI[NNN]`    | Title, description, acceptance criteria, severity, autonomy tier |
-| GitHub   | `{{TEMP-N}}` | Issue title, body, labels, milestone suggestion                  |
+| Platform | Format           | Structure                                                        |
+|----------|------------------|------------------------------------------------------------------|
+| ADO      | `WI-SEC-{NNN}`   | Title, description, acceptance criteria, severity, autonomy tier |
+| GitHub   | `{{SEC-TEMP-N}}` | Issue title, body, labels, milestone suggestion                  |
 
 Work items include enough context for an implementer to act without re-reading the full security plan: the threat description, affected components, relevant standards, and specific acceptance criteria.
 

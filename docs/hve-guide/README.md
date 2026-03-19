@@ -42,17 +42,17 @@ flowchart LR
 > [!TIP]
 > [Design Thinking](../design-thinking/using-together.md) can feed into this lifecycle at three exit points. See the [DT-RPI integration guide](../design-thinking/dt-rpi-integration.md) for details.
 
-| Stage   | Name               | Key Tools                                                                                                   |
-|---------|--------------------|-------------------------------------------------------------------------------------------------------------|
-| Stage 1 | Setup              | hve-core-installer (skill), memory                                                                          |
-| Stage 2 | Discovery          | task-researcher, brd-builder, security-planner, dt-coach                                                    |
-| Stage 3 | Product Definition | prd-builder, product-manager-advisor, adr-creation, arch-diagram-builder                                    |
-| Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                                      |
-| Stage 5 | Sprint Planning    | github-backlog-manager, agile-coach                                                                         |
-| Stage 6 | Implementation     | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder, coding-standards |
-| Stage 7 | Review             | task-reviewer, pr-review                                                                                    |
-| Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                     |
-| Stage 9 | Operations         | doc-ops, doc-ops-update, incident-response                                                                  |
+| Stage   | Name               | Key Tools                                                                                                             |
+|---------|--------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Stage 1 | Setup              | hve-core-installer (skill), memory                                                                                    |
+| Stage 2 | Discovery          | task-researcher, brd-builder, security-planner, dt-coach, sssc-planner, rai-planner                                   |
+| Stage 3 | Product Definition | prd-builder, product-manager-advisor, adr-creation, arch-diagram-builder, security-planner, sssc-planner, rai-planner |
+| Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                                                |
+| Stage 5 | Sprint Planning    | github-backlog-manager, agile-coach                                                                                   |
+| Stage 6 | Implementation     | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder, coding-standards           |
+| Stage 7 | Review             | task-reviewer, pr-review                                                                                              |
+| Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                               |
+| Stage 9 | Operations         | doc-ops, doc-ops-update, incident-response                                                                            |
 
 > Cross-cutting: memory is available at every stage and is not tied to any single phase.
 

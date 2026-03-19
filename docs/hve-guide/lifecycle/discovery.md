@@ -32,6 +32,8 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 | task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics                                         |
 | brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                               |
 | security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                          |
+| sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                       |
+| rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                   |
 | gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                             |
 | adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                      |
 | arch-diagram-builder   | Agent  | Select **arch-diagram-builder** agent   | Generate architecture diagrams                                                       |
@@ -90,9 +92,21 @@ tokenization, and a security model covering injection and broken
 access control. Exclude infrastructure and network-level controls.
 ```
 
+Select **sssc-planner** agent:
+
+```text
+Assess this repository's supply chain security posture against the OpenSSF Scorecard
+```
+
+Select **rai-planner** agent:
+
+```text
+Assess the responsible AI risks for this project based on the security plan
+```
+
 ## Stage Outputs and Next Stage
 
-Discovery produces BRDs, research summaries, security plans, data specifications, and architecture decision records. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
+Discovery produces BRDs, research summaries, security plans, data specifications, architecture decision records, supply chain security assessments, and RAI assessments. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

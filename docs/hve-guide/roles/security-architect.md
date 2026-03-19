@@ -51,9 +51,11 @@ This guide is for you if you perform security model analysis, build security pla
 
 1. Stage 2: Discovery. Use the **task-researcher** agent to investigate the threat landscape, existing security controls, and compliance requirements for your system.
 2. Stage 3: Product Definition. Run the **security-planner** agent to generate a security plan with security models, attack vectors, and mitigation strategies.
-3. Stage 3: Product Definition. Use `/risk-register` to assess and document component-level risks with severity ratings, likelihood, and mitigation plans.
-4. Stage 7: Review. Validate implementation against security requirements using the **task-reviewer** agent for code-level security compliance checks.
-5. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update security models as the system evolves.
+3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security posture against OpenSSF standards.
+4. Stage 3: Product Definition. Run the **rai-planner** agent if the project includes AI/ML components.
+5. Stage 3: Product Definition. Use `/risk-register` to assess and document component-level risks with severity ratings, likelihood, and mitigation plans.
+6. Stage 7: Review. Validate implementation against security requirements using the **task-reviewer** agent for code-level security compliance checks.
+7. Stage 9: Operations. Maintain incident response readiness with `/incident-response` and update security models as the system evolves.
 
 ## Starter Prompts
 
@@ -79,6 +81,18 @@ Include containment steps, GDPR notification timelines, forensic evidence
 preservation, and post-incident review process.
 ```
 
+Select **sssc-planner** agent:
+
+```text
+Assess this repository's supply chain security posture
+```
+
+Select **rai-planner** agent:
+
+```text
+Assess responsible AI risks based on the security plan
+```
+
 Select **task-researcher** agent:
 
 ```text
@@ -90,12 +104,14 @@ arguments.
 
 ## Key Agents and Workflows
 
-| Agent                | Purpose                                       | Docs                                            |
-|----------------------|-----------------------------------------------|-------------------------------------------------|
-| **security-planner** | Security plan and security model generation   | Agent file                                      |
-| **task-researcher**  | Security-focused codebase and threat research | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-reviewer**    | Security compliance review                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **memory**           | Session context and preference persistence    | Agent file                                      |
+| Agent                | Purpose                                                    | Docs                                            |
+|----------------------|------------------------------------------------------------|-------------------------------------------------|
+| **security-planner** | Security plan and security model generation                | Agent file                                      |
+| **sssc-planner**     | Supply chain security assessment against OpenSSF standards | Agent file                                      |
+| **rai-planner**      | Responsible AI risk assessment and RAI plan generation     | Agent file                                      |
+| **task-researcher**  | Security-focused codebase and threat research              | [Task Researcher](../../rpi/task-researcher.md) |
+| **task-reviewer**    | Security compliance review                                 | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **memory**           | Session context and preference persistence                 | Agent file                                      |
 
 Prompts complement the agents for targeted security workflows:
 
@@ -106,13 +122,15 @@ Prompts complement the agents for targeted security workflows:
 
 ## Tips
 
-| Do                                                                 | Don't                                                           |
-|--------------------------------------------------------------------|-----------------------------------------------------------------|
-| Start with the **security-planner** agent for comprehensive models | Create ad-hoc security notes without structured security models |
-| Use `/risk-register` for each significant component                | Track risks informally or skip risk documentation               |
-| Research the threat landscape before defining mitigations          | Assume security models from other projects directly apply       |
-| Update security models as the system architecture evolves          | Treat security plans as static, one-time documents              |
-| Map security requirements to specific lifecycle stages             | Isolate security from the broader product lifecycle             |
+| Do                                                                      | Don't                                                               |
+|-------------------------------------------------------------------------|---------------------------------------------------------------------|
+| Start with the **security-planner** agent for comprehensive models      | Create ad-hoc security notes without structured security models     |
+| Use `/risk-register` for each significant component                     | Track risks informally or skip risk documentation                   |
+| Research the threat landscape before defining mitigations               | Assume security models from other projects directly apply           |
+| Update security models as the system architecture evolves               | Treat security plans as static, one-time documents                  |
+| Map security requirements to specific lifecycle stages                  | Isolate security from the broader product lifecycle                 |
+| Run **sssc-planner** after **security-planner** for pipeline assessment | Skip supply chain assessment for non-deployable documentation repos |
+| Use **rai-planner** for any project with AI/ML components               | Apply RAI assessment to purely non-AI systems                       |
 
 ## Related Roles
 
@@ -123,7 +141,8 @@ Prompts complement the agents for targeted security workflows:
 ## Next Steps
 
 > [!TIP]
-> Explore security planning tools: [Security Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/security-planning.collection.md)
+> Explore security tools: [Security Collection](https://github.com/microsoft/hve-core/blob/main/collections/security.collection.md)
+> Plan responsible AI assessments: [RAI Planning Collection](https://github.com/microsoft/hve-core/blob/main/collections/rai-planning.collection.md)
 > Review the security model documentation: [Security Model](../../security/security-model.md)
 > See how security fits the project lifecycle: [AI-Assisted Project Lifecycle](../lifecycle/)
 
