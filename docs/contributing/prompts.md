@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-03-17
 ms.topic: how-to
 ---
 
@@ -69,58 +69,133 @@ Prompt files MUST:
 | Style    | Sentence case with proper punctuation                                                                              |
 | Example  | `'Required protocol for creating Azure DevOps pull requests with work item discovery and reviewer identification'` |
 
-**`mode`** (string enum, MANDATORY for prompts)
-
-| Property | Value                                  |
-|----------|----------------------------------------|
-| Purpose  | Defines when/how the prompt is invoked |
-| Example  | `workflow`                             |
-
-Valid values:
-
-* `agent` - Used by specialized AI agents
-* `assistant` - General-purpose assistance context
-* `copilot` - GitHub Copilot-specific workflows
-* `workflow` - Automated workflow/pipeline context
-
 ### Optional Fields
 
-**`category`** (string enum)
+**`agent`** (string)
 
-Organizes prompts by domain.
+| Property | Value                                                                    |
+|----------|--------------------------------------------------------------------------|
+| Purpose  | Delegates execution to a named custom agent                              |
+| Format   | Human-readable agent name matching the agent's `name:` frontmatter field |
+| Style    | Quote the value when the agent name contains spaces                      |
+| Example  | `'ADO Backlog Manager'`                                                  |
 
-Valid values:
+**`argument-hint`** (string)
 
-* `ado` - Azure DevOps workflows
-* `git` - Git operations
-* `documentation` - Documentation generation/maintenance
-* `workflow` - General workflow automation
-* `development` - Development tasks
+| Property | Value                                                                                                                                          |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Purpose  | Displays expected inputs in the VS Code prompt picker                                                                                          |
+| Format   | Brief string; required arguments first, then optional; `[]` for positional, `key=value` for named, `{option1\|option2}` for enumerated choices |
+| Style    | Keep hints concise; lead with required arguments                                                                                               |
+| Example  | `"project=... [type={Epic\|Feature\|UserStory\|Bug\|Task}] [title=...]"`                                                                       |
+
+**`model`** (string)
+
+| Property | Value                                                                             |
+|----------|-----------------------------------------------------------------------------------|
+| Purpose  | Specifies a preferred AI model for prompt invocation                              |
+| Format   | Model identifier string                                                           |
+| Style    | Use the model's canonical identifier; omit if the workspace default is acceptable |
+| Example  | `gpt-4o`                                                                          |
+
+**`disable-model-invocation`** (boolean)
+
+| Property | Value                                                                                 |
+|----------|---------------------------------------------------------------------------------------|
+| Purpose  | Prevents the prompt from automatically invoking an AI model at start                  |
+| Format   | Boolean (`true` or `false`)                                                           |
+| Style    | Use for prompts that gather context or run setup steps before handing off to the user |
+| Example  | `true`                                                                                |
+
+**`mode`** (string)
+
+| Property | Value                                                                        |
+|----------|------------------------------------------------------------------------------|
+| Purpose  | Specifies the invocation context                                             |
+| Format   | Enumerated string; valid values: `agent`, `assistant`, `copilot`, `workflow` |
+| Style    | Lowercase                                                                    |
+| Example  | `agent`                                                                      |
+
+**`category`** (string)
+
+| Property | Value                                                            |
+|----------|------------------------------------------------------------------|
+| Purpose  | Groups the prompt by topic or domain for organizational purposes |
+| Format   | String identifying the domain or topic area                      |
+| Style    | Lowercase kebab-case (e.g., `code-review`, `ado`, `git`)         |
+| Example  | `code-review`                                                    |
 
 **`version`** (string)
 
-Tracks prompt revisions using semantic versioning (e.g., `1.0.0`).
+| Property | Value                                          |
+|----------|------------------------------------------------|
+| Purpose  | Tracks prompt revisions                        |
+| Format   | Semantic versioning string (MAJOR.MINOR.PATCH) |
+| Style    | Quoted string                                  |
+| Example  | `'1.0.0'`                                      |
 
 **`author`** (string)
 
-Attribution for the prompt creator (e.g., `microsoft/hve-core`, `your-team-name`).
+| Property | Value                                |
+|----------|--------------------------------------|
+| Purpose  | Attribution for the prompt creator   |
+| Format   | Team or repository identifier string |
+| Style    | Use `org/repo` format or a team name |
+| Example  | `'microsoft/hve-core'`               |
 
 **`lastUpdated`** (string)
 
-Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
+| Property | Value                             |
+|----------|-----------------------------------|
+| Purpose  | Timestamp of last modification    |
+| Format   | ISO 8601 date string (YYYY-MM-DD) |
+| Style    | Quoted string                     |
+| Example  | `'2026-03-17'`                    |
 
 ### Frontmatter Example
 
 ```yaml
 ---
 description: 'Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking'
-mode: 'workflow'
-category: 'ado'
+agent: 'ADO Backlog Manager'
+argument-hint: "project-slug=... [type={PR|Draft}]"
 version: '1.0.0'
 author: 'microsoft/hve-core'
-lastUpdated: '2025-11-19'
+lastUpdated: '2026-03-17'
 ---
 ```
+
+### Input Variables
+
+Prompts can declare input variables that VS Code resolves at invocation time. The syntax is:
+
+```text
+${input:varName}
+${input:varName:defaultValue}
+```
+
+Declare variables in an Inputs section and reference them in prompt content:
+
+```markdown
+## Inputs
+
+* ${input:topic}: (Required) Primary topic or focus area.
+* ${input:scope:all}: (Optional, defaults to all) Scope of the operation.
+```
+
+Required inputs (no default) are inferred from the user's conversation or attached files when not explicitly supplied.
+
+### Activation Lines
+
+Prompts that need to clarify the workflow entry point can include an activation line: a `---` separator followed by an instruction that tells the agent where to begin. Activation lines apply only to prompt files and are omitted when the delegated agent's phases already define the workflow start.
+
+```markdown
+---
+
+Begin by reading the current branch state and identifying open work items.
+```
+
+Prompts that delegate to a custom agent via `agent:` typically omit the activation line because the agent's phases define execution order.
 
 ## Collection Entry Requirements
 
@@ -352,7 +427,6 @@ When specific files/paths trigger behavior:
 ```yaml
 ---
 description: 'Required protocol for creating Azure DevOps pull requests'
-mode: 'workflow'
 applyTo: '**/.copilot-tracking/pr/new/**'  # Workflow-specific context
 ---
 ```

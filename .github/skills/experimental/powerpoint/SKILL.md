@@ -312,38 +312,38 @@ Validates only the specified slides. When content directories cover fewer slides
 
 #### validate_slides.py CLI Reference
 
-| Flag | Required | Default | Description |
-|---|---|---|---|
-| `--image-dir` | Yes | — | Directory containing `slide-NNN.jpg` images |
-| `--prompt` | One of `--prompt` / `--prompt-file` | — | Validation prompt text |
-| `--prompt-file` | One of `--prompt` / `--prompt-file` | — | Path to file containing the validation prompt |
-| `--model` | No | `claude-haiku-4.5` | Vision model ID |
-| `--output` | No | stdout | JSON results file path |
-| `--slides` | No | all | Comma-separated slide numbers to validate |
-| `-v`, `--verbose` | No | — | Enable debug-level logging |
+| Flag              | Required                            | Default            | Description                                   |
+|-------------------|-------------------------------------|--------------------|-----------------------------------------------|
+| `--image-dir`     | Yes                                 | —                  | Directory containing `slide-NNN.jpg` images   |
+| `--prompt`        | One of `--prompt` / `--prompt-file` | —                  | Validation prompt text                        |
+| `--prompt-file`   | One of `--prompt` / `--prompt-file` | —                  | Path to file containing the validation prompt |
+| `--model`         | No                                  | `claude-haiku-4.5` | Vision model ID                               |
+| `--output`        | No                                  | stdout             | JSON results file path                        |
+| `--slides`        | No                                  | all                | Comma-separated slide numbers to validate     |
+| `-v`, `--verbose` | No                                  | —                  | Enable debug-level logging                    |
 
 #### validate_deck.py CLI Reference
 
-| Flag | Required | Default | Description |
-|---|---|---|---|
-| `--input` | Yes | — | Input PPTX file path |
-| `--content-dir` | No | — | Content directory for slide count comparison |
-| `--slides` | No | all | Comma-separated slide numbers to validate |
-| `--output` | No | stdout | JSON results file path |
-| `--report` | No | — | Markdown report file path |
-| `--per-slide-dir` | No | — | Directory for per-slide JSON files (`slide-NNN-deck-validation.json`) |
+| Flag              | Required | Default | Description                                                           |
+|-------------------|----------|---------|-----------------------------------------------------------------------|
+| `--input`         | Yes      | —       | Input PPTX file path                                                  |
+| `--content-dir`   | No       | —       | Content directory for slide count comparison                          |
+| `--slides`        | No       | all     | Comma-separated slide numbers to validate                             |
+| `--output`        | No       | stdout  | JSON results file path                                                |
+| `--report`        | No       | —       | Markdown report file path                                             |
+| `--per-slide-dir` | No       | —       | Directory for per-slide JSON files (`slide-NNN-deck-validation.json`) |
 
 #### Validation Outputs
 
 When run through the pipeline, validation produces these files in the image output directory:
 
-| File | Format | Content |
-|---|---|---|
-| `deck-validation-results.json` | JSON | Per-slide PPTX property issues (speaker notes, slide count) |
-| `deck-validation-report.md` | Markdown | Human-readable report for PPTX property validation |
-| `validation-results.json` | JSON | Consolidated vision model responses with quality findings |
-| `slide-NNN-validation.txt` | Text | Per-slide vision response text (next to `slide-NNN.jpg`) |
-| `slide-NNN-deck-validation.json` | JSON | Per-slide PPTX property validation result (next to `slide-NNN.jpg`) |
+| File                             | Format   | Content                                                             |
+|----------------------------------|----------|---------------------------------------------------------------------|
+| `deck-validation-results.json`   | JSON     | Per-slide PPTX property issues (speaker notes, slide count)         |
+| `deck-validation-report.md`      | Markdown | Human-readable report for PPTX property validation                  |
+| `validation-results.json`        | JSON     | Consolidated vision model responses with quality findings           |
+| `slide-NNN-validation.txt`       | Text     | Per-slide vision response text (next to `slide-NNN.jpg`)            |
+| `slide-NNN-deck-validation.json` | JSON     | Per-slide PPTX property validation result (next to `slide-NNN.jpg`) |
 
 Per-slide vision text files are written alongside their corresponding `slide-NNN.jpg` images, enabling agents to read validation findings for individual slides without parsing the consolidated JSON file.
 
@@ -400,19 +400,19 @@ python scripts/render_pdf_images.py \
 
 The build and extraction scripts use shared modules in the `scripts/` directory:
 
-| Module | Purpose |
-|---|---|
-| `pptx_utils.py` | Shared utilities: exit codes, logging configuration, slide filter parsing, unit conversion (`emu_to_inches()`), YAML loading |
-| `pptx_colors.py` | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries) |
-| `pptx_fonts.py` | Font resolution, family normalization, weight suffix handling, alignment mapping |
-| `pptx_shapes.py` | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities |
-| `pptx_fills.py` | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles |
-| `pptx_text.py` | Text frame properties (margins, auto-size, vertical anchor), paragraph properties (spacing, level), run properties (underline, hyperlink) |
-| `pptx_tables.py` | Table element creation and extraction with cell merging, banding, and per-cell styling |
-| `pptx_charts.py` | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.) |
-| `validate_deck.py` | PPTX-only validation for speaker notes and slide count |
-| `validate_slides.py` | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output |
-| `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming |
+| Module                 | Purpose                                                                                                                                   |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `pptx_utils.py`        | Shared utilities: exit codes, logging configuration, slide filter parsing, unit conversion (`emu_to_inches()`), YAML loading              |
+| `pptx_colors.py`       | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries)                                                   |
+| `pptx_fonts.py`        | Font resolution, family normalization, weight suffix handling, alignment mapping                                                          |
+| `pptx_shapes.py`       | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities                                               |
+| `pptx_fills.py`        | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles                                            |
+| `pptx_text.py`         | Text frame properties (margins, auto-size, vertical anchor), paragraph properties (spacing, level), run properties (underline, hyperlink) |
+| `pptx_tables.py`       | Table element creation and extraction with cell merging, banding, and per-cell styling                                                    |
+| `pptx_charts.py`       | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.)                                  |
+| `validate_deck.py`     | PPTX-only validation for speaker notes and slide count                                                                                    |
+| `validate_slides.py`   | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output            |
+| `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming                                                                  |
 
 ## python-pptx Constraints
 
@@ -428,19 +428,19 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 
 ## Troubleshooting
 
-| Issue | Cause | Solution |
-|---|---|---|
-| SVG runtime error | python-pptx cannot embed SVG | Convert to PNG via `cairosvg` before adding |
-| Text overlay between elements | Insufficient vertical spacing | Follow element positioning conventions in `pptx.instructions.md` |
-| Width overflow off-slide | Element extends beyond slide boundary | Follow element positioning conventions in `pptx.instructions.md` |
-| Bright accent color unreadable as fill | White text on bright background | Darken accent to ~60% saturation for box fills |
-| Background fill replaced with NoFill | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing |
-| Missing speaker notes | Notes not specified in `content.yaml` | Add `speaker_notes` field to every content slide |
-| LibreOffice not found during Validate | Validate exports slides to images first | Install LibreOffice: `brew install --cask libreoffice` (macOS) |
-| `uv` not found | uv package manager not installed | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
-| Python not found by uv | No Python 3.11+ on PATH | Install via `uv python install 3.11` or `pyenv install 3.11` |
-| `uv sync` fails | Missing or corrupt `.venv` | Delete `.venv/` at the skill root and re-run `uv sync` |
-| Import errors in scripts | Dependencies not installed or stale venv | Run `uv sync` from the skill root to recreate the environment |
+| Issue                                  | Cause                                              | Solution                                                                                         |
+|----------------------------------------|----------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| SVG runtime error                      | python-pptx cannot embed SVG                       | Convert to PNG via `cairosvg` before adding                                                      |
+| Text overlay between elements          | Insufficient vertical spacing                      | Follow element positioning conventions in `pptx.instructions.md`                                 |
+| Width overflow off-slide               | Element extends beyond slide boundary              | Follow element positioning conventions in `pptx.instructions.md`                                 |
+| Bright accent color unreadable as fill | White text on bright background                    | Darken accent to ~60% saturation for box fills                                                   |
+| Background fill replaced with NoFill   | Accessed `background.fill` on inherited background | Check `slide.follow_master_background` before accessing                                          |
+| Missing speaker notes                  | Notes not specified in `content.yaml`              | Add `speaker_notes` field to every content slide                                                 |
+| LibreOffice not found during Validate  | Validate exports slides to images first            | Install LibreOffice: `brew install --cask libreoffice` (macOS)                                   |
+| `uv` not found                         | uv package manager not installed                   | Install uv: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
+| Python not found by uv                 | No Python 3.11+ on PATH                            | Install via `uv python install 3.11` or `pyenv install 3.11`                                     |
+| `uv sync` fails                        | Missing or corrupt `.venv`                         | Delete `.venv/` at the skill root and re-run `uv sync`                                           |
+| Import errors in scripts               | Dependencies not installed or stale venv           | Run `uv sync` from the skill root to recreate the environment                                    |
 
 ## Environment Recovery
 
