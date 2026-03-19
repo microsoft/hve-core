@@ -1,1 +1,0 @@
-../../../.github/prompts/security/security-capture.prompt.md

@@ -61,7 +61,7 @@ copilot plugin install project-planning@hve-core
 
 | Command                     | Description                                                                                                                              |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode                                       |
+| security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                      |
 | security-capture            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                             |
 | incident-response           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                         |
 | risk-register               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                          |

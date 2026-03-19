@@ -5,6 +5,9 @@ Responsible AI assessment, sensitive uses screening, and standards-aligned impac
 
 > **⚠️ Experimental** — This collection is experimental. Contents and behavior may change or be removed without notice.
 
+> [!CAUTION]
+> The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss sensitive use categories, or produce recommendations that are incomplete or inappropriate for your context.
+
 ## Overview
 
 Assess AI systems for responsible AI risks using structured standards-aligned analysis, sensitive uses screening, and impact assessment.
@@ -42,9 +45,10 @@ copilot plugin install rai-planning@hve-core
 
 ## Agents
 
-| Agent       | Description                                                                                                                                                                                                                                                                                                                  |
-|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| rai-planner | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
+| Agent               | Description                                                                                                                                                                                                                                                                                                                  |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rai-planner         | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
+| researcher-subagent | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                                                                                 |
 
 ## Commands
 

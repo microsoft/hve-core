@@ -1,0 +1,1 @@
+../../../.github/prompts/security-planning/sssc-from-security-plan.prompt.md

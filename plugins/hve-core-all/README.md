@@ -9,6 +9,9 @@ HVE Core provides the complete collection of AI chat agents, prompts, instructio
 
 Use this edition when you want access to everything without choosing a focused collection.
 
+> [!CAUTION]
+> This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+
 Code review agents included (via coding-standards collection):
 
 - **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
@@ -139,7 +142,7 @@ copilot plugin install hve-core-all@hve-core
 | incident-response                           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                 |
 | risk-register                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
 | security-capture                            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                     |
-| security-plan-from-prd                      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode                                               |
+| security-plan-from-prd                      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                              |
 
 ## Instructions
 

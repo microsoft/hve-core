@@ -1,1 +1,0 @@
-../../../.github/instructions/rai-planning/rai-security-model.instructions.md
