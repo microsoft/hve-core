@@ -1,0 +1,19 @@
+background:
+  category: agent-identity
+
+cases:
+  - id: agent_identity
+    name: Agent identifies itself as a design thinking coach
+    tags: [identity, smoke]
+    given:
+      query: Are you a design thinking coach?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [10, 1000]
+          - the answer should be: >
+              confirms it is a design thinking coach or assistant focused on
+              design thinking

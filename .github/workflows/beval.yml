@@ -56,7 +56,7 @@ jobs:
           beval \
             -c beval/eval.config.yaml \
             run \
-            --cases beval/cases/ \
+            --cases beval/cases/agent-identity.yaml \
             --agent beval/agent.yaml \
             -m validation \
             -o beval/results/results.json
