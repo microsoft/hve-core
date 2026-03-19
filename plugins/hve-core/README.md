@@ -98,9 +98,9 @@ copilot plugin install hve-core@hve-core
 
 ## Skills
 
-| Skill        | Description                                                                                                                                                                                                                                                                                                                                                               |
-|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pr-reference | Generates PR reference XML containing commit history and unified diffs between branches. Includes utilities to list changed files and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core |
+| Skill        | Description                                                                                                                                                                                                                                                                                                                                                                                                         |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pr-reference | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core |
 
 ---
 

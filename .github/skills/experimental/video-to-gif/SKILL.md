@@ -89,34 +89,34 @@ The script automatically detects HDR video content via ffprobe by checking for B
 
 Use `--tonemap` to select the tonemapping algorithm:
 
-| Algorithm | Characteristics                              |
-| --------- | -------------------------------------------- |
+| Algorithm | Characteristics                                |
+|-----------|------------------------------------------------|
 | hable     | Filmic curve, good highlight rolloff (default) |
-| reinhard  | Preserves more color saturation              |
-| mobius    | Similar to reinhard with better highlights   |
-| bt2390    | ITU standard, more conservative              |
+| reinhard  | Preserves more color saturation                |
+| mobius    | Similar to reinhard with better highlights     |
+| bt2390    | ITU standard, more conservative                |
 
 ## Parameters Reference
 
-| Parameter        | Flag (bash)     | Flag (PowerShell) | Default      | Description                            |
-| ---------------- | --------------- | ----------------- | ------------ | -------------------------------------- |
-| Input file       | `--input`       | `-InputPath`      | (required)   | Source video file path                 |
-| Output file      | `--output`      | `-OutputPath`     | `input.gif`  | Destination GIF file path              |
-| Frame rate       | `--fps`         | `-Fps`            | 10           | Frames per second                      |
-| Width            | `--width`       | `-Width`          | 1280         | Output width in pixels                 |
-| Dithering        | `--dither`      | `-Dither`         | sierra2_4a   | Dithering algorithm                    |
-| Tonemapping      | `--tonemap`     | `-Tonemap`        | hable        | HDR tonemapping algorithm              |
-| Skip palette     | `--skip-palette`| `-SkipPalette`    | false        | Use single-pass mode                   |
-| Start time       | `--start`       | `-Start`          | 0            | Start time in seconds                  |
-| Duration         | `--duration`    | `-Duration`       | (full video) | Duration to convert in seconds         |
-| Loop count       | `--loop`        | `-Loop`           | 0            | GIF loop count (0 = infinite)          |
+| Parameter    | Flag (bash)      | Flag (PowerShell) | Default      | Description                    |
+|--------------|------------------|-------------------|--------------|--------------------------------|
+| Input file   | `--input`        | `-InputPath`      | (required)   | Source video file path         |
+| Output file  | `--output`       | `-OutputPath`     | `input.gif`  | Destination GIF file path      |
+| Frame rate   | `--fps`          | `-Fps`            | 10           | Frames per second              |
+| Width        | `--width`        | `-Width`          | 1280         | Output width in pixels         |
+| Dithering    | `--dither`       | `-Dither`         | sierra2_4a   | Dithering algorithm            |
+| Tonemapping  | `--tonemap`      | `-Tonemap`        | hable        | HDR tonemapping algorithm      |
+| Skip palette | `--skip-palette` | `-SkipPalette`    | false        | Use single-pass mode           |
+| Start time   | `--start`        | `-Start`          | 0            | Start time in seconds          |
+| Duration     | `--duration`     | `-Duration`       | (full video) | Duration to convert in seconds |
+| Loop count   | `--loop`         | `-Loop`           | 0            | GIF loop count (0 = infinite)  |
 
 ### Frame Rate (FPS)
 
 FPS controls animation smoothness and file size. Lower values reduce file size but create choppier motion.
 
 | FPS | Use Case                 |
-| --- | ------------------------ |
+|-----|--------------------------|
 | 5   | Simple animations, icons |
 | 10  | General use (default)    |
 | 15  | Smooth motion, UI demos  |
@@ -126,23 +126,23 @@ FPS controls animation smoothness and file size. Lower values reduce file size b
 
 Width sets the output horizontal resolution in pixels. Height scales proportionally to maintain aspect ratio.
 
-| Width | Use Case                  |
-| ----- | ------------------------- |
-| 320   | Thumbnails, previews      |
-| 640   | Documentation             |
-| 800   | Presentations             |
-| 1280  | High detail (default)     |
+| Width | Use Case              |
+|-------|-----------------------|
+| 320   | Thumbnails, previews  |
+| 640   | Documentation         |
+| 800   | Presentations         |
+| 1280  | High detail (default) |
 
 ### Dithering Algorithms
 
 Dithering determines how the 256-color GIF palette approximates the original colors.
 
-| Algorithm       | Quality | Speed   | Best For                       |
-| --------------- | ------- | ------- | ------------------------------ |
-| sierra2_4a      | High    | Medium  | General use (default)          |
-| floyd_steinberg | High    | Slow    | Photographic content           |
-| bayer           | Medium  | Fast    | Graphics with solid colors     |
-| none            | Low     | Fastest | Stylized/posterized look       |
+| Algorithm       | Quality | Speed   | Best For                   |
+|-----------------|---------|---------|----------------------------|
+| sierra2_4a      | High    | Medium  | General use (default)      |
+| floyd_steinberg | High    | Slow    | Photographic content       |
+| bayer           | Medium  | Fast    | Graphics with solid colors |
+| none            | Low     | Fastest | Stylized/posterized look   |
 
 ### Time Range Selection
 
@@ -157,11 +157,11 @@ scripts/convert.sh --input video.mp4 --start 5 --duration 10
 
 Use `--loop` to control GIF repeat behavior:
 
-| Value | Behavior           |
-| ----- | ------------------ |
-| 0     | Loop forever       |
-| 1     | Play once          |
-| N     | Play N times       |
+| Value | Behavior     |
+|-------|--------------|
+| 0     | Loop forever |
+| 1     | Play once    |
+| N     | Play N times |
 
 ## Two-Pass vs Single-Pass
 

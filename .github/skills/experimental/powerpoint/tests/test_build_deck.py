@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for build_deck module."""
 
 from unittest.mock import MagicMock, patch

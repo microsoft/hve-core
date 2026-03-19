@@ -68,10 +68,11 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent              | Purpose                                          | Key Constraint                        |
-|--------------------|--------------------------------------------------|---------------------------------------|
-| **pr-review**      | 4-phase PR review with tracking artifacts        | Review-only; never modifies code      |
-| **prompt-builder** | Engineers and validates instruction/prompt files | Dual-persona system with auto-testing |
+| Agent                 | Purpose                                                          | Key Constraint                          |
+|-----------------------|------------------------------------------------------------------|-----------------------------------------|
+| **pr-review**         | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code        |
+| **prompt-builder**    | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing   |
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents |
 
 ### Generator Agents
 
@@ -294,6 +295,26 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
 
 **Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+
+### security-reviewer
+
+**Creates:** OWASP vulnerability assessment reports:
+
+* `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md` (audit mode report)
+* `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md` (diff mode report)
+* `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md` (plan mode report)
+
+**Workflow:** Setup → Profile Codebase → Assess Applicable Skills → Verify Findings → Generate Report → Compute Summary
+
+**Modes:**
+
+* `audit` (default): Full codebase scan against applicable OWASP skills
+* `diff`: Scoped scan of changed files relative to the default branch
+* `plan`: Pre-implementation risk assessment of a plan document (skips verification)
+
+**Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
+
+**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`) for vulnerability references. Supports incremental comparison with prior scan reports.
 
 ### gen-jupyter-notebook
 

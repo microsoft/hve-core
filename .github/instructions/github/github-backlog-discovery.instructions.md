@@ -120,6 +120,8 @@ Map document types and content patterns to issue attributes.
 | Meeting notes | Action item               | `maintenance`     | Task        |
 | Security plan | Vulnerability remediation | `security`        | Bug         |
 | Security plan | Hardening requirement     | `security`        | Enhancement |
+| Backlog Brief | Experiment requirement    | `experiment`      | User story  |
+| Backlog Brief | Non-functional constraint | `experiment`      | Task        |
 
 When a document section contains acceptance criteria, include them in the candidate issue body as a checklist.
 

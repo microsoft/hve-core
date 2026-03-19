@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Text frame, paragraph, and run property utilities for PowerPoint skill scripts.
 
 Centralizes text properties (margins, auto-size, spacing, underline,

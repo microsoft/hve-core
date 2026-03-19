@@ -66,7 +66,7 @@ param(
     [switch]$FailOnMissing,
 
     [Parameter(Mandatory = $false)]
-    [string[]]$ExcludePaths = @('node_modules', '.git', 'vendor', 'logs')
+    [string[]]$ExcludePaths
 )
 
 # Import shared helpers if available
@@ -75,6 +75,13 @@ if (Test-Path $helpersPath) {
     Import-Module $helpersPath -Force
 }
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+
+# Canonical default exclusions shared between script-level param and Invoke-CopyrightHeaderCheck
+$DefaultExcludePaths = @('node_modules', '.git', 'vendor', 'logs', '.venv', '.copilot-tracking')
+
+if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
+    $ExcludePaths = $DefaultExcludePaths
+}
 
 # Header patterns to check
 $CopyrightPattern = '^\s*#\s*Copyright\s*\(c\)\s*Microsoft\s+Corporation\.?\s*$'
@@ -142,19 +149,21 @@ function Get-FilesToCheck {
 
     $files = @()
 
+    $excludeRegex = $null
+    $validExcludes = @($Exclude | Where-Object { $_ })
+    if ($validExcludes.Count -gt 0) {
+        $sepPattern = '[/\\]'
+        $excludeAlternation = ($validExcludes | ForEach-Object { [regex]::Escape($_) }) -join '|'
+        $excludeRegex = "${sepPattern}(?:${excludeAlternation})(?:${sepPattern}|$)"
+    }
+
     foreach ($ext in $Extensions) {
-        $found = Get-ChildItem -Path $RootPath -Filter $ext -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object {
-                $filePath = $_.FullName
-                $excluded = $false
-                foreach ($excludePath in $Exclude) {
-                    if ($filePath -like "*$excludePath*") {
-                        $excluded = $true
-                        break
-                    }
-                }
-                -not $excluded
-            }
+        $found = Get-ChildItem -Path $RootPath -Filter $ext -Recurse -File -Force -ErrorAction SilentlyContinue
+
+        if ($excludeRegex) {
+            $found = $found | Where-Object { $_.FullName -notmatch $excludeRegex }
+        }
+
         $files += $found
     }
 
@@ -178,7 +187,7 @@ function Invoke-CopyrightHeaderCheck {
         [switch]$FailOnMissing,
 
         [Parameter(Mandatory = $false)]
-        [string[]]$ExcludePaths = @('node_modules', '.git', 'vendor', 'logs')
+        [string[]]$ExcludePaths = $script:DefaultExcludePaths
     )
 
     Write-Host "📄 Validating copyright headers..." -ForegroundColor Cyan
