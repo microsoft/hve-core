@@ -24,7 +24,8 @@
     "**/Cargo.lock",
     "CHANGELOG.md",
     "logs/**",
-    "docs/docusaurus/build/**"
+    "docs/docusaurus/build/**",
+    "beval/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -62,11 +63,14 @@
     "general-technical"
   ],
   "words": [
+    "beval",
     "behaviour",
     "brainwriting",
     "easyops",
     "hideable",
     "learning",
+    "parseable",
+    "wireframes",
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic"

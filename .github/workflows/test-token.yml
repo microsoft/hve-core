@@ -3,9 +3,12 @@ name: Test Copilot Token
 on:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions: {}
     env:
       COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
     steps:
