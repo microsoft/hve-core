@@ -47,6 +47,7 @@ MAX_IMAGE_BLOB_BYTES = 100 * 1024 * 1024  # 100 MB
 class _ImageSecurityError(ValueError):
     """Security-critical image validation failure that must not be suppressed."""
 
+
 _CONTENT_TYPE_TO_EXT: dict[str, str] = {
     "image/bmp": "bmp",
     "image/gif": "gif",
@@ -89,9 +90,7 @@ def _validate_emf_magic_bytes(blob: bytes) -> None:
     if len(blob) < 44:
         raise _ImageSecurityError("EMF blob too short for magic-byte validation")
     if blob[:4] != _EMF_RECORD_TYPE or blob[40:44] != _EMF_SIGNATURE:
-        raise _ImageSecurityError(
-            "EMF blob does not match expected file signature"
-        )
+        raise _ImageSecurityError("EMF blob does not match expected file signature")
 
 
 def _sanitize_svg(blob: bytes) -> bytes:
