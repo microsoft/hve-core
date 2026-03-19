@@ -22,6 +22,8 @@ items:
   - path: .github/prompts/jira/jira-triage-issues.prompt.md
     kind: prompt
   # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
   - path: .github/instructions/jira/jira-backlog-discovery.instructions.md
     kind: instruction
   - path: .github/instructions/jira/jira-backlog-planning.instructions.md
@@ -35,8 +37,5 @@ items:
   # Skills
   - path: .github/skills/jira/jira
     kind: skill
-  # Instructions
-  - path: .github/instructions/shared/hve-core-location.instructions.md
-    kind: instruction
 display:
   ordering: alpha

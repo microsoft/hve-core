@@ -1,5 +1,5 @@
 ---
-description: 'Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution'
+description: 'Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/jira-issues/triage/**'
 ---
 

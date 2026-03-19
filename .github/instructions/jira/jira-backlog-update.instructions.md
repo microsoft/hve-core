@@ -1,5 +1,5 @@
 ---
-description: 'Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations'
+description: 'Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/jira-issues/**/handoff-logs.md'
 ---
 

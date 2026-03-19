@@ -1,5 +1,5 @@
 ---
-description: 'Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence'
+description: 'Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/jira-issues/**'
 ---
 

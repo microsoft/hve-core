@@ -1,6 +1,6 @@
 ---
 name: Jira PRD to WIT
-description: 'Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira'
+description: 'Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira - Brought to you by microsoft/hve-core'
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web']
 ---
 

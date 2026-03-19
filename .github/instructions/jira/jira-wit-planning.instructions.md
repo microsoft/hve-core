@@ -1,5 +1,5 @@
 ---
-description: 'Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts'
+description: 'Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/jira-issues/prds/**'
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: 'Discovery protocol for Jira backlog management with user-centric, artifact-driven, and JQL-based issue discovery'
+description: 'Discovery protocol for Jira backlog management with user-centric, artifact-driven, and JQL-based issue discovery - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/jira-issues/discovery/**'
 ---
 

@@ -176,8 +176,4 @@ python scripts/jira.py comments PROJ-123 PROJ-456 --fields _issue,author.display
 | JSON payload error         | Invalid JSON was passed to `create` or `update`  | Validate the payload and retry with well-formed JSON                                                              |
 | Network connection error   | Jira instance URL is unreachable                 | Verify the base URL and local network access                                                                      |
 
-## Attribution
-
-This skill is adapted for hve-core from the upstream Jira skill at `/tmp/copilot-research/jira-and-gitlab-skills/.github/skills/jira/`.
-
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
