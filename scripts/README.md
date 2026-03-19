@@ -2,7 +2,7 @@
 title: Scripts
 description: PowerShell scripts for linting, validation, and security automation
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - powershell
@@ -59,6 +59,9 @@ The `linting/` directory contains scripts for validating code quality and docume
 | `Markdown-Link-Check.ps1`          | Validate markdown links                            |
 | `Invoke-YamlLint.ps1`              | YAML file validation                               |
 | `Test-CopyrightHeaders.ps1`        | Validate copyright headers in source files         |
+| `Invoke-MsDateFreshnessCheck.ps1`  | Check ms.date frontmatter freshness                |
+| `Invoke-PythonLint.ps1`            | Python linting via ruff                            |
+| `Invoke-PythonTests.ps1`           | Python tests via pytest                            |
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
