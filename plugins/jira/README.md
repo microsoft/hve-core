@@ -26,7 +26,7 @@ copilot plugin install jira@hve-core
 | Agent                | Description                                                                                                                                                      |
 |----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | jira-backlog-manager | Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions - Brought to you by microsoft/hve-core |
-| jira-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira                                                              |
+| jira-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira - Brought to you by microsoft/hve-core                       |
 
 ## Commands
 
@@ -41,12 +41,12 @@ copilot plugin install jira@hve-core
 
 | Instruction            | Description                                                                                                                                                                                                                                                 |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jira-backlog-discovery | Discovery protocol for Jira backlog management with user-centric, artifact-driven, and JQL-based issue discovery                                                                                                                                            |
-| jira-backlog-planning  | Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence                                                                                                               |
-| jira-backlog-triage    | Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution                                                                                                                                       |
-| jira-backlog-update    | Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations                                                                                                                                       |
-| jira-wit-planning      | Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts                                                                                                                                   |
 | hve-core-location      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| jira-backlog-discovery | Discovery protocol for Jira backlog management with user-centric, artifact-driven, and JQL-based issue discovery - Brought to you by microsoft/hve-core                                                                                                     |
+| jira-backlog-planning  | Reference specification for Jira backlog management tooling, planning files, search conventions, similarity assessment, and state persistence - Brought to you by microsoft/hve-core                                                                        |
+| jira-backlog-triage    | Triage workflow for Jira backlog management with field recommendations, duplicate detection, and controlled execution - Brought to you by microsoft/hve-core                                                                                                |
+| jira-backlog-update    | Execution workflow for Jira backlog management that consumes planning handoffs and applies sequential Jira operations - Brought to you by microsoft/hve-core                                                                                                |
+| jira-wit-planning      | Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts - Brought to you by microsoft/hve-core                                                                                            |
 
 ## Skills
 
