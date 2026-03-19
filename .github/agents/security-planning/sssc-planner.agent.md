@@ -1,4 +1,5 @@
 ---
+name: SSSC Planner
 description: >-
   Guides users through a six-phase assessment of their repository's supply chain
   security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards,
@@ -6,6 +7,15 @@ description: >-
   and microsoft/physical-ai-toolchain.
 agents:
   - Researcher Subagent
+handoffs:
+  - label: "Compact"
+    agent: SSSC Planner
+    send: true
+    prompt: "/compact Make sure summarization includes that all state is managed through .copilot-tracking/sssc-plans/ folder files, and be sure to include the current phase, entry mode, and project slug"
+  - label: "Security Planner"
+    agent: Security Planner
+    prompt: /security-capture
+    send: true
 tools:
   - read
   - edit/createFile
@@ -14,6 +24,7 @@ tools:
   - execute/runInTerminal
   - execute/getTerminalOutput
   - search
+  - web
   - agent
 ---
 
@@ -104,29 +115,29 @@ State JSON schema for `state.json`:
 
 ```json
 {
-  "projectSlug": "string",
-  "entryMode": "capture | from-prd | from-brd | from-security-plan",
-  "currentPhase": "number (1-6)",
-  "phases": {
-    "1-scoping": { "status": "❓|✅|🔄|❌", "artifacts": ["state.json"] },
-    "2-assessment": { "status": "❓", "artifacts": [] },
-    "3-standards": { "status": "❓", "artifacts": [] },
-    "4-gap-analysis": { "status": "❓", "artifacts": [] },
-    "5-backlog": { "status": "❓", "artifacts": [] },
-    "6-handoff": { "status": "❓", "artifacts": [] }
-  },
-  "context": {
-    "techStack": ["string"],
-    "packageManagers": ["string"],
-    "ciPlatform": "string",
-    "releaseStrategy": "string",
-    "complianceTargets": ["string"]
-  },
+  "projectSlug": "",
+  "sscpPlanFile": "",
+  "currentPhase": 1,
+  "entryMode": "capture",
+  "scopingComplete": false,
+  "assessmentComplete": false,
+  "standardsMapped": false,
+  "gapAnalysisComplete": false,
+  "backlogGenerated": false,
   "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": [],
+    "packageManagers": [],
+    "ciPlatform": "",
+    "releaseStrategy": "",
+    "complianceTargets": []
+  },
+  "referencesProcessed": [],
+  "nextActions": [],
+  "userPreferences": { "autonomyTier": "partial" },
   "sscpEnabled": true,
-  "securityPlannerLink": "string|null",
-  "raiPlannerLink": "string|null",
-  "nextActions": ["string"]
+  "securityPlannerLink": null,
+  "raiPlannerLink": null
 }
 ```
 
@@ -163,6 +174,27 @@ Six instruction files provide detailed guidance for each domain. These files are
 * `.github/instructions/sssc-planning/sssc-handoff.instructions.md`: Phase 6 backlog handoff protocol with projections.
 
 Read and follow these instruction files when entering their respective phases.
+
+## Subagent Delegation
+
+This agent delegates supply chain standard specification lookups and framework research to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/sssc-plans/`, state management, and synthesizing subagent outputs.
+
+Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+
+* Research topic(s) and/or question(s) to investigate.
+* Subagent research document file path to create or update.
+
+The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+
+* When a `runSubagent` or `task` tool is available, run subagents as described above and in the sssc-standards instruction file.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
+
+Subagents can run in parallel when researching independent standard domains.
+
+### Phase-Specific Delegation
+
+* Phase 3 delegates evolving supply chain framework lookups to the Researcher Subagent per the trigger conditions in the sssc-standards instruction file delegation section. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
+* Phase 4 delegates current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
 
 ## Resume and Recovery Protocol
 
@@ -202,8 +234,8 @@ When a Security Planner assessment exists, incorporate its findings to avoid red
 
 Reference `.github/instructions/sssc-planning/sssc-handoff.instructions.md` for full handoff templates and formatting rules.
 
-* ADO work items use `WI[NNN]` temporary IDs with HTML `<div>` wrapper formatting.
-* GitHub issues use `{{TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
+* ADO work items use `WI-SSSC-{NNN}` sequential IDs with HTML `<div>` wrapper formatting.
+* GitHub issues use `{{SSSC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
 * Default autonomy tier is Partial: the agent creates items but requires user confirmation before submission.
 * Content sanitization: no secrets, credentials, internal URLs, or PII in work item content.
 
@@ -212,5 +244,5 @@ Reference `.github/instructions/sssc-planning/sssc-handoff.instructions.md` for 
 * Create all files only under `.copilot-tracking/sssc-plans/{project-slug}/`.
 * Never modify application source code.
 * Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
-* Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain` — verify workflow availability before recommending adoption.
+* Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain`. Verify workflow availability before recommending adoption.
 * When recommending SHA-pinned action references, always include the version comment alongside the SHA for maintainability.

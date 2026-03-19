@@ -57,6 +57,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                    | Iterative questioning; state-tracked sessions         |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
 | **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff | Six-phase conversational workflow; experimental       |
+| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM | Six-phase conversational workflow; experimental       |
 | **rai-planner**                  | Responsible AI assessment with 6-phase workflow against MS RAI Standard v2 and NIST AI RMF | Six-phase conversational workflow; experimental       |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
@@ -291,11 +292,11 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 * `state.json` (session state for resume capability)
 * `security-plan-{project-slug}.md` (security plan with STRIDE analysis, standards mapping, and operational bucket classification)
-* Backlog items in ADO (`WI[NNN]`) or GitHub (`{{TEMP-N}}`) format
+* Backlog items in ADO (`WI-SEC-{NNN}`) or GitHub (`{{SEC-TEMP-N}}`) format
 
 **Workflow:** Six sequential phases: Scoping → Bucket Analysis → Standards Mapping → Security Model Analysis → Backlog Generation → Review and Handoff
 
-**Entry Modes:** Two modes converge at Phase 2. Capture mode starts from scratch with an interview. Scoping mode pre-populates from existing PRD/BRD artifacts.
+**Entry Modes:** Two modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from existing PRD/BRD artifacts.
 
 **Critical:** Uses STRIDE methodology per operational bucket. Maps controls to OWASP Top 10, NIST 800-53, and CIS v8 frameworks. Detects AI/ML components during scoping and recommends RAI Planner dispatch when AI elements are present. Works iteratively with 3-5 questions per turn using emoji checklists to track progress. No blueprint infrastructure requirement. Maturity: experimental.
 
@@ -316,6 +317,20 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
 
 **Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Screens for sensitive uses and restricted uses requiring escalation. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
+
+### sssc-planner
+
+**Creates:** Assessment artifacts under `.copilot-tracking/sssc-plans/{project-slug}/`:
+
+* `state.json` (session state for resume capability)
+* `sssc-plan-{project-slug}.md` (supply chain security assessment with standards mapping and gap analysis)
+* Backlog items in ADO or GitHub format for remediation tracking
+
+**Workflow:** Six sequential phases: Scoping → Supply Chain Assessment → Standards Mapping → Gap Analysis → Backlog Generation → Review and Handoff
+
+**Entry Modes:** Four modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from PRD artifacts. From-BRD mode seeds from BRD artifacts. From-security-plan mode continues from a completed Security Planner session.
+
+**Critical:** Assesses against OpenSSF Scorecard (20 checks), SLSA Build levels (L0-L3), Best Practices Badge tiers, Sigstore keyless signing maturity, and SBOM compliance. Works iteratively with 3-5 questions per turn with confirmation before phase advancement. Maturity: experimental.
 
 ### gen-jupyter-notebook
 

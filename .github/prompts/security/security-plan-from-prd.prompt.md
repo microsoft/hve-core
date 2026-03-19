@@ -1,11 +1,11 @@
 ---
-description: "Initiate security planning from PRD/BRD artifacts using the Security Planner agent in scoping mode"
+description: "Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode"
 agent: security-planner
 ---
 
 # Security Plan from PRD/BRD
 
-Activate the Security Planner in **scoping mode** to bootstrap a security plan from existing product definition artifacts.
+Activate the Security Planner in **from-prd mode** to bootstrap a security plan from existing product definition artifacts.
 
 ## Inputs
 
@@ -50,7 +50,7 @@ If the project name cannot be derived from the discovered artifacts and `${input
 
 Create the project directory at `.copilot-tracking/security-plans/{project-slug}/` and initialize `state.json` with:
 
-* `entryMode` set to `"scoping"`
+* `entryMode` set to `"from-prd"`
 * `currentPhase` set to `1`
 * Pre-populated fields from extracted PRD/BRD data (project slug, technology inventory, deployment targets, compliance requirements)
 

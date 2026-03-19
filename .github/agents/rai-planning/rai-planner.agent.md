@@ -1,4 +1,5 @@
 ---
+name: RAI Planner
 description: "Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core"
 agents:
   - Researcher Subagent
@@ -115,7 +116,7 @@ State JSON schema for `state.json`:
   "sensitiveUsesCategories": [],
   "restrictedUsesCleared": false,
   "standardsMapped": false,
-  "raiRiskSurfaceStarted": false,
+  "securityModelAnalysisStarted": false,
   "raiThreatCount": 0,
   "impactAssessmentGenerated": false,
   "evidenceRegisterComplete": false,
@@ -135,7 +136,9 @@ State JSON schema for `state.json`:
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "userPreferences": {}
+  "userPreferences": {
+    "autonomyTier": "partial"
+  }
 }
 ```
 
@@ -183,6 +186,28 @@ Seven instruction files provide detailed guidance for each domain. These files a
 
 Read and follow these instruction files when entering their respective phases.
 
+## Subagent Delegation
+
+This agent delegates regulatory framework research and AI threat intelligence to `Researcher Subagent`. Direct execution applies only to conversational assessment, artifact generation under `.copilot-tracking/rai-plans/`, state management, and synthesizing subagent outputs.
+
+Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
+
+* Research topic(s) and/or question(s) to investigate.
+* Subagent research document file path to create or update.
+
+The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+
+* When a `runSubagent` or `task` tool is available, run subagents as described above and in the rai-standards instruction file.
+* When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
+
+Subagents can run in parallel when researching independent frameworks or governance domains.
+
+### Phase-Specific Delegation
+
+* Phase 3 delegates evolving regulatory framework lookups per the trigger conditions in the rai-standards instruction file delegation section.
+* Phase 4 delegates current adversarial ML threat intelligence, MITRE ATLAS mappings, and AI supply chain risk data when threat analysis requires context beyond the embedded taxonomy.
+* Phase 5 delegates regulatory enforcement precedents, emerging control patterns, and RAI principle tradeoff case studies when evidence gaps require external research.
+
 ## Resume and Recovery Protocol
 
 ### Session Resume
@@ -208,8 +233,8 @@ Five-step recovery when conversation context is compacted:
 
 Reference `.github/instructions/rai-planning/rai-backlog-handoff.instructions.md` for full handoff templates and formatting rules.
 
-* ADO work items use `WI[NNN]` temporary IDs with HTML `<div>` wrapper formatting.
-* GitHub issues use `{{TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
+* ADO work items use `WI-RAI-{NNN}` temporary IDs with HTML `<div>` wrapper formatting.
+* GitHub issues use `{{RAI-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
 * Default autonomy tier is Partial: the agent creates items but requires user confirmation before submission.
 * Content sanitization: no secrets, credentials, internal URLs, or PII in work item content.
 
