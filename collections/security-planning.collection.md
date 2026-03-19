@@ -1,4 +1,4 @@
-Create comprehensive security plans, incident response procedures, and risk assessments for cloud and hybrid environments.
+Create comprehensive security plans, incident response procedures, risk assessments, supply chain security assessments, and responsible AI plans for cloud and hybrid environments.
 
 > [!CAUTION]
 > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
@@ -10,3 +10,4 @@ This collection includes agents and prompts for:
 - **Risk Assessment** — Evaluate security risks with structured assessment frameworks
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
 - **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards
+- **RAI Planning** — Responsible AI impact assessment, sensitive-use analysis, and RAI backlog generation

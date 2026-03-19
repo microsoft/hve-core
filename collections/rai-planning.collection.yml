@@ -2,6 +2,9 @@ id: rai-planning
 name: RAI Planning
 description: Responsible AI assessment, sensitive uses screening, and standards-aligned impact analysis
 maturity: experimental
+notice: |
+  > [!CAUTION]
+  > The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss sensitive use categories, or produce recommendations that are incomplete or inappropriate for your context.
 tags:
   - rai
   - responsible-ai
@@ -12,6 +15,8 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/rai-planning/rai-capture.prompt.md
     kind: prompt
