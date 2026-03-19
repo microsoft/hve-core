@@ -71,11 +71,9 @@ def test_handle_search_returns_issue_rows_when_fields_selected(
     handler_client: jira.JiraClient,
 ) -> None:
     client_recorder.responses = [{"issues": [{"key": TEST_ISSUE_KEY}]}]
-    args = argparse.Namespace(
-        jql=TEST_JQL, max_results=10, fields=FIELDS_ISSUE)
+    args = argparse.Namespace(jql=TEST_JQL, max_results=10, fields=FIELDS_ISSUE)
 
-    assert jira.handle_search(handler_client, args) == [
-        {"key": TEST_ISSUE_KEY}]
+    assert jira.handle_search(handler_client, args) == [{"key": TEST_ISSUE_KEY}]
 
 
 def test_handle_get_fetches_issue(
@@ -95,8 +93,7 @@ def test_handle_get_fetches_issue(
     ("payload", "stdin_text", "expected_data"),
     [
         ('{"fields": {"summary": "New"}}', None, {"fields": {"summary": "New"}}),
-        (None, '{"fields": {"summary": "stdin"}}',
-         {"fields": {"summary": "stdin"}}),
+        (None, '{"fields": {"summary": "stdin"}}', {"fields": {"summary": "stdin"}}),
     ],
 )
 def test_handle_create_forwards_exact_json_payloads(
@@ -177,8 +174,7 @@ def test_handle_transition_resolves_transition_name(
         {"transitions": [{"id": "21", "name": "In Progress"}]},
         None,
     ]
-    args = argparse.Namespace(issue_key=TEST_ISSUE_KEY,
-                              transition="In Progress")
+    args = argparse.Namespace(issue_key=TEST_ISSUE_KEY, transition="In Progress")
 
     result = jira.handle_transition(handler_client, args)
 
@@ -285,8 +281,7 @@ def test_handle_fields_builds_expected_paths(
     issue_type_id: str | None,
     expected_path: str,
 ) -> None:
-    args = argparse.Namespace(
-        project_key=TEST_PROJECT_KEY, issue_type_id=issue_type_id)
+    args = argparse.Namespace(project_key=TEST_PROJECT_KEY, issue_type_id=issue_type_id)
 
     jira.handle_fields(handler_client, args)
 
@@ -296,8 +291,7 @@ def test_handle_fields_builds_expected_paths(
 def test_handle_fields_validates_issue_type_id(
     handler_client: jira.JiraClient,
 ) -> None:
-    args = argparse.Namespace(
-        project_key=TEST_PROJECT_KEY, issue_type_id="abc")
+    args = argparse.Namespace(project_key=TEST_PROJECT_KEY, issue_type_id="abc")
 
     with pytest.raises(jira.ScriptError) as exc_info:
         jira.handle_fields(handler_client, args)

@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
-# SPDX-License-Identifier: MIT"""Shared fixtures for GitLab skill tests."""
+# SPDX-License-Identifier: MIT
+"""Shared fixtures for GitLab skill tests."""
 
 from __future__ import annotations
 
@@ -56,8 +57,7 @@ class RequestRecorder:
         data: object | None = None,
         quiet: bool = False,
     ) -> object | None:
-        self.calls.append(RecordedCall(
-            method=method, url=url, data=data, quiet=quiet))
+        self.calls.append(RecordedCall(method=method, url=url, data=data, quiet=quiet))
         return self.response
 
 

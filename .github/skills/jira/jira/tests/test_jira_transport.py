@@ -46,8 +46,7 @@ def test_from_environment_builds_basic_auth_client(
     configured_cloud_environment: None,
 ) -> None:
     client = jira.JiraClient.from_environment()
-    encoded = base64.b64encode(
-        f"{TEST_USER_EMAIL}:{TEST_API_TOKEN}".encode()).decode()
+    encoded = base64.b64encode(f"{TEST_USER_EMAIL}:{TEST_API_TOKEN}".encode()).decode()
 
     assert client.api_url == TEST_API_URL
     assert client.auth_header == f"Basic {encoded}"
@@ -147,8 +146,7 @@ def test_request_translates_http_error_details(
         with pytest.raises(jira.ScriptError) as exc_info:
             configured_client.request("GET", REQUEST_PATH)
 
-    assert str(
-        exc_info.value) == f"HTTP 403 from GET {REQUEST_URL}: {expected_detail}"
+    assert str(exc_info.value) == f"HTTP 403 from GET {REQUEST_URL}: {expected_detail}"
 
 
 def test_request_translates_url_error(configured_client: jira.JiraClient) -> None:

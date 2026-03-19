@@ -354,8 +354,7 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the command-line parser."""
     parser = argparse.ArgumentParser(
         description=(
-            "Jira REST API helper for search, issue changes, comments, "
-            "and transitions."
+            "Jira REST API helper for search, issue changes, comments, and transitions."
         )
     )
     parser.add_argument(

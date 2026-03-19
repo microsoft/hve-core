@@ -47,8 +47,7 @@ class TestRequireEnvironment:
         ("env_name", "env_value", "expected_message"),
         [
             ("GITLAB_URL", "", "GITLAB_URL is not set"),
-            ("GITLAB_URL", "gitlab.example.com",
-             "GITLAB_URL must start with https://"),
+            ("GITLAB_URL", "gitlab.example.com", "GITLAB_URL must start with https://"),
             ("GITLAB_TOKEN", "", "GITLAB_TOKEN is not set"),
         ],
     )
@@ -245,8 +244,7 @@ class TestCmdJobLog:
         ):
             gitlab.cmd_job_log(["99"])
 
-        assert capsys.readouterr().out.strip().splitlines() == [
-            "line one", "line two"]
+        assert capsys.readouterr().out.strip().splitlines() == ["line one", "line two"]
 
     def test_requires_job_id(self, capsys: pytest.CaptureFixture[str]) -> None:
         with pytest.raises(SystemExit) as exc_info:

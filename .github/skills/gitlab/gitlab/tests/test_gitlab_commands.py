@@ -122,8 +122,7 @@ def test_get_commands_build_expected_urls(
     args: list[str],
     expected_url: str,
 ) -> None:
-    recorder = _configure_command_test(
-        monkeypatch, request_recorder, response={})
+    recorder = _configure_command_test(monkeypatch, request_recorder, response={})
 
     command(args)
 
@@ -136,8 +135,7 @@ def test_mr_list_uses_default_state_and_page_size(
     monkeypatch: pytest.MonkeyPatch,
     request_recorder: RequestRecorder,
 ) -> None:
-    recorder = _configure_command_test(
-        monkeypatch, request_recorder, response=[])
+    recorder = _configure_command_test(monkeypatch, request_recorder, response=[])
 
     gitlab.cmd_mr_list([])
 
@@ -156,8 +154,7 @@ def test_mr_list_uses_default_state_and_page_size(
             MR_LIST_RESPONSE,
             MR_LIST_RESPONSE,
         ),
-        (gitlab.cmd_mr_get, ["42"], FIELDS_MR,
-         MR_GET_RESPONSE, MR_GET_RESPONSE),
+        (gitlab.cmd_mr_get, ["42"], FIELDS_MR, MR_GET_RESPONSE, MR_GET_RESPONSE),
         (
             gitlab.cmd_pipeline_get,
             ["10"],
@@ -184,8 +181,7 @@ def test_read_commands_print_selected_fields(
     expected_printed: object,
 ) -> None:
     gitlab.selected_fields = selected_fields
-    recorder = _configure_command_test(
-        monkeypatch, request_recorder, response=response)
+    recorder = _configure_command_test(monkeypatch, request_recorder, response=response)
     printed = _capture_print_fields(monkeypatch)
 
     command(args)
@@ -303,8 +299,7 @@ def test_mr_notes_uses_default_max_results(
     monkeypatch: pytest.MonkeyPatch,
     request_recorder: RequestRecorder,
 ) -> None:
-    recorder = _configure_command_test(
-        monkeypatch, request_recorder, response=[])
+    recorder = _configure_command_test(monkeypatch, request_recorder, response=[])
 
     gitlab.cmd_mr_notes(["5"])
 

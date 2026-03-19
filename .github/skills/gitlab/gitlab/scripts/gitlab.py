@@ -64,8 +64,7 @@ def require_environment() -> None:
         die("GITLAB_URL is not set", EXIT_USAGE)
     if not re.match(r"^https?://", gitlab_url):
         die(
-            "GITLAB_URL must start with https:// "
-            "(or http:// for local dev)",
+            "GITLAB_URL must start with https:// (or http:// for local dev)",
             EXIT_USAGE,
         )
     if not gitlab_token:
@@ -221,8 +220,7 @@ def print_fields(data: Any) -> None:
         for item in cast(list[Any], data):
             print(
                 "\t".join(
-                    extract_field(item, field_name)
-                    for field_name in selected_fields
+                    extract_field(item, field_name) for field_name in selected_fields
                 )
             )
         return
